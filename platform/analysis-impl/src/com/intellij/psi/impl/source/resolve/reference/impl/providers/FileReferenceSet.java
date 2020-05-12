@@ -555,7 +555,7 @@ public class FileReferenceSet {
         if (helper.isFallback() && !result.isEmpty()) {
           continue;
         }
-        Collection<PsiFileSystemItem> roots = helper.getRoots(module);
+        Collection<PsiFileSystemItem> roots = helper.getRoots(module, virtualFile);
         for (PsiFileSystemItem root : roots) {
           if (root == null) {
             LOG.error("Helper " + helper + " produced a null root for " + file);

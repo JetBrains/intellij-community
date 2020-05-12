@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -76,6 +77,15 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     myFixture.checkResultByFile("content/anno/rename/annotations.xml",
                                 "content/anno/rename/annotations_after.xml",
                                 true);
+  }
+
+  public void testHardcodedStringLiteralWithExternalPackageAnnotation() {
+    myFixture.configureByFiles("src/i18n/Foo.java", "content/anno/i18n/annotations.xml");
+    I18nInspection inspection = new I18nInspection();
+    inspection.setIgnoreForAllButNls(true);
+    myFixture.enableInspections(inspection);
+
+    myFixture.testHighlighting(true, false, false, "src/i18n/Foo.java");
   }
 
   public void testBringToSrc() {

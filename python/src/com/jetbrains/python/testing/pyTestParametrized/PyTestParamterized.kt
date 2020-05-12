@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pyTestParametrized
 
+import com.intellij.util.ThreeState
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyFunction
@@ -84,7 +85,7 @@ internal data class PyTestParameter(val name: String, val type: PyType? = null)
  */
 internal fun PyFunction.getParametersOfParametrized(evalContext: TypeEvalContext): List<PyTestParameter> {
   val decoratorList = decoratorList ?: return emptyList()
-  if (!isTestElement(this, evalContext)) {
+  if (!isTestElement(this, ThreeState.NO, evalContext)) {
     return emptyList()
   }
   return decoratorList.decorators

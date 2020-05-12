@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ public class IconButton extends ActiveIcon {
 
   private Icon myHovered;
 
-  public IconButton(final String tooltip, @Nullable final Icon regular, @Nullable final Icon hovered, @Nullable final Icon inactive) {
+  public IconButton(@Tooltip String tooltip, @Nullable final Icon regular, @Nullable final Icon hovered, @Nullable final Icon inactive) {
     super(regular, inactive);
     myTooltip = tooltip;
     setHovered(hovered);
@@ -36,11 +37,11 @@ public class IconButton extends ActiveIcon {
     myHovered = hovered != null ? hovered : getRegular();
   }
 
-  public IconButton(final String tooltip, final Icon regular, final Icon hovered) {
+  public IconButton(@Tooltip String tooltip, final Icon regular, final Icon hovered) {
     this(tooltip, regular, hovered, regular);
   }
 
-  public IconButton(final String tooltip, final Icon regular) {
+  public IconButton(@Tooltip String tooltip, final Icon regular) {
     this(tooltip, regular, regular, regular);
   }
 

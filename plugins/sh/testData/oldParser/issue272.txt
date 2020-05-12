@@ -28,7 +28,13 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('#ar[@]')
+          PsiElement(param_separator)('#')
+          PsiElement(word)('ar')
+          ARRAY_EXPRESSION
+            PsiElement([)('[')
+            LITERAL_EXPRESSION
+              PsiElement(word)('@')
+            PsiElement(])(']')
           PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -57,7 +63,13 @@ SHELL_SCRIPT
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
-              PsiElement(parameter_expansion_body)('#JOBS[@]')
+              PsiElement(param_separator)('#')
+              PsiElement(word)('JOBS')
+              ARRAY_EXPRESSION
+                PsiElement([)('[')
+                LITERAL_EXPRESSION
+                  PsiElement(word)('@')
+                PsiElement(])(']')
               PsiElement(})('}')
         PsiElement(;)(';')
         PsiWhiteSpace(' ')

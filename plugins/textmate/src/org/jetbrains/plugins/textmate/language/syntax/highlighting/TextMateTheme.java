@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax.highlighting;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -12,10 +12,8 @@ import java.util.Set;
 
 public class TextMateTheme {
   public static final TextMateTheme INSTANCE = new TextMateTheme("IntelliJ");
-  public static final String DEFAULT_ATTRIBUTES_NAME = "textmate.default";
 
   private static final TextMateDefaultColorsProvider DEFAULT_COLORS_PROVIDER = new TextMateDefaultColorsProvider();
-
 
   private static final Map<CharSequence, CharSequence> EXTENSIONS_MAPPING = new HashMap<CharSequence, CharSequence>() {{
     // XmlHighlighterColors
@@ -161,8 +159,8 @@ public class TextMateTheme {
     put("variable.parameter.function.objc", "OC.PARAMETER");
   }};
 
-  private static final Sets.SetView<CharSequence> RULES =
-    Sets.union(DEFAULT_COLORS_PROVIDER.getAllDefaultKeys(), EXTENSIONS_MAPPING.keySet());
+  private static final @NotNull Set<CharSequence> RULES =
+    ContainerUtil.union(DEFAULT_COLORS_PROVIDER.getAllDefaultKeys(), EXTENSIONS_MAPPING.keySet());
 
   @NotNull
   private final String myName;

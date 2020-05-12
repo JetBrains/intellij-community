@@ -1,29 +1,32 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
  */
 public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWrapper {
 
-  public StructuralSearchInspectionToolWrapper(Configuration configuration) {
-    super(new StructuralSearchFakeInspection(configuration));
-  }
-
-  private StructuralSearchInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-    super(tool);
+  public StructuralSearchInspectionToolWrapper(@NotNull Collection<@NotNull Configuration> configurations) {
+    super(new StructuralSearchFakeInspection(configurations));
   }
 
   @NotNull
   @Override
   public LocalInspectionToolWrapper createCopy() {
-    return new StructuralSearchInspectionToolWrapper(new StructuralSearchFakeInspection((StructuralSearchFakeInspection)getTool()));
+    final StructuralSearchFakeInspection inspection = (StructuralSearchFakeInspection)getTool();
+    final List<Configuration> copies = new SmartList<>();
+    for (Configuration configuration : inspection.getConfigurations()) {
+      copies.add(configuration.copy());
+    }
+    return new StructuralSearchInspectionToolWrapper(copies);
   }
 
   @NotNull
@@ -46,9 +49,5 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
   @Override
   public String getGroupDisplayName() {
     return getTool().getGroupDisplayName();
-  }
-
-  public void setProfile(InspectionProfileImpl profile) {
-    ((StructuralSearchFakeInspection)myTool).setProfile(profile);
   }
 }

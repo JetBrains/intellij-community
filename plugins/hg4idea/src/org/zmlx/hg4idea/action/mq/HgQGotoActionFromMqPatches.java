@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.action.mq;
 
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.command.mq.HgQGotoCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
@@ -29,6 +30,6 @@ public class HgQGotoActionFromMqPatches extends HgSingleActionFomMqPatches {
   @NotNull
   @Override
   protected String getTitle() {
-    return "Goto...";
+    return HgBundle.message("action.hg4idea.QGotoFromPatches.title");
   }
 }

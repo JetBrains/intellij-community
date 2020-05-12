@@ -6,7 +6,8 @@ import com.intellij.openapi.util.text.StringUtil
 /**
  * @author peter
  */
-internal data class PresentationInvariant(val itemText: String?, val tail: String?, val type: String?): Comparable<PresentationInvariant> {
+@Deprecated("Use LookupElementPresentation directly")
+data class PresentationInvariant(val itemText: String?, val tail: String?, val type: String?): Comparable<PresentationInvariant> {
   override fun compareTo(other: PresentationInvariant): Int {
     var result = StringUtil.naturalCompare(itemText, other.itemText)
     if (result != 0) return result

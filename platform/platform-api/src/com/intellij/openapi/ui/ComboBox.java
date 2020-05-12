@@ -130,6 +130,15 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     registerTableCellEditor(this, cellEditor);
   }
 
+  @SuppressWarnings("unchecked")
+  public E getItem() {
+    return (E)getSelectedItem();
+  }
+
+  public void setItem(E item) {
+    setSelectedItem(item);
+  }
+
   @Override
   public void setPopupVisible(boolean visible) {
     if (getModel().getSize() == 0 && visible) {

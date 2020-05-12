@@ -23,31 +23,8 @@ internal class IntentionPreviewComputable(private val project: Project,
                                           private val originalFile: PsiFile,
                                           private val originalEditor: Editor) : Callable<IntentionPreviewResult?> {
   override fun call(): IntentionPreviewResult? {
-    val psiFileCopy = nonPhysicalPsiCopy(originalFile)
-    ProgressManager.checkCanceled()
-    val editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.caretModel.offset)
-
     try {
-      val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
-      val fileEditorPair = ShowIntentionActionsHandler.chooseFileForAction(psiFileCopy, editorCopy, action)
-                           ?: return null
-
-      val writable = originalEditor.document.isWritable
-      try {
-        originalEditor.document.setReadOnly(true)
-        ProgressManager.checkCanceled()
-        action.invoke(project, fileEditorPair.second, fileEditorPair.first)
-        ProgressManager.checkCanceled()
-      }
-      finally {
-        originalEditor.document.setReadOnly(!writable)
-      }
-
-      return IntentionPreviewResult(
-        psiFileCopy,
-        ComparisonManager.getInstance().compareLines(originalFile.text, editorCopy.document.text, ComparisonPolicy.TRIM_WHITESPACES,
-                                                     DumbProgressIndicator.INSTANCE)
-      )
+      return generatePreview()
     }
     catch (e: IntentionPreviewUnsupportedOperationException) {
       return null
@@ -61,9 +38,30 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
   }
 
-  private fun nonPhysicalPsiCopy(psiFile: PsiFile): PsiFile {
+  fun generatePreview(): IntentionPreviewResult? {
+    val psiFileCopy = originalFile.copy() as PsiFile
     ProgressManager.checkCanceled()
-    return psiFile.copy() as PsiFile
+    val editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.caretModel.offset)
+    val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
+    val fileEditorPair = ShowIntentionActionsHandler.chooseFileForAction(psiFileCopy, editorCopy, action)
+                         ?: return null
+
+    val writable = originalEditor.document.isWritable
+    try {
+      originalEditor.document.setReadOnly(true)
+      ProgressManager.checkCanceled()
+      action.invoke(project, fileEditorPair.second, fileEditorPair.first)
+      ProgressManager.checkCanceled()
+    }
+    finally {
+      originalEditor.document.setReadOnly(!writable)
+    }
+
+    return IntentionPreviewResult(
+      psiFileCopy,
+      ComparisonManager.getInstance().compareLines(originalFile.text, editorCopy.document.text, ComparisonPolicy.TRIM_WHITESPACES,
+                                                   DumbProgressIndicator.INSTANCE)
+    )
   }
 
   companion object {
@@ -79,6 +77,8 @@ internal class IntentionPreviewComputable(private val project: Project,
                                   editorCopy: Editor,
                                   psiFileCopy: PsiFile,
                                   originalAction: IntentionAction): IntentionAction? {
+      val transferred = originalAction.getFileModifierForPreview(psiFileCopy) as? IntentionAction
+      if (transferred != null) return transferred
       val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy, false)
       val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFileCopy, editorCopy, actionsToShow)
 
@@ -87,4 +87,4 @@ internal class IntentionPreviewComputable(private val project: Project,
   }
 }
 
-internal data class IntentionPreviewResult(val psiFile: PsiFile?, val lineFragments: List<LineFragment>)
+internal data class IntentionPreviewResult(val psiFile: PsiFile, val lineFragments: List<LineFragment>)

@@ -10,6 +10,8 @@ import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 @State(name = "GetterTemplates", storages = @Storage("getterTemplates.xml"))
 public final class GetterTemplatesManager extends TemplatesManager {
@@ -20,11 +22,9 @@ public final class GetterTemplatesManager extends TemplatesManager {
   }
 
   @Override
-  public @NotNull TemplateResource @NotNull [] getDefaultTemplates() {
+  public @NotNull List<TemplateResource> getDefaultTemplates() {
     try {
-      return new TemplateResource[]{
-        new TemplateResource("IntelliJ Default", readFile(DEFAULT), true),
-      };
+      return Collections.singletonList(new TemplateResource("IntelliJ Default", readFile(DEFAULT), true));
     }
     catch (IOException e) {
       throw new TemplateResourceException("Error loading default templates", e);

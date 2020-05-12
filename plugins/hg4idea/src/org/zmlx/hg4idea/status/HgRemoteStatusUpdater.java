@@ -14,6 +14,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
@@ -31,8 +32,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class HgRemoteStatusUpdater implements Disposable {
   private final Project myProject;
   private final HgVcs myVcs;
-  private final HgChangesetStatus myIncomingStatus = new HgChangesetStatus("In");
-  private final HgChangesetStatus myOutgoingStatus = new HgChangesetStatus("Out");
+  private final HgChangesetStatus myIncomingStatus = new HgChangesetStatus(HgBundle.message("hg4idea.changesets.in"));
+  private final HgChangesetStatus myOutgoingStatus = new HgChangesetStatus(HgBundle.message("hg4idea.changesets.out"));
   private final AtomicBoolean myUpdateStarted = new AtomicBoolean();
 
   public HgRemoteStatusUpdater(@NotNull HgVcs vcs) {
@@ -99,7 +100,7 @@ public class HgRemoteStatusUpdater implements Disposable {
   }
 
   private static String getProgressTitle() {
-    return "Checking Incoming and Outgoing Changes";
+    return HgBundle.message("hg4idea.changesets.checking.progress");
   }
 
   public static boolean isCheckingEnabled(@NotNull Project project) {

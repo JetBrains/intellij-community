@@ -7,6 +7,7 @@
                 secondary="false"
                 canCloseContents="true"/>
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
 
     <projectConfigurable groupId="tools" groupWeight="130"
                          bundle="messages.IdeBundle"
@@ -25,7 +26,7 @@
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
 
     <terminal.shellCommandHandler implementation="com.intellij.diff.actions.DiffCustomCommandHandler"/>
-    <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="0"/>
+    <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
     <notificationWhitelist groupIds="Terminal"/>
   </extensions>

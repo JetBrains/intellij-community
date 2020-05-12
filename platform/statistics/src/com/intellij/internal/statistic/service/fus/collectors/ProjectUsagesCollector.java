@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -46,8 +47,11 @@ import java.util.Set;
  * @see ApplicationUsagesCollector
  * @see FUCounterUsageLogger
  */
+@ApiStatus.Internal
 public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
-  private static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
+
+  @ApiStatus.Internal
+  public static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.projectUsagesCollector");
 
   @NotNull

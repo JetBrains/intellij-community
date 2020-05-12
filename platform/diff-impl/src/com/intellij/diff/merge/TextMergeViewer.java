@@ -16,6 +16,8 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.ProxySimpleDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.tools.holders.EditorHolderFactory;
+import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
@@ -243,6 +245,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       myLineStatusTracker.release();
       myInnerDiffWorker.disable();
       super.onDispose();
+    }
+
+    @Override
+    protected @NotNull List<TextEditorHolder> createEditorHolders(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
+      List<TextEditorHolder> holders = super.createEditorHolders(factory);
+      ThreeSide.BASE.select(holders).getEditor().putUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG, true);
+      return holders;
     }
 
     @NotNull

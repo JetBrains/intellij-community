@@ -631,6 +631,130 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testIgnoreSwitchBreak() throws Exception {
+    doTest();
+  }
+
+  public void testExtractSwitchVariable() throws Exception {
+    doTest();
+  }
+
+  public void testReturnVariablesResolved() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBranchedPrimitive() throws Exception {
+    doTest();
+  }
+
+  public void testExtractSwitchNotNullVariable() throws Exception {
+    doTest();
+  }
+
+  public void testAvoidContinueInsideMethod() throws Exception {
+    doTest();
+  }
+
+  public void testLocalVariablesAreNotExposed() throws Exception {
+    doTest();
+  }
+
+  public void testExtractConditionalContinue() throws Exception {
+    doTest();
+  }
+
+  public void testExtractConditionalBreak() throws Exception {
+    doTest();
+  }
+
+  public void testDontMissReturn() throws Exception {
+    doTest();
+  }
+
+  public void testNoRedundantContinue() throws Exception {
+    doTest();
+  }
+
+  public void testDontReplaceThrowWithReturn() throws Exception {
+    doTest();
+  }
+
+  public void testDontMissReturnDueToThrowable() throws Exception {
+    doTest();
+  }
+
+  public void testDontExtractInsideSwitch() throws Exception {
+    try {
+      doTest();
+      fail("Should fail inside switch");
+    } catch (PrepareFailedException e){
+    }
+  }
+
+  public void testDontExtractFieldWithConstructor() throws Exception {
+    doChainedConstructorTest(false);
+  }
+
+  public void testExtractSingleLabelFromSwitch() throws Exception {
+    doTest();
+  }
+
+  public void testExtractVariableAndReturn() throws Exception {
+    doTest();
+  }
+
+  public void testExtractVariableAndReturn1() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract different returns");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
+  public void testExtractVariableAndReturn2() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract internal references");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
+  public void testExtractVariableAndReturn3() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract semantically different references");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
+  public void testDontExtractUnfoldableVariable() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract nullable variable if primitive type delcared outside");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
+  public void testExtractConstantExpressions() throws Exception {
+      doTest();
+  }
+
+  public void testDontExtractLocalConstant() throws Exception {
+    try {
+      doTest();
+      fail("Should fail if expression is linked to the scope");
+    } catch (PrepareFailedException e){
+    }
+  }
+
+  public void testDontExtractCustomFinalObjects() throws Exception {
+    try {
+      doTest();
+      fail("Should fail if expression contains mutable object");
+    } catch (PrepareFailedException e){
+    }
+  }
+
   public void testReturnStatementFolding() throws Exception {
     doTest();
   }
@@ -1112,7 +1236,23 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
-  public void testTypeUseAnnotationsOnParameter() throws Exception {
+  public void testSkipCustomAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testNullabilityIsTypeAnnotation() throws Exception {
+    doTest();
+  }
+
+  public void testKeepDeclarationWithAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testFilterAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testNullabilityAnnotationOverridden() throws Exception {
     doTest();
   }
 

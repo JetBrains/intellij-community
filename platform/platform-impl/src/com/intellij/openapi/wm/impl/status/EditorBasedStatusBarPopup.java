@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
@@ -34,13 +35,18 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+
+import static com.intellij.openapi.util.NlsContexts.StatusBarText;
 
 public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   private final PopupState myPopupState = new PopupState();
@@ -306,7 +312,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       this("", "", false);
     }
 
-    public WidgetState(@Nls(capitalization = Nls.Capitalization.Sentence) String toolTip, @Nls String text, boolean actionEnabled) {
+    public WidgetState(@Tooltip String toolTip, @StatusBarText String text, boolean actionEnabled) {
       this.toolTip = toolTip;
       this.text = text;
       this.actionEnabled = actionEnabled;

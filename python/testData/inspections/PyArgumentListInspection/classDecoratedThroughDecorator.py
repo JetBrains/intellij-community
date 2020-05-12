@@ -1,7 +1,7 @@
-import attr
+import abcd
 
-@attr.s
+@abcd.s
 class A(object):
-    a = attr.ib()
+    a = abcd.ib()
 
 A(a="test")

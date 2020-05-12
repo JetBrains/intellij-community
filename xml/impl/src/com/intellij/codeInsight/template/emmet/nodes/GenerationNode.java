@@ -42,11 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 public class GenerationNode extends UserDataHolderBase {
   private final TemplateToken myTemplateToken;
-  private final List<GenerationNode> myChildren = newArrayList();
+  private final List<GenerationNode> myChildren = new ArrayList<>();
   private final int myNumberInIteration;
   private final int myTotalIterations;
   private String mySurroundedText;
@@ -147,7 +145,7 @@ public class GenerationNode extends UserDataHolderBase {
       Editor editor = callback.getEditor();
       Document document = editor.getDocument();
       if (document instanceof DocumentWindow && ((DocumentWindow)document).isOneLine()) {
-        /* 
+        /*
          * If document is one-line that in the moment of inserting text,
          * new line chars will be filtered (see DocumentWindowImpl#insertString).
          * So in this case we should filter text by SingleLineAvoid in order to avoid
@@ -252,11 +250,11 @@ public class GenerationNode extends UserDataHolderBase {
                                          @Nullable ZenCodingGenerator generator,
                                          final boolean hasChildren) {
     ZenCodingGenerator zenCodingGenerator = ObjectUtils.notNull(generator, XmlZenCodingGeneratorImpl.INSTANCE);
-    
+
     Map<String, String> attributes = token.getAttributes();
     TemplateImpl template = token.getTemplate();
     assert template != null;
-    
+
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(callback.getProject());
     PsiFile dummyFile = fileFactory.createFileFromText("dummy.html", callback.getFile().getLanguage(), token.getTemplateText(), false, true);
     XmlTag tag = PsiTreeUtil.findChildOfType(dummyFile, XmlTag.class);
@@ -416,7 +414,7 @@ public class GenerationNode extends UserDataHolderBase {
 
   private void setAttributeValues(@NotNull XmlTag tag,
                                   @NotNull final Map<String, String> attributes,
-                                  @NotNull CustomTemplateCallback callback, 
+                                  @NotNull CustomTemplateCallback callback,
                                   boolean isHtml) {
     // default and implied attributes
     final String defaultAttributeValue = attributes.get(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);

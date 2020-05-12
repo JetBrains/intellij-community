@@ -22,21 +22,26 @@ class SignatureBuilder(private val project: Project) {
     returnType: PsiType? = null,
     methodName: String = "extracted",
     inputParameters: List<InputParameter> = emptyList(),
+    annotations: List<PsiAnnotation> = emptyList(),
     thrownExceptions: List<PsiClassType> = emptyList(),
     anchor: PsiMember
   ): PsiMethod {
 
     val parameterList = createParameterList(inputParameters, scope)
 
-    val method = when (returnType) {
-      null -> factory.createConstructor("methodName", context)
-      else -> factory.createMethod(methodName, returnType, context)
+    val method = if (returnType != null) {
+      factory.createMethod(methodName, returnType, context)
+    } else {
+      factory.createConstructor("methodName", context)
     }
+
+    annotations.forEach { annotation -> method.modifierList.add(annotation) }
 
     JavaCodeStyleManager.getInstance(method.project).shortenClassReferences(method)
 
     val isInInterface = anchor.containingClass?.isInterface == true
-    val shouldHaveDefaultModifier = isJava8() && ! isStatic && isInInterface
+    val isJava8 = PsiUtil.getLanguageLevel(anchor) == LanguageLevel.JDK_1_8
+    val shouldHaveDefaultModifier = isJava8 && ! isStatic && isInInterface
 
     val typeParameterList = factory.createTypeParameterList()
     typeParameters.forEach { typeParameterList.add(it) }
@@ -45,7 +50,7 @@ class SignatureBuilder(private val project: Project) {
     method.modifierList.setModifierProperty(PsiModifier.STATIC, isStatic)
     method.modifierList.setModifierProperty(PsiModifier.DEFAULT, shouldHaveDefaultModifier)
     if (visibility != null) method.modifierList.setModifierProperty(visibility, true)
-    thrownExceptions.map { exception -> factory.createReferenceElementByType(exception) }.forEach { method.throwsList.add(it) }
+    thrownExceptions.forEach { exception -> method.throwsList.add(factory.createReferenceElementByType(exception)) }
     return method
   }
 
@@ -70,17 +75,16 @@ class SignatureBuilder(private val project: Project) {
       PsiUtil.setModifierProperty(methodParameter!!, PsiModifier.FINAL, shouldBeFinal)
     }
 
+    inputParameters.forEach { inputParameter ->
+      val modifierList = parameterList.parameters.find { it.name == inputParameter.name }?.modifierList
+      inputParameter.annotations.forEach { annotation -> modifierList?.add(annotation) }
+    }
+
     return parameterList
   }
 
   private fun isInsideAnonymousOrLocal(element: PsiElement, scope: List<PsiElement>): Boolean {
     return scope.any { upperBound -> RefactoringUtil.isInsideAnonymousOrLocal(element, upperBound) }
-  }
-
-  private fun isJava8(): Boolean {
-    val languageLevel: LanguageLevel = PsiUtil.getLanguageLevel(project)
-    val isAtLeastJava9 = languageLevel.isAtLeast(LanguageLevel.JDK_1_9)
-    return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && !isAtLeastJava9
   }
 
 }

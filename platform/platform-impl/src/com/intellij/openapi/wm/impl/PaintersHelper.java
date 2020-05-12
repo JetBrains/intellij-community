@@ -1,17 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.BOTTOM_CENTER;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.BOTTOM_LEFT;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.BOTTOM_RIGHT;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.CENTER;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.MIDDLE_LEFT;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.TOP_CENTER;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.TOP_LEFT;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.TOP_RIGHT;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.SCALE;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.TILE;
-
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -28,42 +17,18 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import java.awt.AlphaComposite;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
-import java.awt.Image;
-import java.awt.ImageCapabilities;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Transparency;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.AffineTransformOp;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageFilter;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ColorModel;
-import java.awt.image.ImageFilter;
-import java.awt.image.VolatileImage;
+import java.awt.image.*;
 import java.io.File;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.*;
 
 final class PaintersHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
@@ -128,8 +93,7 @@ final class PaintersHelper implements Painter.Listener {
     g.setTransform(orig);
   }
 
-  @Nullable
-  Offsets computeOffsets(Graphics gg, @NotNull JComponent component) {
+  @Nullable Offsets computeOffsets(Graphics gg, @NotNull JComponent component) {
     if (myPainters.isEmpty()) return null;
     Offsets offsets = new Offsets();
     offsets.offsets = new int[myPainters.size() * 2];
@@ -236,8 +200,8 @@ final class PaintersHelper implements Painter.Listener {
       private void loadImageAsync(@Nullable String propertyValue) {
         String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
         float newAlpha = Math.abs(Math.min(StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f, 1f));
-        IdeBackgroundUtil.Fill newFillType = StringUtil.parseEnum(parts.length > 2 ? StringUtil.toUpperCase(parts[2]) : "", SCALE, IdeBackgroundUtil.Fill.class);
-        IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? StringUtil.toUpperCase(parts[3]) : "", CENTER, IdeBackgroundUtil.Anchor.class);
+        IdeBackgroundUtil.Fill newFillType = StringUtil.parseEnum(parts.length > 2 ? StringUtil.toUpperCase(parts[2]) : "", IdeBackgroundUtil.Fill.SCALE, IdeBackgroundUtil.Fill.class);
+        IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? StringUtil.toUpperCase(parts[3]) : "", IdeBackgroundUtil.Anchor.CENTER, IdeBackgroundUtil.Anchor.class);
         String flip = parts.length > 4 ? parts[4] : "none";
         String filePath = parts[0];
         if (StringUtil.isEmpty(filePath)) {
@@ -324,7 +288,7 @@ final class PaintersHelper implements Painter.Listener {
       Rectangle dst0 = new Rectangle();
       calcSrcDst(src0, dst0, w, h, cw, ch, fillType);
       alignRect(src0, w, h, anchor);
-      if (fillType == TILE) {
+      if (fillType == IdeBackgroundUtil.Fill.TILE) {
         alignRect(dst0, cw, ch, anchor);
       }
       int sw0 = scaled == null ? -1 : scaled.getWidth(null);
@@ -343,12 +307,12 @@ final class PaintersHelper implements Painter.Listener {
         }
         Graphics2D gg = scaled.createGraphics();
         gg.setComposite(AlphaComposite.Src);
-        if (fillType == SCALE) {
+        if (fillType == IdeBackgroundUtil.Fill.SCALE) {
           gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                               RenderingHints.VALUE_INTERPOLATION_BILINEAR);
           StartupUiUtil.drawImage(gg, image, dst0, src0, null);
         }
-        else if (fillType == TILE) {
+        else if (fillType == IdeBackgroundUtil.Fill.TILE) {
           Rectangle r = new Rectangle(0, 0, 0, 0);
           for (int x = 0; x < dst0.width; x += w) {
             for (int y = 0; y < dst0.height; y += h) {
@@ -370,7 +334,7 @@ final class PaintersHelper implements Painter.Listener {
       }
       Rectangle src = new Rectangle(0, 0, cw, ch);
       Rectangle dst = new Rectangle(i.left, i.top, cw, ch);
-      if (fillType != TILE) {
+      if (fillType != IdeBackgroundUtil.Fill.TILE) {
         alignRect(src, dst0.width, dst0.height, anchor);
       }
 
@@ -387,7 +351,7 @@ final class PaintersHelper implements Painter.Listener {
                            int cw,
                            int ch,
                            IdeBackgroundUtil.Fill fillType) {
-      if (fillType == SCALE) {
+      if (fillType == IdeBackgroundUtil.Fill.SCALE) {
         boolean useWidth = cw * h > ch * w;
         int sw = useWidth ? w : cw * h / ch;
         int sh = useWidth ? ch * w / cw : h;
@@ -395,7 +359,7 @@ final class PaintersHelper implements Painter.Listener {
         src.setBounds(0, 0, sw, sh);
         dst.setBounds(0, 0, cw, ch);
       }
-      else if (fillType == TILE) {
+      else if (fillType == IdeBackgroundUtil.Fill.TILE) {
         int dw = cw < w ? w : ((cw / w + 1) / 2 * 2 + 1) * w;
         int dh = ch < h ? h : ((ch / h + 1) / 2 * 2 + 1) * h;
         // tile rectangles are not clipped for proper anchor support
@@ -409,20 +373,20 @@ final class PaintersHelper implements Painter.Listener {
     }
 
     static void alignRect(Rectangle r, int w, int h, IdeBackgroundUtil.Anchor anchor) {
-      if (anchor == TOP_CENTER ||
-          anchor == CENTER ||
-          anchor == BOTTOM_CENTER) {
+      if (anchor == IdeBackgroundUtil.Anchor.TOP_CENTER ||
+          anchor == IdeBackgroundUtil.Anchor.CENTER ||
+          anchor == IdeBackgroundUtil.Anchor.BOTTOM_CENTER) {
         r.x = (w - r.width) / 2;
-        r.y = anchor == TOP_CENTER ? 0 :
-              anchor == BOTTOM_CENTER ? h - r.height :
+        r.y = anchor == IdeBackgroundUtil.Anchor.TOP_CENTER ? 0 :
+              anchor == IdeBackgroundUtil.Anchor.BOTTOM_CENTER ? h - r.height :
               (h - r.height) / 2;
       }
       else {
-        r.x = anchor == TOP_LEFT ||
-              anchor == MIDDLE_LEFT ||
-              anchor == BOTTOM_LEFT ? 0 : w - r.width;
-        r.y = anchor == TOP_LEFT || anchor == TOP_RIGHT ? 0 :
-              anchor == BOTTOM_LEFT || anchor == BOTTOM_RIGHT ? h - r.height :
+        r.x = anchor == IdeBackgroundUtil.Anchor.TOP_LEFT ||
+              anchor == IdeBackgroundUtil.Anchor.MIDDLE_LEFT ||
+              anchor == IdeBackgroundUtil.Anchor.BOTTOM_LEFT ? 0 : w - r.width;
+        r.y = anchor == IdeBackgroundUtil.Anchor.TOP_LEFT || anchor == IdeBackgroundUtil.Anchor.TOP_RIGHT ? 0 :
+              anchor == IdeBackgroundUtil.Anchor.BOTTOM_LEFT || anchor == IdeBackgroundUtil.Anchor.BOTTOM_RIGHT ? h - r.height :
               (h - r.height) / 2;
       }
     }

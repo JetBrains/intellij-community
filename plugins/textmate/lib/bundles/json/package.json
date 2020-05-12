@@ -28,7 +28,8 @@
           ".webmanifest",
           ".js.map",
           ".css.map",
-          ".har"
+          ".har",
+          ".jsonld"
         ],
         "filenames": [
           "composer.lock",
@@ -66,12 +67,6 @@
         "language": "jsonc",
         "scopeName": "source.json.comments",
         "path": "./syntaxes/JSONC.tmLanguage.json"
-      }
-    ],
-    "jsonValidation": [
-      {
-        "fileMatch": "*.schema.json",
-        "url": "http://json-schema.org/draft-07/schema#"
       }
     ]
   }

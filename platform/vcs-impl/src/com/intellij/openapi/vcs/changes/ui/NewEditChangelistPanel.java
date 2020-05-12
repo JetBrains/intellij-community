@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -110,7 +111,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
   protected void nameChangedImpl(final Project project, final LocalChangeList initial) {
     String name = getChangeListName();
     if (name == null || name.trim().length() == 0) {
-      nameChanged("Cannot create new changelist with empty name.");
+      nameChanged(VcsBundle.message("new.changelist.empty.name.error"));
     } else if ((initial == null || !name.equals(initial.getName())) && ChangeListManager.getInstance(project).findChangeList(name) != null) {
       nameChanged(VcsBundle.message("new.changelist.duplicate.name.error"));
     } else {
@@ -153,7 +154,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     return myNameTextField;
   }
 
-  protected abstract void nameChanged(String errorMessage);
+  protected abstract void nameChanged(@Nls String errorMessage);
 
   protected ComponentWithTextFieldWrapper createComponentWithTextField(Project project) {
     final EditorTextField editorTextField = createEditorField(project, 1);

@@ -28,13 +28,20 @@ class JavaUCallExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UElementWithLocation, UMultiResolvable {
   override val kind: UastCallKind
-    get() = UastCallKind.METHOD_CALL
+    get() {
+      val element = nameReferenceElement
+      if (element is PsiKeyword && (element.text == PsiKeyword.THIS || element.text == PsiKeyword.SUPER))
+        return UastCallKind.CONSTRUCTOR_CALL
+
+      return UastCallKind.METHOD_CALL
+    }
 
   override val methodIdentifier: UIdentifier? by lz {
-    val methodExpression = sourcePsi.methodExpression
-    val nameElement = methodExpression.referenceNameElement ?: return@lz null
-    UIdentifier(nameElement, this)
+    nameReferenceElement?.let { UIdentifier(it, this) }
   }
+
+  private val nameReferenceElement: PsiElement?
+    get() = sourcePsi.methodExpression.referenceNameElement
 
   override val classReference: UReferenceExpression?
     get() = null

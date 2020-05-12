@@ -155,9 +155,9 @@ abstract class IntermediateOperation implements Operation {
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
       String orResult = myRecords.get(myRecords.size() - 1).myOutVar.getName();
-      String orCode = OptionalToIfInspection.wrapCode(context, myRecords, outVar.getName() + " = " + orResult + ";");
+      String orCode = OptionalToIfInspection.wrapCode(context, myRecords, outVar.getName() + "=" + orResult + ";");
       if (orCode == null) return null;
-      return "if (" + outVar.getName() + " == null) {\n" +
+      return "if(" + outVar.getName() + "==null){\n" +
              orCode +
              "\n}" +
              context.generateNotNullCondition(outVar.getName(), code);
@@ -204,8 +204,11 @@ abstract class IntermediateOperation implements Operation {
                            @NotNull ChainVariable outVar,
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
+      String elseBranch = context.getElseBranch();
       List<OperationRecord> records = StreamEx.of(myRecords).map(r -> replaceFnVariable(r, inVar, context)).collect(Collectors.toList());
-      return OptionalToIfInspection.wrapCode(context, records, code);
+      String wrapped = OptionalToIfInspection.wrapCode(context, records, code);
+      context.setElseBranch(elseBranch);
+      return wrapped;
     }
 
     @NotNull

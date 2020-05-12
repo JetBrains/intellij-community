@@ -110,7 +110,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
   }
 
   private CodeStyleSettings getCurrentCodeStyleSettings() {
-    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
+    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return CodeStyle.createTestSettings();
     return CodeStyle.getSettings(getProject());
   }
 

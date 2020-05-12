@@ -3,15 +3,11 @@
 
 package com.intellij.psi
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.uast.UElementPattern
-import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
@@ -20,40 +16,14 @@ import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.toUElementOfExpectedTypes
 import java.util.concurrent.ConcurrentHashMap
 
-private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContributorChunk>> = Key.create(
-  "uast.psiReferenceContributor.chunks")
-
 /**
  * Groups all UAST-based reference providers by chunks with the same priority and supported UElement types.
  */
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  // important: here we rely on the fact that all reference contributors run in a single-thread
-  val registrar = this
-  val chunks = getContributorChunks(registrar)
-
-  val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
-    val newChunk = UastReferenceContributorChunk(provider.supportedUElementTypes)
-    registrar.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), newChunk, priority)
-    newChunk
-  }
-  chunk.register(pattern, provider)
-}
-
-private fun getContributorChunks(registrar: PsiReferenceRegistrar): MutableMap<ChunkTag, UastReferenceContributorChunk> {
-  val existingChunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
-  if (existingChunks != null) return existingChunks
-
-  val newChunks: MutableMap<ChunkTag, UastReferenceContributorChunk> = ConcurrentHashMap()
-  registrar.putUserData(CONTRIBUTOR_CHUNKS_KEY, newChunks)
-  // reset cache on extension point removal IDEA-235191
-  PsiReferenceContributor.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<KeyedLazyInstance<PsiReferenceContributor>> {
-    override fun extensionRemoved(extension: KeyedLazyInstance<PsiReferenceContributor>, pluginDescriptor: PluginDescriptor) {
-      newChunks.clear()
-    }
-  }, ApplicationManager.getApplication())
-  return newChunks
+  val adapter = UastReferenceProviderAdapter(provider.supportedUElementTypes, pattern, provider)
+  this.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), adapter, priority)
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
@@ -83,19 +53,33 @@ fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement
 inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   uastReferenceProvider(T::class.java, provider)
 
-private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
-internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("REQUESTED_PSI_ELEMENT")
-internal val USAGE_PSI_ELEMENT = Key.create<PsiElement>("USAGE_PSI_ELEMENT")
+private val CACHED_UAST_ELEMENTS : Key<MutableMap<List<Class<out UElement>>, UElement>> = Key.create("CACHED_UAST_ELEMENTS")
+internal val REQUESTED_PSI_ELEMENT : Key<PsiElement> = Key.create("REQUESTED_PSI_ELEMENT")
+internal val USAGE_PSI_ELEMENT : Key<PsiElement> = Key.create("USAGE_PSI_ELEMENT")
 
 internal fun getOrCreateCachedElement(element: PsiElement,
                                       context: ProcessingContext,
                                       supportedUElementTypes: List<Class<out UElement>>): UElement? {
-  val existingElement = element as? UElement ?: context.get(cachedUElement)
-  if (existingElement != null) return existingElement
+  if (element is UElement) return element
 
-  val uElement = element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray()) ?: return null
-  context.put(cachedUElement, uElement)
-  return uElement
+  val cachedUastElements = getCachedUastElements(context)
+  val existingValue = cachedUastElements[supportedUElementTypes]
+  if (existingValue != null) return existingValue
+
+  val newValue = element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray())
+  if (newValue != null) {
+    cachedUastElements[supportedUElementTypes] = newValue
+  }
+  return newValue
+}
+
+private fun getCachedUastElements(context: ProcessingContext): MutableMap<List<Class<out UElement>>, UElement> {
+  val map = context.sharedContext.get(CACHED_UAST_ELEMENTS)
+  if (map != null) return map
+
+  val newMap = ConcurrentHashMap<List<Class<out UElement>>, UElement>()
+  context.sharedContext.put(CACHED_UAST_ELEMENTS, newMap)
+  return newMap
 }
 
 internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
@@ -109,13 +93,6 @@ internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>):
   return uastTypePattern
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-@Deprecated("Use custom pattern with PsiElementPattern.Capture<PsiElement>")
-fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Class<out UElement>): ElementPattern<PsiElement> = UastPatternAdapter(
-  if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java),
-  this::accepts
-)
-
 /**
  * Creates UAST reference provider that accepts additional PSI element that could be either the same as reference PSI element or reference
  * element that is used in the same file and satisfy usage pattern.
@@ -125,7 +102,6 @@ fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Cla
 @ApiStatus.Experimental
 fun uastReferenceProviderByUsage(provider: (UExpression, referencePsi: PsiLanguageInjectionHost, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   object : UastReferenceProvider(UInjectionHost::class.java) {
-
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
       val uLiteral = element as? UExpression ?: return PsiReference.EMPTY_ARRAY
       val host = context[REQUESTED_PSI_ELEMENT] as? PsiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY

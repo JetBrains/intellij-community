@@ -41,7 +41,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
         if (error != null) {
           if (!GithubAsyncUtil.isCancellation(error)) this.error = error
         }
-        else handleResult(list)
+        else if (list != null) handleResult(list)
       }
     }
   }

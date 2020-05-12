@@ -2,36 +2,39 @@
 package com.intellij.ide;
 
 import com.intellij.ide.util.TipAndTrickBean;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TipsOfTheDayUsagesCollector {
-  private static final String GROUP_ID = "ui.tips";
-  private static final String NO_FEATURE_ID = "no.feature.id";
+public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 4);
 
-  public static void trigger(String feature) {
-    FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, feature);
+  public enum DialogType { automatically, manually }
+
+  public static final EventId NEXT_TIP = GROUP.registerEvent("next.tip");
+  public static final EventId PREVIOUS_TIP = GROUP.registerEvent("previous.tip");
+  public static final EventId1<DialogType> DIALOG_SHOWN =
+    GROUP.registerEvent("dialog.shown", EventFields.Enum("type", DialogType.class));
+
+  private static final EventId3<String, String, String> TIP_SHOWN =
+    GROUP.registerEvent("tip.shown",
+                        EventFields.String("filename").withCustomRule("tip_info"),
+                        EventFields.String("algorithm").withCustomEnum("tips_order_algorithm"),
+                        EventFields.Version);
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
-  public static void triggerShow(@NotNull String type) {
-    FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, "dialog.shown", new FeatureUsageData().addData("type", type));
-  }
-
-  public static void triggerTipShown(@NotNull TipAndTrickBean tip) {
-    FeatureUsageData usageData = new FeatureUsageData();
-
-    String featureId = tip.featureId;
-    usageData.addData("feature_id", featureId != null ? featureId : NO_FEATURE_ID);
-    usageData.addData("filename", tip.fileName);
-
-    FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, "tip.shown", usageData);
+  public static void triggerTipShown(@NotNull TipAndTrickBean tip, @NotNull String algorithm, @Nullable String version) {
+    TIP_SHOWN.log(tip.fileName, algorithm, version);
   }
 
   public static class TipInfoWhiteListRule extends CustomWhiteListRule {
@@ -43,7 +46,6 @@ public class TipsOfTheDayUsagesCollector {
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (NO_FEATURE_ID.equals(data) || isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
       PluginInfo info = context.pluginInfo;
       if (info != null) {
         return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;

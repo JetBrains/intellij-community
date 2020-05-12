@@ -14,7 +14,7 @@ class MyEx extends IOException {
     }
 
     MyEx(String s) { 
-        super(<warning descr="Hardcoded string literal: \"my ex\"">"my ex"</warning>);
+        super("my ex");
     }
     
 }

@@ -17,6 +17,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.TextMergeRequestImpl;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.vcs.DiffVcsFacade;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.vcsUtil.VcsUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -100,14 +100,14 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @Override
   public String getContentTitle(@Nullable VirtualFile file) {
     if (file == null) return null;
-    return getContentTitle(VcsUtil.getFilePath(file));
+    return getContentTitle(DiffVcsFacade.getInstance().getFilePath(file));
   }
 
   @NotNull
   @Override
   public String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
-    FilePath path1 = file1 != null ? VcsUtil.getFilePath(file1) : null;
-    FilePath path2 = file2 != null ? VcsUtil.getFilePath(file2) : null;
+    FilePath path1 = file1 != null ? DiffVcsFacade.getInstance().getFilePath(file1) : null;
+    FilePath path2 = file2 != null ? DiffVcsFacade.getInstance().getFilePath(file2) : null;
     return getTitle(path1, path2, " vs ");
   }
 

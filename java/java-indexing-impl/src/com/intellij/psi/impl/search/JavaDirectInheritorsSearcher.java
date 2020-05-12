@@ -203,6 +203,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     // memory/speed optimisation: it really is a map(string -> PsiClass or List<PsiClass>)
     final Map<String, Object> classesWithFqn = new HashMap<>();
 
+    List<PsiAnonymousClass> anonymous = new ArrayList<>();
+
     processConcurrentlyIfTooMany(candidates,
        referenceList -> {
          ProgressManager.checkCanceled();
@@ -210,7 +212,13 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
            final PsiClass candidate = (PsiClass)referenceList.getParent();
            if (checker.checkInheritance(candidate)) {
              String fqn = candidate.getQualifiedName();
+
              synchronized (classesWithFqn) {
+               if (candidate instanceof PsiAnonymousClass) {
+                 anonymous.add((PsiAnonymousClass)candidate);
+                 return;
+               }
+
                Object value = classesWithFqn.get(fqn);
                if (value == null) {
                  classesWithFqn.put(fqn, candidate);
@@ -253,7 +261,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     processConcurrentlyIfTooMany(anonymousCandidates, candidate-> {
       if (dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {
         synchronized (result) {
-          result.add(candidate);
+          anonymous.add(candidate);
         }
       }
       return true;
@@ -270,7 +278,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
             ReadAction.compute(((PsiEnumConstant)field)::getInitializingClass);
           if (initializingClass != null) {
             synchronized (result) {
-              result.add(initializingClass); // it surely is an inheritor
+              anonymous.add(initializingClass); // it surely is an inheritor
             }
           }
         }
@@ -278,11 +286,21 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     if (info != null) {
-      info.getHierarchyChildren().filter(element -> element instanceof PsiClass).forEach(aClass -> result.add((PsiClass)aClass));
+      info.getHierarchyChildren().forEach(aClass -> {
+        if (aClass instanceof PsiAnonymousClass) {
+          anonymous.add((PsiAnonymousClass)aClass);
+        }
+        else if (aClass instanceof PsiClass) {
+          result.add((PsiClass)aClass);
+        }
+      });
     }
 
     synchronized (result) {
-      return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
+      if (result.isEmpty() && anonymous.isEmpty()) return PsiClass.EMPTY_ARRAY;
+
+      result.addAll(anonymous);
+      return result.toArray(PsiClass.EMPTY_ARRAY);
     }
   }
 

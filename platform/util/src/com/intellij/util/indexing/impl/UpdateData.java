@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-public class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
+public final class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
   private final Map<Key, Value> myNewData;
   private final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
   private final IndexId<Key, Value> myIndexId;
@@ -49,22 +49,12 @@ public class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
                                 @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     final InputDataDiffBuilder<Key, Value> currentData;
     try {
-      currentData = getCurrentDataEvaluator().compute();
+      currentData = myCurrentDataEvaluator.compute();
     }
     catch (IOException e) {
       throw new StorageException("Error while applying " + this, e);
     }
     return currentData.differentiate(myNewData, addProcessor, updateProcessor, removeProcessor);
-  }
-
-  @Override
-  public boolean newDataIsEmpty() {
-    return myNewData.isEmpty();
-  }
-
-  @NotNull
-  protected ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> getCurrentDataEvaluator() {
-    return myCurrentDataEvaluator;
   }
 
   @Override

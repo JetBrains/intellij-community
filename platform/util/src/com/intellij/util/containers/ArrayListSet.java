@@ -61,4 +61,8 @@ public class ArrayListSet<E> extends AbstractSet<E> {
   public void clear() {
     myList.clear();
   }
+
+  public E get(int index) {
+    return myList.get(index);
+  }
 }

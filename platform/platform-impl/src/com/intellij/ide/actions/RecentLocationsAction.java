@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -122,18 +121,10 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
                         ? topPanel.getBackground()
                         : null;
 
-    Ref<Boolean> navigationRef = Ref.create(false);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mainPanel, list)
       .setProject(project)
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
-      .setCancelCallback(() -> {
-        if (speedSearch.isHoldingFilter() && !navigationRef.get()) {
-          speedSearch.reset();
-          return false;
-        }
-        return true;
-      })
       .setResizable(true)
       .setMovable(true)
       .setBorderColor(borderColor)
@@ -167,7 +158,7 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
           final int i = list.locationToIndex(event.getPoint());
           if (i != -1) {
             list.setSelectedIndex(i);
-            navigateToSelected(project, list, popup, navigationRef);
+            navigateToSelected(project, list, popup);
           }
         }
       }
@@ -181,7 +172,7 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
       }
     });
 
-    initSearchActions(project, model, listWithFilter, list, checkBox, popup, navigationRef);
+    initSearchActions(project, model, listWithFilter, list, checkBox, popup);
 
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
@@ -213,6 +204,7 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
 
   @NotNull
   public static JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet, boolean showChanged) {
+    //noinspection HardCodedStringLiteral
     String text = "<html>"
                   + IdeBundle.message("recent.locations.title.text")
                   + " <font color=\"" + Holder.SHORTCUT_HEX_COLOR + "\">"
@@ -313,20 +305,19 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
                                         @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
                                         @NotNull JBList<RecentLocationItem> list,
                                         @NotNull JBCheckBox checkBox,
-                                        @NotNull JBPopup popup,
-                                        @NotNull Ref<? super Boolean> navigationRef) {
+                                        @NotNull JBPopup popup) {
     listWithFilter.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
         int clickCount = event.getClickCount();
         if (clickCount > 1 && clickCount % 2 == 0) {
           event.consume();
-          navigateToSelected(project, list, popup, navigationRef);
+          navigateToSelected(project, list, popup);
         }
       }
     });
 
-    DumbAwareAction.create(e -> navigateToSelected(project, list, popup, navigationRef))
+    DumbAwareAction.create(e -> navigateToSelected(project, list, popup))
       .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), listWithFilter, popup);
 
     DumbAwareAction.create(e -> removePlaces(project, listWithFilter, list, data, checkBox.isSelected()))
@@ -364,12 +355,10 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
 
   private static void navigateToSelected(@NotNull Project project,
                                          @NotNull JBList<RecentLocationItem> list,
-                                         @NotNull JBPopup popup,
-                                         @NotNull Ref<? super Boolean> navigationRef) {
+                                         @NotNull JBPopup popup) {
     ContainerUtil.reverse(list.getSelectedValuesList())
       .forEach(item -> IdeDocumentHistory.getInstance(project).gotoPlaceInfo(item.getInfo(), true));
 
-    navigationRef.set(true);
     popup.closeOk(null);
   }
 

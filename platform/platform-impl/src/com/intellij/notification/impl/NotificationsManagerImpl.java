@@ -95,6 +95,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     UIUtil.invokeLaterIfNeeded(() -> EventLog.expireNotification(notification));
   }
 
+  public void expireAll() {
+    for (Notification notification : getNotificationsOfType(Notification.class, null)) {
+      notification.expire();
+    }
+ }
+
   @Override
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable final Project project) {
     final List<T> result = new ArrayList<>();
@@ -348,6 +354,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       layoutData.mergeData = null;
     }
     layoutData.id = notification.id;
+    layoutData.displayId = notification.displayId;
     layoutDataRef.set(layoutData);
 
     if (layoutData.textColor == null) {
@@ -629,6 +636,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final BalloonImpl balloon = (BalloonImpl)builder.createBalloon();
+    balloon.getContent().addMouseListener(new MouseAdapter() {
+    });
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
 
@@ -636,7 +645,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (!layoutData.welcomeScreen && buttons == null) {
       balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id));
+        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.displayId));
     }
 
     Disposer.register(parentDisposable, balloon);

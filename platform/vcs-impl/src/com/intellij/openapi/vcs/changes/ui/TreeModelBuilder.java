@@ -476,8 +476,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
       parent.remove(0);
 
-      //noinspection unchecked
-      Enumeration<ChangesBrowserNode<?>> children = child.children();
+      @SuppressWarnings({"unchecked", "rawtypes"})
+      Enumeration<ChangesBrowserNode<?>> children = (Enumeration)child.children();
       for (ChangesBrowserNode<?> childNode : toList(children)) {
         parent.add(childNode);
       }

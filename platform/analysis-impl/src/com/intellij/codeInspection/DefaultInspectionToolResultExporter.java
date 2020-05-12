@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -11,6 +10,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
@@ -252,7 +252,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
 
-  static SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
+  private static @NotNull SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
     return new SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor>() {
       @NotNull
       @Override
@@ -273,7 +273,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
         final Tools tools = context.getTools().get(shortName);
         if (tools != null) {
           for (ScopeToolState state : tools.getTools()) {
-            InspectionToolWrapper toolWrapper = state.getTool();
+            InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
             if (toolWrapper == getToolWrapper()) {
               return context.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
             }
@@ -396,7 +396,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
     checkFromSameFile(refElement, descriptors);
     if (filterSuppressed) {
-      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)
+          || this instanceof AggregateResultsExporter) {
         myProblemElements.put(refElement, descriptors);
       }
       else {
@@ -419,7 +420,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     if (pointer == null) return;
     VirtualFile entityFile = ensureNotInjectedFile(pointer.getVirtualFile());
     if (entityFile == null) return;
-    Lists.newArrayList(descriptors).forEach(d -> {
+    for (CommonProblemDescriptor d : descriptors) {
       if (d instanceof ProblemDescriptorBase) {
         VirtualFile file = ((ProblemDescriptorBase)d).getContainingFile();
         if (file != null) {
@@ -427,7 +428,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
                          "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
         }
       }
-    });
+    }
   }
 
   @Contract("null -> null")

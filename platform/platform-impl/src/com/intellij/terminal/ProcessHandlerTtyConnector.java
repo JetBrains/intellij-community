@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.jediterm.terminal.Questioner;
 import com.jediterm.terminal.TtyConnector;
@@ -11,26 +11,23 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 public class ProcessHandlerTtyConnector implements TtyConnector {
 
-  private final OSProcessHandler myProcessHandler;
-  private final PtyProcess myPtyProcess;
-  protected Charset myCharset;
+  private final BaseProcessHandler<?> myProcessHandler;
+  private final Process myPtyProcess;
+  private final Charset myCharset;
 
   public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, @NotNull Charset charset) {
-    if (!(processHandler instanceof OSProcessHandler)) {
-      throw new IllegalArgumentException("Works currently only with OSProcessHandler");
+    if (!(processHandler instanceof BaseProcessHandler)) {
+      throw new IllegalArgumentException("Works currently only with BaseProcessHandler");
     }
-    else {
-      myProcessHandler = (OSProcessHandler)processHandler;
-    }
-    if (!(myProcessHandler.getProcess() instanceof PtyProcess)) {
-      throw new IllegalArgumentException("Should be a PTY based process");
-    }
-    else {
-      myPtyProcess = (PtyProcess)myProcessHandler.getProcess();
+    myProcessHandler = (BaseProcessHandler<?>)processHandler;
+    myPtyProcess = myProcessHandler.getProcess();
+    if (!(myPtyProcess instanceof PtyBasedProcess) && !(myPtyProcess instanceof PtyProcess)) {
+      throw new IllegalArgumentException("Not a PTY based process: " + myPtyProcess.getClass());
     }
     myCharset = charset;
   }
@@ -48,9 +45,14 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   @Override
   public void resize(Dimension termSize, Dimension pixelSize) {
     if (termSize != null && pixelSize != null) {
-      if (myPtyProcess.isRunning()) {
-        myPtyProcess.setWinSize(
-          new WinSize(termSize.width, termSize.height, pixelSize.width, pixelSize.height));
+      if (myPtyProcess instanceof PtyProcess) {
+        PtyProcess ptyProcess = (PtyProcess)myPtyProcess;
+        if (ptyProcess.isRunning()) {
+          ptyProcess.setWinSize(new WinSize(termSize.width, termSize.height, pixelSize.width, pixelSize.height));
+        }
+      }
+      else {
+        ((PtyBasedProcess)myPtyProcess).resizePtyWindow(termSize.width, termSize.height, pixelSize.width, pixelSize.height);
       }
     }
   }
@@ -67,8 +69,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   @Override
   public void write(byte[] bytes) throws IOException {
-    myProcessHandler.getProcessInput().write(bytes);
-    myProcessHandler.getProcessInput().flush();
+    writeBytes(bytes);
   }
 
   @Override
@@ -78,12 +79,19 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   @Override
   public void write(String string) throws IOException {
-    myProcessHandler.getProcessInput().write(string.getBytes(myCharset));
-    myProcessHandler.getProcessInput().flush();
+    writeBytes(string.getBytes(myCharset));
   }
 
   @Override
   public int waitFor() throws InterruptedException {
     return myPtyProcess.waitFor();
+  }
+
+  private void writeBytes(byte[] bytes) throws IOException {
+    OutputStream input = myProcessHandler.getProcessInput();
+    if (input != null) {
+      input.write(bytes);
+      input.flush();
+    }
   }
 }

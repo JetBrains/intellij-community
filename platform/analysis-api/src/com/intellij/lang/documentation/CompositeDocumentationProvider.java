@@ -157,9 +157,9 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
   }
 
   @Override
-  public @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
+  public @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     for (DocumentationProvider provider : getAllProviders()) {
-      String result = provider.generateRenderedDoc(element);
+      String result = provider.generateRenderedDoc(comment);
       if (result != null) {
         LOG.debug("generateRenderedDoc: ", provider);
         return result;

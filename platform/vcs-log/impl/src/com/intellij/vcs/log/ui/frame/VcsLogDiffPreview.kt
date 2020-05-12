@@ -11,8 +11,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.DiffPreviewProvider
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.vcs.log.VcsLogBundle
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
-fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
+private fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
                                       parent: Disposable,
                                       showDiffPreview: (Boolean) -> Unit) {
   val propertiesChangeListener: PropertiesChangeListener = object : PropertiesChangeListener {
@@ -124,7 +124,7 @@ class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties
 
 private fun openPreviewInEditor(project: Project, diffPreviewProvider: DiffPreviewProvider, componentToFocus: JComponent) {
   val escapeHandler = Runnable {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true) }, false)
   }
   EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(diffPreviewProvider), false, escapeHandler)

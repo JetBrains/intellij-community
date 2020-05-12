@@ -10,6 +10,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
@@ -29,7 +30,7 @@ public class HgBookmarkDialog extends DialogWrapper {
   public HgBookmarkDialog(@NotNull HgRepository repository) {
     super(repository.getProject(), false);
     myRepository = repository;
-    setTitle("Create Bookmark");
+    setTitle(HgBundle.message("hg4idea.bookmark.create.title"));
     setResizable(false);
     init();
   }
@@ -71,10 +72,10 @@ public class HgBookmarkDialog extends DialogWrapper {
       }
     });
 
-    JBLabel bookmarkLabel = new JBLabel("Bookmark name:");
+    JBLabel bookmarkLabel = new JBLabel(HgBundle.message("hg4idea.bookmark.name"));
     bookmarkLabel.setLabelFor(myBookmarkName);
 
-    myActiveCheckbox = new JBCheckBox("Inactive", false);
+    myActiveCheckbox = new JBCheckBox(HgBundle.message("hg4idea.bookmark.inactive"), false);
 
     contentPanel.add(icon, g.nextLine().next().coverColumn(3).pady(DEFAULT_HGAP));
     contentPanel.add(bookmarkLabel, g.next().fillCellNone().insets(new Insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
@@ -88,7 +89,7 @@ public class HgBookmarkDialog extends DialogWrapper {
     String name = getName();
     if (!validator.checkInput(name)) {
       String message = validator.getErrorText(name);
-      setErrorText(message == null ? "You have to specify bookmark name." : message, myBookmarkName);
+      setErrorText(message == null ? HgBundle.message("hg4idea.bookmark.specify.name") : message, myBookmarkName);
       setOKActionEnabled(false);
       return;
     }

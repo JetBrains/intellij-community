@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -9,18 +9,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import com.intellij.codeInspection.util.InspectionMessage;
 
 public abstract class InspectionManager {
   public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION =
     ExtensionPointName.create("com.intellij.cantBeStatic");
 
   public static InspectionManager getInstance(Project project) {
-    return ServiceManager.getService(project, InspectionManager.class);
+    return project.getService(InspectionManager.class);
   }
 
   @NotNull

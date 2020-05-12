@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Restarter {
+public final class Restarter {
   private static final String DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY = "restarter.do.not.lock.install.folder";
 
   private Restarter() { }
@@ -43,9 +43,8 @@ public class Restarter {
   }
 
   private static final NotNullLazyValue<Boolean> ourRestartSupported = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
     @Override
-    protected Boolean compute() {
+    protected @NotNull Boolean compute() {
       String problem;
 
       if (SystemInfo.isWindows) {
@@ -96,8 +95,8 @@ public class Restarter {
   };
 
   private static String checkRestarter(String restarterName) {
-    File restarter = PathManager.findBinFile(restarterName);
-    return restarter != null && restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
+    Path restarter = PathManager.findBinFile(restarterName);
+    return restarter != null && Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
   public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
@@ -171,19 +170,21 @@ public class Restarter {
       Collections.addAll(args, beforeRestart);
     }
 
-    File launcher;
+    Path launcher;
     if (elevate && (launcher = PathManager.findBinFile("launcher.exe")) != null) {
       args.add(String.valueOf(argv.length + 1));
-      args.add(launcher.getPath());
+      args.add(launcher.toString());
     }
     else {
       args.add(String.valueOf(argv.length));
     }
     Collections.addAll(args, argv);
 
-    File restarter = PathManager.findBinFile("restarter.exe");
-    if (restarter == null) throw new IOException("Can't find restarter.exe; please reinstall the IDE");
-    runRestarter(restarter, args);
+    Path restarter = PathManager.findBinFile("restarter.exe");
+    if (restarter == null) {
+      throw new IOException("Can't find restarter.exe; please reinstall the IDE");
+    }
+    runRestarter(restarter.toFile(), args);
 
     // Since the process ID is passed through the command line, we want to make sure we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated

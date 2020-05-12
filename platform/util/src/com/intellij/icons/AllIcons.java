@@ -25,6 +25,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ArrowCollapse = load("/actions/arrowCollapse.svg");
     /** 16x16 */ public static final @NotNull Icon ArrowExpand = load("/actions/arrowExpand.svg");
     /** 16x16 */ public static final @NotNull Icon Back = load("/actions/back.svg");
+    /** 16x16 */ public static final @NotNull Icon BuildAutoReloadChanges = load("/actions/buildAutoReloadChanges.svg");
     /** 16x16 */ public static final @NotNull Icon BuildLoadChanges = load("/actions/buildLoadChanges.svg");
     /** 16x16 */ public static final @NotNull Icon Cancel = load("/actions/cancel.svg");
     /** 16x16 */ public static final @NotNull Icon ChangeView = load("/actions/changeView.svg");
@@ -39,6 +40,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Commit = load("/actions/commit.svg");
     /** 16x16 */ public static final @NotNull Icon Compile = load("/actions/compile.svg");
     /** 16x16 */ public static final @NotNull Icon Copy = load("/actions/copy.svg");
+    /** 16x16 */ public static final @NotNull Icon DeleteTag = load("/actions/deleteTag.svg");
     /** 16x16 */ public static final @NotNull Icon DiagramDiff = load("/actions/diagramDiff.svg");
     /** 16x16 */ public static final @NotNull Icon Diff = load("/actions/diff.svg");
     /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("/actions/diffWithClipboard.svg");
@@ -52,7 +54,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Expandall = load("/actions/expandall.svg");
     /** 16x16 */ public static final @NotNull Icon Find = load("/actions/find.svg");
     /** 16x16 */ public static final @NotNull Icon FindAndShowNextMatches = load("/actions/findAndShowNextMatches.svg");
+    /** 16x16 */ public static final @NotNull Icon FindAndShowNextMatchesSmall = load("/actions/findAndShowNextMatchesSmall.svg");
     /** 16x16 */ public static final @NotNull Icon FindAndShowPrevMatches = load("/actions/findAndShowPrevMatches.svg");
+    /** 16x16 */ public static final @NotNull Icon FindAndShowPrevMatchesSmall = load("/actions/findAndShowPrevMatchesSmall.svg");
     /** 16x16 */ public static final @NotNull Icon FindBackward = load("/actions/findBackward.svg");
     /** 16x16 */ public static final @NotNull Icon FindEntireFile = load("/actions/findEntireFile.svg");
     /** 16x16 */ public static final @NotNull Icon FindForward = load("/actions/findForward.svg");

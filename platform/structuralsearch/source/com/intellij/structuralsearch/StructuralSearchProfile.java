@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Entry point for supporting a specific language in Structural Search.
+ *
  * @author Eugene.Kudelevsky
  */
 public abstract class StructuralSearchProfile {
@@ -40,14 +42,43 @@ public abstract class StructuralSearchProfile {
     ExtensionPointName.create("com.intellij.structuralsearch.profile");
   @NonNls protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
 
+  /**
+   * Creates the pattern PSI tree which is stored inside CompiledPattern.
+   * Uses compiling visitor to visit the query PsiElements, sets the correct Filters and Handlers.
+   * @see #createCompiledPattern()
+   * @param elements
+   * @param globalVisitor
+   */
   public abstract void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor);
 
+  /**
+   * The MatchingVisitor knows how to match language specific constructs, when those constructs have already been found.
+   *
+   * <p>For example {@code if} statements in Java: first the condition of the pattern is compared to the condition of the found
+   * {@code if} statement. If it matches, compare the then part of the {@code if} statement. And if the pattern has an
+   * {@code else} part, try to match that as well. If no {@code else} is present in the pattern, just ignore any {@code else} in the code.
+   *
+   * <p>In some cases MatchingVisitor also knows how to match two not quite similar things as well,
+   * like {@code String s = "";}  and {@code var s = "";} in Java, if {@code s} has the same inferred type as the explicit type in
+   * the pattern.
+   *
+   * @param globalVisitor  the global matching visitor which the created matching visitor can use to e.g. retrieve the current element to match.
+   * @return a language specific matching visitor
+   */
   @NotNull
   public abstract PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor);
 
+  /**
+   * Filter to filter out uninteresting elements that should not be matched. Usually white space and error elements.
+   * @return
+   */
   @NotNull
   public abstract NodeFilter getLexicalNodesFilter();
 
+  /**
+   * Creates language specific compiled pattern.
+   * @return
+   */
   @NotNull
   public abstract CompiledPattern createCompiledPattern();
 
@@ -56,8 +87,23 @@ public abstract class StructuralSearchProfile {
     return Collections.emptyList();
   }
 
+  /**
+   * @param language
+   * @return true, if this structural search profile can match code of the specified language. False otherwise.
+   */
   public abstract boolean isMyLanguage(@NotNull Language language);
 
+  /**
+   * Converts query text into PSI tree.
+   * @param text  the text of the search query.
+   * @param context
+   * @param fileType
+   * @param language
+   * @param contextId
+   * @param project
+   * @param physical
+   * @return
+   */
   @NotNull
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,

@@ -1,11 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventField;
+import com.intellij.internal.statistic.eventLog.EventFields;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.VarargEventId;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,38 +37,66 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
-public class FileTypeUsageCounterCollector {
+public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
 
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", FeatureUsageLogger.INSTANCE.getConfig().getVersion());
+
+  private static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
+  private static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
+
+  private static VarargEventId registerFileTypeEvent(String eventId) {
+    return GROUP.registerVarargEvent(eventId, EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
+  }
+
+  private static final VarargEventId SELECT = registerFileTypeEvent("select");
+  private static final VarargEventId EDIT = registerFileTypeEvent("edit");
+  private static final VarargEventId OPEN = registerFileTypeEvent("open");
+  private static final VarargEventId CLOSE = registerFileTypeEvent("close");
+
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
-    trigger(project, file, "edit");
+    log(EDIT, project, file);
   }
 
   public static void triggerSelect(@NotNull Project project, @Nullable VirtualFile file) {
     if (file != null) {
-      trigger(project, file, "select");
+      log(SELECT, project, file);
     }
     else {
-      final FeatureUsageData data = new FeatureUsageData().addAnonymizedPath(null);
-      FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", "select", data);
+      logEmptyFile();
     }
   }
 
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
-    trigger(project, file, "open");
+    log(OPEN, project, file);
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
-    trigger(project, file, "close");
+    log(CLOSE, project, file);
   }
 
-  private static void trigger(@NotNull Project project,
-                              @NotNull VirtualFile file,
-                              @NotNull String event) {
-    final FeatureUsageData data = FileTypeUsagesCollector.newFeatureUsageData(file.getFileType()).addAnonymizedPath(file.getPath());
+  private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
+    FileType fileType = file.getFileType();
+    eventId.log(project,
+        EventFields.PluginInfoFromInstance.with(fileType),
+        FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
+        EventFields.AnonymizedPath.with(file.getPath()),
+        SCHEMA.with(findSchema(file)));
+  }
+
+  private static void logEmptyFile() {
+    SELECT.log(EventFields.AnonymizedPath.with(null));
+  }
+
+  private static @Nullable String findSchema(@NotNull VirtualFile file) {
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {
@@ -71,13 +104,11 @@ public class FileTypeUsageCounterCollector {
         continue;
       }
 
-      if (instance.describes(file)) {
-        data.addData("schema", getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party");
-        break;
+      if(instance.describes(file)) {
+        return getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party";
       }
     }
-
-    FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", event, data);
+    return null;
   }
 
   public static final class FileTypeUsageSchemaDescriptorEP<T> extends BaseKeyedLazyInstance<T> implements KeyedLazyInstance<T> {

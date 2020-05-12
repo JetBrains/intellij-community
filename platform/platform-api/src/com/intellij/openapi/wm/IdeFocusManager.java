@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.diagnostic.LoadingState;
@@ -48,8 +48,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
    *
    * @return suitable component to focus
    */
-  @Nullable
-  public abstract JComponent getFocusTargetFor(@NotNull JComponent comp);
+  public abstract @Nullable JComponent getFocusTargetFor(@NotNull JComponent comp);
 
   /**
    * Executes given runnable after all focus activities are finished.
@@ -69,8 +68,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * Finds focused component among descendants of the given component. Descendants may be in child popups and windows.
    */
-  @Nullable
-  public abstract Component getFocusedDescendantFor(@NotNull Component comp);
+  public abstract @Nullable Component getFocusedDescendantFor(@NotNull Component comp);
 
   /**
    * @deprecated use {@link #typeAheadUntil(ActionCallback, String)} instead
@@ -90,8 +88,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * Requests default focus. The method should not be called by the user code.
    */
-  @NotNull
-  public ActionCallback requestDefaultFocus(boolean forced) {
+  public @NotNull ActionCallback requestDefaultFocus(boolean forced) {
     return ActionCallback.DONE;
   }
 
@@ -123,17 +120,14 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * Returns last focused component for the given IDE {@code Window}.
    * Only IDE window (that's implementing {@link IdeFrame}).
    */
-  @Nullable
-  public abstract Component getLastFocusedFor(@Nullable Window frame);
+  public abstract @Nullable Component getLastFocusedFor(@Nullable Window frame);
 
   /**
    * Returns last focused {@code IdeFrame}.
    */
-  @Nullable
-  public abstract IdeFrame getLastFocusedFrame();
+  public abstract @Nullable IdeFrame getLastFocusedFrame();
 
-  @Nullable
-  public abstract Window getLastFocusedIdeWindow();
+  public abstract @Nullable Window getLastFocusedIdeWindow();
 
   /**
    * Put the container window to front. May not execute if the app is inactive or under some other conditions. This
@@ -151,8 +145,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
     }
   }
 
-  @NotNull
-  public static IdeFocusManager findInstanceByContext(@Nullable DataContext context) {
+  public static @NotNull IdeFocusManager findInstanceByContext(@Nullable DataContext context) {
     IdeFocusManager instance = null;
     if (context != null) {
       instance = getInstanceSafe(CommonDataKeys.PROJECT.getData(context));
@@ -169,42 +162,36 @@ public abstract class IdeFocusManager implements FocusRequestor {
     return instance;
   }
 
-  @NotNull
-  public static IdeFocusManager findInstanceByComponent(@NotNull Component component) {
+  public static @NotNull IdeFocusManager findInstanceByComponent(@NotNull Component component) {
     IdeFocusManager instance = findByComponent(component);
     return instance == null ? findInstanceByContext(null) : instance;
   }
 
-  @Nullable
-  private static IdeFocusManager findByComponent(@Nullable Component component) {
+  private static @Nullable IdeFocusManager findByComponent(@Nullable Component component) {
     if (component == null) return null;
     Component parent = ComponentUtil.findUltimateParent(component);
     return parent instanceof IdeFrame ? getInstanceSafe(((IdeFrame)parent).getProject()) : null;
   }
 
 
-  @Nullable
-  private static IdeFocusManager getInstanceSafe(@Nullable Project project) {
+  private static @Nullable IdeFocusManager getInstanceSafe(@Nullable Project project) {
     if (project != null && !project.isDisposed() && project.isInitialized()) {
       return getInstance(project);
     }
     return null;
   }
 
-  @NotNull
-  public static IdeFocusManager findInstance() {
+  public static @NotNull IdeFocusManager findInstance() {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
   }
 
   @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
-  @NotNull
-  public FocusRequestor getFurtherRequestor() {
+  public @NotNull FocusRequestor getFurtherRequestor() {
     return new FocusRequestor() {
-      @NotNull
       @Override
-      public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
+      public @NotNull ActionCallback requestFocus(@NotNull Component c, boolean forced) {
         return ActionCallback.REJECTED;
       }
 
@@ -213,8 +200,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
     };
   }
 
-  @NotNull
-  public static IdeFocusManager getGlobalInstance() {
+  public static @NotNull IdeFocusManager getGlobalInstance() {
     IdeFocusManager focusManager = null;
 
     Application app = ApplicationManager.getApplication();

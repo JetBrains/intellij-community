@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
@@ -9,13 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import org.jdom.JDOMException;
@@ -29,13 +26,9 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import static com.intellij.ide.plugins.DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
 
 @Service
 public final class PluginManager {
@@ -43,17 +36,7 @@ public final class PluginManager {
 
   private final List<Runnable> disabledPluginListeners = new CopyOnWriteArrayList<>();
 
-  @ApiStatus.Internal
-  public static final ConcurrentMap<PluginDescriptor, Disposable> pluginDisposables = ConcurrentFactoryMap.createWeakMap(
-    plugin -> {
-      Disposable pluginDisposable = Disposer.newDisposable("Plugin disposable [" + plugin.getName() + "]");
-      Disposer.register(ApplicationManager.getApplication(), pluginDisposable);
-      return pluginDisposable;
-    }
-  );
-
-  @NotNull
-  public static PluginManager getInstance() {
+  public static @NotNull PluginManager getInstance() {
     return ApplicationManager.getApplication().getService(PluginManager.class);
   }
 
@@ -76,33 +59,30 @@ public final class PluginManager {
   /**
    * @return file with list of once installed plugins if it exists, null otherwise
    */
-  @Nullable
-  public static Path getOnceInstalledIfExists() {
+  public static @Nullable Path getOnceInstalledIfExists() {
     Path onceInstalledFile = PathManager.getConfigDir().resolve(INSTALLED_TXT);
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
   // not in PluginManagerCore because it is helper method
-  @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
-    return loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins(), false);
+  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
+    return loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins(), false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
   }
 
-  @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
-                                                        @NotNull String fileName,
-                                                        @Nullable Set<PluginId> disabledPlugins,
-                                                        boolean bundled) {
-    Set<PluginId> disabled = disabledPlugins == null ? Collections.emptySet() : disabledPlugins;
-    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabled);
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
+                                                                  @NotNull String fileName,
+                                                                  @NotNull Set<PluginId> disabledPlugins,
+                                                                  boolean bundled,
+                                                                  PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
+    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins);
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, pathResolver)) {
       return PluginManagerCore.loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
   }
 
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact(@NotNull Path file, @Nullable BuildNumber buildNumber) throws IOException {
-    PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap(), buildNumber != null ? buildNumber : PluginManagerCore.getBuildNumber());
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), result);
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR, PluginManagerCore.disabledPlugins(),
+                                                                                  PluginManagerCore.createLoadingResult(buildNumber));
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);
       if (descriptor == null && file.getFileName().toString().endsWith(".zip")) {
@@ -146,7 +126,7 @@ public final class PluginManager {
     return PluginManagerCore.getPlugin(id);
   }
 
-  public static @NotNull IdeaPluginDescriptor[] getPlugins() {
+  public static IdeaPluginDescriptor @NotNull [] getPlugins() {
     return PluginManagerCore.getPlugins();
   }
 
@@ -162,6 +142,7 @@ public final class PluginManager {
     return PluginManagerCore.getLoadedPlugins();
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
     return PluginManagerCore.getPluginOrPlatformByClassName(className);
   }
@@ -172,8 +153,7 @@ public final class PluginManager {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @NotNull
-  public static List<String> getDisabledPlugins() {
+  public static @NotNull List<String> getDisabledPlugins() {
     return PluginManagerCore.getDisabledPlugins();
   }
 
@@ -200,12 +180,13 @@ public final class PluginManager {
   /**
    * Consider using {@link #enablePlugins(Collection, boolean)}.
    */
+  @SuppressWarnings("MethodMayBeStatic")
   public boolean enablePlugin(@NotNull PluginId id) {
     return PluginManagerCore.enablePlugin(id);
   }
 
-  @NotNull
-  public static Logger getLogger() {
+  @ApiStatus.Internal
+  public static @NotNull Logger getLogger() {
     return PluginManagerCore.getLogger();
   }
 
@@ -213,22 +194,19 @@ public final class PluginManager {
   public static void loadDescriptorFromFile(@NotNull IdeaPluginDescriptorImpl descriptor,
                                             @NotNull Path file,
                                             @Nullable SafeJdomFactory factory,
-                                            boolean ignoreMissingInclude,
                                             @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
-    int flags = 0;
-    if (ignoreMissingInclude) {
-      flags |= IGNORE_MISSING_INCLUDE;
-    }
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
+    int flags = DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE | DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, PluginManagerCore.createLoadingResult(null));
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, descriptor.isBundled(), /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
-    descriptor.readExternal(JDOMUtil.load(file, factory), file.getParent(), context.pathResolver, context, descriptor);
+    descriptor.readExternal(JDOMUtil.load(file, factory), context.pathResolver, context, descriptor);
   }
 
   public boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public boolean isDevelopedByJetBrains(@Nullable String vendorString) {
     if (vendorString == null) {
       return false;
@@ -246,6 +224,7 @@ public final class PluginManager {
     return false;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins, boolean enabled) {
     Set<PluginId> disabled = PluginManagerCore.getDisabledIds();
     int sizeBefore = disabled.size();
@@ -267,6 +246,7 @@ public final class PluginManager {
     PluginManagerCore.trySaveDisabledPlugins(disabled);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     List<IdeaPluginDescriptorImpl> result = PluginManagerCore.ourLoadedPlugins;
     if (result == null) {
@@ -281,10 +261,12 @@ public final class PluginManager {
     return null;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public boolean hideImplementationDetails() {
     return !Registry.is("plugins.show.implementation.details");
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @ApiStatus.Internal
   public void setPlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
     @SuppressWarnings("SuspiciousToArrayCall")

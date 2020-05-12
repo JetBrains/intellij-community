@@ -125,41 +125,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpClass(RegExpClass regExpClass) {
-    if (!(regExpClass.getParent() instanceof RegExpClass)) {
-      checkForDuplicates(regExpClass, new HashSet<>());
-    }
-  }
-
-  private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
-    if (element instanceof RegExpChar) {
-      final RegExpChar regExpChar = (RegExpChar)element;
-      final int value = regExpChar.getValue();
-      if (value != -1 && !seen.add(value)) {
-        myHolder.newAnnotation(HighlightSeverity.WARNING,
-                               RegExpBundle.message("warning.duplicate.character.0.inside.character.class", regExpChar.getText()))
-          .range(regExpChar).create();
-      }
-    }
-    else if (element instanceof RegExpSimpleClass) {
-      final RegExpSimpleClass regExpSimpleClass = (RegExpSimpleClass)element;
-      final RegExpSimpleClass.Kind kind = regExpSimpleClass.getKind();
-      if (!seen.add(kind)) {
-        final String text = regExpSimpleClass.getText();
-        myHolder.newAnnotation(HighlightSeverity.WARNING,
-                               RegExpBundle.message("warning.duplicate.predefined.character.class.0.inside.character.class", text))
-          .range(regExpSimpleClass).create();
-      }
-    }
-    else if (element instanceof RegExpClass) {
-      final RegExpClass regExpClass = (RegExpClass)element;
-      for (RegExpClassElement classElement : regExpClass.getElements()) {
-        checkForDuplicates(classElement, seen);
-      }
-    }
-  }
-
-  @Override
   public void visitRegExpChar(final RegExpChar ch) {
     final PsiElement child = ch.getFirstChild();
     final IElementType type = child.getNode().getElementType();

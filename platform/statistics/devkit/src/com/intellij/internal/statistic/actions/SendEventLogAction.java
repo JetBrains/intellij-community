@@ -108,12 +108,12 @@ public class SendEventLogAction extends AnAction {
     private final List<LogEventRecordRequest> myFailed = new ArrayList<>();
 
     @Override
-    public void onSucceed(@NotNull LogEventRecordRequest request) {
+    public void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content) {
       mySucceed.add(request);
     }
 
     @Override
-    public void onFailed(@Nullable LogEventRecordRequest request) {
+    public void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content) {
       if (request != null) {
         myFailed.add(request);
       }

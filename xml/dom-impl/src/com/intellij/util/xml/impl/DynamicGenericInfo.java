@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
@@ -29,8 +29,8 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class DynamicGenericInfo extends DomGenericInfoEx {
-  private static final Key<SoftReference<Interner<ChildrenDescriptionsHolder>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
+public final class DynamicGenericInfo extends DomGenericInfoEx {
+  private static final Key<SoftReference<Interner<ChildrenDescriptionsHolder<?>>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private volatile boolean myInitialized;
@@ -107,37 +107,35 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     }
 
     final List<DomExtensionImpl> customs = registrar.getCustoms();
-    myCustomChildren = customs.isEmpty() ? null : ContainerUtil.map(customs, extension -> new CustomDomChildrenDescriptionImpl(extension));
+    myCustomChildren = customs.isEmpty() ? null : ContainerUtil.map(customs, CustomDomChildrenDescriptionImpl::new);
   }
 
   private static <T extends DomChildDescriptionImpl> ChildrenDescriptionsHolder<T> internChildrenHolder(XmlFile file, ChildrenDescriptionsHolder<T> holder) {
-    SoftReference<Interner<ChildrenDescriptionsHolder>> ref = file.getUserData(HOLDERS_CACHE);
-    Interner<ChildrenDescriptionsHolder> cache = SoftReference.dereference(ref);
+    SoftReference<Interner<ChildrenDescriptionsHolder<?>>> ref = file.getUserData(HOLDERS_CACHE);
+    Interner<ChildrenDescriptionsHolder<?>> cache = SoftReference.dereference(ref);
     if (cache == null) {
       cache = new WeakInterner<>();
       file.putUserData(HOLDERS_CACHE, new SoftReference<>(cache));
     }
     //noinspection unchecked
-    return cache.intern(holder);
+    return (ChildrenDescriptionsHolder<T>)cache.intern(holder);
   }
 
   @Nullable
   private DomExtensionsRegistrarImpl runDomExtenders() {
     DomExtensionsRegistrarImpl registrar = null;
-    final Project project = myInvocationHandler.getManager().getProject();
-    List<DomExtenderEP> extenders = DomExtenderEP.EP_NAME.getExtensionList();
-    if (extenders.size() > 0) {
-      for (final DomExtenderEP extenderEP : extenders) {
-        registrar = extenderEP.extend(project, myInvocationHandler, registrar);
-      }
+    Project project = myInvocationHandler.getManager().getProject();
+    for (DomExtenderEP extenderEP : DomExtenderEP.EP_NAME.getExtensionList()) {
+      registrar = extenderEP.extend(project, myInvocationHandler, registrar);
     }
 
-    final AbstractDomChildDescriptionImpl description = myInvocationHandler.getChildDescription();
+    AbstractDomChildDescriptionImpl description = myInvocationHandler.getChildDescription();
     if (description != null) {
-      final List<DomExtender> extendersFromParent = description.getUserData(DomExtensionImpl.DOM_EXTENDER_KEY);
+      List<DomExtender<?>> extendersFromParent = description.getUserData(DomExtensionImpl.DOM_EXTENDER_KEY);
       if (extendersFromParent != null) {
         if (registrar == null) registrar = new DomExtensionsRegistrarImpl();
-        for (final DomExtender extender : extendersFromParent) {
+        //noinspection rawtypes
+        for (DomExtender extender : extendersFromParent) {
           //noinspection unchecked
           extender.registerExtensions(myInvocationHandler.getProxy(), registrar);
         }
@@ -147,7 +145,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public GenericDomValue getNameDomElement(DomElement element) {
+  public GenericDomValue<?> getNameDomElement(DomElement element) {
     return myStaticGenericInfo.getNameDomElement(element);
   }
 
@@ -222,7 +220,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
 
   @Override
-  public DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace) {
+  public DomAttributeChildDescription<?> getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace) {
     checkInitialized();
     return myAttributes.getDescription(attributeName, namespace);
   }

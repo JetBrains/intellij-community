@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,17 +16,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +112,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       result = new File(pluginBaseDir, relativePath);
     }
     else {
-      if (ApplicationManager.getApplication().isInternal()) {
+      Application application = ApplicationManager.getApplication();
+      if (application != null && application.isInternal()) {
         jarPath = StringUtil.trimEnd(jarPath.replace('\\', '/'), '/') + '/';
         String srcDir = jarPath.replace("/out/classes/production/intellij.terminal/",
                                         "/community/plugins/terminal/resources/");
@@ -157,7 +161,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
+  public PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
     return createProcess(directory, null);
   }
 
@@ -165,7 +169,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
 
-    String[] command = getCommand(envs);
+    String[] command = ArrayUtil.toStringArray(getCommands(envs));
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       try {
@@ -230,10 +234,17 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
 
+  /**
+   * @deprecated use {@link #getCommands(Map)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public String[] getCommand(Map<String, String> envs) {
+    return ArrayUtil.toStringArray(getCommands(envs));
+  }
 
+  public @NotNull List<String> getCommands(@NotNull Map<String, String> envs) {
     String shellPath = getShellPath();
-
     return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
   }
 
@@ -241,73 +252,69 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return TerminalOptionsProvider.getInstance().getShellPath();
   }
 
-  public static String @NotNull [] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
-    if (SystemInfo.isUnix) {
-      List<String> command = Lists.newArrayList(shellPath.split(" "));
+  public static @NotNull List<String> getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
+    if (SystemInfo.isWindows) {
+      return ParametersListUtil.parse(shellPath, false, false);
+    }
+    List<String> command = ParametersListUtil.parse(shellPath, false, true);
+    String shellCommand = command.size() > 0 ? command.get(0) : null;
+    String shellName = getShellName(shellCommand);
 
-      String shellCommand = command.size() > 0 ? command.get(0) : null;
-      String shellName = getShellName(shellCommand);
+    if (shellName == null) {
+      return command;
+    }
+    command.remove(0);
 
-      if (shellName != null) {
-        command.remove(0);
-
-        if (!containsLoginOrInteractiveOption(command)) {
-          if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {
-            command.add(LOGIN_CLI_OPTION);
-          }
-          if (isInteractiveOptionAvailable(shellName)) {
-            command.add(INTERACTIVE_CLI_OPTION);
-          }
-        }
-
-        List<String> result = Lists.newArrayList(shellCommand);
-
-        String rcFilePath = findRCFile(shellName);
-
-        if (rcFilePath != null && shellIntegration) {
-          if (shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME))) {
-            addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
-            // remove --login to enable --rcfile sourcing
-            boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);
-            setLoginShellEnv(envs, loginShell);
-          }
-          else if (shellName.equals(ZSH_NAME)) {
-            String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
-            if (StringUtil.isNotEmpty(zdotdir)) {
-              envs.put("_OLD_ZDOTDIR", zdotdir);
-              File zshRc = new File(FileUtil.expandUserHome(zdotdir), ".zshrc");
-              if (zshRc.exists()) {
-                envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
-              }
-            }
-            envs.put(ZDOTDIR, new File(rcFilePath).getParent());
-          }
-          else if (shellName.equals(FISH_NAME)) {
-            String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);
-            if (StringUtil.isNotEmpty(xdgConfig)) {
-              File fishConfig = new File(new File(FileUtil.expandUserHome(xdgConfig), "fish"), "config.fish");
-              if (fishConfig.exists()) {
-                envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
-              }
-              envs.put("OLD_" + XDG_CONFIG_HOME, xdgConfig);
-            }
-
-            envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());
-          }
-        }
-
-        setLoginShellEnv(envs, isLogin(command));
-
-        result.addAll(command);
-        return ArrayUtilRt.toStringArray(result);
+    if (!containsLoginOrInteractiveOption(command)) {
+      if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {
+        command.add(LOGIN_CLI_OPTION);
       }
-      else {
-        return ArrayUtilRt.toStringArray(command);
+      if (isInteractiveOptionAvailable(shellName)) {
+        command.add(INTERACTIVE_CLI_OPTION);
       }
     }
-    else {
-      return new String[]{shellPath};
+
+    List<String> result = new ArrayList<>();
+    result.add(shellCommand);
+
+    String rcFilePath = findRCFile(shellName);
+
+    if (rcFilePath != null && shellIntegration) {
+      if (shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME))) {
+        addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
+        // remove --login to enable --rcfile sourcing
+        boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);
+        setLoginShellEnv(envs, loginShell);
+      }
+      else if (shellName.equals(ZSH_NAME)) {
+        String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
+        if (StringUtil.isNotEmpty(zdotdir)) {
+          envs.put("_OLD_ZDOTDIR", zdotdir);
+          File zshRc = new File(FileUtil.expandUserHome(zdotdir), ".zshrc");
+          if (zshRc.exists()) {
+            envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
+          }
+        }
+        envs.put(ZDOTDIR, new File(rcFilePath).getParent());
+      }
+      else if (shellName.equals(FISH_NAME)) {
+        String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);
+        if (StringUtil.isNotEmpty(xdgConfig)) {
+          File fishConfig = new File(new File(FileUtil.expandUserHome(xdgConfig), "fish"), "config.fish");
+          if (fishConfig.exists()) {
+            envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
+          }
+          envs.put("OLD_" + XDG_CONFIG_HOME, xdgConfig);
+        }
+
+        envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());
+      }
     }
+
+    setLoginShellEnv(envs, isLogin(command));
+
+    result.addAll(command);
+    return result;
   }
 
   private static boolean isLoginOptionAvailable(@NotNull String shellName) {
@@ -350,7 +357,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static boolean isLogin(@NotNull List<String> command) {
-    return command.stream().anyMatch(s -> LOGIN_CLI_OPTIONS.contains(s));
+    return command.stream().anyMatch(LOGIN_CLI_OPTIONS::contains);
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {

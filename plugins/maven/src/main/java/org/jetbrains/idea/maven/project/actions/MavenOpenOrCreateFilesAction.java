@@ -24,13 +24,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,14 +53,14 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
     boolean enabled = true;
 
     if (files.size() == 1 && virtualFiles.isEmpty()) {
-      text = "Create ''{0}''";
+      p.setText(MavenProjectBundle.message("action.Maven.create.file", files.get(0).getName()));
     }
     else {
       enabled = virtualFiles.size() == files.size();
-      text = "Open ''{0}''";
+      p.setText(MavenProjectBundle.message("action.Maven.open.file", files.get(0).getName()));
     }
 
-    p.setText(MessageFormat.format(text, files.get(0).getName()));
+
     p.setEnabled(enabled);
   }
 

@@ -3,15 +3,14 @@
   <id>com.intellij.platform.images</id>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter"/>
+    <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter" dynamic="true"/>
   </extensionPoints>
 
   <resource-bundle>messages.ImagesBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationConfigurable groupId="editor" instance="org.intellij.images.options.impl.ImagesConfigurable" id="Images"
-                             bundle="messages.ImagesBundle" key="settings.page.name"/>
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
+    <colorSettingsPage implementation="org.intellij.images.options.impl.ImageEditorColorSchemeSettings"/>
     <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
 
     <applicationService serviceInterface="org.intellij.images.fileTypes.ImageFileTypeManager"
@@ -29,6 +28,12 @@
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
 
     <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
+    <registryKey key="ide.images.wheel.zooming" defaultValue="true"/>
+    <registryKey key="ide.images.show.chessboard" defaultValue="false"/>
+    <registryKey key="ide.images.chessboard.cell.size" defaultValue="5"/>
+    <registryKey key="ide.images.show.grid" defaultValue="false"/>
+    <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3"/>
+    <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1"/>
   </extensions>
 
   <actions>

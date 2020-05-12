@@ -19,10 +19,12 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
-import com.jetbrains.python.sdk.add.addInterpretersAsync
+import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.basePath
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -48,21 +50,10 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   private val moduleField: JComboBox<Module>
 
-  private val baseSdkField = PySdkPathChoosingComboBox().apply {
-    val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
-    val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
-    selectedSdk = when {
-      detectedPreferredSdk != null -> detectedPreferredSdk
-      preferredSdkPath != null -> PyDetectedSdk(preferredSdkPath).apply {
-        childComponent.insertItemAt(this, 0)
-      }
-      else -> items.getOrNull(0)
-    }
-  }
+  private val baseSdkField = PySdkPathChoosingComboBox()
+
   init {
-   addInterpretersAsync(baseSdkField) {
-     findBaseSdks(existingSdks, module, context)
-   }
+    addBaseInterpretersAsync(baseSdkField, existingSdks, module, context)
   }
 
   private val installPackagesCheckBox = JBCheckBox(PyBundle.message("install.packages.from.pipfile")).apply {

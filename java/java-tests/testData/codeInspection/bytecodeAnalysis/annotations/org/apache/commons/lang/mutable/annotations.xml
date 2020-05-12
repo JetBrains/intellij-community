@@ -54,6 +54,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableBoolean void setValue(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableBoolean void setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -135,11 +140,36 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableByte void add(byte)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableByte void add(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableByte void decrement()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableByte void increment()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableByte void setValue(byte)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableByte void setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableByte void subtract(byte)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableByte void subtract(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -227,11 +257,36 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble void add(double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble void add(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble void decrement()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble void increment()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble void setValue(double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble void setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble void subtract(double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble void subtract(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -319,11 +374,36 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat void add(float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat void add(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat void decrement()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat void increment()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat void setValue(float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat void setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat void subtract(float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat void subtract(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -401,11 +481,36 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableInt void add(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableInt void add(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableInt void decrement()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableInt void increment()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableInt void setValue(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableInt void setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableInt void subtract(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableInt void subtract(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -486,11 +591,36 @@
     <item name='org.apache.commons.lang.mutable.MutableLong void add(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableLong void add(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableLong void decrement()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableLong void increment()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableLong void setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableLong void setValue(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableLong void subtract(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableLong void subtract(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableObject MutableObject()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -518,6 +648,11 @@
     <item name='org.apache.commons.lang.mutable.MutableObject java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableObject void setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableShort MutableShort()'>
@@ -601,10 +736,35 @@
     <item name='org.apache.commons.lang.mutable.MutableShort void add(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableShort void add(short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableShort void decrement()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableShort void increment()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableShort void setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableShort void setValue(short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableShort void subtract(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableShort void subtract(short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
 </root>

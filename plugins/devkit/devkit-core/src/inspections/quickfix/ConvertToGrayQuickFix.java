@@ -3,14 +3,14 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,12 +24,12 @@ public class ConvertToGrayQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @NlsUI.ListItem @NotNull String getName() {
+  public @IntentionName @NotNull String getName() {
     return "Convert to Gray._" + myNum;
   }
 
   @Override
-  public @NlsUI.ListItem @NotNull String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return "Convert to Gray";
   }
 

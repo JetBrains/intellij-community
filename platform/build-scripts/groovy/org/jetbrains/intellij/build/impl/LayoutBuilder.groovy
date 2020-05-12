@@ -4,9 +4,10 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.MultiValuesMap
+
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.Stack
 import org.apache.tools.ant.AntClassLoader
 import org.jetbrains.intellij.build.CompilationContext
@@ -32,7 +33,7 @@ class LayoutBuilder {
   
   private final AntBuilder ant
   private final boolean compressJars
-  private final MultiValuesMap<String, String> moduleOutputPatches = new MultiValuesMap<>(true)
+  private final MultiMap<String, String> moduleOutputPatches = MultiMap.createLinked()
   private final CompilationContext context
 
   LayoutBuilder(CompilationContext context, boolean compressJars) {
@@ -56,7 +57,7 @@ class LayoutBuilder {
    * when calling {@link LayoutSpec#jar} and call {@link LayoutSpec#modulePatches} from its body to apply the patches to the JAR.
    */
   void patchModuleOutput(String moduleName, String pathToDirectoryWithPatchedFiles) {
-    moduleOutputPatches.put(moduleName, pathToDirectoryWithPatchedFiles)
+    moduleOutputPatches.putValue(moduleName, pathToDirectoryWithPatchedFiles)
   }
 
   /**
@@ -166,7 +167,7 @@ class LayoutBuilder {
      */
     void modulePatches(Collection<String> moduleNames, Closure body = {}) {
       moduleNames.each { String moduleName ->
-        moduleOutputPatches.get(moduleName)?.each {
+        moduleOutputPatches.get(moduleName).each {
           ant.fileset(dir: it, body)
           context.messages.debug(" include $it with pathces for module '$moduleName'")
         }
@@ -283,7 +284,7 @@ class LayoutBuilder {
       context.findRequiredModule(name)
     }
 
-    private String getLibraryName(JpsLibrary lib) {
+    static String getLibraryName(JpsLibrary lib) {
       def name = lib.name
       if (name.startsWith("#")) {
         if (lib.getRoots(JpsOrderRootType.COMPILED).size() != 1) {

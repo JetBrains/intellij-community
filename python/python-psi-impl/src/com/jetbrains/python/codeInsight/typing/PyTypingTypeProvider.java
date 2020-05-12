@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -793,7 +792,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
-    final List<PyType> members = Lists.newArrayList();
+    final List<PyType> members = new ArrayList<>();
     boolean foundAny = false;
     for (Pair<PyTargetExpression, PsiElement> pair : tryResolvingWithAliases(expression, context.getTypeContext())) {
       final Ref<PyType> typeRef = getTypeForResolvedElement(pair.getFirst(), pair.getSecond(), context);
@@ -1405,7 +1404,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   private static List<Pair<PyTargetExpression, PsiElement>> tryResolvingWithAliases(@NotNull PyExpression expression,
                                                                                     @NotNull TypeEvalContext context) {
-    final List<Pair<PyTargetExpression, PsiElement>> elements = Lists.newArrayList();
+    final List<Pair<PyTargetExpression, PsiElement>> elements = new ArrayList<>();
     if (expression instanceof PyReferenceExpression) {
       final List<PsiElement> results;
       if (context.maySwitchToAST(expression)) {

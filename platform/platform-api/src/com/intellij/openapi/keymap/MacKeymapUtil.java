@@ -97,17 +97,17 @@ public class MacKeymapUtil {
       case KeyEvent.VK_ADD:            return "+";
       case KeyEvent.VK_MINUS:          return "-";
       case KeyEvent.VK_PLUS:           return "+";
-      case KeyEvent.VK_DIVIDE:         return "NumPad /";
-      case KeyEvent.VK_NUMPAD0:        return "0";
-      case KeyEvent.VK_NUMPAD1:        return "1";
-      case KeyEvent.VK_NUMPAD2:        return "2";
-      case KeyEvent.VK_NUMPAD3:        return "3";
-      case KeyEvent.VK_NUMPAD4:        return "4";
-      case KeyEvent.VK_NUMPAD5:        return "5";
-      case KeyEvent.VK_NUMPAD6:        return "6";
-      case KeyEvent.VK_NUMPAD7:        return "7";
-      case KeyEvent.VK_NUMPAD8:        return "8";
-      case KeyEvent.VK_NUMPAD9:        return "9";
+      case KeyEvent.VK_DIVIDE:         return get(NUM_PAD, "NumPad") + "/";
+      case KeyEvent.VK_NUMPAD0:        return get(NUM_PAD, "NumPad") + "0";
+      case KeyEvent.VK_NUMPAD1:        return get(NUM_PAD, "NumPad") + "1";
+      case KeyEvent.VK_NUMPAD2:        return get(NUM_PAD, "NumPad") + "2";
+      case KeyEvent.VK_NUMPAD3:        return get(NUM_PAD, "NumPad") + "3";
+      case KeyEvent.VK_NUMPAD4:        return get(NUM_PAD, "NumPad") + "4";
+      case KeyEvent.VK_NUMPAD5:        return get(NUM_PAD, "NumPad") + "5";
+      case KeyEvent.VK_NUMPAD6:        return get(NUM_PAD, "NumPad") + "6";
+      case KeyEvent.VK_NUMPAD7:        return get(NUM_PAD, "NumPad") + "7";
+      case KeyEvent.VK_NUMPAD8:        return get(NUM_PAD, "NumPad") + "8";
+      case KeyEvent.VK_NUMPAD9:        return get(NUM_PAD, "NumPad") + "9";
       case 0:                          return "fn";
     }
     return KeyEvent.getKeyText(code);

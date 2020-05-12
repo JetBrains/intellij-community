@@ -18,20 +18,16 @@
     <extensionPoint qualifiedName="com.intellij.deadCode"
                     interface="com.intellij.codeInspection.reference.EntryPoint" dynamic="true"/>
 
-    <!-- PsiMember -->
-    <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary"
-                    interface="com.intellij.openapi.util.Condition"/>
+    <!-- See com.intellij.codeInspection.visibility.VisibilityInspection -->
+    <extensionPoint qualifiedName="com.intellij.visibility" interface="com.intellij.codeInspection.visibility.VisibilityExtension" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.visibility"
-                    interface="com.intellij.codeInspection.visibility.VisibilityExtension"/>
-
-    <extensionPoint qualifiedName="com.intellij.java.error.fix" beanClass="com.intellij.codeInsight.daemon.impl.analysis.ErrorFixExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.java.error.fix" beanClass="com.intellij.codeInsight.daemon.impl.analysis.ErrorFixExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.IntentionAction"/>
     </extensionPoint>
 
-    <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmElementActionsFactory" interface="com.intellij.lang.jvm.actions.JvmElementActionsFactory"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmElementActionsFactory" interface="com.intellij.lang.jvm.actions.JvmElementActionsFactory" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension"/>
+    <extensionPoint qualifiedName="com.intellij.allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.canBeFinal" interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.implicitSubclassProvider" interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider" dynamic="true"/>
@@ -123,7 +119,7 @@
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="CodeBlock2Expr"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection"
-                     key="inspection.code.block.2.expr.display.name" bundle="messages.JavaAnalysisBundle"/>
+                     key="statement.lambda.can.be.replaced.with.expression.lambda" bundle="messages.JavaAnalysisBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InvalidComparatorMethodReference"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.InvalidComparatorMethodReferenceInspection"
@@ -247,6 +243,17 @@
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.unneededThrows.RedundantThrowsInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.style.ConstantOnWrongSideOfComparisonInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.style.MultipleVariablesInDeclarationInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.controlflow.SimplifiableConditionalExpressionInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ObjectEqualityInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.security.SerializableClassInSecureContextMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.internationalization.CallToSuspiciousStringMethodInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.threading.WaitNotifyNotInSynchronizedContextInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.inheritance.MethodDoesntCallSuperMethodInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.junit.MalformedSetUpTearDownInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.naming.MisspelledMethodNameInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ThrowableNeverThrownInspectionMerger"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
     <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.DefaultInferredAnnotationProvider"/>

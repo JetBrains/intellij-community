@@ -18,6 +18,43 @@
     <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
     <appStarter implementation="com.intellij.ide.plugins.JarOrderStarter"/>
+    <appStarter implementation="com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilderAppStarter"/>
+
+    <groupConfigurable id="appearance" weight="70"
+                       helpTopic="configurable.group.appearance.help.topic"
+                       displayNameKey="configurable.group.appearance.settings.display.name"
+                       descriptionKey="configurable.group.appearance.settings.description"/>
+    <groupConfigurable id="editor" weight="60"
+                       helpTopic="configurable.group.editor.help.topic"
+                       displayNameKey="configurable.group.editor.settings.display.name"
+                       descriptionKey="configurable.group.editor.settings.description"/>
+    <groupConfigurable id="proofread" parentId="editor"
+                       displayNameKey="configurable.group.proofread.settings.display.name"
+                       descriptionKey="configurable.group.proofread.settings.description"/>
+    <groupConfigurable id="project" weight="40"
+                       displayNameKey="configurable.group.project.settings.display.name"
+                       descriptionKey="configurable.group.project.settings.description"/>
+    <groupConfigurable id="build" weight="30"
+                       helpTopic="configurable.group.build.help.topic"
+                       displayNameKey="configurable.group.build.settings.display.name"
+                       descriptionKey="configurable.group.build.settings.description"/>
+    <groupConfigurable id="build.tools" parentId="build" weight="1000"
+                       displayNameKey="configurable.group.build.tools.settings.display.name"
+                       descriptionKey="configurable.group.build.tools.settings.description"/>
+    <groupConfigurable id="profiler" parentId="build"
+                       displayNameKey="configurable.group.profiler.settings.display.name"
+                       descriptionKey="configurable.group.profiler.settings.description"/>
+    <groupConfigurable id="language" weight="20"
+                       helpTopic="configurable.group.language.help.topic"
+                       displayNameKey="configurable.group.language.settings.display.name"
+                       descriptionKey="configurable.group.language.settings.description"/>
+    <groupConfigurable id="tools" weight="10"
+                       helpTopic="configurable.group.tools.help.topic"
+                       displayNameKey="configurable.group.tools.settings.display.name"
+                       descriptionKey="configurable.group.tools.settings.description"/>
+    <groupConfigurable id="other" weight="-10"
+                       displayNameKey="configurable.group.other.settings.display.name"
+                       descriptionKey="configurable.group.other.settings.description"/>
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
@@ -62,6 +99,8 @@
 
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
 
+    <applicationService serviceInterface="com.intellij.codeWithMe.ClientIdValueStoreService" serviceImplementation="com.intellij.codeWithMe.ClientIdValueStoreServiceImpl" preload="true" />
+
     <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>
     <projectService serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent" preload="notHeadless"/>
 
@@ -93,7 +132,7 @@
     <applicationService serviceInterface="com.intellij.application.options.RegistryManager"
                         serviceImplementation="com.intellij.application.options.RegistryManagerImpl" preload="true"/>
 
-    <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="true" os="mac"/>
 
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
@@ -197,6 +236,7 @@
     <applicationService serviceImplementation="com.intellij.diff.impl.DiffSettingsHolder"/>
     <applicationService serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
     <applicationService serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
+    <applicationService serviceImplementation="com.intellij.diff.vcs.DiffVcsFacade"/>
     <applicationConfigurable groupId="tools" id="diff.base"
                              bundle="messages.DiffBundle"
                              key="configurable.DiffSettingsConfigurable.display.name"
@@ -298,6 +338,8 @@
                         serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
     <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                     serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.editor.EditorActivityManager" />
 
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
@@ -540,7 +582,7 @@
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
     <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="last"/>
-    <filePropertyPusher implementation="com.intellij.execution.impl.RCInArbitraryFileScanner"/>
+    <filePropertyPusher implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
     <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
 
@@ -607,13 +649,19 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
     <statistics.counterUsagesCollector groupId="vcs.diff.trigger" version="1"/>
     <statistics.counterUsagesCollector groupId="vcs.back.forward.trigger" version="1"/>
     <statistics.counterUsagesCollector groupId="ide.self.update" version="2"/>
     <statistics.counterUsagesCollector groupId="import.old.config" version="3"/>
     <statistics.counterUsagesCollector groupId="file.editor" version="2"/>
-    <statistics.counterUsagesCollector groupId="ui.tips" version="3"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
+    <statistics.counterUsagesCollector groupId="inspection.widget" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
 
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="1"/>
 
@@ -622,7 +670,7 @@
     <statistics.counterUsagesCollector groupId="vcs" version="4"/>
     <statistics.counterUsagesCollector groupId="build" version="2"/>
     <statistics.counterUsagesCollector groupId="project.import" version="2"/>
-    <statistics.counterUsagesCollector groupId="ui.event" version="6"/>
+    <statistics.counterUsagesCollector groupId="ui.event" version="7"/>
     <statistics.counterUsagesCollector groupId="plugins.advertiser" version="1"/>
     <statistics.counterUsagesCollector groupId="plugins.dynamic" version="1"/>
     <statistics.counterUsagesCollector groupId="editor.notification.panel" version="1"/>
@@ -630,11 +678,14 @@
 
     <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
 
+    <statistics.counterUsagesCollector groupId="light.edit" version="1"/>
+
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.application.Preloader"/>
-    <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader$AppInitListener"/>
+    <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
+
+    <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
     <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
@@ -671,6 +722,7 @@
     <startupActivity implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
 
+    <postStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
@@ -687,7 +739,6 @@
 
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
-    <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
 
     <writingAccessProvider implementation="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider" order="first"/>
 
@@ -701,6 +752,7 @@
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
 
+    <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.BidiContentNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
@@ -960,6 +1012,9 @@
     Automatic Module Unloading;Error Copying File;Project Startup Tasks Messages;scrolling-capabilities-debug;editor-rendering-benchmark;
     Test Runner;Merge;Diff;System shortcuts conflicts;Settings Error;Plugin Error;Memory;Low Memory;Failed to remove BOM;
     File type recognized;Project Settings;Tutorials;System Messages"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeHintPersistentComponent" configurationSchemaKey="fileTypes"/>
+    <fileTypeOverrider implementation="com.intellij.openapi.fileTypes.impl.FileTypeHintService"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
@@ -970,5 +1025,7 @@
               topic="com.intellij.notification.EventLogListener"/>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+    <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 </idea-plugin>

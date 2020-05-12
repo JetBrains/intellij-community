@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.PlaceProvider;
@@ -363,7 +363,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @NotNull
-  public TabInfo setTooltipText(@NlsUI.Tooltip String text) {
+  public TabInfo setTooltipText(@NlsContexts.Tooltip String text) {
     String old = myTooltipText;
     if (!Objects.equals(old, text)) {
       myTooltipText = text;

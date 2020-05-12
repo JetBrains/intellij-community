@@ -280,7 +280,7 @@ public class FoldingModelSupport {
     int offset = document.getLineStartOffset(lineNumber);
 
     FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, virtualFile);
-    List<Crumb> crumbs = ContainerUtil.newArrayList(collector.computeCrumbs(virtualFile, document, offset, null));
+    List<Crumb> crumbs = ContainerUtil.newArrayList(collector.computeCrumbs(virtualFile, document, offset, true));
     if (crumbs.isEmpty()) return null;
 
     String description = StringUtil.join(crumbs, it -> it.getText(), " > ");

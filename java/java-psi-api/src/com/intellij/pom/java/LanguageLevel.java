@@ -38,7 +38,7 @@ public enum LanguageLevel {
   JDK_14_PREVIEW(JavaPsiBundle.message("jdk.14.preview.language.level.description"), 14),
   JDK_X(JavaPsiBundle.message("jdk.X.language.level.description"), 15);
 
-  public static final LanguageLevel HIGHEST = JDK_13;
+  public static final LanguageLevel HIGHEST = JDK_14;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
   private final String myPresentableText;

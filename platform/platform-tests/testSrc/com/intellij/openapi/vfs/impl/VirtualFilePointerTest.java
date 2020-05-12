@@ -56,8 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
+import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -905,7 +904,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   @Test
   public void testUnc() throws IOException {
     assumeWindows();
-    Path uncRootPath = Paths.get("\\\\127.0.0.1\\" + tempDir.getRoot().getPath().replaceAll("^([A-Z]):", "$1\\$"));
+    Path uncRootPath = Paths.get(toLocalUncPath(tempDir.getRoot().getPath()));
     assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
 
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByPath(uncRootPath.toString());
@@ -945,5 +944,10 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     verifyPointersInCorrectState(pointersToWatch);
     assertFalse("still valid: " + jarParentPointer, jarParentPointer.isValid());
     assertFalse("still valid: " + jarPointer, jarPointer.isValid());
+  }
+
+  @Test
+  public void testProjectUnderNetworkMountDoesntOpenAnymoreAfterUpgradeTo2019_3() {
+    assertNotNull(myVirtualFilePointerManager.create("file://Z://.idea/Q.iml", disposable, null));
   }
 }

@@ -9,52 +9,49 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+/**
+ * Consider using application level extension point. Avoid project level - extension should be stateless and operate on passed context.
+ */
 public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T> {
   public ProjectExtensionPointName(@NotNull @NonNls String name) {
     super(name);
   }
 
-  @NotNull
-  public ExtensionPoint<T> getPoint(@NotNull AreaInstance areaInstance) {
+  public @NotNull ExtensionPoint<T> getPoint(@NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance);
   }
 
-  @NotNull
-  public List<T> getExtensions(@NotNull AreaInstance areaInstance) {
+  public @NotNull List<T> getExtensions(@NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance).getExtensionList();
   }
 
-  @NotNull
-  public Stream<T> extensions(@NotNull AreaInstance areaInstance) {
+  public @NotNull Stream<T> extensions(@NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance).extensions();
   }
 
-  @Nullable
-  public <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
+  public @Nullable <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance).findExtension(instanceOf, false, ThreeState.UNSURE);
   }
 
-  @NotNull
-  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
+  public @NotNull <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
     //noinspection ConstantConditions
     return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);
   }
 
   public boolean hasAnyExtensions(@NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).hasAnyExtensions();
+    return getPointImpl(areaInstance).size() != 0;
   }
 
-  @Nullable
-  public T findFirstSafe(@NotNull AreaInstance areaInstance, @NotNull Predicate<? super T> predicate) {
+  public @Nullable T findFirstSafe(@NotNull AreaInstance areaInstance, @NotNull Predicate<? super T> predicate) {
     return ExtensionProcessingHelper.findFirstSafe(predicate, getPointImpl(areaInstance));
   }
 
-  @Nullable
-  public <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
+  public @Nullable <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
     return ExtensionProcessingHelper.computeSafeIfAny(processor, getPointImpl(areaInstance));
   }
 
@@ -65,9 +62,11 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
     getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable);
   }
 
-  public void addExtensionPointListener(@NotNull AreaInstance areaInstance,
-                                        @NotNull ExtensionPointChangeListener listener,
-                                        @Nullable Disposable parentDisposable) {
-    getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable);
+  public void addChangeListener(@NotNull AreaInstance areaInstance, @NotNull Runnable listener, @Nullable Disposable parentDisposable) {
+    getPointImpl(areaInstance).addChangeListener(listener, parentDisposable);
+  }
+
+  public void processWithPluginDescriptor(@NotNull AreaInstance areaInstance, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
+    getPointImpl(areaInstance).processWithPluginDescriptor(true, consumer);
   }
 }

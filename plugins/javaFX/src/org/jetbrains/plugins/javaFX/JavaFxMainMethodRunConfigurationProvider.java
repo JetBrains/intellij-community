@@ -21,8 +21,7 @@ public class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodP
 
   @Override
   public boolean hasMainMethod(PsiClass clazz) {
-    return !DumbService.isDumb(clazz.getProject()) &&
-           InheritanceUtil.isInheritor(clazz, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
+    return isApplicable(clazz);
   }
 
   @Override

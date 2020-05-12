@@ -23,6 +23,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileStatusEnum;
@@ -205,7 +206,7 @@ public class HgStatusCommand {
     List<String> errors = result.getErrorLines();
     if (!errors.isEmpty()) {
       if (result.getExitValue() != 0 && !myProject.isDisposed()) {
-        String title = "Could not execute hg status command ";
+        String title = HgBundle.message("action.hg4idea.status.error");
         LOG.warn(title + errors.toString());
         VcsNotifier.getInstance(myProject).logInfo(title, errors.toString());
         return changes;

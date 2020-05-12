@@ -114,7 +114,7 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createConfirmation(String title, Runnable onYes, int defaultOptionIndex);
+  public abstract ListPopup createConfirmation(@PopupTitle String title, Runnable onYes, int defaultOptionIndex);
 
   /**
    * Creates a popup allowing to choose one of two specified options and execute code when one of them is selected.
@@ -127,7 +127,11 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createConfirmation(@PopupTitle String title, String yesText, String noText, Runnable onYes, int defaultOptionIndex);
+  public abstract ListPopup createConfirmation(@PopupTitle String title,
+                                               @NlsContexts.Label String yesText,
+                                               @NlsContexts.Label String noText,
+                                               Runnable onYes,
+                                               int defaultOptionIndex);
 
   /**
    * Creates a popup allowing to choose one of two specified options and execute code when either of them is selected.
@@ -142,8 +146,8 @@ public abstract class JBPopupFactory {
    */
   @NotNull
   public abstract ListPopup createConfirmation(@PopupTitle String title,
-                                               String yesText,
-                                               String noText,
+                                               @NlsContexts.Label String yesText,
+                                               @NlsContexts.Label String noText,
                                                Runnable onYes,
                                                Runnable onNo,
                                                int defaultOptionIndex);

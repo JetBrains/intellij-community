@@ -243,7 +243,6 @@ class Test {
   }
 
   void testSetter3() {
-
     myFixture.configureByText 'a.groovy', '''
 class Test {
     static foo

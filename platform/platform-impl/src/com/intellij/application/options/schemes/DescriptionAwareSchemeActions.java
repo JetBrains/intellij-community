@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Scheme;
@@ -31,7 +32,9 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
           e.getPresentation().setEnabledAndVisible(false);
           return;
         }
-        final String text = getDescription(scheme) == null ? "Add Description..." : "Edit Description...";
+        final String text = getDescription(scheme) ==
+                            null ? IdeBundle.message("action.DescriptionAwareSchemeActions.add.description.text")
+                                 : IdeBundle.message("action.DescriptionAwareSchemeActions.edit.description.text");
         e.getPresentation().setEnabledAndVisible(true);
         e.getPresentation().setText(text);
       }

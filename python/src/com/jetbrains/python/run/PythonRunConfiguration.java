@@ -76,11 +76,11 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     }
     else {
       if (isModuleMode() && !myQualifiedNameRegex.matcher(myScriptName).matches()) {
-        throw new RuntimeConfigurationWarning("Provide a qualified name of a module");
+        throw new RuntimeConfigurationWarning(PyBundle.message("python.provide.a.qualified.name.of.a.module"));
       }
     }
     if (isRedirectInput() && !new File(myInputFile).exists()) {
-      throw new RuntimeConfigurationWarning("Input file doesn't exist");
+      throw new RuntimeConfigurationWarning(PyBundle.message("python.input.file.doesn.t.exist"));
     }
   }
 

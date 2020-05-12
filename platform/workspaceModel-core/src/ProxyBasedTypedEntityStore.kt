@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.lang.JavaVersion
+import com.intellij.workspace.api.pstorage.PId
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.*
@@ -144,7 +145,7 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
   }
 
   fun applyDiff(diffBuilder: TypedEntityStorageDiffBuilder): TypedEntityStorage {
-    val builder = TypedEntityStorageBuilder.from(this) as TypedEntityStorageBuilderImpl
+    val builder = TypedEntityStorageBuilder.fromProxy(this) as TypedEntityStorageBuilderImpl
     builder.addDiff(diffBuilder)
     return builder.toStorage()
   }
@@ -227,7 +228,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     val oldIdHash = (e as? TypedEntityWithPersistentId)?.persistentId()?.hashCode()
-    val oldData = (e as ProxyBasedEntity).data
+    val id = (e as ProxyBasedEntity).id
+    val oldData = entityById[id] ?: error("Unknown entity $id")
     val newData = oldData.createModifiableCopy()
     val newImpl = EntityImpl(newData, this)
     val newInstance = createProxy(clazz, newImpl)
@@ -235,8 +237,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       newInstance.change()
     }
     // Referrers are updated in proxy method invocation
-    replaceEntity(e.id, newData, newInstance, oldIdHash, handleReferrers = false)
-    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(e.id, newData)) }
+    replaceEntity(id, newData, newInstance, oldIdHash, handleReferrers = false)
+    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(id, newData)) }
     return newInstance as T
   }
 
@@ -391,7 +393,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     removePersistentIdReferrers(data)
   }
 
-  override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
+  override fun addDiff(diff: TypedEntityStorageDiffBuilder): Map<TypedEntity, TypedEntity> {
     val diffLog = (diff as TypedEntityStorageBuilderImpl).changeLog
     updateChangeLog { it.addAll(diffLog) }
     for (change in diffLog) {
@@ -409,6 +411,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
         }
       }
     }
+    return emptyMap()
   }
 
   private fun EntityData.persistentId() =

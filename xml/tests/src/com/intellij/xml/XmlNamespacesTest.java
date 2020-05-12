@@ -269,6 +269,19 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  public void testHtml5Namespace() {
+    myFixture.configureByText("test.xslt",
+                              "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                              "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns=\"http://www.w3.org/1999/xhtml\">\n" +
+                              "  <xsl:template match=\"foo\">\n" +
+                              "    <div data-foo=\"bar\"\n" +
+                              "         <error>dta-foo</error>=\"bar\">\n" +
+                              "    </div>\n" +
+                              "  </xsl:template>\n" +
+                              "</xsl:stylesheet>\n");
+    myFixture.testHighlighting();
+  }
+
   public void testPatternPerformanceProblem() {
     myFixture.configureByFile("idproblem.html");
     PlatformTestUtil.startPerformanceTest("?", 100, () -> myFixture.doHighlighting()).assertTiming();

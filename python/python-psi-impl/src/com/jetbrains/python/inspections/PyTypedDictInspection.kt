@@ -15,7 +15,9 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
@@ -36,15 +38,18 @@ class PyTypedDictInspection : PyInspection() {
       if (operandType !is PyTypedDictType) return
 
       val indexExpression = node.indexExpression
-      val indexExprValue = PyEvaluator.evaluate(indexExpression, String::class.java)
-      if (indexExprValue == null) {
+      val indexExpressionValueOptions = getIndexExpressionValueOptions(indexExpression)
+      if (indexExpressionValueOptions.isNullOrEmpty()) {
         registerProblem(indexExpression, "TypedDict key must be a string literal; expected one of " +
                                          "(${operandType.fields.keys.joinToString(transform = { "'$it'" })})")
         return
       }
 
-      if (indexExprValue !in operandType.fields) {
-        registerProblem(indexExpression, String.format("TypedDict \"%s\" has no key '%s'", operandType.name, indexExprValue))
+      val nonMatchingFields = indexExpressionValueOptions.filterNot { it in operandType.fields }
+      if (nonMatchingFields.isNotEmpty()) {
+        registerProblem(indexExpression, if (nonMatchingFields.size == 1)
+          "TypedDict \"${operandType.name}\" has no key '${nonMatchingFields[0]}'"
+        else "TypedDict \"${operandType.name}\" has no keys (${nonMatchingFields.joinToString(transform = { "'$it'" })})")
       }
     }
 
@@ -240,6 +245,23 @@ class PyTypedDictInspection : PyInspection() {
                                                   PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)))
           }
         }
+      }
+    }
+
+    private fun getIndexExpressionValueOptions(indexExpression: PyExpression?): List<String>? {
+      if (indexExpression == null) return null
+      val indexExprValue = PyEvaluator.evaluate(indexExpression, String::class.java)
+      if (indexExprValue == null) {
+        val type = myTypeEvalContext.getType(indexExpression) ?: return null
+        val members = PyTypeUtil.toStream(type)
+          .map { if (it is PyLiteralType) PyEvaluator.evaluate(it.expression, String::class.java) else null }
+          .toList()
+        return if (members.contains(null)) null
+        else members
+          .filterNotNull()
+      }
+      else {
+        return listOf(indexExprValue)
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -13,23 +13,23 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.editor.VcsLogEditor
 import com.intellij.vcs.log.ui.editor.VcsLogFile
 
-fun getLogId(editor: FileEditor): String? = VcsLogContentUtil.getLogUi(editor.component)?.id
+internal fun getLogId(editor: FileEditor): String? = VcsLogContentUtil.getLogUi(editor.component)?.id
 
-fun findSelectedLogIds(project: Project): Set<String> {
+internal fun findSelectedLogIds(project: Project): Set<String> {
   return FileEditorManager.getInstance(project).selectedEditors.mapNotNullTo(mutableSetOf(), ::getLogId)
 }
 
-fun getExistingLogIds(project: Project): Set<String> {
+internal fun getExistingLogIds(project: Project): Set<String> {
   return FileEditorManager.getInstance(project).allEditors.mapNotNullTo(mutableSetOf(), ::getLogId)
 }
 
-fun updateTabName(project: Project, ui: VcsLogUiEx) {
+internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
   val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
   val file = fileEditorManager.allEditors.first { getLogId(it) == ui.id }?.file
   file?.let { fileEditorManager.updateFilePresentation(it) }
 }
 
-fun <U : VcsLogUiEx> openLogTab(project: Project, logManager: VcsLogManager, name: String,
+internal fun <U : VcsLogUiEx> openLogTab(project: Project, logManager: VcsLogManager, name: String,
                                 factory: VcsLogManager.VcsLogUiFactory<U>, focus: Boolean): U {
   val logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
 
@@ -40,7 +40,7 @@ fun <U : VcsLogUiEx> openLogTab(project: Project, logManager: VcsLogManager, nam
   return logUi
 }
 
-fun closeLogTab(project: Project, tabId: String): Boolean {
+internal fun closeLogTab(project: Project, tabId: String): Boolean {
   val editorManager = FileEditorManager.getInstance(project)
 
   val logEditor = editorManager.allEditors.find { getLogId(it) == tabId } ?: return false

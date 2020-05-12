@@ -65,7 +65,7 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
     myHelper.renderElement(presentation, !myHelper.willBeImported(), true, PsiSubstitutor.EMPTY);
   }
 

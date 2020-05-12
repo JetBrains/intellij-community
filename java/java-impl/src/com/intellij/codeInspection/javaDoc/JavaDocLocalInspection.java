@@ -74,19 +74,19 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     return new OptionsPanel();
   }
 
-  protected LocalQuickFix createAddJavadocFix(@NotNull PsiElement nameIdentifier, boolean isOnTheFly) {
+  private static LocalQuickFix createAddJavadocFix(@NotNull PsiElement nameIdentifier, boolean isOnTheFly) {
     return isOnTheFly ? new AddJavadocFix(nameIdentifier) : null;
   }
 
-  protected LocalQuickFix createAddMissingTagFix(@NotNull String tag, @NotNull String value, boolean isOnTheFly) {
+  private static LocalQuickFix createAddMissingTagFix(@NotNull String tag, @NotNull String value) {
     return new AddMissingTagFix(tag, value);
   }
 
-  protected LocalQuickFix createAddMissingParamTagFix(@NotNull String name, boolean isOnTheFly) {
+  private static LocalQuickFix createAddMissingParamTagFix(@NotNull String name) {
     return new AddMissingParamTagFix(name);
   }
 
-  protected LocalQuickFix createRegisterTagFix(@NotNull String tag, boolean isOnTheFly) {
+  protected LocalQuickFix createRegisterTagFix(@NotNull String tag) {
     return new AddUnknownTagToCustoms(this, tag);
   }
 
@@ -832,17 +832,17 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
     @Override
     public LocalQuickFix addMissingTagFix(@NotNull String tag, @NotNull String value) {
-      return createAddMissingTagFix(tag, value, myOnTheFly);
+      return createAddMissingTagFix(tag, value);
     }
 
     @Override
     public LocalQuickFix addMissingParamTagFix(@NotNull String name) {
-      return createAddMissingParamTagFix(name, myOnTheFly);
+      return createAddMissingParamTagFix(name);
     }
 
     @Override
     public LocalQuickFix registerTagFix(@NotNull String tag) {
-      return createRegisterTagFix(tag, myOnTheFly);
+      return createRegisterTagFix(tag);
     }
   }
 }

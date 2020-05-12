@@ -26,8 +26,8 @@ enum class UIEventId {
   IncrementalSearchActivated,
   IncrementalSearchKeyTyped,
   IncrementalSearchCancelled,
-  IncrementalSearchNextPrevItemSelected
-
+  IncrementalSearchNextPrevItemSelected,
+  ShowUsagesPopupShowSettings
 }
 
 fun logUIEvent(eventId: UIEventId) {

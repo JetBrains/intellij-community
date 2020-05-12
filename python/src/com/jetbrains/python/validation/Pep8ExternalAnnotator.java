@@ -53,6 +53,7 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,7 +207,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Override
   public Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
-    ArrayList<String> options = Lists.newArrayList();
+    ArrayList<String> options = new ArrayList<>();
 
     if (!collectedInfo.ignoredErrors.isEmpty()) {
       options.add("--ignore=" + DEFAULT_IGNORED_ERRORS + "," + StringUtil.join(collectedInfo.ignoredErrors, ","));
@@ -293,6 +294,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           problemRange = new TextRange(offset, lineEndOffset);
         }
 
+        @NonNls
         final String message = "PEP 8: " + problem.myCode + " " + problem.myDescription;
         HighlightSeverity severity;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {

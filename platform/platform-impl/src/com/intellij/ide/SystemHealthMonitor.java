@@ -9,7 +9,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationFullContent;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -17,6 +16,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
@@ -38,7 +39,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true, null, null,
                                                                        null, PluginManagerCore.CORE_ID);
-  private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
 
   @Override
@@ -76,11 +76,19 @@ final class SystemHealthMonitor extends PreloadingActivity {
           (bundledJdk = JdkBundle.createBundled()) != null &&
           bundledJdk.isOperational();
 
-        NotificationAction switchAction = new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.switch")) {
+        NotificationAction switchAction = new NotificationAction(IdeBundle.messagePointer("action.SwitchToJBR.text")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             notification.expire();
-            ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(e);
+
+            String appName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
+            File config = new File(PathManager.getConfigPath(),
+                                   appName + (SystemInfo.isWindows ? (SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk") : ".jdk"));
+
+            if (!FileUtil.delete(config)) {
+              LOG.warn("Can't delete JDK configuration file: " + config.getAbsolutePath());
+            }
+            ApplicationManager.getApplication().restart();
           }
         };
 

@@ -115,7 +115,10 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
     final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
     if (settings.isPlain(file)) {
       final List<String> values = DocStringFormat.ALL_NAMES_BUT_PLAIN;
-      final int i = MessagesService.getInstance().showChooseDialog(null, null, "Docstring format:", "Select Docstring Type", ArrayUtilRt.toStringArray(values), values.get(0), null);
+      final int i = MessagesService.getInstance().showChooseDialog(null, null,
+                                                                   PyBundle.message("python.docstring.format"),
+                                                                   PyBundle.message("python.docstring.select.type"),
+                                                                   ArrayUtilRt.toStringArray(values), values.get(0), null);
       if (i < 0) {
         return false;
       }

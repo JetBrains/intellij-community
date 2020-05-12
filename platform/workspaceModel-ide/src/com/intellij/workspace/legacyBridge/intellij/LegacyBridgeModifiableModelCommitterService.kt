@@ -20,8 +20,8 @@ internal class LegacyBridgeModifiableModelCommitterService : ModifiableModelComm
       else rootModel.dispose()
     }
 
-    WorkspaceModel.getInstance(moduleModel.project).updateProjectModel {
-      diffs.forEach(it::addDiff)
+    WorkspaceModel.getInstance(moduleModel.project).updateProjectModel { builder ->
+      diffs.forEach { builder.addDiff(it) }
     }
   }
 }

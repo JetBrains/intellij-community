@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations
 
+import com.intellij.execution.ui.FragmentedSettings
 import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.*
 
@@ -17,7 +18,7 @@ class PredefinedLogFile() : BaseState() {
   var isEnabled by property(false)
 }
 
-open class RunConfigurationOptions : BaseState() {
+open class RunConfigurationOptions : BaseState(), FragmentedSettings {
   @Tag("output_file")
   class OutputFileOptions : BaseState() {
     @get:Attribute("path")
@@ -51,6 +52,9 @@ open class RunConfigurationOptions : BaseState() {
 
   @get:OptionTag(tag = "target", valueAttribute = "name", nameAttribute = "")
   var remoteTarget by string()
+
+  @get:XCollection(propertyElementName = "visibleFragments", elementName = "fragment", valueAttributeName = "name")
+  override var visibleFragments by stringSet()
 }
 
 open class LocatableRunConfigurationOptions : RunConfigurationOptions() {

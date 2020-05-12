@@ -6,6 +6,7 @@ import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.project.Project
+import com.intellij.util.io.exists
 
 object GrazieRemote {
   private fun isLibExists(lib: String) = GrazieDynamic.dynamicFolder.resolve(lib).exists() || GraziePlugin.libFolder.resolve(lib).exists()

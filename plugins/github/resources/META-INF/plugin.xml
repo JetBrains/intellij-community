@@ -15,6 +15,8 @@
       ]]>
   </description>
 
+  <resource-bundle>messages.GithubBundle</resource-bundle>
+
   <depends>com.intellij.modules.lang</depends>
   <depends>Git4Idea</depends>
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
@@ -56,20 +58,48 @@
   </extensions>
 
   <applicationListeners>
+    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager$PasswordStorageClearedListener"
+              topic="com.intellij.credentialStore.PasswordSafeSettingsListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+
+    <listener class="org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager"
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+
+    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider$AccountTokenListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+
+    <listener class="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager$AccountTokenListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+
+
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$AccountsListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$AccountsListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforeProjectCloseListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 
   <projectListeners>
+    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder$RemovalListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+
+
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$RemoteUrlsListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$RemoteUrlsListener"
               topic="git4idea.repo.GitRepositoryChangeListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforePluginUnloadListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>
 
@@ -129,5 +159,8 @@
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
     </group>
+
+    <action id="Github.Break.Api.Requests" internal="true"
+            class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"/>
   </actions>
 </idea-plugin>

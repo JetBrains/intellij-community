@@ -6,28 +6,20 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider;
-import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider;
-import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.lang.LangBundle;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,28 +57,18 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import java.awt.Component;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.AbstractAction;
-import javax.swing.InputMap;
-import javax.swing.JComponent;
-import javax.swing.JList;
-import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
-import javax.swing.ListCellRenderer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object> {
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
@@ -106,27 +89,52 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   private final GlobalSearchScope myProjectScope;
 
   protected final SmartPsiElementPointer<PsiElement> myPsiContext;
-  protected final List<ScopeDescriptor> myScopeDescriptors = new ArrayList<>();
 
   protected AbstractGotoSEContributor(@NotNull AnActionEvent event) {
     myProject = event.getRequiredData(CommonDataKeys.PROJECT);
     PsiElement context = GotoActionBase.getPsiContext(event);
     myPsiContext = context != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context) : null;
     myEverywhereScope = GlobalSearchScope.everythingScope(myProject);
-    ScopeChooserCombo.processScopes(
-      myProject, event.getDataContext(),
-      ScopeChooserCombo.OPT_LIBRARIES | ScopeChooserCombo.OPT_EMPTY_SCOPES,
-      new CommonProcessors.CollectProcessor<>(myScopeDescriptors));
+    List<ScopeDescriptor> scopeDescriptors = createScopes();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     if (myEverywhereScope.equals(projectScope)) {
       // just get the second scope, i.e. Attached Directories in DataGrip
-      ScopeDescriptor secondScope = JBIterable.from(myScopeDescriptors)
+      ScopeDescriptor secondScope = JBIterable.from(scopeDescriptors)
         .filter(o -> !o.scopeEquals(myEverywhereScope) && !o.scopeEquals(null))
         .first();
       projectScope = secondScope != null ? (GlobalSearchScope)secondScope.getScope() : myEverywhereScope;
     }
     myProjectScope = projectScope;
-    myScopeDescriptor = getInitialSelectedScope();
+    myScopeDescriptor = getInitialSelectedScope(scopeDescriptors);
+
+    myProject.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        myScopeDescriptor = getInitialSelectedScope(createScopes());
+      }
+    });
+  }
+
+  private List<ScopeDescriptor> createScopes() {
+    DataContext context = createContext();
+    List<ScopeDescriptor> res = new ArrayList<>();
+    ScopeChooserCombo.processScopes(
+      myProject, context,
+      ScopeChooserCombo.OPT_LIBRARIES | ScopeChooserCombo.OPT_EMPTY_SCOPES,
+      new CommonProcessors.CollectProcessor<>(res));
+
+    return res;
+  }
+
+  private DataContext createContext() {
+    DataContext parentContext = myProject == null ? null : SimpleDataContext.getProjectContext(myProject);
+    PsiElement context = myPsiContext != null ? myPsiContext.getElement() : null;
+    PsiFile file = context == null ? null : context.getContainingFile();
+
+    Map<String, Object> map = new HashMap<>();
+    map.put(CommonDataKeys.PSI_ELEMENT.getName(), context);
+    map.put(CommonDataKeys.PSI_FILE.getName(), file);
+    return SimpleDataContext.getSimpleContext(map, parentContext);
   }
 
   @Nullable
@@ -175,7 +183,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
         @Override
         boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
-          return ContainerUtil.process(myScopeDescriptors, processor);
+          return ContainerUtil.process(createScopes(), processor);
         }
 
         @Override
@@ -216,11 +224,11 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   @NotNull
-  private ScopeDescriptor getInitialSelectedScope() {
+  private ScopeDescriptor getInitialSelectedScope(List<ScopeDescriptor> scopeDescriptors) {
     String selectedScope = myProject == null ? null : getSelectedScopes(myProject).get(getClass().getSimpleName());
     if (Registry.is("search.everywhere.show.scopes") && Registry.is("search.everywhere.sticky.scopes") &&
         StringUtil.isNotEmpty(selectedScope)) {
-      for (ScopeDescriptor descriptor : myScopeDescriptors) {
+      for (ScopeDescriptor descriptor : scopeDescriptors) {
         if (!selectedScope.equals(descriptor.getDisplayName()) || descriptor.scopeEquals(null)) continue;
         return descriptor;
       }
@@ -527,8 +535,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         CHOOSE, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
       String shortcutText2 = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(
         TOGGLE, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
-      e.getPresentation().setDescription("Choose scope (" + shortcutText + ")<p/>" +
-                                         "Toggle scope (" + shortcutText2 + ")");
+      e.getPresentation().setDescription(LangBundle.message("action.choose.scope.p.toggle.scope.description", shortcutText, shortcutText2));
       JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
       if (button != null) {
         button.setBackground(selection.getColor());

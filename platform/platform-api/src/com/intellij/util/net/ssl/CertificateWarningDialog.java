@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBDimension;
@@ -27,8 +26,8 @@ public class CertificateWarningDialog extends DialogWrapper {
 
   public static CertificateWarningDialog createUntrustedCertificateWarning(@NotNull X509Certificate certificate) {
     return new CertificateWarningDialog(certificate,
-                                        "Untrusted Server's Certificate",
-                                        "Server's certificate is not trusted");
+                                        IdeBundle.message("dialog.title.untrusted.server.s.certificate"),
+                                        IdeBundle.message("text.server.s.certificate.trusted"));
   }
 
   public static CertificateWarningDialog createExpiredCertificateWarning(@NotNull X509Certificate certificate) {
@@ -44,7 +43,7 @@ public class CertificateWarningDialog extends DialogWrapper {
 
   public CertificateWarningDialog(@NotNull X509Certificate certificate,
                                   @NotNull @NlsContexts.DialogTitle String title,
-                                  @NotNull @NlsUI.Text String message) {
+                                  @NotNull @NlsContexts.DetailedDescription String message) {
     super((Project)null, false);
 
     myRootPanel.setPreferredSize(new JBDimension(550, 650));

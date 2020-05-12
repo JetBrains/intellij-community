@@ -53,7 +53,7 @@ class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {
 }
 
 internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule: LegacyBridgeModule) : FacetModelBase() {
-  protected val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create<FacetEntity, Facet<*>>()
+  protected val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
 
   override fun getAllFacets(): Array<Facet<*>> {
     return entityToFacet.values.toTypedArray()

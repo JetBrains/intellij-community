@@ -196,7 +196,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final VirtualFile vFile = viewProvider.getVirtualFile();
       AstLoadingFilter.assertTreeLoadingAllowed(vFile);
       if (myManager.isAssertOnFileLoading(vFile)) {
-        LOG.error("Access to tree elements not allowed. path='" + vFile.getPresentableUrl() + "'");
+        reportProhibitedAstAccess(vFile);
       }
     }
 
@@ -223,6 +223,29 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       return treeElement;
     }
+  }
+
+  /**
+   * Reports unexpected AST loading in tests.<p></p>
+   *
+   * AST loading is expensive and should be avoided for files that aren't already opened in the editor.
+   * Resolving references during editor highlighting should be done via stubs (see {@link com.intellij.extapi.psi.StubBasedPsiElementBase})
+   * or other indices, otherwise highlighting can become quite slow and memory-hungry due to parsing a lot of
+   * other files and building their ASTs.<p></p>
+   *
+   * To help prevent this performance issue, there's a mode in tests when AST loading for non-opened files is prohibited.
+   * To fix it, find in the stack trace where an AST-requiring API is called and consider using stubs or other indices instead.
+   * In a rare case when loading AST is actually OK (e.g. during reference search for "unused symbol" highlighting),
+   * you can switch off this check, e.g. via {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#allowTreeAccessForFile}.
+   * <p></p>
+   *
+   * Note that this failure can be nondeterministic due to garbage collector which might or might not have collected previously loaded AST.
+   * To make debugging simpler in this case, you can increase the chance of failure by starting the test with a smaller Xmx.
+   */
+  private static void reportProhibitedAstAccess(VirtualFile vFile) {
+    LOG.error("Access to tree elements not allowed for '" + vFile.getPresentableUrl() + "'.\n" +
+              "Try using stub-based PSI API to avoid expensive AST loading for files that aren't already opened in the editor.\n" +
+              "Consult this method's javadoc for more details.");
   }
 
   @NotNull

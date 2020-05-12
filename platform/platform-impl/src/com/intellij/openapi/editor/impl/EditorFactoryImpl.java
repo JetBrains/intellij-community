@@ -173,15 +173,15 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public Editor createEditor(@NotNull final Document document, final Project project, @NotNull final FileType fileType, final boolean isViewer) {
-    Editor editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
-    ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType));
+    EditorEx editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
+    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType));
     return editor;
   }
 
   @Override
   public Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer) {
-    Editor editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
-    ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
+    EditorEx editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
+    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
     return editor;
   }
 
@@ -191,12 +191,12 @@ public class EditorFactoryImpl extends EditorFactory {
                              @NotNull VirtualFile file,
                              boolean isViewer,
                              @NotNull EditorKind kind) {
-    Editor editor = createEditor(document, isViewer, project, kind);
-    ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
+    EditorEx editor = createEditor(document, isViewer, project, kind);
+    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
     return editor;
   }
 
-  private Editor createEditor(@NotNull Document document, boolean isViewer, Project project, @NotNull EditorKind kind) {
+  private @NotNull EditorEx createEditor(@NotNull Document document, boolean isViewer, Project project, @NotNull EditorKind kind) {
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
     EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind);
     myEditors.add(editor);
@@ -276,7 +276,6 @@ public class EditorFactoryImpl extends EditorFactory {
   public static final class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
-    @SuppressWarnings("NonDefaultConstructor")
     public MyRawTypedHandler(TypedActionHandler delegate) {
       myDelegate = delegate;
     }

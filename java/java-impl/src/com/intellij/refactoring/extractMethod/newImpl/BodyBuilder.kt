@@ -68,9 +68,10 @@ class BodyBuilder(private val factory: PsiElementFactory) {
   }
 
   private fun wrapExpression(expression: PsiExpression, shouldBeReturned: Boolean): Pair<PsiStatement, PsiExpression> {
-    val statement = when (shouldBeReturned) {
-      false -> factory.createStatementFromText("${expression.text};", null)
-      true -> factory.createStatementFromText("return ${expression.text};", null)
+    val statement = if (shouldBeReturned) {
+      factory.createStatementFromText("return ${expression.text};", expression.context)
+    } else {
+      factory.createStatementFromText("${expression.text};", expression.context)
     }
     val block = factory.createCodeBlockFromText("{\n}", expression.context)
     val addedStatement = block.add(statement) as PsiStatement

@@ -2,13 +2,13 @@
   <module value="com.intellij.modules.remoteServers"/>
 
   <extensionPoints>
-    <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType"/>
-    <extensionPoint name="remoteServer.deploymentSource.type" interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"/>
-
-    <extensionPoint name="remoteServer.util.CloudDeploymentRuntimeProvider"
-                    interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
+    <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType" dynamic="true"/>
+    <extensionPoint name="remoteServer.deploymentSource.type"
+                    interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"
+                    dynamic="true"/>
     <extensionPoint name="remoteServer.runConfigurationExtension"
-                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
+                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -30,20 +30,26 @@
                     serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewImpl"/>
     <projectService serviceInterface="com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager"
                     serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentConfigurationManagerImpl"/>
-    <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
-    <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
-                        serviceImplementation="com.intellij.remoteServer.impl.runtime.log.ConsoleTerminalProvider"/>
-    <applicationInitializedListener implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"/>
+    <remoteServer.deploymentSource.type
+      implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
+    <applicationInitializedListener
+      implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"/>
 
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.remoteServer.impl.runtime.ServerConnectionManagerImpl$DisconnectFromRemovedServer"
+              topic="com.intellij.remoteServer.configuration.RemoteServerListener"/>
+  </applicationListeners>
+
   <actions>
     <group id="RemoteServersViewToolbar" text="Remote Servers">
       <action id="RemoteServers.ConnectServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerConnectAction"
               text="Connect" description="Connect to the selected remote server" icon="AllIcons.Actions.Execute"/>
-      <action id="RemoteServers.DisconnectServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerDisconnectAction"
+      <action id="RemoteServers.DisconnectServer"
+              class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerDisconnectAction"
               text="Disconnect" description="Disconnect from the selected remote server" icon="AllIcons.Actions.Suspend"/>
       <action id="RemoteServers.EditServerConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerConfigAction"
               text="Edit Configuration" description="Edit the selected remote server configuration" icon="AllIcons.Actions.EditSource"

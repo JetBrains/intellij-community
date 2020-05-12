@@ -4,64 +4,77 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.TypedEntity
 import gnu.trove.TIntHashSet
 
-internal open class EntityFamily<E : TypedEntity> internal constructor(
-  protected open val entities: List<PEntityData<E>?>,
-  protected val emptySlots: TIntHashSet
-) {
+internal class ImmutableEntityFamily<E : TypedEntity>(
+  override val entities: ArrayList<PEntityData<E>?>,
+  private val emptySlotsSize: Int
+) : EntityFamily<E>() {
 
-  operator fun get(idx: Int) = entities[idx]
+  fun toMutable() = MutableEntityFamily(entities, true)
 
-  fun copyToMutable() = MutableEntityFamily(entities.toMutableList(), true)
+  override fun size(): Int = entities.size - emptySlotsSize
 
-  fun all() = entities.asSequence().filterNotNull()
+  inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
+    var emptySlotsCounter = 0
 
-  fun exists(id: Int) = entities[id] != null
-
-  val size: Int
-    get() = entities.size - emptySlots.size()
-
-  companion object {
-    fun <E : TypedEntity> empty(): EntityFamily<E> = Empty as EntityFamily<E>
-
-    private object Empty : EntityFamily<PTypedEntity<*>>(emptyList(),
-                                                         TIntHashSet())
+    entities.forEachIndexed { idx, entity ->
+      if (entity == null) {
+        emptySlotsCounter++
+      }
+      else {
+        assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
+        entityAssertion(entity)
+      }
+    }
+    assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
   }
 }
 
 internal class MutableEntityFamily<E : TypedEntity>(
-  override val entities: MutableList<PEntityData<E>?>,
-  var familyCopiedToModify: Boolean
-) : EntityFamily<E>(
-  entities,
-  TIntHashSet().also { entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) } }
-) {
+  override var entities: ArrayList<PEntityData<E>?>,
+  private var freezed: Boolean
+) : EntityFamily<E>() {
+
+  // This set contains empty slots at the moment of MutableEntityFamily creation
+  //   New empty slots MUST NOT be added this this set.
+  // TODO Fill the reason
+  private val availableSlots: TIntHashSet = TIntHashSet().also {
+    entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) }
+  }
+
+  private var amountOfGapsInEntities = availableSlots.size()
 
   private val copiedToModify: TIntHashSet = TIntHashSet()
 
   fun remove(id: Int) {
-    if (id in emptySlots) return
+    if (id in availableSlots) error("id $id is already removed")
+    startWrite()
 
-    emptySlots.add(id)
     copiedToModify.remove(id)
     entities[id] = null
+    amountOfGapsInEntities++
   }
 
   fun add(other: PEntityData<E>) {
-    if (emptySlots.isEmpty) {
+    startWrite()
+
+    if (availableSlots.isEmpty) {
       other.id = entities.size
-      entities += other
+      entities.add(other)
     }
     else {
-      val emptySlot = emptySlots.pop()
+      val emptySlot = availableSlots.pop()
       other.id = emptySlot
       entities[emptySlot] = other
+      amountOfGapsInEntities--
     }
     copiedToModify.add(other.id)
   }
 
   fun replaceById(entity: PEntityData<E>) {
     val id = entity.id
-    emptySlots.remove(id)
+    if (id in availableSlots) error("Nothing to replace")
+    startWrite()
+
     entities[id] = entity
     copiedToModify.add(id)
   }
@@ -69,11 +82,27 @@ internal class MutableEntityFamily<E : TypedEntity>(
   fun getEntityDataForModification(id: PId<E>): PEntityData<E> {
     val entity = entities[id.arrayId] ?: error("Nothing to modify")
     if (id.arrayId in copiedToModify) return entity
+    startWrite()
 
     val clonedEntity = entity.clone()
     entities[id.arrayId] = clonedEntity
     copiedToModify.add(id.arrayId)
     return clonedEntity
+  }
+
+  fun toImmutable(): ImmutableEntityFamily<E> {
+    freezed = true
+    copiedToModify.clear()
+    return ImmutableEntityFamily(entities, amountOfGapsInEntities)
+  }
+
+  override fun size(): Int = entities.size - amountOfGapsInEntities
+
+  private fun startWrite() {
+    if (!freezed) return
+
+    entities = ArrayList(entities)
+    freezed = false
   }
 
   private fun TIntHashSet.pop(): Int {
@@ -84,12 +113,22 @@ internal class MutableEntityFamily<E : TypedEntity>(
     return res
   }
 
-  fun freeze() {
-    this.familyCopiedToModify = false
-    this.copiedToModify.clear()
-  }
-
   companion object {
-    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(mutableListOf(), true)
+    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(ArrayList(), false)
   }
+}
+
+internal sealed class EntityFamily<E : TypedEntity> {
+
+  internal abstract val entities: List<PEntityData<E>?>
+
+  operator fun get(idx: Int) = entities.getOrNull(idx)
+
+  fun all() = entities.asSequence().filterNotNull()
+
+  fun exists(id: Int) = get(id) != null
+
+  fun isEmpty() = entities.isEmpty()
+
+  abstract fun size(): Int
 }

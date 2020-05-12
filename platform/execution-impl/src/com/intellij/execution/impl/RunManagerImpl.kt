@@ -9,6 +9,8 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -16,7 +18,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -46,6 +47,7 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -192,7 +194,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
     override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
-      val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
+      val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
       for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensionList(project)) {
         result.put(provider.id.toString(), provider)
       }
@@ -204,19 +206,28 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    val messageBusConnection = project.messageBus.connect()
+    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
-        selectedConfiguration?.let {
-          iconCache.remove(it.uniqueID)
-        }
+        clearSelectedConfigurationIcon()
 
         deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
       }
     })
 
-    BeforeRunTaskProvider.EXTENSION_POINT_NAME.getPoint(project).addExtensionPointListener(
-      ExtensionPointChangeListener { stringIdToBeforeRunProvider.drop() },
-      true, project)
+    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        clearSelectedConfigurationIcon()
+      }
+    })
+
+    BeforeRunTaskProvider.EXTENSION_POINT_NAME.getPoint(project).addChangeListener(Runnable(stringIdToBeforeRunProvider::drop), project)
+  }
+
+  private fun clearSelectedConfigurationIcon() {
+    selectedConfiguration?.let {
+      iconCache.remove(it.uniqueID)
+    }
   }
 
   @TestOnly
@@ -797,9 +808,28 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun runConfigurationFirstLoaded() {
+    if (project.isDefault) {
+      return
+    }
+
     if (selectedConfiguration == null) {
       notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId
       selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
+
+      if (selectedConfiguration == null && notYetAppliedInitialSelectedConfigurationId == null) {
+        // This happens when there's exactly one RC in the project and it is stored in .run.xml file. It will be loaded later, and we need to set it as selected.
+        // This may also happen if there are several RCs but all stored in .run.xml files AND workspace.xml file is malformed or deleted or
+        // doesn't contain info about selected RC for any other reason. We'll set any RC as selected in this case.
+        StartupManager.getInstance(project).runAfterOpened {
+          GuiUtils.invokeLaterIfNeeded(Runnable {
+            if (selectedConfiguration == null) {
+              selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
+            }
+          },
+          ModalityState.NON_MODAL,
+          project.disposed)
+        }
+      }
     }
   }
 
@@ -950,7 +980,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
       }
       else {
-        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks, true, false)
+        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
+                                                                     ownIsOnlyEnabled = true, isDisableTemplateTasks = false)
         return
       }
     }

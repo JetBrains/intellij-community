@@ -196,10 +196,13 @@ public class CompilerMessagesService implements BuildViewService {
         final Project project = myProject;
         if (!project.isDisposed()) {
           synchronized (myMessageViewLock) {
-            if (myErrorTreeView == null && MessageView.SERVICE.getInstance(project).getContentManager().getContentCount() > 0) {
-              // only do something if there are already contans from previous compilations present
-              // this will add the new content for this task and clear messages from previous compilations
-              openMessageView(sessionId);
+            if (myErrorTreeView == null) {
+              MessageView messageView = project.getServiceIfCreated(MessageView.class);
+              if (messageView != null && messageView.getContentManager().getContentCount() > 0) {
+                // only do something if there are already contains from previous compilations present
+                // this will add the new content for this task and clear messages from previous compilations
+                openMessageView(sessionId);
+              }
             }
           }
         }
@@ -266,15 +269,17 @@ public class CompilerMessagesService implements BuildViewService {
       component = myErrorTreeView.getComponent();
     }
 
-    final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
-    content.setHelpId(HelpID.COMPILER);
-    CONTENT_ID_KEY.set(content, myContentId);
-    SESSION_ID_KEY.set(content, sessionId);
-    messageView.getContentManager().addContent(content);
-    myCloseListener.setContent(content, messageView.getContentManager());
-    removeOldContents(myProject, sessionId, content);
-    messageView.getContentManager().setSelectedContent(content);
+    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    messageView.runWhenInitialized(() -> {
+      Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
+      content.setHelpId(HelpID.COMPILER);
+      CONTENT_ID_KEY.set(content, myContentId);
+      SESSION_ID_KEY.set(content, sessionId);
+      messageView.getContentManager().addContent(content);
+      myCloseListener.setContent(content, messageView.getContentManager());
+      removeOldContents(myProject, sessionId, content);
+      messageView.getContentManager().setSelectedContent(content);
+    });
   }
 
   private void removeOldContents(final Project project, Object sessionId, final Content notRemove) {

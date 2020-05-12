@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ListSelection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

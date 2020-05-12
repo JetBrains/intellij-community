@@ -202,9 +202,7 @@ public class UnusedSymbolUtil {
         useScope = GlobalSearchScope.projectScope(project).uniteWith((GlobalSearchScope)useScope);
       }
 
-      // if we've resolved all references, find usages will be fast
-      PsiSearchHelper.SearchCostResult cheapEnough = RefResolveService.ENABLED && RefResolveService.getInstance(project).isUpToDate() ? PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES :
-                                                     searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
+      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
           // try to search for private and package-private members unconditionally - they are unlikely to have millions of usages
           && (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED))) {

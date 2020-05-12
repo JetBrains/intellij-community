@@ -57,7 +57,7 @@ abstract class FoldRegionsTree {
 
   protected abstract boolean hasBlockInlays();
 
-  protected abstract int getBlockInlaysHeight(int startOffset, int endOffset);
+  protected abstract int getFoldedBlockInlaysHeight(int foldStartOffset, int foldEndOffset);
 
   CachedData rebuild() {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
@@ -358,7 +358,7 @@ abstract class FoldRegionsTree {
         topFoldedInlaysHeight = ArrayUtil.newIntArray(count);
         int inlaysHeightSum = 0;
         for (int i = 0; i < count; i++) {
-          topFoldedInlaysHeight[i] = (inlaysHeightSum += getBlockInlaysHeight(topStartOffsets[i], topEndOffsets[i]));
+          topFoldedInlaysHeight[i] = (inlaysHeightSum += getFoldedBlockInlaysHeight(topStartOffsets[i], topEndOffsets[i] + 1));
         }
       }
       else {

@@ -3,7 +3,7 @@
 package com.intellij.openapi.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsUI.Button
+import com.intellij.openapi.util.NlsContexts.Button
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import javax.swing.Icon

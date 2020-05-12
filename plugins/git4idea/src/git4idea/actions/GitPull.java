@@ -44,7 +44,7 @@ public class GitPull extends GitMergeAction {
 
   @Override
   protected DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
-                                                                        @NotNull VirtualFile defaultRoot) {
+                                      @NotNull VirtualFile defaultRoot) {
     final GitPullDialog dialog = new GitPullDialog(project, gitRoots, defaultRoot);
     if (!dialog.showAndGet()) {
       return null;

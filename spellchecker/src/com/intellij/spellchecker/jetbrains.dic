@@ -361,6 +361,7 @@ javadoc
 javaee
 javafx
 javascript
+javassist
 javax
 jaxb
 jaxen
@@ -489,6 +490,7 @@ msql
 mssql
 msvc
 multi
+multihost
 multilinestring
 multipart
 multipoint
@@ -621,6 +623,7 @@ portlet
 posix
 postfix
 postgres
+postgresql
 postprocessing
 postprocessor
 pragma

@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public class HgBrancher {
 
   public void compare(@NotNull final String branchName, @NotNull final List<HgRepository> repositories,
                       @NotNull final HgRepository selectedRepository) {
-    new Task.Backgroundable(myProject, "Comparing with " + branchName) {
+    new Task.Backgroundable(myProject, HgBundle.message("hg4idea.branch.comparing", branchName)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).compare(branchName, repositories, selectedRepository);

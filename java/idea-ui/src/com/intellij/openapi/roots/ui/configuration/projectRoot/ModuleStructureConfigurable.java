@@ -19,7 +19,9 @@ import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -59,7 +61,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
+public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator, Configurable.WithEpDependencies {
   private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
     final NamedConfigurable<?> configurable1 = o1.getConfigurable();
     final NamedConfigurable<?> configurable2 = o2.getConfigurable();
@@ -203,6 +205,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   protected boolean updateMultiSelection(final List<? extends NamedConfigurable> selectedConfigurables) {
     return FacetStructureConfigurable.getInstance(myProject).updateMultiSelection(selectedConfigurables, getDetailsComponent());
+  }
+
+  @Override
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Collections.singletonList(ModuleStructureExtension.EP_NAME);
   }
 
   private void updateModuleEditorSelection(final NamedConfigurable configurable) {

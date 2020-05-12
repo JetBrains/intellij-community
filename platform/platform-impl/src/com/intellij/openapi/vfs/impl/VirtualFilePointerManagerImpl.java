@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.PathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.AsyncFileListener.ChangeApplier;
@@ -277,7 +278,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   // convert \ -> /
-  // convert // -> /
+  // convert // -> / (except // at the beginning of a UNC path)
   // convert /. ->
   // trim trailing /
   @NotNull
@@ -291,7 +292,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
       char next = path.charAt(slash + 1);
 
-      if (next == '/' && !(i == 0 && SystemInfo.isWindows) || // additional condition for Windows UNC
+      if (next == '/' && i != 0 ||
+          next == '/' && !SystemInfo.isWindows || // additional condition for Windows UNC
+          next == '/' && SystemInfo.isWindows && slash == 2 && path.charAt(1) == ':' && PathUtil.isDriveLetter(path.charAt(0)) ||   // Z://foo -> Z:/foo
           next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
         return cleanupTail(path, slash);
       }
@@ -664,9 +667,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       synchronized (this) {
         totalPointers = myRoots.values().stream().flatMapToInt(myPointers->myPointers.values().stream().mapToInt(root -> root.pointersUnder)).sum();
       }
-      LOG.warn("VirtualFilePointerManagerImpl.prepareChange("+eventsSize+" events): "+prepareElapsedMs+"ms." +
-               " after(toFireEvents: "+toFireEvents.size()+", toUpdateUrl: "+toUpdateUrls+", eventList: "+eventList+"): "+afterElapsedMs+"ms." +
-               " total pointers: "+totalPointers);
+      LOG.warn("VirtualFilePointerManagerImpl.prepareChange("+eventsSize+" events): "+prepareElapsedMs+"ms. total pointers: "+totalPointers
+               +"; afterElapsedMs: "+afterElapsedMs+"ms.; eventList.size(): "+eventList.size()+
+               "; toFireEvents.size(): "+toFireEvents.size()+"; toUpdateUrls.size(): "+toUpdateUrls.size()+"; eventList: "+
+               ContainerUtil.getFirstItems(eventList, 100));
     }
   }
 

@@ -1,19 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
-import static com.intellij.util.containers.ContainerUtil.all;
-import static com.intellij.util.containers.ContainerUtil.exists;
-import static com.intellij.util.containers.ContainerUtil.filter;
-import static com.intellij.util.containers.ContainerUtil.find;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtil.map2Set;
-import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
-import static com.intellij.util.containers.ContainerUtil.reverse;
-import static com.intellij.util.containers.ContainerUtil.sorted;
-import static com.intellij.util.containers.ContainerUtil.subtract;
-import static java.util.Collections.unmodifiableList;
-
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -28,15 +15,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -50,19 +31,14 @@ import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.*;
+import static java.util.Collections.unmodifiableList;
 
 public class NewMappings implements Disposable {
   private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparing(it -> it.root.getPath());
@@ -96,19 +72,13 @@ public class NewMappings implements Disposable {
     myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
       .usePassThroughInUnitTestMode();
 
-    vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, () -> {
-      if (!myProject.isDisposed()) {
-        activateActiveVcses();
-      }
-    });
-
     myFilePointerListener = new VirtualFilePointerListener() {
       @Override
       public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
         scheduleMappedRootsUpdate();
       }
     };
-    VcsRootChecker.EXTENSION_POINT_NAME.addExtensionPointListener(() -> scheduleMappedRootsUpdate(), project);
+    VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener(() -> scheduleMappedRootsUpdate(), project);
   }
 
   @TestOnly
@@ -205,6 +175,8 @@ public class NewMappings implements Disposable {
     myRootUpdateQueue.cancelAllUpdates();
 
     if (!myActivated) return;
+    LOG.debug("updateMappedRoots");
+
     List<VcsDirectoryMapping> mappings = myMappings;
     Mappings newMappedRoots = collectMappedRoots(mappings);
 

@@ -10,14 +10,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider
 import com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl
 import com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl.needGenerateInternalIgnoreFile
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,7 +39,7 @@ class GitIgnoreInStoreDirGeneratorActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (!project.isDirectoryBased || project.isDefault) return
 
-    ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       project.service<GitIgnoreInStoreDirGenerator>().run()
     }
   }

@@ -2,6 +2,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
@@ -297,7 +298,7 @@ public final class ProjectUtil {
     return path.contains("://") || path.contains("\\\\");
   }
 
-  public static Project @NotNull [] getOpenProjects() {
+  public static @NotNull Project @NotNull [] getOpenProjects() {
     ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
     return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
   }
@@ -336,6 +337,7 @@ public final class ProjectUtil {
                                                 IdeBundle.message("button.new.frame"),
                                                 Messages.getQuestionIcon(),
                                                 new ProjectNewWindowDoNotAskOption());
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
         return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
       }
       else {
@@ -346,6 +348,7 @@ public final class ProjectUtil {
                                                       CommonBundle.getCancelButtonText(),
                                                       Messages.getQuestionIcon(),
                                                       new ProjectNewWindowDoNotAskOption());
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
         return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
                exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
       }
@@ -372,6 +375,7 @@ public final class ProjectUtil {
       },
       MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
       Messages.getQuestionIcon());
+    LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
     return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
            exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
            exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
@@ -414,7 +418,12 @@ public final class ProjectUtil {
       AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(project));
       frame.toFront();
       if (!SystemInfo.isMac && !frame.isAutoRequestFocus()) {
-        IdeFocusManager.getInstance(project).requestFocus(mostRecentFocusOwner, true);
+        if (mostRecentFocusOwner != null) {
+          IdeFocusManager.getInstance(project).requestFocus(mostRecentFocusOwner, true);
+        }
+        else {
+          LOG.warn("frame.getMostRecentFocusOwner() is null");
+        }
       }
     }
     else {

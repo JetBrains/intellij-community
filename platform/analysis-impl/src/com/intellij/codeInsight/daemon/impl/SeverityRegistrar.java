@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -29,6 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class SeverityRegistrar implements Comparator<HighlightSeverity>, ModificationTracker {
@@ -41,16 +42,16 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
 
   @NonNls private static final String INFO_TAG = "info";
   @NonNls private static final String COLOR_ATTRIBUTE = "color";
-  private final Map<String, SeverityBasedTextAttributes> myMap = ContainerUtil.newConcurrentMap();
-  private final Map<String, Color> myRendererColors = ContainerUtil.newConcurrentMap();
+  private final Map<String, SeverityBasedTextAttributes> myMap = new ConcurrentHashMap<>();
+  private final Map<String, Color> myRendererColors = new ConcurrentHashMap<>();
   static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = Topic.create("SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
   private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = Topic.create("STANDARD_SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_CHILDREN);
-  @NotNull private final MessageBus myMessageBus;
+  private final @NotNull MessageBus myMessageBus;
 
   private volatile OrderMap myOrderMap;
   private JDOMExternalizableStringList myReadOrder;
 
-  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = ContainerUtil.newConcurrentMap();
+  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new ConcurrentHashMap<>();
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
@@ -73,8 +74,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
     ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
   }
 
-  @NotNull
-  public static SeverityRegistrar getSeverityRegistrar(@Nullable Project project) {
+  public static @NotNull SeverityRegistrar getSeverityRegistrar(@Nullable Project project) {
     return project == null
            ? InspectionProfileManager.getInstance().getSeverityRegistrar()
            : InspectionProfileManager.getInstance(project).getCurrentProfile().getProfileManager().getSeverityRegistrar();
@@ -107,8 +107,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
     return myMap.remove(severity.getName());
   }
 
-  @NotNull
-  public HighlightInfoType.HighlightInfoTypeImpl getHighlightInfoTypeBySeverity(@NotNull HighlightSeverity severity) {
+  public @NotNull HighlightInfoType.HighlightInfoTypeImpl getHighlightInfoTypeBySeverity(@NotNull HighlightSeverity severity) {
     HighlightInfoType infoType = STANDARD_SEVERITIES.get(severity.getName());
     if (infoType != null) {
       return (HighlightInfoType.HighlightInfoTypeImpl)infoType;
@@ -126,8 +125,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
     return myMap.get(severity.getName());
   }
 
-  @Nullable
-  public TextAttributes getTextAttributesBySeverity(@NotNull HighlightSeverity severity) {
+  public @Nullable TextAttributes getTextAttributesBySeverity(@NotNull HighlightSeverity severity) {
     final SeverityBasedTextAttributes infoType = getAttributesBySeverity(severity);
     if (infoType != null) {
       return infoType.getAttributes();
@@ -214,13 +212,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
     }
   }
 
-  @NotNull
-  public List<HighlightSeverity> getAllSeverities() {
+  public @NotNull List<HighlightSeverity> getAllSeverities() {
     return getSortedSeverities(getOrderMap());
   }
 
-  @NotNull
-  private static List<HighlightSeverity> getSortedSeverities(OrderMap map) {
+  private static @NotNull List<HighlightSeverity> getSortedSeverities(OrderMap map) {
     return Arrays.stream(map.keys())
                  .map(o -> (HighlightSeverity)o)
                  .sorted((o1, o2) -> compare(o1, o2, map))
@@ -247,8 +243,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
     return ArrayUtil.max(getOrderMap().getValues());
   }
 
-  @Nullable
-  public HighlightSeverity getSeverity(@NotNull String name) {
+  public @Nullable HighlightSeverity getSeverity(@NotNull String name) {
     final HighlightInfoType type = STANDARD_SEVERITIES.get(name);
     if (type != null) return type.getSeverity(null);
     final SeverityBasedTextAttributes attributes = myMap.get(name);
@@ -283,8 +278,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
     return o1 - o2;
   }
 
-  @NotNull
-  private OrderMap getOrderMap() {
+  private @NotNull OrderMap getOrderMap() {
     OrderMap orderMap;
     OrderMap defaultOrder = null;
     while ((orderMap = myOrderMap) == null) {
@@ -302,8 +296,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
 
   private static final AtomicFieldUpdater<SeverityRegistrar, OrderMap> ORDER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(SeverityRegistrar.class, OrderMap.class);
 
-  @NotNull
-  private static OrderMap fromList(@NotNull List<? extends HighlightSeverity> orderList) {
+  private static @NotNull OrderMap fromList(@NotNull List<? extends HighlightSeverity> orderList) {
     if (orderList.size() != new HashSet<>(orderList).size()) {
       LOG.error("Severities order list MUST contain only unique severities: " + orderList);
     }
@@ -315,8 +308,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
     return new OrderMap(map);
   }
 
-  @NotNull
-  private List<HighlightSeverity> getDefaultOrder() {
+  private @NotNull List<HighlightSeverity> getDefaultOrder() {
     Collection<SeverityBasedTextAttributes> values = myMap.values();
     List<HighlightSeverity> order = new ArrayList<>(STANDARD_SEVERITIES.size() + values.size());
     for (HighlightInfoType type : STANDARD_SEVERITIES.values()) {
@@ -411,13 +403,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
       myType = type;
     }
 
-    @NotNull
-    public TextAttributes getAttributes() {
+    public @NotNull TextAttributes getAttributes() {
       return myAttributes;
     }
 
-    @NotNull
-    public HighlightInfoType.HighlightInfoTypeImpl getType() {
+    public @NotNull HighlightInfoType.HighlightInfoTypeImpl getType() {
       return myType;
     }
 
@@ -426,8 +416,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
       myType.writeExternal(element);
     }
 
-    @NotNull
-    public HighlightSeverity getSeverity() {
+    public @NotNull HighlightSeverity getSeverity() {
       return myType.getSeverity(null);
     }
 

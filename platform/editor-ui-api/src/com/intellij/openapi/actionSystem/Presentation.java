@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;
 import static com.intellij.openapi.util.NlsActions.ActionText;
@@ -88,6 +90,10 @@ public final class Presentation implements Cloneable {
    * The actual value is a Boolean.
    */
   @NonNls public static final String PROP_ENABLED = "enabled";
+  /**
+   * value: Boolean
+   */
+  @NonNls public static final String STRIP_MNEMONIC = "stripMnemonic";
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
@@ -111,6 +117,10 @@ public final class Presentation implements Cloneable {
     myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(text);
   }
 
+  public Presentation(@NotNull Supplier<@ActionText String> dynamicText) {
+    myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(dynamicText.get());
+  }
+
   public void addPropertyChangeListener(@NotNull PropertyChangeListener l) {
     PropertyChangeSupport support = myChangeSupport;
     if (support == null) {
@@ -126,9 +136,17 @@ public final class Presentation implements Cloneable {
     }
   }
 
+  private static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
+  
   public String getText() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
-    return textWithMnemonic == null ? null : textWithMnemonic.getText();
+    String text = textWithMnemonic == null ? null : textWithMnemonic.getText();
+
+    if (text != null && Boolean.TRUE.equals(getClientProperty(STRIP_MNEMONIC))) {
+      Matcher matcher = MNEMONIC.matcher(text);
+      return matcher.replaceAll("");
+    }
+    return text;
   }
 
   /**
@@ -156,11 +174,12 @@ public final class Presentation implements Cloneable {
 
   @NotNull
   public Supplier<TextWithMnemonic> getTextWithMnemonic(@Nls(capitalization = Nls.Capitalization.Title) @NotNull Supplier<String> text,
-                                                                  boolean mayContainMnemonic) {
+                                                        boolean mayContainMnemonic) {
     Supplier<TextWithMnemonic> textWithMnemonic = () -> null;
-    if (text.get() != null) {
+    String txt = text.get();
+    if (txt != null) {
       if (mayContainMnemonic) {
-        textWithMnemonic = () -> TextWithMnemonic.parse(text.get());
+        textWithMnemonic = () -> TextWithMnemonic.parse(txt);
 
         UISettings uiSettings = UISettings.getInstanceOrNull();
         if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
@@ -169,7 +188,7 @@ public final class Presentation implements Cloneable {
         }
       }
       else {
-        textWithMnemonic = () -> TextWithMnemonic.fromPlainText(text.get());
+        textWithMnemonic = () -> TextWithMnemonic.fromPlainText(txt);
       }
     }
     return textWithMnemonic;

@@ -4,7 +4,10 @@ package com.intellij.model.presentation;
 import com.intellij.model.Symbol;
 import com.intellij.navigation.TargetPopupPresentation;
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 /**
  * This is an entry point to obtain presentation of a {@link Symbol}.
@@ -17,6 +20,10 @@ public interface SymbolPresentationService {
 
   static @NotNull SymbolPresentationService getInstance() {
     return ServiceManager.getService(SymbolPresentationService.class);
+  }
+
+  static @Nls(capitalization = Sentence) @NotNull String getLongDescription(@NotNull Symbol symbol) {
+    return getInstance().getSymbolPresentation(symbol).getLongDescription();
   }
 
   @NotNull SymbolPresentation getSymbolPresentation(@NotNull Symbol symbol);

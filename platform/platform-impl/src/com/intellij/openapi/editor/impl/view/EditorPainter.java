@@ -102,6 +102,10 @@ public class EditorPainter implements TextDrawingCallback {
            (Registry.is("editor.show.right.margin.in.read.only.files") || editor.getDocument().isWritable());
   }
 
+  public static int getIndentGuideShift(@NotNull Editor editor) {
+    return - Session.getTabGap(Session.getWhiteSpaceScale(editor)) / 2;
+  }
+
   private static class Session {
     private final EditorView myView;
     private final EditorImpl myEditor;
@@ -299,7 +303,7 @@ public class EditorPainter implements TextDrawingCallback {
                                                 : null;
       final LineWhitespacePaintingStrategy whitespacePaintingStrategy = new LineWhitespacePaintingStrategy(myEditor.getSettings());
       boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
-      float whiteSpaceScale = ((float)myEditor.getColorsScheme().getEditorFontSize()) / FontPreferences.DEFAULT_FONT_SIZE;
+      float whiteSpaceScale = getWhiteSpaceScale(myEditor);
       final BasicStroke whiteSpaceStroke = new BasicStroke(calcFeatureSize(1, whiteSpaceScale));
 
       PeekableIterator<Caret> caretIterator = null;
@@ -345,7 +349,7 @@ public class EditorPainter implements TextDrawingCallback {
         boolean dryRun = visualLine > myEndVisualLine;
         if (dryRun && !calculateMarginWidths) break;
         boolean paintSoftWraps = paintAllSoftWraps ||
-                                 myEditor.getCaretModel().getLogicalPosition().line == visLinesIterator.getStartLogicalLine();
+                                 myEditor.getCaretModel().getLogicalPosition().line == visLinesIterator.getDisplayedLogicalLine();
         int[] currentLogicalLine = new int[]{-1};
         paintLineFragments(visLinesIterator, y, new LineFragmentPainter() {
           @Override
@@ -560,10 +564,7 @@ public class EditorPainter implements TextDrawingCallback {
       markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, highlighter -> {
         CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
         if (customRenderer != null) {
-          int highlighterStart = highlighter.getStartOffset();
-          int highlighterEnd = highlighter.getEndOffset();
-          if (highlighterStart <= myEndOffset && highlighterEnd >= myStartOffset &&
-              myClipDetector.rangeCanBeVisible(highlighterStart, highlighterEnd)) {
+          if (myClipDetector.rangeCanBeVisible(highlighter.getStartOffset(), highlighter.getEndOffset())) {
             if (customRenderer.isForeground()) {
               myForegroundCustomHighlighters.add(highlighter);
             }
@@ -776,7 +777,7 @@ public class EditorPainter implements TextDrawingCallback {
             }
             else {
               int yMid = yToUse - myView.getCharHeight() / 2;
-              int tabEndX = Math.max(startX + 1, endX - calcFeatureSize(5, scale));
+              int tabEndX = Math.max(startX + 1, endX - getTabGap(scale));
               myTextDrawingTasks.add(g -> {
                 g.setColor(color);
                 LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
@@ -801,6 +802,14 @@ public class EditorPainter implements TextDrawingCallback {
           g.setStroke(defaultStroke);
         });
       }
+    }
+
+    private static int getTabGap(float scale) {
+      return calcFeatureSize(5, scale);
+    }
+
+    private static float getWhiteSpaceScale(@NotNull Editor editor) {
+      return ((float)editor.getColorsScheme().getEditorFontSize()) / FontPreferences.DEFAULT_FONT_SIZE;
     }
 
     private void collectExtensions(int visualLine, int offset) {
@@ -901,7 +910,12 @@ public class EditorPainter implements TextDrawingCallback {
     private void paintBorderEffect(int startOffset, int endOffset, EffectDescriptor borderDescriptor) {
       startOffset = DocumentUtil.alignToCodePointBoundary(myDocument, startOffset);
       endOffset = DocumentUtil.alignToCodePointBoundary(myDocument, endOffset);
+
+      FoldRegion foldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+      if (foldRegion != null && endOffset <= foldRegion.getEndOffset()) return;
+
       if (!myClipDetector.rangeCanBeVisible(startOffset, endOffset)) return;
+
       int startLine = myDocument.getLineNumber(startOffset);
       int endLine = myDocument.getLineNumber(endOffset);
       if (startLine + 1 == endLine &&

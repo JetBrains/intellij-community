@@ -3,8 +3,8 @@
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
                         serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.actions.FormatChangedTextUtil"
-                        serviceImplementation="com.intellij.codeInsight.actions.VcsAwareFormatChangedTextUtil" overrides="true"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.actions.VcsFacade"
+                        serviceImplementation="com.intellij.codeInsight.actions.VcsFacadeImpl" overrides="true"/>
     <applicationService serviceImplementation="com.intellij.openapi.vcs.actions.AnnotationsSettings"/>
     <applicationService serviceInterface="com.intellij.vfs.AsyncVfsEventsPostProcessor"
                         serviceImplementation="com.intellij.vfs.AsyncVfsEventsPostProcessorImpl"/>
@@ -47,12 +47,16 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl"/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyStartUpActivity"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsInitialization"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.VcsInitialization$StartUpActivity"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsDirtyScopeManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"/>
@@ -90,6 +94,14 @@
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAfterWithLocalAction"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAction"/>
+
+    <applicationService serviceInterface="com.intellij.diff.vcs.DiffVcsFacade"
+                        serviceImplementation="com.intellij.diff.DiffVcsFacadeImpl"
+                        overrides="true"/>
+
+    <referenceProviderType key="commentsReferenceProvider"
+                           implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
+    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.UrlReferenceContributor"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
@@ -184,6 +196,8 @@
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateVcsVirtualFileAction$Provider"/>
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$Provider" order="first"/>
 
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
@@ -206,28 +220,64 @@
 
     <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$ActivateVcsesStartupActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyStartupActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyStartupActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyStartupActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$DetectRootsStartupActivity"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
     <notificationWhitelist groupIds="Vcs Important Messages;Vcs Notifications;Vcs Silent Notifications;Vcs Messages;
-    Common Version Control Messages"/>
+    Common Version Control Messages" notificationIds="ignored.to.exclude.synchronization.notification;externally.added.files.notification;
+    project.configuration.files.added.notification;manage.ignore.files.notification"/>
+    <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
+                    serviceImplementation="com.intellij.impl.RunConfigurationVcsSupportImpl"
+                    overrides="true"/>
+
+    <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener" id="PlatformProjectCheckoutListener"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
+    <projectService serviceInterface="com.intellij.ide.todo.TodoViewChangesSupport"
+                    serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupportImpl"
+                    overrides="true"/>
+
+    <searchScopesProvider implementation="com.intellij.vcs.changes.ChangeListsSearchScopeProvider"/>
+
+    <generalEditorOptionsExtension instance="com.intellij.options.VcsGeneralEditorOptionsExtension" />
+
+    <modelScopeItemPresenter implementation="com.intellij.analysis.VcsScopeItemPresenter" id="vcs_scope" order="after module_scope" />
+
+    <customScopesProvider implementation="com.intellij.vcs.changes.ChangeListsScopesProvider" order="last"/>
+    <projectService serviceImplementation="com.intellij.vcs.changes.ChangeListScopeViewUpdater" preload="true" />
+
+    <checkinHandlerFactory implementation="com.intellij.tools.ExternalToolsCheckinHandlerFactory"/>
+    <arbitraryPlaceUrlProvider implementation="com.intellij.vcs.IssueNavigationConfigurationUrlProvider" />
+    <findInProjectExtension implementation="com.intellij.vcs.changes.ChangeListsFindInProjectExtension" />
+    <silentChangeVetoer implementation="com.intellij.codeInsight.daemon.VcsSilentChangeVetoer" />
   </extensions>
 
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyProjectManagerListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    <listener class="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyAppLevelProjectManagerListener"
+    <listener class="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$ShutDownProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase$InitMappingsListenerActivity"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
 
   <projectListeners>
     <listener class="com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier$IncomingChangesListener"
               topic="com.intellij.openapi.vcs.changes.committed.CommittedChangesListener"/>
+    <listener class="com.intellij.impl.VcsModuleAttachListener"
+              topic="com.intellij.platform.ModuleAttachListener"/>
+    <listener class="com.intellij.vcs.changes.ChangeListScopeViewUpdater"
+              topic="com.intellij.openapi.vcs.changes.ChangeListListener"/>
   </projectListeners>
 </idea-plugin>
 

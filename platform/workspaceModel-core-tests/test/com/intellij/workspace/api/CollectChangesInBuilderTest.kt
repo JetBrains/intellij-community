@@ -11,13 +11,13 @@ class CollectChangesInBuilderTest {
 
   @Before
   fun setUp() {
-    initialStorage = TypedEntityStorageBuilder.create().apply {
+    initialStorage = TypedEntityStorageBuilder.createProxy().apply {
       addSampleEntity("initial")
       addEntity(SelfModifiableSampleEntity::class.java, SampleEntitySource("test")) {
         intProperty = 1
       }
     }.toStorage()
-    builder = TypedEntityStorageBuilder.from(initialStorage)
+    builder = TypedEntityStorageBuilder.fromProxy(initialStorage)
   }
 
   @Test

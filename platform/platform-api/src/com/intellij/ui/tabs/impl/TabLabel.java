@@ -29,9 +29,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
-import static java.awt.BorderLayout.EAST;
-import static java.awt.BorderLayout.WEST;
-
 public class TabLabel extends JPanel implements Accessible {
   private static final Logger LOG = Logger.getInstance(TabLabel.class);
 
@@ -613,7 +610,9 @@ public class TabLabel extends JPanel implements Accessible {
     }
 
     private boolean doCustomLayout(Container parent) {
+      int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
       if (myTabs != null && myTabs.ignoreTabLabelLimitedWidthWhenPaint() &&
+          (tabPlacement == SwingConstants.TOP || tabPlacement == SwingConstants.BOTTOM) &&
           parent.getWidth() < parent.getPreferredSize().width) {
         int spaceTop = parent.getInsets().top;
         int spaceLeft = parent.getInsets().left;

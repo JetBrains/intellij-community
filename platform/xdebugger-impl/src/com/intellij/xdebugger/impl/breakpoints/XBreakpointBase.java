@@ -36,13 +36,14 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
-import java.util.List;
-import java.util.Objects;
-import javax.swing.Icon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.List;
+import java.util.Objects;
 
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
   @NonNls private static final String BR_NBSP = "<br>" + CommonXmlStrings.NBSP;
@@ -519,7 +520,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @Override
     public String getAccessibleName() {
       // [tav] todo: add "hit" state
-      return "icon: " + getType().getTitle() + (getCondition() != null ? " conditional" : "") + (!isEnabled() ? " disabled" : "");
+      return XDebuggerBundle.message("accessible.name.icon.0.1.2", getType().getTitle(),
+                                     getCondition() != null ? " " + XDebuggerBundle.message("accessible.name.icon.conditional") : "",
+                                     !isEnabled() ? " " + XDebuggerBundle.message("accessible.name.icon.disabled") : "");
     }
 
     @Override

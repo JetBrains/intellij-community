@@ -288,6 +288,12 @@
           <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
+      <option name="DEFAULT_HIGHLIGHTED_REFERENCE">
+        <value>
+          <option name="BACKGROUND" value="edfced" deuteranopia="ebebeb" protanopia="ebebeb"/>
+          <option name="FOREGROUND" value="0" />
+        </value>
+      </option>
 
       <option name="LINE_FULL_COVERAGE">
         <value>
@@ -1693,6 +1699,12 @@
         <value>
           <option name="EFFECT_COLOR" value="707d95" />
           <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="DEFAULT_HIGHLIGHTED_REFERENCE">
+        <value>
+          <option name="BACKGROUND" value="364135" deuteranopia="1f2433" protanopia="1f2433"/>
+          <option name="FOREGROUND" value="a9b7c6" />
         </value>
       </option>
       <option name="DELETED_TEXT_ATTRIBUTES">

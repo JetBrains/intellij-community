@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -22,11 +22,9 @@ public final class ActivityImpl implements Activity {
   // null doesn't mean root - not obligated to set parent, only as hint
   private final ActivityImpl parent;
 
-  @Nullable
-  private ActivityCategory category;
+  private @Nullable ActivityCategory category;
 
-  @Nullable
-  private final String pluginId;
+  private final @Nullable String pluginId;
 
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
@@ -53,8 +51,7 @@ public final class ActivityImpl implements Activity {
     }
   }
 
-  @NotNull
-  public String getThreadName() {
+  public @NotNull String getThreadName() {
     return threadName;
   }
 
@@ -62,13 +59,11 @@ public final class ActivityImpl implements Activity {
     return threadId;
   }
 
-  @Nullable
-  public ActivityImpl getParent() {
+  public @Nullable ActivityImpl getParent() {
     return parent;
   }
 
-  @Nullable
-  public ActivityCategory getCategory() {
+  public @Nullable ActivityCategory getCategory() {
     return category;
   }
 
@@ -79,23 +74,19 @@ public final class ActivityImpl implements Activity {
   // and how do we can sort correctly, when parent item equals to child (start and end), also there is another child with start equals to end?
   // so, parent added to API but as it was not enough, decided to measure time in nanoseconds instead of ms to mitigate such situations
   @Override
-  @NotNull
-  public ActivityImpl startChild(@NotNull String name) {
+  public @NotNull ActivityImpl startChild(@NotNull String name) {
     return new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId, category);
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
-  @Nullable
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return description;
   }
 
-  @Nullable
-  public String getPluginId() {
+  public @Nullable String getPluginId() {
     return pluginId;
   }
 
@@ -130,8 +121,7 @@ public final class ActivityImpl implements Activity {
   }
 
   @Override
-  @NotNull
-  public Activity endAndStart(@NotNull String name) {
+  public @NotNull Activity endAndStart(@NotNull String name) {
     end();
     return new ActivityImpl(name, /* start = */end, parent, /* level = */ pluginId, category);
   }

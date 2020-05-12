@@ -24,7 +24,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
@@ -129,9 +128,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   private ConcurrentMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict =
-    ContainerUtil.newConcurrentMap();
+    new ConcurrentHashMap<>();
   private ConcurrentMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict =
-    ContainerUtil.newConcurrentMap();
+    new ConcurrentHashMap<>();
 
   @Override
   public void clearCaches() {
@@ -142,9 +141,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     super.clearCaches();
   }
 
-  @Nullable
   @Override
-  public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
+  public @Nullable XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
     long curExtResourcesModCount = ExternalResourceManagerEx.getInstanceEx().getModificationCount(getProject());
     if (myExtResourcesModCount != curExtResourcesModCount) {
       myDefaultDescriptorsCacheNotStrict.clear();
@@ -277,13 +275,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return null;
   }
 
-  @Nullable
-  public static XmlNSDescriptor getCachedHtmlNsDescriptor(@NotNull final XmlFile descriptorFile) {
+  public static @Nullable XmlNSDescriptor getCachedHtmlNsDescriptor(final @NotNull XmlFile descriptorFile) {
     return getCachedHtmlNsDescriptor(descriptorFile, "");
   }
 
-  @Nullable
-  public static XmlNSDescriptor getCachedHtmlNsDescriptor(@NotNull final XmlFile descriptorFile, @NotNull final String prefix) {
+  public static @Nullable XmlNSDescriptor getCachedHtmlNsDescriptor(final @NotNull XmlFile descriptorFile, final @NotNull String prefix) {
     Map<String, XmlNSDescriptor> descriptorsByPrefix = CachedValuesManager.getCachedValue(descriptorFile, () -> {
       return CachedValueProvider.Result.create(new ConcurrentHashMap<>(), descriptorFile);
     });
@@ -294,8 +290,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     });
   }
 
-  @NotNull
-  private static String getFilePathForLogging(@Nullable PsiFile file) {
+  private static @NotNull String getFilePathForLogging(@Nullable PsiFile file) {
     if (file == null) {
       return "NULL";
     }
@@ -303,8 +298,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return vFile != null ? vFile.getPath() : "NULL_VFILE";
   }
 
-  @Nullable
-  private XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile, final boolean forHtml) {
+  private @Nullable XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile, final boolean forHtml) {
     XmlNSDescriptor descriptor = getNSDescriptorFromMetaData(doctype.getMarkupDecl(), true);
 
     final String filePath = getFilePathForLogging(containingFile);
@@ -340,8 +334,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return descriptor;
   }
 
-  @Nullable
-  private XmlNSDescriptor getNSDescriptorFromMetaData(@Nullable PsiMetaOwner metaOwner, boolean nonEmpty) {
+  private @Nullable XmlNSDescriptor getNSDescriptorFromMetaData(@Nullable PsiMetaOwner metaOwner, boolean nonEmpty) {
     if (metaOwner == null) return null;
     XmlNSDescriptor descriptor = (XmlNSDescriptor)metaOwner.getMetaData();
     if (descriptor == null) return null;
@@ -351,9 +344,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return descriptor;
   }
 
-  @NotNull
   @Override
-  public CompositePsiElement clone() {
+  public @NotNull CompositePsiElement clone() {
     HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<>(
       myDefaultDescriptorsCacheStrict
     );
@@ -380,8 +372,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
   private void updateSelfDependentDtdDescriptors(XmlDocumentImpl copy, HashMap<String,
     CachedValue<XmlNSDescriptor>> cacheStrict, HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict) {
-    copy.myDefaultDescriptorsCacheNotStrict = ContainerUtil.newConcurrentMap();
-    copy.myDefaultDescriptorsCacheStrict = ContainerUtil.newConcurrentMap();
+    copy.myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<>();
+    copy.myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<>();
 
     for(Map.Entry<String, CachedValue<XmlNSDescriptor>> e:cacheStrict.entrySet()) {
       if (e.getValue().hasUpToDateValue()) {

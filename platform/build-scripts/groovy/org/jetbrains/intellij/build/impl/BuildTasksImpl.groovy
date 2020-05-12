@@ -420,7 +420,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildNonBundledPlugins(List<String> mainPluginModules) {
     checkProductProperties()
-    checkPluginModules(mainPluginModules, "mainPluginModules", [] as Set<String>)
+    checkPluginModules(mainPluginModules, "mainPluginModules")
     copyDependenciesFile()
     def pluginsToPublish = new LinkedHashSet<PluginLayout>(
       DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
@@ -551,16 +551,15 @@ idea.fatal.error.notification=disabled
     }
 
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
-    def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
-    checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
-    checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
+    checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules")
+    checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish")
 
     if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
                                     "layout.compatiblePluginsToIgnore property will be ignored ($layout.compatiblePluginsToIgnore)")
     }
     if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
-      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", optionalModules)
+      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore")
     }
 
     if (!buildContext.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
@@ -580,7 +579,7 @@ idea.fatal.error.notification=disabled
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     def allBundledPlugins = layout.bundledPluginModules as Set<String>
     nonTrivialPlugins.findAll { allBundledPlugins.contains(it.mainModule) }.each { plugin ->
-      checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
+      checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
       checkArtifacts(plugin.includedArtifacts.keySet(), "'$plugin.mainModule' plugin")
@@ -610,12 +609,12 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
+  private void checkPluginModules(List<String> pluginModules, String fieldName) {
     if (pluginModules == null) {
       return
     }
     checkModules(pluginModules, fieldName)
-    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
+    def unknownBundledPluginModules = pluginModules.findAll { buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
         "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +
@@ -678,6 +677,16 @@ idea.fatal.error.notification=disabled
             }
           } as Callable<V>)
         }
+
+        //wait until all tasks finishes
+        futures.each {
+          try {
+            it.get()
+          }
+          catch (Throwable ignore) {
+          }
+        }
+
         futures.collect { it.get() }
       }
     }

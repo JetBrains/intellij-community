@@ -3,12 +3,12 @@ package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ui.CommitMessage;
@@ -70,7 +70,7 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
 
   protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
     @Override
-    public @NlsUI.ListItem @NotNull String getFamilyName() {
+    public @IntentionFamilyName @NotNull String getFamilyName() {
       return "Wrap line";
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,23 +57,20 @@ public abstract class WindowManager {
    *
    * @return {@code null} if there is no currently active window or there is no window that can be the parent.
    */
-  @Nullable
-  public abstract Window suggestParentWindow(@Nullable Project project);
+  public abstract @Nullable Window suggestParentWindow(@Nullable Project project);
 
   /**
    * Get the status bar for the project's main frame.
    */
   public abstract StatusBar getStatusBar(@NotNull Project project);
 
-  public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
+  public @Nullable StatusBar getStatusBar(@NotNull Component component, @Nullable Project project) {
     return null;
   }
 
-  @Nullable
-  public abstract JFrame getFrame(@Nullable Project project);
+  public abstract @Nullable JFrame getFrame(@Nullable Project project);
 
-  @Nullable
-  public abstract IdeFrame getIdeFrame(@Nullable Project project);
+  public abstract @Nullable IdeFrame getIdeFrame(@Nullable Project project);
 
   /**
    * Tests whether the specified rectangle is inside of screen bounds.
@@ -84,9 +81,9 @@ public abstract class WindowManager {
    */
   public abstract boolean isInsideScreenBounds(int x, int y, int width);
 
-  public abstract IdeFrame @NotNull [] getAllProjectFrames();
+  public abstract @NotNull IdeFrame @NotNull [] getAllProjectFrames();
 
-  public abstract JFrame findVisibleFrame();
+  public abstract @Nullable JFrame findVisibleFrame();
 
   public abstract void addListener(@NotNull WindowManagerListener listener);
 

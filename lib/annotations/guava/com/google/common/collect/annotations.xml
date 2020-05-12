@@ -1,0 +1,18 @@
+<root>
+  <item name='com.google.common.collect.Lists java.util.ArrayList&lt;E&gt; newArrayList()'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
+  <item name='com.google.common.collect.Lists java.util.ArrayList&lt;E&gt; newArrayList(E...)'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
+  <item name='com.google.common.collect.Lists java.util.LinkedList&lt;E&gt; newLinkedList()'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
+  <item name='com.google.common.collect.Lists java.util.concurrent.CopyOnWriteArrayList&lt;E&gt; newCopyOnWriteArrayList()'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
+  <item
+    name='com.google.common.collect.Lists java.util.concurrent.CopyOnWriteArrayList&lt;E&gt; newCopyOnWriteArrayList(java.lang.Iterable&lt;? extends E&gt;)'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
+</root>

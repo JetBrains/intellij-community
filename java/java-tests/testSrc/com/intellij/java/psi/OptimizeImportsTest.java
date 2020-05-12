@@ -16,16 +16,20 @@
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.formatting.MockCodeStyleSettingsModifier;
 import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -72,11 +76,40 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testDisabledFormatting() {
-    CodeStyleSettings temp = new CodeStyleSettings();
+    CodeStyleSettings temp = CodeStyle.createTestSettings();
     NamedScopeDescriptor descriptor = new NamedScopeDescriptor("Test");
     descriptor.setPattern("file:*.java");
     temp.getExcludedFiles().addDescriptor(descriptor);
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest());
+  }
+
+  public void testLeavesDocumentUnblocked() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", "import static java.ut<caret>il.List.*; class Foo {}");
+    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+
+    assertFalse(PsiDocumentManager.getInstance(getProject()).isDocumentBlockedByPsi(myFixture.getEditor().getDocument()));
+
+    myFixture.checkResult("class Foo {}");
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
+  }
+
+  public void testNoStubPsiMismatchOnRecordInsideImportList() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", "import java.ut<caret>il.List;\n" +
+                                        "record foo.bar.Goo;\n" +
+                                        "import java.util.Collection;\n\n" +
+                                        "class Foo {}");
+    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+
+    // whatever: main thing it didn't throw
+    myFixture.checkResult("record foo.bar.Goo;\n" +
+                          "import java.util.Collection;\n\n" +
+                          "class Foo {}");
   }
 
   public void testPerFileImportSettings() {

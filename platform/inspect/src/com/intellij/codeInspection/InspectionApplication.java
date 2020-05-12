@@ -96,7 +96,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       printHelp();
     }
 
-    ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
+    ApplicationManagerEx.getApplicationEx().isSaveAllowed();
     try {
       execute();
     }
@@ -293,6 +293,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       try {
         reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
                                 ContainerUtil.map2List(inspectionsResults, path -> path.toFile()));
+        reportConverter.projectData(project, myOutPath);
       }
       catch (InspectionsReportConverter.ConversionException e) {
         reportError("\n" + e.getMessage());

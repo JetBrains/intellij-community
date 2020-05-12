@@ -425,7 +425,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return result;
   }
 
-  private static PsiReferenceProcessor createReferenceProcessor(@NotNull final List<UsagesProcessor> processors,
+  private static PsiReferenceProcessor createReferenceProcessor(final @NotNull List<UsagesProcessor> processors,
                                                                 final GlobalInspectionContext context) {
     return reference -> {
       AnalysisScope scope = context.getRefManager().getScope();
@@ -448,9 +448,9 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   @Override
-  public void performPreRunActivities(@NotNull final List<Tools> globalTools,
-                                      @NotNull final List<Tools> localTools,
-                                      @NotNull final GlobalInspectionContext context) {
+  public void performPreRunActivities(final @NotNull List<Tools> globalTools,
+                                      final @NotNull List<Tools> localTools,
+                                      final @NotNull GlobalInspectionContext context) {
     if (globalTools.stream().anyMatch(tools -> {
       InspectionProfileEntry tool = tools.getTool().getTool();
       return tool instanceof GlobalInspectionTool && ((GlobalInspectionTool)tool).isGraphNeeded();
@@ -470,7 +470,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
 
   @Override
-  public void performPostRunActivities(@NotNull List<InspectionToolWrapper> needRepeatSearchRequest, @NotNull final GlobalInspectionContext context) {
+  public void performPostRunActivities(@NotNull List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest, final @NotNull GlobalInspectionContext context) {
     JobDescriptor progress = context.getStdJobDescriptors().FIND_EXTERNAL_USAGES;
     progress.setTotalAmount(getRequestCount());
 

@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.analysis.problemsView.inspection.InspectionProblemsView;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -51,10 +52,9 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
             HighlightInfo fullInfo = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project))
               .findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
             DaemonTooltipUtil.showInfoTooltip(fullInfo != null ? fullInfo : infoToGo,
-                                              editor, editor.getCaretModel().getOffset(), 0, false, true);
+                                              editor, editor.getCaretModel().getOffset(), false, true);
           }
         });
-
         return;
       }
     }
@@ -108,7 +108,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     HintManager.getInstance().showInformationHint(editor, message);
   }
 
-  static void navigateToError(Project project, final Editor editor, HighlightInfo info, @Nullable Runnable postNavigateRunnable) {
+  static void navigateToError(@NotNull Project project, @NotNull Editor editor, @NotNull HighlightInfo info, @Nullable Runnable postNavigateRunnable) {
     int oldOffset = editor.getCaretModel().getOffset();
 
     final int offset = getNavigationPositionFor(info, editor.getDocument());
@@ -139,6 +139,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     );
 
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+    InspectionProblemsView.selectProblemIfVisible(project, info);
   }
 
   private static int getNavigationPositionFor(HighlightInfo info, Document document) {

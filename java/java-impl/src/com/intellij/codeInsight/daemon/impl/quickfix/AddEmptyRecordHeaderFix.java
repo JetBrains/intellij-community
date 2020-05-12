@@ -11,11 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AddEmptyRecordHeaderFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private final SmartPsiElementPointer<PsiClass> myRecordPointer;
-
   public AddEmptyRecordHeaderFix(@NotNull PsiClass record) {
     super(record);
-    this.myRecordPointer = SmartPointerManager.createPointer(record);
   }
 
   @Override
@@ -24,8 +21,8 @@ public class AddEmptyRecordHeaderFix extends LocalQuickFixAndIntentionActionOnPs
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    PsiClass record = myRecordPointer.dereference();
-    if (record == null || !record.isRecord() || record.getRecordHeader() != null) return;
+    PsiClass record = (PsiClass)startElement;
+    if (!record.isRecord() || record.getRecordHeader() != null) return;
     PsiTypeParameterList typeParameterList = record.getTypeParameterList();
     if (typeParameterList == null) return;
     PsiRecordHeader recordHeader = JavaPsiFacade.getElementFactory(project).createRecordHeaderFromText("", record);

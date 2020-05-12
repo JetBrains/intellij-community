@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -48,10 +49,10 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
         changedLines += performAction(editor, new TextRange(0, editor.getDocument().getTextLength()));
       }
       if (changedLines == 0) {
-        HintManager.getInstance().showInformationHint(editor, "All lines already have requested indentation");
+        HintManager.getInstance().showInformationHint(editor, IdeBundle.message("hint.text.all.lines.already.have.requested.indentation"));
       }
       else {
-        HintManager.getInstance().showInformationHint(editor, "Changed indentation in " + changedLines + (changedLines == 1 ? " line" : " lines"));
+        HintManager.getInstance().showInformationHint(editor, IdeBundle.message("hint.text.changed.indentation.in", changedLines));
       }
     }
   }

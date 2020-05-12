@@ -55,7 +55,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
     e.getPresentation().setEnabled(module != null && PsiUtil.isPluginModule(module));
   }

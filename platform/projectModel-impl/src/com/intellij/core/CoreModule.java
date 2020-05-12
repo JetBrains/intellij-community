@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   @NotNull private final ModuleScopeProvider myModuleScopeProvider;
 
   public CoreModule(@NotNull Disposable parentDisposable, @NotNull Project project, String moduleFilePath) {
-    super(project.getPicoContainer(), parentDisposable);
+    super((DefaultPicoContainer)project.getPicoContainer(), parentDisposable);
     myLifetime = parentDisposable;
     myProject = project;
     myPath = moduleFilePath;

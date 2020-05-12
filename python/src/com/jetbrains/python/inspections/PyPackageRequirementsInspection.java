@@ -29,6 +29,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
@@ -39,6 +40,7 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,8 +69,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    if (!(holder.getFile() instanceof PyFile) && !(holder.getFile() instanceof PsiPlainTextFile)) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!(holder.getFile() instanceof PyFile) && !(holder.getFile() instanceof PsiPlainTextFile)
+        && !isPythonInTemplateLanguages(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new Visitor(holder, session, ignoredPackages);
+  }
+
+  private boolean isPythonInTemplateLanguages(PsiFile psiFile) {
+    return StreamEx.of(psiFile.getViewProvider().getLanguages())
+      .findFirst(x -> x.isKindOf(PythonLanguage.getInstance()))
+      .isPresent();
   }
 
   @Nullable
@@ -96,7 +107,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       final Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
         if (file.getText().trim().isEmpty()) {
-          registerProblem(file, PyPsiBundle.message("python.requirements.file.empty"),
+          registerProblem(file, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
         }
         else {
@@ -547,7 +558,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return PyPsiBundle.message("python.requirements.quickfix.family.name");
+      return PyPsiBundle.message("INSP.package.requirements.quickfix.family.name");
     }
 
     @Override
@@ -559,7 +570,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public boolean startInWriteAction() {
       return false;
     }
-
   }
 
   public static class RunningPackagingTasksListener implements PyPackageManagerUI.Listener {

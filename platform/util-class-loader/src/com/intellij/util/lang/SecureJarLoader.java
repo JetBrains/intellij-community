@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -20,8 +21,8 @@ final class SecureJarLoader extends JarLoader {
   private @Nullable ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
-  SecureJarLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
-    super(url, index, configuration);
+  SecureJarLoader(@NotNull URL url, @NotNull File file, int index, @NotNull ClassPath configuration) throws IOException {
+    super(url, file, index, configuration);
   }
 
   @NotNull

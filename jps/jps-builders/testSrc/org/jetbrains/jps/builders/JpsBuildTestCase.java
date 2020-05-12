@@ -93,12 +93,6 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myBuildParams = new HashMap<>();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myProjectDir = null;
-    super.tearDown();
-  }
-
   protected static void assertOutput(final String outputPath, TestFileSystemBuilder expected) {
     expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(outputPath)));
   }

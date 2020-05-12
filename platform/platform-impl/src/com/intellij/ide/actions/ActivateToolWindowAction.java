@@ -31,8 +31,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     myToolWindowId = toolWindowId;
   }
 
-  @NotNull
-  public String getToolWindowId() {
+  public @NotNull String getToolWindowId() {
     return myToolWindowId;
   }
 
@@ -86,7 +85,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     if (project == null) {
       return;
@@ -110,8 +109,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
    * @param id {@code id} of tool window to be activated.
    */
   @NonNls
-  @NotNull
-  public static String getActionIdForToolWindow(@NotNull String id) {
+  public static @NotNull String getActionIdForToolWindow(@NotNull String id) {
     return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
   }
 

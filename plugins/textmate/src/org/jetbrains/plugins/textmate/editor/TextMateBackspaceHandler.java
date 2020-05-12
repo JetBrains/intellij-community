@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.language.TextMateFileType;
+import org.jetbrains.plugins.textmate.TextMateFileType;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
 public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {

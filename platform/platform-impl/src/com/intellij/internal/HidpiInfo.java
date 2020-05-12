@@ -3,6 +3,7 @@ package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
@@ -84,15 +85,21 @@ public final class HidpiInfo extends AnAction implements DumbAware {
         Class cls = Class.forName("sun.awt.X11GraphicsDevice");
         MethodInvocator getDpiInfo = new MethodInvocator(cls, "getDpiInfo");
         if (getDpiInfo.isAvailable()) {
-          String[][] dpiInfo = (String[][])getDpiInfo.invoke(activeFrame.getGraphicsConfiguration().getDevice());
-          if (dpiInfo != null && dpiInfo.length > 0) {
-            for (String[] row : dpiInfo) {
-              row[2] = "<html><span style='font-size:x-small'>" + row[2] + "</span></html>";
+          GraphicsDevice gd = null;
+          try {
+            gd = activeFrame.getGraphicsConfiguration().getDevice();
+            String[][] dpiInfo = (String[][])getDpiInfo.invoke(gd);
+            if (dpiInfo != null && dpiInfo.length > 0) {
+              for (String[] row : dpiInfo) {
+                row[2] = "<html><span style='font-size:x-small'>" + row[2] + "</span></html>";
+              }
+              String[][] _exData = new String[data.length + dpiInfo.length][];
+              System.arraycopy(data, 0, _exData, 0, data.length);
+              System.arraycopy(dpiInfo, 0, _exData, data.length, dpiInfo.length);
+              data = _exData;
             }
-            String[][] _exData = new String[data.length + dpiInfo.length][];
-            System.arraycopy(data, 0, _exData, 0, data.length);
-            System.arraycopy(dpiInfo, 0, _exData, data.length, dpiInfo.length);
-            data = _exData;
+          } catch (IllegalArgumentException e) {
+            Logger.getInstance(HidpiInfo.class).warn("Unexpected GraphicsDevice type (value): " + (gd != null ? gd.getClass().getName() : "null"));
           }
         }
       }

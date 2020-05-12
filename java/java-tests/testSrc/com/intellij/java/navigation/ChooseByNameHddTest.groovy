@@ -24,6 +24,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 
 /**
  * @author peter
@@ -70,5 +72,34 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     assert ChooseByNameTest.calcContributorElements(contributor, "foo/bar/goo/doo") == [file]
   }
 
+  void "test source-test-resources priority"() {
+    def srcDir = myFixture.tempDirFixture.findOrCreateDir("src")
+    def resourcesDir = myFixture.tempDirFixture.findOrCreateDir("resources")
+    def testSrcDir = myFixture.tempDirFixture.findOrCreateDir("test")
+
+    PsiTestUtil.addSourceRoot(module, srcDir, JavaSourceRootType.SOURCE)
+    PsiTestUtil.addSourceRoot(module, testSrcDir, JavaSourceRootType.TEST_SOURCE)
+    PsiTestUtil.addSourceRoot(module, resourcesDir, JavaResourceRootType.RESOURCE)
+    PsiTestUtil.removeSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir(""))
+
+    def testSrcFile1 = myFixture.addFileToProject("${testSrcDir.name}/fileForSearch.txt", "")
+    def testSrcFile2 = myFixture.addFileToProject("${testSrcDir.name}/sub/fileForSearch.txt", "")
+    def srcFile1 = myFixture.addFileToProject("${srcDir.name}/sub/fileForSearch.txt", "")
+    def srcFile2 = myFixture.addFileToProject("${srcDir.name}/sub/sub/fileForSearch.txt", "")
+    def resourcesFile = myFixture.addFileToProject("${resourcesDir.name}/fileForSearch.txt", "")
+
+    def contextFile = myFixture.addFileToProject("context.txt", "")
+    def contextFile2 = myFixture.addFileToProject("${testSrcDir.name}/context.txt", "")
+
+    //tests have low priority because of com.intellij.psi.util.proximity.InResolveScopeWeigher
+    assert gotoFile("fileForSearch.txt", false, contextFile) == [srcFile1, srcFile2, resourcesFile, testSrcFile1, testSrcFile2]
+
+    //tests have high priority because of search from same root
+    assert gotoFile("fileForSearch.txt", false, contextFile2) == [testSrcFile1, testSrcFile2, srcFile1, srcFile2, resourcesFile]
+  }
+
+  private List<Object> gotoFile(String text, boolean checkboxState = false, PsiElement context = null) {
+    return ChooseByNameTest.calcContributorElements(ChooseByNameTest.createFileContributor(project, context, checkboxState), text)
+  }
 
 }

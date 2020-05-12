@@ -650,4 +650,94 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       wrapIntoCommandAndWriteActionAndCommitAll = false
     )
   }
+
+  fun testRenameClassWithNameErased() {
+    doTest(
+      """
+        class X<caret> {
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("X")
+      },
+      {
+        myFixture.type("Y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("X", "Y"))
+    )
+  }
+
+  fun testRenameMethodWithNameErased() {
+    doTest(
+      """
+        class X {
+          void foo<caret>() {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("foo")
+      },
+      {
+        myFixture.type("bar")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("foo", "bar"))
+    )
+  }
+
+  fun testRenameLocalWithNameErased() {
+    doTest(
+      """
+        class X {
+          int foo() {
+            int local<caret> = 10;
+            return local;
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("local")
+      },
+      {
+        myFixture.type("xxx")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("local", "xxx"))
+    )
+  }
+
+  fun testRenameParameterWithNameErased1() {
+    doTest(
+      """
+        class RenameParam {
+          void foo(int x, int x2<caret>) {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("x2")
+      },
+      {
+        myFixture.type("y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("x2", "y"))
+    )
+  }
+
+  fun testRenameParameterWithNameErased2() {
+    doTest(
+      """
+        class RenameParam {
+          void foo(int x, int x2<caret>, Object o) {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("x2")
+      },
+      {
+        myFixture.type("y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("x2", "y"))
+    )
+  }
 }

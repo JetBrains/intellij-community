@@ -31,6 +31,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -101,6 +102,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,6 +117,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.Vector;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -168,7 +171,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private int myHistoryIndex;
   private boolean mySkipFocusGain;
 
-  public static final Key<JBPopup> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
+  public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
@@ -209,18 +212,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
 
+        String classesTabName = String.join("/",GotoClassPresentationUpdater.getActionTitlePluralized());
         if (Registry.is("ide.helptooltip.enabled")) {
           HelpTooltip.dispose(this);
 
           new HelpTooltip()
             .setTitle(myPresentation.getText())
             .setShortcut(shortcutText)
-            .setDescription("Searches for:<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings")
+            .setDescription(IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName))
             .installOn(this);
         }
         else {
-          setToolTipText("<html><body>Search Everywhere<br/>Press <b>" + shortcutText +
-                         "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
+          setToolTipText(IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName));
         }
       }
     };
@@ -906,7 +909,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               @Override
               public void navigate(boolean requestFocus) {
                 Executor executor = findExecutor((RunnerAndConfigurationSettings)config);
-                RunDialog.editConfiguration(project, (RunnerAndConfigurationSettings)config, "Edit Configuration", executor);
+                RunDialog.editConfiguration(project, (RunnerAndConfigurationSettings)config,
+                                            LangBundle.message("dialog.title.edit.configuration"), executor);
               }
 
               @Override
@@ -2046,11 +2050,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setShowShadow(false)
               .setShowBorder(false)
               .createPopup();
-            project.putUserData(SEARCH_EVERYWHERE_POPUP, myPopup);
+            ConcurrentHashMap<ClientId, JBPopup> map = project.getUserData(SEARCH_EVERYWHERE_POPUP);
+            if (map == null) {
+              map = new ConcurrentHashMap<>();
+              project.putUserData(SEARCH_EVERYWHERE_POPUP, map);
+            }
+            map.put(ClientId.getCurrent(), myPopup);
             //myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             myPopup.getContent().setBorder(null);
             Disposer.register(myPopup, () -> {
-              project.putUserData(SEARCH_EVERYWHERE_POPUP, null);
+              Objects.requireNonNull(project.getUserData(SEARCH_EVERYWHERE_POPUP)).remove(ClientId.getCurrent());
               ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 resetFields();
                 myNonProjectCheckBox.setSelected(false);

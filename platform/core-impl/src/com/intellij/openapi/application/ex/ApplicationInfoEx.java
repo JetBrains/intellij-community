@@ -7,8 +7,6 @@ import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.io.File;
 import java.util.Calendar;
 import java.util.List;
 
@@ -33,34 +31,24 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
    */
   @Deprecated
-  @NotNull
-  public abstract String getSmallIconUrl();
+  public abstract @NotNull String getSmallIconUrl();
 
   /**
    * @deprecated use {@link #getApplicationSvgIconUrl()} instead
    */
   @Deprecated
-  @Nullable
-  public abstract String getBigIconUrl();
+  public abstract @Nullable String getBigIconUrl();
 
   /**
    * Return path to an svg file containing icon of the current version of the product. The path is a relative path inside the product's JAR
    * files. It may return special icon for EAP builds.
    */
-  @Nullable
-  public abstract String getApplicationSvgIconUrl();
+  public abstract @Nullable String getApplicationSvgIconUrl();
 
   /**
    * Return path to an svg file containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.
    */
-  @Nullable
-  public abstract String getSmallApplicationSvgIconUrl();
-
-  /**
-   * Return an svg file containing icon of the current version of the product. It may return special icon for EAP builds.
-   */
-  @Nullable
-  public abstract File getApplicationSvgIconFile();
+  public abstract @Nullable String getSmallApplicationSvgIconUrl();
 
   public abstract String getToolWindowIconUrl();
 
@@ -70,8 +58,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
    * standalone tool so different licensing scheme should be applied.
    */
-  @Nullable
-  public abstract String getPackageCode();
+  public abstract @Nullable String getPackageCode();
 
   public abstract boolean showLicenseeInfo();
 
@@ -82,7 +69,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   public abstract boolean isMajorEAP();
 
-  public @Nullable abstract UpdateUrls getUpdateUrls();
+  public abstract @Nullable UpdateUrls getUpdateUrls();
 
   public abstract String getDocumentationUrl();
 
@@ -115,7 +102,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getMacKeymapUrl();
 
-  public abstract Color getAboutForeground();
+  public abstract long getAboutForeground();
 
   public interface UpdateUrls {
     String getCheckingUrl();
@@ -129,8 +116,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 
-  @Nullable
-  public abstract String getCustomizeIDEWizardStepsProvider();
+  public abstract @Nullable String getCustomizeIDEWizardStepsProvider();
 
   public abstract String getSubscriptionFormId();
 
@@ -142,8 +128,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean areSubscriptionTipsAvailable();
 
-  @Nullable
-  public abstract String getSubscriptionAdditionalFormData();
+  public abstract @Nullable String getSubscriptionAdditionalFormData();
 
   /**
    * @return true if the product's vendor is JetBrains
@@ -158,10 +143,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract int getProgressY();
 
-  @Nullable
-  public abstract Color getProgressColor();
+  public abstract long getProgressColor();
 
-  public @Nullable abstract String getProgressTailIcon();
+  public abstract long getCopyrightForeground();
 
-  public @NotNull abstract BuildNumber getApiVersionAsNumber();
+  public abstract @Nullable String getProgressTailIcon();
+
+  public abstract @NotNull BuildNumber getApiVersionAsNumber();
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,10 +10,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public final class ArrayUtil extends ArrayUtilRt {
+public final class ArrayUtil {
   public static final char[] EMPTY_CHAR_ARRAY = ArrayUtilRt.EMPTY_CHAR_ARRAY;
   public static final byte[] EMPTY_BYTE_ARRAY = ArrayUtilRt.EMPTY_BYTE_ARRAY;
   public static final int[] EMPTY_INT_ARRAY = ArrayUtilRt.EMPTY_INT_ARRAY;
@@ -173,7 +176,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     int[] ret = newIntArray(list.size());
     int i = 0;
     for (Integer e : list) {
-      ret[i++] = e.intValue();
+      ret[i++] = e;
     }
     return ret;
   }
@@ -273,7 +276,7 @@ public final class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <T> T @NotNull [] mergeArrayAndCollection(T @NotNull [] array,
                                                           @NotNull Collection<? extends T> collection,
-                                                          @NotNull final ArrayFactory<? extends T> factory) {
+                                                          final @NotNull ArrayFactory<? extends T> factory) {
     if (collection.isEmpty()) {
       return array;
     }
@@ -306,7 +309,7 @@ public final class ArrayUtil extends ArrayUtilRt {
    * @return new array
    */
   @Contract(pure=true)
-  public static <T> T @NotNull [] append(final T @NotNull [] src, @Nullable final T element) {
+  public static <T> T @NotNull [] append(final T @NotNull [] src, final @Nullable T element) {
     return append(src, element, getComponentType(src));
   }
 
@@ -352,7 +355,7 @@ public final class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] append(T @NotNull [] src, @Nullable final T element, @NotNull Class<T> componentType) {
+  public static <T> T @NotNull [] append(T @NotNull [] src, final @Nullable T element, @NotNull Class<T> componentType) {
     int length = src.length;
     T[] result = newArray(componentType, length + 1);
     System.arraycopy(src, 0, result, 0, length);
@@ -688,7 +691,7 @@ public final class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(final T @NotNull [] src, @Nullable final T obj) {
+  public static <T> int lastIndexOf(final T @NotNull [] src, final @Nullable T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];
       if (o == null) {
@@ -751,7 +754,7 @@ public final class ArrayUtil extends ArrayUtilRt {
 
   @SafeVarargs
   @Contract(pure=true)
-  public static <T> boolean contains(@Nullable final T o, T @NotNull ... objects) {
+  public static <T> boolean contains(final @Nullable T o, T @NotNull ... objects) {
     return indexOf(objects, o) >= 0;
   }
 
@@ -786,9 +789,8 @@ public final class ArrayUtil extends ArrayUtilRt {
     return newArray(getComponentType(sample), count);
   }
 
-  @Nullable
-  @Contract(value = "null -> null", pure=true)
-  public static <T> T getFirstElement(T @Nullable [] array) {
+  @Contract(value = "null -> null", pure = true)
+  public static @Nullable <T> T getFirstElement(T @Nullable [] array) {
     return array != null && array.length > 0 ? array[0] : null;
   }
 
@@ -812,7 +814,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     return ArrayUtilRt.toStringArray(collection);
   }
 
-  public static <T> void copy(@NotNull final Collection<? extends T> src, final T @NotNull [] dst, final int dstOffset) {
+  public static <T> void copy(final @NotNull Collection<? extends T> src, final T @NotNull [] dst, final int dstOffset) {
     int i = dstOffset;
     for (T t : src) {
       dst[i++] = t;
@@ -943,8 +945,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     return o == newSize ? r : Arrays.copyOf(r, o);
   }
 
-  @NotNull
-  public static <T> Class<T> getComponentType(T @NotNull [] collection) {
+  public static @NotNull <T> Class<T> getComponentType(T @NotNull [] collection) {
     //noinspection unchecked
     return (Class<T>)collection.getClass().getComponentType();
   }

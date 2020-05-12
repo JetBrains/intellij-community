@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -131,10 +132,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
         HgCommandResult revertResult = new HgRevertCommand(project).execute(repo, chunk, revisionNumber, false);
         if (HgErrorUtil.hasUncommittedChangesConflict(revertResult)) {
 
-          String message = String.format("<html>Revert failed due to uncommitted merge.<br>" +
-                                         "Would you like to discard all changes for repository <it><b>%s</b></it>?</html>",
-                                         repo.getPresentableName());
-
+          String message = XmlStringUtil.wrapInHtml(HgBundle.message("hg4idea.revert.failed.msg", repo.getPresentableName()));
           int exitCode = HgUpdateCommand.showDiscardChangesConfirmation(project, message);
           if (exitCode == Messages.OK) {
             //discard all changes for this repository//

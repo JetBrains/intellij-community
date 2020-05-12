@@ -80,7 +80,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     IdeMenuBar menu = createMenuBar();
     myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive();
 
-    if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
+    if (!isDecoratedMenu() && !FrameInfoHelper.isFloatingMenuBarSupported()) {
       setJMenuBar(menu);
     }
     else {
@@ -92,7 +92,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         menu.setVisible(false);
       }
 
-      if (WindowManagerImpl.isFloatingMenuBarSupported()) {
+      if (FrameInfoHelper.isFloatingMenuBarSupported()) {
         menuBar = menu;
         getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
       }
@@ -109,7 +109,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     setBorder(UIManager.getBorder("Window.border"));
 
     UIUtil.setCustomTitleBar(frame, this, runnable -> {
-      Disposer.register(parentDisposable, () -> runnable.run());
+      Disposer.register(parentDisposable, runnable::run);
     });
 
     updateMainMenuVisibility();
@@ -117,19 +117,16 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
   }
 
-  @NotNull
-  protected IdeMenuBar createMenuBar() {
+  protected @NotNull IdeMenuBar createMenuBar() {
     return IdeMenuBar.createMenuBar();
   }
 
-  @NotNull
-  protected Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
+  protected @NotNull Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     myToolWindowsPane = new ToolWindowsPane(frame, parentDisposable);
     return myToolWindowsPane;
   }
 
-  @NotNull
-  public ToolWindowsPane getToolWindowPane() {
+  public @NotNull ToolWindowsPane getToolWindowPane() {
     return myToolWindowsPane;
   }
 
@@ -154,7 +151,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   @Override
   protected LayoutManager createRootLayout() {
-    return WindowManagerImpl.isFloatingMenuBarSupported() ? new MyRootLayout() : super.createRootLayout();
+    return FrameInfoHelper.isFloatingMenuBarSupported() ? new MyRootLayout() : super.createRootLayout();
   }
 
   @Override
@@ -231,8 +228,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     menuBar.repaint();
   }
 
-  @NotNull
-  private static JComponent createToolbar() {
+  private static @NotNull JComponent createToolbar() {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     ActionToolbar toolBar = actionManager.createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
@@ -254,13 +250,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
   }
 
-  @NotNull
-  protected IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
+  protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
     return new IdeStatusBarImpl(frame, true);
   }
 
-  @Nullable
-  final IdeStatusBarImpl getStatusBar() {
+  final @Nullable IdeStatusBarImpl getStatusBar() {
     return myStatusBar;
   }
 
@@ -328,8 +322,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myNorthComponents.clear();
   }
 
-  @Nullable
-  public IdeRootPaneNorthExtension findByName(@NotNull String name) {
+  public @Nullable IdeRootPaneNorthExtension findByName(@NotNull String name) {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       if (northComponent.getKey().equals(name)) {
         return northComponent;

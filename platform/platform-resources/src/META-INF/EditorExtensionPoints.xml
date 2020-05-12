@@ -23,6 +23,10 @@
     <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>
     <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate" dynamic="true"/>
 
+    <extensionPoint dynamic="true" name="generalEditorOptionsExtension" beanClass="com.intellij.application.options.editor.GeneralEditorOptionsProviderEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
+
     <!--quote handlers-->
     <extensionPoint name="quoteHandler" beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP" dynamic="true">
       <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>

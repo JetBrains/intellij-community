@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.util.ThreeState
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
@@ -21,7 +22,7 @@ object PyTestLineMarkerContributor : RunLineMarkerContributor() {
     val typeEvalContext = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
     if ((testElement is PyClass || testElement is PyFunction)
         && (testElement is PsiNamedElement)
-        && isTestElement(testElement, typeEvalContext)) {
+        && isTestElement(testElement, ThreeState.UNSURE, typeEvalContext)) {
       return RunLineMarkerContributor.withExecutorActions(AllIcons.RunConfigurations.TestState.Run)
     }
     return null

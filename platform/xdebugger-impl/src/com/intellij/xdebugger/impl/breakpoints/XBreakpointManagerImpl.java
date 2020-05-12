@@ -99,6 +99,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
             doRemoveBreakpointImpl(bpt, isDefaultBreakpoint(bpt));
           }
           myBreakpointsDefaults.remove(type);
+          myDefaultBreakpoints.remove(type);
         });
       }
     }, project);

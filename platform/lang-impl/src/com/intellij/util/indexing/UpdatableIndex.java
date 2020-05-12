@@ -25,7 +25,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 /**
@@ -36,16 +35,6 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
   boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 
   @NotNull
-  default Lock getReadLock() {
-    return getLock().readLock();
-  }
-
-  @NotNull
-  default Lock getWriteLock() {
-    return getLock().writeLock();
-  }
-
-  @NotNull
   ReadWriteLock getLock();
 
   @NotNull
@@ -54,7 +43,8 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
   void setIndexedStateForFile(int fileId, @NotNull IndexedFile file);
   void resetIndexedStateForFile(int fileId);
 
-  boolean isIndexedStateForFile(int fileId, @NotNull IndexedFile file);
+  @NotNull
+  FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file);
 
   long getModificationStamp();
 

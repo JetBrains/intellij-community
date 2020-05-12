@@ -16,7 +16,6 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -52,6 +51,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
+import com.intellij.util.ListSelection;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;
@@ -154,7 +154,6 @@ public class ShelvedChangesViewManager implements Disposable {
 
         myContent.setCloseable(false);
         myContent.setDisposer(myPanel);
-        addContent(myContent);
         DnDSupport.createBuilder(myPanel.myTree)
           .setImageProvider(myPanel::createDraggedImage)
           .setBeanProvider(myPanel::createDragStartBean)
@@ -162,6 +161,7 @@ public class ShelvedChangesViewManager implements Disposable {
           .setDropHandler(dnDTarget)
           .setDisposableParent(myContent)
           .install();
+        addContent(myContent);
       }
       updateTreeIfShown(tree -> {
         tree.rebuildTree();
@@ -490,6 +490,14 @@ public class ShelvedChangesViewManager implements Disposable {
   @NotNull
   public static List<ShelvedBinaryFile> getBinaryShelveChanges(@NotNull final DataContext dataContext) {
     return notNullize(dataContext.getData(SHELVED_BINARY_FILE_KEY));
+  }
+
+  @NotNull
+  public static List<String> getSelectedShelvedChangeNames(@NotNull final DataContext dataContext) {
+    ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
+    if (shelvedChangeTree == null) return emptyList();
+    return StreamEx.of(VcsTreeModelData.selected(shelvedChangeTree).userObjectsStream(ShelvedWrapper.class))
+      .map(ShelvedWrapper::getRequestName).toList();
   }
 
   private static class MyShelveDeleteProvider implements DeleteProvider {

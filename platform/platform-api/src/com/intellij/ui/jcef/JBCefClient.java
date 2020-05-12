@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -35,6 +36,8 @@ import java.util.*;
 @SuppressWarnings({"unused", "UnusedReturnValue"}) // [tav] todo: remove it ( or add*Handler methods not yet used)
 @ApiStatus.Experimental
 public class JBCefClient implements JBCefDisposable {
+  private static final Logger LOG = Logger.getInstance(JBCefClient.class);
+
   @NotNull private final CefClient myCefClient;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
@@ -62,7 +65,14 @@ public class JBCefClient implements JBCefDisposable {
 
   @Override
   public void dispose() {
-    myDisposeHelper.dispose(() -> myCefClient.dispose());
+    myDisposeHelper.dispose(() -> {
+      try {
+        myCefClient.dispose();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+    });
   }
 
   @Override

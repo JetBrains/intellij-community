@@ -31,6 +31,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -38,12 +39,12 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContex
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
@@ -75,20 +76,16 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val dataProvider = dataContext.dataLoader.getDataProvider(pullRequest, disposable)
 
-    val detailsModel = SingleValueModel(pullRequest)
+    val detailsModel = SingleValueModel(dataProvider.detailsData.loadedDetails ?: pullRequest)
     val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider.reviewData, disposable)
 
     val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
 
-    fun handleDetails() {
-      dataProvider.detailsRequest.handleOnEdt(disposable) { pr, _ ->
-        detailsModel.value = pr
+    dataProvider.detailsData.loadDetails(disposable) {
+      it.handleOnEdt(disposable) { pr, _ ->
+        if (pr != null) detailsModel.value = pr
       }
     }
-    dataProvider.addRequestsChangesListener(disposable, object : GHPRDataProvider.RequestsChangedListener {
-      override fun detailsRequestChanged() = handleDetails()
-    })
-    handleDetails()
 
     val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(),
                                                                               GithubImageResizer.getInstance(),
@@ -136,11 +133,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         add(timeline, CC().growX().minWidth(""))
         add(loadingIcon, CC().hideMode(2).alignX("center"))
 
-        with(dataContext.commentService) {
-          if (canComment()) {
-            val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
-            add(createCommentField(commentServiceAdapter, avatarIconsProvider, dataContext.securityService.currentUser), CC().growX())
-          }
+        if (dataContext.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
+          val commentField = createCommentField(dataProvider.commentsData,
+                                                avatarIconsProvider,
+                                                dataContext.securityService.currentUser)
+          add(commentField, CC().growX())
         }
       }
 
@@ -174,7 +171,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     Disposer.register(loaderPanel, timelinePanel)
     Disposer.register(timelinePanel, loadingIcon)
 
-    val statePanel = GHPRStatePanel(project, dataProvider, dataContext.securityService, dataContext.stateService, detailsModel, disposable)
+    val stateModel = GHPRStateModelImpl(project, dataProvider, detailsModel.value, disposable)
+    val statePanel = GHPRStatePanel(dataContext.securityService, stateModel)
+    detailsModel.addAndInvokeValueChangedListener {
+      statePanel.select(detailsModel.value.state, true)
+    }
 
     val contentPanel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()
 
@@ -207,7 +208,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     }
   }
 
-  private fun createCommentField(commentService: GHPRCommentServiceAdapter,
+  private fun createCommentField(commentService: GHPRCommentsDataProvider,
                                  avatarIconsProvider: GHAvatarIconsProvider,
                                  currentUser: GHUser): JComponent {
     val model = GHPRSubmittableTextField.Model {

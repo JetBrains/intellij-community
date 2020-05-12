@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 
 import java.util.regex.Pattern;
 
@@ -51,7 +52,7 @@ public class HgReferenceValidator implements InputValidatorEx {
 
   protected boolean containsIllegalSymbols(@Nullable String inputString) {
     if (inputString != null && ILLEGAL.matcher(inputString).find()) {
-      myErrorText = "Name could not contain colons";
+      myErrorText = HgBundle.message("hg4idea.validation.name.no.colons");
       return true;
     }
     return false;
@@ -59,7 +60,7 @@ public class HgReferenceValidator implements InputValidatorEx {
 
   private boolean onlyDigits(@Nullable String inputString) {
     if (inputString != null && DIGITS_ILLEGAL.matcher(inputString).matches()) {
-      myErrorText = "Invalid name for hg reference";
+      myErrorText = HgBundle.message("hg4idea.validation.name.invalid");
       return true;
     }
     return false;
@@ -71,7 +72,7 @@ public class HgReferenceValidator implements InputValidatorEx {
   }
 
   private boolean isReservedWord(@Nullable String name) {
-    myErrorText = TIP_REFERENCE.equals(name) ? String.format("The name \'%s\' is reserved.", name) : null;
+    myErrorText = TIP_REFERENCE.equals(name) ? HgBundle.message("hg4idea.validation.name.reserved", name) : null;
     return myErrorText != null;
   }
 

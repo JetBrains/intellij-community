@@ -5,6 +5,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;

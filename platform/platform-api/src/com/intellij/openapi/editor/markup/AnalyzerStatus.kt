@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup
 
-import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import org.jetbrains.annotations.PropertyKey
 import java.awt.Container
+import java.util.*
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
@@ -25,7 +25,7 @@ enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) p
 /*
  * Per language highlight level
  */
-data class LanguageHighlightLevel(val language: Language, val level: InspectionsLevel)
+data class LanguageHighlightLevel(val langID: String, val level: InspectionsLevel)
 
 /**
  * Light wrapper for <code>ProgressableTextEditorHighlightingPass</code> with only essential UI data.
@@ -38,21 +38,17 @@ data class PassWrapper(val presentableName: String, val progress: Double, val fi
 }
 
 /**
- * Standard (predefined) expanded status that's printed as text in the inspection widget component.
+ * Type of the analyzing status that's taking place.
  */
-enum class StandardStatus(private val bundleKey: String) {
-  NONE(""),
-  OFF("iw.status.off"),
-  INDEXING("iw.status.indexing"),
-  ANALYZING("iw.status.analyzing");
-
-  override fun toString(): String = if (bundleKey.isNotEmpty()) EditorBundle.message(bundleKey) else ""
+enum class AnalyzingType {
+  COMPLETE, // Analyzing complete
+  PARTIAL,  // Analyzing has partial results available for displaying
+  EMPTY     // Analyzing in progress but no information is available
 }
-
 /**
- * Severity status item containing text (not necessarily a number) and a possible icon
+ * Severity status item containing text (not necessarily a number) possible icon and severity type
  */
-data class StatusItem(val text: String, val icon: Icon?)
+data class StatusItem @JvmOverloads constructor(val text: String, val icon: Icon? = null, val type: String? = null)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and
@@ -123,10 +119,16 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
   var showNavigation : Boolean = false
   var expandedStatus: List<StatusItem> = emptyList()
   var passes : List<PassWrapper> = emptyList()
-  var standardStatus: StandardStatus = StandardStatus.NONE;
+  var analyzingType : AnalyzingType = AnalyzingType.COMPLETE
+    private set
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true
+    return this
+  }
+
+  fun withExpandedStatus(status: StatusItem): AnalyzerStatus {
+    expandedStatus = Collections.singletonList(status)
     return this
   }
 
@@ -135,9 +137,8 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
     return this
   }
 
-  fun withStandardStatus(status: StandardStatus): AnalyzerStatus {
-    expandedStatus = listOf(StatusItem(status.toString(), null))
-    standardStatus = status
+  fun withAnalyzingType(type: AnalyzingType) : AnalyzerStatus {
+    analyzingType = type
     return this
   }
 

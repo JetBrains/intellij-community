@@ -5,13 +5,12 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
@@ -54,7 +53,7 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
         && ConvertToJBBorderQuickFix.canSimplify(expression)) {
       return manager.createProblemDescriptor(expression, "Simplify", new ConvertToJBBorderQuickFix() {
         @Override
-        public @NlsUI.ListItem @NotNull String getFamilyName() {
+        public @IntentionFamilyName @NotNull String getFamilyName() {
           return "Simplify";
         }
       }, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);

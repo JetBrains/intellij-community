@@ -44,7 +44,7 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyReferenceExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PyReferenceExpressionImpl.class);
 
   @Nullable private volatile QualifiedName myQualifiedName = null;
 
@@ -216,44 +216,35 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    if (!TypeEvalStack.mayEvaluate(this)) {
+    final boolean qualified = isQualified();
+
+    final PyType providedType = getTypeFromProviders(context);
+    if (providedType != null) {
+      return providedType;
+    }
+
+    if (qualified) {
+      final Ref<PyType> qualifiedReferenceType = getQualifiedReferenceType(context);
+      if (qualifiedReferenceType != null) {
+        return qualifiedReferenceType.get();
+      }
+    }
+
+    final PyType typeFromTargets = getTypeFromTargets(context);
+    if (qualified && typeFromTargets instanceof PyNoneType) {
       return null;
     }
-
-    try {
-      final boolean qualified = isQualified();
-
-      final PyType providedType = getTypeFromProviders(context);
-      if (providedType != null) {
-        return providedType;
-      }
-
-      if (qualified) {
-        final Ref<PyType> qualifiedReferenceType = getQualifiedReferenceType(context);
-        if (qualifiedReferenceType != null) {
-          return qualifiedReferenceType.get();
-        }
-      }
-
-      final PyType typeFromTargets = getTypeFromTargets(context);
-      if (qualified && typeFromTargets instanceof PyNoneType) {
-        return null;
-      }
-      final Ref<PyType> descriptorType = getDescriptorType(typeFromTargets, context);
-      if (descriptorType != null) {
-        return descriptorType.get();
-      }
-
-      final PyType callableType = getCallableType(context);
-      if (callableType != null) {
-        return callableType;
-      }
-
-      return typeFromTargets;
+    final Ref<PyType> descriptorType = getDescriptorType(typeFromTargets, context);
+    if (descriptorType != null) {
+      return descriptorType.get();
     }
-    finally {
-      TypeEvalStack.evaluated(this);
+
+    final PyType callableType = getCallableType(context);
+    if (callableType != null) {
+      return callableType;
     }
+
+    return typeFromTargets;
   }
 
   @Nullable

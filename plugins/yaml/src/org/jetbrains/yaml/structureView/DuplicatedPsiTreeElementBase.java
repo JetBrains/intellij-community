@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -26,8 +27,7 @@ import java.util.Objects;
 abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> implements StructureViewTreeElement,
                                                                                            ItemPresentation,
                                                                                            NodeDescriptorProvidingKey {
-  @NotNull
-  private final StoredData<T> myValue;
+  private final @NotNull StoredData<T> myValue;
 
   /** @param details is used to distinguish different occurrences of the same PSI element */
   protected DuplicatedPsiTreeElementBase(@NotNull T psiElement, @NotNull String details) {
@@ -35,36 +35,30 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
   }
 
   /** @return stored psi element */
-  @NotNull
-  public final T getElement() {
+  public final @NotNull T getElement() {
     return getValue().getElement();
   }
 
   /** @return additional information which is used to distinguish different occurrences of the same PSI element */
-  @NotNull
-  public final String getDetails() {
+  public final @NotNull String getDetails() {
     return getValue().getDetails();
   }
 
-  @NotNull
-  public abstract Collection<StructureViewTreeElement> getChildrenBase();
+  public abstract @NotNull Collection<StructureViewTreeElement> getChildrenBase();
 
-  @NotNull
   @Override
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return this;
   }
 
-  @NotNull
   @Override
-  public Object getKey() {
+  public @NotNull Object getKey() {
     return String.valueOf(getElement());
   }
 
   @Contract(pure = true)
-  @NotNull
   @Override
-  public final StoredData<T> getValue() {
+  public final @NotNull StoredData<T> getValue() {
     return myValue;
   }
 
@@ -74,10 +68,10 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
 
   @Override
   public final StructureViewTreeElement @NotNull [] getChildren() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren);
+    return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren).toArray(EMPTY_ARRAY);
   }
 
-  private StructureViewTreeElement @NotNull [] doGetChildren() {
+  private @NotNull List<StructureViewTreeElement> doGetChildren() {
     return PsiTreeElementBase.mergeWithExtensions(getElement(), getChildrenBase(), true);
   }
 
@@ -116,24 +110,20 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
 
   /** This class is a wrapper over PSI element with additional information */
   private static class StoredData<T extends Navigatable> implements Navigatable {
-    @NotNull
-    private final T myElement;
+    private final @NotNull T myElement;
 
-    @NotNull
-    private final String myDetails;
+    private final @NotNull String myDetails;
 
     StoredData(@NotNull T element, @NotNull String details) {
       myElement = element;
       myDetails = details;
     }
 
-    @NotNull
-    public T getElement() {
+    public @NotNull T getElement() {
       return myElement;
     }
 
-    @NotNull
-    public String getDetails() {
+    public @NotNull String getDetails() {
       return myDetails;
     }
 

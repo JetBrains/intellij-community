@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -337,12 +338,27 @@ fun PsiElement.properResolve(): GroovyResolveResult? {
   }
 }
 
+private fun locateMethod(file: GroovyFileBase, method: GrMethod): GrMethod? {
+  val containingClass = method.containingClass
+  if (containingClass == null) {
+    return file.methods.find { methodsAgree(it, method) }
+  }
+  else {
+    val outerClasses = containingClass.parentsOfType<PsiClass>(true).toList().reversed()
+    val initialClass = file.classes.find { it.name == outerClasses.first().name } ?: return null
+    val innermostClass = outerClasses.drop(1).fold(initialClass) { currentOriginalClass, psiClass ->
+      currentOriginalClass.innerClasses.find { it.name == psiClass.name } ?: return null
+    }
+    return innermostClass.methods.find { it.name == method.name } as? GrMethod
+  }
+}
+
 @Suppress("RemoveExplicitTypeArguments")
 internal fun getOriginalMethod(method: GrMethod): GrMethod {
   return when (val originalFile = method.containingFile?.originalFile) {
       null -> method
       method.containingFile -> method
-      is GroovyFileBase -> originalFile.methods.find { methodsAgree(it, method) } ?: method
+      is GroovyFileBase -> locateMethod(originalFile, method) ?: method
       else -> originalFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()?.takeIf { it.name == method.name } ?: method
     }
 }

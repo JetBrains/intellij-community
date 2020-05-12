@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
 import com.intellij.notification.Notification;
@@ -19,6 +19,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitSaveChangesPolicy;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -50,7 +51,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     LOG.info("saving " + rootsToSave);
 
     for (VirtualFile root : rootsToSave) {
-      final String message = "Stashing changes from '" + root.getName() + "'...";
+      String message = GitBundle.message("stash.progress.indicator.title", root.getName());
       LOG.info(message);
       final String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(message);
@@ -85,7 +86,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   public void load() {
     final String oldProgressTitle = myProgressIndicator.getText();
     GitStashUtils.unstash(myProject, myStashedRoots, (root) -> {
-      final String message = "Popping changes to '" + root.getName() + "'...";
+      String message = GitBundle.message("stash.unstash.progress.indicator.title", root.getName());
       myProgressIndicator.setText(message);
       GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
       handler.addParameters("pop");
@@ -124,7 +125,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
         return givenParams;
       }
       Params params = new Params(project);
-      params.setErrorNotificationTitle("Local changes were not restored");
+      params.setErrorNotificationTitle(GitBundle.message("preserving.process.local.changes.not.restored.error.title"));
       params.setMergeDialogCustomizer(new UnstashMergeDialogCustomizer());
       params.setReverse(true);
       return params;
@@ -133,29 +134,23 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were restored with conflicts",
-                                                                "Your uncommitted changes were saved to <a href='saver'>stash</a>.<br/>" +
-                                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
-                                                                "<a href='resolve'>Resolve</a> conflicts and drop the stash.",
-                                                                new NotificationListener() {
-                                                                  @Override
-                                                                  public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                              @NotNull HyperlinkEvent event) {
-                                                                    if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                                      if (event.getDescription().equals("saver")) {
-                                                                        // we don't use #showSavedChanges to specify unmerged root first
-                                                                        GitUnstashDialog.showUnstashDialog(myProject,
-                                                                                                           new ArrayList<>(
-                                                                                                             myStashedRoots),
-                                                                                                           myStashedRoots.iterator().next()
-                                                                        );
-                                                                      }
-                                                                      else if (event.getDescription().equals("resolve")) {
-                                                                        mergeNoProceed();
-                                                                      }
-                                                                    }
-                                                                  }
-                                                                }
+      VcsNotifier.getInstance(myProject).notifyImportantWarning(
+        GitBundle.getString("stash.unstash.unresolved.conflict.warning.notification.title"),
+        GitBundle.getString("stash.unstash.unresolved.conflict.warning.notification.message"),
+        new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              if (event.getDescription().equals("saver")) {
+                // we don't use #showSavedChanges to specify unmerged root first
+                GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
+              }
+              else if (event.getDescription().equals("resolve")) {
+                mergeNoProceed();
+              }
+            }
+          }
+        }
       );
     }
 
@@ -166,7 +161,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
-      return "Uncommitted changes that were stashed before update have conflicts with updated files.";
+      return GitBundle.getString("stash.unstash.conflict.dialog.description.label.text");
     }
 
     @NotNull

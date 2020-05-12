@@ -31,7 +31,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
 
   private TemplatesState myState = new TemplatesState();
 
-  public abstract @NotNull TemplateResource @NotNull [] getDefaultTemplates();
+  public abstract @NotNull List<TemplateResource> getDefaultTemplates();
 
   /**
    * Reads the content of the resource and return it as a String.
@@ -47,22 +47,26 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
   }
 
   @Override
-  public TemplatesState getState() {
+  public @NotNull TemplatesState getState() {
     return myState;
   }
 
   @Override
   public void loadState(@NotNull TemplatesState state) {
+    if (StringUtil.isEmpty(state.defaultTemplateName) && !StringUtil.isEmpty(state.oldDefaultTemplateName)) {
+      state.defaultTemplateName = state.oldDefaultTemplateName;
+    }
+    state.oldDefaultTemplateName = null;
     myState = state;
   }
 
-  public void addTemplate(TemplateResource template) {
+  public void addTemplate(@NotNull TemplateResource template) {
     myState.templates.add(template);
   }
 
-  public Collection<TemplateResource> getAllTemplates() {
+  public @NotNull Collection<TemplateResource> getAllTemplates() {
     Set<String> names = new HashSet<>();
-    Collection<TemplateResource> templates = new LinkedHashSet<>(Arrays.asList(getDefaultTemplates()));
+    Collection<TemplateResource> templates = new LinkedHashSet<>(getDefaultTemplates());
     for (TemplateResource template : myState.templates) {
       if (names.add(template.getFileName())) {
         templates.add(template);

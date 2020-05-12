@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.psi.*
 
-class MemberCollector(private val memberFilter: (PsiMember) -> Boolean): JavaRecursiveElementVisitor() {
+class MemberCollector(private val memberFilter: (PsiMember) -> Boolean) : JavaRecursiveElementVisitor() {
 
   private val members = mutableListOf<PsiMember>()
 

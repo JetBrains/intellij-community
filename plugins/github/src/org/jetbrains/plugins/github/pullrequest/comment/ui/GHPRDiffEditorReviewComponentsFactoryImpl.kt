@@ -9,8 +9,9 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
@@ -54,7 +55,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
       }
     }
 
-    return createCommentComponent(textFieldModel, "Comment", hideCallback)
+    return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.comment"), hideCallback)
   }
 
   override fun createNewReviewCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
@@ -67,7 +68,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
       }
     }
 
-    return createCommentComponent(textFieldModel, "Start review", hideCallback)
+    return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.start"), hideCallback)
   }
 
   override fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, hideCallback: () -> Unit): JComponent {
@@ -80,7 +81,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
       }
     }
 
-    return createCommentComponent(textFieldModel, "Comment", hideCallback)
+    return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.comment"), hideCallback)
   }
 
   private fun createCommentComponent(textFieldModel: GHPRSubmittableTextField.Model, actionName: String, hideCallback: () -> Unit)

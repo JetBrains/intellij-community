@@ -274,6 +274,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   }
 
   private static class LabelWrapper extends MnemonicWrapper<JLabel> {
+    private KeyStroke myStrokePress;
     private KeyStroke myStrokeRelease;
 
     private LabelWrapper(JLabel component) {
@@ -282,6 +283,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
 
     @Override
     void updateInputMap(InputMap map, int code) {
+      myStrokePress = fixMacKeyStroke(myStrokePress, map, code, false, "press");
       myStrokeRelease = fixMacKeyStroke(myStrokeRelease, map, code, true, "release");
     }
 

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.openapi.util.NlsUI.Button;
+import static com.intellij.openapi.util.NlsContexts.Button;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 

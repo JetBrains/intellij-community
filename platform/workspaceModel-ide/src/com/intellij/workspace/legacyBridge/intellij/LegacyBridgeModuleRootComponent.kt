@@ -2,6 +2,8 @@
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -77,6 +79,15 @@ class LegacyBridgeModuleRootComponent(
         val library = createModuleLibrary(libraryEntity.persistentId())
         moduleLibraries.add(library)
       }
+    ModuleExtension.EP_NAME.getPoint(legacyBridgeModule).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension?> {
+      override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
+        modelValue.dropCache()
+      }
+
+      override fun extensionRemoved(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
+        modelValue.dropCache()
+      }
+    }, false, null)
   }
 
   internal fun createModuleLibrary(libraryId: LibraryId) = LegacyBridgeLibraryImpl(
@@ -87,7 +98,7 @@ class LegacyBridgeModuleRootComponent(
     parent = this
   )
 
-  internal val model
+  internal val model: RootModelViaTypedEntityImpl
     get() = modelValue.value
 
   override fun dispose() = Unit

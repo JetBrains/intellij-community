@@ -36,7 +36,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     };
     JList list = UIUtil.findComponentOfType(panel, JList.class);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
-      .setTitle("Recent Projects")
+      .setTitle(IdeBundle.message("popup.title.recent.projects"))
       .setFocusable(true)
       .setRequestFocus(true)
       .setMayBeParent(true)

@@ -1240,8 +1240,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     final Document document1 = FileDocumentManager.getInstance().getDocument(file1);
     final Document document2 = FileDocumentManager.getInstance().getDocument(file2);
 
-    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor();
-    fileEditor.DOCUMENTS = new Document[]{document1, document2};
+    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2);
 
     UndoManager undoManager = UndoManager.getInstance(myProject);
 
@@ -1388,8 +1387,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     UndoManager undoManager = UndoManager.getInstance(myProject);
 
-    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor();
-    fileEditor.DOCUMENTS = new Document[]{document1, document2};
+    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2);
 
     assertTrue(undoManager.isUndoAvailable(fileEditor));
 

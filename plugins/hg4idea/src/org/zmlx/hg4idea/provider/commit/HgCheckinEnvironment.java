@@ -220,7 +220,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     final int[] choice = new int[1];
     Runnable runnable = () -> choice[0] = Messages.showOkCancelDialog(
       myProject,
-      HgBundle.message("hg4idea.commit.partial.merge.message", filesNotIncludedString),
+      XmlStringUtil.wrapInHtml(HgBundle.message("hg4idea.commit.partial.merge.message", filesNotIncludedString)),
       HgBundle.message("hg4idea.commit.partial.merge.title"),
       null
     );
@@ -238,7 +238,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
       }
       filesWithRoots.add(new HgFile(vcsRoot, filePath));
     }
-    new Task.Backgroundable(myProject, "Removing Files...") {
+    new Task.Backgroundable(myProject, HgBundle.message("files.removing.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         new HgRemoveCommand(myProject).executeInCurrentThread(filesWithRoots);
@@ -325,11 +325,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
       myCommitContext = commitContext;
       myAmendOption = showAmendOption ? new ToggleAmendCommitOption(myCommitPanel, this) : null;
 
-      myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
+      myCommitSubrepos = new JCheckBox(HgBundle.message("repositories.commit.subs"), false);
       myCommitSubrepos.setVisible(hasSubrepos);
-      myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(
-        "Commit all subrepos for selected repositories.<br>" +
-        " <code>hg ci <i><b>files</b></i> -S <i><b>subrepos</b></i></code>"));
+      myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(HgBundle.message("repositories.commit.subs.tooltip")));
       myCommitSubrepos.setMnemonic('s');
       myCommitSubrepos.addActionListener(e -> updateAmendState(!myCommitSubrepos.isSelected()));
 

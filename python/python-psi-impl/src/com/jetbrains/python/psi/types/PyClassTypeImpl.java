@@ -39,8 +39,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull protected final PyClass myClass;
   protected final boolean myIsDefinition;
 
-  private static final ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = ThreadLocal.withInitial(() -> new HashSet<>());
-
   /**
    * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
    * the type system :)
@@ -134,18 +132,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext,
                                                           boolean inherited) {
-    final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
-    final Pair<PyClass, String> key = Pair.create(myClass, name);
-    if (resolving.contains(key)) {
-      return Collections.emptyList();
-    }
-    resolving.add(key);
-    try {
-      return doResolveMember(name, location, direction, resolveContext, inherited);
-    }
-    finally {
-      resolving.remove(key);
-    }
+    return RecursionManager.doPreventingRecursion(
+      resolveContext.allowProperties()
+      ? ContainerUtil.newArrayList(this, name, location, direction, resolveContext)
+      : ContainerUtil.newArrayList(this, name, location, resolveContext),
+      false,
+      () -> doResolveMember(name, location, direction, resolveContext, inherited)
+    );
   }
 
   @Nullable

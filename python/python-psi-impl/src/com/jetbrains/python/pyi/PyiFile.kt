@@ -21,9 +21,11 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.DelegatingScopeProcessor
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyImportElement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
@@ -41,15 +43,11 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   override fun multiResolveName(name: String, exported: Boolean): List<RatedResolveResult> {
     if (name == "function" && PyBuiltinCache.getInstance(this).builtinsFile == this) return emptyList()
+    if (exported && isPrivateName(name) && !resolvingBuiltinPathLike(name)) return emptyList()
 
     val baseResults = super.multiResolveName(name, exported)
     return if (exported)
-      baseResults
-        .filter {
-          val importedResult = it as? ImportedResolveResult
-          val importElement = importedResult?.definer as? PyImportElement
-          importElement == null || importElement.asName != null
-        }
+      baseResults.filterNot { isPrivateImport((it as? ImportedResolveResult)?.definer) }
     else
       baseResults
   }
@@ -60,11 +58,19 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
                                    place: PsiElement): Boolean {
     val wrapper = object : DelegatingScopeProcessor(processor) {
       override fun execute(element: PsiElement, state: ResolveState): Boolean = when {
-        element is PyImportElement && element.asName == null -> true
-        element is PsiNamedElement && element.name?.startsWith("_") == true -> true
+        isPrivateImport(element) -> true
+        element is PsiNamedElement && isPrivateName(element.name) -> true
         else -> super.execute(element, state)
       }
     }
     return super.processDeclarations(wrapper, resolveState, lastParent, place)
+  }
+
+  private fun isPrivateName(name: String?) = PyUtil.getInitialUnderscores(name) == 1
+
+  private fun isPrivateImport(element: PsiElement?) = element is PyImportElement && element.asName == null
+
+  private fun resolvingBuiltinPathLike(name: String): Boolean {
+    return name == PyNames.BUILTIN_PATH_LIKE && PyBuiltinCache.getInstance(this).builtinsFile == this
   }
 }

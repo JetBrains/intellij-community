@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -244,5 +245,10 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   public @NotNull PsiJavaCodeReferenceElement getReference() {
     return myReference.retrieveNonNullReference();
+  }
+
+  @Override
+  public @Nullable PsiElement getPsiContext() {
+    return myReference.retrieveReference();
   }
 }

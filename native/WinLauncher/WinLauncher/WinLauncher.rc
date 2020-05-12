@@ -137,25 +137,9 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "WinLauncher"
-    IDS_JDK_ENV_VAR         "IDEA_JDK"
-    IDS_VM_OPTIONS_PATH     "%APPDATA%\\JetBrains\\__PRODUCT_PATHS_SELECTOR__"
-    IDS_VM_OPTION_ERRORFILE "-XX:ErrorFile=%USERPROFILE%\\java_error_in___product_uc___%p.log"
-    IDS_VM_OPTION_HEAPDUMPPATH "-XX:HeapDumpPath=%USERPROFILE%\\java_error_in___product_uc__.hprof"
     IDS_MAIN_CLASS          "com/intellij/idea/Main"
-    IDS_CLASSPATH_LIBS      "bootstrap.jar;extensions.jar;util.jar;jdom.jar;log4j.jar;trove4j.jar;jna.jar"
-    IDS_JDK_ONLY            "true"
-    IDC_WINLAUNCHER         "WINLAUNCHER"
     IDS_COMMAND_LINE_PROCESSOR_CLASS
                             "com/intellij/ide/WindowsCommandLineProcessor"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_VM_OPTIONS          "-Didea.jre.check=false -Dide.native.launcher=true"
-    IDS_PROPS_ENV_VAR       "IDEA_PROPERTIES"
-    IDS_VM_OPTIONS_ENV_VAR  "IDEA_VM_OPTIONS"
-    IDS_ERROR_LAUNCHING_APP "Error Launching IntelliJ Platform"
 END
 
 #endif    // English (United States) resources

@@ -18,7 +18,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('a')
+          PsiElement(word)('a')
           PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -73,7 +73,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('ENV_FILE')
+          PsiElement(word)('ENV_FILE')
           PsiElement(})('}')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
@@ -106,7 +106,7 @@ SHELL_SCRIPT
                 PsiElement($)('$')
                 SHELL_PARAMETER_EXPANSION
                   PsiElement({)('{')
-                  PsiElement(parameter_expansion_body)('ENV_FILE')
+                  PsiElement(word)('ENV_FILE')
                   PsiElement(})('}')
           PsiElement())(')')
     PsiElement(;)(';')

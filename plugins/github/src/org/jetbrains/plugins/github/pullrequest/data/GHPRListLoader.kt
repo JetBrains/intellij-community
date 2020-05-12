@@ -13,10 +13,10 @@ internal interface GHPRListLoader : GHListLoader {
   val filterNotEmpty: Boolean
 
   @CalledInAwt
-  fun reloadData(request: CompletableFuture<out GHPullRequestShort>)
+  fun findData(id: GHPRIdentifier): GHPullRequestShort?
 
   @CalledInAwt
-  fun findData(id: GHPRIdentifier): GHPullRequestShort?
+  fun updateData(pullRequest: GHPullRequestShort)
 
   @CalledInAwt
   fun resetFilter()

@@ -6,10 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
@@ -33,7 +30,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
     updateEnabledAndVisible(e, enabled)
 
     if (!e.getData(VcsDataKeys.CHANGE_LISTS).isNullOrEmpty()) {
-      e.presentation.text = "Move Files to Another Changelist..."
+      e.presentation.text = ActionsBundle.message("action.ChangesView.Move.Files.text")
     }
   }
 
@@ -45,7 +42,9 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       }
 
       if (isEmpty) {
-        VcsBalloonProblemNotifier.showOverChangesView(project, "Nothing is selected that can be moved", MessageType.INFO)
+        VcsBalloonProblemNotifier.showOverChangesView(project,
+                                                      VcsBundle.message("move.to.another.changelist.nothing.selected.notification.title"),
+                                                      MessageType.INFO)
         return
       }
 

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -204,8 +205,12 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     Sdk sdk = config.getSdk() != null ? config.getSdk() : consoleParameters.mySdk;
     String workingDir = config.getWorkingDirectory() != null ? config.getWorkingDirectory() : consoleParameters.myWorkingDir;
 
+    Map<String, String> consoleEnvs = new HashMap<>();
+    consoleEnvs.putAll(consoleParameters.myEnvs);
+    consoleEnvs.putAll(config.getEnvs());
+
     return new PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.myConsoleType, config.getName(), workingDir,
-                                              consoleParameters.myEnvs, consoleParameters.mySettingsProvider, rerunAction, config,
+                                              consoleEnvs, consoleParameters.mySettingsProvider, rerunAction, config,
                                               consoleParameters.mySetupFragment);
   }
 }

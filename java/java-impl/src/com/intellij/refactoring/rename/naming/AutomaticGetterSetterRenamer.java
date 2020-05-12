@@ -5,7 +5,6 @@ import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -50,7 +49,7 @@ public class AutomaticGetterSetterRenamer extends AutomaticRenamer {
   }
 
   @Override
-  public @NlsUI.Button String getDialogDescription() {
+  public @NlsContexts.Button String getDialogDescription() {
     return JavaRefactoringBundle.message("rename.accessors.with.the.following.names.to");
   }
 

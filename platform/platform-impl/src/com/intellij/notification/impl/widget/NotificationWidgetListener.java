@@ -5,8 +5,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.EventLogListener;
-import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -14,11 +14,9 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 final class NotificationWidgetListener implements UISettingsListener, ToolWindowManagerListener, EventLogListener {
@@ -28,9 +26,11 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
   }
 
   @Override
-  public void toolWindowRegistered(@NotNull String id) {
-    if (EventLog.LOG_TOOL_WINDOW_ID.equals(id)) {
-      updateWidgetAndIcon();
+  public void toolWindowsRegistered(@NotNull List<String> ids) {
+    for (String id : ids) {
+      if (EventLog.LOG_TOOL_WINDOW_ID.equals(id)) {
+        updateWidgetAndIcon();
+      }
     }
   }
 
@@ -55,6 +55,7 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
     if (projectManager == null) {
       return;
     }
+
     boolean widgetIsAvailable = NotificationWidgetFactory.isAvailable();
     NotificationWidgetFactory widgetFactory = StatusBarWidgetFactory.EP_NAME.findExtension(NotificationWidgetFactory.class);
 
@@ -74,17 +75,16 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
         }
       }
     }
-
   }
 
   private static void updateToolWindowNotificationsIcon(@NotNull Project project) {
     ToolWindow eventLog = EventLog.getEventLog(project);
     if (eventLog != null) {
       List<Notification> notifications = EventLog.getNotifications(project);
-      LayeredIcon icon = IdeNotificationArea.createIconWithNotificationCount(new JBLabel(),
-                                                                              IdeNotificationArea.getMaximumType(notifications),
-                                                                              notifications.size(), true);
-      ApplicationManager.getApplication().invokeLater(() -> eventLog.setIcon(icon));
+      NotificationType type = IdeNotificationArea.getMaximumType(notifications);
+      int size = notifications.size();
+      ApplicationManager.getApplication()
+        .invokeLater(() -> eventLog.setIcon(IdeNotificationArea.createIconWithNotificationCount(new JBLabel(), type, size, true)));
     }
   }
 }

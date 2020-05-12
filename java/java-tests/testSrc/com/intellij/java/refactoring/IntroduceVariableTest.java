@@ -52,7 +52,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testExpectedType8Inference() { doTest("temp", true, false, false, "java.util.Map<java.lang.String,java.util.List<java.lang.String>>"); }
   public void testMethodCall() { doTest("temp", true, true, true, CommonClassNames.JAVA_LANG_OBJECT); }
   public void testMethodCallInSwitch() { doTest("i", true, true, true, "int"); }
-  public void testFunctionalExpressionInSwitchJava13Preview() { doTest("p", true, true, true, "java.util.function.Predicate<java.lang.String>"); }
+  public void testFunctionalExpressionInSwitch() { doTest("p", true, true, true, "java.util.function.Predicate<java.lang.String>"); }
   public void testParenthesizedOccurrence1() { doTest("empty", true, true, true, "boolean"); }
   public void testParenthesizedOccurrence2() { doTest("s", true, true, true, JAVA_LANG_STRING); }
   public void testAfterSemicolon() { doTest("s", true, true, true, CommonClassNames.JAVA_LANG_RUNNABLE); }
@@ -150,9 +150,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testReturnTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testFieldInitializer() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testAssignTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
-  public void testEnsureCodeBlockAroundBreakStatementJava13Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
-  public void testEnsureCodeBlockForThrowsJava13Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
-  public void testFromSwitchStatementJava13Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testEnsureCodeBlockAroundBreakStatement() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testEnsureCodeBlockForThrows() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testFromSwitchStatement() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
 
   public void testVarTypeExtractedJava10() {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "java.util.ArrayList<java.lang.String>"));

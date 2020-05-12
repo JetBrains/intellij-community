@@ -451,12 +451,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
     private int getLineNumber(EditorMouseEvent event) {
       Editor editor = event.getEditor();
-      int line = editor.yToVisualLine(event.getMouseEvent().getY());
-      if (line >= ((EditorImpl)editor).getVisibleLineCount()) {
+      if (event.getVisualPosition().line >= ((EditorImpl)editor).getVisibleLineCount()) {
         return -1;
       }
-      int offset = ((EditorImpl)editor).visualLineStartOffset(line);
-      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
+      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
       return editor.getDocument().getLineNumber(lineStartOffset);
     }
 

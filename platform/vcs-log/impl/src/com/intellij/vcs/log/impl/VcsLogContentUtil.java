@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -35,7 +34,7 @@ import java.util.function.Supplier;
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
  */
-public class VcsLogContentUtil {
+public final class VcsLogContentUtil {
   @Nullable
   public static VcsLogUiEx getLogUi(@NotNull JComponent c) {
     VcsLogPanel vcsLogPanel = null;
@@ -76,7 +75,7 @@ public class VcsLogContentUtil {
   public static <U extends VcsLogUiEx> U find(@NotNull Project project,
                                               @NotNull Class<U> clazz, boolean select,
                                               @NotNull Condition<? super U> condition) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (toolWindow == null) {
       return null;
     }
@@ -117,7 +116,7 @@ public class VcsLogContentUtil {
   public static Set<String> getExistingLogIds(@NotNull Project project) {
     Set<String> existingIds;
 
-    ContentManager contentManager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).getContentManager();
+    ContentManager contentManager = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).getContentManager();
     TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, VcsLogContentProvider.TAB_NAME);
     if (tabbedContent != null) {
       existingIds = ContainerUtil.map2SetNotNull(tabbedContent.getTabs(), pair -> {
@@ -145,7 +144,7 @@ public class VcsLogContentUtil {
                                                     @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
     U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi),
                                    groupId, tabGroupDisplayName, () -> tabDisplayName.apply(logUi),
                                    focus, logUi);
@@ -209,7 +208,7 @@ public class VcsLogContentUtil {
   }
 
   public static void updateLogUiName(@NotNull Project project, @NotNull VcsLogUi ui) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (toolWindow == null) return;
 
     ContentManager manager = toolWindow.getContentManager();

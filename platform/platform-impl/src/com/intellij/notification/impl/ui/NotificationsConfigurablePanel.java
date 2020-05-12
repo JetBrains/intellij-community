@@ -21,6 +21,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.IndexTreePathState;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -197,6 +198,11 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       getTree().setCellRenderer(new TreeColumnCellRenderer(this));
 
       initColumns();
+    }
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+      return new JBDimension(600, 400);
     }
 
     private void initColumns() {

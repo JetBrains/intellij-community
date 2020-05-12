@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,16 +130,6 @@ public class ComplementaryFontsRegistry {
   }
 
   /**
-   * @deprecated Use {{@link #getFontAbleToDisplay(int, int, FontPreferences, FontRenderContext)}} instead. To be removed in 2020.2 version.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @NotNull
-  public static FontInfo getFontAbleToDisplay(int codePoint, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences) {
-    return getFontAbleToDisplay(codePoint, style, preferences, null);
-  }
-
-  /**
    * If you intend to use font metrics from returned {@link FontInfo} object,
    * pass not-null correct {@link FontRenderContext} to this method.
    */
@@ -253,16 +242,6 @@ public class ComplementaryFontsRegistry {
       LOG.debug("Fallback font: " + result.getFont().getFontName());
     }
     return result;
-  }
-
-  /**
-   * @deprecated Use {{@link #getFontAbleToDisplay(int, int, int, String, FontRenderContext)}} instead. To be removed in 2020.2 version.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @NotNull
-  public static FontInfo getFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
-    return getFontAbleToDisplay(codePoint, size, style, defaultFontFamily, null);
   }
 
   /**

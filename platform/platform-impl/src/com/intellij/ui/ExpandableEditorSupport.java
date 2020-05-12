@@ -46,7 +46,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
     label.setBorder(JBUI.Borders.empty(5, 3, 5, 7));
     editor.getContentComponent().putClientProperty(Expandable.class, this);
     editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     editor.getScrollPane().getVerticalScrollBar().setBackground(background);
     editor.getScrollPane().getVerticalScrollBar().add(JBScrollBar.LEADING, label);
     editor.getScrollPane().setViewportBorder(JBUI.Borders.empty(4, 6));

@@ -172,27 +172,28 @@ class EditorCoordinateMapper {
     int maxLogicalColumn = 0;
     int maxOffset = offset;
     LogicalPosition delayedResult = null;
+    boolean delayedInlay = false;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false)) {
-      if (delayedResult != null) return delayedResult.leanForward(fragment.getCurrentInlay() == null);
       int minColumn = fragment.getStartVisualColumn();
       int maxColumn = fragment.getEndVisualColumn();
-      if (column < minColumn || column == minColumn && !pos.leansRight) {
+      if (delayedResult != null && minColumn != maxColumn) {
+        return delayedInlay ? delayedResult.leanForward(fragment.getCurrentInlay() == null) : delayedResult;
+      }
+      if (column < minColumn || column == minColumn && !pos.leansRight && minColumn != maxColumn) {
         return offsetToLogicalPosition(offset);
       }
       if (column > minColumn && column < maxColumn ||
           column == minColumn ||
           column == maxColumn && !pos.leansRight) {
-        if (column == maxColumn && fragment.getCurrentInlay() != null) {
-          // for visual positions between adjacent inlays, we return same result as for visual position before the first one
-          delayedResult = new LogicalPosition(fragment.getEndLogicalLine(), fragment.getEndLogicalColumn(), true);
-        }
-        else {
-          return new LogicalPosition(column == maxColumn && minColumn != maxColumn ? fragment.getEndLogicalLine()
-                                                                                   : fragment.getStartLogicalLine(),
-                                     fragment.visualToLogicalColumn(column),
-                                     fragment.isCollapsedFoldRegion() ? column < maxColumn || minColumn == maxColumn :
-                                     fragment.getCurrentInlay() == null && fragment.isRtl() ^ pos.leansRight);
-        }
+        // for visual positions between adjacent inlays, we return same result as for visual position before the first one
+        delayedInlay = fragment.getCurrentInlay() != null;
+        delayedResult =
+          new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(),
+                              fragment.visualToLogicalColumn(column),
+                              fragment.isCollapsedFoldRegion() ? column < maxColumn :
+                              !delayedInlay && fragment.isRtl() ^ pos.leansRight);
+        // delaying result to check whether there's an 'invisible' fold region going next
+        if (column != maxColumn) return delayedResult;
       }
       maxLogicalColumn = logicalLine == fragment.getEndLogicalLine() ? Math.max(maxLogicalColumn, fragment.getMaxLogicalColumn()) : 
                          fragment.getMaxLogicalColumn();
@@ -200,6 +201,7 @@ class EditorCoordinateMapper {
       logicalLine = fragment.getEndLogicalLine();
       maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
     }
+    if (delayedResult != null && !delayedInlay) return delayedResult;
     if (myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) == null) {
       boolean[] leansForward = new boolean[] {pos.leansRight};
       int resultColumn = maxLogicalColumn + visToLogWithInlays(logicalLine, column - maxVisualColumn, leansForward);

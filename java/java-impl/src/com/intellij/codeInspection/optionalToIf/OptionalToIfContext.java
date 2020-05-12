@@ -7,10 +7,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -43,6 +46,10 @@ class OptionalToIfContext extends ChainContext {
 
   void setInitializer(@NotNull String initializer) {
     LOG.assertTrue(myInitializer == null);
+    if (myModel.needsAdditionalVariable()) {
+      String additionalVarName = registerVarName(Arrays.asList("result", "nonFinalResult", "nonFinal"));
+      myModel.setVarName(additionalVarName);
+    }
     myInitializer = initializer;
   }
 
@@ -50,42 +57,31 @@ class OptionalToIfContext extends ChainContext {
     myElseBranch = elseBranch;
   }
 
+  String getElseBranch() {
+    return myElseBranch;
+  }
+
   @NotNull
   String generateNotNullCondition(@NotNull String arg, @NotNull String code) {
     if (myElseBranch == null) {
-      return "if (" + arg + " != null) {\n" +
+      return "if(" + arg + "!=null){\n" +
              code +
              "\n}";
     }
-    return "if(" + arg + " == null) " + myElseBranch +
+    return "if(" + arg + "==null)" + myElseBranch +
            code;
   }
 
   @Nullable
   String generateCondition(@NotNull PsiExpression conditional, @NotNull String code) {
     if (myElseBranch == null) {
-      return "if (" + conditional.getText() + ") {\n" +
+      return "if(" + conditional.getText() + "){\n" +
              code +
              "\n}";
     }
-    String negated = getNegatedConditional(conditional);
-    if (negated == null) return null;
-    return "if (" + negated + ")" + myElseBranch +
+    String negated = BoolUtils.getNegatedExpressionText(conditional, new CommentTracker());
+    return "if(" + negated + ")" + myElseBranch +
            code;
-  }
-
-  @Nullable
-  private static String getNegatedConditional(@NotNull PsiExpression conditional) {
-    PsiExpression negated = BoolUtils.getNegated(conditional);
-    if (negated != null) return negated.getText();
-    PsiBinaryExpression condition = tryCast(conditional, PsiBinaryExpression.class);
-    if (condition == null || !ComparisonUtils.isComparison(condition)) return null;
-    PsiExpression lhs = condition.getLOperand();
-    PsiExpression rhs = condition.getROperand();
-    if (rhs == null) return null;
-    String negatedToken = ComparisonUtils.getNegatedComparison(condition.getOperationTokenType());
-    if (negatedToken == null) return null;
-    return lhs.getText() + negatedToken + rhs.getText();
   }
 
   @Nullable
@@ -107,6 +103,13 @@ class OptionalToIfContext extends ChainContext {
 
     @NotNull
     abstract String addInitializer(@NotNull String initializer, @NotNull String code);
+
+    boolean needsAdditionalVariable() {
+      return false;
+    }
+
+    public void setVarName(@NotNull String name) {
+    }
 
     @Nullable
     static ChainExpressionModel create(@NotNull PsiStatement chainStatement, @NotNull PsiExpression chainExpression) {
@@ -200,7 +203,7 @@ class OptionalToIfContext extends ChainContext {
     @NotNull
     @Override
     String createResult(@NotNull String expression) {
-      return myName + " = " + expression + ";";
+      return myName + "=" + expression + ";";
     }
 
     @NotNull
@@ -229,40 +232,67 @@ class OptionalToIfContext extends ChainContext {
 
   private static class ChainDeclaration extends ChainExpressionModel {
 
-    private final String myName;
-    private final PsiVariable myVariable;
+    private final PsiLocalVariable myVariable;
+    private String myName;
 
-    ChainDeclaration(@NotNull String name, @NotNull PsiVariable variable) {
+    ChainDeclaration(@Nullable String name, @NotNull PsiLocalVariable variable) {
       myName = name;
       myVariable = variable;
+    }
+
+    @Override
+    boolean needsAdditionalVariable() {
+      return !myVariable.getName().equals(myName);
+    }
+
+    @Override
+    public void setVarName(@NotNull String name) {
+      myName = name;
     }
 
     @NotNull
     @Override
     String createResult(@NotNull String expression) {
-      return myName + " = " + expression + ";";
+      LOG.assertTrue(myName != null);
+      return myName + "=" + expression + ";";
     }
 
     @NotNull
     @Override
     String createInitializer(@NotNull String expression) {
-      return String.format("%s %s = %s;", myVariable.getType().getCanonicalText(), myName, expression);
+      if (myName == null || !needsAdditionalVariable()) {
+        return declareVariable(expression);
+      }
+      String typeText = myVariable.getType().getCanonicalText();
+      return typeText + " " + myName + "=" + expression + ";";
     }
 
     @NotNull
     @Override
     String addInitializer(@NotNull String initializer, @NotNull String code) {
-      return initializer + code;
+      return needsAdditionalVariable() ? initializer + code + declareVariable(myName) : initializer + code;
+    }
+
+    private String declareVariable(@NotNull String expression) {
+      PsiLocalVariable copy = (PsiLocalVariable)myVariable.copy();
+      PsiElementFactory factory = PsiElementFactory.getInstance(myVariable.getProject());
+      copy.setInitializer(factory.createExpressionFromText(expression, myVariable));
+      if (!needsAdditionalVariable()) {
+        PsiModifierList modifierList = copy.getModifierList();
+        if (modifierList != null) modifierList.setModifierProperty(PsiModifier.FINAL, false);
+      }
+      return copy.getText();
     }
 
     @Nullable
     static ChainDeclaration create(@NotNull PsiDeclarationStatement declaration, @NotNull PsiExpression chainExpression) {
       PsiElement[] elements = declaration.getDeclaredElements();
       if (elements.length != 1) return null;
-      PsiVariable variable = tryCast(elements[0], PsiVariable.class);
+      PsiLocalVariable variable = tryCast(elements[0], PsiLocalVariable.class);
       if (variable == null || PsiUtil.skipParenthesizedExprDown(variable.getInitializer()) != chainExpression) return null;
-      String name = variable.getName();
-      return name == null ? null : new ChainDeclaration(name, variable);
+      boolean needsAdditionalVariable = !VariableAccessUtils.canUseAsNonFinal(variable);
+      String name = needsAdditionalVariable ? null : variable.getName();
+      return new ChainDeclaration(name, variable);
     }
   }
 }

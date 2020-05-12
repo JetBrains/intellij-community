@@ -62,11 +62,12 @@ public class PyMandatoryEncodingInspection extends PyInspection {
 
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(node);
       if (charsetString == null) {
-        TextRange tr = new TextRange(0,0);
+        TextRange tr = new TextRange(0, 0);
         ProblemsHolder holder = getHolder();
-        if (holder != null)
+        if (holder != null) {
           holder.registerProblem(node, tr, PyPsiBundle.message("INSP.mandatory.encoding.no.encoding.specified.for.file"),
                                  new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
+        }
       }
     }
   }
@@ -119,7 +120,11 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   @NotNull
   private JPanel onlyPython2Box() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(PythonUiService.getInstance().createInspectionCheckBox(PyPsiBundle.message("enable.in.python.3"), this, "myAllPythons"));
+    JCheckBox checkBox =
+      PythonUiService.getInstance().createInspectionCheckBox(PyPsiBundle.message("enable.in.python.3"), this, "myAllPythons");
+    if (checkBox != null) {
+      panel.add(checkBox);
+    }
     return panel;
   }
 

@@ -26,7 +26,10 @@ import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -127,7 +130,7 @@ public class StringIndex {
   }
   
   public boolean update(final String path, @Nullable String content, @Nullable String oldContent) {
-    return myIndex.update(MathUtil.nonNegativeAbs(path.hashCode()), toInput(path, content)).compute();
+    return myIndex.update(MathUtil.nonNegativeAbs(path.hashCode()), toInput(path, content));
   }
 
   public long getModificationStamp() {

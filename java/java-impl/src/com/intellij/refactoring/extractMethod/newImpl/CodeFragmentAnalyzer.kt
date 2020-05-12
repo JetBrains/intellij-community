@@ -142,9 +142,10 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     if (instructionOffset >= flow.size) return instructionOffset
     val instruction = flow.instructions[instructionOffset]
     fun returnsValue(instructionOffset: Int): Boolean = (flow.getElement(instructionOffset) as? PsiReturnStatement)?.returnValue != null
-    return when {
-      instruction is GoToInstruction && !returnsValue(instructionOffset) -> lastGotoPointFrom(instruction.offset)
-      else -> instructionOffset
+    return if (instruction is GoToInstruction && !returnsValue(instructionOffset)) {
+      lastGotoPointFrom(instruction.offset)
+    } else {
+      instructionOffset
     }
   }
 
@@ -238,7 +239,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
   companion object {
     fun inferNullability(expressionGroup: List<PsiExpression>): Nullability {
-      if (expressionGroup.any { it.text == "null" }) return Nullability.NULLABLE
+      if (expressionGroup.any { it.type == PsiType.NULL }) return Nullability.NULLABLE
 
       if (expressionGroup.isEmpty()) return Nullability.UNKNOWN
       val fragmentToAnalyze = ControlFlowUtil.findCodeFragment(expressionGroup.first())
@@ -261,9 +262,10 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
       val visitor = Visitor()
       val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, visitor)
-      return when (runnerState) {
-        RunnerResult.OK -> DfaNullability.toNullability(nullability)
-        else -> Nullability.UNKNOWN
+      return if (runnerState == RunnerResult.OK) {
+        DfaNullability.toNullability(nullability)
+      } else {
+        Nullability.UNKNOWN
       }
     }
 
@@ -271,26 +273,21 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       if (probeExpression == null) return Nullability.UNKNOWN
       val factory = PsiElementFactory.getInstance(place.project)
       val sourceClass = findClassMember(place)?.containingClass ?: return Nullability.UNKNOWN
-      val copyClass = sourceClass.copy()
-      val copyPlace = findSameElementInCopy(sourceClass, copyClass, place)
+      val copyFile = sourceClass.containingFile.copy() as PsiFile
+      val copyPlace = PsiTreeUtil.findSameElementInCopy(place, copyFile)
       val probeStatement = factory.createStatementFromText("return $probeExpression;", null)
 
       val parent = copyPlace.parent
-      val codeBlock = when(parent) {
-        is PsiCodeBlock -> copyPlace.parent as PsiCodeBlock
-        else -> (copyPlace.parent.replace(factory.createCodeBlock()) as PsiCodeBlock)
-          .also { codeBlock -> codeBlock.add(copyPlace) }
+      val codeBlock = if (parent is PsiCodeBlock) {
+        copyPlace.parent as PsiCodeBlock
+      } else {
+        val block = copyPlace.parent.replace(factory.createCodeBlock()) as PsiCodeBlock
+        block.add(copyPlace)
+        block
       }
       val artificialReturn = codeBlock.add(probeStatement) as PsiReturnStatement
       val artificialExpression = requireNotNull(artificialReturn.returnValue)
       return inferNullability(listOf(artificialExpression))
-    }
-
-    private fun <T: PsiElement> findSameElementInCopy(source: PsiElement, copy: PsiElement, element: T): T {
-      val sourceStartOffset = source.textRange.startOffset
-      val copyStartOffset = copy.textRange.startOffset
-      val range = element.textRange.shiftRight(copyStartOffset - sourceStartOffset)
-      return CodeInsightUtil.findElementInRange(copy.containingFile, range.startOffset, range.endOffset, element.javaClass)
     }
 
     fun findReturnExpressionsIn(scope: PsiElement): List<PsiExpression> {

@@ -21,7 +21,15 @@ public interface StartupActivity {
    */
   ExtensionPointName<StartupActivity.Background> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
 
+  ExtensionPointName<StartupActivity.RequiredForSmartMode> REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.requiredForSmartModeStartupActivity");
+
   void runActivity(@NotNull Project project);
+
+  /**
+   * Represent a startup activity that should be executed before {@link com.intellij.openapi.project.DumbService} will be switched to "smart mode".
+   */
+  interface RequiredForSmartMode extends StartupActivity {
+  }
 
   interface DumbAware extends StartupActivity, com.intellij.openapi.project.DumbAware {
   }

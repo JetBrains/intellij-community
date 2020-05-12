@@ -131,7 +131,7 @@ public class TooBroadCatchInspection extends BaseInspection {
   }
 
   private static class AddCatchSectionFix extends InspectionGadgetsFix {
-
+    @SafeFieldForPreview
     private final SmartTypePointer myThrown;
     private final String myText;
 

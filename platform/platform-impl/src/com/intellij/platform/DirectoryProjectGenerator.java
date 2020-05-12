@@ -5,7 +5,7 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,7 +40,7 @@ public interface DirectoryProjectGenerator<T> {
   }
 
   @NotNull
-  @NlsActions.ActionText
+  @NlsContexts.Label
   String getName();
 
   @NotNull

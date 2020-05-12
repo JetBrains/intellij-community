@@ -56,6 +56,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   public ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
+    myEditor.addSettingsEditorListener(editor -> fireStepsBeforeRunChanged());
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);
     myDecorator = new HideableDecorator(myBeforeLaunchContainer, "", false) {
@@ -90,9 +91,16 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myDisclaimerPanel.setVisible(settings.isTemplate() && ProjectManager.getInstance().getOpenProjects().length != 0);
   }
 
+  public boolean isFragmented() {
+    return myEditor.isFragmented();
+  }
+
   @Override
   @NotNull
   protected JComponent createEditor() {
+    if (isFragmented()) {
+      return myEditor.getComponent();
+    }
     myComponentPlace.setLayout(new BorderLayout());
     myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
     DataManager.registerDataProvider(myWholePanel, dataId -> {

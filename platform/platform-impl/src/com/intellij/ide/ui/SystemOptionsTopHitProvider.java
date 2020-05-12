@@ -6,6 +6,7 @@ import com.intellij.ide.GeneralSettingsConfigurableKt;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -21,7 +22,7 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
       Arrays.asList(
         option(messageIde("option.show.tips.on.startup"), "isShowTipsOnStartup", "setShowTipsOnStartup"),
         option(messageIde("checkbox.support.screen.readers"), "isSupportScreenReaders", "setSupportScreenReaders"),
-        option("Start search in background", "isSearchInBackground", "setSearchInBackground")
+        option(messageIde("label.start.search.in.background"), "isSearchInBackground", "setSearchInBackground")
       )
     ));
 
@@ -37,7 +38,7 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
     return "system";
   }
 
-  static BooleanOptionDescription option(String option, String getter, String setter) {
+  static BooleanOptionDescription option(@Nls String option, String getter, String setter) {
     return new PublicMethodBasedOptionDescription(option, "preferences.general", getter, setter) {
       @NotNull
       @Override

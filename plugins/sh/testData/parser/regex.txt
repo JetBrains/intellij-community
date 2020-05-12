@@ -37,7 +37,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('XCODE_VERSION')
+                PsiElement(word)('XCODE_VERSION')
                 PsiElement(})('}')
               PsiElement(STRING_CONTENT)('.0')
               PsiElement(CLOSE_QUOTE)('"')

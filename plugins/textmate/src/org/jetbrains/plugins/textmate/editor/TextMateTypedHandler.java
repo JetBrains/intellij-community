@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.language.TextMateFileType;
+import org.jetbrains.plugins.textmate.TextMateFileType;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
 public class TextMateTypedHandler extends TypedHandlerDelegate {

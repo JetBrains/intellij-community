@@ -95,11 +95,11 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
       cd(bromunity)
       git("push origin :feature")
 
-      val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
+      val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), null, false, true)
       val result = updateProcess.update(UpdateMethod.MERGE)
 
       assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
-      assertErrorNotification("Can't Update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
+      assertErrorNotification("Can't update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
     }
     finally {
       settings.syncSetting = syncSetting
@@ -113,7 +113,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
 
     community.checkout("HEAD^0")
 
-    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
+    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), null, false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
 
     assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
@@ -130,14 +130,14 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
 
     repositories().forEach { it.checkout("HEAD^0")}
 
-    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
+    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), null, false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
     assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
     assertErrorNotification("Can't Update: No Current Branch", GitUpdateProcess.getDetachedHeadErrorNotificationContent(community))
   }
 
   private fun updateWithMerge(): GitUpdateResult {
-    return GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true).update(UpdateMethod.MERGE)
+    return GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), null, false, true).update(UpdateMethod.MERGE)
   }
 
   private fun repositories() = listOf(repository, community)

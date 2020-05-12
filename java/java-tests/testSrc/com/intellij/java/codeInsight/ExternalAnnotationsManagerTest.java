@@ -32,10 +32,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 import org.junit.Assume;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -55,7 +55,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
 
       Collection<String> utilClassPath = PathManager.getUtilClassPath();
       VirtualFile[] files = StreamEx.of(utilClassPath)
-        .append(PathManager.getJarPathForClass(Unmodifiable.class))
+        .append(PathManager.getJarPathForClass(XmlElement.class))
         .map(path -> path.endsWith(".jar") ?
                      JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path) + "!/") :
                      LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)))

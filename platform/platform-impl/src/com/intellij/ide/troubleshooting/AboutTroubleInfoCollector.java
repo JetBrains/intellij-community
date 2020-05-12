@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.troubleshooting;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.StartupUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
@@ -14,7 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Properties;
 
-public class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
+final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @NotNull
   @Override
   public String getTitle() {
@@ -52,6 +54,12 @@ public class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += "JVM version: ";
     output += properties.getProperty("java.vm.name", "unknown");
     output += ' ' + properties.getProperty("java.vendor", "unknown");
+    output += '\n';
+
+    output += PathManager.PROPERTY_CONFIG_PATH + "=" + StartupUtil.canonicalPath(PathManager.getConfigPath()) + "\n";
+    output += PathManager.PROPERTY_SYSTEM_PATH + "=" + StartupUtil.canonicalPath(PathManager.getSystemPath()) + "\n";
+    output += PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath() + "\n";
+    output += PathManager.PROPERTY_LOG_PATH + "=" + PathManager.getLogPath() + "\n";
 
     return output;
   }

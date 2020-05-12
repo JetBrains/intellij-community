@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.IntPair;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffColors;
@@ -49,11 +48,11 @@ public abstract class LineStatusMarkerRenderer {
   private final MarkupEditorFilter myEditorFilter;
 
   @NotNull private final MergingUpdateQueue myUpdateQueue;
-  private boolean myDisposed = false;
+  private boolean myDisposed;
   @NotNull private final RangeHighlighter myHighlighter;
   @NotNull private final List<RangeHighlighter> myTooltipHighlighters = new ArrayList<>();
 
-  public LineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
+  LineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
     myTracker = tracker;
     myEditorFilter = getEditorFilter();
 
@@ -70,12 +69,9 @@ public abstract class LineStatusMarkerRenderer {
 
     myUpdateQueue = new MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, ANY_COMPONENT, myTracker.getDisposable());
 
-    Disposer.register(myTracker.getDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        myDisposed = true;
-        destroyHighlighters();
-      }
+    Disposer.register(myTracker.getDisposable(), () -> {
+      myDisposed = true;
+      destroyHighlighters();
     });
 
     scheduleUpdate();
@@ -141,7 +137,7 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @NotNull
-  protected List<? extends Range> getSelectedRanges(@NotNull Editor editor, int y) {
+  private List<? extends Range> getSelectedRanges(@NotNull Editor editor, int y) {
     List<? extends Range> ranges = myTracker.getRanges();
     if (ranges == null) return emptyList();
 
@@ -226,7 +222,7 @@ public abstract class LineStatusMarkerRenderer {
     return new TextAttributes() {
       @Override
       public Color getErrorStripeColor() {
-        return LineStatusMarkerRenderer.getErrorStripeColor(range, null);
+        return LineStatusMarkerRenderer.getErrorStripeColor(range);
       }
     };
   }
@@ -292,7 +288,7 @@ public abstract class LineStatusMarkerRenderer {
 
   private static void paintChangedLines(@NotNull Graphics2D g,
                                         @NotNull Editor editor,
-                                        @NotNull List<ChangedLines> block,
+                                        @NotNull List<? extends ChangedLines> block,
                                         int framingBorder) {
     EditorImpl editorImpl = (EditorImpl)editor;
 
@@ -420,9 +416,9 @@ public abstract class LineStatusMarkerRenderer {
       Stroke oldStroke = g.getStroke();
       g.setStroke(new BasicStroke(JBUIScale.scale(1)));
       g.setColor(borderColor);
-      LinePainter2D.paint((Graphics2D)g, x1, y1, x2 - 1, y1);
-      LinePainter2D.paint((Graphics2D)g, x1, y1, x1, y2 - 1);
-      LinePainter2D.paint((Graphics2D)g, x1, y2 - 1, x2 - 1, y2 - 1);
+      LinePainter2D.paint(g, x1, y1, x2 - 1, y1);
+      LinePainter2D.paint(g, x1, y1, x1, y2 - 1);
+      LinePainter2D.paint(g, x1, y2 - 1, x2 - 1, y2 - 1);
       g.setStroke(oldStroke);
     }
   }
@@ -467,8 +463,8 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @Nullable
-  private static Color getErrorStripeColor(@NotNull Range range, @Nullable Editor editor) {
-    final EditorColorsScheme scheme = getColorScheme(editor);
+  private static Color getErrorStripeColor(@NotNull Range range) {
+    final EditorColorsScheme scheme = getColorScheme(null);
     switch (range.getType()) {
       case Range.INSERTED:
         return scheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
@@ -709,7 +705,7 @@ public abstract class LineStatusMarkerRenderer {
 
   private class MyActiveGutterRenderer implements ActiveGutterRenderer {
     @Override
-    public void paint(Editor editor, Graphics g, Rectangle r) {
+    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
       LineStatusMarkerRenderer.this.paint(editor, g);
     }
 

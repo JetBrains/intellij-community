@@ -7,12 +7,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspace.api.*
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener
 
 class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
 
   private val projectEntities: TypedEntityStorageBuilder
 
-  private val cacheEnabled = !ApplicationManager.getApplication().isUnitTestMode
+  private val cacheEnabled = !ApplicationManager.getApplication().isUnitTestMode && LegacyBridgeProjectLifecycleListener.cacheEnabled
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
 
   override val entityStore: EntityStoreImpl

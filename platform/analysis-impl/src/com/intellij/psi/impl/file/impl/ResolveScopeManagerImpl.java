@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -58,7 +57,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
     ((PsiManagerImpl)myManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
     // Make it explicit that registering and removing ResolveScopeProviders needs to clear the resolve scope cache
     // (even though normally registerRunnableToRunOnChange would be enough to clear the cache)
-    ResolveScopeProvider.EP_NAME.addExtensionPointListener(() -> myDefaultResolveScopesCache.clear(), project);
+    ResolveScopeProvider.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), project);
+    ResolveScopeEnlarger.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), project);
   }
 
   private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
@@ -178,14 +178,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
              ? result : GlobalSearchScope.fileScope(containingFile).uniteWith(result);
     }
     boolean isTest = TestSourcesFilter.isTestSources(vDirectory, myProject);
-    GlobalSearchScope scope = isTest
-                              ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
-                              : GlobalSearchScope.moduleWithDependentsScope(module);
-    RefResolveService resolveService;
-    if (virtualFile instanceof VirtualFileWithId && RefResolveService.ENABLED && (resolveService = RefResolveService.getInstance(myProject)).isUpToDate()) {
-      return resolveService.restrictByBackwardIds(virtualFile, scope);
-    }
-    return scope;
+    return isTest
+           ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
+           : GlobalSearchScope.moduleWithDependentsScope(module);
   }
 
   private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {

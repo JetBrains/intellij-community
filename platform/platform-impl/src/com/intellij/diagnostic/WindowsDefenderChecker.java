@@ -70,6 +70,7 @@ public class WindowsDefenderChecker {
   public CheckResult checkWindowsDefender(@NotNull Project project) {
     final Boolean windowsDefenderActive = isWindowsDefenderActive();
     if (windowsDefenderActive == null || !windowsDefenderActive) {
+      LOG.info("Windows Defender status: not used");
       return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
     }
 
@@ -80,14 +81,28 @@ public class WindowsDefenderChecker {
       if (excludedProcesses != null &&
           ContainerUtil.all(processesToCheck, (exe) -> excludedProcesses.contains(exe.getName().toLowerCase(Locale.ENGLISH))) &&
           excludedProcesses.contains("java.exe")) {
+        LOG.info("Windows Defender status: all relevant processes excluded from real-time scanning");
         return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
       }
 
       List<Pattern> excludedPatterns = getExcludedPatterns();
       if (excludedPatterns != null) {
         Map<Path, Boolean> pathStatuses = checkPathsExcluded(getImportantPaths(project), excludedPatterns);
+        boolean anyPathNotExcluded = !ContainerUtil.all(pathStatuses.values(), Boolean::booleanValue);
+        if (anyPathNotExcluded) {
+          LOG.info("Windows Defender status: some relevant paths not excluded from real-time scanning, notifying user");
+        }
+        else {
+          LOG.info("Windows Defender status: all relevant paths excluded from real-time scanning");
+        }
         return new CheckResult(scanningStatus, pathStatuses);
       }
+    }
+    if (scanningStatus == RealtimeScanningStatus.ERROR) {
+      LOG.info("Windows Defender status: failed to detect");
+    }
+    else {
+      LOG.info("Windows Defender status: real-time scanning disabled");
     }
     return new CheckResult(scanningStatus, Collections.emptyMap());
   }

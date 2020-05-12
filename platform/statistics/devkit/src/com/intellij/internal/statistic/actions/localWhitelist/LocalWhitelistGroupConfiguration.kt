@@ -1,17 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions.localWhitelist
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventLogWhitelistDialog
-import com.intellij.internal.statistic.eventLog.FeatureUsageData.Companion.platformDataKeys
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupContextData
-import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory
 import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.json.JsonLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -24,8 +26,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBCheckBox
@@ -35,6 +40,7 @@ import com.intellij.util.TextFieldCompletionProviderDumbAware
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -64,6 +70,8 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
     groupIdTextField = TextFieldWithCompletion(project, completionProvider, initialGroup.groupId, true, true, false)
 
     tempFile = TestParseEventLogWhitelistDialog.createTempFile(project, "event-log-validation-rules", currentGroup.customRules)!!
+    tempFile.virtualFile.putUserData(LocalWhitelistJsonSchemaProviderFactory.LOCAL_WHITELIST_VALIDATION_RULES_KEY, true)
+    tempFile.putUserData(FUS_WHITELIST_COMMON_RULES_KEY, ProductionRules(productionGroups.rules))
     validationRulesEditor = createEditor(project, tempFile)
     validationRulesEditor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
@@ -167,13 +175,22 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
   }
 
   fun validate(): List<ValidationInfo> {
-    return validateWhitelistGroup(currentGroup, productionGroups.rules, groupIdTextField)
+    return validateWhitelistGroup(project, currentGroup, groupIdTextField, tempFile)
   }
 
   companion object {
-    fun validateWhitelistGroup(localWhitelistGroup: LocalWhitelistGroup,
-                               productionRules: FUStatisticsWhiteListGroupsService.WLRule?,
+    internal val FUS_WHITELIST_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.localWhitelist.validation.rules.file")
+
+    fun validateWhitelistGroup(project: Project,
+                               localWhitelistGroup: LocalWhitelistGroup,
                                groupIdTextField: JComponent): List<ValidationInfo> {
+      return validateWhitelistGroup(project, localWhitelistGroup, groupIdTextField, null)
+    }
+
+    private fun validateWhitelistGroup(project: Project,
+                                       localWhitelistGroup: LocalWhitelistGroup,
+                                       groupIdTextField: JComponent,
+                                       customRulesFile: PsiFile?): List<ValidationInfo> {
       val groupId: String = localWhitelistGroup.groupId
       val validationInfo = mutableListOf<ValidationInfo>()
       if (groupId.isEmpty()) {
@@ -181,51 +198,47 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
       }
 
       if (localWhitelistGroup.useCustomRules) {
-        validationInfo.addAll(validateEventData(groupId, localWhitelistGroup.customRules, productionRules))
+        validationInfo.addAll(validateCustomValidationRules(project, localWhitelistGroup.customRules, customRulesFile))
       }
       return validationInfo
     }
 
-    internal fun validateEventData(groupId: String,
-                                   customRules: String,
-                                   productionRules: FUStatisticsWhiteListGroupsService.WLRule?): List<ValidationInfo> {
-      val rules = parseRules(groupId, customRules)
-                  ?: return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
-      val eventData = rules.event_data
-      if (eventData == null || productionRules == null) return emptyList()
-      val contextData = WhiteListGroupContextData.create(rules.enums, productionRules.enums, rules.regexps,
-                                                         productionRules.regexps)
-      val validationInfo = ArrayList<ValidationInfo>()
-      val eventIds = rules.event_id
-      if (eventIds != null) {
-        for (eventId in eventIds) {
-          val eventRule = WhiteListSimpleRuleFactory.createRule(eventId!!, contextData)
-          if (!eventRule.isValidRule) {
-            validationInfo.add(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.event.id.0", eventId)))
-          }
-        }
+    internal fun validateCustomValidationRules(project: Project,
+                                               customRules: String,
+                                               customRulesFile: PsiFile?): List<ValidationInfo> {
+      val file = if (customRulesFile != null) {
+        customRulesFile
+      } else {
+        val psiFile = PsiFileFactory.getInstance(project).createFileFromText(JsonLanguage.INSTANCE, customRules)
+        psiFile.virtualFile.putUserData(LocalWhitelistJsonSchemaProviderFactory.LOCAL_WHITELIST_VALIDATION_RULES_KEY, true)
+        psiFile
       }
-      for ((key, value) in eventData) {
-        if (platformDataKeys.contains(key)) continue
-        for (rule in value) {
-          val fusRule = WhiteListSimpleRuleFactory.createRule(rule!!, contextData)
-          if (!fusRule.isValidRule) {
-            validationInfo.add(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rule.0", rule)))
-          }
-        }
+      if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
+      val problemHolder = ProblemsHolder(InspectionManager.getInstance(project), file, true)
+      val inspectionSession = LocalInspectionToolSession(file, file.textRange.startOffset, file.textRange.endOffset)
+      val inspectionVisitor = JsonSchemaComplianceInspection()
+        .buildVisitor(problemHolder, problemHolder.isOnTheFly, inspectionSession)
+      val traverser = SyntaxTraverser.psiTraverser(file)
+      for (element in traverser) {
+        element.accept(inspectionVisitor)
       }
-      return validationInfo
+      return problemHolder.results.map { ValidationInfo("Line ${it.lineNumber + 1}: ${it.descriptionTemplate}") }
     }
 
-    private fun parseRules(groupId: String, customRules: String): FUStatisticsWhiteListGroupsService.WLRule? {
-      val whitelistRules: FUStatisticsWhiteListGroupsService.WLGroup = try {
-        EventLogTestWhitelistPersistence.createGroupWithCustomRules(groupId, customRules)
+    private fun isValidJson(customRules: String): Boolean {
+      try {
+        Gson().fromJson(customRules, JsonObject::class.java)
+        return true
       }
       catch (e: JsonSyntaxException) {
-        return null
+        return false
       }
-      return whitelistRules.rules
     }
+  }
+
+  internal class ProductionRules(val regexps: Set<String>, val enums: Set<String>) {
+    constructor(rules: FUStatisticsWhiteListGroupsService.WLRule?) : this(rules?.regexps?.keys ?: emptySet(),
+                                                                          rules?.enums?.keys ?: emptySet())
   }
 
 }

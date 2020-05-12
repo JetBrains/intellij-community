@@ -317,7 +317,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                "; startup passed:" + passed +
                "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
 
-    CodeStyle.setTemporarySettings(project, new CodeStyleSettings());
+    CodeStyle.setTemporarySettings(project, CodeStyle.createTestSettings());
 
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager instanceof FileDocumentManagerImpl) {

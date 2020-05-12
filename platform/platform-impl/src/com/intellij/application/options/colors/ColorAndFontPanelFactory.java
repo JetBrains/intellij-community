@@ -4,7 +4,7 @@ package com.intellij.application.options.colors;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,7 +20,7 @@ public interface ColorAndFontPanelFactory {
   NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options);
 
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NlsContexts.ConfigurableName
   String getPanelDisplayName();
 
   /**

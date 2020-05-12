@@ -15,6 +15,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.concurrent.atomic.AtomicBoolean void set(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.concurrent.atomic.AtomicInteger AtomicInteger()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -30,6 +35,11 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.concurrent.atomic.AtomicInteger void set(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicIntegerArray AtomicIntegerArray(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -126,6 +136,11 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.concurrent.atomic.AtomicLong void set(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLongArray AtomicLongArray(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -255,6 +270,11 @@
     <item name='java.util.concurrent.atomic.AtomicReference java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.atomic.AtomicReference void set(V)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicReferenceArray AtomicReferenceArray(E[])'>

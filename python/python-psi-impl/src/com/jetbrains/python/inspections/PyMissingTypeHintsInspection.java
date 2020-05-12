@@ -54,8 +54,13 @@ public class PyMissingTypeHintsInspection extends PyInspection {
 
   private boolean shouldRegisterProblem(PyFunction function) {
     if (m_onlyWhenTypesAreKnown) {
-      PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
-      return signature != null && canAnnotate(signature);
+      PySignatureCacheManager instance = PySignatureCacheManager.getInstance(function.getProject());
+      if (instance != null) {
+        PySignature signature = instance.findSignature(function);
+        return signature != null && canAnnotate(signature);
+      } else {
+        return false;
+      }
     }
     else {
       return true;

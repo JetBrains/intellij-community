@@ -3,7 +3,10 @@ package com.intellij.lang.ant
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newBooleanMetric
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.lang.ant.config.AntConfiguration
 import com.intellij.openapi.project.Project
@@ -31,16 +34,13 @@ class AntSettingsCollector : ProjectUsagesCollector() {
   }
 }
 
-class AntActionsUsagesCollector {
-  enum class ActionID {
-    RunSelectedBuild
-  }
+class AntActionsUsagesCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    @JvmStatic
-    fun trigger(project: Project?, actionId: ActionID) {
-      if (project == null) return
-      FUCounterUsageLogger.getInstance().logEvent(project, "build.ant.actions", actionId.name)
-    }
+    private val GROUP = EventLogGroup("build.ant.actions", 1)
+
+    @JvmField
+    val runSelectedBuildAction = GROUP.registerEvent("RunSelectedBuild")
   }
 }

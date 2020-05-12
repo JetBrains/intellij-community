@@ -12,20 +12,17 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import javax.swing.Icon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.*;
+
 /**
  * This class represents an item of a lookup list.
  */
-public class LookupItem<T> extends MutableLookupElement<T> implements Comparable {
+public class LookupItem<T> extends MutableLookupElement implements Comparable {
   public static final ClassConditionKey<LookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(LookupItem.class);
 
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
@@ -165,14 +162,8 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     myAttributes.put(key, value);
   }
 
-  @Override
   public InsertHandler<? extends LookupItem> getInsertHandler(){
     return myInsertHandler;
-  }
-
-  @Override
-  public boolean isBold() {
-    return getAttribute(HIGHLIGHTED_ATTR) != null;
   }
 
   @Override
@@ -226,7 +217,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return tailType != null ? tailType : TailType.UNKNOWN;
   }
 
-  @Override
   @NotNull
   public LookupItem<T> setTailType(@NotNull TailType type) {
     setAttribute(TAIL_TYPE_ATTR, type);
@@ -244,7 +234,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return getLookupString().compareTo(((LookupItem)o).getLookupString());
   }
 
-  @Override
   public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {
     myInsertHandler = handler;
     return this;
@@ -262,7 +251,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     DefaultLookupItemRenderer.INSTANCE.renderElement(this, presentation);
   }
 
-  @Override
   public LookupItem<T> setBold() {
     setAttribute(HIGHLIGHTED_ATTR, "");
     return this;
@@ -273,7 +261,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return this;
   }
 
-  @Override
   public LookupItem<T> setAutoCompletionPolicy(final AutoCompletionPolicy policy) {
     myAutoCompletionPolicy = policy;
     return this;
@@ -284,14 +271,12 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myAutoCompletionPolicy;
   }
 
-  @Override
   @NotNull
   public LookupItem<T> setIcon(Icon icon) {
     setAttribute(ICON_ATTR, icon);
     return this;
   }
 
-  @Override
   @NotNull
   public LookupItem<T> setPriority(double priority) {
     myPriority = priority;
@@ -302,7 +287,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myPriority;
   }
 
-  @Override
   @NotNull
   public LookupItem<T> setPresentableText(@NotNull final String displayText) {
     myPresentable = displayText;
@@ -315,13 +299,12 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   @NotNull
-  public MutableLookupElement<T> setTailText(final String text, final boolean grayed) {
+  public LookupItem<T> setTailText(final String text, final boolean grayed) {
     setAttribute(TAIL_TEXT_ATTR, text);
     setAttribute(TAIL_TEXT_SMALL_ATTR, Boolean.TRUE);
     return this;
   }
 
-  @Override
   public LookupItem<T> addLookupStrings(@NonNls final String... additionalLookupStrings) {
     ContainerUtil.addAll(myAllLookupStrings, additionalLookupStrings);
     return this;

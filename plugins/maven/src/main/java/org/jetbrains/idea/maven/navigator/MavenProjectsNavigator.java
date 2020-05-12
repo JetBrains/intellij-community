@@ -12,10 +12,10 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
@@ -58,10 +58,10 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;
-  private ToolWindowEx myToolWindow;
+  private ToolWindow myToolWindow;
 
   public static MavenProjectsNavigator getInstance(Project project) {
-    return project.getComponent(MavenProjectsNavigator.class);
+    return project.getService(MavenProjectsNavigator.class);
   }
 
   public MavenProjectsNavigator(@NotNull Project project) {
@@ -228,8 +228,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, myProject);
 
-    final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
-    myToolWindow = (ToolWindowEx)manager.registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, myProject, true);
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);
@@ -261,7 +260,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     group.add(actionManager.getAction("Maven.AlwaysShowArtifactId"));
     group.add(actionManager.getAction("Maven.ShowVersions"));
 
-    myToolWindow.setAdditionalGearActions(group);
+    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(group);
   }
 
   private void initTree() {

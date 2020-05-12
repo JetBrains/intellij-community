@@ -1,20 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +17,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManagerKt;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.SystemProperties;
@@ -37,7 +33,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 /**
  * This must be the last test.
@@ -69,19 +64,35 @@ public class _LastInSuiteTest extends TestCase {
   public void testDynamicExtensions() {
     Assume.assumeTrue(!EXTENSION_POINTS_WHITE_LIST.isEmpty() ||
                       SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false));
-    if (ApplicationManager.getApplication() == null) return;
+    Application app = ApplicationManager.getApplication();
+    if (app == null) {
+      return;
+    }
 
-    Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = collectDynamicNonPlatformExtensions();
-    unloadExtensionPoints(extensions.keySet());
-    startCorePluginUnload();
-    disposePluginDisposables();
-    ProjectManager pm = ProjectManager.getInstanceIfCreated();
-    if (pm != null) {
-      for (Project project : pm.getOpenProjects()) {
-        ((CachedValuesManagerImpl) CachedValuesManager.getManager(project)).clearCachedValues();
+    app.invokeAndWait(() -> PlatformTestUtil.cleanupAllProjects());
+
+    Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensionPointToNonPlatformExtensions = collectDynamicNonPlatformExtensions(app);
+    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
+    assert corePlugin != null;
+    try {
+      // It doesn't matter what plugin to pass here. Main thing here is firing events.
+      fireBeforePluginUnloadEvent(corePlugin);
+      app.invokeAndWait(() -> {
+        // obey contract that used by DynamicPluginManager - reloading of plugin is done in EDT and write action.
+        // one write action for all - as DynamicPluginManager does (plugin unloaded in one write action)
+        app.runWriteAction(() -> {
+          for (ExtensionPointImpl<?> ep : extensionPointToNonPlatformExtensions.keySet()) {
+            ep.reset();
+          }
+        });
+      });
+      for (Project project : ProjectUtil.getOpenProjects()) {
+        ((CachedValuesManagerImpl)CachedValuesManager.getManager(project)).clearCachedValues();
       }
     }
-    finishCorePluginUnload();
+    finally {
+      firePluginUnloadedEvent(corePlugin);
+    }
 
     GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
@@ -89,7 +100,7 @@ public class _LastInSuiteTest extends TestCase {
     String heapDump = HeavyPlatformTestCase.publishHeapDump("dynamicExtension");
 
     AtomicBoolean failed = new AtomicBoolean(false);
-    extensions.forEach((ep, references) -> {
+    extensionPointToNonPlatformExtensions.forEach((ep, references) -> {
       String testName = escape(getTestName("Dynamic EP unloading " + ep.getName()));
       System.out.printf("##teamcity[testStarted name='%s']%n", testName);
       System.out.flush();
@@ -113,79 +124,48 @@ public class _LastInSuiteTest extends TestCase {
     }
   }
 
-  private static void disposePluginDisposables() {
-    PluginManager.pluginDisposables.forEach((plugin, disposable) -> Disposer.dispose(disposable));
+  private static void fireBeforePluginUnloadEvent(@NotNull IdeaPluginDescriptor plugin) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(plugin, false);
+    });
   }
 
-  @NotNull
-  private static String escape(String s) {
+  private static void firePluginUnloadedEvent(@NotNull IdeaPluginDescriptor plugin) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(plugin, false);
+    });
+  }
+
+  private static @NotNull String escape(String s) {
     return MapSerializerUtil.escapeStr(s, MapSerializerUtil.STD_ESCAPER);
   }
 
-  private static void unloadExtensionPoints(@NotNull Set<ExtensionPoint<?>> extensionPoints) {
-    for (ExtensionPoint<?> ep : extensionPoints) {
-      WriteAction.runAndWait(() -> {
-        ep.unregisterExtensions((a, b) -> false, false);
-      });
-    }
-  }
-
-  private static void startCorePluginUnload() {
-    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
-    assert corePlugin != null;
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
-        .beforePluginUnload(corePlugin, false);
-    });
-  }
-
-  private static void finishCorePluginUnload() {
-    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
-    assert corePlugin != null;
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
-        .pluginUnloaded(corePlugin, false);
-    });
-  }
-
-  @NotNull
-  private static Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> collectDynamicNonPlatformExtensions() {
-
+  private static @NotNull Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> collectDynamicNonPlatformExtensions(@NotNull Application app) {
     boolean useWhiteList = !SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
-    ExtensionsArea area = Extensions.getRootArea();
-
-    Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = new HashMap<>();
-    ProjectManager pm = ProjectManager.getInstanceIfCreated();
-    if (pm != null) {
-      for (Project project : pm.getOpenProjects()) {
-        collectForArea(project.getExtensionArea(), useWhiteList, extensions);
-      }
+    Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensions = new HashMap<>();
+    for (Project project : ProjectUtil.getOpenProjects()) {
+      collectForArea((ExtensionsAreaImpl)project.getExtensionArea(), useWhiteList, extensions);
     }
-    collectForArea(area, useWhiteList, extensions);
-
+    collectForArea((ExtensionsAreaImpl)app.getExtensionArea(), useWhiteList, extensions);
     return extensions;
   }
 
-  private static void collectForArea(ExtensionsArea area,
+  private static void collectForArea(@NotNull ExtensionsAreaImpl area,
                                      boolean useWhiteList,
-                                     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions) {
-    if (area == null) return;
+                                     @NotNull Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensions) {
+    area.processExtensionPoints(ep -> {
+      if (!ep.isDynamic() || (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.getName()))) {
+        return;
+      }
 
-    for (ExtensionPoint<?> ep : area.getExtensionPoints()) {
-      if (!ep.isDynamic()) continue;
-      if (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.getName())) continue;
-
-      extensions.put(ep, ep.extensions()
-        .filter(e -> !isPlatformExtension(ep, e))
-        .map(WeakReference<Object>::new)
-        .collect(Collectors.toList()));
-    }
-  }
-
-  private static boolean isPlatformExtension(ExtensionPoint<?> ep, Object extension) {
-    //noinspection unchecked
-    PluginDescriptor plugin = ((ExtensionPointImpl<Object>)ep).getPluginDescriptor(extension);
-    return plugin != null && plugin.getPluginId() == PluginManagerCore.CORE_ID;
+      List<WeakReference<Object>> list = new ArrayList<>();
+      ep.processWithPluginDescriptor(false, (object, pluginDescriptor) -> {
+        if (pluginDescriptor.getPluginId() != PluginManagerCore.CORE_ID) {
+          list.add(new WeakReference<>(object));
+        }
+      });
+      extensions.put(ep, list);
+    });
   }
 
   public void testProjectLeak() {

@@ -1,23 +1,36 @@
 package com.intellij.workspace.api
 
-interface ModifiableModuleEntity : ModuleEntity, ModifiableTypedEntity<ModuleEntity> {
-  override var name: String
-  override var dependencies: List<ModuleDependencyItem>
+import com.intellij.workspace.api.pstorage.EntityDataDelegation
+import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
+import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlNullableProperty
+import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlProperty
+import com.intellij.workspace.api.pstorage.references.MutableManyToOne
+import com.intellij.workspace.api.pstorage.references.MutableOneToAbstractMany
+import com.intellij.workspace.api.pstorage.references.MutableOneToAbstractOneChild
+import com.intellij.workspace.api.pstorage.references.MutableOneToOneChild
+
+class ModifiableModuleEntity : PModifiableTypedEntity<ModuleEntity>() {
+  var name: String by EntityDataDelegation()
+  var type: String? by EntityDataDelegation()
+  var dependencies: List<ModuleDependencyItem> by EntityDataDelegation()
 }
 
-fun TypedEntityStorageDiffBuilder.addModuleEntity(name: String, dependencies: List<ModuleDependencyItem>, source: EntitySource) = addEntity(
+fun TypedEntityStorageDiffBuilder.addModuleEntity(name: String, dependencies: List<ModuleDependencyItem>, source: EntitySource,
+                                                  type : String? = null) = addEntity(
   ModifiableModuleEntity::class.java, source) {
   this.name = name
+  this.type = type
   this.dependencies = dependencies
 }
 
-interface ModifiableJavaModuleSettingsEntity : JavaModuleSettingsEntity, ModifiableTypedEntity<JavaModuleSettingsEntity> {
-  override var inheritedCompilerOutput: Boolean
-  override var excludeOutput: Boolean
-  override var compilerOutput: VirtualFileUrl?
-  override var compilerOutputForTests: VirtualFileUrl?
+class ModifiableJavaModuleSettingsEntity : PModifiableTypedEntity<JavaModuleSettingsEntity>() {
+  var inheritedCompilerOutput: Boolean by EntityDataDelegation()
+  var excludeOutput: Boolean by EntityDataDelegation()
+  var compilerOutput: VirtualFileUrl? by VirtualFileUrlNullableProperty()
+  var compilerOutputForTests: VirtualFileUrl? by VirtualFileUrlNullableProperty()
 
-  override var module: ModuleEntity
+  var module: ModuleEntity by MutableOneToOneChild.HardRef.NotNull(JavaModuleSettingsEntity::class, ModuleEntity::class, true)
 }
 
 fun TypedEntityStorageDiffBuilder.addJavaModuleSettingsEntity(inheritedCompilerOutput: Boolean,
@@ -34,22 +47,25 @@ fun TypedEntityStorageDiffBuilder.addJavaModuleSettingsEntity(inheritedCompilerO
   this.module = module
 }
 
-interface ModifiableModuleCustomImlDataEntity : ModuleCustomImlDataEntity, ModifiableTypedEntity<ModuleCustomImlDataEntity> {
-  override var rootManagerTagCustomData: String
-  override var module: ModuleEntity
+class ModifiableModuleCustomImlDataEntity : PModifiableTypedEntity<ModuleCustomImlDataEntity>() {
+  var rootManagerTagCustomData: String? by EntityDataDelegation()
+  var customModuleOptions: MutableMap<String, String> by EntityDataDelegation()
+  var module: ModuleEntity by MutableOneToOneChild.HardRef.NotNull(ModuleCustomImlDataEntity::class, ModuleEntity::class, true)
 }
 
-fun TypedEntityStorageDiffBuilder.addModuleCustomImlDataEntity(rootManagerTagCustomData: String,
+fun TypedEntityStorageDiffBuilder.addModuleCustomImlDataEntity(rootManagerTagCustomData: String?,
+                                                               customModuleOptions: Map<String, String>,
                                                                module: ModuleEntity,
                                                                source: EntitySource) = addEntity(
   ModifiableModuleCustomImlDataEntity::class.java, source) {
   this.rootManagerTagCustomData = rootManagerTagCustomData
+  this.customModuleOptions = HashMap(customModuleOptions)
   this.module = module
 }
 
-interface ModifiableModuleGroupPathEntity : ModuleGroupPathEntity, ModifiableTypedEntity<ModuleGroupPathEntity> {
-  override var path: List<String>
-  override var module: ModuleEntity
+class ModifiableModuleGroupPathEntity : PModifiableTypedEntity<ModuleGroupPathEntity>() {
+  var path: List<String> by EntityDataDelegation()
+  var module: ModuleEntity by MutableOneToOneChild.HardRef.NotNull(ModuleGroupPathEntity::class, ModuleEntity::class, true)
 }
 
 fun TypedEntityStorageDiffBuilder.addModuleGroupPathEntity(path: List<String>,
@@ -59,11 +75,11 @@ fun TypedEntityStorageDiffBuilder.addModuleGroupPathEntity(path: List<String>,
   this.module = module
 }
 
-interface ModifiableSourceRootEntity : SourceRootEntity, ModifiableTypedEntity<SourceRootEntity> {
-  override var module: ModuleEntity
-  override var url: VirtualFileUrl
-  override var tests: Boolean
-  override var rootType: String
+class ModifiableSourceRootEntity : PModifiableTypedEntity<SourceRootEntity>() {
+  var module: ModuleEntity by MutableManyToOne.HardRef.NotNull(SourceRootEntity::class, ModuleEntity::class)
+  var url: VirtualFileUrl by VirtualFileUrlProperty()
+  var tests: Boolean by EntityDataDelegation()
+  var rootType: String by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addSourceRootEntity(module: ModuleEntity,
@@ -77,10 +93,10 @@ fun TypedEntityStorageDiffBuilder.addSourceRootEntity(module: ModuleEntity,
   this.rootType = rootType
 }
 
-interface ModifiableJavaSourceRootEntity : JavaSourceRootEntity, ModifiableTypedEntity<JavaSourceRootEntity> {
-  override var sourceRoot: SourceRootEntity
-  override var generated: Boolean
-  override var packagePrefix: String
+class ModifiableJavaSourceRootEntity : PModifiableTypedEntity<JavaSourceRootEntity>() {
+  var sourceRoot: SourceRootEntity by MutableManyToOne.HardRef.NotNull(JavaSourceRootEntity::class, SourceRootEntity::class)
+  var generated: Boolean by EntityDataDelegation()
+  var packagePrefix: String by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
@@ -92,10 +108,10 @@ fun TypedEntityStorageDiffBuilder.addJavaSourceRootEntity(sourceRoot: SourceRoot
   this.packagePrefix = packagePrefix
 }
 
-interface ModifiableJavaResourceRootEntity : JavaResourceRootEntity, ModifiableTypedEntity<JavaResourceRootEntity> {
-  override var sourceRoot: SourceRootEntity
-  override var generated: Boolean
-  override var relativeOutputPath: String
+class ModifiableJavaResourceRootEntity : PModifiableTypedEntity<JavaResourceRootEntity>() {
+  var sourceRoot: SourceRootEntity by MutableManyToOne.HardRef.NotNull(JavaResourceRootEntity::class, SourceRootEntity::class)
+  var generated: Boolean by EntityDataDelegation()
+  var relativeOutputPath: String by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
@@ -107,9 +123,9 @@ fun TypedEntityStorageDiffBuilder.addJavaResourceRootEntity(sourceRoot: SourceRo
   this.relativeOutputPath = relativeOutputPath
 }
 
-interface ModifiableCustomSourceRootPropertiesEntity : CustomSourceRootPropertiesEntity, ModifiableTypedEntity<CustomSourceRootPropertiesEntity> {
-  override var sourceRoot: SourceRootEntity
-  override var propertiesXmlTag: String
+class ModifiableCustomSourceRootPropertiesEntity : PModifiableTypedEntity<CustomSourceRootPropertiesEntity>() {
+  var sourceRoot: SourceRootEntity by MutableManyToOne.HardRef.NotNull(CustomSourceRootPropertiesEntity::class, SourceRootEntity::class)
+  var propertiesXmlTag: String by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity,
@@ -119,11 +135,11 @@ fun TypedEntityStorageDiffBuilder.addCustomSourceRootPropertiesEntity(sourceRoot
   this.propertiesXmlTag = propertiesXmlTag
 }
 
-interface ModifiableContentRootEntity : ContentRootEntity, ModifiableTypedEntity<ContentRootEntity> {
-  override var url: VirtualFileUrl
-  override var excludedUrls: List<VirtualFileUrl>
-  override var excludedPatterns: List<String>
-  override var module: ModuleEntity
+class ModifiableContentRootEntity : PModifiableTypedEntity<ContentRootEntity>() {
+  var url: VirtualFileUrl by VirtualFileUrlProperty()
+  var excludedUrls: List<VirtualFileUrl> by VirtualFileUrlListProperty()
+  var excludedPatterns: List<String> by EntityDataDelegation()
+  var module: ModuleEntity by MutableManyToOne.HardRef.NotNull(ContentRootEntity::class, ModuleEntity::class)
 }
 
 fun TypedEntityStorageDiffBuilder.addContentRootEntity(url: VirtualFileUrl,
@@ -137,11 +153,11 @@ fun TypedEntityStorageDiffBuilder.addContentRootEntity(url: VirtualFileUrl,
   this.module = module
 }
 
-interface ModifiableLibraryEntity : LibraryEntity, ModifiableTypedEntity<LibraryEntity> {
-  override var tableId: LibraryTableId
-  override var name: String
-  override var roots: List<LibraryRoot>
-  override var excludedRoots: List<VirtualFileUrl>
+class ModifiableLibraryEntity : PModifiableTypedEntity<LibraryEntity>() {
+  var tableId: LibraryTableId by EntityDataDelegation()
+  var name: String by EntityDataDelegation()
+  var roots: List<LibraryRoot> by EntityDataDelegation()
+  var excludedRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 }
 
 fun TypedEntityStorageDiffBuilder.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
@@ -153,10 +169,10 @@ fun TypedEntityStorageDiffBuilder.addLibraryEntity(name: String, tableId: Librar
   this.excludedRoots = excludedRoots
 }
 
-interface ModifiableLibraryPropertiesEntity : LibraryPropertiesEntity, ModifiableTypedEntity<LibraryPropertiesEntity> {
-  override var library: LibraryEntity
-  override var libraryType: String
-  override var propertiesXmlTag: String?
+class ModifiableLibraryPropertiesEntity : PModifiableTypedEntity<LibraryPropertiesEntity>() {
+  var library: LibraryEntity by MutableOneToOneChild.HardRef.NotNull(LibraryPropertiesEntity::class, LibraryEntity::class, true)
+  var libraryType: String by EntityDataDelegation()
+  var propertiesXmlTag: String? by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addLibraryPropertiesEntity(library: LibraryEntity,
@@ -168,9 +184,9 @@ fun TypedEntityStorageDiffBuilder.addLibraryPropertiesEntity(library: LibraryEnt
   this.propertiesXmlTag = propertiesXmlTag
 }
 
-interface ModifiableSdkEntity : SdkEntity, ModifiableTypedEntity<SdkEntity> {
-  override var library: LibraryEntity
-  override var homeUrl: VirtualFileUrl
+class ModifiableSdkEntity : PModifiableTypedEntity<SdkEntity>() {
+  var library: LibraryEntity by MutableOneToOneChild.HardRef.NotNull(SdkEntity::class, LibraryEntity::class, true)
+  var homeUrl: VirtualFileUrl by VirtualFileUrlProperty()
 }
 
 fun TypedEntityStorageDiffBuilder.addSdkEntity(library: LibraryEntity,
@@ -180,12 +196,31 @@ fun TypedEntityStorageDiffBuilder.addSdkEntity(library: LibraryEntity,
   this.homeUrl = homeUrl
 }
 
-interface ModifiableFacetEntity : FacetEntity, ModifiableTypedEntity<FacetEntity> {
-  override var name: String
-  override var facetType: String
-  override var configurationXmlTag: String?
-  override var module: ModuleEntity
-  override var underlyingFacet: FacetEntity?
+class ModifiableExternalSystemModuleOptionsEntity : PModifiableTypedEntity<ExternalSystemModuleOptionsEntity>() {
+  var module: ModuleEntity by MutableOneToOneChild.HardRef.NotNull(ExternalSystemModuleOptionsEntity::class, ModuleEntity::class, true)
+  var externalSystem: String? by EntityDataDelegation()
+  var externalSystemModuleVersion: String? by EntityDataDelegation()
+
+  var linkedProjectPath: String? by EntityDataDelegation()
+  var linkedProjectId: String? by EntityDataDelegation()
+  var rootProjectPath: String? by EntityDataDelegation()
+
+  var externalSystemModuleGroup: String? by EntityDataDelegation()
+  var externalSystemModuleType: String? by EntityDataDelegation()
+}
+
+fun TypedEntityStorageDiffBuilder.getOrCreateExternalSystemModuleOptions(module: ModuleEntity, source: EntitySource): ExternalSystemModuleOptionsEntity =
+  module.externalSystemOptions ?: addEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, source) {
+    this.module = module
+  }
+
+class ModifiableFacetEntity : PModifiableTypedEntity<FacetEntity>() {
+  var name: String by EntityDataDelegation()
+  var facetType: String by EntityDataDelegation()
+  var configurationXmlTag: String? by EntityDataDelegation()
+
+  var module: ModuleEntity by MutableManyToOne.HardRef.NotNull(FacetEntity::class, ModuleEntity::class)
+  var underlyingFacet: FacetEntity? by MutableOneToOneChild.HardRef.Nullable(FacetEntity::class, FacetEntity::class, true)
 }
 
 fun TypedEntityStorageDiffBuilder.addFacetEntity(name: String, facetType: String, configurationXmlTag: String?, module: ModuleEntity,
@@ -198,12 +233,13 @@ fun TypedEntityStorageDiffBuilder.addFacetEntity(name: String, facetType: String
     this.underlyingFacet = underlyingFacet
   }
 
-interface ModifiableArtifactEntity : ArtifactEntity, ModifiableTypedEntity<ArtifactEntity> {
-  override var name: String
-  override var artifactType: String
-  override var includeInProjectBuild: Boolean
-  override var outputUrl: VirtualFileUrl
-  override var rootElement: CompositePackagingElementEntity
+class ModifiableArtifactEntity : PModifiableTypedEntity<ArtifactEntity>() {
+  var name: String by EntityDataDelegation()
+  var artifactType: String by EntityDataDelegation()
+  var includeInProjectBuild: Boolean by EntityDataDelegation()
+  var outputUrl: VirtualFileUrl by VirtualFileUrlProperty()
+  var rootElement: CompositePackagingElementEntity by MutableOneToAbstractOneChild.HardRef(ArtifactEntity::class,
+                                                                                           CompositePackagingElementEntity::class)
 }
 
 fun TypedEntityStorageDiffBuilder.addArtifactEntity(name: String,
@@ -220,10 +256,10 @@ fun TypedEntityStorageDiffBuilder.addArtifactEntity(name: String,
   this.rootElement = rootElement
 }
 
-interface ModifiableArtifactPropertiesEntity : ArtifactPropertiesEntity, ModifiableTypedEntity<ArtifactPropertiesEntity> {
-  override var artifact: ArtifactEntity
-  override var providerType: String
-  override var propertiesXmlTag: String?
+class ModifiableArtifactPropertiesEntity : PModifiableTypedEntity<ArtifactPropertiesEntity>() {
+  var artifact: ArtifactEntity by MutableManyToOne.HardRef.NotNull(ArtifactPropertiesEntity::class, ArtifactEntity::class)
+  var providerType: String by EntityDataDelegation()
+  var propertiesXmlTag: String? by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addArtifactPropertisEntity(artifact: ArtifactEntity,
@@ -235,79 +271,83 @@ fun TypedEntityStorageDiffBuilder.addArtifactPropertisEntity(artifact: ArtifactE
   this.propertiesXmlTag = propertiesXmlTag
 }
 
-interface ModifiableArtifactRootElementEntity : ArtifactRootElementEntity, ModifiableTypedEntity<ArtifactRootElementEntity> {
-  override var children: MutableList<PackagingElementEntity>
+class ModifiableArtifactRootElementEntity : PModifiableTypedEntity<ArtifactRootElementEntity>() {
+  var children: Sequence<PackagingElementEntity> by MutableOneToAbstractMany.HardRef(ArtifactRootElementEntity::class,
+                                                                                     PackagingElementEntity::class)
 }
 
 fun TypedEntityStorageDiffBuilder.addArtifactRootElementEntity(children: MutableList<PackagingElementEntity>,
                                                                source: EntitySource) = addEntity(
-  ModifiableArtifactRootElementEntity::class.java, source) { this.children = children }
+  ModifiableArtifactRootElementEntity::class.java, source) { this.children = children.asSequence() }
 
-interface ModifiableDirectoryPackagingElementEntity : DirectoryPackagingElementEntity, ModifiableTypedEntity<DirectoryPackagingElementEntity> {
-  override var directoryName: String
-  override var children: MutableList<PackagingElementEntity>
+class ModifiableDirectoryPackagingElementEntity : PModifiableTypedEntity<DirectoryPackagingElementEntity>() {
+  var directoryName: String by EntityDataDelegation()
+  var children: Sequence<PackagingElementEntity> by MutableOneToAbstractMany.HardRef(DirectoryPackagingElementEntity::class,
+                                                                                     PackagingElementEntity::class)
 }
 
 fun TypedEntityStorageDiffBuilder.addDirectoryPackagingElementEntity(directoryName: String,
                                                                      children: MutableList<PackagingElementEntity>,
                                                                      source: EntitySource) = addEntity(
-  ModifiableDirectoryPackagingElementEntity::class.java, source) { this.directoryName = directoryName; this.children = children }
+  ModifiableDirectoryPackagingElementEntity::class.java,
+  source) { this.directoryName = directoryName; this.children = children.asSequence() }
 
-interface ModifiableArchivePackagingElementEntity : ArchivePackagingElementEntity, ModifiableTypedEntity<ArchivePackagingElementEntity> {
-  override var fileName: String
-  override var children: MutableList<PackagingElementEntity>
+class ModifiableArchivePackagingElementEntity : PModifiableTypedEntity<ArchivePackagingElementEntity>() {
+  var fileName: String by EntityDataDelegation()
+  var children: Sequence<PackagingElementEntity> by MutableOneToAbstractMany.HardRef(ArchivePackagingElementEntity::class,
+                                                                                     PackagingElementEntity::class)
 }
 
 fun TypedEntityStorageDiffBuilder.addArchivePackagingElementEntity(fileName: String,
                                                                    children: MutableList<PackagingElementEntity>,
                                                                    source: EntitySource) = addEntity(
-  ModifiableArchivePackagingElementEntity::class.java, source) { this.fileName = fileName; this.children = children }
+  ModifiableArchivePackagingElementEntity::class.java, source) { this.fileName = fileName; this.children = children.asSequence() }
 
-interface ModifiableArtifactOutputPackagingElementEntity : ArtifactOutputPackagingElementEntity, ModifiableTypedEntity<ArtifactOutputPackagingElementEntity> {
-  override var artifact: ArtifactId
+class ModifiableArtifactOutputPackagingElementEntity : PModifiableTypedEntity<ArtifactOutputPackagingElementEntity>() {
+  var artifact: ArtifactId by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addArtifactOutputPackagingElementEntity(artifact: ArtifactId, source: EntitySource) = addEntity(
   ModifiableArtifactOutputPackagingElementEntity::class.java, source) { this.artifact = artifact }
 
-interface ModifiableModuleOutputPackagingElementEntity : ModuleOutputPackagingElementEntity, ModifiableTypedEntity<ModuleOutputPackagingElementEntity> {
-  override var module: ModuleId
+class ModifiableModuleOutputPackagingElementEntity : PModifiableTypedEntity<ModuleOutputPackagingElementEntity>() {
+  var module: ModuleId by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addModuleOutputPackagingElementEntity(module: ModuleId, source: EntitySource) = addEntity(
   ModifiableModuleOutputPackagingElementEntity::class.java, source) { this.module = module }
 
-interface ModifiableLibraryFilesPackagingElementEntity : LibraryFilesPackagingElementEntity, ModifiableTypedEntity<LibraryFilesPackagingElementEntity> {
-  override var library: LibraryId
+class ModifiableLibraryFilesPackagingElementEntity : PModifiableTypedEntity<LibraryFilesPackagingElementEntity>() {
+  var library: LibraryId by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addLibraryFilesPackagingElementEntity(library: LibraryId, source: EntitySource) = addEntity(
   ModifiableLibraryFilesPackagingElementEntity::class.java, source) { this.library = library }
 
-interface ModifiableModuleSourcePackagingElementEntity : ModuleSourcePackagingElementEntity, ModifiableTypedEntity<ModuleSourcePackagingElementEntity> {
-  override var module: ModuleId
+class ModifiableModuleSourcePackagingElementEntity : PModifiableTypedEntity<ModuleSourcePackagingElementEntity>() {
+  var module: ModuleId by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addModuleSourcePackagingElementEntity(module: ModuleId, source: EntitySource) = addEntity(
   ModifiableModuleSourcePackagingElementEntity::class.java, source) { this.module = module }
 
-interface ModifiableModuleTestOutputPackagingElementEntity : ModuleTestOutputPackagingElementEntity, ModifiableTypedEntity<ModuleTestOutputPackagingElementEntity> {
-  override var module: ModuleId
+class ModifiableModuleTestOutputPackagingElementEntity : PModifiableTypedEntity<ModuleTestOutputPackagingElementEntity>() {
+  var module: ModuleId by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addModuleTestOutputPackagingElementEntity(module: ModuleId, source: EntitySource) = addEntity(
   ModifiableModuleTestOutputPackagingElementEntity::class.java, source) { this.module = module }
 
-interface ModifiableDirectoryCopyPackagingElementEntity : DirectoryCopyPackagingElementEntity, ModifiableTypedEntity<DirectoryCopyPackagingElementEntity> {
-  override var directory: VirtualFileUrl
+class ModifiableDirectoryCopyPackagingElementEntity : PModifiableTypedEntity<DirectoryCopyPackagingElementEntity>() {
+  var directory: VirtualFileUrl by VirtualFileUrlProperty()
 }
 
 fun TypedEntityStorageDiffBuilder.addDirectoryCopyPackagingElementEntity(directory: VirtualFileUrl, source: EntitySource) = addEntity(
   ModifiableDirectoryCopyPackagingElementEntity::class.java, source) { this.directory = directory }
 
-interface ModifiableExtractedDirectoryPackagingElementEntity : ExtractedDirectoryPackagingElementEntity, ModifiableTypedEntity<ExtractedDirectoryPackagingElementEntity> {
-  override var archive: VirtualFileUrl
-  override var pathInArchive: String
+class ModifiableExtractedDirectoryPackagingElementEntity : PModifiableTypedEntity<ExtractedDirectoryPackagingElementEntity>() {
+  var archive: VirtualFileUrl by VirtualFileUrlProperty()
+  var pathInArchive: String by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addExtractedDirectoryPackagingElementEntity(archive: VirtualFileUrl,
@@ -317,9 +357,9 @@ fun TypedEntityStorageDiffBuilder.addExtractedDirectoryPackagingElementEntity(ar
   this.pathInArchive = pathInArchive
 }
 
-interface ModifiableFileCopyPackagingElementEntity : FileCopyPackagingElementEntity, ModifiableTypedEntity<FileCopyPackagingElementEntity> {
-  override var file: VirtualFileUrl
-  override var renamedOutputFileName: String?
+class ModifiableFileCopyPackagingElementEntity : PModifiableTypedEntity<FileCopyPackagingElementEntity>() {
+  var file: VirtualFileUrl by VirtualFileUrlProperty()
+  var renamedOutputFileName: String? by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addFileCopyPackagingElementEntity(file: VirtualFileUrl,
@@ -329,9 +369,9 @@ fun TypedEntityStorageDiffBuilder.addFileCopyPackagingElementEntity(file: Virtua
   this.renamedOutputFileName = renamedOutputFileName
 }
 
-interface ModifiableCustomPackagingElementEntity : CustomPackagingElementEntity, ModifiableTypedEntity<CustomPackagingElementEntity> {
-  override var typeId: String
-  override var propertiesXmlTag: String
+class ModifiableCustomPackagingElementEntity : PModifiableTypedEntity<CustomPackagingElementEntity>() {
+  var typeId: String by EntityDataDelegation()
+  var propertiesXmlTag: String by EntityDataDelegation()
 }
 
 fun TypedEntityStorageDiffBuilder.addCustomPackagingElementEntity(typeId: String,

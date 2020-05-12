@@ -18,10 +18,11 @@ package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.NlsContexts;
 
 public class MinimizeButton extends IconButton {
 
-  public MinimizeButton(final String tooltip) {
+  public MinimizeButton(@NlsContexts.Tooltip String tooltip) {
       super(tooltip, AllIcons.General.HideToolWindow);
   }
 }

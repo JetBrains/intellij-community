@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to inject additional references into an element that supports reference contributors.
- * Register it via {@link PsiReferenceContributor} or {@link PsiReferenceProviderBean#EP_NAME}
- *
+ * Allows injecting additional references into an element that supports reference contributors.
+ * Register it via {@link PsiReferenceContributor} or {@link PsiReferenceProviderBean} extension points.
+ * <p>
  * Note that, if you're implementing a custom language, it won't by default support references registered through PsiReferenceContributor.
  * If you want to support that, you need to call
  * {@link com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry#getReferencesFromProviders(PsiElement)} from your implementation

@@ -16,6 +16,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
 import java.io.IOException
 
@@ -80,7 +81,7 @@ class GithubAccountsMigrationHelper {
               val accountName = progressManager.runProcessWithProgressSynchronously(ThrowableComputable<String, IOException> {
                 executorFactory.create(password).execute(progressManager.progressIndicator,
                                                          GithubApiRequests.CurrentUser.get(server)).login
-              }, "Accessing GitHub", true, project)
+              }, GithubBundle.message("accessing.github"), true, project)
               val account = GithubAccountManager.createAccount(accountName, server)
               registerAccount(account, password)
             }
@@ -95,8 +96,7 @@ class GithubAccountsMigrationHelper {
         GithubAuthData.AuthType.BASIC -> {
           LOG.debug("Migrating basic auth")
           val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent,
-                                         message = "Password authentication is no longer supported for Github.\n" +
-                                                   "Personal access token can be acquired instead.")
+                                         message = GithubBundle.message("accounts.password.auth.not.supported"))
             .withServer(hostToUse, false).withCredentials(login, password)
           dialogCancelled = !registerFromDialog(dialog)
         }

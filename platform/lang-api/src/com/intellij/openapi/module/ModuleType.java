@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -36,8 +36,7 @@ import javax.swing.*;
 public abstract class ModuleType<T extends ModuleBuilder> {
   public static final ModuleType<?> EMPTY;
 
-  @NotNull
-  private final String myId;
+  private final @NotNull String myId;
   private final FrameworkRole myFrameworkRole;
 
   protected ModuleType(@NotNull @NonNls String id) {
@@ -45,41 +44,31 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     myFrameworkRole = new FrameworkRole(id);
   }
 
-  @NotNull
-  public abstract T createModuleBuilder();
+  public abstract @NotNull T createModuleBuilder();
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public abstract String getName();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getName();
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public abstract String getDescription();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription();
 
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return getNodeIcon(false);
   }
 
-  @NotNull
-  public abstract Icon getNodeIcon(@Deprecated boolean isOpened);
+  public abstract @NotNull Icon getNodeIcon(@Deprecated boolean isOpened);
 
   public ModuleWizardStep @NotNull [] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull T moduleBuilder, @NotNull ModulesProvider modulesProvider) {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder) {
     return null;
   }
 
-  @Nullable
-  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder) {
+  public @Nullable ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder) {
     return null;
   }
 
-  @NotNull
-  public final String getId() {
+  public final @NotNull String getId() {
     return myId;
   }
 
@@ -104,17 +93,16 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     EMPTY = instantiate("com.intellij.openapi.module.EmptyModuleType");
   }
 
-  @NotNull
-  private static ModuleType instantiate(String className) {
+  private static @NotNull ModuleType<?> instantiate(String className) {
     try {
-      return (ModuleType)Class.forName(className).newInstance();
+      return (ModuleType<?>)Class.forName(className).newInstance();
     }
     catch (Exception e) {
       throw new IllegalArgumentException(e);
     }
   }
 
-  public boolean isValidSdk(@NotNull Module module, @Nullable final Sdk projectSdk) {
+  public boolean isValidSdk(@NotNull Module module, final @Nullable Sdk projectSdk) {
     return true;
   }
 
@@ -126,8 +114,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return get(module) instanceof InternalModuleType;
   }
 
-  @NotNull
-  public static ModuleType get(@NotNull Module module) {
+  public static @NotNull ModuleType<?> get(@NotNull Module module) {
     final ModuleTypeManager instance = ModuleTypeManager.getInstance();
     if (instance == null) {
       return EMPTY;
@@ -135,12 +122,11 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return instance.findByID(module.getModuleTypeName());
   }
 
-  @NotNull
-  public FrameworkRole getDefaultAcceptableRole() {
+  public @NotNull FrameworkRole getDefaultAcceptableRole() {
     return myFrameworkRole;
   }
 
-  public boolean isSupportedRootType(JpsModuleSourceRootType type) {
+  public boolean isSupportedRootType(JpsModuleSourceRootType<?> type) {
     return true;
   }
 

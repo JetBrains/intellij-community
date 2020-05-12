@@ -18,7 +18,7 @@ package com.intellij.java.codeInsight.actions;
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.FileInEditorProcessor;
-import com.intellij.codeInsight.actions.FormatChangedTextUtil;
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.actions.LayoutCodeOptions;
 import com.intellij.codeInsight.actions.ReformatCodeRunOptions;
 import com.intellij.formatting.fileSet.NamedScopeDescriptor;
@@ -41,7 +41,7 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
+      myFixture.getFile().putUserData(VcsFacade.TEST_REVISION_CONTENT, null);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -62,7 +62,7 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
 
     myFixture.configureByFile(getTestName(true) + "_before.java");
     if (revisionContent != null) {
-      myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, revisionContent);
+      myFixture.getFile().putUserData(VcsFacade.TEST_REVISION_CONTENT, revisionContent);
     }
 
     FileInEditorProcessor processor = new FileInEditorProcessor(myFixture.getFile(), myFixture.getEditor(), options);
@@ -129,7 +129,7 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
   }
 
   public void testWrapParamList() {
-    CodeStyleSettings temp = new CodeStyleSettings();
+    CodeStyleSettings temp = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = temp.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_LINE_BREAKS = false;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -138,7 +138,7 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
   }
 
   public void testDisabledFormatting() {
-    CodeStyleSettings temp = new CodeStyleSettings();
+    CodeStyleSettings temp = CodeStyle.createTestSettings();
     NamedScopeDescriptor descriptor = new NamedScopeDescriptor("Test");
     descriptor.setPattern("file:*.java");
     temp.getExcludedFiles().addDescriptor(descriptor);

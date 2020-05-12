@@ -127,7 +127,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
       VirtualFile script_file = BuildoutConfigPanel.getScriptFile(script_name);
       paths_from_script = BuildoutFacet.extractBuildoutPaths(script_file);
       if (paths_from_script == null) {
-        throw new ConfigurationException("Failed to extract paths from '" + script_file.getPresentableName() + "'");
+        throw new ConfigurationException(PyBundle.message("python.buildout.failed.to.extract.path", script_file.getPresentableName()));
       }
       mySettingsPanel.getConfiguration().setPaths(paths_from_script);
 

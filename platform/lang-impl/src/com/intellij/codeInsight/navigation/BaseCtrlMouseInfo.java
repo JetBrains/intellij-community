@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -10,18 +11,17 @@ import java.util.List;
 
 import static com.intellij.codeInsight.navigation.CtrlMouseHandler.LOG;
 
-abstract class BaseCtrlMouseInfo implements CtrlMouseInfo {
+@ApiStatus.Internal
+public abstract class BaseCtrlMouseInfo implements CtrlMouseInfo {
 
-  private final @NotNull PsiElement myElementAtPointer;
   private final @NotNull List<@NotNull TextRange> myRanges;
 
-  BaseCtrlMouseInfo(@NotNull PsiElement elementAtPointer, @NotNull List<@NotNull TextRange> ranges) {
-    myElementAtPointer = elementAtPointer;
+  protected BaseCtrlMouseInfo(@NotNull List<@NotNull TextRange> ranges) {
     myRanges = ranges;
   }
 
-  BaseCtrlMouseInfo(@NotNull PsiElement elementAtPointer) {
-    this(elementAtPointer, getReferenceRanges(elementAtPointer));
+  protected BaseCtrlMouseInfo(@NotNull PsiElement elementAtPointer) {
+    this(getReferenceRanges(elementAtPointer));
   }
 
   @NotNull
@@ -37,11 +37,6 @@ abstract class BaseCtrlMouseInfo implements CtrlMouseInfo {
       textOffset = range.getStartOffset();
     }
     return Collections.singletonList(new TextRange(textOffset, range.getEndOffset()));
-  }
-
-  @Override
-  public final @NotNull PsiElement getElementAtPointer() {
-    return myElementAtPointer;
   }
 
   @Override

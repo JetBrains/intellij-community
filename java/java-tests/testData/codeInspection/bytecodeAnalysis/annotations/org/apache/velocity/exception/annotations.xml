@@ -37,6 +37,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.exception.MethodInvocationException void setReferenceName(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.exception.ParseErrorException ParseErrorException(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

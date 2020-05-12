@@ -13,9 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
@@ -34,7 +31,6 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
    * Override line numbers in editor gutter (function "document line -> user-visible line number")
    */
   Key<TIntFunction> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor");
-  Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO = Key.create("Diff.RevisionInfo");
   Key<String> FILE_NAME = Key.create("Diff.FileName");
 
   Key<Boolean> DIFF_IN_EDITOR = Key.create("Diff.DiffInEditor");

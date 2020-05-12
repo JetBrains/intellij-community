@@ -15,8 +15,16 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
     private const val DEFAULT: String = "default"
     private const val USE_UNDEFINED: String = "use_undefined"
 
+    private fun List<String>.withSafeWeighers(): Set<String> {
+      val result = this.toMutableSet()
+      result.add("prox_directoryType")
+      result.add("kt_prox_directoryType")
+      result.add("kotlin.unwantedElement")
+      return result
+    }
+
     fun buildInfo(reader: ResourcesMetadataReader): FeaturesInfo {
-      val knownFeatures = reader.allKnown().fromJson<List<String>>().toSet()
+      val knownFeatures = reader.allKnown().fromJson<List<String>>().withSafeWeighers()
 
       val binaryFactors: List<BinaryFeature> = reader.binaryFeatures().fromJson<Map<String, Map<String, Any>>>()
         .map { binary(it.key, it.value) }

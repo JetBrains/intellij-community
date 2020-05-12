@@ -38,7 +38,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
     super(project);
     myProject = project;
 
-    setTitle("Resolve Changelist Conflict");
+    setTitle(VcsBundle.message("dialog.title.resolve.changelist.conflict"));
 
     myListTitle.setText(StringUtil.capitalize(ReadOnlyStatusDialog.getTheseFilesMessage(conflicts))
                         + " " + (conflicts.size() > 1 ? "do" : "does")

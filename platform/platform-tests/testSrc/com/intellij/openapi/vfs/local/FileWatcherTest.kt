@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.IoTestUtil.assumeWindows
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -248,7 +250,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
   @Test fun testSymbolicLinkIntoFlatRoot() {
-    IoTestUtil.assumeSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val root = tempDir.newFolder("root")
     val cDir = tempDir.newFolder("root/A/B/C")
@@ -265,7 +267,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testMultipleSymbolicLinkPathsToFile() {
-    IoTestUtil.assumeSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
@@ -285,7 +287,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymbolicLinkWatchRoot() {
-    IoTestUtil.assumeSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -300,7 +302,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymbolicLinkAboveWatchRoot() {
-    IoTestUtil.assumeSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -316,7 +318,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testJunctionWatchRoot() {
-    IoTestUtil.assumeWindows()
+    assumeWindows()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -337,7 +339,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testJunctionAboveWatchRoot() {
-    IoTestUtil.assumeWindows()
+    assumeWindows()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -360,7 +362,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymlinkBelowWatchRoot() {
-    IoTestUtil.assumeSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -375,7 +377,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testCircularSymlinkBelowWatchRoot() {
-    IoTestUtil.assumeSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newFolder("top")
     val topA = tempDir.newFolder("top/a")
@@ -399,7 +401,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymlinkBelowWatchRootCreation() {
-    IoTestUtil.assumeSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -417,7 +419,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testJunctionBelowWatchRoot() {
-    IoTestUtil.assumeWindows()
+    assumeWindows()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -432,7 +434,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testJunctionBelowWatchRootCreation() {
-    IoTestUtil.assumeWindows()
+    assumeWindows()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -450,7 +452,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSubst() {
-    IoTestUtil.assumeWindows()
+    assumeWindows()
 
     val target = tempDir.newFolder("top")
     val file = tempDir.newFile("top/sub/test.txt")
@@ -573,7 +575,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testHiddenFiles() {
-    IoTestUtil.assumeWindows()
+    assumeWindows()
 
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/dir/file")
@@ -674,7 +676,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testUncRoot() {
-    IoTestUtil.assumeWindows()
+    assumeWindows()
     watch(File("\\\\SRV\\share\\path"), checkRoots = false)
   }
 

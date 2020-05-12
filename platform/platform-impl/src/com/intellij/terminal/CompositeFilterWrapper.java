@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -20,8 +21,6 @@ class CompositeFilterWrapper {
   private final Project myProject;
   private final TerminalExecutionConsole myConsole;
   private final List<Filter> myFilters = new CopyOnWriteArrayList<>();
-  private volatile CompositeFilter myCompositeFilter;
-  private final AtomicBoolean myConsoleFilterProvidersAdded = new AtomicBoolean(false);
 
   CompositeFilterWrapper(@NotNull Project project, @Nullable TerminalExecutionConsole console) {
     myProject = project;
@@ -30,7 +29,6 @@ class CompositeFilterWrapper {
 
   void addFilter(@NotNull Filter filter) {
     myFilters.add(filter);
-    myCompositeFilter = null;
   }
 
   @NotNull
@@ -48,16 +46,10 @@ class CompositeFilterWrapper {
 
   @NotNull
   CompositeFilter getCompositeFilter() {
-    CompositeFilter filter = myCompositeFilter;
-    if (filter != null) {
-      return filter;
-    }
-    if (myConsoleFilterProvidersAdded.compareAndSet(false, true)) {
-      myFilters.addAll(createCompositeFilters());
-    }
-    filter = new CompositeFilter(myProject, myFilters);
+    List<Filter> filters = new ArrayList<>(myFilters);
+    filters.addAll(createCompositeFilters());
+    CompositeFilter filter = new CompositeFilter(myProject, filters);
     filter.setForceUseAllFilters(true);
-    myCompositeFilter = filter;
     return filter;
   }
 }

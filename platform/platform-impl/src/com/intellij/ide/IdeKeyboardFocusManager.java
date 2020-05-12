@@ -20,6 +20,7 @@ import sun.awt.AppContext;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
 import java.util.function.Consumer;
 
 class IdeKeyboardFocusManager extends DefaultKeyboardFocusManager {
@@ -42,7 +43,12 @@ class IdeKeyboardFocusManager extends DefaultKeyboardFocusManager {
   }
 
   static IdeKeyboardFocusManager replaceDefault() {
-    AppContext.getAppContext().put(KeyboardFocusManager.class, new IdeKeyboardFocusManager());
+    KeyboardFocusManager kfm = getCurrentKeyboardFocusManager();
+    IdeKeyboardFocusManager ideKfm = new IdeKeyboardFocusManager();
+    for (PropertyChangeListener l : kfm.getPropertyChangeListeners()) {
+      ideKfm.addPropertyChangeListener(l);
+    }
+    AppContext.getAppContext().put(KeyboardFocusManager.class, ideKfm);
     return (IdeKeyboardFocusManager)getCurrentKeyboardFocusManager();
   }
 }

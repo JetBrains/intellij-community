@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
 import com.intellij.icons.AllIcons;
@@ -31,11 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class LightToolWindow extends JPanel {
+public final class LightToolWindow extends JPanel {
   static final String LEFT_MIN_KEY = "left";
   static final String RIGHT_MIN_KEY = "right";
   static final int MINIMIZE_WIDTH = 25;
@@ -77,7 +78,7 @@ public class LightToolWindow extends JPanel {
                          @NotNull Project project,
                          @NotNull String key,
                          int defaultWidth,
-                         AnAction @Nullable [] actions) {
+                         @Nullable List<AnAction> actions) {
     super(new BorderLayout());
     myContent = content;
     myFocusedComponent = focusedComponent;

@@ -470,5 +470,11 @@
       <action id="Vcs.Show.Local.Changes" class="com.intellij.vcs.VcsShowLocalChangesAction"/>
       <action id="Vcs.Show.Shelf" class="com.intellij.vcs.VcsShowShelfAction"/>
     </group>
+
+    <action id="AnnotateStackTraceAction.show.files.modification.info"
+            class="com.intellij.unscramble.AnnotateStackTraceAction" icon="AllIcons.Actions.Annotate">
+      <add-to-group group-id="AnalyzeStacktraceToolbar" anchor="first" />
+    </action>
+
   </actions>
 </idea-plugin>

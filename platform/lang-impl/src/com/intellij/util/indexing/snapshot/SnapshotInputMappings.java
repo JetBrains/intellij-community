@@ -12,6 +12,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
 import com.intellij.util.io.*;
@@ -38,6 +39,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   private final DataExternalizer<Map<Key, Value>> myMapExternalizer;
   private final DataExternalizer<Value> myValueExternalizer;
   private final DataIndexer<Key, Value, FileContent> myIndexer;
+  @NotNull
   private final PersistentMapBasedForwardIndex myContents;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
@@ -48,7 +50,8 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   private final boolean myIsPsiBackedIndex;
   private PersistentSubIndexerRetriever<?, ?> mySubIndexerRetriever;
 
-  public SnapshotInputMappings(@NotNull IndexExtension<Key, Value, FileContent> indexExtension) throws IOException {
+  public SnapshotInputMappings(@NotNull IndexExtension<Key, Value, FileContent> indexExtension,
+                               @NotNull AbstractMapForwardIndexAccessor<Key, Value, ?> accessor) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
     myIsPsiBackedIndex = FileBasedIndexImpl.isPsiDependentIndex(indexExtension);
 
@@ -58,7 +61,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
 
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
-    myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this, storeOnlySingleValue);
+    myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this, accessor);
     myIndexingTrace = DebugAssertions.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
 
     if (VfsAwareMapReduceIndex.isCompositeIndexer(myIndexer)) {
@@ -189,7 +192,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
 
   @Override
   public void flush() {
-    if (myContents != null) myContents.force();
+    myContents.force();
     if (myIndexingTrace != null) myIndexingTrace.force();
     if (myCompositeHashIdEnumerator != null) myCompositeHashIdEnumerator.force();
   }
@@ -210,13 +213,11 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
         myIndexingTrace = createIndexingTrace();
       }
     } finally {
-      if (myContents != null) {
-        try {
-          myContents.clear();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+      try {
+        myContents.clear();
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
   }
@@ -226,8 +227,8 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     IOUtil.closeSafe(LOG, myContents, myIndexingTrace, myCompositeHashIdEnumerator);
   }
 
+  @NotNull
   private PersistentMapBasedForwardIndex createContentsIndex() throws IOException {
-    if (SharedIndicesData.ourFileSharedIndicesEnabled && !SharedIndicesData.DO_CHECKS) return null;
     final File saved = new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values");
     try {
       return new PersistentMapBasedForwardIndex(saved.toPath(), false);
@@ -263,27 +264,6 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   private ByteArraySequence readContents(int hashId) throws IOException {
-    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      if (SharedIndicesData.DO_CHECKS) {
-        synchronized (myContents) {
-          ByteArraySequence contentBytes = SharedIndicesData.recallContentData(hashId, myIndexId, ByteSequenceDataExternalizer.INSTANCE);
-          ByteArraySequence contentBytesFromContents = myContents.get(hashId);
-
-          if (contentBytes == null && contentBytesFromContents != null ||
-              !Comparing.equal(contentBytesFromContents, contentBytes)) {
-            SharedIndicesData.associateContentData(hashId, myIndexId, contentBytesFromContents, ByteSequenceDataExternalizer.INSTANCE);
-            if (contentBytes != null) {
-              LOG.error("Unexpected indexing diff with hash id " + myIndexId + "," + hashId);
-            }
-            contentBytes = contentBytesFromContents;
-          }
-          return contentBytes;
-        }
-      } else {
-        return SharedIndicesData.recallContentData(hashId, myIndexId, ByteSequenceDataExternalizer.INSTANCE);
-      }
-    }
-
     return myContents.get(hashId);
   }
 
@@ -355,27 +335,12 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
 
   private boolean savePersistentData(@NotNull Map<Key, Value> data, int id) {
     try {
-      if (myContents != null && myContents.containsMapping(id)) return false;
+      if (myContents.containsMapping(id)) return false;
       ByteArraySequence bytes = serializeData(data);
-      saveContents(id, bytes);
+      myContents.put(id, bytes);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
     return true;
-  }
-
-  private void saveContents(int id, ByteArraySequence byteSequence) throws IOException {
-    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      if (SharedIndicesData.DO_CHECKS) {
-        synchronized (myContents) {
-          myContents.put(id, byteSequence);
-          SharedIndicesData.associateContentData(id, myIndexId, byteSequence, ByteSequenceDataExternalizer.INSTANCE);
-        }
-      } else {
-        SharedIndicesData.associateContentData(id, myIndexId, byteSequence, ByteSequenceDataExternalizer.INSTANCE);
-      }
-    } else {
-      myContents.put(id, byteSequence);
-    }
   }
 }

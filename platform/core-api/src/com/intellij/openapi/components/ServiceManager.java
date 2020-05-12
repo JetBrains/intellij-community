@@ -24,13 +24,19 @@ public final class ServiceManager {
     return project.getService(serviceClass);
   }
 
-  @Nullable
-  public static <T> T getServiceIfCreated(@NotNull Project project, @NotNull Class<T> serviceClass) {
+  /**
+   * @deprecated Use {@link ComponentManager#getServiceIfCreated(Class)}.
+   */
+  @Deprecated
+  public static @Nullable <T> T getServiceIfCreated(@NotNull Project project, @NotNull Class<T> serviceClass) {
     return project.getServiceIfCreated(serviceClass);
   }
 
-  @Nullable
-  public static <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+  /**
+   * @deprecated Use {@link ComponentManager#getServiceIfCreated(Class)}.
+   */
+  @Deprecated
+  public static @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return ApplicationManager.getApplication().getServiceIfCreated(serviceClass);
   }
 
@@ -41,8 +47,7 @@ public final class ServiceManager {
    * @param <T>          Service class type.
    * @return Key instance.
    */
-  @NotNull
-  public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<? extends T> serviceClass) {
+  public static @NotNull <T> NotNullLazyKey<T, Project> createLazyKey(final @NotNull Class<? extends T> serviceClass) {
     return NotNullLazyKey.create("Service: " + serviceClass.getName(), project -> project.getService(serviceClass));
   }
 }

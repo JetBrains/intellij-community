@@ -15,7 +15,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('dir')
+          PsiElement(word)('dir')
           PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -42,7 +42,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('dir')
+                PsiElement(word)('dir')
                 PsiElement(})('}')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')

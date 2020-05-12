@@ -21,10 +21,7 @@ import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.diff.impl.DiffWindowBase;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.TestTreeView;
-import com.intellij.execution.testframework.TestTreeViewAction;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -50,7 +47,8 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     }
     if (!openDiff(e.getDataContext(), null)) {
       final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-      Messages.showInfoMessage(component, "Comparison error was not found", "No Comparison Data Found");
+      Messages.showInfoMessage(component, TestRunnerBundle.message("dialog.message.comparison.error.was.found"),
+                               TestRunnerBundle.message("dialog.title.no.comparison.data.found"));
     }
   }
 

@@ -8,7 +8,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -125,11 +124,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myDescription;
   }
 
-  public void setDescription(@NlsUI.Label String description) {
+  public void setDescription(@NlsContexts.Label String description) {
     withDescription(description);
   }
 
-  public FileChooserDescriptor withDescription(@NlsUI.Label String description) {
+  public FileChooserDescriptor withDescription(@NlsContexts.Label String description) {
     myDescription = description;
     return this;
   }

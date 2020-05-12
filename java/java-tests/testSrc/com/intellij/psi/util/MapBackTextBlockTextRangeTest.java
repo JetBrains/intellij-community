@@ -32,9 +32,9 @@ public class MapBackTextBlockTextRangeTest extends LightPlatformCodeInsightTestC
   public void testContentWithBlankLines() {
     doTest("\"\"\"\n" +
            "     \n" +
-           " foo \n" +
+           " foo \t\f\n" +
            "     \n" +
-           "       \"\"\"", 0, 6, new TextRange(9, 22));
+           "       \"\"\"", 0, 6, new TextRange(9, 24));
   }
 
   public void testIndentNonZero() {

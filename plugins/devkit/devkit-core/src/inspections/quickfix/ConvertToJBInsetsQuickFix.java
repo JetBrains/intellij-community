@@ -3,14 +3,13 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertToJBInsetsQuickFix implements LocalQuickFix {
   @Override
-  public @NlsUI.ListItem @NotNull String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return "Convert to JBUI.insets(...)";
   }
 

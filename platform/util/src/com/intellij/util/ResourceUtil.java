@@ -16,8 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class ResourceUtil {
-
+public final class ResourceUtil {
   private ResourceUtil() {
   }
 

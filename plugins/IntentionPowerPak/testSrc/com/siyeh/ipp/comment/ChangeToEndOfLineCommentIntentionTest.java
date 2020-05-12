@@ -10,6 +10,7 @@ public class ChangeToEndOfLineCommentIntentionTest extends IPPTestCase {
   public void testConvertMultiLineTodo() { doTest(); }
   public void testConvertMultiLineTodo2() { doTest(); }
   public void testEmptyLines() { doTest(); }
+  public void testSingleLineBlockAtEof() { doTest(); }
 
   @Override
   protected String getIntentionName() {

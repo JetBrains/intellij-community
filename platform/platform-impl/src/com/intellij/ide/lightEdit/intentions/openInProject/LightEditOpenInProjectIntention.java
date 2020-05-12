@@ -2,6 +2,8 @@
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -17,16 +19,16 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.NlsUI.ListItem;
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.Open;
 
 public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
-  @ListItem
+  @IntentionName
   @Override
   public @NotNull String getText() {
     return ApplicationBundle.message("light.edit.open.in.project.intention");
   }
 
-  @ListItem
+  @IntentionFamilyName
   @Override
   public @NotNull String getFamilyName() {
     return getText();
@@ -49,7 +51,10 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
       ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currFile);
     if (editorInfo != null) {
       Project openProject = findOpenProject(currFile);
-      if (openProject == null) {
+      if (openProject != null) {
+        LightEditFeatureUsagesUtil.logOpenFileInProject(Open);
+      }
+      else {
         VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currFile);
         if (projectRoot != null) {
           openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot, -1, -1, false);

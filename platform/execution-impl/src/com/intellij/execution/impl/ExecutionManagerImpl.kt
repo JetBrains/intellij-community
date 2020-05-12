@@ -341,7 +341,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             return
           }
         }
-        runBeforeRunExecutorMap.put(task, executor)
+        runBeforeRunExecutorMap[task] = executor
       }
     }
 
@@ -470,16 +470,16 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       }
     }
 
-    if (awaitingRunProfiles.get(environment.runProfile) === environment) {
+    if (awaitingRunProfiles[environment.runProfile] === environment) {
       // defense from rerunning exactly the same ExecutionEnvironment
       return
     }
 
-    awaitingRunProfiles.put(environment.runProfile, environment)
+    awaitingRunProfiles[environment.runProfile] = environment
 
     awaitTermination(object : Runnable {
       override fun run() {
-        if (awaitingRunProfiles.get(environment.runProfile) !== environment) {
+        if (awaitingRunProfiles[environment.runProfile] !== environment) {
           // a new rerun has been requested before starting this one, ignore this rerun
           return
         }
@@ -531,6 +531,10 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       return resolvedPromise()
     }
 
+    if ((environment.runProfile as TargetEnvironmentAwareRunProfile).defaultTargetName == null) {
+      return resolvedPromise()
+    }
+
     val processHandler = MyProcessHandler()
     val consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(environment.project).console
     ProcessTerminatedListener.attach(processHandler)
@@ -552,7 +556,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
           }
         }
-        promise.setResult(environment.getPreparedTargetEnvironment(progressIndicator))
+        promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
       }
       catch (t: Throwable) {
         promise.setError(t)

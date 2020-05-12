@@ -5,13 +5,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NlsProgress.ProgressText;
-import com.intellij.openapi.util.NlsProgress.ProgressDetails;
-import com.intellij.openapi.util.NlsProgress.ProgressTitle;
+import com.intellij.openapi.util.NlsContexts.ProgressText;
+import com.intellij.openapi.util.NlsContexts.ProgressDetails;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

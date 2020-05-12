@@ -177,6 +177,10 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
     super.doCancelAction()
   }
 
+  override fun getHelpId(): String? {
+    return "reference.VersionControl.Git.RebaseCommits"
+  }
+
   private class AnActionButtonSeparator : AnActionButton(), CustomComponentAction, DumbAware {
     companion object {
       private val SEPARATOR_HEIGHT = JBUI.scale(20)

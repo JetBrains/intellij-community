@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.openapi.util.NlsUI.ListItem;
 
 /**
  * @author Konstantin Bulenkov
@@ -20,7 +19,7 @@ public abstract class LocalQuickFixBase implements LocalQuickFix {
   /**
    * @param name the name of the quick fix
    */
-  protected LocalQuickFixBase(@ListItem @NotNull String name) {
+  protected LocalQuickFixBase(@IntentionName @NotNull String name) {
     this(name, name);
   }
 
@@ -30,8 +29,7 @@ public abstract class LocalQuickFixBase implements LocalQuickFix {
    *                   if the name of the quickfix is "Create template &lt;filename&gt", the return value of getFamilyName() should be "Create template".
    *                   If the name of the quickfix does not depend on a specific element, simply return getName().
    */
-  protected LocalQuickFixBase(@ListItem @NotNull String name,
-                              @ListItem @NotNull String familyName) {
+  protected LocalQuickFixBase(@IntentionName @NotNull String name, @IntentionFamilyName @NotNull String familyName) {
     myName = name;
     myFamilyName = familyName;
   }

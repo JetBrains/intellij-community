@@ -53,9 +53,11 @@ public class PyDocstringTypesInspection extends PyInspection {
       final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
       if (docStringExpression != null) {
         PySignatureCacheManager manager = PySignatureCacheManager.getInstance(function.getProject());
-        PySignature signature = manager.findSignature(function);
-        if (signature != null) {
-          checkParameters(function, docStringExpression, signature);
+        if (manager != null) {
+          PySignature signature = manager.findSignature(function);
+          if (signature != null) {
+            checkParameters(function, docStringExpression, signature);
+          }
         }
       }
     }

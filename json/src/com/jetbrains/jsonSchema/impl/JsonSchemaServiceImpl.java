@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -57,9 +57,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
         return ContainerUtil.map2SetNotNull(myState.getFiles(), f -> JsonCachedValues.getSchemaId(f, myProject));
       }
     };
-    JsonSchemaProviderFactory.EP_NAME.addExtensionPointListener(this::reset, this);
-    JsonSchemaEnabler.EXTENSION_POINT_NAME.addExtensionPointListener(this::reset, this);
-    JsonSchemaCatalogExclusion.EP_NAME.addExtensionPointListener(this::reset, this);
+    JsonSchemaProviderFactory.EP_NAME.addChangeListener(this::reset, this);
+    JsonSchemaEnabler.EXTENSION_POINT_NAME.addChangeListener(this::reset, this);
+    JsonSchemaCatalogExclusion.EP_NAME.addChangeListener(this::reset, this);
 
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 

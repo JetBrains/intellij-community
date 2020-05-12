@@ -185,5 +185,5 @@ private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, r
       rowIndex = findVisibleAncestorRow(commitIndex, visiblePack)
     }
     rowIndex ?: GraphTableModel.COMMIT_DOES_NOT_MATCH
-  }, SettableFuture.create<Boolean>(), silently)
+  }, SettableFuture.create(), silently)
 }

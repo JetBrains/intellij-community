@@ -45,10 +45,8 @@ class ExtractSelector {
   fun suggestElementsToExtract(editor: Editor): List<PsiElement> {
     val selectedElements = findSelectedElements(editor)
     val alignedElements = alignElements(selectedElements)
-    return when {
-      alignedElements.isEmpty() -> throw PrepareFailedException("Fail", selectedElements.first())
-      else -> alignedElements
-    }
+    if (alignedElements.isEmpty()) throw PrepareFailedException("Fail", selectedElements.first())
+    return alignedElements
   }
 
   private fun alignElements(elements: List<PsiElement>): List<PsiElement> {
@@ -57,7 +55,6 @@ class ExtractSelector {
       elements.size > 1 -> alignStatements(elements)
       singleElement is PsiBlockStatement -> if (singleElement.codeBlock.firstBodyElement != null) listOf(singleElement) else emptyList()
       singleElement is PsiCodeBlock -> alignCodeBlock(singleElement)
-      //singleElement is PsiStatement -> listOfNotNull(alignStatement(singleElement))
       singleElement is PsiExpression -> listOfNotNull(alignExpression(singleElement))
       else -> elements
     }
@@ -91,9 +88,10 @@ class ExtractSelector {
     val filteredStatements = statements
       .dropWhile { it is PsiSwitchLabelStatement || it is PsiWhiteSpace }
       .dropLastWhile { it is PsiSwitchLabelStatement || it is PsiWhiteSpace }
-    return when {
-      filteredStatements.any { it is PsiSwitchLabelStatement } -> emptyList()
-      else -> filteredStatements
+    return if (filteredStatements.any { it is PsiSwitchLabelStatement }) {
+      emptyList()
+    } else {
+      filteredStatements
     }
   }
 
@@ -102,9 +100,10 @@ class ExtractSelector {
   }
 
   private fun alignCodeBlock(codeBlock: PsiCodeBlock): List<PsiElement> {
-    return when (codeBlock.parent) {
-      is PsiSwitchStatement -> listOf(codeBlock.parent)
-      else -> codeBlock.children.dropWhile { it !== codeBlock.firstBodyElement }.dropLastWhile { it !== codeBlock.lastBodyElement }
+    return if (codeBlock.parent is PsiSwitchStatement) {
+      listOf(codeBlock.parent)
+    } else {
+      codeBlock.children.dropWhile { it !== codeBlock.firstBodyElement }.dropLastWhile { it !== codeBlock.lastBodyElement }
     }
   }
 

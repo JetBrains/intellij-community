@@ -15,19 +15,18 @@
  */
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.util.NlsProgress;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 public interface TaskInfo {
   @NotNull
-  @NlsProgress.ProgressTitle
+  @NlsContexts.ProgressTitle
   String getTitle();
 
-  @NlsUI.Button
+  @NlsContexts.Button
   String getCancelText();
 
-  @NlsUI.Tooltip
+  @NlsContexts.Tooltip
   String getCancelTooltipText();
 
   boolean isCancellable();

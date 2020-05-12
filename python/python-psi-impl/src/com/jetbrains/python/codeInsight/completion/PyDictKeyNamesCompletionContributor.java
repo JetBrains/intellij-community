@@ -17,6 +17,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,9 +47,12 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
 
           final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class);
           if (subscription == null) return;
-          final PsiElement operand = subscription.getOperand();
+          final PyExpression operand = subscription.getOperand();
+          if (addCompletionIfOperandIsTypedDict(operand, dictCompletion)) {
+            return;
+          }
           if (operand instanceof PyReferenceExpression) {
-            final PsiElement resolvedElement = PyResolveUtil.fullResolveLocally((PyReferenceExpression)operand);
+            final PyExpression resolvedElement = PyResolveUtil.fullResolveLocally((PyReferenceExpression)operand);
             if (resolvedElement instanceof PyDictLiteralExpression) {
               addDictLiteralKeys((PyDictLiteralExpression)resolvedElement, dictCompletion);
               addAdditionalKeys(parameters.getOriginalFile(), operand, dictCompletion);
@@ -61,6 +65,24 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
         }
       }
     );
+  }
+
+  /**
+   * Add index expression completion if an operand is a TypedDict
+   *
+   * @return true if an operand is a TypedDict
+   */
+  private static boolean addCompletionIfOperandIsTypedDict(@NotNull final PyExpression operand,
+                                                           @NotNull final CompletionResultSet dictCompletion) {
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(operand.getProject(), operand.getContainingFile());
+    final PyType type = typeEvalContext.getType(operand);
+    if (type instanceof PyTypedDictType) {
+      for (String key : ((PyTypedDictType)type).getFields().keySet()) {
+        dictCompletion.addElement(createElement("'" + key + "'"));
+      }
+      return true;
+    }
+    return false;
   }
 
   /**

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   private static final String POPUP_GROUP = "Unversioned.Files.Dialog.Popup";
 
   public UnversionedViewDialog(@NotNull Project project) {
-    super(project, "Unversioned Files", ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY,
+    super(project, VcsBundle.message("dialog.title.unversioned.files"), ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY,
           ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFilesPaths());
   }
 

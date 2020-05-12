@@ -17,7 +17,6 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
@@ -33,7 +32,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
+public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   protected PersistentMap<Key, UpdatableValueContainer<Value>> myMap;
   protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
@@ -47,7 +46,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   private final boolean myReadOnly;
   @NotNull private final ValueContainerInputRemapping myInputRemapping;
 
-  protected MapIndexStorage(@NotNull Path storageFile,
+  public MapIndexStorage(@NotNull Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,
@@ -55,14 +54,14 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
   }
 
-  protected MapIndexStorage(@NotNull Path storageFile,
-                            @NotNull KeyDescriptor<Key> keyDescriptor,
-                            @NotNull DataExternalizer<Value> valueExternalizer,
-                            final int cacheSize,
-                            boolean keyIsUniqueForIndexedFile,
-                            boolean initialize,
-                            boolean readOnly,
-                            @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
+  public MapIndexStorage(@NotNull Path storageFile,
+                         @NotNull KeyDescriptor<Key> keyDescriptor,
+                         @NotNull DataExternalizer<Value> valueExternalizer,
+                         final int cacheSize,
+                         boolean keyIsUniqueForIndexedFile,
+                         boolean initialize,
+                         boolean readOnly,
+                         @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
     myBaseStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
@@ -150,7 +149,9 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     myMap = map;
   }
 
-  protected abstract void checkCanceled();
+  protected void checkCanceled() {
+    // Do nothing by default.
+  }
 
   @NotNull
   private Path getStorageFile() {

@@ -152,16 +152,21 @@ class InspectionProblemsViewPanel extends AnalysisProblemsViewPanel {
     AnalysisProblem updatedSelectedProblem = model.addProblemsAndReturnReplacementForSelection(Collections.singletonList(problem), oldSelectedProblem);
 
     if (updatedSelectedProblem != null) {
-      myTable.setSelection(Collections.singletonList(updatedSelectedProblem));
+      selectProblem(updatedSelectedProblem);
     }
 
     updateStatusDescription();
+  }
+
+  void selectProblem(@NotNull AnalysisProblem updatedSelectedProblem) {
+    myTable.setSelection(Collections.singletonList(updatedSelectedProblem));
   }
 
   private Disposable myCurrentFileDisposable = Disposer.newDisposable();
   public void setCurrentFile(@Nullable VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     AnalysisProblemsTableModel model = getModel();
+    AnalysisProblem oldSelectedProblem = myTable.getSelectedObject();
     model.removeRows(problem -> true); // remove everything, in case setCurrentFile() was called with the same file to refresh from highlights
     if (file != null) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
@@ -189,6 +194,9 @@ class InspectionProblemsViewPanel extends AnalysisProblemsViewPanel {
         });
       }
     }
+    if (oldSelectedProblem != null) {
+      selectProblem(oldSelectedProblem);
+    }
     updateStatusDescription();
   }
 
@@ -196,8 +204,9 @@ class InspectionProblemsViewPanel extends AnalysisProblemsViewPanel {
     Object tooltip = highlighter.getErrorStripeTooltip();
     if (tooltip instanceof HighlightInfo) {
       HighlightInfo info = (HighlightInfo)tooltip;
-      if (info.getDescription() != null) {
-        HighlightingProblem problem = new HighlightingProblem(myProject, myPresentationHelper.getCurrentFile(), info);
+      VirtualFile currentFile = myPresentationHelper.getCurrentFile();
+      if (info.getDescription() != null && currentFile != null) {
+        HighlightingProblem problem = new HighlightingProblem(myProject, currentFile, info);
         getModel().removeRows(p -> p.equals(problem));
         updateStatusDescription();
       }
@@ -208,8 +217,9 @@ class InspectionProblemsViewPanel extends AnalysisProblemsViewPanel {
     Object tooltip = highlighter.getErrorStripeTooltip();
     if (tooltip instanceof HighlightInfo) {
       HighlightInfo info = (HighlightInfo)tooltip;
-      if (info.getDescription() != null) {
-        HighlightingProblem problem = new HighlightingProblem(myProject, myPresentationHelper.getCurrentFile(), info);
+      VirtualFile currentFile = myPresentationHelper.getCurrentFile();
+      if (info.getDescription() != null && currentFile != null) {
+        HighlightingProblem problem = new HighlightingProblem(myProject, currentFile, info);
         addProblem(problem);
       }
     }

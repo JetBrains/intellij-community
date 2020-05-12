@@ -19,9 +19,10 @@ class CallBuilder(project: Project, private val context: PsiElement?) {
   private fun statementsOf(vararg statements: String) = statements.map { statement -> factory.createStatementFromText(statement, context) }
 
   private fun createDeclaration(type: PsiType?, name: String, initializer: String): PsiStatement {
-    return when {
-      type != null -> factory.createVariableDeclarationStatement(name, type, expressionOf(initializer))
-      else -> factory.createStatementFromText("$name = $initializer;", context)
+    return if (type != null) {
+      factory.createVariableDeclarationStatement(name, type, expressionOf(initializer))
+    } else {
+      factory.createStatementFromText("$name = $initializer;", context)
     }
   }
 
@@ -84,10 +85,7 @@ class CallBuilder(project: Project, private val context: PsiElement?) {
 
   fun buildExpressionCall(methodCall: String, dataOutput: DataOutput): List<PsiElement> {
     require(dataOutput is ExpressionOutput)
-    val expression = when {
-      dataOutput.name != null -> "${dataOutput.name} = $methodCall"
-      else -> methodCall
-    }
+    val expression = if (dataOutput.name != null) "${dataOutput.name} = $methodCall" else methodCall
     return listOf(factory.createExpressionFromText(expression, context))
   }
 }

@@ -26,9 +26,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     public String myName;
     public Object myGroupId;
     public final Document myDocument;
-    @NotNull
-    public final UndoConfirmationPolicy myUndoConfirmationPolicy;
-    public final boolean myShouldRecordActionForActiveDocument;
+    @NotNull final UndoConfirmationPolicy myUndoConfirmationPolicy;
+    final boolean myShouldRecordActionForActiveDocument;
 
     CommandDescriptor(@NotNull Runnable command,
                       Project project,
@@ -213,9 +212,10 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       return;
     }
     Throwable throwable = null;
+    CommandDescriptor descriptor = new CommandDescriptor(command, project, name, groupId, confirmationPolicy,
+                                                         shouldRecordCommandForActiveDocument, document);
     try {
-      myCurrentCommand = new CommandDescriptor(command, project, name, groupId, confirmationPolicy,
-                                               shouldRecordCommandForActiveDocument, document);
+      myCurrentCommand = descriptor;
       fireCommandStarted();
       command.run();
     }
@@ -223,7 +223,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       throwable = th;
     }
     finally {
-      finishCommand(myCurrentCommand, throwable);
+      finishCommand(descriptor, throwable);
     }
   }
 
@@ -246,9 +246,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
     Document document = groupId instanceof Document
                         ? (Document)groupId
-                        : (groupId instanceof Ref && ((Ref)groupId).get() instanceof Document
+                        : groupId instanceof Ref && ((Ref)groupId).get() instanceof Document
                            ? (Document)((Ref)groupId).get()
-                           : null);
+                           : null;
     myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy, true, document);
     fireCommandStarted();
     return myCurrentCommand;
@@ -261,7 +261,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     fireCommandFinished();
   }
 
-  protected void fireCommandFinished() {
+  private void fireCommandFinished() {
     ApplicationManager.getApplication().assertIsWriteThread();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this, currentCommand.myCommand,

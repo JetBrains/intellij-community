@@ -3,7 +3,6 @@ package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -24,7 +23,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog
-import com.intellij.xml.util.XmlStringUtil.escapeString
+import com.intellij.xml.util.XmlStringUtil.*
 import git4idea.GitBranch
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil.*
@@ -35,10 +34,12 @@ import git4idea.history.GitHistoryUtils
 import git4idea.history.GitLogUtil
 import git4idea.history.GitLogUtil.readFullDetails
 import git4idea.history.GitLogUtil.readFullDetailsForHashes
+import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.util.*
 import javax.swing.JPanel
 
@@ -49,41 +50,37 @@ internal open class GitDefaultMergeDialogCustomizer(
     val repos = getRepositoriesForFiles(project, files)
       .ifEmpty { getRepositories(project).filter { it.conflictsHolder.conflicts.isNotEmpty() } }
 
-    val mergeBranches = repos.map { resolveMergeBranch(it)?.presentable }
-    if (mergeBranches.any { it != null }) {
-      return buildString {
-        append("<html>Merging ")
-        append(mergeBranches.toSet().singleOrNull()?.let { "branch <b>${escapeString(it)}</b>" } ?: "diverging branches ")
-        append(" into ")
-        append(getSingleCurrentBranchName(repos)?.let { "branch <b>${escapeString(it)}</b>" }
-               ?: "diverging branches")
-      }
+    val mergeBranches = repos.mapNotNull { resolveMergeBranch(it)?.presentable }.toSet()
+    if (mergeBranches.isNotEmpty()) {
+      val currentBranches = getCurrentBranchNameSet(repos)
+      return wrapInHtml(
+        GitBundle.message(
+          "merge.dialog.description.merge.label.text",
+          mergeBranches.size, wrapInHtmlTag(escapeString(mergeBranches.first()), "b"),
+          currentBranches.size, wrapInHtmlTag(escapeString(currentBranches.first()), "b")
+        )
+      )
     }
 
-    val rebaseOntoBranches = repos.map { resolveRebaseOntoBranch(it) }
-    if (rebaseOntoBranches.any { it != null }) {
+    val rebaseOntoBranches = repos.mapNotNull { resolveRebaseOntoBranch(it) }
+    if (rebaseOntoBranches.isNotEmpty()) {
       val singleCurrentBranch = getSingleCurrentBranchName(repos)
       val singleOntoBranch = rebaseOntoBranches.toSet().singleOrNull()
       return getDescriptionForRebase(singleCurrentBranch, singleOntoBranch?.branchName, singleOntoBranch?.hash)
     }
 
-    val cherryPickCommitDetails = repos.map { loadCherryPickCommitDetails(it) }
-    if (cherryPickCommitDetails.any { it != null }) {
-      val notNullCherryPickCommitDetails = cherryPickCommitDetails.filterNotNull()
-      val singleCherryPick = notNullCherryPickCommitDetails.distinctBy { it.authorName + it.commitMessage }.singleOrNull()
-      return buildString {
-        append("<html>Conflicts during cherry-picking ")
-        if (notNullCherryPickCommitDetails.size == 1) {
-          append("commit <code>${notNullCherryPickCommitDetails.single().shortHash}</code> ")
-        }
-        else {
-          append("multiple commits ")
-        }
-        if (singleCherryPick != null) {
-          append("made by ${escapeString(singleCherryPick.authorName)}<br/>")
-          append("<code>\"${escapeString(singleCherryPick.commitMessage)}\"</code>")
-        }
-      }
+    val cherryPickCommitDetails = repos.mapNotNull { loadCherryPickCommitDetails(it) }
+    if (cherryPickCommitDetails.isNotEmpty()) {
+      val singleCherryPick = cherryPickCommitDetails.distinctBy { it.authorName + it.commitMessage }.singleOrNull()
+      return wrapInHtml(
+        GitBundle.message(
+          "merge.dialog.description.cherry.pick.label.text",
+          cherryPickCommitDetails.size, wrapInHtmlTag(cherryPickCommitDetails.single().shortHash, "code"),
+          (singleCherryPick != null).toInt(),
+          escapeString(singleCherryPick?.authorName),
+          "<br/>" + wrapInHtmlTag(escapeString(singleCherryPick?.commitMessage), "code")
+        )
+      )
     }
 
     return super.getMultipleFileMergeDescription(files)
@@ -108,13 +105,13 @@ internal open class GitDefaultMergeDialogCustomizer(
       HEAD
     )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
     val leftTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
-      "Local Changes",
+      GitBundle.getString("merge.dialog.diff.left.title.cherry.pick.label.text"),
       repository,
       file,
       Pair(mergeBase, HEAD)
     )
     val rightTitleCustomizer = getTitleWithCommitDetailsCustomizer(
-      "<html>Changes from cherry-pick ${cherryPickHead.toShortString()}</html>",
+      wrapInHtml(GitBundle.message("merge.dialog.diff.right.title.cherry.pick.label.text", cherryPickHead.toShortString())),
       repository,
       file,
       cherryPickHead.asString()
@@ -134,7 +131,9 @@ internal open class GitDefaultMergeDialogCustomizer(
       mergeBranchHash.asString()
     )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
 
-    fun getChangesFromBranchTitle(branch: String) = "<html>Changes from <b>${escapeString(branch)}</b></html>"
+    fun getChangesFromBranchTitle(branch: String) = wrapInHtml(
+      GitBundle.message("merge.dialog.diff.title.changes.from.branch.label.text", wrapInHtmlTag(branch, "b"))
+    )
 
     val leftTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
       getChangesFromBranchTitle(currentBranchPresentable),
@@ -163,19 +162,23 @@ internal open class GitDefaultMergeDialogCustomizer(
       REBASE_HEAD,
       upstreamBranchHash.asString()
     )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
-    val leftTitleCustomizer = getTitleWithCommitDetailsCustomizer(
-      "<html>Rebasing ${rebaseHead.toShortString()} from <b>${escapeString(rebasingBranchPresentable)}</b></html>",
-      repository,
-      file,
-      rebaseHead.asString())
-    val branchPartWithBold = if (upstreamBranch.branchName != null) " and commits from <b>${upstreamBranch.branchName}</b>" else ""
-    val rightTitle = "<html>Already rebased commits$branchPartWithBold</html>"
-    val rightTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
-      rightTitle,
-      repository,
-      file,
-      Pair(mergeBase, HEAD)
+    val leftTitle = wrapInHtml(
+      GitBundle.message(
+        "merge.dialog.diff.left.title.rebase.label.text",
+        rebaseHead.toShortString(),
+        wrapInHtmlTag(escapeString(rebasingBranchPresentable), "b")
+      )
     )
+    val leftTitleCustomizer = getTitleWithCommitDetailsCustomizer(leftTitle, repository, file, rebaseHead.asString())
+    val rightTitle = wrapInHtml(
+      if (upstreamBranch.branchName != null) {
+        GitBundle.message("merge.dialog.diff.right.title.rebase.with.branch.label.text", wrapInHtmlTag(upstreamBranch.branchName, "b"))
+      }
+      else {
+        GitBundle.getString("merge.dialog.diff.right.title.rebase.without.branch.label.text")
+      }
+    )
+    val rightTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(rightTitle, repository, file, Pair(mergeBase, HEAD))
     return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
   }
 
@@ -192,40 +195,46 @@ internal open class GitDefaultMergeDialogCustomizer(
   private data class CherryPickDetails(val shortHash: String, val authorName: String, val commitMessage: String)
 }
 
-internal fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, baseHash: Hash?): String {
-  return buildString {
-    append("<html>Rebasing ")
-    if (rebasingBranch != null) append("branch <b>${escapeString(rebasingBranch)}</b> ")
-    append("onto ")
-    appendBranchName(baseBranch, baseHash)
+internal fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, baseHash: Hash?): String = wrapInHtml(
+  when {
+    baseBranch != null -> GitBundle.message(
+      "merge.dialog.description.rebase.with.onto.branch.label.text",
+      (rebasingBranch != null).toInt(), wrapInHtmlTag(escapeString(rebasingBranch), "b"),
+      wrapInHtmlTag(escapeString(baseBranch), "b"),
+      (baseHash != null).toInt(), baseHash?.toShortString()
+    )
+    baseHash != null -> GitBundle.message(
+      "merge.dialog.description.rebase.with.hash.label.text",
+      (rebasingBranch != null).toInt(), wrapInHtmlTag(escapeString(rebasingBranch), "b"),
+      wrapInHtmlTag(baseHash.toShortString(), "b")
+    )
+    else -> GitBundle.message(
+      "merge.dialog.description.rebase.without.onto.info.label.text",
+      (rebasingBranch != null).toInt(), wrapInHtmlTag(escapeString(rebasingBranch), "b")
+    )
   }
-}
+)
 
-internal fun getDefaultLeftPanelTitleForBranch(branchName: String): String {
-  return "<html>${escapeString(DiffBundle.message("merge.version.title.our"))}, branch <b>" +
-         "${escapeString(branchName)}</b>"
-}
+internal fun getDefaultLeftPanelTitleForBranch(branchName: String): String = wrapInHtml(
+  GitBundle.message("merge.dialog.diff.left.title.default.branch.label.text", wrapInHtmlTag(escapeString(branchName), "b"))
+)
 
-internal fun getDefaultRightPanelTitleForBranch(branchName: String?, baseHash: Hash?): String {
-  return buildString {
-    append("<html>Changes from ")
-    appendBranchName(branchName, baseHash)
+internal fun getDefaultRightPanelTitleForBranch(branchName: String?, baseHash: Hash?): String = wrapInHtml(
+  when {
+    branchName != null -> GitBundle.message(
+      "merge.dialog.diff.right.title.default.with.onto.branch.label.text",
+      wrapInHtmlTag(escapeString(branchName), "b"),
+      (baseHash != null).toInt(), baseHash?.toShortString()
+    )
+    baseHash != null -> GitBundle.message(
+      "merge.dialog.diff.right.title.default.with.hash.label.text",
+      wrapInHtmlTag(baseHash.toShortString(), "b")
+    )
+    else -> GitBundle.getString("merge.dialog.diff.right.title.default.without.onto.info.label.text")
   }
-}
+)
 
-private fun StringBuilder.appendBranchName(branchName: String?, hash: Hash?) {
-  if (branchName != null) {
-    append("branch <b>${escapeString(branchName)}</b>")
-    if (hash != null) append(", revision ${hash.toShortString()}")
-  }
-  else if (hash != null) {
-    append("<b>${hash.toShortString()}</b>")
-  }
-  else {
-    append("diverging branches")
-  }
-}
-
+@NonNls
 private fun resolveMergeBranchOrCherryPick(repository: GitRepository): String? {
   val mergeBranch = resolveMergeBranch(repository)
   if (mergeBranch != null) return mergeBranch.presentable
@@ -265,19 +274,17 @@ private fun tryResolveRef(repository: GitRepository, ref: String): Hash? {
   }
 }
 
-internal fun getSingleMergeBranchName(roots: Collection<GitRepository>): String? {
-  return roots.asSequence()
-    .mapNotNull { repo -> resolveMergeBranchOrCherryPick(repo) }
-    .distinct()
-    .singleOrNull()
-}
+internal fun getSingleMergeBranchName(roots: Collection<GitRepository>): String? = getMergeBranchNameSet(roots).singleOrNull()
 
-internal fun getSingleCurrentBranchName(roots: Collection<GitRepository>): String? {
-  return roots.asSequence()
-    .mapNotNull { repo -> repo.currentBranchName }
-    .distinct()
-    .singleOrNull()
-}
+private fun getMergeBranchNameSet(roots: Collection<GitRepository>): Set<String> = roots.mapNotNull { repo ->
+  resolveMergeBranchOrCherryPick(repo)
+}.toSet()
+
+internal fun getSingleCurrentBranchName(roots: Collection<GitRepository>): String? = getCurrentBranchNameSet(roots).singleOrNull()
+
+private fun getCurrentBranchNameSet(roots: Collection<GitRepository>): Set<String> = roots.asSequence().mapNotNull { repo ->
+  repo.currentBranchName
+}.toSet()
 
 internal fun getTitleWithCommitDetailsCustomizer(
   @Nls title: String,
@@ -329,7 +336,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
           },
           "${range.first}..${range.second}")
       },
-      "Collecting Commits Details...",
+      GitBundle.message("merge.dialog.customizer.collecting.details.progress"),
       true,
       repository.project)
     val dlg = MergeConflictMultipleCommitInfoDialog(repository.project, repository.root, details, filteredCommits)
@@ -341,7 +348,9 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
 internal fun getTitleWithShowDetailsAction(@Nls title: String, action: () -> Unit): JPanel =
   BorderLayoutPanel()
     .addToCenter(JBLabel(title).setCopyable(true))
-    .addToRight(LinkLabel.create("Show Details", action))
+    .addToRight(LinkLabel.create(GitBundle.message("merge.dialog.customizer.show.details.link.label"), action))
+
+private fun Boolean.toInt() = if (this) 1 else 0
 
 private class MergeConflictMultipleCommitInfoDialog(
   private val project: Project,
@@ -367,7 +376,7 @@ private class MergeConflictMultipleCommitInfoDialog(
   }
 
   override fun createSouthAdditionalPanel(): JPanel {
-    val checkbox = JBCheckBox("Filter by conflicted file", true)
+    val checkbox = JBCheckBox(GitBundle.message("merge.dialog.customizer.filter.by.conflicted.file.checkbox"), true)
     checkbox.addItemListener {
       if (checkbox.isSelected) {
         filterCommitsByConflictingFile()

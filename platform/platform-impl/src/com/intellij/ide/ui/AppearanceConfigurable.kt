@@ -73,27 +73,28 @@ private val cdUseContrastToolbars                     get() = CheckboxDescriptor
 private val cdFullPathsInTitleBar                     get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 // @formatter:on
 
-internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
-  cdAnimateWindows,
-  cdShowToolWindowBars,
-  cdShowToolWindowNumbers,
-  cdDisableMenuMnemonics,
-  cdDisableControlsMnemonics,
-  cdAllowMergingButtons,
-  cdSmoothScrolling,
-  cdShowMenuIcons,
-  cdWidescreenToolWindowLayout,
-  cdLeftToolWindowLayout,
-  cdRightToolWindowLayout,
-  cdCyclicListScrolling,
-  cdShowQuickNavigationIcons,
-  cdUseCompactTreeIndents,
-  cdShowTreeIndents,
-  cdMoveCursorOnButton,
-  cdHideNavigationPopups,
-  cdDnDWithAlt,
-  cdFullPathsInTitleBar
-).map(CheckboxDescriptor::asOptionDescriptor)
+internal val appearanceOptionDescriptors: List<OptionDescription>
+  get() = listOf(
+    cdAnimateWindows,
+    cdShowToolWindowBars,
+    cdShowToolWindowNumbers,
+    cdDisableMenuMnemonics,
+    cdDisableControlsMnemonics,
+    cdAllowMergingButtons,
+    cdSmoothScrolling,
+    cdShowMenuIcons,
+    cdWidescreenToolWindowLayout,
+    cdLeftToolWindowLayout,
+    cdRightToolWindowLayout,
+    cdCyclicListScrolling,
+    cdShowQuickNavigationIcons,
+    cdUseCompactTreeIndents,
+    cdShowTreeIndents,
+    cdMoveCursorOnButton,
+    cdHideNavigationPopups,
+    cdDnDWithAlt,
+    cdFullPathsInTitleBar
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
   private var shouldUpdateLaF = false

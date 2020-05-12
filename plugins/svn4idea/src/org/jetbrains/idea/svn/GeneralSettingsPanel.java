@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
-
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
@@ -10,16 +9,16 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.ui.components.JBCheckBox;
-import java.util.Objects;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 
-public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
+import javax.swing.*;
+import java.util.Objects;
+
+import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
+
+public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, Disposable {
 
   @NotNull private final Project myProject;
 
@@ -110,5 +109,14 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
       vcs17.invokeRefreshSvnRoots();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  private void createUIComponents() {
+    myCommandLineClient = new TextFieldWithBrowseButton(null, this);
+    myConfigurationDirectoryText = new TextFieldWithBrowseButton(null, this);
   }
 }

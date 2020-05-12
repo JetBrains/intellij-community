@@ -8,6 +8,7 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,7 @@ public class OptimizeImportsAction extends AnAction {
     actionPerformedImpl(event.getDataContext());
   }
 
-  public static void actionPerformedImpl(final DataContext dataContext) {
+  public static void actionPerformedImpl(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
@@ -75,11 +76,11 @@ public class OptimizeImportsAction extends AnAction {
         final boolean hasChanges;
         if (moduleContext != null) {
           text = CodeInsightBundle.message("process.scope.module", moduleContext.getName());
-          hasChanges = FormatChangedTextUtil.hasChanges(moduleContext);
+          hasChanges = VcsFacade.getInstance().hasChanges(moduleContext);
         }
         else {
           text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
-          hasChanges = FormatChangedTextUtil.hasChanges(projectContext);
+          hasChanges = VcsFacade.getInstance().hasChanges(projectContext);
         }
         Boolean isProcessVcsChangedText = isProcessVcsChangedText(project, text, hasChanges);
         if (isProcessVcsChangedText == null) {
@@ -115,7 +116,7 @@ public class OptimizeImportsAction extends AnAction {
     boolean processOnlyVcsChangedFiles = false;
     if (!ApplicationManager.getApplication().isUnitTestMode() && file == null && dir != null) {
       String message = CodeInsightBundle.message("process.scope.directory", dir.getName());
-      OptimizeImportsDialog dialog = new OptimizeImportsDialog(project, message, FormatChangedTextUtil.hasChanges(dir));
+      OptimizeImportsDialog dialog = new OptimizeImportsDialog(project, message, VcsFacade.getInstance().hasChanges(dir));
       dialog.show();
       if (!dialog.isOK()) {
         return;
@@ -128,14 +129,14 @@ public class OptimizeImportsAction extends AnAction {
       new OptimizeImportsProcessor(project, dir, true, processOnlyVcsChangedFiles).run();
     }
     else{
-      final OptimizeImportsProcessor optimizer = new OptimizeImportsProcessor(project, file);
+      OptimizeImportsProcessor optimizer = new OptimizeImportsProcessor(project, file);
       if (editor != null && EditorSettingsExternalizable.getInstance().isShowNotificationAfterOptimizeImports()) {
         optimizer.setCollectInfo(true);
         optimizer.setPostRunnable(() -> {
           LayoutCodeInfoCollector collector = optimizer.getInfoCollector();
           if (collector != null) {
             String info = collector.getOptimizeImportsNotification();
-            if (!editor.isDisposed() && editor.getComponent().isShowing()) {
+            if (!editor.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
               String message = info != null ? info : NO_IMPORTS_OPTIMIZED;
               FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
             }
@@ -216,7 +217,7 @@ public class OptimizeImportsAction extends AnAction {
     return true;
   }
 
-  private static boolean isOptimizeImportsAvailable(final PsiFile file) {
+  private static boolean isOptimizeImportsAvailable(@NotNull PsiFile file) {
     return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
 
@@ -255,7 +256,7 @@ public class OptimizeImportsAction extends AnAction {
       init();
     }
 
-    public boolean isProcessOnlyVcsChangedFiles() {
+    boolean isProcessOnlyVcsChangedFiles() {
       return myOnlyVcsCheckBox.isSelected();
     }
 

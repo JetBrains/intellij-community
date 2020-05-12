@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @param <R> type of search result, it is used to bind type of search parameters to the type of {@link Query}
  */
-@SuppressWarnings("unused")
 public interface SearchParameters<R> {
 
   @NotNull

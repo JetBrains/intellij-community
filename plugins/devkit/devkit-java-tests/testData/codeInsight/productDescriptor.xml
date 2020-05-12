@@ -6,5 +6,6 @@
 
   <product-descriptor code="012345678901234"
                       release-date="20180509"
-                      release-version="20181"/>
+                      release-version="20181"
+                      optional="false"/>
 </idea-plugin>

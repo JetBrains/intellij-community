@@ -28,6 +28,10 @@ object FileHistoryPersistence {
 
   fun loadFileHistory(project: Project): FilePredictionHistoryState {
     val state = FilePredictionHistoryState()
+    if (project.isDisposed) {
+      return state
+    }
+
     val path: Path? = getPathToStorage(project)
     try {
       if (path != null && path.exists()) {

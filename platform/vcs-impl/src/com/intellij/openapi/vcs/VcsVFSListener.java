@@ -688,7 +688,7 @@ public abstract class VcsVFSListener implements Disposable {
 
         ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(() -> myProcessor.process(events),
-                                               "Version Control: Processing Changed Files", true, myProject);
+                                               VcsBundle.message("progress.title.version.control.processing.changed.files"), true, myProject);
       }
     }
 }

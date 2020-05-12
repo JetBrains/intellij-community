@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +153,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Nullable
     private static String getLiteralText(@NotNull PsiLiteralExpression literal) {
-      if (!literal.isTextBlock() && !(literal.getType() instanceof PsiPrimitiveType)) return PsiLiteralUtil.getInnerText(literal);
+      if (!literal.isTextBlock() && ExpressionUtils.hasStringType(literal)) return PsiLiteralUtil.getStringLiteralContent(literal);
       Object value = literal.getValue();
       return value == null ? null : value.toString();
     }

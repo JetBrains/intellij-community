@@ -1641,6 +1641,91 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     assertContainsElements(suggested, "update", "clear", "pop", "popitem", "setdefault");
   }
 
+  // PY-39703
+  public void testTypedDictUsingConstructorKeysCompletion() {
+    final String test1 = "from typing import TypedDict\n" +
+                         "class A(TypedDict):\n" +
+                         "    x: int\n" +
+                         "    y: int\n" +
+                         "a = A(x=42, y=1)\n" +
+                         "b = a['<caret>']";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, test1);
+        myFixture.completeBasic();
+        myFixture.checkResult(test1);
+
+        assertContainsElements(myFixture.getLookupElementStrings(), "'x'", "'y'");
+      }
+    );
+  }
+
+  // PY-39703
+  public void testTypedDictInTypedDictKeys() {
+    final String test2 = "from typing import TypedDict, Mapping\n" +
+                         "class Movie(TypedDict):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "class A(TypedDict):\n" +
+                         "    film: Movie\n" +
+                         "    genre: str\n" +
+                         "def get_back(m: A):\n" +
+                         "   a = m['film']['<caret>']";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, test2);
+        myFixture.completeBasic();
+        myFixture.checkResult(test2);
+
+        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
+      }
+    );
+  }
+
+  // PY-39703
+  public void testTypedDictKeysUsingTypeAnnotation() {
+    final String test3 = "from typing import TypedDict\n" +
+                         "class Movie(TypedDict, total=False):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "m: Movie = {}\n" +
+                         "m['<caret>']";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, test3);
+        myFixture.completeBasic();
+        myFixture.checkResult(test3);
+
+        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
+      }
+    );
+  }
+
+  // PY-39703
+  public void testTypedDictWithWrongKey() {
+    final String test4 = "from typing import TypedDict\n" +
+                         "class Movie(TypedDict, total=False):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "m: Movie = {'name': 'Alien', 'year': 1979}\n" +
+                         "m['wrong_key'] = 1\n" +
+                         "m['<caret>']";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, test4);
+        myFixture.completeBasic();
+        myFixture.checkResult(test4);
+
+        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
+        assertDoesntContain(myFixture.getLookupElementStrings(), "'wrong_key'");
+      }
+    );
+  }
+
   // PY-36008
   public void testTypedDictDefinition() {
     final List<String> suggested = doTestByText("from typing import TypedDict\n" +

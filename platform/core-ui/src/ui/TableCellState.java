@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -25,24 +27,26 @@ public class TableCellState {
       myBackground = table.getBackground();
     }
 
+    //if (hasFocus) {
+    //  if (table.isCellEditable(row, column)) {
+    //    myForeground = UIUtil.getTableFocusCellForeground();
+    //    myBackground = UIUtil.getTableFocusCellBackground();
+    //  }
+    //}
+
+    myCellBorder = getBorder(isSelected, hasFocus);
+  }
+
+  @Nullable
+  protected Border getBorder(boolean isSelected, boolean hasFocus) {
     if (hasFocus) {
-      Border border = null;
       if (isSelected) {
-        border = UIManager.getBorder("Table.focusSelectedCellHighlightBorder");
+        Border border = UIManager.getBorder("Table.focusSelectedCellHighlightBorder");
+        if (border != null) return border;
       }
-      if (border == null) {
-        border = UIManager.getBorder("Table.focusCellHighlightBorder");
-      }
-
-      myCellBorder = border;
-
-      //if (table.isCellEditable(row, column)) {
-      //  myForeground = UIUtil.getTableFocusCellForeground();
-      //  myBackground = UIUtil.getTableFocusCellBackground();
-      //}
-    } else {
-      myCellBorder = UIManager.getBorder("Table.cellNoFocusBorder");
+      return UIManager.getBorder("Table.focusCellHighlightBorder");
     }
+    return UIManager.getBorder("Table.cellNoFocusBorder");
   }
 
   public void updateRenderer(JComponent renderer) {

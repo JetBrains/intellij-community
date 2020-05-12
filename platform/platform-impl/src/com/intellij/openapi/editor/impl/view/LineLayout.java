@@ -135,6 +135,9 @@ abstract class LineLayout {
     if (view.getEditor().myDisableRtl || !Bidi.requiresBidi(text, 0, textLength)) {
       return Collections.singletonList(new BidiRun(textLength));
     }
+
+    view.getEditor().bidiTextFound();
+
     List<BidiRun> runs = new ArrayList<>();
     int flags = view.getBidiFlags();
     if (startOffsetInEditor >= 0) {

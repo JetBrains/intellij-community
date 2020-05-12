@@ -3,6 +3,8 @@ package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PyFunctionImpl
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 
 class PyMlCompletionFeaturesTest: PyMlCompletionTestCase() {
   override fun getTestDataPath(): String = super.getTestDataPath() + "/codeInsight/mlcompletion"
@@ -99,6 +101,12 @@ class PyMlCompletionFeaturesTest: PyMlCompletionTestCase() {
 
   fun testInsideClassAfterConstructor() = doContextFeaturesTest(Pair("containing_class_have_constructor", MLFeatureValue.binary(true)),
                                                                 Pair("diff_lines_with_class_def", MLFeatureValue.numerical(4)))
+
+  fun testNumOfPrevQualifiersIs3() = doContextFeaturesTest(Pair("num_of_prev_qualifiers", MLFeatureValue.numerical(3)))
+
+  fun testNumOfPrevQualifiersIs4() = doContextFeaturesTest(Pair("num_of_prev_qualifiers", MLFeatureValue.numerical(4)))
+
+  fun testNumOfPrevQualifiersIs1() = doContextFeaturesTest(Pair("num_of_prev_qualifiers", MLFeatureValue.numerical(1)))
 
   // Element features
 
@@ -245,4 +253,49 @@ class PyMlCompletionFeaturesTest: PyMlCompletionTestCase() {
                                                           Pair("receiver_name_matches", MLFeatureValue.binary(false)),
                                                           Pair("receiver_num_matched_tokens", MLFeatureValue.numerical(3)),
                                                           Pair("receiver_tokens_num", MLFeatureValue.numerical(3)))
+
+  fun testMatchesWithEnclosingMethodTheSameName() = doElementFeaturesTest(
+    "_qwer_tyuio_asdf_gh",
+    Pair("number_of_tokens", MLFeatureValue.numerical(4)),
+    Pair("matches_with_enclosing_method", MLFeatureValue.binary(true)),
+    Pair("matched_tokens_with_enclosing_method", MLFeatureValue.numerical(4))
+  )
+
+  fun testMatchesWithEnclosingMethodAlmostTheSameName() = doElementFeaturesTest(
+    "_qwer_tyuio_asdf_gh",
+    listOf(Pair("number_of_tokens", MLFeatureValue.numerical(4)),
+    Pair("matched_tokens_with_enclosing_method", MLFeatureValue.numerical(4))),
+    listOf("matches_with_enclosing_method")
+  )
+
+  fun testLocationSameFileAndMethodAndClass() = doElementFeaturesTest(
+    "some_variable",
+    Pair("is_the_same_file", MLFeatureValue.binary(true)),
+    Pair("is_the_same_class", MLFeatureValue.binary(true)),
+    Pair("is_the_same_method", MLFeatureValue.binary(true))
+  )
+
+  fun testLocationSameFileAndClass() = doElementFeaturesTest(
+    "some_variable",
+    listOf(Pair("is_the_same_file", MLFeatureValue.binary(true)), Pair("is_the_same_class", MLFeatureValue.binary(true))),
+    listOf("is_the_same_method")
+  )
+
+  fun testLocationSameFileAndMethod() = doElementFeaturesTest(
+    "some_variable",
+    listOf(Pair("is_the_same_file", MLFeatureValue.binary(true)), Pair("is_the_same_method", MLFeatureValue.binary(true))),
+    listOf("is_the_same_class")
+  )
+
+  fun testLocationSameFileOnly() = doElementFeaturesTest(
+    "some_function",
+    listOf(Pair("is_the_same_file", MLFeatureValue.binary(true))),
+    listOf("is_the_same_class", "is_the_same_method")
+  )
+
+  fun testLocationDifferentFile() = doElementFeaturesTest(
+    "min",
+    emptyList(),
+    listOf("is_the_same_file", "is_the_same_class", "is_the_same_method")
+  )
 }

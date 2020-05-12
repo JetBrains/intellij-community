@@ -21,6 +21,8 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FontUtil;
@@ -224,7 +226,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     return myTooltip;
   }
 
-  public void setTooltip(@Nullable final String tooltip) {
+  public void setTooltip(@Nullable @Tooltip String tooltip) {
     myTooltip = tooltip;
   }
 
@@ -245,7 +247,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myColoredText.add(coloredFragment);
   }
 
-  public void addText(String text, SimpleTextAttributes attributes) {
+  public void addText(@NlsContexts.Label String text, SimpleTextAttributes attributes) {
     myColoredText.add(new PresentableNodeDescriptor.ColoredFragment(text, attributes));
   }
 

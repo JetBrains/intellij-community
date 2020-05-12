@@ -328,9 +328,6 @@
     <localInspection shortName="PyPackageRequirementsInspection" suppressId="PyPackageRequirements" bundle="messages.PyPsiBundle" key="INSP.NAME.requirements" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
     <localInspection language="Python" shortName="PyPep8Inspection" suppressId="PyPep8" bundle="messages.PyPsiBundle" key="INSP.pep8.coding.style.violation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
     <localInspection language="Python" shortName="PyInterpreterInspection" suppressId="PyInterpreter" bundle="messages.PyPsiBundle" key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInterpreterInspection"/>
-    <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" bundle="messages.PyPsiBundle" key="INSP.pep8.naming" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
-    <localInspection language="Python" shortName="PyChainedComparisonsInspection" suppressId="PyChainedComparisons" bundle="messages.PyPsiBundle" key="INSP.NAME.chained.comparisons" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyChainedComparisonsInspection"/>
-    <localInspection language="Python" shortName="PyShadowingBuiltinsInspection" suppressId="PyShadowingBuiltins" bundle="messages.PyPsiBundle" key="INSP.shadowing.builtins" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingBuiltinsInspection"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility" bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesCompatibilityInspection"/>
     <localInspection language="Python" shortName="PyStubPackagesAdvertiser" suppressId="PyStubPackagesAdvertiser" bundle="messages.PyPsiBundle" key="INSP.stub.packages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser"/>
 
@@ -428,8 +425,7 @@
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor" language="Python"/>
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
-                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
-                             displayName="Python External Documentation"/>
+                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          bundle="messages.PyBundle"
@@ -550,7 +546,6 @@
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter"/>
-    <extensionPoint qualifiedName="Pythonid.runnableUnitTestFilter" interface="com.jetbrains.python.testing.RunnableUnitTestFilter"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>

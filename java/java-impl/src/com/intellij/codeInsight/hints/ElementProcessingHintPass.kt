@@ -25,7 +25,6 @@ abstract class ElementProcessingHintPass(
   private val hints = TIntObjectHashMap<SmartList<String>>()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    assert(myDocument != null)
     hints.clear()
 
     val virtualFile = rootElement.containingFile?.originalFile?.virtualFile ?: return

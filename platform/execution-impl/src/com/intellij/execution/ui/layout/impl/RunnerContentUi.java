@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
 import com.intellij.ui.*;
@@ -1461,7 +1462,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       super(layout);
       setOpaque(true);
       setFocusCycleRoot(!ScreenReader.isActive());
-      setBorder(new ToolWindow.Border(false, false, false, false));
+      setBorder(new ToolWindowEx.Border(false, false, false, false));
     }
 
     @Override

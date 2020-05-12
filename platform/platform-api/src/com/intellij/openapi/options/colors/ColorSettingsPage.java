@@ -1,15 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 
 /**
@@ -61,4 +64,31 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
    * It's used to implement navigation between the list of keys and regions in sample editor.
    */
   @Nullable default Map<String, ColorKey> getAdditionalHighlightingTagToColorKeyMap() { return null; }
+
+  /**
+   * Allows to define additional customizations for the preview editor, which cannot be configured by markup in demo text.
+   */
+  default @Nullable PreviewCustomizer getPreviewEditorCustomizer() { return null; }
+
+  /**
+   * Specifies customizations for the preview editor, which cannot be configured by markup in demo text.
+   */
+  interface PreviewCustomizer {
+    /**
+     * Add customizations which are to be demonstrated by the preview editor. If {@code selectedKeyName} is not null, feature corresponding
+     * to the {@link TextAttributesKey} or {@link ColorKey} with that name should be highlighted, and associated text range in the document
+     * should be returned. Otherwise, {@code null} should be returned.
+     */
+    @Nullable TextRange addCustomizations(@NotNull Editor editor, @Nullable String selectedKeyName);
+
+    /**
+     * Should remove any customizations, which are added by {@link #addCustomizations(Editor, String)} method.
+     */
+    void removeCustomizations(@NotNull Editor editor);
+
+    /**
+     * Returns the name of {@link TextAttributesKey} or {@link ColorKey} corresponding for the feature at given location.
+     */
+    @Nullable String getCustomizationAt(@NotNull Editor editor, @NotNull Point location);
+  }
 }

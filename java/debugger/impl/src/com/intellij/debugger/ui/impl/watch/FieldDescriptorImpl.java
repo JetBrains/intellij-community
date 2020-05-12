@@ -89,21 +89,24 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myPresetValue != null) {
-      return myPresetValue.get();
-    }
     try {
-      if (myObject != null) {
-        Value fieldValue = myObject.getValue(myField);
-        if (populateExceptionStackTraceIfNeeded(fieldValue, evaluationContext)) {
-          // re-read stacktrace value
-          fieldValue = myObject.getValue(myField);
-        }
-        return fieldValue;
+      Value fieldValue;
+      if (myPresetValue != null) {
+        fieldValue = myPresetValue.get();
+      }
+      else if (myObject != null) {
+        fieldValue = myObject.getValue(myField);
       }
       else {
-        return myField.declaringType().getValue(myField);
+        fieldValue = myField.declaringType().getValue(myField);
       }
+
+      if (myObject != null && populateExceptionStackTraceIfNeeded(fieldValue, evaluationContext)) {
+        // re-read stacktrace value
+        fieldValue = myObject.getValue(myField);
+      }
+
+      return fieldValue;
     }
     catch (InternalException e) {
       if (evaluationContext.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms

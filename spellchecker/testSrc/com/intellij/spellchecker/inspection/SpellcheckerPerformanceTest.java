@@ -57,13 +57,19 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
 
     myFixture.enableInspections(getInspectionTools());
 
+    TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject());
+    List<TextEditorHighlightingPass> passes = passRegistrar.instantiatePasses(myFixture.getFile(), myFixture.getEditor(), new int[0]);
+    int[] toIgnore = passes.stream().mapToInt(TextEditorHighlightingPass::getId).toArray();
+    int i = ArrayUtil.find(toIgnore, Pass.LOCAL_INSPECTIONS);
+    toIgnore[i] = 0; // ignore everything except Pass.LOCAL_INSPECTIONS
+    
     start = System.currentTimeMillis();
-    assertSize(typoCount, runLocalInspections());
+    CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false);
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
     PlatformTestUtil.startPerformanceTest("many typos highlighting", 12_000, () -> {
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
-      assertSize(typoCount, runLocalInspections());
+      assertSize(typoCount, CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false));
     }).assertTiming();
   }
 

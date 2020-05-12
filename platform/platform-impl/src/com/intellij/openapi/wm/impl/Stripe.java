@@ -47,6 +47,10 @@ final class Stripe extends JPanel implements UISettingsListener {
     setBorder(new AdaptiveBorder());
   }
 
+  public boolean isEmpty() {
+    return buttons.isEmpty();
+  }
+
   public void reset() {
     buttons.clear();
     preferredSize = null;
@@ -318,8 +322,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
-  @NotNull
-  private List<StripeButton> getButtonsToLayOut() {
+  private @NotNull List<StripeButton> getButtonsToLayOut() {
     List<StripeButton> result = new ArrayList<>();
 
     List<StripeButton> tools = new ArrayList<>();
@@ -344,8 +347,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     return result;
   }
 
-  @NotNull
-  public ToolWindowAnchor getAnchor() {
+  public @NotNull ToolWindowAnchor getAnchor() {
     return ToolWindowAnchor.get(anchor);
   }
 
@@ -381,8 +383,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     repaint();
   }
 
-  @Nullable
-  public StripeButton getButtonFor(@NotNull String toolWindowId) {
+  public @Nullable StripeButton getButtonFor(@NotNull String toolWindowId) {
     for (StripeButton button : buttons) {
       if (button.getId().equals(toolWindowId)) {
         return button;
@@ -461,7 +462,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     String id = myDragButton.toolWindow.getId();
     myFinishingDrop = true;
     manager.setSideToolAndAnchor(id, ToolWindowAnchor.get(anchor), myLastLayoutData.dragInsertPosition, myLastLayoutData.dragToSide);
-    manager.invokeLater(() -> resetDrop());
+    manager.invokeLater(this::resetDrop);
   }
 
   public void resetDrop() {

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * "Project Settings" and "IDE Settings" groups correspondingly in the "Settings" dialog
  *
  * @see Configurable
+ * @see Configurable.WithEpDependencies
  */
 public abstract class ConfigurableProvider {
 

@@ -116,9 +116,8 @@ object MapFromDialog {
     val expression = options.elements.singleOrNull() as? PsiExpression
     if (expression != null || returnType !is PsiPrimitiveType) {
         codeStyleManager.suggestVariableName(VariableKind.FIELD, null, expression, returnType).names
-          .map { name -> codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD) }
           .forEach { name ->
-            initialMethodNames += name
+            initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
           }
     }
 

@@ -53,6 +53,7 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("DEFAULT_INVALID_STRING_ESCAPE");
 
   public static final TextAttributesKey PREDEFINED_SYMBOL = TextAttributesKey.createTextAttributesKey("DEFAULT_PREDEFINED_SYMBOL", IDENTIFIER);
+  public static final TextAttributesKey HIGHLIGHTED_REFERENCE = TextAttributesKey.createTextAttributesKey("DEFAULT_HIGHLIGHTED_REFERENCE", IDENTIFIER);
 
   public static final TextAttributesKey METADATA = TextAttributesKey.createTextAttributesKey("DEFAULT_METADATA", HighlighterColors.TEXT);
 

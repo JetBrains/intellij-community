@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,10 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
@@ -55,7 +51,7 @@ public class PyEnvTaskRunner {
                       final String @NotNull ... tagsRequiredByTest) {
     boolean wasExecuted = false;
 
-    List<String> passedRoots = Lists.newArrayList();
+    List<String> passedRoots = new ArrayList<>();
 
     final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiredByTest));
 

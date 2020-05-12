@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -35,10 +34,10 @@ public class PyStructuredDocstringFormatter {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module == null) {
       final Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
-      if (modules.length == 0) return Lists.newArrayList();
+      if (modules.length == 0) return new ArrayList<>();
       module = modules[0];
     }
-    if (module == null) return Lists.newArrayList();
+    if (module == null) return new ArrayList<>();
     final List<String> result = new ArrayList<>();
 
     final String preparedDocstring = PyIndentUtil.removeCommonIndent(docstring, true).trim();

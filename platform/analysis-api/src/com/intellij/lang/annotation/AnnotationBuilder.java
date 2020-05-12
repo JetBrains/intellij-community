@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -115,7 +116,7 @@ interface AnnotationBuilder {
    */
   @Contract(pure = true)
   @NotNull
-  AnnotationBuilder tooltip(@NotNull String tooltip);
+  AnnotationBuilder tooltip(@NotNull @NlsContexts.Tooltip String tooltip);
 
   /**
    * Optimization method specifying whether the annotation should be re-calculated when the user types in it.

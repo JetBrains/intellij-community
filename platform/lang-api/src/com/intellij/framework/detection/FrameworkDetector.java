@@ -87,7 +87,7 @@ public abstract class FrameworkDetector {
   /**
    * @return {@link FrameworkType} instance which will be used to present the framework in 'Frameworks Detected' dialog and 'Disable Detection' settings
    */
-  public abstract FrameworkType getFrameworkType();
+  public abstract @NotNull FrameworkType getFrameworkType();
 
   /**
    * @return {@link FrameworkType} instance describing framework which is required for this framework.

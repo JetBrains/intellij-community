@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.codeInspection.javaDoc
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey

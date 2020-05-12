@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class TabbedContentAction extends AnAction implements DumbAware {

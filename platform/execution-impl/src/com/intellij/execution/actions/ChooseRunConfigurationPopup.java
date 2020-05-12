@@ -188,7 +188,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   void editConfiguration(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
     final Executor executor = getExecutor();
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
-    if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor)) {
+    if (RunDialog.editConfiguration(project, configuration, ExecutionBundle.message("dialog.title.edit.configuration.settings"), executor)) {
       RunManager.getInstance(project).setSelectedConfiguration(configuration);
       ExecutionUtil.runConfiguration(configuration, executor);
     }

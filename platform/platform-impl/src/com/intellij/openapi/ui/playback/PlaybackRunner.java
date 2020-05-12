@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class PlaybackRunner implements Disposable {
+public class PlaybackRunner {
   private static final Logger LOG = Logger.getInstance(PlaybackRunner.class);
 
   private Robot myRobot;
@@ -43,7 +44,7 @@ public class PlaybackRunner implements Disposable {
   private final boolean myStopOnAppDeactivation;
   private final ApplicationActivationListener myAppListener;
 
-  private final HashSet<Class> myFacadeClasses = new HashSet<>();
+  private final HashSet<Class<?>> myFacadeClasses = new HashSet<>();
   private final ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<>();
   private final ArrayList<StageInfo> myPassedStages = new ArrayList<>();
 
@@ -51,9 +52,13 @@ public class PlaybackRunner implements Disposable {
 
   private final Map<String, String> myRegistryValues = new HashMap<>();
 
-  private final Disposable myOnStop = Disposer.newDisposable();
+  protected final Disposable myOnStop = Disposer.newDisposable();
 
-  public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall, boolean stopOnAppDeactivation, boolean useTypingTargets) {
+  public PlaybackRunner(String script,
+                        StatusCallback callback,
+                        final boolean useDirectActionCall,
+                        boolean stopOnAppDeactivation,
+                        boolean useTypingTargets) {
     myScript = script;
     myCallback = callback;
     myUseDirectActionCall = useDirectActionCall;
@@ -81,12 +86,15 @@ public class PlaybackRunner implements Disposable {
     myPassedStages.clear();
     myContextTimestamp++;
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+    subscribeListeners(ApplicationManager.getApplication().getMessageBus().connect(myOnStop));
+    Disposer.register(myOnStop, () -> {
+      onStop();
+    });
 
     try {
       myActionCallback = new ActionCallback();
       myActionCallback.doWhenProcessed(() -> {
-        stop();
+        Disposer.dispose(myOnStop);
 
         SwingUtilities.invokeLater(() -> {
           activityMonitor.setActive(false);
@@ -134,9 +142,11 @@ public class PlaybackRunner implements Disposable {
         myActionCallback.setRejected();
         return;
       }
+      @SuppressWarnings("unchecked")
+      Set<Class<?>> facadeClassesClone = (Set<Class<?>>)myFacadeClasses.clone();
       PlaybackContext context =
         new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir,
-                            (Set<Class<?>>)myFacadeClasses.clone()) {
+                            facadeClassesClone) {
           private final long myTimeStamp = myContextTimestamp;
 
           @Override
@@ -198,6 +208,14 @@ public class PlaybackRunner implements Disposable {
     }
   }
 
+  protected void subscribeListeners(MessageBusConnection connection) {
+    connection.subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+  }
+
+  protected void onStop() {
+    myCommands.clear();
+  }
+
   private void parse() {
     includeScript(myScript, getScriptDir(), myCommands, 0);
   }
@@ -250,7 +268,8 @@ public class PlaybackRunner implements Disposable {
 
     if (string.startsWith(RegistryValueCommand.PREFIX)) {
       cmd = new RegistryValueCommand(string, line);
-    } else if (string.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
+    }
+    else if (string.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
       cmd = new EmptyCommand(line);
     }
     else if (string.startsWith(KeyCodeTypeCommand.PREFIX)) {
@@ -297,7 +316,6 @@ public class PlaybackRunner implements Disposable {
 
   public void stop() {
     myStopRequested = true;
-    Disposer.dispose(myOnStop);
   }
 
   public File getScriptDir() {
@@ -306,11 +324,6 @@ public class PlaybackRunner implements Disposable {
 
   public void setScriptDir(File baseDir) {
     myScriptDir = baseDir;
-  }
-
-  @Override
-  public void dispose() {
-    myCommands.clear();
   }
 
   public interface StatusCallback {

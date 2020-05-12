@@ -215,7 +215,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
            : QuickFixAction.EMPTY;
   }
 
-  final QuickFixAction[] myQuickFixActions;
+  private final QuickFixAction[] myQuickFixActions;
 
   private QuickFixAction @NotNull [] createQuickFixes(@NotNull InspectionToolWrapper toolWrapper) {
     return new QuickFixAction[]{new PermanentDeleteAction(toolWrapper), new CommentOutBin(toolWrapper), new MoveToEntries(toolWrapper)};
@@ -246,10 +246,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         //filter out elements inside classes to be deleted
         PsiElement[] elements = Arrays.stream(filteredRefElements).filter(e -> {
           RefEntity owner = e.getOwner();
-          if (owner != null && classes.contains(owner)) {
-            return false;
-          }
-          return true;
+          return owner == null || !classes.contains(owner);
         }).map(e -> e.getPsiElement())
           .filter(e -> e != null)
           .toArray(PsiElement[]::new);
@@ -484,12 +481,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return PsiModifier.PUBLIC;
   }
 
-  protected static boolean compareVisibilities(RefJavaElement listOwner,
-                                               UnusedSymbolLocalInspectionBase localInspectionTool) {
+  private static boolean compareVisibilities(RefJavaElement listOwner,
+                                             UnusedSymbolLocalInspectionBase localInspectionTool) {
     return compareVisibilities(listOwner, getAcceptedVisibility(localInspectionTool, listOwner));
   }
 
-  protected static boolean compareVisibilities(RefJavaElement listOwner, final String acceptedVisibility) {
+  static boolean compareVisibilities(RefJavaElement listOwner, final String acceptedVisibility) {
     if (acceptedVisibility != null) {
       while (listOwner != null) {
         if (VisibilityUtil.compare(listOwner.getAccessModifier(), acceptedVisibility) >= 0) {
@@ -655,7 +652,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @ApiStatus.Internal
   protected static class UnusedDeclarationRefElementNode extends RefElementNode {
-    public UnusedDeclarationRefElementNode(@Nullable RefEntity entity, @NotNull UnusedDeclarationPresentation presentation, @NotNull InspectionTreeNode parent) {
+    UnusedDeclarationRefElementNode(@Nullable RefEntity entity,
+                                    @NotNull UnusedDeclarationPresentation presentation,
+                                    @NotNull InspectionTreeNode parent) {
       super(entity, presentation, parent);
     }
 

@@ -36,6 +36,7 @@ import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -51,6 +52,8 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   private final static Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
   public static final ProgressIndicator EMPTY_PROGRESS_INDICATOR = new EmptyProgressIndicator();
 
+  private static boolean ourEnabledInTests;
+
   static {
     addDependency("indent_size", "continuation_indent_size");
   }
@@ -62,7 +65,8 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   @Override
   public boolean modifySettings(@NotNull TransientCodeStyleSettings settings, @NotNull PsiFile psiFile) {
     final VirtualFile file = psiFile.getVirtualFile();
-    if (Utils.isFullIntellijSettingsSupport() && file != null) {
+    if (Utils.isFullIntellijSettingsSupport() && file != null &&
+        (!ApplicationManager.getApplication().isUnitTestMode() || isEnabledInTests())) {
       final Project project = psiFile.getProject();
       if (!project.isDisposed() && Utils.isEnabled(settings)) {
         // Get editorconfig settings
@@ -270,5 +274,14 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       EditorConfigSettings editorConfigSettings = settings.getCustomSettings(EditorConfigSettings.class);
       editorConfigSettings.ENABLED = false;
     };
+  }
+
+  private static boolean isEnabledInTests() {
+    return ourEnabledInTests;
+  }
+
+  @TestOnly
+  public static void setEnabledInTests(boolean isEnabledInTests) {
+    ourEnabledInTests = isEnabledInTests;
   }
 }

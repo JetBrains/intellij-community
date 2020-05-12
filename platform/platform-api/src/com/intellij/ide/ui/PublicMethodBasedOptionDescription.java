@@ -3,6 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDescription {
@@ -10,7 +11,7 @@ public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDe
   private final String myGetterName;
   private final String mySetterName;
 
-  public PublicMethodBasedOptionDescription(String option, String configurableId, String getterName, String setterName) {
+  public PublicMethodBasedOptionDescription(@NlsContexts.Label String option, String configurableId, String getterName, String setterName) {
     super(option, configurableId);
     myGetterName = getterName;
     mySetterName = setterName;

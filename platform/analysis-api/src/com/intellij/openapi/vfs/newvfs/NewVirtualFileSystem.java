@@ -6,16 +6,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
-  private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = ContainerUtil.newConcurrentMap();
+  private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new ConcurrentHashMap<>();
 
   /**
    * <p>Implementations <b>should</b> convert separator chars to forward slashes and remove duplicates ones,
@@ -36,10 +36,9 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * and an implementation can't extract a valid root path nevertheless, it should return an empty string.
    */
   @ApiStatus.OverrideOnly
-  protected @NotNull abstract String extractRootPath(@NotNull String normalizedPath);
+  protected abstract @NotNull String extractRootPath(@NotNull String normalizedPath);
 
-  @Nullable
-  public abstract VirtualFile findFileByPathIfCached(@NotNull String path);
+  public abstract @Nullable VirtualFile findFileByPathIfCached(@NotNull String path);
 
   @Override
   public void refreshWithoutFileWatcher(boolean asynchronous) {
@@ -80,17 +79,14 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   public abstract int getRank();
 
-  @NotNull
   @Override
-  public abstract VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
+  public abstract @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
 
   @Override
-  @NotNull
-  public abstract VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
+  public abstract @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
 
-  @NotNull
   @Override
-  public abstract VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
+  public abstract @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
 
   @Override
   public abstract void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException;
@@ -105,8 +101,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return false;
   }
 
-  @NotNull
-  public String getCanonicallyCasedName(@NotNull VirtualFile file) {
+  public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
     return file.getName();
   }
 
@@ -116,8 +111,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * @param file file to get attributes of.
    * @return attributes of a given file, or {@code null} if the file doesn't exist.
    */
-  @Nullable
-  public abstract FileAttributes getAttributes(@NotNull VirtualFile file);
+  public abstract @Nullable FileAttributes getAttributes(@NotNull VirtualFile file);
 
   /**
    * Returns {@code true} if {@code path} represents a directory with at least one child.

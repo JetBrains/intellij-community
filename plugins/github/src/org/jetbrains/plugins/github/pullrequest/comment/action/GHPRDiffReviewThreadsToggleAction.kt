@@ -3,10 +3,13 @@ package org.jetbrains.plugins.github.pullrequest.comment.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 
 class GHPRDiffReviewThreadsToggleAction
-  : ToggleAction("Show Comments", "Show or hide pull request review threads", null) {
+  : ToggleAction({ GithubBundle.message("pull.request.review.show.comments.action") },
+                 { GithubBundle.message("pull.request.review.show.comments.action.description") },
+                 null) {
 
   override fun update(e: AnActionEvent) {
     super.update(e)

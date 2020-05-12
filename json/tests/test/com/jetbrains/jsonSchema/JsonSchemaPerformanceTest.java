@@ -28,14 +28,15 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   }
 
   public void testSwaggerHighlighting() {
-    doPerformanceTest(15000, "swagger");
+    doPerformanceTest(20_000, "swagger");
   }
 
   public void testTsLintSchema() {
-    doPerformanceTest(9000, "tslint-schema");
+    doPerformanceTest(15_000, "tslint-schema");
   }
 
   private void doPerformanceTest(int expectedMs, String jsonFileNameWithoutExtension) {
+    myFixture.configureByFiles("/" + jsonFileNameWithoutExtension + ".json");
     final ThrowableRunnable<Exception> test = () -> skeleton(new Callback() {
       @Override
       public void registerSchemes() {
@@ -48,7 +49,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void configureFiles() {
-        myFixture.configureByFiles("/" + jsonFileNameWithoutExtension + ".json");
+        // files have been configured before the performance test started to not influence the results
       }
 
       @Override
@@ -56,7 +57,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         myFixture.doHighlighting();
       }
     });
-    PlatformTestUtil.startPerformanceTest(getTestName(false), expectedMs, test).attempts(1).usesAllCPUCores().assertTiming();
+    PlatformTestUtil.startPerformanceTest(getTestName(false), expectedMs, test).reattemptUntilJitSettlesDown().usesAllCPUCores().assertTiming();
   }
 
 
@@ -83,6 +84,6 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         WriteCommandAction.runWriteCommandAction(getProject(), (Runnable)() -> camelcase.getValue().replace(a.getValue()));
         myFixture.doHighlighting();
       }
-    }).attempts(10).assertTiming();
+    }).reattemptUntilJitSettlesDown().assertTiming();
   }
 }

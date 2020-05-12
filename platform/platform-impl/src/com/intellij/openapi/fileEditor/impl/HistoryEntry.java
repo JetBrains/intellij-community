@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * `Heavy` entries should be disposed with {@link #destroy()} to prevent leak of VirtualFilePointer
  */
-final class HistoryEntry {
+public final class HistoryEntry {
   @NonNls static final String TAG = "entry";
   static final String FILE_ATTR = "file";
   @NonNls private static final String PROVIDER_ELEMENT = "provider";

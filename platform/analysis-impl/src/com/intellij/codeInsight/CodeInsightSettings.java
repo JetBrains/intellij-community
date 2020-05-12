@@ -69,7 +69,17 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
 
   @MagicConstant(intValues = {ALL, NONE, FIRST_LETTER})
+  @Deprecated
   public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER;
+
+  public int getCompletionCaseSensitive() {
+    return COMPLETION_CASE_SENSITIVE;
+  }
+
+  public void setCompletionCaseSensitive(int value) {
+    COMPLETION_CASE_SENSITIVE = value;
+  }
+
   public static final int ALL = 1;
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;

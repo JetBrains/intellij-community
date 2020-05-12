@@ -3,13 +3,15 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.*;
+import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 
 public class ClsStubPsiFactory extends StubPsiFactory {
   public static final ClsStubPsiFactory INSTANCE = new ClsStubPsiFactory();
 
   @Override
   public PsiClass createClass(PsiClassStub stub) {
-    return new ClsClassImpl(stub);
+    boolean anonymous = stub instanceof PsiClassStubImpl && ((PsiClassStubImpl<?>)stub).isAnonymousInner();
+    return anonymous ? new ClsAnonymousClass(stub) : new ClsClassImpl(stub);
   }
 
   @Override

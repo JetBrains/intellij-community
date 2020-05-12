@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,11 +60,6 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     myFileList.setCellRenderer(new FileListRenderer());
 
     init();
-  }
-
-  @Override
-  public long getTypeAheadTimeoutMs() {
-    return Registry.intValue("actionSystem.typeAheadTimeBeforeDialog");
   }
 
   private void initFileList() {

@@ -157,7 +157,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     if (processor == null) return true;
     try {
       processor.prepare(null);
-      processor.testPrepare(); //TODO remove
+      processor.prepareVariablesAndName();
       processor.myMethodName = "extracted";
     }
     catch (PrepareFailedException e) {

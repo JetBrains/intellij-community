@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -66,6 +66,10 @@ public class StackFrameItem {
   public StackFrameItem(@NotNull Location location, List<XNamedValue> variables) {
     myLocation = location;
     myVariables = variables;
+  }
+
+  public Location location() {
+    return myLocation;
   }
 
   @NotNull
@@ -225,6 +229,10 @@ public class StackFrameItem {
     }
   }
 
+  public static String getAsyncStacktraceMessage() {
+    return JavaDebuggerBundle.message("frame.panel.async.stacktrace");
+  }
+
   public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
                                                                         XDebuggerFramesList.ItemWithSeparatorAbove {
     private final XSourcePosition mySourcePosition;
@@ -324,10 +332,6 @@ public class StackFrameItem {
         return mySourcePosition.getFile().getName() + ":" + (mySourcePosition.getLine() + 1);
       }
       return "<position unknown>";
-    }
-
-    private static String getAsyncStacktraceMessage() {
-      return JavaDebuggerBundle.message("frame.panel.async.stacktrace");
     }
   }
 }

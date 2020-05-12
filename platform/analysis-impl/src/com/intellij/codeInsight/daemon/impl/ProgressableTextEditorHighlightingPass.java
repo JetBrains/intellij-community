@@ -48,7 +48,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
-                                                   @Nullable final Document document,
+                                                   @NotNull final Document document,
                                                    @NotNull String presentableName,
                                                    @Nullable PsiFile file,
                                                    @Nullable Editor editor,
@@ -77,8 +77,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     myFinished = false;
     if (myFile != null) {
-      myHighlightingSession =
-        HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, (DaemonProgressIndicator)ProgressWrapper.unwrapAll(progress), getColorsScheme());
+      DaemonProgressIndicator daemonProgressIndicator = (DaemonProgressIndicator)ProgressWrapper.unwrapAll(progress);
+      myHighlightingSession = HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, daemonProgressIndicator, getColorsScheme());
     }
     try {
       collectInformationWithProgress(progress);
@@ -161,7 +161,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   }
 
   static class EmptyPass extends TextEditorHighlightingPass {
-    EmptyPass(final Project project, @Nullable final Document document) {
+    EmptyPass(@NotNull Project project, @NotNull Document document) {
       super(project, document, false);
     }
 

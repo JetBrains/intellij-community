@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -24,9 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixtureTestCase {
   @Override
@@ -61,10 +60,12 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
 
-    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(getTools().collect(Collectors.toList()));
+    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(getTools());
     Disposer.register(getTestRootDisposable(), toolSupplier);
     InspectionProfileImpl profile = new InspectionProfileImpl("test", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
-    getTools().forEach(t -> profile.enableTool(t.getShortName(), getProject()));
+    for (InspectionToolWrapper<?, ?> t : getTools()) {
+      profile.enableTool(t.getShortName(), getProject());
+    }
 
     context.setExternalProfile(profile);
 
@@ -141,8 +142,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     InspectionTestUtil.compareWithExpected(expectedUnnCondResults, unnCondResults, false);
   }
 
-  @NotNull
-  private static Element loadFile(@NotNull Path file) {
+  private static @NotNull Element loadFile(@NotNull Path file) {
     try {
       return JDOMUtil.load(file);
     }
@@ -156,8 +156,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     }
   }
 
-  @NotNull
-  private static Stream<InspectionToolWrapper> getTools() {
-    return Stream.of(new DataFlowInspection(), new SimplifiableConditionalExpressionInspection()).map(LocalInspectionToolWrapper::new);
+  private static @NotNull List<InspectionToolWrapper<?, ?>> getTools() {
+    return Arrays.asList(new LocalInspectionToolWrapper(new DataFlowInspection()), new LocalInspectionToolWrapper(new SimplifiableConditionalExpressionInspection()));
   }
 }

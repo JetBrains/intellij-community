@@ -1,14 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.DialogManager
+import git4idea.i18n.GitBundle
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
 
@@ -24,8 +26,8 @@ internal class InteractiveSelectGithubAccountHttpAuthDataProvider(private val pr
                                            null,
                                            false,
                                            true,
-                                           "Choose GitHub Account",
-                                           "Log In")
+                                           GithubBundle.message("account.choose.title"),
+                                           GitBundle.message("login.dialog.button.login"))
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
     val account = dialog.account

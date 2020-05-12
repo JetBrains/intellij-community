@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -62,7 +63,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     String errorPrefix = String.format("Failed to %s changes: ", StringUtil.toLowerCase(action));
 
     final ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(), null,
-                                                            "Select Target Changelist", defaultName);
+                                                            VcsBundle.message("revert.changes.changelist.chooser.title"), defaultName);
     if (!chooser.showAndGet()) {
       return;
     }

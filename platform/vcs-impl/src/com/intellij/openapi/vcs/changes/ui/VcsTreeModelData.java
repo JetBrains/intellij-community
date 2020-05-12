@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -9,6 +8,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ListSelection;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.io.File;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -350,8 +347,9 @@ public abstract class VcsTreeModelData {
   @Nullable
   private static ChangesBrowserNode<?> findTagNode(@NotNull JTree tree, @NotNull Object tag) {
     ChangesBrowserNode<?> root = (ChangesBrowserNode<?>)tree.getModel().getRoot();
-    //noinspection unchecked
-    Iterator<ChangesBrowserNode> iterator = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    Enumeration<ChangesBrowserNode<?>> children = (Enumeration)root.children();
+    Iterator<ChangesBrowserNode<?>> iterator = ContainerUtil.iterate(children);
     return ContainerUtil.find(iterator, node -> tag.equals(node.getUserObject()));
   }
 }

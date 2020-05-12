@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -11,6 +11,8 @@ import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
@@ -44,6 +46,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETION;
+import static com.intellij.openapi.application.ModalityState.stateForComponent;
 
 public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileTextField {
 
@@ -169,6 +172,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   @Override
   public void dispose() {
+    myUiUpdater = null;
   }
 
   private void processTextChanged() {
@@ -213,8 +217,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         result.myCompletionBase = completionBase;
         if (result.myCompletionBase == null) return;
         result.myFieldText = myPathTextField.getText();
+        EmptyProgressIndicator indicator = new EmptyProgressIndicator(stateForComponent(myPathTextField));
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          processCompletion(result);
+          ProgressManager.getInstance().runProcess(() -> processCompletion(result), indicator);
           SwingUtilities.invokeLater(() -> {
             if (!result.myCompletionBase.equals(getCompletionBase())) return;
 

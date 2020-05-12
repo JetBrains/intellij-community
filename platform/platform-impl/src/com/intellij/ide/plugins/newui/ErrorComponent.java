@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.JBUI;
@@ -63,7 +64,7 @@ public class ErrorComponent {
                           @Nullable Runnable enableCallback) {
     JEditorPane editorPane = (JEditorPane)errorComponent;
 
-    editorPane.setText("<html><span>" + message + "</span>" +
+    editorPane.setText("<html><span>" + StringUtil.escapeXmlEntities(message) + "</span>" +
                        (enableCallback == null ? "" : "&nbsp;<a href='link'>" + action + "</a>") + "</html>");
 
     editorPane.putClientProperty(KEY, enableCallback);

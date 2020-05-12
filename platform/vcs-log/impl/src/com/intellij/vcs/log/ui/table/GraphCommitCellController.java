@@ -115,12 +115,11 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
       }
     }
 
-    myTable.repaint();
-
     if (answer == null) {
       return null;
     }
 
+    if (answer.isRepaintRequired()) myTable.repaint();
     if (answer.getCommitToJump() != null) {
       Integer row = myTable.getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
       if (row != null && row >= 0 && answer.doJump()) {

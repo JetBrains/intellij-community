@@ -5,10 +5,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.rd.RdIdeaKt;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
@@ -806,7 +806,7 @@ public class JBTabsImpl extends JComponent
 
 
   /**
-   * TODO use {@link RdIdeaKt#childAtMouse(IdeGlassPane, Container)}
+   * TODO use {@link RdGraphicsExKt#childAtMouse(IdeGlassPane, Container)}
    */
   @Deprecated
   final class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
@@ -1171,7 +1171,9 @@ public class JBTabsImpl extends JComponent
       return result;
     }
     else {
-      requestFocus();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        requestFocus();
+      }, ModalityState.NON_MODAL);
       return removeDeferred();
     }
   }
@@ -1222,7 +1224,10 @@ public class JBTabsImpl extends JComponent
     if (toFocus == null) return ActionCallback.DONE;
 
     if (isShowing()) {
-      return myFocusManager.requestFocusInProject(toFocus, myProject);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myFocusManager.requestFocusInProject(toFocus, myProject);
+      }, ModalityState.NON_MODAL);
+      return ActionCallback.DONE;
     }
     return ActionCallback.REJECTED;
   }
@@ -2924,7 +2929,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo) {
+  public void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
     TabsLayout newTabsLayout = newTabsLayoutInfo.createTabsLayout(myTabsLayoutCallback);
 
     if (myTabsLayout != null) {

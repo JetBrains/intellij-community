@@ -12,7 +12,7 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
-@Presentation(typeName = "Action", provider = ActionOrGroupPresentationProvider.class)
+@Presentation(typeName = DevkitDomPresentationConstants.ACTION, provider = ActionOrGroupPresentationProvider.class)
 public interface Action extends ActionOrGroup {
 
   @NotNull

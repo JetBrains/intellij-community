@@ -104,6 +104,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testPackageHtml() { doTestPackageInfo(); }
   public void testSyntheticEnumValues() { doTestAtCaret(); }
   public void testVariableDoc() { doTestAtCaret(); }
+  public void testTypeAnnotation() { useJava8(); doTestAtCaret(); }
+  public void testTypeAnnotationArray() { useJava8(); doTestAtCaret(); }
+  public void testTypeAnnotationClass() { useJava8(); doTestClass(); }
 
   public void testAnonymousAndSuperJavadoc() {
     PsiClass psiClass = PsiTreeUtil.findChildOfType(getTestClass(), PsiAnonymousClass.class);
