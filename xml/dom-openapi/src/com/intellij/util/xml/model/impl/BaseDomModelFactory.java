@@ -76,9 +76,9 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
   @Override
   public M getModelByConfigFile(@Nullable XmlFile file) {
     if (file == null) return null;
-
-    final S scope = getModelScope(file);
-    return computeModel(file, scope);
+    final XmlFile originalFile = (XmlFile)file.getOriginalFile();
+    final S scope = getModelScope(originalFile);
+    return computeModel(originalFile, scope);
   }
 
   @Override
