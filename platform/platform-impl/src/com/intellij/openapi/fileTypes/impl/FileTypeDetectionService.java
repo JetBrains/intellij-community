@@ -157,7 +157,7 @@ class FileTypeDetectionService implements Disposable {
 
       private boolean isReparseEvent(@NotNull VFileEvent event) {
         return event instanceof VFilePropertyChangeEvent &&
-               FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(((VFilePropertyChangeEvent)event).getPropertyName());
+               FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor());
       }
     }, this);
 
