@@ -66,7 +66,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public class CoverageDataManagerImpl extends CoverageDataManager {
+public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable{
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(CoverageDataManagerImpl.class);
   @NonNls
@@ -117,7 +117,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       @Override
       public void projectOpened(@NotNull Project project) {
         if (project == myProject) {
-          EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), myProject);
+          EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), CoverageDataManagerImpl.this);
         }
       }
 
@@ -135,7 +135,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
     final CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
     if (coverageViewListener != null) {
-      addSuiteListener(coverageViewListener, myProject);
+      addSuiteListener(coverageViewListener, this);
     }
 
     CoverageRunner.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageRunner>() {
@@ -174,7 +174,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
         ActionToolbarImpl.updateAllToolbarsImmediately();
       }
-    }, myProject);
+    }, this);
 
     CoverageEngine.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageEngine>() {
       @Override
@@ -186,7 +186,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
         myCoverageSuites.removeIf(suite -> suite.getCoverageEngine() == coverageEngine);
       }
-    }, myProject);
+    }, this);
   }
 
   @Nullable
@@ -450,6 +450,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     VirtualFileManager.getInstance().addVirtualFileListener(myContentListener);
   }
 
+  @Override
+  public void dispose() { }
+
   public static void processGatheredCoverage(RunConfigurationBase configuration) {
     final Project project = configuration.getProject();
     if (project.isDisposed()) return;
@@ -673,7 +676,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   private class CoverageEditorFactoryListener implements EditorFactoryListener {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, CoverageDataManagerImpl.this);
     private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
     @Override
