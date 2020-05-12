@@ -29,6 +29,8 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
                                    private val target: TargetEnvironmentConfiguration?) {
 
   val commandLine = TargetedCommandLineBuilder(request)
+  val platform = request.targetPlatform.platform
+
   private val languageRuntime: JavaLanguageRuntimeConfiguration? = target?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
@@ -276,8 +278,6 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
     return result
   }
-
-  private val platform = request.targetPlatform.platform
 
   private fun joinPath(segments: Array<String>) = segments.joinTo(StringBuilder(), platform.fileSeparator.toString()).toString()
 
