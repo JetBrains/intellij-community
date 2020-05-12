@@ -424,7 +424,7 @@ public class WSLDistribution {
    */
   @ApiStatus.Experimental
   @NotNull
-  File getUNCRoot() {
+  public File getUNCRoot() {
     return new File(UNC_PREFIX + myDescriptor.getMsId());
   }
 

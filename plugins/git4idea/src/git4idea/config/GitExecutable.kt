@@ -66,8 +66,9 @@ sealed class GitExecutable {
     }
 
     override fun convertFilePathBack(path: String, workingDir: File): File {
-      val localPath = distribution.getWindowsPath(path) ?: path
-      return File(localPath)
+      val localPath = distribution.getWindowsPath(path)
+      if (localPath != null) return File(localPath)
+      return File(distribution.uncRoot, path)
     }
 
     override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, withLowPriority: Boolean, withNoTty: Boolean) {
