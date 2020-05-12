@@ -142,6 +142,9 @@ class PSimplePropertiesInProxyBasedStorageTest {
     assertTrue(foo1.hasEqualProperties(foo1))
     assertTrue(foo1.hasEqualProperties(foo2))
     assertFalse(foo1.hasEqualProperties(bar))
+    val builder2 = PEntityStorageBuilder.create()
+    val foo1a = builder2.addPSampleEntity("foo1", virtualFileManager = virtualFileManager)
+    assertTrue(foo1.hasEqualProperties(foo1a))
 
     val bar2 = builder.modifyEntity(ModifiablePSampleEntity::class.java, bar) {
       stringProperty = "bar2"

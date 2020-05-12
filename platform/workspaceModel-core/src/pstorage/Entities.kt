@@ -21,6 +21,7 @@ abstract class PTypedEntity : ReferableTypedEntity, Any() {
 
     this::class.memberProperties.forEach {
       if (it.name == PTypedEntity::id.name) return@forEach
+      if (it.name == PTypedEntity::snapshot.name) return@forEach
       if (it.getter.call(this) != it.getter.call(e)) return false
     }
     return true
