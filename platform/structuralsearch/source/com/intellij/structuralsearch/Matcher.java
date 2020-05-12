@@ -182,10 +182,8 @@ public class Matcher {
         visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
       }
       else {
-        final LanguageFileType fileType = matchContext.getOptions().getFileType();
-        final Language language = fileType.getLanguage();
         for (PsiElement element : elements) {
-          match(element, language);
+          match(element);
         }
       }
 
@@ -387,19 +385,19 @@ public class Matcher {
    * Initiates the matching process for given element
    * @param element the current search tree element
    */
-  void match(@NotNull PsiElement element, Language language) {
+  void match(@NotNull PsiElement element) {
     final MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
-    if (strategy.continueMatching(element) && element.getLanguage().isKindOf(language)) {
+    if (strategy.continueMatching(element)) {
       visitor.matchContext(newSingleNodeIterator(element));
       return;
     }
     for(PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
-      match(el, language);
+      match(el);
     }
     if (element instanceof PsiLanguageInjectionHost) {
       InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
-                                                               (injectedPsi, places) -> match(injectedPsi, language));
+                                                               (injectedPsi, places) -> match(injectedPsi));
     }
   }
 
@@ -531,8 +529,6 @@ public class Matcher {
 
       if (files.isEmpty()) return;
 
-      final LanguageFileType fileType = matchContext.getOptions().getFileType();
-      final Language patternLanguage = fileType.getLanguage();
       for (final PsiElement file : files) {
         if (file instanceof PsiFile) {
           matchContext.getSink().processFile((PsiFile)file);
@@ -543,7 +539,7 @@ public class Matcher {
             if (!file.isValid()) return;
             final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(file);
             if (profile == null) return;
-            match(profile.extendMatchOnePsiFile(file), patternLanguage);
+            match(profile.extendMatchOnePsiFile(file));
           }
         ).inSmartMode(project).executeSynchronously();
       }
