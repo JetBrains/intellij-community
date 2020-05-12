@@ -47,6 +47,11 @@ import static org.junit.Assert.*;
 public class JarFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
+  @After
+  public void testDown() {
+    JarFileSystemImpl.cleanupForNextTest();
+  }
+
   @Test
   public void testFindFile() throws IOException {
     assertNull(JarFileSystem.getInstance().findFileByPath("/invalid/path"));
@@ -193,11 +198,6 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     catch (TimeoutException e) {
       fail("Deadlock detected");
     }
-  }
-
-  @After
-  public void testDown() {
-    JarFileSystemImpl.cleanupForNextTest();
   }
 
   @Test
