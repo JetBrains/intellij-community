@@ -64,9 +64,7 @@ public class PatchRenameRootTest extends PatchTestCase {
   @Test
   public void applyAndRevertBasic() throws Exception {
     TestScenario scenario = new TestScenario();
-/* b/155929480
     scenario.run();
-b/155929480 */
   }
 
   @Test
@@ -224,23 +222,34 @@ b/155929480 */
           PatchFileCreator.prepareAndValidate(myPatchFile, myPatchApplyOldDir, TEST_UI);
         validatePreparationResult(preparationResult.validationResults);
 
-        myOriginal = digest(patch, myPatchApplyOldDir);
-        myTarget = digest(patch, myNewerDir);
+        myOriginal = createDigest(patch, myPatchApplyOldDir);
+        myTarget = createDigest(patch, myNewerDir);
 
         List<PatchAction> appliedActions = PatchFileCreator.apply(preparationResult, options, myBackupDir, TEST_UI).appliedActions;
         afterApply();
-        Map<String, Long> patchedOld = digest(patch, myPatchApplyOldDir);
-        Map<String, Long> patchedNew = digest(patch, myPatchApplyNewDir);
+        Map<String, Long> patchedOld = createDigest(patch, myPatchApplyOldDir);
+        Map<String, Long> patchedNew = createDigest(patch, myPatchApplyNewDir);
         validateAfterApply(patchedOld, patchedNew);
 
         PatchFileCreator.revert(preparationResult, appliedActions, myBackupDir, TEST_UI);
-        Map<String, Long> revertedNew = digest(patch, myPatchApplyNewDir);
-        Map<String, Long> revertedOld = digest(patch, myPatchApplyOldDir);
+        Map<String, Long> revertedNew = createDigest(patch, myPatchApplyNewDir);
+        Map<String, Long> revertedOld = createDigest(patch, myPatchApplyOldDir);
         validateAfterRevert(revertedOld, revertedNew);
       }
       finally {
         cleanup();
       }
+    }
+
+    /**
+     * This wrapper to digest() first checks if the root file/directory exists. digest() method doesn't work
+     * if the root file/dir doesn't exist.
+     */
+    private Map<String, Long> createDigest(Patch patch, File dir) throws IOException {
+      if (!dir.exists()) {
+        return new HashMap<>();
+      }
+      return digest(patch, dir);
     }
 
     protected void beforePrepare() throws Exception {
