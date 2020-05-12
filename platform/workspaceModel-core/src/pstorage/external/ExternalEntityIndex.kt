@@ -13,9 +13,9 @@ import java.util.*
 open class ExternalEntityIndex<T> private constructor(internal val index: BidirectionalMap<PId<out TypedEntity>, T>) {
   private lateinit var entityStorage: AbstractPEntityStorage
 
-  fun getEntities(data: T): List<TypedEntity>? = index.getKeysByValue(data)?.toMutableList()?.mapNotNull {
+  fun getEntities(data: T): List<TypedEntity> = index.getKeysByValue(data)?.toMutableList()?.mapNotNull {
     entityStorage.entityDataById(it)?.createEntity(entityStorage)
-  }
+  } ?: emptyList()
 
   fun getDataByEntity(entity: TypedEntity): T? {
     entity as PTypedEntity
