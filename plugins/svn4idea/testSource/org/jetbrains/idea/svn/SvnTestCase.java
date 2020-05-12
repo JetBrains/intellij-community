@@ -395,7 +395,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   protected void withDisabledChangeListManager(@NotNull ThrowableRunnable<? extends Exception> action) throws Exception {
-    changeListManager.stopEveryThingIfInTestMode();
+    changeListManager.waitUntilRefreshed();
+    changeListManager.forceStopInTestMode();
     action.run();
     changeListManager.forceGoInTestMode();
     refreshSvnMappingsSynchronously();
