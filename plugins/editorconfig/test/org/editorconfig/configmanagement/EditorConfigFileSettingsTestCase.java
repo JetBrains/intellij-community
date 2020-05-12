@@ -50,9 +50,14 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
 
   @NotNull
   protected PsiFile findPsiFile(@NotNull String name) {
+    return getPsiFile(getProject(), getVirtualFile(name));
+  }
+
+  @NotNull
+  protected VirtualFile getVirtualFile(@NotNull String name) {
     File file = new File(getTestDataPath() + "/" + name);
     VirtualFile virtualFile = VfsUtil.findFileByIoFile(file, true);
     assertNotNull("Can not find the file" + file.getPath(), virtualFile);
-    return getPsiFile(getProject(), virtualFile);
+    return virtualFile;
   }
 }

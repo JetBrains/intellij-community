@@ -379,5 +379,7 @@
     </extensionPoint>
 
     <extensionPoint name="iconDescriptionBundle" beanClass="com.intellij.ui.IconDescriptionBundleEP" dynamic="true"/>
+
+    <extensionPoint name="fileEncodingProvider" interface="com.intellij.openapi.vfs.encoding.FileEncodingProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -28,12 +28,15 @@ public class EncodingManager implements FileDocumentManagerListener {
   // Handles the following EditorConfig settings:
   public static final String charsetKey = "charset";
 
+  public static final String UTF8_BOM_ENCODING = "utf-8-bom";
+
   public static final Map<String, Charset> encodingMap;
 
   static {
     Map<String, Charset> map = new HashMap<>();
     map.put("latin1", Charset.forName("ISO-8859-1"));
     map.put("utf-8", StandardCharsets.UTF_8);
+    map.put(UTF8_BOM_ENCODING, StandardCharsets.UTF_8);
     map.put("utf-16be", CharsetToolkit.UTF_16BE_CHARSET);
     map.put("utf-16le", CharsetToolkit.UTF_16LE_CHARSET);
     encodingMap = Collections.unmodifiableMap(map);
