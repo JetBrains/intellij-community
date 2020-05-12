@@ -6,10 +6,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.refactoring.suggested.*
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.pyi.PyiUtil
 
 class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
-  override fun isDeclaration(psiElement: PsiElement): Boolean = psiElement is PsiNameIdentifierOwner
+  override fun isDeclaration(psiElement: PsiElement): Boolean {
+    return psiElement is PsiNameIdentifierOwner &&
+           !PyiUtil.isOverload(psiElement, TypeEvalContext.codeAnalysis(psiElement.project, psiElement.containingFile))
+  }
 
   override fun signatureRange(declaration: PsiElement): TextRange? = nameRange(declaration)
 
