@@ -17,8 +17,10 @@ class GitIndexVirtualFileCache(private val project: Project) : Disposable {
     return cache.get(Key(root, filePath))
   }
 
-  fun forEachFile(function: (GitIndexVirtualFile) -> Unit) {
-    cache.asMap().forEach { (_, file) -> function(file) }
+  fun filesUnder(roots: Collection<VirtualFile>): List<GitIndexVirtualFile> {
+    val result = mutableListOf<GitIndexVirtualFile>()
+    cache.asMap().forEach { (_, file) -> if (roots.contains(file.root)) result.add(file) }
+    return result
   }
 
   override fun dispose() {

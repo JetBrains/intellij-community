@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.vfs
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
@@ -20,18 +22,15 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
 import git4idea.util.GitFileUtils
 import java.io.*
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 class GitIndexVirtualFile(private val project: Project,
                           val root: VirtualFile,
                           val filePath: FilePath) : VirtualFile() {
-  private val lock = ReentrantReadWriteLock()
   private val refresher: GitIndexFileSystemRefresher get() = project.service()
 
   private val cachedData: AtomicReference<CachedData?> = AtomicReference()
@@ -40,8 +39,13 @@ class GitIndexVirtualFile(private val project: Project,
   private var modificationStamp = LocalTimeCounter.currentTime()
 
   init {
-    refresher.runTask(false) {
-      cachedData.compareAndSet(null, readCachedData())
+    val task = Runnable { cachedData.compareAndSet(null, readCachedData()) }
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(task, GitBundle.message("stage.vfs.read.process", name),
+                                                                        false, project)
+    }
+    else {
+      task.run()
     }
   }
 
@@ -57,9 +61,7 @@ class GitIndexVirtualFile(private val project: Project,
   override fun getTimeStamp(): Long = 0
   override fun getModificationStamp(): Long = modificationStamp
   override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
-    refresher.runTask(asynchronous) {
-      getRefresh()?.also { refresher.execute(listOf(it), postRunnable) } ?: writeInEdt { postRunnable?.run() }
-    }
+    refresher.refresh(listOf(this), asynchronous, postRunnable)
   }
 
   internal fun getRefresh(): Refresh? {
@@ -85,22 +87,20 @@ class GitIndexVirtualFile(private val project: Project,
   private fun write(requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
     val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
     refresher.changeContent(this, requestor, modificationStamp) {
-      lock.write {
-        val oldCachedData = cachedData.get()
-        if (oldCachedData != readCachedData()) {
-          // TODO
-          LOG.warn("Skipping write for $this as it is not up to date")
-          return@write
-        }
+      val oldCachedData = cachedData.get()
+      if (oldCachedData != readCachedData()) {
+        // TODO
+        LOG.warn("Skipping write for $this as it is not up to date")
+        return@changeContent
+      }
 
-        val isExecutable = oldCachedData?.isExecutable ?: false
-        val newHash = GitIndexUtil.write(project, root, filePath, ByteArrayInputStream(newContent), isExecutable)
-        LOG.debug("Written $this. newHash=$newHash")
+      val isExecutable = oldCachedData?.isExecutable ?: false
+      val newHash = GitIndexUtil.write(project, root, filePath, ByteArrayInputStream(newContent), isExecutable)
+      LOG.debug("Written $this. newHash=$newHash")
 
-        modificationStamp = newModStamp
-        if (oldCachedData?.hash != newHash) {
-          cachedData.compareAndSet(oldCachedData, CachedData(newHash, calculateLength(newHash.asString()), isExecutable))
-        }
+      modificationStamp = newModStamp
+      if (oldCachedData?.hash != newHash) {
+        cachedData.compareAndSet(oldCachedData, CachedData(newHash, calculateLength(newHash.asString()), isExecutable))
       }
     }
   }
@@ -113,9 +113,7 @@ class GitIndexVirtualFile(private val project: Project,
   @Throws(IOException::class)
   override fun contentsToByteArray(): ByteArray {
     return try {
-      lock.read {
-        GitFileUtils.getFileContent(project, root, "", VcsFileUtil.relativePath(root, filePath))
-      }
+      GitFileUtils.getFileContent(project, root, "", VcsFileUtil.relativePath(root, filePath))
     }
     catch (e: VcsException) {
       throw IOException(e)
@@ -123,10 +121,8 @@ class GitIndexVirtualFile(private val project: Project,
   }
 
   private fun readCachedData(): CachedData? {
-    lock.read {
-      val stagedFile = GitIndexUtil.listStaged(project, root, listOf(filePath)).singleOrNull() ?: return null
-      return CachedData(HashImpl.build(stagedFile.blobHash), calculateLength(stagedFile.blobHash), stagedFile.isExecutable)
-    }
+    val stagedFile = GitIndexUtil.listStaged(project, root, listOf(filePath)).singleOrNull() ?: return null
+    return CachedData(HashImpl.build(stagedFile.blobHash), calculateLength(stagedFile.blobHash), stagedFile.isExecutable)
   }
 
   @Throws(VcsException::class)
