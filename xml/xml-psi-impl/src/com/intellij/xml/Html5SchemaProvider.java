@@ -23,7 +23,7 @@ public abstract class Html5SchemaProvider {
   private static String loadLocation(URL url, String id) {
     String location = VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(
       URLUtil.unescapePercentSequences(url.toExternalForm())));
-    LOG.info(id + "_LOCATION = " + HTML5_SCHEMA_LOCATION);
+    LOG.info(id + "_LOCATION = " + location);
     return location;
   }
 
