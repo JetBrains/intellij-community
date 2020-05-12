@@ -86,10 +86,13 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
       appendln()
 
-      val pluginsUsingComponents = result.filter { it.getStatus() == UnloadabilityStatus.USES_COMPONENTS }.sortedByDescending { it.componentCount }
+      val pluginsUsingComponents = result.filter { it.getStatus() == UnloadabilityStatus.USES_COMPONENTS }.sortedByDescending { it.components.size }
       appendln("Plugins using components (${pluginsUsingComponents.size}):")
       for (status in pluginsUsingComponents) {
-        appendln("${status.pluginId} (${status.componentCount})")
+        appendln("${status.pluginId} (${status.components.size})")
+        for (componentName in status.components) {
+          appendln("  $componentName")
+        }
       }
       appendln()
 
@@ -160,7 +163,8 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val nonDynamicEPs = mutableSetOf<String>()
     val analysisErrors = mutableListOf<String>()
     val serviceOverrides = mutableListOf<String>()
-    var componentCount = analyzePluginFile(ideaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
+    val components = mutableListOf<String>()
+    analyzePluginFile(ideaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
 
     for (dependency in ideaPlugin.dependencies) {
       val configFileName = dependency.configFile.stringValue ?: continue
@@ -174,9 +178,10 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
           analysisErrors.add("Unsupported nested dependency on " + nestedDependency.value?.id + " in " + configFileName)
         }
       }
-      componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
+      analyzePluginFile(depIdeaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
     }
 
+    val componentsInOptionalDependencies = mutableListOf<String>()
     val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
     val serviceOverridesInDependencies = mutableListOf<String>()
     for (descriptor in allPlugins.mapNotNull { DescriptorUtil.getIdeaPlugin(it) }) {
@@ -190,7 +195,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             continue
           }
           val nonDynamicEPsInDependency = mutableSetOf<String>()
-          analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPsInDependency, nonDynamicEPsInDependency, serviceOverridesInDependencies, false)
+          analyzePluginFile(depIdeaPlugin, analysisErrors, componentsInOptionalDependencies, nonDynamicEPsInDependency, nonDynamicEPsInDependency, serviceOverridesInDependencies, false)
           if (nonDynamicEPsInDependency.isNotEmpty()) {
             nonDynamicEPsInOptionalDependencies[descriptor.pluginId ?: "<unknown>"] = nonDynamicEPsInDependency
           }
@@ -200,7 +205,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
 
     return PluginUnloadabilityStatus(
       ideaPlugin.pluginId ?: "?",
-      unspecifiedDynamicEPs, nonDynamicEPs, nonDynamicEPsInOptionalDependencies, componentCount, serviceOverrides, analysisErrors
+      unspecifiedDynamicEPs, nonDynamicEPs, nonDynamicEPsInOptionalDependencies, components, serviceOverrides, analysisErrors
     )
   }
 
@@ -217,10 +222,11 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
 
   private fun analyzePluginFile(ideaPlugin: IdeaPlugin,
                                 analysisErrors: MutableList<String>,
+                                components: MutableList<String>,
                                 nonDynamicEPs: MutableSet<String>,
                                 unspecifiedDynamicEPs: MutableSet<String>,
                                 serviceOverrides: MutableList<String>,
-                                allowOwnEPs: Boolean): Int {
+                                allowOwnEPs: Boolean) {
     for (extension in ideaPlugin.extensions.flatMap { it.collectExtensions() }) {
       val ep = extension.extensionPoint
       if (ep == null) {
@@ -241,10 +247,9 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         serviceOverrides.add(extension.xmlTag.getAttributeValue("serviceInterface") ?: "<unknown>")
       }
     }
-    val componentCount = ideaPlugin.applicationComponents.flatMap { it.components }.size +
-                         ideaPlugin.projectComponents.flatMap { it.components }.size +
-                         ideaPlugin.moduleComponents.flatMap { it.components }.size
-    return componentCount
+    ideaPlugin.applicationComponents.flatMap { it.components }.mapTo(components) { it.implementationClass.rawText ?: "?" }
+    ideaPlugin.projectComponents.flatMap { it.components }.mapTo(components) { it.implementationClass.rawText ?: "?" }
+    ideaPlugin.moduleComponents.flatMap { it.components }.mapTo(components) { it.implementationClass.rawText ?: "?" }
   }
 }
 
@@ -257,13 +262,13 @@ private data class PluginUnloadabilityStatus(
   val unspecifiedDynamicEPs: Set<String>,
   val nonDynamicEPs: Set<String>,
   val nonDynamicEPsInDependencies: Map<String, Set<String>>,
-  val componentCount: Int,
+  val components: List<String>,
   val serviceOverrides: List<String>,
   val analysisErrors: List<String>
 ) {
   fun getStatus(): UnloadabilityStatus {
     return when {
-      componentCount > 0 -> UnloadabilityStatus.USES_COMPONENTS
+      components.isNotEmpty() -> UnloadabilityStatus.USES_COMPONENTS
       serviceOverrides.isNotEmpty() -> UnloadabilityStatus.USES_SERVICE_OVERRIDES
       nonDynamicEPs.isNotEmpty() -> UnloadabilityStatus.USES_NON_DYNAMIC_EPS
       unspecifiedDynamicEPs.isNotEmpty() -> UnloadabilityStatus.USES_UNSPECIFIED_DYNAMIC_EPS
