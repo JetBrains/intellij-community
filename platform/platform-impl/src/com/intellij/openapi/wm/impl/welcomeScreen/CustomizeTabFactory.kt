@@ -75,47 +75,8 @@ class CustomizeTab : DefaultWelcomeScreenTab("Customize") {
           //.shouldUpdateLaF()
         }.largeGapAfter()
 
-        val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
-        if (supportedValues.isNotEmpty()) {
-          val modelBinding = PropertyBinding({ settings.colorBlindness }, { settings.colorBlindness = it })
-          val onApply = {
-            // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
-            ApplicationManager.getApplication().invokeLater(Runnable {
-              DefaultColorSchemesManager.getInstance().reload()
-              (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
-            })
-          }
+        createColorBlindnessSettingBlock()
 
-          fullRow {
-            if (supportedValues.size == 1) {
-              val jbCheckBox = JBCheckBox(UIBundle.message("color.blindness.checkbox.text"))
-              jbCheckBox.isOpaque = false
-              component(jbCheckBox)
-                .withBinding({ if (it.isSelected) supportedValues.first() else null },
-                             { it, value -> it.isSelected = value != null },
-                             modelBinding)
-                .comment(UIBundle.message("color.blindness.checkbox.comment"))
-            }
-            else {
-              val enableColorBlindness = component(
-                JBCheckBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"))).applyToComponent {
-                isSelected = modelBinding.get() != null
-                isOpaque = false
-              }
-              component<ComboBox<ColorBlindness>>(ComboBox(supportedValues.toTypedArray()))
-                .enableIf(enableColorBlindness.selected)
-                .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
-                .comment(UIBundle.message("color.blindness.combobox.comment"))
-                .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
-                             { it, value -> it.selectedItem = value ?: supportedValues.first() },
-                             modelBinding)
-                .onApply(onApply)
-            }
-            component(Link(UIBundle.message("color.blindness.link.to.help"))
-                      { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
-              .withLargeLeftGap()
-          }
-        }
       }.largeGapAfter()
       blockRow {
         header(KeyMapBundle.message("keymap.display.name"))
@@ -132,6 +93,50 @@ class CustomizeTab : DefaultWelcomeScreenTab("Customize") {
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
       .withBackground(WelcomeScreenUIManager.getCustomizeBackground())
+  }
+
+  private fun Row.createColorBlindnessSettingBlock() {
+    val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
+    if (supportedValues.isNotEmpty()) {
+      val modelBinding = PropertyBinding({ settings.colorBlindness }, { settings.colorBlindness = it })
+      val onApply = {
+        // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          DefaultColorSchemesManager.getInstance().reload()
+          (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
+        })
+      }
+
+      fullRow {
+        if (supportedValues.size == 1) {
+          val jbCheckBox = JBCheckBox(UIBundle.message("color.blindness.checkbox.text"))
+          jbCheckBox.isOpaque = false
+          component(jbCheckBox)
+            .withBinding({ if (it.isSelected) supportedValues.first() else null },
+                         { it, value -> it.isSelected = value != null },
+                         modelBinding)
+            .comment(UIBundle.message("color.blindness.checkbox.comment"))
+        }
+        else {
+          val enableColorBlindness = component(
+            JBCheckBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"))).applyToComponent {
+            isSelected = modelBinding.get() != null
+            isOpaque = false
+          }
+          component<ComboBox<ColorBlindness>>(ComboBox(supportedValues.toTypedArray()))
+            .enableIf(enableColorBlindness.selected)
+            .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
+            .comment(UIBundle.message("color.blindness.combobox.comment"))
+            .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
+                         { it, value -> it.selectedItem = value ?: supportedValues.first() },
+                         modelBinding)
+            .onApply(onApply)
+        }
+        component(Link(UIBundle.message("color.blindness.link.to.help"))
+                  { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
+          .withLargeLeftGap()
+      }
+    }
   }
 
   private fun Row.header(@Nls title: String) {
