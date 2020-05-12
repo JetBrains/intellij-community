@@ -1,6 +1,7 @@
 package com.intellij.workspace.api
 
 import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
+import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -110,6 +111,7 @@ interface TypedEntityStorage {
   fun <E : TypedEntity, R : TypedEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
+  fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>?
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>>
 }
 
@@ -169,6 +171,8 @@ interface TypedEntityStorageDiffBuilder {
 
   // Returns an association between an entity in diff and an entity in the current builder
   fun addDiff(diff: TypedEntityStorageDiffBuilder): Map<TypedEntity, TypedEntity>
+  fun <T> getExternalIndex(identifier: String): ExternalEntityIndex.MutableExternalEntityIndex<T>?
+  fun <T> getOrCreateExternalIndex(identifier: String): ExternalEntityIndex.MutableExternalEntityIndex<T>
 
   val modificationCount: Long
 

@@ -9,7 +9,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.lang.JavaVersion
-import com.intellij.workspace.api.pstorage.PId
+import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.*
@@ -113,6 +113,10 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
     return entitiesByPersistentIdHash[id.hashCode()]?.asSequence()
       ?.map { (createEntityInstance(it) as E) }
       ?.find {it.persistentId() == id }
+  }
+
+  override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {
+    TODO("Not yet implemented")
   }
 
   override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R> {
@@ -412,6 +416,14 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       }
     }
     return emptyMap()
+  }
+
+  override fun <T> getOrCreateExternalIndex(identifier: String): ExternalEntityIndex.MutableExternalEntityIndex<T> {
+    TODO("Not yet implemented")
+  }
+
+  override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex.MutableExternalEntityIndex<T>? {
+    TODO("Not yet implemented")
   }
 
   private fun EntityData.persistentId() =
