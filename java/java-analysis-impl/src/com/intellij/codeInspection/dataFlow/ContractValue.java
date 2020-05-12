@@ -382,9 +382,6 @@ public abstract class ContractValue {
       if (value == IndependentValue.FALSE) {
         return getValueComparedTo(IndependentValue.TRUE, !equal);
       }
-      if (value == IndependentValue.TRUE) {
-        return getValueComparedTo(IndependentValue.FALSE, !equal);
-      }
       return null;
     }
 
