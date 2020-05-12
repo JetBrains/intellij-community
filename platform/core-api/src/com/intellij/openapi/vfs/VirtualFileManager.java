@@ -79,8 +79,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileLookup#newLookup()
    * @see VirtualFileLookup#fromUrl(String)
    */
-  @SuppressWarnings("MethodMayBeStatic")
-  public final @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
+  public @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
     return VirtualFileLookup.newLookup().fromUrl(url);
   }
 
@@ -101,8 +100,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileLookup#withRefresh()
    * @see VirtualFileLookup#fromUrl(String)
    */
-  @SuppressWarnings("MethodMayBeStatic")
-  public final @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
+  public @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
     return VirtualFileLookup.newLookup().withRefresh().fromUrl(url);
   }
 
