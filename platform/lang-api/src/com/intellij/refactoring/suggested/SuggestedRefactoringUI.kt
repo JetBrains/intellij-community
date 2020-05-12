@@ -40,8 +40,18 @@ abstract class SuggestedRefactoringUI {
   data class NewParameterData(
     val presentableName: String,
     val valueFragment: PsiCodeFragment,
-    val offerToUseAnyVariable: Boolean
+    val offerToUseAnyVariable: Boolean,
+    val additionalData: NewParameterAdditionalData? = null
   )
+
+  /**
+   * Language-specific information to be stored in [NewParameterData].
+   *
+   * Don't put any PSI-related objects here.
+   */
+  interface NewParameterAdditionalData {
+    override fun equals(other: Any?): Boolean
+  }
 
   /**
    * Extracts data about new parameters to offer the user to specify its values for updating calls.
