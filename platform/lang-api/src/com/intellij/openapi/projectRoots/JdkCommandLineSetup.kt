@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots
 
 import com.intellij.execution.CantRunException
+import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
@@ -13,17 +14,24 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.collectResults
+import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.StandardCharsets
 import java.nio.charset.UnsupportedCharsetException
 import java.util.*
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeoutException
 
 internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
                                    private val target: TargetEnvironmentConfiguration?) {
@@ -109,10 +117,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     if (dynamicClasspath) {
       val cs = StandardCharsets.UTF_8 // todo detect JNU charset from VM options?
       if (javaParameters.isArgFile) {
-        JdkUtil.setArgFileParams(this, commandLine, request,
-                                 classPathVolume, agentVolume,
-                                 languageRuntime, javaParameters, vmParameters, dynamicVMOptions,
-                                 dynamicParameters, cs)
+        setArgFileParams(javaParameters, vmParameters, dynamicVMOptions, dynamicParameters, cs)
         dynamicMainClass = dynamicParameters
       }
       else if (!vmParameters.isExplicitClassPath() && javaParameters.jarPath == null && commandLineWrapperClass != null) {
@@ -145,6 +150,52 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       for (parameter in javaParameters.programParametersList.list) {
         commandLine.addParameter(parameter!!)
       }
+    }
+  }
+
+  @Throws(CantRunException::class)
+  private fun setArgFileParams(javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
+                               dynamicVMOptions: Boolean, dynamicParameters: Boolean,
+                               cs: Charset) {
+
+    try {
+      val argFile = ArgFile(dynamicVMOptions, dynamicParameters, cs, platform)
+      commandLine.addFileToDeleteOnTermination(argFile.file)
+
+      val classPath = javaParameters.classPath
+      if (!classPath.isEmpty && !vmParameters.isExplicitClassPath()) {
+        argFile.addPromisedParameter("-classpath", composeClassPathValues(javaParameters, classPath))
+      }
+
+      val modulePath = javaParameters.modulePath
+      if (!modulePath.isEmpty && !vmParameters.isExplicitModulePath()) {
+        argFile.addPromisedParameter("-p", composeClassPathValues(javaParameters, modulePath))
+      }
+
+      if (dynamicParameters) {
+        for (nextMainClassParam in getMainClassParams(javaParameters)) {
+          argFile.addPromisedParameter(nextMainClassParam)
+        }
+      }
+
+      if (!dynamicVMOptions) { // dynamic options will be handled later by ArgFile
+        appendVmParameters(vmParameters)
+      }
+
+      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters)
+
+      val commandLineContent = HashMap<String, String>()
+
+      commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, commandLineContent)
+      appendEncoding(javaParameters, vmParameters)
+
+      val argFileParameter = classPathVolume.createUpload(argFile.file.absolutePath)
+      commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
+
+      JdkUtil.addCommandLineContentOnResolve(commandLineContent, argFile.file, argFileParameter)
+    }
+    catch (e: IOException) {
+      JdkUtil.throwUnableToCreateTempFile(e)
     }
   }
 
@@ -284,6 +335,8 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     private const val JAVAAGENT = "-javaagent"
     private const val WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper"
 
+    private val LOG by lazy { Logger.getInstance(JdkCommandLineSetup::class.java) }
+
     private val commandLineWrapperClass by lazy {
       try {
         Class.forName(WRAPPER_CLASS)
@@ -306,6 +359,68 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     private fun ParametersList.isExplicitModulePath(): Boolean {
       return JdkUtil.explicitModulePath(this)
       //return this.hasParameter("-p") || this.hasParameter("--module-path")
+    }
+  }
+
+  internal class ArgFile @Throws(IOException::class) constructor(private val dynamicVMOptions: Boolean,
+                                                                 private val dynamicParameters: Boolean,
+                                                                 private val charset: Charset,
+                                                                 private val platform: Platform) {
+
+    val file = FileUtil.createTempFile("idea_arg_file" + Random().nextInt(Int.MAX_VALUE), null)
+
+    private val myPromisedOptionValues: MutableMap<String, TargetValue<String>> = LinkedHashMap()
+    private val myPromisedParameters = mutableListOf<TargetValue<String>>()
+    private val myAllPromises = mutableListOf<Promise<String>>()
+
+    fun addPromisedParameter(@NonNls optionName: String, promisedValue: TargetValue<String>) {
+      myPromisedOptionValues[optionName] = promisedValue
+      registerPromise(promisedValue)
+    }
+
+    fun addPromisedParameter(promisedValue: TargetValue<String>) {
+      myPromisedParameters.add(promisedValue)
+      registerPromise(promisedValue)
+    }
+
+    fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+      myAllPromises.collectResults().onSuccess { _ ->
+        try {
+          writeArgFileNow(javaParameters, vmParameters)
+        }
+        catch (e: IOException) {
+          //todo[remoteServers]: interrupt preparing environment
+        }
+        catch (e: ExecutionException) {
+          LOG.error("Couldn't resolve target value", e)
+        }
+        catch (e: TimeoutException) {
+          LOG.error("Couldn't resolve target value", e)
+        }
+      }
+    }
+
+    @Throws(IOException::class, ExecutionException::class, TimeoutException::class)
+    private fun writeArgFileNow(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+      val fileArgs: MutableList<String?> = ArrayList()
+      if (dynamicVMOptions) {
+        fileArgs.addAll(vmParameters.list)
+      }
+      for ((nextOption, nextResolvedValue) in myPromisedOptionValues) {
+        fileArgs.add(nextOption)
+        fileArgs.add(nextResolvedValue.targetValue.blockingGet(0))
+      }
+      for (nextResolvedParameter in myPromisedParameters) {
+        fileArgs.add(nextResolvedParameter.targetValue.blockingGet(0))
+      }
+      if (dynamicParameters) {
+        fileArgs.addAll(javaParameters.programParametersList.list)
+      }
+      CommandLineWrapperUtil.writeArgumentsFile(file, fileArgs, platform.lineSeparator, charset)
+    }
+
+    private fun registerPromise(value: TargetValue<String>) {
+      myAllPromises.add(value.targetValue)
     }
   }
 }

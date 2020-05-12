@@ -3,7 +3,6 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommandLineWrapperUtil;
-import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
@@ -30,17 +29,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
@@ -179,135 +175,6 @@ public final class JdkUtil {
     return vmParameters.hasParameter("-p") || vmParameters.hasParameter("--module-path");
   }
 
-  /*make private*/
-  static void setArgFileParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
-                               TargetEnvironmentRequest request,
-                               TargetEnvironmentRequest.Volume classPathVolume,
-                               TargetEnvironmentRequest.Volume agentVolume,
-                               @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                               SimpleJavaParameters javaParameters,
-                               ParametersList vmParameters,
-                               boolean dynamicVMOptions,
-                               boolean dynamicParameters,
-                               Charset cs) throws CantRunException {
-    try {
-      ArgFile argFile = new ArgFile(dynamicVMOptions, dynamicParameters, cs, setup.getPlatform());
-      commandLine.addFileToDeleteOnTermination(argFile.getFile());
-
-      PathsList classPath = javaParameters.getClassPath();
-      if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-        argFile.addPromisedParameter("-classpath", setup.composeClassPathValues(javaParameters, classPath));
-      }
-
-      PathsList modulePath = javaParameters.getModulePath();
-      if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-        argFile.addPromisedParameter("-p", setup.composeClassPathValues(javaParameters, modulePath));
-      }
-
-      if (dynamicParameters) {
-        for (TargetValue<String> nextMainClassParam : setup.getMainClassParams(javaParameters)) {
-          argFile.addPromisedParameter(nextMainClassParam);
-        }
-      }
-
-      if (!dynamicVMOptions) { // dynamic options will be handled later by ArgFile
-        setup.appendVmParameters(vmParameters);
-      }
-
-      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters);
-
-      HashMap<String, String> commandLineContent = new HashMap<>();
-      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
-
-      setup.appendEncoding(javaParameters, vmParameters);
-      TargetValue<String> argFileParameter = classPathVolume.createUpload(argFile.getFile().getAbsolutePath());
-      commandLine.addParameter(TargetValue.map(argFileParameter, s -> "@" + s));
-      addCommandLineContentOnResolve(commandLineContent, argFile.getFile(), argFileParameter);
-    }
-    catch (IOException e) {
-      throwUnableToCreateTempFile(e);
-    }
-  }
-
-  static class ArgFile {
-    private final File myFile;
-    private final Charset myCharset;
-    private final Platform myPlatform;
-    private final boolean myDynamicVMOptions;
-    private final boolean myDynamicParameters;
-
-    private final Map<String, TargetValue<String>> myPromisedOptionValues = new LinkedHashMap<>();
-    private final List<TargetValue<String>> myPromisedParameters = new LinkedList<>();
-    private final List<Promise<String>> myAllPromises = new LinkedList<>();
-
-    ArgFile(boolean dynamicVMOptions, boolean dynamicParameters, Charset charset, Platform platform) throws IOException {
-      myDynamicVMOptions = dynamicVMOptions;
-      myDynamicParameters = dynamicParameters;
-      myCharset = charset;
-      myPlatform = platform;
-
-      myFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
-    }
-
-    public File getFile() {
-      return myFile;
-    }
-
-    public void addPromisedParameter(@NonNls String optionName, TargetValue<String> promisedValue) {
-      myPromisedOptionValues.put(optionName, promisedValue);
-      registerPromise(promisedValue);
-    }
-
-    public void addPromisedParameter(TargetValue<String> promisedValue) {
-      myPromisedParameters.add(promisedValue);
-      registerPromise(promisedValue);
-    }
-
-    public void scheduleWriteFileWhenReady(SimpleJavaParameters javaParameters, ParametersList vmParameters) {
-      Promises.collectResults(myAllPromises).onSuccess(__ -> {
-        try {
-          writeArgFileNow(javaParameters, vmParameters);
-        }
-        catch (IOException e) {
-          //todo[remoteServers]: interrupt preparing environment
-        }
-        catch (ExecutionException | TimeoutException e) {
-          LOG.error("Couldn't resolve target value", e);
-        }
-      });
-    }
-
-    private void writeArgFileNow(SimpleJavaParameters javaParameters, ParametersList vmParameters)
-      throws IOException, ExecutionException, TimeoutException {
-
-      List<String> fileArgs = new ArrayList<>();
-      if (myDynamicVMOptions) {
-        fileArgs.addAll(vmParameters.getList());
-      }
-
-      for (Map.Entry<String, TargetValue<String>> entry : myPromisedOptionValues.entrySet()) {
-        String nextOption = entry.getKey();
-        TargetValue<String> nextResolvedValue = entry.getValue();
-
-        fileArgs.add(nextOption);
-        fileArgs.add(nextResolvedValue.getTargetValue().blockingGet(0));
-      }
-
-      for (TargetValue<String> nextResolvedParameter : myPromisedParameters) {
-        fileArgs.add(nextResolvedParameter.getTargetValue().blockingGet(0));
-      }
-
-      if (myDynamicParameters) {
-        fileArgs.addAll(javaParameters.getProgramParametersList().getList());
-      }
-
-      CommandLineWrapperUtil.writeArgumentsFile(myFile, fileArgs, myPlatform.lineSeparator, myCharset);
-    }
-
-    private void registerPromise(TargetValue<String> value) {
-      myAllPromises.add(value.getTargetValue());
-    }
-  }
 
   /*make private*/
   static void setCommandLineWrapperParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
@@ -421,7 +288,7 @@ public final class JdkUtil {
     }
   }
 
-  private static void addCommandLineContentOnResolve(Map<String, String> commandLineContent, File localFile, TargetValue<String> value) {
+  static void addCommandLineContentOnResolve(Map<String, String> commandLineContent, File localFile, TargetValue<String> value) {
     value.getTargetValue().onSuccess(resolved -> {
       try {
         commandLineContent.put(resolved, FileUtil.loadFile(localFile));
@@ -532,7 +399,8 @@ public final class JdkUtil {
     return param.startsWith("-D") && !(param.startsWith("-Dsun.") || param.startsWith("-Djava."));
   }
 
-  private static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
+  /*make private*/
+  static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
     throw new CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
