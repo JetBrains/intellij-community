@@ -34,7 +34,7 @@ interface VirtualFileLookup {
 
   /**
    * Searches for a [VirtualFile] corresponding to the given nio [Path].
-   * The [VirtualFile.toPath] method should return the same Path back.
+   * The [VirtualFile.toNioPath] method should return the same Path back.
    */
   fun fromNioPath(path: Path) : VirtualFile?
 

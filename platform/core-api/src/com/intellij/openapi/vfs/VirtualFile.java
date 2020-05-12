@@ -128,7 +128,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * ({@link File#separatorChar}) replaced to the forward slash ({@code '/'}).
    *
    * @return the path
-   * @see #toPath()
+   * @see #toNioPath()
    */
   @NotNull
   public abstract String getPath();
@@ -137,27 +137,17 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return a related {@link Path} for a given virtual file where possible otherwise an
    * exception is thrown.
    * The returned {@link Path} may not have a default filesystem behind.
+   * <br/>
+   * Use {@link #getFileSystem()} and {@link VirtualFileSystem#getNioPath(VirtualFile)}
+   * to avoid the exception
    *
    * @throws UnsupportedOperationException if this VirtualFile does not have an associated {@link Path}
-   *
-   * @see #toPathOrNull()
    */
   @NotNull
-  public Path toPath() {
-    Path path = toPathOrNull();
+  public Path toNioPath() {
+    Path path = getFileSystem().getNioPath(this);
     if (path != null) return path;
     throw new UnsupportedOperationException("Failed to map " + this + " (filesystem " + getFileSystem() + ") into nio Path");
-  }
-
-  /**
-   * @return a related {@link Path} for a given virtual file where possible otherwise {@code null}.
-   * The returned {@link Path} may not have a default filesystem behind.
-   *
-   * @see #toPath()
-   */
-  @Nullable
-  public Path toPathOrNull() {
-    return getFileSystem().getNioPath(this);
   }
 
   /**
