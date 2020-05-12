@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-public class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-
+final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,

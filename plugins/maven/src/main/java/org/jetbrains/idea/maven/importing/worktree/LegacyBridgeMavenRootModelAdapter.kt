@@ -11,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
@@ -43,7 +43,7 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
   private var moduleEntity: ModuleEntity = initialModuleEntity
   private val legacyBridge = LegacyBridgeModuleRootComponent.getInstance(module)
   private val modifiableModel = legacyBridge.getModifiableModel(builder, RootConfigurationAccessor())
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val entitySource = MavenExternalSource.INSTANCE
 
   override fun init(isNewlyCreatedModule: Boolean) {}

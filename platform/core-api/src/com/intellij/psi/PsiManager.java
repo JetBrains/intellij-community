@@ -82,7 +82,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
    *
    * @param listener the listener instance.
+   * @deprecated Please use the overload with specified parent disposable
    */
+  @Deprecated
   public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
 
   /**

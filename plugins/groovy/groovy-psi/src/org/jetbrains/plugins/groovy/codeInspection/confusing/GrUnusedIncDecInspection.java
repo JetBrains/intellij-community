@@ -173,7 +173,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         GrUnaryExpression expr = findUnaryExpression(descriptor);
         GrExpression newExpr = GroovyPsiElementFactory.getInstance(project)
-          .createExpressionFromText(expr.getOperand().getText() + expr.getOperationToken().getText().substring(0, 1) + "1");
+          .createExpressionFromText(expr.getOperand().getText() + expr.getOperationToken().getText().charAt(0) + "1");
         expr.replaceWithExpression(newExpr, true);
       }
     }

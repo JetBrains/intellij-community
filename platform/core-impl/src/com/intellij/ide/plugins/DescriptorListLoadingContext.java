@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
 
 final class DescriptorListLoadingContext implements AutoCloseable {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  static final boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
+  private static final boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
   static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
@@ -50,11 +51,14 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   final boolean ignoreMissingInclude;
   final boolean ignoreMissingSubDescriptor;
-  final boolean skipDisabledPlugins;
+  private final boolean skipDisabledPlugins;
 
   boolean usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins;
 
   private final Map<String, PluginId> optionalConfigNames;
+
+  String bundledPluginsPath = PathManager.getPreInstalledPluginsPath();
+  boolean loadBundledPlugins = !PluginManagerCore.isUnitTestMode;
 
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
@@ -90,18 +94,20 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
   }
 
+  boolean isPluginDisabled(@NotNull PluginId id) {
+    return id != PluginManagerCore.CORE_ID && disabledPlugins.contains(id);
+  }
+
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull Logger getLogger() {
     return LOG;
   }
 
-  @NotNull
-  ExecutorService getExecutorService() {
+  @NotNull ExecutorService getExecutorService() {
     return executorService;
   }
 
-  @NotNull
-  SafeJdomFactory getXmlFactory() {
+  @NotNull SafeJdomFactory getXmlFactory() {
     return xmlFactorySupplier.get();
   }
 

@@ -4,6 +4,8 @@ package com.intellij.grazie
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.io.delete
+import com.intellij.util.io.isFile
 import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.language.Language
 import org.languagetool.language.Languages
@@ -16,9 +18,14 @@ import java.util.*
 
 internal object GrazieDynamic {
   private val myDynClassLoaders by lazy {
-    for (file in dynamicFolder.toFile().walk().filter { file -> file.isFile && Lang.values().all { it.remote.file != file } }) {
+    val oldFiles = Files.walk(dynamicFolder).filter { file ->
+      file.isFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
+    }
+
+    for (file in oldFiles) {
       file.delete()
     }
+
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)

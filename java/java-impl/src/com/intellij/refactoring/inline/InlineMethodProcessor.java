@@ -492,7 +492,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        if (myMethod.isWritable() && myDeleteTheDeclaration) myMethod.delete();
+        if (myMethod.isValid() && myMethod.isWritable() && myDeleteTheDeclaration) myMethod.delete();
       }
       removeAddedBracesWhenPossible();
     }

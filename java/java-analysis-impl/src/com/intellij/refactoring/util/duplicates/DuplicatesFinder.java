@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -32,7 +18,7 @@ import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +27,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class DuplicatesFinder {
+public final class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance(DuplicatesFinder.class);
   public static final Key<Parameter> PARAMETER = Key.create("PARAMETER");
   private final PsiElement @NotNull [] myPattern;
@@ -80,13 +66,15 @@ public class DuplicatesFinder {
       int i = 0;
       do {
         startOffset = controlFlow.getStartOffset(pattern[i++]);
-      } while(startOffset < 0 && i < pattern.length);
+      }
+      while(startOffset < 0 && i < pattern.length);
 
       int endOffset;
       int j = pattern.length - 1;
       do {
         endOffset = controlFlow.getEndOffset(pattern[j--]);
-      } while(endOffset < 0 && j >= 0);
+      }
+      while (endOffset < 0 && j >= 0);
 
       IntArrayList exitPoints = new IntArrayList();
       final Collection<PsiStatement> exitStatements = ControlFlowUtil
@@ -248,7 +236,7 @@ public class DuplicatesFinder {
     return match;
   }
 
-  protected boolean isSelf(@NotNull PsiElement candidate) {
+  private boolean isSelf(@NotNull PsiElement candidate) {
     for (PsiElement pattern : myPattern) {
       ProgressManager.checkCanceled();
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) {
@@ -277,7 +265,7 @@ public class DuplicatesFinder {
 
       final IntArrayList exitPoints = new IntArrayList();
       ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
-      final PsiVariable[] outVariables = ControlFlowUtil.getOutputVariables(controlFlow, startOffset, endOffset, exitPoints.toArray());
+      final PsiVariable[] outVariables = ControlFlowUtil.getOutputVariables(controlFlow, startOffset, endOffset, exitPoints.toIntArray());
 
       if (outVariables.length > 0) {
         if (outVariables.length == 1) {
@@ -731,7 +719,7 @@ public class DuplicatesFinder {
     return true;
   }
 
-  public boolean matchLeaf(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
+  private static boolean matchLeaf(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
     if (pattern.getParent() instanceof PsiVariable && ((PsiVariable)pattern.getParent()).getNameIdentifier() == pattern) {
       return match.putDeclarationCorrespondence(pattern.getParent(), candidate.getParent());
     }
@@ -930,7 +918,7 @@ public class DuplicatesFinder {
     return false;
   }
 
-  public static PsiElement @NotNull [] getFilteredChildren(@NotNull PsiElement element) {
+  private static PsiElement @NotNull [] getFilteredChildren(@NotNull PsiElement element) {
     PsiElement[] children = element.getChildren();
     return getDeeplyFilteredElements(children);
   }

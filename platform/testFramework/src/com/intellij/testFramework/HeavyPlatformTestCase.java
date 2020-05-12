@@ -58,7 +58,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -121,10 +120,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
 
   protected boolean myAssertionsInTestDetected;
-  public static Thread ourTestThread;
   private static TestCase ourTestCase;
-  private static final long DEFAULT_TEST_TIME = 300L;
-  public static long ourTestTime = DEFAULT_TEST_TIME;
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
 
@@ -159,12 +155,13 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     tempDir.refresh(false, true);
   }
 
-  public static void synchronizeTempDirVfs(@NotNull Path tempDir) {
+  public static VirtualFile synchronizeTempDirVfs(@NotNull Path tempDir) {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(tempDir.toString()));
     // null is ok, because Path can be only generated, but not created
     if (virtualFile != null) {
-      synchronizeTempDirVfs(Objects.requireNonNull(virtualFile));
+      synchronizeTempDirVfs(virtualFile);
     }
+    return virtualFile;
   }
 
   protected void initApplication() throws Exception {
@@ -274,12 +271,12 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-    WriteAction.run(() -> {
+    WriteAction.run(() ->
       ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
         setUpModule();
         setUpJdk();
-      });
-    });
+      })
+    );
 
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
@@ -415,14 +412,14 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @NotNull
-  protected Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType moduleType) {
+  protected Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType<?> moduleType) {
     return createModuleAt(moduleName, project, moduleType, Objects.requireNonNull(project.getBasePath()));
   }
 
   @NotNull
   protected Module createModuleAt(@NotNull String moduleName,
                                   @NotNull Project project,
-                                  @NotNull ModuleType moduleType,
+                                  @NotNull ModuleType<?> moduleType,
                                   @NotNull String path) {
     if (isCreateProjectFileExplicitly()) {
       File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
@@ -683,50 +680,43 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   private void runBareImpl() throws Throwable {
     ThrowableRunnable<Throwable> runnable = () -> {
-      ourTestThread = Thread.currentThread();
-      ourTestTime = DEFAULT_TEST_TIME;
       try {
+        myAssertionsInTestDetected = true;
+        setUp();
+        myAssertionsInTestDetected = false;
+      }
+      catch (Throwable e) {
         try {
-          myAssertionsInTestDetected = true;
-          setUp();
-          myAssertionsInTestDetected = false;
+          tearDown();
         }
-        catch (Throwable e) {
-          try {
-            tearDown();
-          }
-          catch (Throwable ignored) {
-          }
-
-          throw e;
+        catch (Throwable ignored) {
         }
 
-        Throwable exception = null;
-        try {
-          myAssertionsInTestDetected = true;
-          runTest();
-          myAssertionsInTestDetected = false;
-        }
-        catch (Throwable e) {
-          exception = e;
-        }
-        finally {
-          try {
-            tearDown();
-          }
-          catch (Throwable e) {
-            if (exception == null) {
-              exception = e;
-            }
-          }
-        }
+        throw e;
+      }
 
-        if (exception != null) {
-          throw exception;
-        }
+      Throwable exception = null;
+      try {
+        myAssertionsInTestDetected = true;
+        runTest();
+        myAssertionsInTestDetected = false;
+      }
+      catch (Throwable e) {
+        exception = e;
       }
       finally {
-        ourTestThread = null;
+        try {
+          tearDown();
+        }
+        catch (Throwable e) {
+          if (exception == null) {
+            exception = e;
+          }
+        }
+      }
+
+      if (exception != null) {
+        throw exception;
       }
     };
 

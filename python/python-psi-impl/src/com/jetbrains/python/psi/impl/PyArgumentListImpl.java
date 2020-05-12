@@ -54,7 +54,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
   @Override
   public PyExpression @NotNull [] getArguments() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 
   @Override
@@ -146,7 +146,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     else {
       ASTNode before = PyPsiUtils.getNextNonWhitespaceSibling(pars[0]);
       ASTNode anchorBefore;
-      if (before != null && elementPrecedesElementsOfType(before, PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens())) {
+      if (before != null && elementPrecedesElementsOfType(before, PythonDialectsTokenSetProvider.getInstance().getExpressionTokens())) {
         ASTNode comma = createComma();
         node.addChild(comma, before);
         node.addChild(ASTFactory.whitespace(" "), before);
@@ -247,7 +247,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         addArgumentNode(argument, node, true);
         break;
       }
-      else if (PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(type)) {
+      else if (PythonDialectsTokenSetProvider.getInstance().getExpressionTokens().contains(type)) {
         // 2: After some argument followed by comma: after comma, add element, add comma
         // 3: After some argument not followed by comma: add comma, add element
         addArgumentNode(argument, node, true);

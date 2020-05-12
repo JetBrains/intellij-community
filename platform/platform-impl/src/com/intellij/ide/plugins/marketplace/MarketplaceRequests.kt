@@ -13,6 +13,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
@@ -24,17 +26,45 @@ import java.io.File
 import java.io.IOException
 import java.io.Reader
 import java.net.HttpURLConnection
+import java.net.URLConnection
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 
 @ApiStatus.Internal
-object MarketplaceRequests {
+open class MarketplaceRequests {
 
   private val LOG = Logger.getInstance(MarketplaceRequests::class.java)
 
-  private const val TAG_EXT = ".etag"
+  companion object {
+    private const val TAG_EXT = ".etag"
 
-  private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
+    private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
+
+    private const val FILENAME = "filename="
+
+    private val INSTANCE = MarketplaceRequests()
+
+    @JvmStatic
+    fun getInstance(): MarketplaceRequests {
+      return INSTANCE
+    }
+
+    @JvmStatic
+    fun parsePluginList(reader: Reader): List<PluginNode> {
+      try {
+        val parser = SAXParserFactory.newInstance().newSAXParser()
+        val handler = RepositoryContentHandler()
+        parser.parse(InputSource(reader), handler)
+        return handler.pluginsList
+      }
+      catch (e: Exception) {
+        when (e) {
+          is ParserConfigurationException, is SAXException, is RuntimeException -> throw IOException(e)
+          else -> throw e
+        }
+      }
+    }
+  }
 
   private val PLUGIN_MANAGER_URL = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
 
@@ -67,7 +97,6 @@ object MarketplaceRequests {
   )
 
   @Throws(IOException::class)
-  @JvmStatic
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return readOrUpdateFile(
@@ -80,13 +109,11 @@ object MarketplaceRequests {
   }
 
   @Throws(IOException::class)
-  @JvmStatic
   fun getMarketplaceCachedPlugins(): List<String>? {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return if (pluginXmlIdsFile.length() > 0) pluginXmlIdsFile.bufferedReader().use(::parseXmlIds) else null
   }
 
-  @JvmStatic
   fun getBuildForPluginRepositoryRequests(): String {
     val instance = ApplicationInfoImpl.getShadowInstance()
     val compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild()
@@ -99,7 +126,6 @@ object MarketplaceRequests {
     else instance.apiVersion
   }
 
-  @JvmStatic
   @Throws(IOException::class)
   fun searchPlugins(query: String, count: Int): List<PluginNode> {
     val marketplaceSearchPluginData = HttpRequests.request(createSearchUrl(query, count))
@@ -114,7 +140,6 @@ object MarketplaceRequests {
     return marketplaceSearchPluginData.filter { it.externalUpdateId != null }.map { it.toPluginNode() }
   }
 
-  @JvmStatic
   fun getAllPluginsVendors(): List<String> = try {
     HttpRequests
       .request(MARKETPLACE_ORGANIZATIONS_URL)
@@ -129,7 +154,6 @@ object MarketplaceRequests {
     emptyList()
   }
 
-  @JvmStatic
   fun getAllPluginsTags(): List<String> = try {
     HttpRequests
       .request(MARKETPLACE_TAGS_URL)
@@ -155,13 +179,11 @@ object MarketplaceRequests {
     ).toPluginNode()
   }
 
-  @JvmStatic
   fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
     return loadPluginDescriptor(xmlId, ideCompatibleUpdate)
   }
 
-  @JvmStatic
   @Throws(IOException::class)
   fun <T> readOrUpdateFile(
     file: File?,
@@ -186,7 +208,7 @@ object MarketplaceRequests {
           indicator.text2 = indicatorMessage
         }
         if (file != null) {
-          synchronized(MarketplaceRequests) {
+          synchronized(INSTANCE) {
             request.saveToFile(file, indicator)
             connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
           }
@@ -216,7 +238,6 @@ object MarketplaceRequests {
       }
   }
 
-  @JvmStatic
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null, indicator: ProgressIndicator? = null): PluginNode? {
     val data = try {
@@ -227,22 +248,6 @@ object MarketplaceRequests {
       null
     }
     return data?.let { loadPluginDescriptor(id, it, indicator) }
-  }
-
-  @JvmStatic
-  fun parsePluginList(reader: Reader): List<PluginNode> {
-    try {
-      val parser = SAXParserFactory.newInstance().newSAXParser()
-      val handler = RepositoryContentHandler()
-      parser.parse(InputSource(reader), handler)
-      return handler.pluginsList
-    }
-    catch (e: Exception) {
-      when (e) {
-        is ParserConfigurationException, is SAXException, is RuntimeException -> throw IOException(e)
-        else -> throw e
-      }
-    }
   }
 
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
@@ -279,6 +284,53 @@ object MarketplaceRequests {
     catch (e: IOException) {
       LOG.warn("Can't save ETag to '" + eTagFile.absolutePath + "'", e)
     }
+  }
+
+  @Throws(IOException::class)
+  open fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+    val pluginsTemp = File(PathManager.getPluginTempPath())
+    if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
+      throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
+    }
+    val file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
+    return HttpRequests.request(pluginUrl).gzip(false).productNameAsUserAgent().connect(
+      HttpRequests.RequestProcessor { request: HttpRequests.Request ->
+        request.saveToFile(file, indicator)
+        val fileName: String = guessFileName(request.connection, file, pluginUrl)
+        val newFile = File(file.parentFile, fileName)
+        FileUtil.rename(file, newFile)
+        newFile
+      })
+  }
+
+  @Throws(IOException::class)
+  private fun guessFileName(connection: URLConnection, file: File, pluginUrl: String): String {
+    var fileName: String? = null
+    val contentDisposition = connection.getHeaderField("Content-Disposition")
+    LOG.debug("header: $contentDisposition")
+    if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
+      val startIdx = contentDisposition.indexOf(FILENAME)
+      val endIdx = contentDisposition.indexOf(';', startIdx)
+      fileName = contentDisposition.substring(startIdx + FILENAME.length, if (endIdx > 0) endIdx else contentDisposition.length)
+      if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
+        fileName = fileName.substring(1, fileName.length - 1)
+      }
+    }
+    if (fileName == null) {
+      // try to find a filename in an URL
+      val usedURL = connection.url.toString()
+      LOG.debug("url: $usedURL")
+      fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1)
+      if (fileName.isEmpty() || fileName.contains("?")) {
+        fileName = pluginUrl.substring(pluginUrl.lastIndexOf('/') + 1)
+      }
+    }
+    if (!PathUtil.isValidFileName(fileName)) {
+      LOG.debug("fileName: $fileName")
+      FileUtil.delete(file)
+      throw IOException("Invalid filename returned by a server")
+    }
+    return fileName
   }
 
   private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)

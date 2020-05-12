@@ -88,7 +88,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBasics() throws IOException {
-    VirtualFile dir = PlatformTestUtil.notNull(myFS.refreshAndFindFileByIoFile(tempDir.newFolder("xxx")));
+    VirtualFile dir = PlatformTestUtil.notNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
     assertTrue(dir.isValid());
     assertEquals(0, dir.getChildren().length);
 
@@ -106,7 +106,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testChildrenAccessedButNotCached() throws IOException {
-    File dir = tempDir.newFolder("xxx");
+    File dir = tempDir.newDirectory("xxx");
     ManagingFS managingFS = ManagingFS.getInstance();
 
     VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath());
@@ -154,7 +154,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testRefreshAndFindFile() throws IOException {
-    doTestRefreshAndFindFile(tempDir.newFolder("top"));
+    doTestRefreshAndFindFile(tempDir.newDirectory("top"));
   }
 
   public static void doTestRefreshAndFindFile(@NotNull File tempDir) throws IOException {
@@ -179,7 +179,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testRefreshEquality() throws IOException {
-    doTestRefreshEquality(tempDir.newFolder("top"));
+    doTestRefreshEquality(tempDir.newDirectory("top"));
   }
 
   public static void doTestRefreshEquality(@NotNull File tempDir) throws IOException {
@@ -213,8 +213,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testCopyFile() {
     runInEdtAndWait(() -> {
-      File fromDir = tempDir.newFolder("from");
-      File toDir = tempDir.newFolder("to");
+      File fromDir = tempDir.newDirectory("from");
+      File toDir = tempDir.newDirectory("to");
 
       VirtualFile fromVDir = myFS.refreshAndFindFileByIoFile(fromDir);
       VirtualFile toVDir = myFS.refreshAndFindFileByIoFile(toDir);
@@ -233,8 +233,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testCopyDir() {
     runInEdtAndWait(() -> {
-      File fromDir = tempDir.newFolder("from");
-      File toDir = tempDir.newFolder("to");
+      File fromDir = tempDir.newDirectory("from");
+      File toDir = tempDir.newDirectory("to");
 
       VirtualFile fromVDir = myFS.refreshAndFindFileByIoFile(fromDir);
       VirtualFile toVDir = myFS.refreshAndFindFileByIoFile(toDir);
@@ -251,7 +251,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testUnicodeName() throws IOException {
+  public void testUnicodeName() {
     String name = getUnicodeName();
     assumeTrue(name != null);
     File childFile = tempDir.newFile(name + ".txt");
@@ -264,7 +264,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindRoot() throws IOException {
+  public void testFindRoot() {
     assertNull(myFS.findFileByPath("wrong_path"));
 
     if (SystemInfo.isWindows) {
@@ -471,7 +471,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBadFileNameUnderUnix() throws IOException {
+  public void testBadFileNameUnderUnix() {
     assumeUnix();
 
     File file = tempDir.newFile("test\\file.txt");
@@ -499,7 +499,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testFindRootWithDeepNestedFileMustThrow() {
     try {
-      File d = tempDir.newFolder();
+      File d = tempDir.newDirectory();
       VirtualFile vDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(d));
       ManagingFS.getInstance().findRoot(vDir.getPath(), myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
@@ -511,8 +511,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCopyToPointDir() throws IOException {
-    File sub = tempDir.newFolder("sub");
+  public void testCopyToPointDir() {
+    File sub = tempDir.newDirectory("sub");
     File file = tempDir.newFile("file.txt");
 
     VirtualFile topDir = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
@@ -579,7 +579,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testPartialRefresh() throws IOException {
-    doTestPartialRefresh(tempDir.newFolder("top"));
+    doTestPartialRefresh(tempDir.newDirectory("top"));
   }
 
   public static void doTestPartialRefresh(@NotNull File top) throws IOException {
@@ -627,7 +627,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   public void testSymlinkTargetBlink() throws IOException {
     assumeSymLinkCreationIsSupported();
 
-    File target = tempDir.newFolder("target");
+    File target = tempDir.newDirectory("target");
     File link = new File(tempDir.getRoot(), "link");
     Files.createSymbolicLink(link.toPath(), target.toPath()).toFile();
 
@@ -662,7 +662,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testInterruptedRefresh() throws IOException {
-    doTestInterruptedRefresh(tempDir.newFolder("top"));
+    doTestInterruptedRefresh(tempDir.newDirectory("top"));
   }
 
   public static void doTestInterruptedRefresh(@NotNull File top) throws IOException {
@@ -761,10 +761,10 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assumeSymLinkCreationIsSupported();
 
     runInEdtAndWait(() -> {
-      File srcDir = tempDir.newFolder("src");
+      File srcDir = tempDir.newDirectory("src");
       File link = new File(tempDir.getRoot(), "link");
       Files.createSymbolicLink(link.toPath(), new File(tempDir.getRoot(), "missing").toPath());
-      File dstDir = tempDir.newFolder("dst");
+      File dstDir = tempDir.newDirectory("dst");
 
       VirtualFile file = myFS.refreshAndFindFileByIoFile(link);
       assertNotNull(file);
@@ -844,5 +844,21 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     VirtualFile home = userHome.getParent();
     assumeTrue("User home is mapped to root (" + userHome + ")", home != null);
     assertThat(myFS.list(home)).containsExactlyInAnyOrder(new File(home.getPath()).list());
+  }
+
+  @Test
+  public void testNioPathIsImplementedForDir() {
+    File newDir = tempDir.newDirectory("someDir-32");
+    VirtualFile newDirFile = myFS.refreshAndFindFileByPath(newDir.getPath());
+    assertNotNull(newDirFile);
+    assertThat(newDirFile.toPath()).isNotNull().isEqualTo(newDir.toPath());
+  }
+
+  @Test
+  public void testNioPathIsImplementedForFile() {
+    File newDir = tempDir.newFile("someFile-32");
+    VirtualFile newDirFile = myFS.refreshAndFindFileByPath(newDir.getPath());
+    assertNotNull(newDirFile);
+    assertThat(newDirFile.toPath()).isNotNull().isEqualTo(newDir.toPath());
   }
 }

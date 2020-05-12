@@ -865,7 +865,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @CalledInAwt
   @Nullable
-  protected List<UnifiedDiffChange> getDiffChanges() {
+  public List<UnifiedDiffChange> getDiffChanges() {
     return myModel.getDiffChanges();
   }
 

@@ -28,6 +28,10 @@ open class SignatureInferenceContext(val ignored: List<GrMethod>) {
   open fun ignoreMethod(method: GrMethod): SignatureInferenceContext {
     return SignatureInferenceContext(listOf(method, *ignored.toTypedArray()))
   }
+
+  open val allowedToProcessReturnType : Boolean = true
+
+  open val allowedToResolveOperators : Boolean = true
 }
 
 object DefaultInferenceContext : SignatureInferenceContext(emptyList())
@@ -53,4 +57,8 @@ class ClosureIgnoringInferenceContext(private val manager: PsiManager, ignored: 
   override fun ignoreMethod(method: GrMethod): SignatureInferenceContext {
     return ClosureIgnoringInferenceContext(manager, listOf(method, *ignored.toTypedArray()))
   }
+
+  override val allowedToProcessReturnType: Boolean = false
+
+  override val allowedToResolveOperators: Boolean = false
 }

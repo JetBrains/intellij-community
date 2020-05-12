@@ -8,7 +8,6 @@ import com.intellij.ide.actions.*
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.EventPair
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -321,6 +320,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     if (isAvailable != value) {
       isAvailable = value
       toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
+
+      if (!value) {
+        contentUi?.dropCaches()
+      }
     }
   }
 
@@ -619,8 +622,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.removeFromSideBar(id)
     }
 
-    override fun addAdditionalUsageData(event: AnActionEvent, data: MutableList<EventPair<*>>) {
-      data.add(ToolwindowFusEventFields.TOOLWINDOW with id)
+    override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
+      return listOf(ToolwindowFusEventFields.TOOLWINDOW with id)
     }
   }
 
@@ -645,8 +648,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.setContentUiType(id, if (state) ToolWindowContentUiType.COMBO else ToolWindowContentUiType.TABBED)
     }
 
-    override fun addAdditionalUsageData(event: AnActionEvent, data: MutableList<EventPair<*>>) {
-      data.add(ToolwindowFusEventFields.TOOLWINDOW with id)
+    override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
+      return listOf(ToolwindowFusEventFields.TOOLWINDOW with id)
     }
   }
 

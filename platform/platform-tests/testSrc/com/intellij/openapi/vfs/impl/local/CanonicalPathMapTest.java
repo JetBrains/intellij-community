@@ -11,7 +11,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.NavigableSet;
 
@@ -129,11 +128,11 @@ public class CanonicalPathMapTest {
   }
 
   @Test
-  public void remappedSymLinkReportsOriginalWatchedPath() throws IOException {
+  public void remappedSymLinkReportsOriginalWatchedPath() {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
     // Tests the situation where the watch root is a symlink AND REMAPPED by the native file watcher.
-    File realDir = myTempDir.newFolder("real");
+    File realDir = myTempDir.newDirectory("real");
     File symLink = IoTestUtil.createSymLink(realDir.getPath(), myTempDir.getRoot() + "/link");
     File mappedDir = new File(myTempDir.getRoot(), "mapped");
 

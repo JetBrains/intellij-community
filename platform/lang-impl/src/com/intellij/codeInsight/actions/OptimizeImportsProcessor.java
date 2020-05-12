@@ -3,8 +3,11 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -83,34 +86,37 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     }
 
-    Runnable runnable = runnables.isEmpty() ? EmptyRunnable.getInstance() : () -> {
+    List<HintAction> hints = ShowAutoImportPass.getImportHints(file);
+
+    Runnable writeTask = runnables.isEmpty() ? EmptyRunnable.getInstance() : () -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
       try {
         for (Runnable runnable1 : runnables) {
           runnable1.run();
-          retrieveAndStoreNotificationInfo(runnable1);
+          myOptimizerNotifications.add(getNotificationInfo(runnable1));
         }
         putNotificationInfoIntoCollector();
+        ShowAutoImportPass.fixAllImportsSilently(file, hints);
       }
       finally {
         CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
       }
     };
 
-    return new FutureTask<>(runnable, true);
+    return new FutureTask<>(writeTask, true);
   }
 
-  private void retrieveAndStoreNotificationInfo(@NotNull Runnable runnable) {
+  @NotNull
+  private static NotificationInfo getNotificationInfo(@NotNull Runnable runnable) {
     if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
       String optimizerMessage = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
-      myOptimizerNotifications.add(optimizerMessage != null ? new NotificationInfo(optimizerMessage) : NOTHING_CHANGED_NOTIFICATION);
+      return optimizerMessage == null ? NOTHING_CHANGED_NOTIFICATION : new NotificationInfo(optimizerMessage);
     }
-    else if (runnable == EmptyRunnable.getInstance()) {
-      myOptimizerNotifications.add(NOTHING_CHANGED_NOTIFICATION);
+    if (runnable == EmptyRunnable.getInstance()) {
+      return NOTHING_CHANGED_NOTIFICATION;
     }
-    else {
-      myOptimizerNotifications.add(SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION);
-    }
+    return SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION;
   }
 
   private void putNotificationInfoIntoCollector() {

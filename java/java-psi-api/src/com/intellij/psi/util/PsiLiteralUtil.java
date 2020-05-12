@@ -143,7 +143,8 @@ public class PsiLiteralUtil {
   }
 
   /**
-   * Convert a string that contains a character (e.g. ""\n"" or ""\\"", etc.) to a string (e.g. "'\n'" or "'\\'", etc.)
+   * Convert a string that contains a character (e.g. ""\n"" or ""\\"", etc.) 
+   * to a character literal string (e.g. "'\n'" or "'\\'", etc.)
    *
    * @param text a string to convert
    * @return the converted string

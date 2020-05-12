@@ -944,8 +944,14 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       try {
         CaptureTraverser traverser = CaptureTraverser.create((PsiClass)targetClass, fromClass, checkInheritance);
         if (!traverser.isValid() && !fromClass.equals(myContextPsiClass)) { // do not check twice
-          return CaptureTraverser.create((PsiClass)targetClass, myContextPsiClass, checkInheritance);
+          traverser = CaptureTraverser.create((PsiClass)targetClass, myContextPsiClass, checkInheritance);
         }
+
+        if (!traverser.isValid()) {
+          LOG.warn("Unable create valid CaptureTraverser to access 'this'.");
+          traverser = CaptureTraverser.direct();
+        }
+
         return traverser;
       }
       catch (Exception e) {

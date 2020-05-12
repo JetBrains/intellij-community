@@ -94,10 +94,8 @@ object GHPRStatusChecksComponent {
       results.add(it)
     }
 
-    val checksText = if (failedChecks + pendingChecks + successfulChecks == 1) GithubBundle.message("pull.request.check")
-    else GithubBundle.message("pull.request.checks")
-
-    return StringUtil.join(results, ", ") + " " + checksText
+    val checksCount = failedChecks + pendingChecks + successfulChecks
+    return StringUtil.join(results, ", ") + " " + GithubBundle.message("pull.request.checks", checksCount)
   }
 
   private fun createLink(url: String) =

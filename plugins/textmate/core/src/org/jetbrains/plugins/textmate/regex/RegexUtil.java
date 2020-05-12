@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.regex;
 
-import com.intellij.openapi.util.TextRange;
 import org.jcodings.specific.NonStrictUTF8Encoding;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +29,9 @@ public class RegexUtil {
   }
 
   @NotNull
-  public static TextRange codePointsRangeByByteRange(byte[] bytes, @NotNull TextRange byteRange) {
-    int startOffset = codePointOffsetByByteOffset(bytes, byteRange.getStartOffset());
-    int endOffset = codePointOffsetByByteOffset(bytes, byteRange.getEndOffset());
-    return TextRange.create(startOffset, endOffset);
+  public static TextMateRange codePointsRangeByByteRange(byte[] bytes, @NotNull TextMateRange byteRange) {
+    int startOffset = codePointOffsetByByteOffset(bytes, byteRange.start);
+    int endOffset = codePointOffsetByByteOffset(bytes, byteRange.end);
+    return new TextMateRange(startOffset, endOffset);
   }
 }

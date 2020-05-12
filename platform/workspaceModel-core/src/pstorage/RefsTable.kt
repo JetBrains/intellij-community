@@ -9,7 +9,7 @@ import com.intellij.workspace.api.pstorage.containers.*
 import pstorage.containers.LinkedBidirectionalMap
 import kotlin.reflect.KClass
 
-internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
+internal class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
   val parentClass: KClass<T>,
   val childClass: KClass<SUBT>,
   val connectionType: ConnectionType,
@@ -23,8 +23,34 @@ internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private co
     ABSTRACT_ONE_TO_ONE
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ConnectionId<*, *>
+
+    if (parentClass.java != other.parentClass.java) return false
+    if (childClass.java != other.childClass.java) return false
+    if (connectionType != other.connectionType) return false
+    if (isParentNullable != other.isParentNullable) return false
+    if (isChildNullable != other.isChildNullable) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = parentClass.java.hashCode()
+    result = 31 * result + childClass.java.hashCode()
+    result = 31 * result + connectionType.hashCode()
+    result = 31 * result + isParentNullable.hashCode()
+    result = 31 * result + isChildNullable.hashCode()
+    return result
+  }
+
   companion object {
+    /** This function should be [@Synchronized] because interner is not thread-save */
     @Suppress("UNCHECKED_CAST")
+    @Synchronized
     fun <T : TypedEntity, SUBT : TypedEntity> create(
       parentClass: KClass<T>,
       childClass: KClass<SUBT>,

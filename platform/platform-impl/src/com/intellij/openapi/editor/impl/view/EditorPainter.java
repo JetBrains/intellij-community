@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectDescriptor;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -27,16 +26,14 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
 import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +103,7 @@ public class EditorPainter implements TextDrawingCallback {
     return - Session.getTabGap(Session.getWhiteSpaceScale(editor)) / 2;
   }
 
-  private static class Session {
+  private static final class Session {
     private final EditorView myView;
     private final EditorImpl myEditor;
     private final Document myDocument;
@@ -125,7 +122,7 @@ public class EditorPainter implements TextDrawingCallback {
     private final int mySeparatorHighlightersEndOffset;
     private final ClipDetector myClipDetector;
     private final IterationState.CaretData myCaretData;
-    private final Map<Integer, Couple<Integer>> myVirtualSelectionMap;
+    private final Int2ObjectOpenHashMap<IntPair> myVirtualSelectionMap;
     private final TIntObjectHashMap<List<LineExtensionData>> myExtensionData = new TIntObjectHashMap<>(); // key is visual line
     private final TIntObjectHashMap<TextAttributes> myBetweenLinesAttributes = new TIntObjectHashMap<>(); // key is bottom visual line
     private final int myLineHeight;
@@ -429,7 +426,7 @@ public class EditorPainter implements TextDrawingCallback {
               paintVirtualSelectionIfNecessary(visualLine, columnStart, x, y);
               myTextDrawingTasks.add(g -> {
                 int logicalLine = myDocument.getLineNumber(offset);
-                List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+                List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
                 if (!inlays.isEmpty()) {
                   float curX = x + myView.getPlainSpaceWidth();
                   for (Inlay inlay : inlays) {
@@ -478,8 +475,8 @@ public class EditorPainter implements TextDrawingCallback {
       }
     }
 
-    private static Map<Integer, Couple<Integer>> createVirtualSelectionMap(Editor editor, int startVisualLine, int endVisualLine) {
-      HashMap<Integer, Couple<Integer>> map = new HashMap<>();
+    private static @NotNull Int2ObjectOpenHashMap<IntPair> createVirtualSelectionMap(Editor editor, int startVisualLine, int endVisualLine) {
+      Int2ObjectOpenHashMap<IntPair> map = new Int2ObjectOpenHashMap<>();
       for (Caret caret : editor.getCaretModel().getAllCarets()) {
         if (caret.hasSelection()) {
           VisualPosition selectionStart = caret.getSelectionStartPosition();
@@ -487,7 +484,7 @@ public class EditorPainter implements TextDrawingCallback {
           if (selectionStart.line == selectionEnd.line) {
             int line = selectionStart.line;
             if (line >= startVisualLine && line <= endVisualLine) {
-              map.put(line, Couple.of(selectionStart.column, selectionEnd.column));
+              map.put(line, new IntPair(selectionStart.column, selectionEnd.column));
             }
           }
         }
@@ -496,7 +493,7 @@ public class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintVirtualSelectionIfNecessary(int visualLine, int columnStart, float xStart, int y) {
-      Couple<Integer> selectionRange = myVirtualSelectionMap.get(visualLine);
+      IntPair selectionRange = myVirtualSelectionMap.get(visualLine);
       if (selectionRange == null || selectionRange.second <= columnStart) return;
       float startX = selectionRange.first <= columnStart
                      ? xStart
@@ -1150,7 +1147,7 @@ public class EditorPainter implements TextDrawingCallback {
         int y = visLinesIterator.getY() + myYShift;
 
         int curY = y;
-        List<Inlay> inlaysAbove = visLinesIterator.getBlockInlaysAbove();
+        List<Inlay<?>> inlaysAbove = visLinesIterator.getBlockInlaysAbove();
         if (!inlaysAbove.isEmpty()) {
           TextAttributes attributes = getInlayAttributes(visualLine);
           for (Inlay inlay : inlaysAbove) {
@@ -1164,7 +1161,7 @@ public class EditorPainter implements TextDrawingCallback {
           }
         }
         curY = y + myLineHeight;
-        List<Inlay> inlaysBelow = visLinesIterator.getBlockInlaysBelow();
+        List<Inlay<?>> inlaysBelow = visLinesIterator.getBlockInlaysBelow();
         if (!inlaysBelow.isEmpty()) {
           TextAttributes attributes = getInlayAttributes(visualLine + 1);
           for (Inlay inlay : inlaysBelow) {
@@ -1199,7 +1196,7 @@ public class EditorPainter implements TextDrawingCallback {
                     caret.getSelectionStartPosition().line < bottomVisualLine && bottomVisualLine <= caret.getSelectionEndPosition().line;
       }
 
-      class MyProcessor implements Processor<RangeHighlighterEx> {
+      final class MyProcessor implements Processor<RangeHighlighterEx> {
         private int layer;
         private Color backgroundColor;
 
@@ -1523,7 +1520,7 @@ public class EditorPainter implements TextDrawingCallback {
       return view.getEditor().isRightAligned() ? new RightAligned(view) : new LeftAligned(view);
     }
 
-    class LeftAligned implements XCorrector {
+    final class LeftAligned implements XCorrector {
       private final EditorView myView;
       private final int myLeftInset;
 
@@ -1593,7 +1590,7 @@ public class EditorPainter implements TextDrawingCallback {
       }
     }
 
-    class RightAligned implements XCorrector {
+    final class RightAligned implements XCorrector {
       private final EditorView myView;
 
       private RightAligned(@NotNull EditorView view) {
@@ -1662,7 +1659,7 @@ public class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private static class LineExtensionData {
+  private static final class LineExtensionData {
     private final LineExtensionInfo info;
     private final LineLayout layout;
 
@@ -1672,7 +1669,7 @@ public class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private static class MarginPositions {
+  private static final class MarginPositions {
     private final float[] x;
     private final int[] y;
 

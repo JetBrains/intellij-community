@@ -129,8 +129,8 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Nullable
   @Override
   public ListPopup getPopupStep() {
+    if (isDisposed()) return null;
     Project project = getProject();
-    if (project.isDisposed()) return null;
     T repository = guessCurrentRepository(project);
     if (repository == null) return null;
 
@@ -146,7 +146,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   protected void updateLater() {
     Project project = getProject();
-    if (project.isDisposed()) return;
+    if (isDisposed()) return;
     ApplicationManager.getApplication().invokeLater(() -> {
       LOG.debug("update after repository change");
       update();
@@ -159,8 +159,8 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     myTooltip = null;
     myIcon = null;
 
+    if (isDisposed()) return;
     Project project = getProject();
-    if (project.isDisposed()) return;
     T repository = guessCurrentRepository(project);
     if (repository == null) return;
 

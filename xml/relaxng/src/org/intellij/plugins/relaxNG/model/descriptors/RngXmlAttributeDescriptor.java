@@ -28,19 +28,14 @@ import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
-import javax.xml.namespace.QName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.DAttributePattern;
 import org.xml.sax.Locator;
+
+import javax.xml.namespace.QName;
+import java.util.*;
 
 public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   @NonNls
@@ -110,12 +105,12 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
 
   @Override
   public boolean hasIdType() {
-    return myValues.values().contains("ID");
+    return myValues.containsValue("ID");
   }
 
   @Override
   public boolean hasIdRefType() {
-    return myValues.values().contains("IDREF");
+    return myValues.containsValue("IDREF");
   }
 
   @Override

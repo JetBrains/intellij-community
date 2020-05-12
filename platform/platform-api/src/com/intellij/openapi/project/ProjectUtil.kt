@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -197,7 +197,7 @@ fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>) {
  * Add one-time projectOpened listener.
  */
 inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (project: Project) -> Unit) {
-  val connection = (project ?: ApplicationManager.getApplication()).messageBus.connect()
+  val connection = (project ?: ApplicationManager.getApplication()).messageBus.simpleConnect()
   connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
     override fun projectOpened(eventProject: Project) {
       if (project == null || project === eventProject) {

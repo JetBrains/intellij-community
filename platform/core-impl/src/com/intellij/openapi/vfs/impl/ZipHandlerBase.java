@@ -101,6 +101,9 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       }
 
       Trinity<String, String, String> path = splitPathAndFix(entryName);
+      if (entryName.equals(path.first)) {
+        throw new IllegalArgumentException("invalid entry name: '"+entryName+"' in "+zip.getName()+"; after split: "+path);
+      }
       EntryInfo parentInfo = getOrCreate(path.first, map, zip);
       entryName = path.third;
       info = store(map, parentInfo, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, entryName);

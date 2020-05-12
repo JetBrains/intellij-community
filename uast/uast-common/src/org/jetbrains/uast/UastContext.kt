@@ -17,13 +17,7 @@ package org.jetbrains.uast
 
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.psi.*
-import com.intellij.reference.SoftReference
-
-@Deprecated("no proper caching for UAST is implemented, please avoid relying on this key")
-internal val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
-
 
 @Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))
 class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
@@ -60,11 +54,6 @@ object UastFacade : UastLanguagePlugin {
   override fun isFileSupported(fileName: String): Boolean = languagePlugins.any { it.isFileSupported(fileName) }
 
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
-    if (cachedElement != null) {
-      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
-    }
-
     return findPlugin(element)?.convertElement(element, parent, requiredType)
   }
 
@@ -72,12 +61,6 @@ object UastFacade : UastLanguagePlugin {
     if (element is PsiWhiteSpace) {
       return null
     }
-
-    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
-    if (cachedElement != null) {
-      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
-    }
-
     return findPlugin(element)?.convertElementWithParent(element, requiredType)
   }
 

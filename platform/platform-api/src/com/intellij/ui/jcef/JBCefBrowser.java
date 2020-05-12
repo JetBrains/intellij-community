@@ -11,7 +11,6 @@ import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
 import org.cef.network.CefCookieManager;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +34,10 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 public class JBCefBrowser implements JBCefDisposable {
   private static final String BLANK_URI = "about:blank";
 
+  private static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
+
   @NotNull private final JBCefClient myCefClient;
-  @NotNull private final MyComponent myComponent;
+  @NotNull private final JPanel myComponent;
   @NotNull private final CefBrowser myCefBrowser;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
   @NotNull private final CefFocusHandler myCefFocusHandler;
@@ -74,7 +75,7 @@ public class JBCefBrowser implements JBCefDisposable {
       SwingUtilities.invokeLater(
         myHtml == null ?
           () -> browser.loadURL(myUrl) :
-          () -> browser.loadString(myHtml, myUrl));
+          () -> loadString(browser, myHtml, myUrl));
     }
   }
 
@@ -100,12 +101,14 @@ public class JBCefBrowser implements JBCefDisposable {
     myCefClient = client;
     myIsDefaultClient = isDefaultClient;
 
-    myComponent = new MyComponent(new BorderLayout());
+    myComponent = new JPanel(new BorderLayout());
     myComponent.setBackground(JBColor.background());
 
     myCefBrowser = cefBrowser != null ?
       cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : BLANK_URI, false, false);
-    myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
+    JComponent uiComp = (JComponent)myCefBrowser.getUIComponent();
+    uiComp.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
+    myComponent.add(uiComp, BorderLayout.CENTER);
 
     if (cefBrowser == null) {
       myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
@@ -124,13 +127,19 @@ public class JBCefBrowser implements JBCefDisposable {
       myLifeSpanHandler = null;
     }
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
+      boolean firstSetFocus = true;
+
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
-        if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) return true;
+        if (!firstSetFocus && source == FocusSource.FOCUS_SOURCE_NAVIGATION) {
+          // Suppress focusing the browser on navigation events.
+          // However, this doesn't work for the first on-show focus, so skip it.
+          return true;
+        }
+        firstSetFocus = false;
         // Workaround: JCEF doesn't change current focus on the client side.
         // Clear the focus manually and this will report focus loss to the client
         // and will let focus return to the client on mouse click.
-        // tav [todo]: the opposite is inadequate
         KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
         return false;
       }
@@ -165,7 +174,7 @@ public class JBCefBrowser implements JBCefDisposable {
    */
   public void loadHTML(@NotNull String html, @NotNull String url) {
     if (myIsCefBrowserCreated) {
-      myCefBrowser.loadString(html, url);
+      loadString(myCefBrowser, html, url);
     }
     else {
       myLoadDeferrer = LoadDeferrer.htmlDeferrer(html, url);
@@ -177,6 +186,11 @@ public class JBCefBrowser implements JBCefDisposable {
    */
   public void loadHTML(@NotNull String html) {
     loadHTML(html, BLANK_URI);
+  }
+
+  private static void loadString(CefBrowser cefBrowser, String html, String url) {
+    url = JBCefFileSchemeHandler.registerLoadHTMLRequest(cefBrowser, html, url);
+    cefBrowser.loadURL(url);
   }
 
   /**
@@ -237,7 +251,7 @@ public class JBCefBrowser implements JBCefDisposable {
   }
 
   @Nullable
-  private Window getActiveFrame(){
+  private static Window getActiveFrame() {
     for (Frame frame : Frame.getFrames()) {
       if (frame.isActive()) return frame;
     }
@@ -289,11 +303,11 @@ public class JBCefBrowser implements JBCefDisposable {
     return myDisposeHelper.isDisposed();
   }
 
-  @SuppressWarnings("unused")
-  @Contract("null->null; !null->!null")
-  protected static JBCefBrowser getJBCefBrowser(CefBrowser browser) {
-    if (browser == null) return null;
-    return ((MyComponent)browser.getUIComponent().getParent()).getJBCefBrowser();
+  /**
+   * Returns {@code JBCefBrowser} instance associated with this {@code CefBrowser}.
+   */
+  public static JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
+    return (JBCefBrowser)((JComponent)browser.getUIComponent()).getClientProperty(JBCEFBROWSER_INSTANCE_PROP);
   }
 
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
@@ -318,16 +332,6 @@ public class JBCefBrowser implements JBCefDisposable {
         return true;
       }
       return false;
-    }
-  }
-
-  private class MyComponent extends JPanel {
-    MyComponent(BorderLayout layout) {
-      super(layout);
-    }
-
-    JBCefBrowser getJBCefBrowser() {
-      return JBCefBrowser.this;
     }
   }
 }

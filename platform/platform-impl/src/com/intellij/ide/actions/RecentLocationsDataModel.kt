@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
@@ -24,12 +24,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.stream.Collectors
 import javax.swing.ScrollPaneConstants
+import kotlin.math.max
+import kotlin.math.min
 
-data class RecentLocationsDataModel(val project: Project, val editorsToRelease: ArrayList<Editor> = arrayListOf()) {
-  val projectConnection = project.messageBus.connect()
+@ApiStatus.Internal
+internal data class RecentLocationsDataModel(val project: Project, val editorsToRelease: ArrayList<Editor> = arrayListOf()) {
+  val projectConnection = project.messageBus.simpleConnect()
 
   init {
     projectConnection.subscribe(RecentPlacesListener.TOPIC, object : RecentPlacesListener {
@@ -259,14 +263,14 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
 
     val beforeAfterLinesCount = Registry.intValue("recent.locations.lines.before.and.after", 2)
 
-    val before = Math.min(beforeAfterLinesCount, line)
-    val after = Math.min(beforeAfterLinesCount, lineCount - line)
+    val before = min(beforeAfterLinesCount, line)
+    val after = min(beforeAfterLinesCount, lineCount - line)
 
     val linesBefore = before + beforeAfterLinesCount - after
     val linesAfter = after + beforeAfterLinesCount - before
 
-    val startLine = Math.max(line - linesBefore, 0)
-    val endLine = Math.min(line + linesAfter, lineCount - 1)
+    val startLine = max(line - linesBefore, 0)
+    val endLine = min(line + linesAfter, lineCount - 1)
 
     val startOffset = document.getLineStartOffset(startLine)
     val endOffset = document.getLineEndOffset(endLine)

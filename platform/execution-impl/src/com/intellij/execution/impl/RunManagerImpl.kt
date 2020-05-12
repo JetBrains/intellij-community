@@ -217,7 +217,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
     messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        clearSelectedConfigurationIcon()
+        iconCache.clear()
+        reloadSchemes()
       }
     })
 

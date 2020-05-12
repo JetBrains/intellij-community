@@ -19,11 +19,13 @@ internal data class NameId(private val name: String) : PersistentEntityId<NamedE
 }
 
 @Suppress("unused")
-internal class NamedEntityData : PEntityData<NamedEntity>() {
+internal class NamedEntityData : PEntityData.WithCalculatablePersistentId<NamedEntity>() {
   lateinit var name: String
   override fun createEntity(snapshot: TypedEntityStorage): NamedEntity {
     return NamedEntity(name).also { addMetaData(it, snapshot) }
   }
+
+  override fun persistentId(): PersistentEntityId<*> = NameId(name)
 }
 
 internal class NamedEntity(

@@ -2596,10 +2596,6 @@ public class JBTabsImpl extends JComponent
     return false;
   }
 
-  public boolean useBoldLabels() {
-    return false;
-  }
-
   @Override
   public boolean isSingleRow() {
     if (!NEW_TABS) {

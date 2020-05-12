@@ -285,7 +285,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          PluginNode descriptor = MarketplaceRequests.getLastCompatiblePluginUpdate(vcs.pluginId.getIdString(), null, indicator);
+          PluginNode descriptor = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(vcs.pluginId.getIdString(), null, indicator);
           if (descriptor != null) {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {

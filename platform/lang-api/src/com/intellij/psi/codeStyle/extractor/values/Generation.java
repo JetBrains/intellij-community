@@ -1,20 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.extractor.values;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.extractor.Utils;
 import com.intellij.psi.codeStyle.extractor.differ.Differ;
+import com.intellij.util.IntPair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class Generation {
-
+public final class Generation {
   private static final int GENERATION_POOL_SIZE = 45;
   private static final int MUTATION_PER_GEN = 10;
-  public  static int GEN_COUNT = 40;
+  public static int GEN_COUNT = 40;
   private List<Gens> myGensPool;
   private int myAge;
   private final int myParentKind;
@@ -75,12 +74,12 @@ public class Generation {
   }
 
   private int reduceToSize(@NotNull Differ differ, int newPoolSize) {
-    List<Pair<Integer, Integer>> ranges = new ArrayList<>(myGensPool.size());
+    List<IntPair> ranges = new ArrayList<>(myGensPool.size());
 
     int i = 0;
     for (final Gens gens : myGensPool) {
       int range = differ.getDifference(gens);
-      ranges.add(Pair.create(range, i++));
+      ranges.add(new IntPair(range, i++));
       if (range == 0) {
         myAge = GEN_COUNT;
         newPoolSize = 1;
@@ -93,7 +92,7 @@ public class Generation {
     final ArrayList<Gens> gensPool = new ArrayList<>(newPoolSize);
     int count = 0;
     int worseForward = 0;
-    for (final Pair<Integer, Integer> pair : ranges) {
+    for (IntPair pair : ranges) {
       if (count >= newPoolSize) {
         break;
       }

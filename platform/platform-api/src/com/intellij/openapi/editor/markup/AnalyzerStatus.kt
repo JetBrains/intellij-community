@@ -121,14 +121,16 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
   var passes : List<PassWrapper> = emptyList()
   var analyzingType : AnalyzingType = AnalyzingType.COMPLETE
     private set
+  private var textStatus: Boolean = false
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true
     return this
   }
 
-  fun withExpandedStatus(status: StatusItem): AnalyzerStatus {
-    expandedStatus = Collections.singletonList(status)
+  fun withTextStatus(status: String): AnalyzerStatus {
+    expandedStatus = Collections.singletonList(StatusItem(status))
+    textStatus = true
     return this
   }
 
@@ -146,6 +148,8 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
     this.passes = passes
     return this
   }
+
+  fun isTextStatus() : Boolean = textStatus
 
   companion object {
     /**

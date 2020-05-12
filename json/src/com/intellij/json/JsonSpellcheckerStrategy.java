@@ -91,7 +91,7 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, position).resolve();
     if (schemas.isEmpty()) return false;
 
-    return schemas.stream().anyMatch(s -> s.getProperties().keySet().contains(value)
+    return schemas.stream().anyMatch(s -> s.getProperties().containsKey(value)
       || s.getMatchingPatternPropertySchema(value) != null);
   }
 

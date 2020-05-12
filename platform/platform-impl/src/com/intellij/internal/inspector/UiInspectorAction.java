@@ -1216,11 +1216,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static ColorIcon createColorIcon(Color color) {
-    return JBUI.scale(new ColorIcon(13, 11, color, true));
+    return JBUIScale.scaleIcon(new ColorIcon(13, 11, color, true));
   }
 
   private static Icon createColorIcon(Color color1, Color color2) {
-    return JBUI.scale(new ColorsIcon(11, color1, color2));
+    return JBUIScale.scaleIcon(new ColorsIcon(11, color1, color2));
   }
 
 
@@ -1337,7 +1337,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       StringBuilder classHierarchy = new StringBuilder();
       for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
-        if (classHierarchy.length() > 0) classHierarchy.append(" -> ");
+        if (classHierarchy.length() > 0) classHierarchy.append(" ").append(UIUtil.rightArrow()).append(" ");
         classHierarchy.append(cl.getName());
         if (JComponent.class.getName().equals(cl.getName())) break;
       }

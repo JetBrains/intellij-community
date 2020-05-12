@@ -4,8 +4,7 @@ import java.io.File
 import java.nio.file.Path
 
 // TODO Do we want to make it inline?
-data class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlManager)
-{
+class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlManager) {
   val url: String
     get() = manager.getUrlById(id)
 
@@ -39,6 +38,19 @@ data class VirtualFileUrl(private val id: Int, internal val manager: VirtualFile
   //override fun equals(other: Any?): Boolean = id == (other as? VirtualFileUrl)?.id
   //override fun hashCode(): Int = id
   override fun toString(): String = url
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as VirtualFileUrl
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = id
 }
 
 fun VirtualFileUrl.append(relativePath: String): VirtualFileUrl {

@@ -26,9 +26,8 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     this.beanStyle = beanStyle;
   }
 
-  @NotNull
   @Override
-  public MutableAccessor getAccessor() {
+  public @NotNull MutableAccessor getAccessor() {
     return myAccessor;
   }
 
@@ -36,9 +35,8 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     return myFlat;
   }
 
-  @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       return null;
@@ -68,8 +66,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     return deserialize(context, element);
   }
 
-  @NotNull
-  public Object deserialize(@NotNull Object context, @NotNull Element element) {
+  public @NotNull Object deserialize(@NotNull Object context, @NotNull Element element) {
     Object currentValue = myAccessor.read(context);
     if (myBinding instanceof BeanBinding && !myAccessor.isWritable()) {
       ((BeanBinding)myBinding).deserializeInto(currentValue, element);
@@ -104,9 +101,8 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     return context;
   }
 
-  @NotNull
   @Override
-  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
+  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     Object currentValue = myAccessor.read(context);
     if (myBinding instanceof BeanBinding && !myAccessor.isWritable()) {
       ((BeanBinding)myBinding).deserializeInto(currentValue, elements.get(0));

@@ -136,7 +136,6 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     PsiParameterList paramList = myMember.getParameterList();
     PsiElement addParameterAfter = null;
     PsiDocTag anchor = null;
-    List<PsiType> addedTypes = new ArrayList<>();
 
     final PsiClass containingClass = myMember.getContainingClass();
     LOG.assertTrue(containingClass != null);
@@ -181,7 +180,6 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     if (mySettings.isMakeClassParameter()) {
       // Add parameter for object
       PsiType parameterType = factory.createType(containingClass, PsiSubstitutor.EMPTY);
-      addedTypes.add(parameterType);
 
       final String classParameterName = mySettings.getClassParameterName();
       PsiParameter parameter = factory.createParameter(classParameterName, parameterType);
@@ -198,7 +196,6 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
       for (Settings.FieldParameter fieldParameter : parameters) {
         final PsiType fieldParameterType = fieldParameter.field.getType();
         final PsiParameter parameter = factory.createParameter(fieldParameter.name, fieldParameterType);
-        addedTypes.add(fieldParameterType);
         if (makeFieldParameterFinal(fieldParameter.field, usages)) {
           PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
         }

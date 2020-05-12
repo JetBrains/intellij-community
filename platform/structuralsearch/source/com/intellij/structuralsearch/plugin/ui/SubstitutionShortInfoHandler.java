@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -132,7 +132,6 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    if (event.getOldLength() == event.getNewLength()) return;
     // to handle backspace & delete (backspace strangely is not reported to the caret listener)
     handleInputFocusMovement(editor.getCaretModel().getLogicalPosition(), true);
     updateEditorInlays();

@@ -20,17 +20,13 @@ public class EditorActivityManager {
    * Determines whether an editor is visible to a user
    */
   public boolean isVisible(@NotNull Editor editor) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
-
-    return editor.getContentComponent().isShowing();
+    return ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getContentComponent().isShowing();
   }
 
   /**
    * Determines whether an editor has focus
    */
   public boolean isFocused(@NotNull Editor editor) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
-
-    return editor.getContentComponent().hasFocus();
+    return ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getContentComponent().hasFocus();
   }
 }

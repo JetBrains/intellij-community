@@ -61,9 +61,8 @@ final class DragHelper extends MouseDragHelper {
     TabInfo.DragOutDelegate delegate = myDragOutSource.getDragOutDelegate();
     if (justStarted) {
       delegate.dragOutStarted(event, myDragOutSource);
-    } else {
-      delegate.processDragOut(event, myDragOutSource);
     }
+    delegate.processDragOut(event, myDragOutSource);
     event.consume();
   }
 

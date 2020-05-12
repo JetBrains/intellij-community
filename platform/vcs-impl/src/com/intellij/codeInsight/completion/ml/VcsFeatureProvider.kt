@@ -25,7 +25,7 @@ class VcsFeatureProvider : ElementFeatureProvider {
 
         if (change.type == Change.Type.MODIFICATION && psi is PsiNameIdentifierOwner) {
           val changedRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(location.project, psiFile)
-          if (changedRanges.any { psi.textRange.intersects(it) }) {
+          if (changedRanges.any { psi.textRange?.intersects(it) == true }) {
             features["declaration_is_changed"] = MLFeatureValue.binary(true)
           }
         }

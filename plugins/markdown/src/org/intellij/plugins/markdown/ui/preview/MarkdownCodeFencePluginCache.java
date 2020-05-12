@@ -51,7 +51,7 @@ public class MarkdownCodeFencePluginCache implements Disposable {
           myAdditionalCacheToDelete.addAll(processSourceFileToDelete(event.getFile(), ContainerUtil.emptyList()));
         }
       }
-    });
+    }, this);
   }
 
   private static List<File> getPluginSystemPaths() {

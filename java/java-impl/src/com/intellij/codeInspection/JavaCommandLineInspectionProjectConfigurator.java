@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.CommandLineInspectionProgressReporter;
+import com.intellij.ide.CommandLineInspectionProjectConfigurator;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -57,7 +59,8 @@ public class JavaCommandLineInspectionProjectConfigurator implements CommandLine
       String name = javaSdk.suggestSdkName(null, path);
       logger.reportMessage(2, "Detected JDK with name " + name + " at " + path);
       Sdk jdk = javaSdk.createJdk(name, path, false);
-      ApplicationManager.getApplication().runWriteAction(() ->  ProjectJdkTable.getInstance().addJdk(jdk));
+
+      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk));
     }
   }
 }

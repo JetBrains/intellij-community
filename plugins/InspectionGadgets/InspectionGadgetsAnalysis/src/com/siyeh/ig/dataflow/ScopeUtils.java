@@ -34,11 +34,13 @@ class ScopeUtils {
     while (prevSibling instanceof PsiWhiteSpace || prevSibling instanceof PsiComment) {
       prevSibling = prevSibling.getPrevSibling();
     }
-    if (skipDeclarationStatements && prevSibling instanceof PsiDeclarationStatement) {
+    if (prevSibling instanceof PsiDeclarationStatement) {
       if (prevSibling.equals(variable.getParent())) {
         return null;
       }
-      return findTighterDeclarationLocation(prevSibling, variable, true);
+      if (skipDeclarationStatements) {
+        return findTighterDeclarationLocation(prevSibling, variable, true);
+      }
     }
     return prevSibling;
   }

@@ -99,7 +99,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
 
     final Map<Configuration, Matcher> compiledOptions =
-      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, project);
+      SSBasedInspectionCompiledPatternsCache.getInstance(project).getCompiledOptions(configurations);
     if (compiledOptions.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
     final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
@@ -116,6 +116,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
       final Configuration configuration = entry.getKey();
       final Matcher matcher = entry.getValue();
+      if (matcher == null) {
+        continue;
+      }
       matcher.getMatchContext().setSink(new DuplicateFilteringResultSink(new InspectionResultSink(processor, configuration)));
     }
 

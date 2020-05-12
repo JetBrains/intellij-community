@@ -101,19 +101,6 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
     }
   };
 
-  protected final FileBasedIndex.InputFilter myInputFilter = file -> {
-    if (!TodoIndexers.needsTodoIndex(file)) return false;
-
-    final FileType fileType = file.getFileType();
-
-    if (fileType instanceof LanguageFileType) {
-      return LanguageParserDefinitions.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null;
-    }
-
-    return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
-           fileType instanceof CustomSyntaxTableFileType;
-  };
-
   @Override
   public int getVersion() {
     // composite indexer
@@ -152,7 +139,18 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return file -> {
+      if (!TodoIndexers.needsTodoIndex(file)) return false;
+
+      final FileType fileType = file.getFileType();
+
+      if (fileType instanceof LanguageFileType) {
+        return LanguageParserDefinitions.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null;
+      }
+
+      return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
+             fileType instanceof CustomSyntaxTableFileType;
+    };
   }
 
   @Override

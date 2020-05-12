@@ -27,6 +27,15 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 
 class JavaFxColorReferenceProvider extends PsiReferenceProvider {
+
+  @Override
+  public boolean acceptsTarget(@NotNull PsiElement target) {
+    if (!(target instanceof PsiField)) return false;
+
+    PsiClass psiClass = ((PsiField)target).getContainingClass();
+    return psiClass != null && JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName());
+  }
+
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
                                                          @NotNull ProcessingContext context) {

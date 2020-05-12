@@ -247,19 +247,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
                                                        @Nullable String testOutputPath,
                                                        JpsSdk<T> sdk) {
     JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
-    final JpsSdkType<T> sdkType = sdk.getSdkType();
-    final JpsSdkReferencesTable sdkTable = module.getSdkReferencesTable();
-    sdkTable.setSdkReference(sdkType, sdk.createReference());
-
-    if (sdkType instanceof JpsJavaSdkTypeWrapper) {
-      final JpsSdkReference<T> wrapperRef = sdk.createReference();
-      sdkTable.setSdkReference(JpsJavaSdkType.INSTANCE, JpsJavaExtensionService.
-        getInstance().createWrappedJavaSdkReference((JpsJavaSdkTypeWrapper)sdkType, wrapperRef));
-    }
-    // ensure jdk entry is the first one in dependency list
-    module.getDependenciesList().clear();
-    module.getDependenciesList().addSdkDependency(sdkType);
-    module.getDependenciesList().addModuleSourceDependency();
+    setupModuleSdk(module, sdk);
     if (srcPaths.length > 0 || outputPath != null) {
       for (String srcPath : srcPaths) {
         module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));
@@ -280,6 +268,22 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       }
     }
     return module;
+  }
+
+  protected  <T extends JpsElement> void setupModuleSdk(JpsModule module, JpsSdk<T> sdk) {
+    final JpsSdkType<T> sdkType = sdk.getSdkType();
+    final JpsSdkReferencesTable sdkTable = module.getSdkReferencesTable();
+    sdkTable.setSdkReference(sdkType, sdk.createReference());
+
+    if (sdkType instanceof JpsJavaSdkTypeWrapper) {
+      final JpsSdkReference<T> wrapperRef = sdk.createReference();
+      sdkTable.setSdkReference(JpsJavaSdkType.INSTANCE, JpsJavaExtensionService.
+        getInstance().createWrappedJavaSdkReference((JpsJavaSdkTypeWrapper)sdkType, wrapperRef));
+    }
+    // ensure jdk entry is the first one in dependency list
+    module.getDependenciesList().clear();
+    module.getDependenciesList().addSdkDependency(sdkType);
+    module.getDependenciesList().addModuleSourceDependency();
   }
 
   protected void rebuildAllModules() {

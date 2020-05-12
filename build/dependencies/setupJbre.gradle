@@ -1,7 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import java.util.concurrent.TimeUnit
 
-task setupJbre()
+apply from: 'archivesCleanup.gradle'
+
+ext.jbreOutputDir = "$project.buildDir/jbre"
+def deleteObsoleteJbreArchives = ext.deleteObsoleteArchivesTask('Jbre', jbreOutputDir)
+task setupJbre() {
+  finalizedBy deleteObsoleteJbreArchives
+}
 
 def targetOs = System.getProperty("intellij.build.target.os", "all")
 def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
@@ -53,8 +59,7 @@ def jreUrl() {
 }
 
 def downloadJbrTask(String artifactName, String build) {
-  def outputDir = "$project.buildDir/jbre"
-  def outputFile = "$outputDir/${artifactName}.tar.gz"
+  def outputFile = "${jbreOutputDir}/${artifactName}.tar.gz"
   task("download${artifactName.capitalize()}") {
     inputs.property('build', build)
     outputs.file(outputFile)

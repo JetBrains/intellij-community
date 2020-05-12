@@ -47,7 +47,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Before
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
-    myJrtPath = tempDir.newFolder("jrt").toPath();
+    myJrtPath = tempDir.newDirectory("jrt").toPath();
 
     setupJrtFileSystem();
     myRoot = findRoot(myJrtPath.toString());

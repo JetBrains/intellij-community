@@ -10,7 +10,7 @@ internal class FilePredictionEditorManagerListener : FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val newFile = event.newFile ?: return
     if (ApplicationManager.getApplication().isEAP && Registry.get("filePrediction.calculate.features").asBoolean()) {
-      FileUsagePredictor.onFileOpened(event.manager.project, newFile, event.oldFile)
+      FilePredictionHandler.getInstance()?.onFileOpened(event.manager.project, newFile, event.oldFile)
     }
   }
 }

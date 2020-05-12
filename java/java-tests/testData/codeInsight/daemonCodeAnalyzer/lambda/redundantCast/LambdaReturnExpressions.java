@@ -25,6 +25,7 @@ class Main {
 
     map1(() -> (<warning descr="Casting 'Main::boom' to 'Runnable' is redundant">Runnable</warning>) Main::boom);
     map1(() -> true ? (<warning descr="Casting 'Main::boom' to 'Runnable' is redundant">Runnable</warning>) Main::boom : (<warning descr="Casting 'Main::boom' to 'Runnable' is redundant">Runnable</warning>) Main::boom);
+    map1(() -> true ? ((<warning descr="Casting 'Main::boom' to 'Runnable' is redundant">Runnable</warning>) Main::boom) : ((<warning descr="Casting 'Main::boom' to 'Runnable' is redundant">Runnable</warning>) Main::boom));
     map1(() -> {
       return true ? (<warning descr="Casting 'Main::boom' to 'Runnable' is redundant">Runnable</warning>) Main::boom : (<warning descr="Casting 'Main::boom' to 'Runnable' is redundant">Runnable</warning>) Main::boom;
     });

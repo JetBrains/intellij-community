@@ -17,7 +17,7 @@ import java.util.function.Function;
  * needed again if it's still running. Function results should be ready for concurrent access, preferably thread-safe.
  */
 @ApiStatus.Internal
-public class DiskQueryRelay<Param, Result> {
+public final class DiskQueryRelay<Param, Result> {
   private final @NotNull Function<? super Param, ? extends Result> myFunction;
 
   /**

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
 public class MockDumbService extends DumbService {
   private final Project myProject;
 

@@ -46,7 +46,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   private final Stack<String> myFStringStack = new Stack<>();
 
   private static final boolean DUMP_TOKENS = false;
-  private final TokenSet RECOVERY_TOKENS = PythonDialectsTokenSetProvider.INSTANCE.getUnbalancedBracesRecoveryTokens();
+  private final TokenSet RECOVERY_TOKENS = PythonDialectsTokenSetProvider.getInstance().getUnbalancedBracesRecoveryTokens();
 
   public PythonIndentingProcessor(FlexLexer lexer, TokenSet tokens) {
     super(new FlexAdapter(lexer), tokens);

@@ -405,9 +405,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   private static Document createDocument(@Nullable Project project,
                                          @NotNull String content,
                                          @Nullable FileType fileType,
-                                         @Nullable @NonNls String fileName,
+                                         @NonNls @NotNull FilePath filePath,
                                          boolean readOnly) {
-    Document document = createPsiDocument(project, content, fileType, fileName, readOnly);
+    Document document = createPsiDocument(project, content, fileType, filePath, readOnly);
     if (document == null) {
       document = EditorFactory.getInstance().createDocument(content);
       document.setReadOnly(readOnly);
@@ -419,16 +419,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   private static Document createPsiDocument(@Nullable Project project,
                                             @NotNull String content,
                                             @Nullable FileType fileType,
-                                            @NonNls @Nullable String fileName,
+                                            @NonNls @NotNull FilePath filePath,
                                             boolean readOnly) {
     if (project == null || project.isDefault()) return null;
     if (fileType == null || fileType.isBinary()) return null;
 
-    if (fileName == null) {
-      fileName = "diff." + StringUtil.defaultIfEmpty(fileType.getDefaultExtension(), "txt");
-    }
-
-    LightVirtualFile file = new LightVirtualFile(fileName, fileType, content);
+    LightVirtualFile file = new MyLightVirtualFile(filePath, fileType, content);
     file.setWritable(!readOnly);
 
     Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
@@ -628,7 +624,17 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @NotNull
     private DocumentContent build(@NotNull TextContent textContent) {
       FileType fileType = context != null ? context.getContentType() : null;
-      Document document = createDocument(project, textContent.text, fileType, fileName, readOnly);
+
+      FilePath filePath = originalFilePath;
+      if (filePath == null) {
+        String name = fileName;
+        if (name == null) {
+          name = "diff." + StringUtil.defaultIfEmpty(fileType != null ? fileType.getDefaultExtension() : null, "txt");
+        }
+        filePath = DiffVcsFacade.getInstance().getFilePath(name);
+      }
+
+      Document document = createDocument(project, textContent.text, fileType, filePath, readOnly);
 
       DocumentContent documentContent = new ContextReferentDocumentContent(project, document, textContent, context);
 
@@ -649,10 +655,25 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
+  private static class MyLightVirtualFile extends LightVirtualFile {
+    private final FilePath myPath;
+
+    private MyLightVirtualFile(@NotNull FilePath path, @Nullable FileType fileType, @NotNull String content) {
+      super(path.getName(), fileType, content);
+      myPath = path;
+    }
+
+    @NotNull
+    @Override
+    public String getPath() {
+      return myPath.getPath();
+    }
+  }
+
   private static class MyBinaryLightVirtualFile extends BinaryLightVirtualFile {
     private final FilePath myPath;
 
-    MyBinaryLightVirtualFile(@NotNull FilePath path, FileType type, byte @NotNull [] content) {
+    MyBinaryLightVirtualFile(@NotNull FilePath path, @Nullable FileType type, byte @NotNull [] content) {
       super(path.getName(), type, content);
       myPath = path;
     }

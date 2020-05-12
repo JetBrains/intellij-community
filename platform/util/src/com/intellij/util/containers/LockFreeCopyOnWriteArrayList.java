@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * This class is a
@@ -20,7 +21,7 @@ import java.util.*;
  * It generally is faster than COWAL in case of low write-contention.
  * (Note that it is not advisable to use COWAL in high write-contention code anyway, consider using {@link java.util.concurrent.ConcurrentHashMap}) instead)
  */
-class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, ConcurrentList<E> {
+final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, ConcurrentList<E> {
   private volatile Object @NotNull [] array;
 
   LockFreeCopyOnWriteArrayList() {
@@ -35,6 +36,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     return array;
   }
 
+  @SuppressWarnings("rawtypes")
   private static final AtomicFieldUpdater<LockFreeCopyOnWriteArrayList, Object[]> ARRAY_UPDATER
     = AtomicFieldUpdater.forFieldOfType(LockFreeCopyOnWriteArrayList.class, Object[].class);
 
@@ -242,6 +244,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       //noinspection unchecked
       return (T[])Arrays.copyOf(elements, len, a.getClass());
     }
+    //noinspection SuspiciousSystemArraycopy
     System.arraycopy(elements, 0, a, 0, len);
     if (a.length > len) {
       a[len] = null;
@@ -572,17 +575,17 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       return null;
     }
     // temp array holds those elements we know we want to keep
-    int newlen = 0;
+    int newLength = 0;
     Object[] temp = new Object[len];
     for (Object element : elements) {
       if (c.contains(element)) {
-        temp[newlen++] = element;
+        temp[newLength++] = element;
       }
     }
-    if (newlen == len) {
+    if (newLength == len) {
       return null;
     }
-    return Arrays.copyOf(temp, newlen, Object[].class);
+    return Arrays.copyOf(temp, newLength, Object[].class);
   }
 
   /**
@@ -726,8 +729,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * @return a string representation of this list
    */
   @Override
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     return Arrays.toString(array);
   }
 
@@ -791,13 +793,19 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    *
    * @return an iterator over the elements in this list in proper sequence
    */
-  @NotNull
   @Override
-  public Iterator<E> iterator() {
+  public @NotNull Iterator<E> iterator() {
     Object[] elements = array;
-    if (elements.length == 0) return Collections.emptyIterator();
+    return elements.length == 0 ? Collections.emptyIterator() : new COWIterator(elements, 0);
+  }
 
-    return new COWIterator(elements, 0);
+  @Override
+  public void forEach(@NotNull Consumer<? super E> action) {
+    Object[] snapshot = array;
+    for (Object element : snapshot) {
+      //noinspection unchecked
+      action.accept((E)element);
+    }
   }
 
   /**
@@ -808,9 +816,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * traversing the iterator. The iterator does <em>NOT</em> support the
    * <tt>remove</tt>, <tt>set</tt> or <tt>add</tt> methods.
    */
-  @NotNull
   @Override
-  public ListIterator<E> listIterator() {
+  public @NotNull ListIterator<E> listIterator() {
     return listIterator(0);
   }
 
@@ -824,9 +831,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    *
    * @throws IndexOutOfBoundsException {@inheritDoc}
    */
-  @NotNull
   @Override
-  public ListIterator<E> listIterator(final int index) {
+  public @NotNull ListIterator<E> listIterator(final int index) {
     Object[] elements = array;
     int len = elements.length;
     if (index < 0 || index > len) {
@@ -914,9 +920,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     }
   }
 
-  @NotNull
   @Override
-  public List<E> subList(int fromIndex, int toIndex) {
+  public @NotNull List<E> subList(int fromIndex, int toIndex) {
     throw new UnsupportedOperationException();
   }
 }

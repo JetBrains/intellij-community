@@ -4,13 +4,11 @@ package com.intellij.codeInsight.daemon.problems.pass;
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
 import com.intellij.codeInsight.hints.InlayHintsSettings;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -27,8 +25,7 @@ import java.util.List;
 import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlaySettingsProvider.hintsEnabled;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-class ProjectProblemFileSelectionListener implements FileEditorManagerListener, InlayHintsSettings.SettingsListener, BulkFileListener {
-
+final class ProjectProblemFileSelectionListener implements FileEditorManagerListener, InlayHintsSettings.SettingsListener, BulkFileListener {
   private final Project myProject;
 
   private ProjectProblemFileSelectionListener(Project project) {
@@ -95,7 +92,6 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
   public static class MyStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (!Registry.is("project.problems.view") && !ApplicationManager.getApplication().isUnitTestMode()) return;
       ProjectProblemFileSelectionListener listener = new ProjectProblemFileSelectionListener(project);
       MessageBusConnection connection = project.getMessageBus().connect();
       connection.subscribe(FILE_EDITOR_MANAGER, listener);

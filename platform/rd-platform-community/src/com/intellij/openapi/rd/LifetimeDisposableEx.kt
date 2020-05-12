@@ -8,6 +8,8 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.onTermination
 
+fun Disposable.createLifetime(): Lifetime = this.defineNestedLifetime().lifetime
+
 fun Disposable.defineNestedLifetime(): LifetimeDefinition {
   val lifetimeDefinition = Lifetime.Eternal.createNested()
   if (Disposer.isDisposing(this) || Disposer.isDisposed(this)) {
@@ -24,7 +26,7 @@ fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
   if(Disposer.isDisposed(this)) return
 
   try {
-    disposableLifetime = defineNestedLifetime(this).lifetime
+    disposableLifetime = createLifetime()
   }
   catch(t : Throwable){
     //do nothing, there is no other way to handle disposables

@@ -979,8 +979,7 @@ int CheckSingleInstance()
     int exitCode;
     if (view)
     {
-      std::wstring result(view);
-      exitCode = std::stoi(result);
+      exitCode = (int)wcstol(view, NULL, 10);
       UnmapViewOfFile(view);
     }
     else

@@ -390,7 +390,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   @Override
-  public final PsiElement getElement() {
+  public final @Nullable PsiElement getElement() {
     return getUsageInfo().getElement();
   }
 

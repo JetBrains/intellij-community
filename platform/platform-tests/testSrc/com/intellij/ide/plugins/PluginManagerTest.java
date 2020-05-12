@@ -8,8 +8,6 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +18,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -194,26 +191,24 @@ public class PluginManagerTest {
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), createPluginLoadingResult(true));
 
     Element root = JDOMUtil.load(file, parentContext.getXmlFactory());
-    DescriptorLoadingContext context = new DescriptorLoadingContext(
-      parentContext, isBundled, /* doesn't matter */ false,
-      new BasePathResolver() {
-        @Override
-        public @NotNull Element resolvePath(@NotNull Path basePath,
-                                            @NotNull String relativePath,
-                                            @NotNull SafeJdomFactory jdomFactory) {
-          for (Element child : root.getChildren("config-file-idea-plugin")) {
-            String url = Objects.requireNonNull(child.getAttributeValue("url"));
-            if (url.endsWith("/" + relativePath)) return child;
-          }
-          throw new AssertionError("Unexpected: " + relativePath);
+    BasePathResolver pathResolver = new BasePathResolver() {
+      @Override
+      public @NotNull Element resolvePath(@NotNull Path basePath,
+                                          @NotNull String relativePath,
+                                          @NotNull SafeJdomFactory jdomFactory) {
+        for (Element child : root.getChildren("config-file-idea-plugin")) {
+          String url = Objects.requireNonNull(child.getAttributeValue("url"));
+          if (url.endsWith("/" + relativePath)) return child;
         }
-      });
+        throw new AssertionError("Unexpected: " + relativePath);
+      }
+    };
 
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
       Path pluginPath = Paths.get(Objects.requireNonNull(url));
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath, pluginPath, isBundled);
-      descriptor.readExternal(element, context.pathResolver, context, descriptor);
+      descriptor.readExternal(element, pathResolver, parentContext, descriptor);
       parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
     }
     parentContext.close();
@@ -225,36 +220,28 @@ public class PluginManagerTest {
   private static String dumpDescriptors(IdeaPluginDescriptorImpl @NotNull [] descriptors) {
     // place breakpoint in PluginManagerCore#loadDescriptors before sorting
     StringBuilder sb = new StringBuilder("<root>");
-    Function<String, String> escape = s ->
-      s.equals("com.intellij") || s.startsWith("com.intellij.modules.") ? s : "-" + s.replace(".", "-")+ "-";
+    Function<String, String> escape = s -> {
+      return s.equals("com.intellij") || s.startsWith("com.intellij.modules.") ? s : "-" + s.replace(".", "-") + "-";
+    };
     for (IdeaPluginDescriptorImpl d : descriptors) {
-      sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPath().getName()).append("/META-INF/plugin.xml\">");
+      sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPluginPath().getFileName().getParent()).append("/META-INF/plugin.xml\">");
       sb.append("\n    <id>").append(escape.apply(d.getPluginId().getIdString())).append("</id>");
       sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
       for (PluginId module : d.getModules()) {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
-      PluginId[] optIds = d.getOptionalDependentPluginIds();
-      List<PluginDependency> pluginDependencies = d.pluginDependencies;
-      for (PluginId depId : d.getDependentPluginIds()) {
-        if (ArrayUtil.indexOf(optIds, depId) == -1) {
-          sb.append("\n    <depends>").append(escape.apply(depId.getIdString())).append("</depends>");
+      for (PluginDependency dependency : d.getPluginDependencies()) {
+        if (!dependency.isOptional) {
+          sb.append("\n    <depends>").append(escape.apply(dependency.id.getIdString())).append("</depends>");
         }
         else {
-          IdeaPluginDescriptorImpl optionalConfigPerId;
-          if (pluginDependencies == null) {
-            optionalConfigPerId = null;
-          }
-          else {
-            PluginDependency dependency = ContainerUtil.find(pluginDependencies, it -> it.id == depId);
-            optionalConfigPerId = dependency == null ? null : dependency.subDescriptor;
-          }
+          IdeaPluginDescriptorImpl optionalConfigPerId = dependency.subDescriptor;
           if (optionalConfigPerId == null) {
-            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.apply(depId.getIdString())).append("</depends>");
+            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.apply(dependency.id.getIdString())).append("</depends>");
           }
           else {
               sb.append("\n    <depends optional=\"true\" config-file=\"")
-                .append(optionalConfigPerId.getPath().getName()).append("\">").append(escape.apply(depId.getIdString())).append("</depends>");
+                .append(optionalConfigPerId.getPluginPath().getFileName().toString()).append("\">").append(escape.apply(dependency.id.getIdString())).append("</depends>");
           }
         }
       }

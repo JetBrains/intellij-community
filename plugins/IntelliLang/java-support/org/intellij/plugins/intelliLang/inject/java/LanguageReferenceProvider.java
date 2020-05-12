@@ -62,6 +62,12 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
         return PsiUtilEx.isStringOrCharacterLiteral(expression);
       }
     }), new PsiReferenceProvider() {
+
+      @Override
+      public boolean acceptsTarget(@NotNull PsiElement target) {
+        return target instanceof PsiLiteral;
+      }
+
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull ProcessingContext context) {
         final PsiLiteralExpression expression = (PsiLiteralExpression)psiElement;

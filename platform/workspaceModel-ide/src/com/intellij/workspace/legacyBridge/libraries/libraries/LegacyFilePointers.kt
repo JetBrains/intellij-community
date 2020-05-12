@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.getInstance
 import kotlin.reflect.KClass
 
 /**
@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  * All legacy file pointers are collected in a single container to perform project model update in a single change
  */
 class LegacyModelRootsFilePointers(val project: Project) {
-  private val virtualFileManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
   private val pointers = listOf(
     // Library roots
     TypedEntityFileWatcher(

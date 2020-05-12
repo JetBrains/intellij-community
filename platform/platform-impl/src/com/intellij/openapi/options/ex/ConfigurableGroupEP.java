@@ -15,6 +15,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
+/**
+ * This extension point is intended to group different configurables in order to simplify finding them in the Settings tree.
+ * If a group in the tree is selected, an uneditable page with a brief description is displayed.
+ * Therefore, do not use groups to create a hierarchy of configurables, especially if there are very few of them.
+ * It is recommended to create a hierarchy using {@link com.intellij.openapi.options.ConfigurableEP#parentId ConfigurableEP}.
+ */
 final class ConfigurableGroupEP implements PluginAware {
   private static final ExtensionPointName<ConfigurableGroupEP> EP = new ExtensionPointName<>("com.intellij.groupConfigurable");
 

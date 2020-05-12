@@ -201,7 +201,7 @@ class ProjectSettingsTracker(
         status.markModified(currentTime(), modificationType)
       }
       else {
-        status.markDirty(currentTime())
+        status.markDirty(currentTime(), modificationType)
       }
     }
 

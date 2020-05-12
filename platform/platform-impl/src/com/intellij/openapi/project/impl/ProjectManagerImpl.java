@@ -218,7 +218,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     catch (Throwable t) {
       LOG.warn(t);
       try {
-        Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+        });
       }
       catch (NoClassDefFoundError e) {
         // error icon not loaded
@@ -307,6 +309,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
+    //noinspection deprecation
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
     activity.end();
 

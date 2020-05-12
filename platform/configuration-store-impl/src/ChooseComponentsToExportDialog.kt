@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.ElementsChooser
@@ -10,14 +10,12 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
-import com.intellij.openapi.util.NlsContexts
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import java.awt.Component
@@ -39,7 +37,9 @@ private val markedElementNames: Set<String>
     return if (value.isNullOrEmpty()) {
       emptySet()
     }
-    else THashSet(StringUtil.split(value.trim { it <= ' ' }, "|"))
+    else {
+      ObjectOpenHashSet(value.trim { it <= ' ' }.split("|"))
+    }
   }
 
 private fun addToExistingListElement(item: ExportableItem,
@@ -75,7 +75,7 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
   chooserDescriptor.title = title
   chooserDescriptor.withFileFilter {
     ConfigImportHelper.isSettingsFile(it) ||
-    ConfigImportHelper.isConfigDirectory(VfsUtil.virtualToIoFile(it).toPath())
+    it.toPathOrNull()?.let { p -> ConfigImportHelper.isConfigDirectory(p) } == true
   }
 
   var initialDir: VirtualFile?
@@ -112,7 +112,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
 
   internal val exportableComponents: Set<ExportableItem>
     get() {
-      val components = THashSet<ExportableItem>()
+      val components = ObjectOpenHashSet<ExportableItem>()
       for (elementProperties in chooser.markedElements) {
         components.addAll(elementProperties.items)
       }
@@ -219,7 +219,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
 }
 
 private class ComponentElementProperties : MultiStateElementsChooser.ElementProperties {
-  val items = THashSet<ExportableItem>()
+  val items = ObjectOpenHashSet<ExportableItem>()
 
   val fileName: String
     get() = items.first().file.fileName.toString()

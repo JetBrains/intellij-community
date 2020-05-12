@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * via the {@link #TOPIC} defined below.
  */
 public interface BatchFileChangeListener {
-
-  Topic<BatchFileChangeListener> TOPIC = Topic.create("Batch File Update", BatchFileChangeListener.class);
+  Topic<BatchFileChangeListener> TOPIC = new Topic<>(BatchFileChangeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
    * @param project Project where many file changes are expected to happen

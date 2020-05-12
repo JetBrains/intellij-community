@@ -54,14 +54,17 @@ public class VcsUtil {
   }
 
   private static int computeLoadedFileSize() {
-    int result = (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
-    String userLimitKb = System.getProperty(MAX_VCS_LOADED_SIZE_KB);
+    long result = PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
     try {
-      return userLimitKb != null ? Integer.parseInt(userLimitKb) * 1024 : result;
+      String userLimitKb = System.getProperty(MAX_VCS_LOADED_SIZE_KB);
+      if (userLimitKb != null) {
+        result = Integer.parseInt(userLimitKb) * 1024L;
+      }
     }
     catch (NumberFormatException ignored) {
-      return result;
     }
+
+    return (int)Math.min(result, Integer.MAX_VALUE);
   }
 
   /**

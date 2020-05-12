@@ -64,13 +64,17 @@ public class Matcher {
   int scannedFilesCount;
 
   public Matcher(@NotNull Project project, @NotNull MatchOptions matchOptions) {
+    this(project, matchOptions, PatternCompiler.compilePattern(project, matchOptions, false, true));
+  }
+
+  public Matcher(@NotNull Project project, @NotNull MatchOptions matchOptions, @NotNull CompiledPattern compiledPattern) {
     this.project = project;
     matchContext = new MatchContext();
     matchContext.setMatcher(visitor);
     visitor.setMatchContext(matchContext);
 
     matchContext.setOptions(matchOptions);
-    matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false, true));
+    matchContext.setPattern(compiledPattern);
   }
 
   public static Matcher buildMatcher(Project project, LanguageFileType fileType, String constraint) {
@@ -537,7 +541,7 @@ public class Matcher {
         ReadAction.nonBlocking(
           () -> {
             if (!file.isValid()) return;
-            final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(file.getLanguage());
+            final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(file);
             if (profile == null) return;
             match(profile.extendMatchOnePsiFile(file), patternLanguage);
           }

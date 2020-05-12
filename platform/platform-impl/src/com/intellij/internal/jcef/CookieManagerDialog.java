@@ -35,10 +35,10 @@ class CookieManagerDialog extends JDialog {
     myTableModel.show(cefCookies);
   }
 
-  private class CookieTableModel extends AbstractTableModel {
+  private static class CookieTableModel extends AbstractTableModel {
     private final String[] columnNames =
       new String[]{"Name", "Value", "Domain", "Path", "Secure", "HTTP only", "Created", "Last Access", "Expires"};
-    private ArrayList<Object[]> rowData = new ArrayList<>();
+    private final ArrayList<Object[]> rowData = new ArrayList<>();
 
     private void show(@NotNull List<CefCookie> cefCookies) {
       for (CefCookie cookie : cefCookies) {

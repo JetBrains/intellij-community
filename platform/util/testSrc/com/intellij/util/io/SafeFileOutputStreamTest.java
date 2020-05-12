@@ -76,7 +76,7 @@ public class SafeFileOutputStreamTest {
   @Test public void newFileInReadOnlyDirectory() throws IOException {
     assumeUnix();
 
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
     Files.setPosixFilePermissions(dir.toPath(), EnumSet.of(OWNER_READ, OWNER_EXECUTE));
     checkWriteFailed(new File(dir, "test.txt"));
   }

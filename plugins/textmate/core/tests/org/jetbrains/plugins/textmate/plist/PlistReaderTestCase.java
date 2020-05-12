@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.plist;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 
 import static org.jetbrains.plugins.textmate.plist.PListValue.*;
 import static org.junit.Assert.assertEquals;
@@ -88,9 +87,10 @@ abstract public class PlistReaderTestCase {
   @Test
   public void parseArray() throws Exception {
     Plist plist = read("<dict><key>list</key><array><string>alex</string><string>zolotov</string><integer>42</integer></array></dict>");
-    assertEquals(
-      Plist.fromMap(ContainerUtil.newHashMap(Pair.create("list", array(string("alex"), string("zolotov"), integer(Long.valueOf(42)))))),
-      plist);
+    HashMap<String, PListValue> map = new HashMap<String, PListValue>() {{
+      put("list", array(string("alex"), string("zolotov"), integer(Long.valueOf(42))));
+    }};
+    assertEquals(Plist.fromMap(map), plist);
   }
 
   @Test
@@ -100,12 +100,15 @@ abstract public class PlistReaderTestCase {
                        "<key>lastname</key><string>zolotov</string>" +
                        "<key>age</key><integer>22</integer>" +
                        "</dict></dict>");
-    assertEquals(Plist.fromMap(
-      ContainerUtil.newHashMap(Pair.create("dict", dict(Plist.fromMap(ContainerUtil.newHashMap(
-        Pair.create("name", string("alex")),
-        Pair.create("lastname", string("zolotov")),
-        Pair.create("age", integer(Long.valueOf(22)))
-      )))))), plist);
+    HashMap<String, PListValue> inner = new HashMap<String, PListValue>() {{
+      put("name", string("alex"));
+      put("lastname", string("zolotov"));
+      put("age", integer(Long.valueOf(22)));
+    }};
+    HashMap<String, PListValue> map = new HashMap<String, PListValue>() {{
+      put("dict", dict(Plist.fromMap(inner)));
+    }};
+    assertEquals(Plist.fromMap(map), plist);
   }
 
   @Test
@@ -121,9 +124,11 @@ abstract public class PlistReaderTestCase {
                        "<key>someKey2</key>" +
                        "<string>someValue2</string>" +
                        "</dict>");
-    assertEquals(Plist.fromMap(ContainerUtil.newLinkedHashMap(
-      Pair.create("someKey", string("someValue")),
-      Pair.create("someKey2", string("someValue2")))), plist);
+    HashMap<String, PListValue> map = new HashMap<String, PListValue>() {{
+      put("someKey", string("someValue"));
+      put("someKey2", string("someValue2"));
+    }};
+    assertEquals(Plist.fromMap(map), plist);
   }
 
   protected Plist read(String string) throws IOException {

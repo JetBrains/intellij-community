@@ -278,6 +278,13 @@ public class LongRangeSetTest {
       assertEquals(start, union, intervals.get(0));
     }
   }
+  
+  @Test
+  public void testSubtract() {
+    assertEquals("{Long.MIN_VALUE..-1, 1..9, 11..Long.MAX_VALUE}", all().subtract(modRange(0, 10, 2, 1)).toString());
+    assertEquals("{Long.MIN_VALUE+1..Long.MAX_VALUE}: odd", all().subtract(modRange(Long.MIN_VALUE, Long.MAX_VALUE, 2, 1)).toString());
+    assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE-1}: even", all().subtract(modRange(Long.MIN_VALUE, Long.MAX_VALUE, 2, 2)).toString());
+  }
 
   @Test
   public void testIntersectSubtractRandomized() {

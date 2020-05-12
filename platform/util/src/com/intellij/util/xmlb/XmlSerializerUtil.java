@@ -31,8 +31,7 @@ public final class XmlSerializerUtil {
     }
   }
 
-  @NotNull
-  public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
+  public static @NotNull List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
     return BeanBinding.getAccessors(aClass);
   }
 }

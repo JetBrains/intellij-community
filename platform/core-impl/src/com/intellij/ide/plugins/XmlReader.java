@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 final class XmlReader {
+  @SuppressWarnings("SSBasedInspection")
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
 
   static final String APPLICATION_SERVICE = "com.intellij.applicationService";
@@ -94,7 +95,7 @@ final class XmlReader {
     return descriptor;
   }
 
-  static void readListeners(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element list, @NotNull ContainerDescriptor containerDescriptor) {
+  static void readListeners(@NotNull Element list, @NotNull ContainerDescriptor containerDescriptor, @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
     List<Content> content = list.getContent();
     List<ListenerDescriptor> result = containerDescriptor.listeners;
     if (result == null) {
@@ -124,7 +125,7 @@ final class XmlReader {
       }
       else {
         result.add(new ListenerDescriptor(listenerClassName, topicClassName,
-                                          getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), descriptor));
+                                          getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), mainDescriptor));
       }
     }
   }
@@ -169,6 +170,10 @@ final class XmlReader {
           descriptor.myImplementationDetail = Boolean.parseBoolean(attribute.getValue());
           break;
 
+        case "require-restart":
+          descriptor.myRequireRestart = Boolean.parseBoolean(attribute.getValue());
+          break;
+
         case "version":
           String internalVersionString = StringUtil.nullize(attribute.getValue());
           if (internalVersionString != null) {
@@ -186,7 +191,7 @@ final class XmlReader {
 
   static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                    @NotNull IdeaPluginDescriptorImpl descriptor,
-                                   @NotNull DescriptorLoadingContext context,
+                                   @NotNull DescriptorListLoadingContext context,
                                    @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver,
                                    @NotNull List<PluginDependency> dependencies) {
     List<String> visitedFiles = null;
@@ -202,17 +207,17 @@ final class XmlReader {
       }
 
       if (pathResolver instanceof ClassPathXmlPathResolver &&
-          context.parentContext.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
+          context.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
         continue;
       }
 
       Element element;
       try {
-        element = pathResolver.resolvePath(descriptor.basePath, configFile, context.parentContext.getXmlFactory());
+        element = pathResolver.resolvePath(descriptor.basePath, configFile, context.getXmlFactory());
       }
       catch (IOException | JDOMException e) {
         String message = "Plugin " + rootDescriptor + " misses optional descriptor " + configFile;
-        if (context.parentContext.ignoreMissingSubDescriptor) {
+        if (context.ignoreMissingSubDescriptor) {
           LOG.info(message, e);
         }
         else {
@@ -222,7 +227,7 @@ final class XmlReader {
       }
 
       if (visitedFiles == null) {
-        visitedFiles = context.parentContext.getVisitedFiles();
+        visitedFiles = context.getVisitedFiles();
       }
 
       checkCycle(rootDescriptor, configFile, visitedFiles);

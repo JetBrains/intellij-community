@@ -3,6 +3,7 @@ package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.containers.map2Array
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.BooleanSupplier
@@ -47,14 +48,18 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
       fun inner() {
         if (attemptChain.size > 3000) {
           val lastCauses = attemptChain.takeLast(15)
-          LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastCauses.joinToString())
+          LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together",
+                    *lastCauses.map2Array { it.toString() })
         }
 
         if (condition?.asBoolean == false) return
         for (constraint in constraints) {
           if (!constraint.isCorrectContext()) {
             return constraint.schedule(Runnable {
-              LOG.assertTrue(constraint.isCorrectContext())
+              if (!constraint.isCorrectContext()) {
+                LOG.error("ContextConstraint scheduled into incorrect context: $constraint",
+                          *constraints.map2Array { it.toString() })
+              }
               attemptChain.add(constraint)
               inner()
             })

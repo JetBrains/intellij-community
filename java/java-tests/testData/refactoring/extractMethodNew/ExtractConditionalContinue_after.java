@@ -7,7 +7,10 @@ class Test {
     }
 
     private boolean newMethod(int x, int y) {
-        if (x == y) return true;
+        if (x == y) {
+            System.out.println();
+            return true;
+        }
         return false;
     }
 }

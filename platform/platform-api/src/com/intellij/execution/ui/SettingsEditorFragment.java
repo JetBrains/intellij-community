@@ -5,6 +5,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,16 +30,16 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final BiConsumer<Settings, C> myReset;
   private final BiConsumer<Settings, C> myApply;
   private final int myCommandLinePosition;
-  private final Predicate<Settings> myInitialVisibility;
+  private final Predicate<Settings> myInitialSelection;
 
   public SettingsEditorFragment(String id,
-                                String name,
-                                String group,
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String group,
                                 C component,
                                 int commandLinePosition,
                                 BiConsumer<Settings, C> reset,
                                 BiConsumer<Settings, C> apply,
-                                Predicate<Settings> initialVisibility) {
+                                Predicate<Settings> initialSelection) {
     myId = id;
     myName = name;
     myGroup = group;
@@ -46,13 +47,16 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myReset = reset;
     myApply = apply;
     myCommandLinePosition = commandLinePosition;
-    myInitialVisibility = initialVisibility;
+    myInitialSelection = initialSelection;
   }
 
-  public SettingsEditorFragment(String id, String name, String group, C component,
+  public SettingsEditorFragment(String id,
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String group,
+                                C component,
                                 BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply,
-                                Predicate<Settings> initialVisibility)  {
-    this(id, name, group, component, -1, reset, apply, initialVisibility);
+                                Predicate<Settings> initialSelection)  {
+    this(id, name, group, component, 0, reset, apply, initialSelection);
   }
 
   public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, Component<? super S> component) {
@@ -65,7 +69,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   public static <Settings> SettingsEditorFragment<Settings, JButton> createTag(String id, String name, String group,
                                                                                Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
     Ref<SettingsEditorFragment<Settings, JButton>> ref = new Ref<>();
-    TagButton button = new TagButton(name, () -> ref.get().setVisible(false));
+    TagButton button = new TagButton(name, () -> ref.get().setSelected(false));
     SettingsEditorFragment<Settings, JButton> fragment = new SettingsEditorFragment<Settings, JButton>(id, name, group, button,
                                                                                                        (settings, label) -> label.setVisible(getter.test(settings)),
                                                                                                        (settings, label) -> setter.accept(settings, label.isVisible()),
@@ -95,15 +99,15 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public boolean isTag() { return false; }
 
-  public boolean isVisible() {
+  public boolean isSelected() {
     return myComponent.isVisible();
   }
 
   public boolean isInitiallyVisible(Settings settings) {
-    return myInitialVisibility.test(settings);
+    return myInitialSelection.test(settings);
   }
 
-  public void setVisible(boolean selected) {
+  public void setSelected(boolean selected) {
     myComponent.setVisible(selected);
     fireEditorStateChanged();
   }
@@ -124,7 +128,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   @Override
   protected @NotNull JComponent createEditor() {
-    myComponent.setVisible(isVisible());
+    myComponent.setVisible(isSelected());
     return myComponent;
   }
 

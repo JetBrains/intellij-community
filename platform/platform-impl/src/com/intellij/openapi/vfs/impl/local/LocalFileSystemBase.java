@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtilRt;
@@ -34,35 +33,13 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class LocalFileSystemBase extends LocalFileSystem {
+public abstract class LocalFileSystemBase extends LocalFileSystemApi {
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
   private static final FileAttributes FAKE_ROOT_ATTRIBUTES =
     new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
-
-  @Override
-  @Nullable
-  public VirtualFile findFileByPath(@NotNull String path) {
-    return VfsImplUtil.findFileByPath(this, path);
-  }
-
-  @Override
-  public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return VfsImplUtil.findFileByPathIfCached(this, path);
-  }
-
-  @Override
-  @Nullable
-  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    return VfsImplUtil.refreshAndFindFileByPath(this, path);
-  }
-
-  @Override
-  public VirtualFile findFileByIoFile(@NotNull File file) {
-    return findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
-  }
 
   @NotNull
   private static File convertToIOFile(@NotNull VirtualFile file) {
@@ -71,6 +48,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       path += '/';  // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
     }
     return new File(path);
+  }
+
+  @Override
+  @Nullable
+  public Path getNioPath(@NotNull VirtualFile file) {
+    if (file.getFileSystem() != this) return null;
+    return convertToIOFile(file).toPath();
   }
 
   @NotNull
@@ -176,17 +160,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
-    String path = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    return refreshAndFindFileByPath(path);
-  }
-
-  @Override
-  public void refreshIoFiles(@NotNull Iterable<? extends File> files) {
-    refreshIoFiles(files, false, false, null);
-  }
-
-  @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
     VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
@@ -211,10 +184,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  @Override
-  public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files) {
-    refreshFiles(files, false, false, null);
-  }
 
   @Override
   public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {

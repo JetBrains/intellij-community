@@ -35,6 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -103,7 +104,7 @@ public final class PluginInstaller {
   }
 
   private static void uninstallAfterRestart(IdeaPluginDescriptor pluginDescriptor) throws IOException {
-    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
+    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath().toFile()));
   }
 
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent, IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
@@ -112,7 +113,12 @@ public final class PluginInstaller {
       : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate);
 
     if (uninstalledWithoutRestart) {
-      FileUtil.delete(pluginDescriptor.getPath());
+      try {
+        FileUtil.delete(pluginDescriptor.getPluginPath());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
     else {
       try {
@@ -125,14 +131,25 @@ public final class PluginInstaller {
     return uninstalledWithoutRestart;
   }
 
+  /**
+   * @deprecated Use {@link #installAfterRestart(File, boolean, Path, IdeaPluginDescriptor)}
+   */
+  @Deprecated
   public static void installAfterRestart(@NotNull File sourceFile,
                                          boolean deleteSourceFile,
                                          @Nullable File existingPlugin,
                                          @NotNull IdeaPluginDescriptor descriptor) throws IOException {
+    
+  }
+
+  public static void installAfterRestart(@NotNull File sourceFile,
+                                         boolean deleteSourceFile,
+                                         @Nullable Path existingPlugin,
+                                         @NotNull IdeaPluginDescriptor descriptor) throws IOException {
     List<StartupActionScriptManager.ActionCommand> commands = new ArrayList<>();
 
     if (existingPlugin != null) {
-      commands.add(new StartupActionScriptManager.DeleteCommand(existingPlugin));
+      commands.add(new StartupActionScriptManager.DeleteCommand(existingPlugin.toFile()));
     }
 
     String pluginsPath = PathManager.getPluginsPath();
@@ -158,19 +175,8 @@ public final class PluginInstaller {
     Ref<IOException> ref = new Ref<>();
     Ref<File> refTarget = new Ref<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      String pluginsPath = PathManager.getPluginsPath();
       try {
-        File target;
-        if (sourceFile.getName().endsWith(".jar")) {
-          target = new File(pluginsPath, sourceFile.getName());
-          FileUtilRt.copy(sourceFile, target);
-        }
-        else {
-          target = new File(pluginsPath, rootEntryName(sourceFile));
-          FileUtil.delete(target);
-          new Decompressor.Zip(sourceFile).extract(new File(pluginsPath));
-        }
-        refTarget.set(target);
+        refTarget.set(unpackPlugin(sourceFile, PathManager.getPluginsPath()));
       }
       catch (IOException e) {
         ref.set(e);
@@ -182,6 +188,21 @@ public final class PluginInstaller {
     }
     PluginStateManager.fireState(descriptor, true);
     return exception != null ? null : refTarget.get();
+  }
+
+  @NotNull
+  public static File unpackPlugin(File sourceFile, String targetPath) throws IOException {
+    File target;
+    if (sourceFile.getName().endsWith(".jar")) {
+      target = new File(targetPath, sourceFile.getName());
+      FileUtilRt.copy(sourceFile, target);
+    }
+    else {
+      target = new File(targetPath, rootEntryName(sourceFile));
+      FileUtil.delete(target);
+      new Decompressor.Zip(sourceFile).extract(new File(targetPath));
+    }
+    return target;
   }
 
   private static String rootEntryName(File zip) throws IOException {
@@ -210,7 +231,7 @@ public final class PluginInstaller {
                                 @NotNull Consumer<? super PluginInstallCallbackData> callback,
                                 @Nullable Component parent) {
     try {
-      IdeaPluginDescriptorImpl pluginDescriptor = PluginManager.loadDescriptorFromArtifact(file.toPath(), null);
+      IdeaPluginDescriptorImpl pluginDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(file.toPath(), null);
       if (pluginDescriptor == null) {
         MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getName()), CommonBundle.getErrorTitle());
         return false;
@@ -248,9 +269,9 @@ public final class PluginInstaller {
         return false;
       }
 
-      File oldFile = null;
+      Path oldFile = null;
       if (installedPlugin != null && !installedPlugin.isBundled()) {
-        oldFile = installedPlugin.getPath();
+        oldFile = installedPlugin.getPluginPath();
       }
 
       boolean installWithoutRestart = oldFile == null && DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);

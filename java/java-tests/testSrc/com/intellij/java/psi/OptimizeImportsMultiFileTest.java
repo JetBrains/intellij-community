@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -46,5 +47,52 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
     });
     String textAfter = VfsUtilCore.loadText(x);
     assertEquals(textBefore, textAfter);
+  }
+
+  public void testOptimizeImportsMustAddUnambiguousImportsIfTheCorrespondingSettingIsOn() throws Exception {
+    boolean importsOnTheFly = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    try {
+      VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, OptimizeImportsTest.BASE_PATH + "/src1", myFilesToDelete, false);
+      PsiTestUtil.addSourceRoot(getModule(), root);
+      PsiDirectory directory = myPsiManager.findDirectory(root);
+      assertNotNull(directory);
+      new OptimizeImportsProcessor(getProject(), directory, true).run();
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        ApplicationManager.getApplication().saveAll();
+      });
+      String text1After = VfsUtilCore.loadText(root.findFileByRelativePath("p/X1.java"));
+      assertTrue(text1After, text1After.contains("import java.util.ArrayList;"));
+      String text2After = VfsUtilCore.loadText(root.findFileByRelativePath("p/X2.java"));
+      assertTrue(text2After, text2After.contains("import java.util.ArrayList;"));
+    }
+    finally {
+      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = importsOnTheFly;
+    }
+  }
+  public void testOptimizeImportsMustNotAddUnambiguousImportsIfTheCorrespondingSettingIsOff() throws Exception {
+    boolean importsOnTheFly = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
+    try {
+      VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, OptimizeImportsTest.BASE_PATH + "/src1", myFilesToDelete, false);
+      PsiTestUtil.addSourceRoot(getModule(), root);
+      PsiDirectory directory = myPsiManager.findDirectory(root);
+      assertNotNull(directory);
+      new OptimizeImportsProcessor(getProject(), directory, true).run();
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        ApplicationManager.getApplication().saveAll();
+      });
+      String text1After = VfsUtilCore.loadText(root.findFileByRelativePath("p/X1.java"));
+      assertFalse(text1After, text1After.contains("import java.util.ArrayList;"));
+      String text2After = VfsUtilCore.loadText(root.findFileByRelativePath("p/X2.java"));
+      assertFalse(text2After, text2After.contains("import java.util.ArrayList;"));
+    }
+    finally {
+      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = importsOnTheFly;
+    }
   }
 }

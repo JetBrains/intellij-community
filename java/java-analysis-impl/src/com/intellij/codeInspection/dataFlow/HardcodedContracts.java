@@ -164,8 +164,11 @@ public class HardcodedContracts {
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
-    if (owner == null ||
-        InjectedLanguageManager.getInstance(owner.getProject()).isInjectedFragment(owner.getContainingFile())) {
+    if (owner == null) {
+      return Collections.emptyList();
+    }
+    PsiFile file = owner.getContainingFile();
+    if (file != null && InjectedLanguageManager.getInstance(owner.getProject()).isInjectedFragment(file)) {
       return Collections.emptyList();
     }
 

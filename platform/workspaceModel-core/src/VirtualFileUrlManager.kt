@@ -3,32 +3,41 @@ package com.intellij.workspace.api
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SmartList
-import com.intellij.util.containers.IntArrayList
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlin.collections.set
 
-open class VirtualFileUrlManager {
+interface VirtualFileUrlManager {
+  companion object
+  fun fromUrl(url: String): VirtualFileUrl
+  fun fromPath(path: String): VirtualFileUrl
+  fun getParentVirtualUrlById(id: Int): VirtualFileUrl?
+  fun getUrlById(id: Int): String
+  fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean
+}
+
+class VirtualFileUrlManagerImpl: VirtualFileUrlManager {
   private val idGenerator= IntIdGenerator()
   private val EMPTY_URL = VirtualFileUrl(0, this)
   private val fileNameStore = VirtualFileNameStore()
-  private val id2NodeMapping = THashMap<Int, FilePathNode>()
+  private val id2NodeMapping = Int2ObjectOpenHashMap<FilePathNode>()
   private val rootNode = FilePathNode(0, 0)
 
   @Synchronized
-  fun fromUrl(url: String): VirtualFileUrl {
+  override fun fromUrl(url: String): VirtualFileUrl {
     if (url.isEmpty()) return EMPTY_URL
     return add(url)
   }
 
-  fun fromPath(path: String): VirtualFileUrl {
+  override fun fromPath(path: String): VirtualFileUrl {
     return fromUrl("file://${FileUtil.toSystemIndependentName(path)}")
   }
 
   @Synchronized
-  fun getParentVirtualUrlById(id: Int): VirtualFileUrl? = id2NodeMapping[id]?.parent?.let { VirtualFileUrl(it.nodeId, this) }
+  override fun getParentVirtualUrlById(id: Int): VirtualFileUrl? = id2NodeMapping.get(id)?.parent?.let { VirtualFileUrl(it.nodeId, this) }
 
   @Synchronized
-  fun getUrlById(id: Int): String {
+  override fun getUrlById(id: Int): String {
     if (id <= 0) return ""
 
     var node = id2NodeMapping[id]
@@ -38,14 +47,14 @@ open class VirtualFileUrlManager {
       node = node.parent
     }
 
-    if (contentIds.size() == 1) {
-      return fileNameStore.getNameForId(contentIds[0])?.let {
+    if (contentIds.size == 1) {
+      return fileNameStore.getNameForId(contentIds.getInt(0))?.let {
         return@let if (it.isEmpty()) "/" else it
       } ?: ""
     }
     val builder = StringBuilder()
-    for (index in contentIds.size() - 1 downTo 0) {
-      builder.append(fileNameStore.getNameForId(contentIds[index]))
+    for (index in contentIds.size - 1 downTo 0) {
+      builder.append(fileNameStore.getNameForId(contentIds.getInt(index)))
       if (index != 0) builder.append("/")
     }
     return builder.toString()
@@ -171,7 +180,7 @@ open class VirtualFileUrlManager {
 
   fun print() = rootNode.print()
 
-  fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
+  override fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
     if (parentNodeId == 0 && childNodeId == 0) return true
 
     var current = childNodeId
@@ -199,35 +208,35 @@ open class VirtualFileUrlManager {
   private inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
     private var children: MutableList<FilePathNode>? = null
 
-    internal fun findChild(nameId: Int): FilePathNode? {
+    fun findChild(nameId: Int): FilePathNode? {
       // If search of child node will be slow, replace SmartList to THashSet
       // For now SmartList reduce 500Kb memory on IDEA project
       return children?.find { it.contentId == nameId }
     }
 
-    internal fun addChild(newNode: FilePathNode) {
+    fun addChild(newNode: FilePathNode) {
       createChildrenList()
       children!!.add(newNode)
     }
 
-    internal fun removeChild(node: FilePathNode) {
+    fun removeChild(node: FilePathNode) {
       children?.remove(node)
     }
 
-    internal fun isEmpty() = children == null || children!!.isEmpty()
+    fun isEmpty() = children == null || children!!.isEmpty()
 
     private fun createChildrenList() {
       if (children == null) children = SmartList()
     }
 
-    internal fun print(): String {
+    fun print(): String {
       val buffer = StringBuilder()
       print(buffer, "", "")
       return buffer.toString()
     }
 
     private fun print(buffer: StringBuilder, prefix: String, childrenPrefix: String) {
-      val name = this@VirtualFileUrlManager.fileNameStore.getNameForId(contentId)
+      val name = this@VirtualFileUrlManagerImpl.fileNameStore.getNameForId(contentId)
       if (name != null) buffer.append("$prefix $name\n")
       val iterator = children?.iterator() ?: return
       while (iterator.hasNext()) {

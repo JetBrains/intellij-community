@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -16,7 +16,6 @@ import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -25,6 +24,7 @@ import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ import java.util.*;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
-public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
+public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
   private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentIndex.class);
 
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
@@ -74,7 +74,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
           final String name = getMethodName(lighterAst, element, element.getTokenType());
           if (name != null) {
             for (int i = 0; i < indices.size(); i++) {
-              result.put(new MethodCallData(name, indices.get(i)), null);
+              result.put(new MethodCallData(name, indices.getInt(i)), null);
             }
           }
         }

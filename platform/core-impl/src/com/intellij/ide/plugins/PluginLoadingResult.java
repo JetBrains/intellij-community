@@ -68,6 +68,16 @@ final class PluginLoadingResult {
     this.enabledPlugins = Arrays.asList(enabledPlugins);
   }
 
+  boolean isBroken(@NotNull PluginId id) {
+    Set<String> set = brokenPluginVersions.get(id);
+    if (set == null) {
+      return false;
+    }
+
+    IdeaPluginDescriptorImpl descriptor = idMap.get(id);
+    return descriptor != null && set.contains(descriptor.getVersion());
+  }
+
   @NotNull List<PluginError> getErrors() {
     if (errors.isEmpty()) {
       return Collections.emptyList();

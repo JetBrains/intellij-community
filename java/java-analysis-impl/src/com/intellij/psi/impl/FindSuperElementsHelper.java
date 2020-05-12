@@ -166,10 +166,6 @@ public class FindSuperElementsHelper {
     @Nullable
     private SiblingInfo findSibling(@NotNull PsiClass inheritor, @NotNull PsiClass anInterface, @NotNull PsiMethod method) {
       for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
-        PsiElement navigationElement = superMethod.getNavigationElement();
-        if (!(navigationElement instanceof PsiMethod)) continue; // Kotlin
-        superMethod = (PsiMethod)navigationElement;
-        ProgressManager.checkCanceled();
         PsiClass superInterface = superMethod.getContainingClass();
         if (superInterface == null || myContainingClass.isInheritor(superInterface, true)) {
           // if containingClass implements the superInterface then it's not a sibling inheritance but a pretty boring the usual one
@@ -177,7 +173,10 @@ public class FindSuperElementsHelper {
         }
 
         if (isOverridden(inheritor, method, superMethod, superInterface)) {
-          return new SiblingInfo(superMethod, inheritor);
+          PsiElement navigationElement = superMethod.getNavigationElement();
+          if (!(navigationElement instanceof PsiMethod)) continue; // Kotlin
+
+          return new SiblingInfo((PsiMethod)navigationElement, inheritor);
         }
       }
       return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 
-class WrappingAccessor extends MagicIntegerConstAccessor {
-
+final class WrappingAccessor extends MagicIntegerConstAccessor {
   WrappingAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field,
           new int[]{
@@ -25,5 +24,4 @@ class WrappingAccessor extends MagicIntegerConstAccessor {
             "split_into_lines",
           });
   }
-
 }

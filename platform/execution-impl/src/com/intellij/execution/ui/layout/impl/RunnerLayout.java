@@ -10,19 +10,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
-import javax.swing.Icon;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.*;
 
 public class RunnerLayout  {
   public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
@@ -32,7 +27,7 @@ public class RunnerLayout  {
   private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<>();
 
   protected Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
-  private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<>();
+  private final Int2ObjectOpenHashMap<TabImpl.Default> myDefaultTabs = new Int2ObjectOpenHashMap<>();
 
   protected General myGeneral = new General();
   private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<>();

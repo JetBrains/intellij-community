@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -16,12 +15,10 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.MatchData;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
+import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.textmate.regex.RegexFacade.regex;
@@ -65,7 +62,7 @@ public final class SyntaxMatchUtils {
     List<SyntaxNodeDescriptor> children = syntaxNodeDescriptor.getChildren();
     for (SyntaxNodeDescriptor child : children) {
       resultState = moreImportantState(resultState, matchFirstChild(child, string, byteOffset, priority, currentScope));
-      if (resultState.matchData.matched() && resultState.matchData.byteOffset().getStartOffset() == byteOffset) {
+      if (resultState.matchData.matched() && resultState.matchData.byteOffset().start == byteOffset) {
         // optimization. There cannot be anything more `important` than current state matched from the very beginning
         break;
       }
@@ -101,8 +98,8 @@ public final class SyntaxMatchUtils {
     else if (!oldState.matchData.matched()) {
       return newState;
     }
-    int newScore = newState.matchData.byteOffset().getStartOffset();
-    int oldScore = oldState.matchData.byteOffset().getStartOffset();
+    int newScore = newState.matchData.byteOffset().start;
+    int oldScore = oldState.matchData.byteOffset().start;
     if (newScore < oldScore || newScore == oldScore && newState.priorityMatch.compareTo(oldState.priorityMatch) > 0) {
       if (!newState.matchData.byteOffset().isEmpty() || oldState.matchData.byteOffset().isEmpty() || hasBeginKey(newState)) {
         return newState;
@@ -142,7 +139,7 @@ public final class SyntaxMatchUtils {
                                                      @NotNull String s) {
     List<CaptureMatchData> result = new ArrayList<>();
     for (int index : captures.keys()) {
-      TextRange range = index < matchData.count() ? matchData.charRange(s, string.bytes, index) : TextRange.EMPTY_RANGE;
+      TextMateRange range = index < matchData.count() ? matchData.charRange(s, string.bytes, index) : TextMateRange.EMPTY_RANGE;
       result.add(new CaptureMatchData(range, index, captures.get(index)));
     }
     return result;
@@ -196,8 +193,8 @@ public final class SyntaxMatchUtils {
           digitIndex++;
         }
         if (hasGroupIndex && matchData.count() > groupIndex) {
-          TextRange range = matchData.byteOffset(groupIndex);
-          StringUtil.escapeToRegexp(new String(string.bytes, range.getStartOffset(), range.getLength(), StandardCharsets.UTF_8), result);
+          TextMateRange range = matchData.byteOffset(groupIndex);
+          StringUtil.escapeToRegexp(new String(string.bytes, range.start, range.getLength(), StandardCharsets.UTF_8), result);
           charIndex = digitIndex;
           continue;
         }
@@ -209,7 +206,7 @@ public final class SyntaxMatchUtils {
   }
 
   @NotNull
-  public static String selectorsToScope(@NotNull List<CharSequence> selectors) {
+  public static String selectorsToScope(@NotNull Collection<CharSequence> selectors) {
     return MY_SCOPES_INTERNER.computeIfAbsent(new ArrayList<>(selectors), SyntaxMatchUtils::joinSelectors);
   }
 

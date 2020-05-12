@@ -120,245 +120,245 @@ public class PyIntentionTest extends PyTestCase {
   */
 
   public void testSplitIf() {
-    doTest(PyBundle.message("INTN.split.if.text"));
+    doTest(PyPsiBundle.message("INTN.split.if.text"));
   }
 
   public void testNegateComparison() {
-    doTest(PyBundle.message("INTN.negate.$0.to.$1", "<=", ">"));
+    doTest(PyPsiBundle.message("INTN.negate.$0.to.$1", "<=", ">"));
   }
 
   public void testNegateComparison2() {
-    doTest(PyBundle.message("INTN.negate.$0.to.$1", ">", "<="));
+    doTest(PyPsiBundle.message("INTN.negate.$0.to.$1", ">", "<="));
   }
 
   public void testFlipComparison() {
-    doTest(PyBundle.message("INTN.flip.$0.to.$1", ">", "<"));
+    doTest(PyPsiBundle.message("INTN.flip.$0.to.$1", ">", "<"));
   }
 
   public void testReplaceListComprehensionWithFor() {
-    doTest(PyBundle.message("INTN.replace.list.comprehensions.with.for"));
+    doTest(PyPsiBundle.message("INTN.replace.list.comprehensions.with.for"));
   }
 
   public void testReplaceListComprehension2() {    //PY-6731
-    doTest(PyBundle.message("INTN.replace.list.comprehensions.with.for"));
+    doTest(PyPsiBundle.message("INTN.replace.list.comprehensions.with.for"));
   }
 
   public void testJoinIf() {
-    doTest(PyBundle.message("INTN.join.if.text"));
+    doTest(PyPsiBundle.message("INTN.join.if.text"));
   }
 
   public void testJoinIfElse() {
-    doNegativeTest(PyBundle.message("INTN.join.if.text"));
+    doNegativeTest(PyPsiBundle.message("INTN.join.if.text"));
   }
 
   public void testJoinIfBinary() {              //PY-4697
-    doTest(PyBundle.message("INTN.join.if.text"));
+    doTest(PyPsiBundle.message("INTN.join.if.text"));
   }
 
   public void testJoinIfMultiStatements() {           //PY-2970
-    doNegativeTest(PyBundle.message("INTN.join.if.text"));
+    doNegativeTest(PyPsiBundle.message("INTN.join.if.text"));
   }
 
   public void testDictConstructorToLiteralForm() {
-    doTest(PyBundle.message("INTN.convert.dict.constructor.to.dict.literal"));
+    doTest(PyPsiBundle.message("INTN.convert.dict.constructor.to.dict.literal"));
   }
 
   public void testDictLiteralFormToConstructor() {
-    doTest(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
+    doTest(PyPsiBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
   public void testDictLiteralFormToConstructor1() {      
-    doNegativeTest(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
   public void testDictLiteralFormToConstructor2() {      //PY-5157
-    doNegativeTest(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
   public void testDictLiteralFormToConstructor3() {
-    doNegativeTest(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
   public void testQuotedString() {      //PY-2915
-    doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
+    doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
   }
 
   public void testQuotedStringDoubleSlash() {      //PY-3295
-    doTest(PyBundle.message("INTN.quoted.string.single.to.double"));
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
   public void testEscapedQuotedString() { //PY-2656
-    doTest(PyBundle.message("INTN.quoted.string.single.to.double"));
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
   public void testDoubledQuotedString() { //PY-2689
-    doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
+    doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
   }
 
   public void testMultilineQuotedString() { //PY-8064
     getIndentOptions().INDENT_SIZE = 2;
-    doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
+    doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
   }
 
   public void testConvertLambdaToFunction() {
-    doTest(PyBundle.message("INTN.convert.lambda.to.function"));
+    doTest(PyPsiBundle.message("INTN.convert.lambda.to.function"));
   }
 
   public void testConvertLambdaToFunction1() {    //PY-6610
-    doNegativeTest(PyBundle.message("INTN.convert.lambda.to.function"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.lambda.to.function"));
   }
 
   public void testConvertLambdaToFunction2() {    //PY-6835
-    doTest(PyBundle.message("INTN.convert.lambda.to.function"));
+    doTest(PyPsiBundle.message("INTN.convert.lambda.to.function"));
   }
 
   public void testConvertVariadicParam() { //PY-2264
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-20254
   public void testConvertVariadicParamEmptySubscription() {
-    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-25035
   public void testConvertVariadicParamNoUsages() {
-    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-25035
   public void testConvertVariadicParamUnrelatedCaret() {
-    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   public void testConvertVariadicParamInvalidIdentifiers() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   public void testConvertVariadicParamPositionalContainerInPy2() {
-    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   public void testConvertVariadicParamPositionalContainerInPy3() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTest(PyBundle.message("INTN.convert.variadic.param")));
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTest(PyPsiBundle.message("INTN.convert.variadic.param")));
   }
 
   // PY-26284
   public void testConvertVariadicParamKeywordContainerPop() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26285
   public void testConvertVariadicParamOverriddenInNested() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26285
   public void testConvertVariadicParamNotOverriddenInNested() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-2264
   public void testConvertVariadicParamKwargsReused() {
-    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-2264
   public void testConvertVariadicParamUnpackedKwargsReused() {
-    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralSubscriptions() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralCalls() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralCallsWithSameDefaultValue() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralCallsWithDifferentDefaultValue() {
-    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralSubscriptionsAndCalls() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralSubscriptionsAndCallsWithSameDefaultValue() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralSubscriptionsAndCallsWithDifferentDefaultValue() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralCallsWithDifferentKeysCaretOnContainer() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralCallsWithDifferentKeysCaretOnAvailableKey() {
-    doTest(PyBundle.message("INTN.convert.variadic.param"));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26286
   public void testConvertVariadicParamSeveralCallsWithDifferentKeysCaretOnUnavailableKey() {
-    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   public void testConvertTripleQuotedString() { //PY-2697
-    doTest(PyBundle.message("INTN.triple.quoted.string"));
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   public void testConvertTripleQuotedString1() { //PY-7774
-    doTest(PyBundle.message("INTN.triple.quoted.string"));
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   public void testConvertTripleQuotedStringInParenthesized() { //PY-7883
-    doTest(PyBundle.message("INTN.triple.quoted.string"));
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   public void testConvertTripleQuotedUnicodeString() { //PY-7152
-    doTest(PyBundle.message("INTN.triple.quoted.string"));
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   public void testConvertTripleQuotedParenthesizedString() { //PY-7151
-    doTest(PyBundle.message("INTN.triple.quoted.string"));
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   // PY-8989
   public void testConvertTripleQuotedStringRawStrings() {
-    doTest(PyBundle.message("INTN.triple.quoted.string"));
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   // PY-8989
   public void testConvertTripleQuotedStringDoesNotReplacePythonEscapes() {
-    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
   }
 
   // PY-8989
   public void testConvertTripleQuotedStringMultilineGluedString() {
-    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
   }
 
   public void testConvertTripleQuotedEmptyString() {
-    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
   }
 
   public void testTransformConditionalExpression() { //PY-3094
-    doTest(PyBundle.message("INTN.transform.into.if.else.statement"));
+    doTest(PyPsiBundle.message("INTN.transform.into.if.else.statement"));
   }
 
   public void testImportFromToImport() {
@@ -397,7 +397,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring6() {         //PY-7973
-    doNegativeTest(PyBundle.message("INTN.specify.return.type"));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.return.type"));
   }
 
   public void testTypeInDocstring7() {         //PY-8930
@@ -410,19 +410,19 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testParamTypeInDocstringNotSuggestedForSelf() {
-    doNegativeTest(PyBundle.message("INTN.specify.type"));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type"));
   }
 
   public void testParamTypeInAnnotationNotSuggestedForSelf() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.specify.type.in.annotation")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation")));
   }
 
   public void testParamTypeInDocstringNotSuggestedForLambda() {
-    doNegativeTest(PyBundle.message("INTN.specify.type"));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type"));
   }
 
   public void testParamTypeInAnnotationNotSuggestedForLambda() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.specify.type.in.annotation")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation")));
   }
 
   // PY-16456
@@ -449,24 +449,24 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testReturnTypeInPy3Annotation() {      //PY-7085
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
   public void testReturnTypeInPy3Annotation1() {      //PY-8783
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
   public void testReturnTypeInPy3Annotation2() {      //PY-8783
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
   
   // PY-17094
   public void testReturnTypeInPy3AnnotationLocalFunction() {
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
   
   public void testReturnTypeInPy3AnnotationNoColon() {
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
   public void testTypeAnnotation3() {  //PY-7087
@@ -474,7 +474,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   private void doTypeAnnotationTest() {
-    doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
   public void testTypeAssertion() {
@@ -490,7 +490,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeAssertion3() {                   //PY-7403
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doNegativeTest(PyBundle.message("INTN.insert.assertion")));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doNegativeTest(PyPsiBundle.message("INTN.insert.assertion")));
   }
 
   public void testTypeAssertion4() {  //PY-7971
@@ -498,11 +498,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeAssertionInDictComp() {  //PY-7971
-    doNegativeTest(PyBundle.message("INTN.insert.assertion"));
+    doNegativeTest(PyPsiBundle.message("INTN.insert.assertion"));
   }
 
   private void doTestTypeAssertion() {
-    doTest(PyBundle.message("INTN.insert.assertion"));
+    doTest(PyPsiBundle.message("INTN.insert.assertion"));
   }
 
   public void testDocStub() {
@@ -784,35 +784,35 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-7383
   public void testYieldFrom() {
-    doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.yield.from"), LanguageLevel.PYTHON34);
   }
 
   public void testConvertStaticMethodToFunction() {
-    doTest(PyBundle.message("INTN.convert.static.method.to.function"));
+    doTest(PyPsiBundle.message("INTN.convert.static.method.to.function"));
   }
 
   public void testConvertStaticMethodToFunctionUsage() {
-    doTest(PyBundle.message("INTN.convert.static.method.to.function"));
+    doTest(PyPsiBundle.message("INTN.convert.static.method.to.function"));
   }
 
   private void doDocStubTest(@NotNull DocStringFormat format) {
     runWithDocStringFormat(format, () -> {
       CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;
-      doTest(PyBundle.message("INTN.doc.string.stub"), true);
+      doTest(PyPsiBundle.message("INTN.doc.string.stub"), true);
     });
   }
 
   private void doDocParamTypeTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.specify.type")));
+    runWithDocStringFormat(format, () -> doTest(PyPsiBundle.message("INTN.specify.type")));
   }
 
   private void doDocReturnTypeTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.specify.return.type")));
+    runWithDocStringFormat(format, () -> doTest(PyPsiBundle.message("INTN.specify.return.type")));
 
   }
 
   public void doDocAddMissingParamsTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.add.parameters.to.docstring")));
+    runWithDocStringFormat(format, () -> doTest(PyPsiBundle.message("INTN.add.parameters.to.docstring")));
 
   }
 }

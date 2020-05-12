@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * A download suggestion to fix a missing SDK by downloading it
  * @see com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
  */
-public interface UnknownSdkDownloadableSdkFix {
+public interface UnknownSdkDownloadableSdkFix extends UnknownSdkFixConfigurator {
   /** User visible description of the proposed download **/
   @NotNull
   String getDownloadDescription();

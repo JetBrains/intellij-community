@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.core;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * public for test purposes
@@ -51,18 +52,16 @@ public abstract class DimensionInfo {
     }
 
     myStretches = new int[getCellCount()];
-    for (int i = 0; i < myStretches.length; i++) {
-      myStretches[i] = 1;
-    }
+    Arrays.fill(myStretches, 1);
     //TODO[anton,vova] handle stretches
 
-    final ArrayList elimitated = new ArrayList();
-    mySpansAfterElimination = (int[])mySpan.clone();
-    Util.eliminate((int[])myCell.clone(), mySpansAfterElimination, elimitated);
+    final ArrayList<Integer> eliminated = new ArrayList<Integer>();
+    mySpansAfterElimination = mySpan.clone();
+    Util.eliminate(myCell.clone(), mySpansAfterElimination, eliminated);
 
     myCellSizePolicies = new int[getCellCount()];
     for (int i = 0; i < myCellSizePolicies.length; i++) {
-      myCellSizePolicies[i] = getCellSizePolicyImpl(i, elimitated);
+      myCellSizePolicies[i] = getCellSizePolicyImpl(i, eliminated);
     }
   }
 
@@ -117,13 +116,13 @@ public abstract class DimensionInfo {
     return myCellSizePolicies[cellIndex];
   }
   
-  private int getCellSizePolicyImpl(final int cellIndex, final ArrayList eliminatedCells){
+  private int getCellSizePolicyImpl(final int cellIndex, final ArrayList<Integer> eliminatedCells){
     int policyFromChild = getCellSizePolicyFromInheriting(cellIndex);
     if (policyFromChild != -1) {
       return policyFromChild;
     }
     for (int i = eliminatedCells.size() - 1; i >= 0; i--) {
-      if (cellIndex == ((Integer)eliminatedCells.get(i)).intValue()) {
+      if (cellIndex == eliminatedCells.get(i).intValue()) {
         return GridConstraints.SIZEPOLICY_CAN_SHRINK;
       }
     }

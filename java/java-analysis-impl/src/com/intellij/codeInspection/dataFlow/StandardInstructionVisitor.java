@@ -337,9 +337,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   protected void onTypeCast(PsiTypeCastExpression castExpression, DfaMemoryState state, boolean castPossible) {}
 
-  protected void beforeMethodCall(@NotNull PsiExpression expression,
-                                  @NotNull DfaCallArguments arguments,
-                                  @NotNull DfaMemoryState memState) {
+  protected void onMethodCall(@NotNull DfaValue result,
+                              @NotNull PsiExpression expression,
+                              @NotNull DfaCallArguments arguments,
+                              @NotNull DfaMemoryState memState) {
 
   }
 
@@ -348,17 +349,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValueFactory factory = runner.getFactory();
     DfaCallArguments callArguments = popCall(instruction, factory, memState);
 
-    if (callArguments.myArguments != null && instruction.getExpression() != null) {
-      beforeMethodCall(instruction.getExpression(), callArguments, memState);
-    }
-
     Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
 
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
     DfaValue defaultResult = getMethodResultValue(instruction, callArguments, memState, factory);
+    PsiExpression expression = instruction.getExpression();
     if (callArguments.myArguments != null && !(defaultResult.getDfType() instanceof DfConstantType)) {
       for (MethodContract contract : instruction.getContracts()) {
-        currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, instruction.getExpression());
+        currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, expression);
         if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
@@ -377,6 +375,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
     int i = 0;
     for (DfaMemoryState state : finalStates) {
+      if (expression != null) {
+        onMethodCall(state.peek(), expression, callArguments, state);
+      }
       callArguments.flush(state);
       pushExpressionResult(state.pop(), instruction, state);
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);

@@ -130,9 +130,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
     }
     if (visitors.isEmpty()) {
-      LOG.error("No visitors registered. list=" +
-                list +
-                "; all visitors are:" +
+      LOG.error("No visitors registered. list=" + list + "; all visitors are:" +
                 HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(myProject));
     }
 

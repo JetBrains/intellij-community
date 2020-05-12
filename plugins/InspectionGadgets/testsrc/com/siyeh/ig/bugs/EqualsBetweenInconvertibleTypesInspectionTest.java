@@ -16,24 +16,24 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
     doMemberTest("public void foo() {\n" +
                  "    final Integer foo = new Integer(3);\n" +
                  "    final Double bar = new Double(3);\n" +
-                 "    foo./*'equals()' between objects of inconvertible types 'Integer' and 'Double'*/equals/**/(bar);\n" +
+                 "    foo./*'equals' between objects of inconvertible types 'Integer' and 'Double'*/equals/**/(bar);\n" +
                  "}\n");
   }
 
   public void testWithoutQualifier() {
     doTest("class Clazz {\n" +
            "    void foo() {\n" +
-           "        boolean bar = /*'equals()' between objects of inconvertible types 'Clazz' and 'String'*/equals/**/(\"differentClass\");\n" +
+           "        boolean bar = /*'equals' between objects of inconvertible types 'Clazz' and 'String'*/equals/**/(\"differentClass\");\n" +
            "    }\n" +
            "}");
   }
 
   public void testJavaUtilObjectsEquals() {
-    doStatementTest("java.util.Objects./*'equals()' between objects of inconvertible types 'Integer' and 'String'*/equals/**/(Integer.valueOf(1), \"string\");");
+    doStatementTest("java.util.Objects./*'equals' between objects of inconvertible types 'Integer' and 'String'*/equals/**/(Integer.valueOf(1), \"string\");");
   }
 
   public void testComGoogleCommonBaseObjects() {
-    doStatementTest("com.google.common.base.Objects./*'equal()' between objects of inconvertible types 'Integer' and 'String'*/equal/**/(Integer.valueOf(1), \"string\");");
+    doStatementTest("com.google.common.base.Objects./*'equal' between objects of inconvertible types 'Integer' and 'String'*/equal/**/(Integer.valueOf(1), \"string\");");
   }
 
   public void testCollection() {
@@ -47,7 +47,7 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
       "  }" +
       "" +
       "  boolean n(Collection<Integer> c1, Collection<String> c2) {" +
-      "     return c1./*'equals()' between objects of inconvertible types 'Collection<Integer>' and 'Collection<String>'*/equals/**/(c2);" +
+      "     return c1./*'equals' between objects of inconvertible types 'Collection<Integer>' and 'Collection<String>'*/equals/**/(c2);" +
       "  }" +
       "}");
   }
@@ -68,10 +68,10 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "import java.util.function.*;\n" +
            "\n" +
            "class Test {\n" +
-           "  Predicate<Integer> p = \"123\"::/*'equals()' between objects of inconvertible types 'String' and 'Integer'*/equals/**/;\n" +
+           "  Predicate<Integer> p = \"123\"::/*'equals' between objects of inconvertible types 'String' and 'Integer'*/equals/**/;\n" +
            "  Predicate<CharSequence> pOk = \"456\"::equals;\n" +
-           "  BiPredicate<String, Integer> bp = Objects::/*'equals()' between objects of inconvertible types 'String' and 'Integer'*/equals/**/;\n" +
-           "  BiPredicate<Long, Double> bp2 = Object::/*'equals()' between objects of inconvertible types 'Long' and 'Double'*/equals/**/;\n" +
+           "  BiPredicate<String, Integer> bp = Objects::/*'equals' between objects of inconvertible types 'String' and 'Integer'*/equals/**/;\n" +
+           "  BiPredicate<Long, Double> bp2 = Object::/*'equals' between objects of inconvertible types 'Long' and 'Double'*/equals/**/;\n" +
            "  BiPredicate<Long, Long> bpOk = Object::equals;\n" +
            "}\n");
   }
@@ -119,8 +119,8 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "\n" +
            "class X {\n" +
            "  boolean test(Set<String> set, List<String> list) {\n" +
-           "    return set./*'equals()' between objects of inconvertible types 'Set<String>' and 'List<String>'*/equals/**/(list) || \n" +
-           "           list./*'equals()' between objects of inconvertible types 'List<String>' and 'Set<String>'*/equals/**/(set);\n" +
+           "    return set./*'equals' between objects of inconvertible types 'Set<String>' and 'List<String>'*/equals/**/(list) || \n" +
+           "           list./*'equals' between objects of inconvertible types 'List<String>' and 'Set<String>'*/equals/**/(set);\n" +
            "  }\n" +
            "}");
   }
@@ -147,7 +147,7 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "  }\n" +
            "\n" +
            "  boolean test2(HashSet<String> set1, TreeSet<Integer> set2) {\n" +
-           "    return set1./*'equals()' between objects of inconvertible types 'HashSet<String>' and 'TreeSet<Integer>'*/equals/**/(set2);\n" +
+           "    return set1./*'equals' between objects of inconvertible types 'HashSet<String>' and 'TreeSet<Integer>'*/equals/**/(set2);\n" +
            "  }\n" +
            "}");
   }
@@ -184,7 +184,7 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
     doTest("import java.util.*;" +
            "class X {{" +
            "    boolean equals = new HashSet<String>() {\n" +
-           "        }./*'equals()' between objects of inconvertible types 'HashSet<String>' and 'TreeSet<Integer>'*/equals/**/(new TreeSet<Integer>());" +
+           "        }./*'equals' between objects of inconvertible types 'HashSet<String>' and 'TreeSet<Integer>'*/equals/**/(new TreeSet<Integer>());" +
            "}}");
   }
 
@@ -201,9 +201,21 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
   public void testFBoundsWrong() {
     doTest("class U<T extends U<T, Q>, Q> {\n" +
            "  void m(U<?, Integer> u1, U<?, String> u2) {\n" +
-           "    if (u1./*'equals()' between objects of inconvertible types 'U<capture of ?, Integer>' and 'U<capture of ?, String>'*/equals/**/(u2)) {\n" +
+           "    if (u1./*'equals' between objects of inconvertible types 'U<capture of ?, Integer>' and 'U<capture of ?, String>'*/equals/**/(u2)) {\n" +
            "      System.out.println();\n" +
            "    }\n" +
+           "  }\n" +
+           "}");
+  }
+  
+  public void testCapture() {
+    doTest("class X<A, B> {\n" +
+           "  static final X<?, ?> CONST = new X<>();\n" +
+           "  static final X<Integer, String> CONST2 = new X<>();\n" +
+           "  \n" +
+           "  void test(X<?, ?>[] data) {\n" +
+           "    if (data[0] == CONST) {}\n" +
+           "    if (data[0] == CONST2) {}\n" +
            "  }\n" +
            "}");
   }

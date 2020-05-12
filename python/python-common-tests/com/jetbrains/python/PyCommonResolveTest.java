@@ -80,6 +80,11 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertResolvesTo(LanguageLevel.getLatest(), PyFunction.class, PyNames.CALL);
   }
 
+  // PY-17877, PY-41380
+  public void testInitializingNotToMetaclassSelfArgsKwargsDunderCall() {
+    assertResolvesTo(LanguageLevel.getLatest(), PyClass.class, "MyClass");
+  }
+
   public void testInitOrNewReturnsInitWhenNewIsFirst() {
     doTestInitOrNewReturnsInit();
   }

@@ -23,10 +23,10 @@ import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +78,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    */
   protected abstract PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception;
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NlsContexts.DialogTitle
   protected abstract String getErrorTitle();
 
   /**
@@ -89,7 +89,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     return "";
   }
 
-  @Nls
+  @NlsContexts.Command
   protected abstract String getActionName(PsiDirectory directory, String newName);
 
   @Override

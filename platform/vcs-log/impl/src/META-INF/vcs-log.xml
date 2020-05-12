@@ -188,6 +188,7 @@
       <reference id="Vcs.Log.ShowOnlyAffectedChanges"/>
       <separator/>
       <reference id="ChangesView.GroupBy"/>
+      <reference id="ChangesBrowser.FiltererGroup"/>
       <separator/>
       <reference id="Vcs.Log.LayoutConfiguration"/>
     </group>

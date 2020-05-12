@@ -1935,7 +1935,7 @@ public final class UIUtil {
     if (!(component instanceof JComponent)) {
       return;
     }
-    forEachComponentInHierarchy(component, __ -> component.doLayout());
+    forEachComponentInHierarchy(component, Component::doLayout);
   }
 
   @Language("HTML")

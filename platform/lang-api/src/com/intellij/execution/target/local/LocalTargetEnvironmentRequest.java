@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetPlatform;
 import com.intellij.execution.target.value.TargetValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
   public DownloadableVolume createDownloadRoot(@Nullable String remoteRootPath) {
     String id = nextSyntheticId();
     if (remoteRootPath == null) {
-      remoteRootPath = id;
+      remoteRootPath = "";
     }
     return myDownloadRoots.computeIfAbsent(remoteRootPath, path -> new LocalDownloadVolume(this, id, path));
   }
@@ -124,8 +125,9 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
       return TargetValue.fixed(fullPath);
     }
 
-    private static String concatPaths(String parent, String child) {
-      return parent + Platform.current().fileSeparator + child;
+    @NotNull
+    private static String concatPaths(@NotNull String parent, @NotNull String child) {
+      return StringUtil.isEmptyOrSpaces(parent) ? child : parent + Platform.current().fileSeparator + child;
     }
   }
 }

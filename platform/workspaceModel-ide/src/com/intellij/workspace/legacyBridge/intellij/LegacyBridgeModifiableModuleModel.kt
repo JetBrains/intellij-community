@@ -15,8 +15,8 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.NonPersistentEntitySource
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 
@@ -31,7 +31,7 @@ internal class LegacyBridgeModifiableModuleModel(
   private val myModulesToAdd = HashBiMap.create<String, LegacyBridgeModule>()
   private val myModulesToDispose = HashBiMap.create<String, LegacyBridgeModule>()
   private val myNewNameToModule = HashBiMap.create<String, LegacyBridgeModule>()
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   // TODO Add cache?
   override fun getModules(): Array<Module> {
@@ -75,14 +75,7 @@ internal class LegacyBridgeModifiableModuleModel(
     if (findModuleByName(moduleName) != null) {
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
-
-    // If module name equals to already unloaded module, the previous should be removed from store
-    val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(moduleName)
-    if (unloadedModuleDescription != null) {
-      val moduleEntity = entityStoreOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
-                         ?: error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
-      diff.removeEntity(moduleEntity)
-    }
+    removeUnloadedModule(moduleName)
 
     val entitySource = JpsProjectEntitiesLoader.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
@@ -113,6 +106,16 @@ internal class LegacyBridgeModifiableModuleModel(
     }
 
     return null
+  }
+
+  private fun removeUnloadedModule(moduleName: String) {
+    // If module name equals to already unloaded module, the previous should be removed from store
+    val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(moduleName)
+    if (unloadedModuleDescription != null) {
+      val moduleEntity = entityStoreOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
+                         ?: error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
+      diff.removeEntity(moduleEntity)
+    }
   }
 
   // TODO Actually load module content
@@ -210,14 +213,7 @@ internal class LegacyBridgeModifiableModuleModel(
     if (module.name != newName) { // if renaming to itself, forget it altogether
       myNewNameToModule[newName] = module
     }
-
-    // If module name equals to already unloaded module, the previous should be removed from store
-    val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(newName)
-    if (unloadedModuleDescription != null) {
-      val moduleEntity = entityStoreOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
-                         ?: error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
-      diff.removeEntity(moduleEntity)
-    }
+    removeUnloadedModule(newName)
 
     if (oldModule != null) {
       throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)

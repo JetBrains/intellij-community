@@ -20,19 +20,16 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.InspectionGadgetsBundle.BUNDLE;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
@@ -50,7 +47,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher STRING_SUBSTRING_TWO_ARG = exactInstanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int", "int");
   private static final CallMatcher STRING_SUBSTRING = anyOf(STRING_SUBSTRING_ONE_ARG, STRING_SUBSTRING_TWO_ARG);
   private static final CallMatcher STRING_BUILDER_APPEND =
-    instanceCall(CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
+    instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
+  private static final CallMatcher STRING_BUILDER_TO_STRING = instanceCall(JAVA_LANG_STRING_BUILDER, "toString").parameterCount(0);
   private static final CallMatcher PRINTSTREAM_PRINTLN = instanceCall("java.io.PrintStream", "println")
     .parameterTypes(JAVA_LANG_STRING);
   private static final CallMatcher METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER =
@@ -87,6 +85,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(STRING_TO_STRING, call -> getProblem(call, "inspection.redundant.string.call.message"))
       .register(STRING_SUBSTRING, this::getSubstringProblem)
       .register(STRING_BUILDER_APPEND, this::getAppendProblem)
+      .register(STRING_BUILDER_TO_STRING, this::getRedundantStringBuilderToStringProblem)
       .register(STRING_INTERN, this::getInternProblem)
       .register(PRINTSTREAM_PRINTLN, call -> getRedundantArgumentProblem(getSingleEmptyStringArgument(call)))
       .register(METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER, this::getRedundantZeroAsSecondParameterProblem)
@@ -116,7 +115,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     public void visitNewExpression(PsiNewExpression expression) {
       PsiJavaCodeReferenceElement classRef = expression.getClassReference();
       ProblemDescriptor descriptor = null;
-      if (ConstructionUtils.isReferenceTo(classRef, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
+      if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING_BUILDER, JAVA_LANG_STRING_BUFFER)) {
         descriptor = getRedundantArgumentProblem(getSingleEmptyStringArgument(expression));
       }
       else if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING) && !myInspection.ignoreStringConstructor) {
@@ -277,6 +276,82 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Nullable
+    private ProblemDescriptor getRedundantStringBuilderToStringProblem(@NotNull final PsiMethodCallExpression call) {
+      if (!ExpressionUtils.isConversionToStringNecessary(call, false)) {
+        // report naked `new StringBuilder().toString()`
+        final PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+        if (parent instanceof PsiPolyadicExpression) {
+          if (((PsiPolyadicExpression)parent).getOperationTokenType() != JavaTokenType.PLUS) return null;
+
+          final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+          final PsiExpression[] operands = polyadicExpression.getOperands();
+
+          final boolean hasStringOperand = Arrays.stream(operands)
+            .filter(operand -> operand != call)
+            .anyMatch(RedundantStringOperationVisitor::isOperandOfStringType);
+
+          if (!hasStringOperand) return null;
+        }
+        return getProblem(call, "inspection.redundant.string.call.message");
+      }
+
+      final PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
+      if (!STRING_SUBSTRING.test(substringCall)) return null;
+
+      return getProblem(call, "inspection.redundant.string.call.message");
+    }
+
+    @Contract("null -> false")
+    private static boolean isOperandOfStringType(final PsiExpression op) {
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(op);
+
+      if (operand == null) return false;
+
+      if (operand instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
+        final PsiElement resolve = referenceExpression.resolve();
+        final PsiType type;
+        if (resolve instanceof PsiVariable) {
+          type = ((PsiVariable)resolve).getType();
+        }
+        else if (resolve instanceof PsiMethod && ((PsiMethod)resolve).getReturnType() != null) {
+          type = ((PsiMethod)resolve).getReturnType();
+        }
+        else if (resolve instanceof PsiExpression && ((PsiExpression)resolve).getType() != null) {
+          type = ((PsiExpression)resolve).getType();
+        }
+        else {
+          return false;
+        }
+        if (type != null && type.equalsToText(String.class.getName())) {
+          return true;
+        }
+      }
+      else if (operand instanceof PsiMethodCallExpression) {
+        if (STRING_BUILDER_TO_STRING.matches(operand)) return false;
+
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method != null && method.getReturnType() != null && method.getReturnType().equalsToText(String.class.getName())) {
+          return true;
+        }
+      }
+      else if (operand instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression expression = (PsiPolyadicExpression)operand;
+        if (expression.getType() != null && expression.getType().equalsToText(String.class.getName())) {
+          return true;
+        }
+      }
+      else {
+        final String value = tryCast(ExpressionUtils.computeConstantExpression(operand), String.class);
+        if (value != null) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Nullable
     private ProblemDescriptor getInternProblem(PsiMethodCallExpression call) {
       return PsiUtil.isConstantExpression(call.getMethodExpression().getQualifierExpression())
              ? getProblem(call, "inspection.redundant.string.intern.on.constant.message")
@@ -290,7 +365,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       // s.lastIndexOf(..., s.length()) or s.lastIndexOf(..., s.length() - 1)
       if (stripped instanceof PsiBinaryExpression) {
         PsiBinaryExpression binOp = (PsiBinaryExpression)stripped;
-        if (binOp.getOperationTokenType().equals(JavaTokenType.MINUS) &&
+        if (binOp.getOperationTokenType() == JavaTokenType.MINUS &&
             ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(binOp.getROperand()), 1)) {
           stripped = binOp.getLOperand();
         }
@@ -647,7 +722,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     private static void extractSideEffects(PsiExpression result, PsiStatement statement) {
       List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(result);
-      if (Collections.singletonList(result).equals(sideEffects)) return;
+      if (Objects.equals(Collections.singletonList(result), sideEffects)) return;
 
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, result);
       if (statements.length > 0) {

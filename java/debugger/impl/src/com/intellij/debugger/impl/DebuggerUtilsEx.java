@@ -1055,7 +1055,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           if (res) {
             return true;
           }
-          PsiClass aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope());
+          PsiClass aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope(), true);
           return aClass != null && aClass.isInheritor(containingClass, true);
         }
       }

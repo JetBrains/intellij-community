@@ -182,7 +182,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     }
 
     private SvnChangeList getList() {
-      SvnChangeList list = myListsMap.get(myRevision);
+      SvnChangeList list = myListsMap.get(myRevision.getRevision().getNumber());
       if (list == null) {
         list = (SvnChangeList)SvnVcs.getInstance(myProject).loadRevisions(myFile, myRevision.getRevisionNumber());
         myListsMap.put(myRevision.getRevision().getNumber(), list);

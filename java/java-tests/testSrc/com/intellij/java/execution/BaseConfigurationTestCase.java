@@ -30,6 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -146,6 +147,16 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
     ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
     assertNotNull(fromContext);
     return (JUnitConfiguration)fromContext.getConfiguration();
+  }
+
+  protected TestNGConfiguration createTestNGConfiguration(@NotNull PsiElement psiElement,
+                                                          @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
+                                                          @NotNull MapDataContext dataContext) {
+    ConfigurationContext context = createContext(psiElement, dataContext);
+    RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);
+    ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
+    assertNotNull(fromContext);
+    return (TestNGConfiguration)fromContext.getConfiguration();
   }
 
   protected final <T extends RunConfiguration> T createConfiguration(@NotNull PsiElement psiElement) {

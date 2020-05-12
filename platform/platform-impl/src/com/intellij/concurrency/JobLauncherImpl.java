@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -11,7 +12,8 @@ import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
-import com.intellij.codeWithMe.ClientId;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +47,7 @@ public class JobLauncherImpl extends JobLauncher {
     Processor<? super T> processor = ((CoreProgressManager)pm).isPrioritizedThread(Thread.currentThread())
                                      ? t -> pm.computePrioritized(() -> thingProcessor.process(t))
                                      : thingProcessor;
-
+    processor = wrapWithIgnoringDumbMode(processor);
     processor = ClientId.decorateProcessor(processor);
 
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
@@ -102,6 +104,14 @@ public class JobLauncherImpl extends JobLauncher {
       throw new RuntimeException(e);
     }
     return applier.completeTaskWhichFailToAcquireReadAction();
+  }
+
+  private static <T> Processor<? super T> wrapWithIgnoringDumbMode(Processor<? super T> processor) {
+    DumbModeAccessType dumbModeAccessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
+    if (dumbModeAccessType == null) return processor;
+    return (t) -> {
+      return FileBasedIndex.getInstance().ignoreDumbMode(dumbModeAccessType, () -> processor.process(t));
+    };
   }
 
   // if {@code things} are too few to be processed in the real pool, returns TRUE if processed successfully, FALSE if not

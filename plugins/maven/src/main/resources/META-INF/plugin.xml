@@ -61,6 +61,7 @@
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
@@ -241,6 +242,10 @@
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
+
+    <registryKey key="maven.print.import.stacktraces" defaultValue="false"
+                 description="Print maven server stacktraces in log"/>
+
 
     <registryKey key="maven.build.tool.window.enabled" defaultValue="true"
                  description="Enable Maven tasks to use Build Tool Window"/>
@@ -574,6 +579,7 @@
       <reference id="Maven.RunBuild"/>
       <reference id="Maven.ExecuteGoal"/>
       <reference id="Maven.ToggleOffline"/>
+      <reference id="ExternalSystem.ToggleAutoReload"/>
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>

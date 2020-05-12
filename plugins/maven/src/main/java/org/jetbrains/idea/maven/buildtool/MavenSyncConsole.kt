@@ -21,6 +21,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
+import com.intellij.util.ExceptionUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.buildtool.quickfix.OffMavenOfflineModeQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
@@ -90,7 +92,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  fun addText(parentId: Any, text: String, stdout: Boolean) = doIfImportInProcess {
+  private fun addText(parentId: Any, text: String, stdout: Boolean) = doIfImportInProcess {
     if (StringUtil.isEmpty(text)) {
       return
     }
@@ -110,6 +112,7 @@ class MavenSyncConsole(private val myProject: Project) {
     debugLog("Maven sync: finishImport")
     doFinish()
   }
+
 
   @Synchronized
   fun terminated(exitCode: Int) = doIfImportInProcess {
@@ -132,6 +135,21 @@ class MavenSyncConsole(private val myProject: Project) {
     mySyncView.onEvent(mySyncId,
                        FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("maven.sync.group.error"), desc, desc,
                                             FilePosition(File(file.path), -1, -1)))
+  }
+
+  @Synchronized
+  @ApiStatus.Internal
+  fun addException(e: Throwable, progressListener: BuildProgressListener) {
+    if(started && !finished){
+      MavenLog.LOG.warn(e)
+      hasErrors = true
+      mySyncView.onEvent(mySyncId,
+                         MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, "Error", e.localizedMessage, ExceptionUtil.getThrowableText(e)));
+    } else {
+      this.startImport(progressListener);
+      this.addException(e, progressListener)
+      this.finishImport();
+    }
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
@@ -263,6 +281,19 @@ class MavenSyncConsole(private val myProject: Project) {
       override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix(), UseBundledMavenQuickFix())
       override fun getNavigatable(project: Project): Navigatable? = null
     }, kind))
+  }
+
+  @Synchronized
+  fun showQuickFixJDK(version: String) {
+    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
+      override val title = SyncBundle.message("maven.sync.quickfixes.maven.jdk.version.title")
+      override val description: String = SyncBundle.message("maven.sync.quickfixes.upgrade.to.jdk7", version) + "\n" +
+                                         "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">" +
+                                         SyncBundle.message("maven.sync.quickfixes.open.settings") +
+                                         "</a>\n"
+      override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix())
+      override fun getNavigatable(project: Project): Navigatable? = null
+    }, MessageEvent.Kind.ERROR))
   }
 
   private fun isJavadocOrSource(dependency: String): Boolean {

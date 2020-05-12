@@ -111,12 +111,12 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
             }
             break;
           case 'M':
-            if (hasNeighbor("HhKk", prev, next)) {
+            if (hasNeighbor("HhKk", prev, next) && !hasNeighbor("yd", prev, next)) {
               return new Problem(token, "month", "minute");
             }
             break;
           case 'm':
-            if (hasNeighbor("yd", prev, next)) {
+            if (hasNeighbor("yd", prev, next) && !hasNeighbor("HhKk", prev, next)) {
               return new Problem(token, "minute", "month");
             }
             break;

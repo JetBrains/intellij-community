@@ -5,10 +5,8 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +19,6 @@ public class ProjectProblemPassFactory implements TextEditorHighlightingPassFact
   @Nullable
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!Registry.is("project.problems.view") && !ApplicationManager.getApplication().isUnitTestMode()) return null;
     PsiJavaFile javaFile = tryCast(file, PsiJavaFile.class);
     if (javaFile == null || !ProjectProblemInlaySettingsProvider.hintsEnabled()) return null;
     return new ProjectProblemPass(editor, javaFile);

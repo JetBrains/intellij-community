@@ -57,8 +57,8 @@ abstract class SourceOperation implements Operation {
     }
 
     @Override
-    public void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {
-      myArg = FunctionHelper.replaceVarReference(myArg, oldName, newName, context);
+    public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
+      myArg = FunctionHelper.replaceVarReference(myArg, oldName, newVar.getName(), context);
     }
 
     @Nullable
@@ -101,8 +101,8 @@ abstract class SourceOperation implements Operation {
     }
 
     @Override
-    public void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {
-      myArg = FunctionHelper.replaceVarReference(myArg, oldName, newName, context);
+    public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
+      myArg = FunctionHelper.replaceVarReference(myArg, oldName, newVar.getName(), context);
     }
 
     @Nullable

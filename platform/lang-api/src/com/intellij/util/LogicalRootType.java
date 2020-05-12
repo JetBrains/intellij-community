@@ -19,8 +19,9 @@ package com.intellij.util;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * @author spleaner
+ * @deprecated see {@link LogicalRootsManager} for details
  */
+@Deprecated
 public class LogicalRootType<T extends LogicalRoot> {
   public static final LogicalRootType<VirtualFileLogicalRoot> SOURCE_ROOT = create("Source root");
   private final String myName;

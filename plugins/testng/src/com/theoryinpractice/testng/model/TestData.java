@@ -14,17 +14,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
+
+import java.util.*;
 
 /**
  * @author Hani Suleiman
@@ -80,6 +74,7 @@ public class TestData implements Cloneable
     return METHOD_NAME == null ? "" : METHOD_NAME;
   }
 
+  @NotNull
   public String getSuiteName() {
     return SUITE_NAME == null ? "" : SUITE_NAME;
   }

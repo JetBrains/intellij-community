@@ -29,7 +29,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
   private val LOG = Logger.getInstance(javaClass)
 
   private val cacheFile: File
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val serializer: EntityStorageSerializer = KryoEntityStorageSerializer(PluginAwareEntityTypesResolver, virtualFileManager)
 
   init {

@@ -906,6 +906,16 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-35235, PY-42281
+  public void testExpectedTypingLiteralReturnType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Literal\n" +
+                         "def foo() -> Literal[\"ok\"]:\n" +
+                         "    return \"ok\"")
+    );
+  }
+
   // PY-33500
   public void testImplicitGenericDunderCallCallOnTypedElement() {
     runWithLanguageLevel(

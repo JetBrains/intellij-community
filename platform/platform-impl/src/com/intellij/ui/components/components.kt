@@ -257,7 +257,8 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
         }
       }
     })
-  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, project)
+  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true,
+                                                         null /* infer disposable from UI context */)
 }
 
 @JvmOverloads

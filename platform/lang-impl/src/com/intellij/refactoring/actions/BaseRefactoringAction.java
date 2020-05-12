@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -212,7 +213,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     PsiFile file = dataContext.getData(CommonDataKeys.PSI_FILE);
     PsiElement element = dataContext.getData(CommonDataKeys.PSI_ELEMENT);
     Language[] languages = dataContext.getData(LangDataKeys.CONTEXT_LANGUAGES);
-    if (element == null || !isAvailableForLanguage(element.getLanguage())) {
+    if (element == null|| element instanceof SyntheticElement || !isAvailableForLanguage(element.getLanguage())) {
       if (file == null || editor == null) {
         return null;
       }
@@ -236,6 +237,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     }
   }
 
+  @NlsActions.ActionText
   @Nullable
   protected String getActionName(@NotNull DataContext dataContext) {
     return null;

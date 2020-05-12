@@ -168,6 +168,8 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
   }
 
   private object PySoftFileReferenceProvider : PsiReferenceProvider() {
+    override fun acceptsTarget(target: PsiElement): Boolean = target is PsiFileSystemItem
+
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<out PsiReference> {
       val expr = element as? PyStringLiteralExpression ?: return emptyArray()
       return PySoftFileReferenceSet(expr, this).allReferences

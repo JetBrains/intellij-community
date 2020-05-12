@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,9 +21,8 @@ import java.util.regex.Matcher;
 public final class JDOMXIncluder {
   private static final Logger LOG = Logger.getInstance(JDOMXIncluder.class);
   public static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
-    @NotNull
     @Override
-    public URL resolvePath(@NotNull String relativePath, @Nullable URL base) throws MalformedURLException {
+    public @NotNull URL resolvePath(@NotNull String relativePath, @Nullable URL base) throws MalformedURLException {
       return base == null ? new URL(relativePath) : new URL(base, relativePath);
     }
   };
@@ -46,8 +45,7 @@ public final class JDOMXIncluder {
   /**
    * The original element will be mutated in place.
    */
-  @NotNull
-  public static Element resolveRoot(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
+  public static @NotNull Element resolveRoot(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
     List<Element> resolved = new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original.clone(), base);
     if (resolved.size() == 1) {
       return resolved.get(0);
@@ -63,10 +61,9 @@ public final class JDOMXIncluder {
   /**
    * @deprecated Use {@link #resolveRoot(Element, URL)}
    */
-  @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public static Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
+  public static @NotNull Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
     return new Document(resolveRoot(original.getRootElement(), new URL((base))));
   }
 
@@ -90,13 +87,11 @@ public final class JDOMXIncluder {
     new JDOMXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
   }
 
-  @NotNull
-  public static List<Element> resolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
+  public static @NotNull List<Element> resolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
     return new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original, base);
   }
 
-  @NotNull
-  private List<Element> doResolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
+  private @NotNull List<Element> doResolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
     Stack<URL> bases = new Stack<>();
     if (base != null) {
       bases.push(base);
@@ -108,8 +103,7 @@ public final class JDOMXIncluder {
     return element.getName().equals(INCLUDE) && element.getNamespace().equals(JDOMUtil.XINCLUDE_NAMESPACE);
   }
 
-  @NotNull
-  private List<Element> resolve(@NotNull Element original, @NotNull Stack<URL> bases) throws XIncludeException, MalformedURLException {
+  private @NotNull List<Element> resolve(@NotNull Element original, @NotNull Stack<URL> bases) throws XIncludeException, MalformedURLException {
     if (isIncludeElement(original)) {
       return resolveXIncludeElement(original, bases);
     }
@@ -119,8 +113,7 @@ public final class JDOMXIncluder {
     }
   }
 
-  @NotNull
-  private List<Element> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<URL> bases)
+  private @NotNull List<Element> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<URL> bases)
     throws XIncludeException, MalformedURLException {
     URL base = null;
     if (!bases.isEmpty()) {
@@ -169,8 +162,7 @@ public final class JDOMXIncluder {
     return remoteParsed;
   }
 
-  @NotNull
-  private static List<Element> extractNeededChildren(@NotNull Element element, @NotNull List<Element> remoteElements) {
+  private static @NotNull List<Element> extractNeededChildren(@NotNull Element element, @NotNull List<Element> remoteElements) {
     final String xpointer = element.getAttributeValue(XPOINTER);
     if (xpointer == null) {
       return remoteElements;
@@ -204,14 +196,11 @@ public final class JDOMXIncluder {
     return new ArrayList<>(e.getChildren());
   }
 
-  @NotNull
-  private List<Element> parseRemote(@NotNull Stack<URL> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
+  private @NotNull List<Element> parseRemote(@NotNull Stack<URL> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
     try {
       bases.push(remote);
       Element root = JDOMUtil.loadResource(remote);
-      List<Element> list = resolve(root, bases);
-      bases.pop();
-      return list;
+      return resolve(root, bases);
     }
     catch (JDOMException e) {
       throw new XIncludeException(e);
@@ -226,6 +215,9 @@ public final class JDOMXIncluder {
         return Collections.emptyList();
       }
       throw new XIncludeException(e);
+    }
+    finally {
+      bases.pop();
     }
   }
 

@@ -68,6 +68,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public int JAVADOC_INFO_DELAY = 1000;
   public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
 
+  /**
+   * @deprecated use accessors instead
+   */
   @MagicConstant(intValues = {ALL, NONE, FIRST_LETTER})
   @Deprecated
   public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER;

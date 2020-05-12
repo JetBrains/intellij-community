@@ -1,9 +1,7 @@
 package org.jetbrains.plugins.textmate.bundles;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -67,7 +65,7 @@ public class Bundle {
     }
     catch (SecurityException ignore) {
     }
-    return files != null && files.length > 0 ? ContainerUtil.newHashSet(files) : Collections.emptySet();
+    return files != null && files.length > 0 ? new HashSet<>(Arrays.asList(files)) : Collections.emptySet();
   }
 
   @Override
@@ -99,7 +97,7 @@ public class Bundle {
     return plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList()).getStringArray();
   }
 
-  public List<Pair<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
+  public List<Map.Entry<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
     return Collections.singletonList(PreferencesReadUtil.retrieveSettingsPlist(plistReader.read(file)));
   }
 

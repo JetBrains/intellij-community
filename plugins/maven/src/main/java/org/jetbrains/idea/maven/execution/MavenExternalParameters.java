@@ -26,6 +26,7 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,8 +134,9 @@ public class MavenExternalParameters {
     if(mavenVersion == null) {
       throw new ExecutionException("Cannot run maven: Maven home " + mavenHome + " looks incorrect");
     }
-    String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Runner | JRE";
-    verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
+    if(!verifyMavenSdkRequirements(jdk, mavenVersion)){
+      throw new ExecutionException(RunnerBundle.message("maven.3.3.1.bad.jdk"));
+    }
 
     params.getProgramParametersList().addProperty("idea.version" + MavenUtil.getIdeaVersionToPassToMavenProcess());
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {

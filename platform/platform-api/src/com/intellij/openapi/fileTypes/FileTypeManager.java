@@ -25,8 +25,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
 
-  @NotNull
-  public static final Topic<FileTypeListener> TOPIC = new Topic<>("File types change", FileTypeListener.class);
+  public static final @NotNull Topic<FileTypeListener> TOPIC = new Topic<>(FileTypeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
    * Returns the singleton instance of the FileTypeManager component.
@@ -86,9 +85,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   @Deprecated
   public abstract String @NotNull [] getAssociatedExtensions(@NotNull FileType type);
 
-
-  @NotNull
-  public abstract List<FileNameMatcher> getAssociations(@NotNull FileType type);
+  public abstract @NotNull List<FileNameMatcher> getAssociations(@NotNull FileType type);
 
   /**
    * Adds a listener for receiving notifications about changes in the list of
@@ -118,12 +115,10 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @return Known file type or {@code null}. Never returns {@link FileTypes#UNKNOWN}.
    * @deprecated Use {@link #getKnownFileTypeOrAssociate(VirtualFile, Project)} instead
    */
-  @Nullable
   @Deprecated
-  public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) { return file.getFileType(); }
+  public @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) { return file.getFileType(); }
 
-  @Nullable
-  public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project);
+  public abstract @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project);
 
   /**
    * Returns the semicolon-delimited list of patterns for files and folders
@@ -132,8 +127,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *
    * @return Semicolon-delimited list of patterns.
    */
-  @NotNull
-  public abstract String getIgnoredFilesList();
+  public abstract @NotNull String getIgnoredFilesList();
 
   /**
    * Sets new list of semicolon-delimited patterns for files and folders which
@@ -171,11 +165,9 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   public abstract void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher);
 
-  @NotNull
-  public static FileNameMatcher parseFromString(@NotNull String pattern) {
+  public static @NotNull FileNameMatcher parseFromString(@NotNull String pattern) {
     return FileNameMatcherFactory.getInstance().createMatcher(pattern);
   }
 
-  @NotNull
-  public abstract FileType getStdFileType(@NotNull @NonNls String fileTypeName);
+  public abstract @NotNull FileType getStdFileType(@NotNull @NonNls String fileTypeName);
 }

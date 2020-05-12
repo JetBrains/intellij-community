@@ -180,6 +180,12 @@ class BuildOptions {
    */
   String hashAlgorithm = "SHA-384"
 
+  /**
+   * Enables module structure validation, false by default
+   */
+  static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
+  boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
+
   BuildOptions() {
     targetOS = System.getProperty("intellij.build.target.os")
     if (targetOS == OS_CURRENT) {

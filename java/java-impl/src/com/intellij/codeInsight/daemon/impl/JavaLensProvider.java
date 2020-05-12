@@ -31,11 +31,12 @@ import java.text.MessageFormat;
 import java.util.List;
 
 public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
-  private static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>("JavaLens");
+  private static final String CODE_LENS_ID = "JavaLens";
   private static final String FUS_GROUP_ID = "java.lens";
   private static final String USAGES_CLICKED_EVENT_ID = "usages.clicked";
   private static final String IMPLEMENTATIONS_CLICKED_EVENT_ID = "implementations.clicked";
   private static final String SETTING_CLICKED_EVENT_ID = "setting.clicked";
+  private static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>(CODE_LENS_ID);
 
   public interface InlResult {
     void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event);
@@ -216,7 +217,8 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
         Project project = element.getProject();
         FUCounterUsageLogger.getInstance().logEvent(project, FUS_GROUP_ID, SETTING_CLICKED_EVENT_ID);
-        InlayHintsConfigurable.showSettingsDialogForLanguage(project, element.getLanguage());
+        InlayHintsConfigurable.showSettingsDialogForLanguage(project, element.getLanguage(), model ->
+          model.getId().equals(CODE_LENS_ID));
       }
 
       @NotNull

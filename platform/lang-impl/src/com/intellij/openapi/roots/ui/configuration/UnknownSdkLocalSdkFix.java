@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Locally detected SDK to fix immediately
  */
-public interface UnknownSdkLocalSdkFix {
+public interface UnknownSdkLocalSdkFix extends UnknownSdkFixConfigurator {
   /**
    * @return the resolved home of the detected SDK to configure
    */

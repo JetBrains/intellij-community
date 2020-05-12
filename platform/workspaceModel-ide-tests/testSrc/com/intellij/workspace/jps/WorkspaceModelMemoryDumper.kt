@@ -8,7 +8,7 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.api.VirtualFileUrlManagerImpl
 import java.io.File
 import java.nio.file.Paths
 import kotlin.system.exitProcess

@@ -426,7 +426,15 @@ public abstract class DebuggerUtils {
   }
 
   @Nullable
-  public static PsiClass findClass(@NotNull String className, @NotNull Project project, final GlobalSearchScope scope) {
+  public static PsiClass findClass(@NotNull String className, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return findClass(className, project, scope, true);
+  }
+
+  @Nullable
+  public static PsiClass findClass(@NotNull String className,
+                                   @NotNull Project project,
+                                   @NotNull GlobalSearchScope scope,
+                                   boolean fallbackToAllScope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
       if (getArrayClass(className) != null) {
@@ -441,7 +449,7 @@ public abstract class DebuggerUtils {
 
       PsiManager psiManager = PsiManager.getInstance(project);
       PsiClass psiClass = ClassUtil.findPsiClass(psiManager, className, null, true, scope);
-      if (psiClass == null) {
+      if (psiClass == null && fallbackToAllScope) {
         GlobalSearchScope globalScope = GlobalSearchScope.allScope(project);
         if (!globalScope.equals(scope)) {
           psiClass = ClassUtil.findPsiClass(psiManager, className, null, true, globalScope);
@@ -491,19 +499,19 @@ public abstract class DebuggerUtils {
   public static boolean hasSideEffects(@Nullable PsiElement element) {
     return hasSideEffectsOrReferencesMissingVars(element, null);
   }
-  
+
   public static boolean hasSideEffectsOrReferencesMissingVars(@Nullable PsiElement element, @Nullable final Set<String> visibleLocalVariables) {
     if (element == null) {
       return false;
     }
     final Ref<Boolean> rv = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override 
+      @Override
       public void visitPostfixExpression(final PsiPostfixExpression expression) {
         rv.set(Boolean.TRUE);
       }
 
-      @Override 
+      @Override
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         final PsiElement psiElement = expression.resolve();
         if (psiElement instanceof PsiLocalVariable) {
@@ -525,7 +533,7 @@ public abstract class DebuggerUtils {
         }
       }
 
-      @Override 
+      @Override
       public void visitPrefixExpression(final PsiPrefixExpression expression) {
         final IElementType op = expression.getOperationTokenType();
         if (JavaTokenType.PLUSPLUS.equals(op) || JavaTokenType.MINUSMINUS.equals(op)) {
@@ -536,12 +544,12 @@ public abstract class DebuggerUtils {
         }
       }
 
-      @Override 
+      @Override
       public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
         rv.set(Boolean.TRUE);
       }
 
-      @Override 
+      @Override
       public void visitCallExpression(final PsiCallExpression callExpression) {
         rv.set(Boolean.TRUE);
         //final PsiMethod method = callExpression.resolveMethod();

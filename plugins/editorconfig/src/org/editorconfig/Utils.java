@@ -47,6 +47,8 @@ public class Utils {
 
   public static final  String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
 
+  public static final String PLUGIN_ID = "org.editorconfig.editorconfigjetbrains";
+
   private static boolean ourIsFullSettingsSupportEnabledInTest;
 
   public static String configValueForKey(List<? extends OutPair> outPairs, String key) {

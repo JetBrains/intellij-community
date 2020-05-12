@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.TestUtil;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
@@ -11,11 +9,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -78,8 +73,7 @@ public class PreferencesTest {
   @Test
   public void loadDisabledPairs() throws Exception {
     PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.LATEX);
-    Preferences preferences = ContainerUtil.getFirstItem(preferencesRegistry.getPreferences("text.tex constant.character.escape.tex"));
-    assertNotNull(preferences);
+    Preferences preferences = preferencesRegistry.getPreferences("text.tex constant.character.escape.tex").iterator().next();
     Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
     assertNotNull(smartTypingPairs);
     assertEquals(0, smartTypingPairs.size());
@@ -91,9 +85,9 @@ public class PreferencesTest {
     assertNotNull(bundle);
     final PreferencesRegistry preferencesRegistry = new PreferencesRegistry();
     for (File file : bundle.getPreferenceFiles()) {
-      for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
+      for (Map.Entry<String, Plist > settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
         if (settingsPair != null) {
-          preferencesRegistry.fillFromPList(settingsPair.first, settingsPair.second);
+          preferencesRegistry.fillFromPList(settingsPair.getKey(), settingsPair.getValue());
         }
       }
     }
@@ -116,5 +110,9 @@ public class PreferencesTest {
       }
     }
     return new Preferences("", highlightingPairs, smartTypingParis);
+  }
+
+  private static Set<TextMateBracePair> newHashSet(TextMateBracePair... pairs) {
+    return new HashSet<>(Arrays.asList(pairs));
   }
 }

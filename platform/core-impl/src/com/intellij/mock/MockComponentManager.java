@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager, MessageBusOwner {
-  private final MessageBus myMessageBus = new MessageBusFactoryImpl().createMessageBus(this);
+  private final MessageBus myMessageBus = MessageBusFactoryImpl.createRootBus(this);
   private final DefaultPicoContainer myPicoContainer;
   private final ExtensionsAreaImpl myExtensionArea;
 
@@ -134,9 +134,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return Conditions.alwaysFalse();
   }
 
-  @NotNull
   @Override
-  public Object createListener(@NotNull ListenerDescriptor descriptor) {
+  public @NotNull Object createListener(@NotNull ListenerDescriptor descriptor) {
     throw new UnsupportedOperationException();
   }
 }

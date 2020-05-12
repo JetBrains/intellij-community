@@ -7,6 +7,9 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.WithoutOwnBeforeRunSteps;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.FragmentedSettings;
+import com.intellij.execution.ui.RunConfigurationFragmentedEditor;
+import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -54,8 +57,8 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     return myEditor.selectTabAndGetEditor(editorClass);
   }
 
-  public ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings) {
-    myEditor = new ConfigurationSettingsEditor(settings);
+  private ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings, SettingsEditor<RunConfiguration> configurationEditor) {
+    myEditor = new ConfigurationSettingsEditor(settings, configurationEditor);
     myEditor.addSettingsEditorListener(editor -> fireStepsBeforeRunChanged());
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);
@@ -91,16 +94,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myDisclaimerPanel.setVisible(settings.isTemplate() && ProjectManager.getInstance().getOpenProjects().length != 0);
   }
 
-  public boolean isFragmented() {
-    return myEditor.isFragmented();
-  }
-
   @Override
   @NotNull
   protected JComponent createEditor() {
-    if (isFragmented()) {
-      return myEditor.getComponent();
-    }
     myComponentPlace.setLayout(new BorderLayout());
     myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
     DataManager.registerDataProvider(myWholePanel, dataId -> {
@@ -192,5 +188,13 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         }
       }
     });
+  }
+
+  public static SettingsEditor<RunnerAndConfigurationSettings> createWrapper(@NotNull RunnerAndConfigurationSettings settings) {
+    SettingsEditor<?> configurationEditor = settings.getConfiguration().getConfigurationEditor();
+    //noinspection unchecked
+    return configurationEditor instanceof RunConfigurationFragmentedEditor<?>
+           ? new RunnerAndConfigurationSettingsEditor(settings, (RunConfigurationFragmentedEditor<FragmentedSettings>)configurationEditor)
+           : new ConfigurationSettingsEditorWrapper(settings, (SettingsEditor<RunConfiguration>)configurationEditor);
   }
 }

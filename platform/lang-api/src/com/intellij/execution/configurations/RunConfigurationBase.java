@@ -235,13 +235,13 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   }
 
   @Override
-  public @NotNull Set<String> getVisibleFragments() {
-    return myOptions.getVisibleFragments();
+  public @NotNull Set<String> getSelectedOptions() {
+    return myOptions.getSelectedOptions();
   }
 
   @Override
-  public void setVisibleFragments(@NotNull Set<String> fragmentIds) {
-    myOptions.setVisibleFragments(fragmentIds);
+  public void setSelectedOptions(@NotNull Set<String> fragmentIds) {
+    myOptions.setSelectedOptions(fragmentIds);
   }
 
   @ApiStatus.Experimental

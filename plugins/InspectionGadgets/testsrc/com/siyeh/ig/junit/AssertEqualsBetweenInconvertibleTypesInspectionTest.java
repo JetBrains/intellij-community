@@ -14,6 +14,9 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
   public void testAssertEqualsBetweenInconvertibleTypesJUnit5() {
     doTest();
   }
+  public void testAssertEqualsBetweenInconvertibleTypesAssertJ() {
+    doTest();
+  }
 
   @Override
   protected String[] getEnvironmentClasses() {
@@ -24,7 +27,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
       "import java.lang.annotation.RetentionPolicy;" +
       "import java.lang.annotation.Target;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
-      "@Target({ElementType.METHOD})" +
+      "@Target(ElementType.METHOD)" +
       "public @interface Test {}",
       "package org.junit;" +
       "public class Assert {" +
@@ -41,7 +44,26 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
       "    public static void assertEquals(Object expected, Object actual) {}\n" +
       "    public static void assertEquals(Object expected, Object actual, String message) {}\n" +
       "    public static void assertEquals(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +
-      "}"
+      "}",
+
+      "package org.assertj.core.api;\n" +
+      "public class Assertions {\n" +
+      "  public static native <T> ObjectAssert<T> assertThat(T actual);\n" +
+      "}",
+
+      "package org.assertj.core.api;\n" +
+      "public class ObjectAssert<T> extends Assert<ObjectAssert<T>, T> {}",
+
+      "package org.assertj.core.api;\n" +
+      "public class Assert<SELF extends Assert<SELF, ACTUAL>, ACTUAL> extends Descriptable<SELF> {\n" +
+      "  public native SELF isEqualTo(Object expected);\n" +
+      "}",
+
+      "package org.assertj.core.api;\n" +
+      "public interface Descriptable<SELF> {\n" +
+      "  SELF describedAs(String description, Object... args);\n" +
+      "  SELF isEqualTo(Object expected);\n" +
+      "}",
     };
   }
 

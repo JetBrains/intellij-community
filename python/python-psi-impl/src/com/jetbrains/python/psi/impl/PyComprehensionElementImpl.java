@@ -30,7 +30,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
   @Override
   @Nullable
   public PyExpression getResultExpression() {
-    ASTNode[] exprs = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    ASTNode[] exprs = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     return exprs.length == 0 ? null : (PyExpression)exprs[0].getPsi();
   }
 
@@ -132,7 +132,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
     do {
       node = node.getTreeNext();
     }
-    while (node != null && !PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(node.getElementType()));
+    while (node != null && !PythonDialectsTokenSetProvider.getInstance().getExpressionTokens().contains(node.getElementType()));
     return node;
   }
 

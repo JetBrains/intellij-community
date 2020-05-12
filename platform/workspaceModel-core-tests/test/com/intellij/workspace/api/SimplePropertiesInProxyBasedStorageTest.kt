@@ -26,7 +26,7 @@ internal fun TypedEntityStorageBuilder.addSampleEntity(stringProperty: String,
                                                        source: EntitySource = SampleEntitySource("test"),
                                                        booleanProperty: Boolean = false,
                                                        stringListProperty: MutableList<String> = ArrayList(),
-                                                       virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager(),
+                                                       virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
                                                        fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp")): SampleEntity {
   return addEntity<ModifiableSampleEntity, SampleEntity>(source) {
     this.booleanProperty = booleanProperty
@@ -44,7 +44,7 @@ class SimplePropertiesInProxyBasedStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager()
+    virtualFileManager = VirtualFileUrlManagerImpl()
   }
 
   @Test

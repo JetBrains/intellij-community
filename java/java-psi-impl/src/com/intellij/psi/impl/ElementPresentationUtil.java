@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.IconWithToolTip;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
@@ -142,7 +143,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
 
   private static final TIntObjectHashMap<Icon> BASE_ICON = new TIntObjectHashMap<>(20);
   static {
-    BASE_ICON.put(CLASS_KIND_CLASS, CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_CLASS, IconWithToolTip.tooltipOnlyIfComposite(CLASS_ICON));
     BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_ANNOTATION, ANNOTATION_TYPE_ICON);
     BASE_ICON.put(CLASS_KIND_ANNOTATION | FLAGS_ABSTRACT, ANNOTATION_TYPE_ICON);
@@ -154,9 +155,9 @@ public final class ElementPresentationUtil implements PlatformIcons {
     BASE_ICON.put(CLASS_KIND_ENUM | FLAGS_ABSTRACT, ENUM_ICON);
     BASE_ICON.put(CLASS_KIND_EXCEPTION, EXCEPTION_CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, AllIcons.Nodes.AbstractException);
-    BASE_ICON.put(CLASS_KIND_INTERFACE, INTERFACE_ICON);
-    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, INTERFACE_ICON);
-    BASE_ICON.put(CLASS_KIND_JUNIT_TEST, CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_INTERFACE, IconWithToolTip.tooltipOnlyIfComposite(INTERFACE_ICON));
+    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, IconWithToolTip.tooltipOnlyIfComposite(INTERFACE_ICON));
+    BASE_ICON.put(CLASS_KIND_JUNIT_TEST, IconWithToolTip.tooltipOnlyIfComposite(CLASS_ICON));
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_RECORD, RECORD_ICON);
     BASE_ICON.put(CLASS_KIND_RUNNABLE, CLASS_ICON);

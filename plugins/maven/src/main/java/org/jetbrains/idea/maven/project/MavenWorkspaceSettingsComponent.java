@@ -52,8 +52,5 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
     if (StringUtil.isEmptyOrSpaces(settings.generalSettings.getMavenHome())) {
       settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
     }
-    else {
-      MavenServerManager.getInstance().setMavenHome(settings.generalSettings.getMavenHome());
-    }
   }
 }

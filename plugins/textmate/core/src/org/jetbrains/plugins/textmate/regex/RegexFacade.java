@@ -46,7 +46,7 @@ public class RegexFacade {
     MatchData lastMatch = lastResult != null ? lastResult.lastMatch : MatchData.NOT_MATCHED;
 
     if (lastId == string.id && lastOffset <= byteOffset) {
-      if (!lastMatch.matched() || lastMatch.byteOffset().getStartOffset() >= byteOffset) {
+      if (!lastMatch.matched() || lastMatch.byteOffset().start >= byteOffset) {
         checkMatched(lastMatch, string);
         return lastMatch;
       }
@@ -65,9 +65,9 @@ public class RegexFacade {
   }
 
   private static void checkMatched(MatchData match, StringWithId string) {
-    if (match.matched() && match.byteOffset().getEndOffset() > string.bytes.length) {
+    if (match.matched() && match.byteOffset().end > string.bytes.length) {
       throw new IllegalStateException(
-        "Match data out of bounds: " + match.byteOffset().getStartOffset() + " > " + string.bytes.length + "\n" +
+        "Match data out of bounds: " + match.byteOffset().start + " > " + string.bytes.length + "\n" +
         new String(string.bytes, StandardCharsets.UTF_8));
     }
   }

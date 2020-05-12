@@ -205,12 +205,18 @@ public abstract class Decompressor {
   }
 
   @Nullable private Condition<? super String> myFilter = null;
+  @Nullable private Condition<? super Entry> myEntryFilter = null;
   @Nullable private List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
   @Nullable private Consumer<? super File> myConsumer;
 
   public Decompressor filter(@Nullable Condition<? super String> filter) {
     myFilter = filter;
+    return this;
+  }
+
+  public Decompressor filterEntries(@Nullable Condition<? super Entry> filter) {
+    myEntryFilter = filter;
     return this;
   }
 
@@ -250,6 +256,10 @@ public abstract class Decompressor {
           if (!myFilter.value(entryName)) {
             continue;
           }
+        }
+
+        if (myEntryFilter != null && !myEntryFilter.value(entry)) {
+          continue;
         }
 
         if (myPathsPrefix != null) {
@@ -308,14 +318,14 @@ public abstract class Decompressor {
   //<editor-fold desc="Internal interface">
   protected Decompressor() { }
 
-  private enum Type {FILE, DIR, SYMLINK}
+  public enum Type {FILE, DIR, SYMLINK}
 
-  protected static class Entry {
-    final String name;
-    final Type type;
-    final boolean isWritable;
-    final boolean isExecutable;
-    final String linkTarget;
+  public static class Entry {
+    public final String name;
+    public final Type type;
+    public final boolean isWritable;
+    public final boolean isExecutable;
+    public final String linkTarget;
 
     protected Entry(String name, boolean isDirectory) {
       this(name, isDirectory ? Type.DIR : Type.FILE, true, false, null);

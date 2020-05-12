@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
@@ -116,7 +116,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
       }
     }
 
-    if (ImportClassFixBase.isAddUnambiguousImportsOnTheFlyEnabled(file)) {
+    if (ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)) {
       for (int i = 0; i < refs.length; i++) {
         if (isUnambiguous(refs[i])) {
           refs[i] = null;

@@ -38,15 +38,14 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
     for (inlay in reportedChanges.values) {
       val renderer = inlay.renderer as BlockInlayRenderer
       val presentation = renderer.getConstrainedPresentations()[0]
-      val rootPresentation = presentation.root as RecursivelyUpdatingRootPresentation
-      val hoverPresentation = rootPresentation.content as OnHoverPresentation
-      hoverPresentation.mouseMoved(clickEvent, point)
-      val usagesSequencePresentation = (hoverPresentation.presentation as SequencePresentation).presentations[0] as SequencePresentation
-      val usagesHoverPresentation = usagesSequencePresentation.presentations[1] as OnHoverPresentation
-      usagesHoverPresentation.mouseMoved(clickEvent, point)
-      val delegatePresentation = usagesHoverPresentation.presentation as DynamicDelegatePresentation
-      val onClickPresentation = delegatePresentation.delegate as OnClickPresentation
-      onClickPresentation.mouseClicked(clickEvent, point)
+      val rootPresentation = presentation.root
+      val sequencePresentation = rootPresentation.content as SequencePresentation
+      val settingsOnClickPresentation = sequencePresentation.presentations[1] as OnClickPresentation
+      val usagesOnHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
+      usagesOnHoverPresentation.mouseMoved(clickEvent, point)
+      val usagesDelegatePresentation = usagesOnHoverPresentation.presentation as DynamicDelegatePresentation
+      val usagesOnClickPresentation = usagesDelegatePresentation.delegate as OnClickPresentation
+      usagesOnClickPresentation.mouseClicked(clickEvent, point)
       val editor = editorManager.selectedTextEditor!!
       val openedFile = FileDocumentManager.getInstance().getFile(editor.document)!!
       if (openedFile != targetFile) {

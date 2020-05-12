@@ -14,9 +14,12 @@ sealed class FilePredictionFeature {
 
     @JvmStatic
     fun numerical(value: Double): FilePredictionFeature = DoubleValue(value)
+
+    @JvmStatic
+    fun categorical(value: String): FilePredictionFeature = CategoricalValue(value)
   }
 
-  protected abstract val value: Any
+  abstract val value: Any
 
   abstract fun addToEventData(key: String, data: FeatureUsageData)
 
@@ -60,6 +63,12 @@ sealed class FilePredictionFeature {
     private fun process(value: Double): Double {
       if (!value.isFinite()) return -1.0
       return round(value * 100000) / 100000
+    }
+  }
+
+  private class CategoricalValue(override val value: String) : FilePredictionFeature() {
+    override fun addToEventData(key: String, data: FeatureUsageData) {
+      data.addData(key, value)
     }
   }
 }

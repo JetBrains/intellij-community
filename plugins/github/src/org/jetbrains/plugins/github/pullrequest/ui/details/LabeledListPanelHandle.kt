@@ -80,6 +80,8 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
         panel.add(getListItemComponent(newList.last(), true))
       }
     }
+    panel.validate()
+    panel.repaint()
   }
 
   init {

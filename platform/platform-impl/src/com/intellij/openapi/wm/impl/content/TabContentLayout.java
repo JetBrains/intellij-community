@@ -87,6 +87,10 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     return myLastLayout.moreRect;
   }
 
+  public void dropCaches() {
+    myLastLayout = null;
+  }
+
   @Override
   public boolean canShowMorePopup() {
     return getMoreRect() != null;

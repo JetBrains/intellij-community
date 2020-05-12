@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -124,6 +124,7 @@ public class HelpTooltip {
   private boolean isOverPopup;
   private boolean isMultiline;
   private int myDismissDelay;
+  private String myToolTipText;
 
   protected MouseAdapter myMouseListener;
 
@@ -280,9 +281,7 @@ public class HelpTooltip {
       }
 
       @Override public void mouseMoved(MouseEvent e) {
-        if (myPopup == null || myPopup.isDisposed()) {
-          scheduleShow(e, Registry.intValue("ide.tooltip.reshowDelay"));
-        }
+        scheduleShow(e, Registry.intValue("ide.tooltip.reshowDelay"));
       }
     };
   }
@@ -444,9 +443,15 @@ public class HelpTooltip {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
       if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {
-        myPopup = myPopupBuilder.createPopup();
-
         Component owner = e.getComponent();
+        String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
+        if (myPopup != null && !myPopup.isDisposed()) {
+          if (StringUtil.isEmpty(text) && StringUtil.isEmpty(myToolTipText)) return; // do nothing if a tooltip become empty
+          if (StringUtil.equals(text, myToolTipText)) return; // do nothing if a tooltip is not changed
+          myPopup.cancel(); // cancel previous popup before showing a new one
+        }
+        myToolTipText = text;
+        myPopup = myPopupBuilder.createPopup();
         myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize, e.getPoint())));
         if (!neverHide) {
           scheduleHide(true, myDismissDelay);
@@ -465,6 +470,7 @@ public class HelpTooltip {
     if (myPopup != null && myPopup.isVisible() && (!isOverPopup || force)) {
       myPopup.cancel();
       myPopup = null;
+      myToolTipText = null;
     }
   }
 

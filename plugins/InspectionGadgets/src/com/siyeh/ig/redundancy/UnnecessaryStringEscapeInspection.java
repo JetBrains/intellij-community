@@ -45,10 +45,17 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryStringEscapeFix();
+    final String expressionText = (String)infos[0];
+    return new UnnecessaryStringEscapeFix(expressionText);
   }
 
   private static class UnnecessaryStringEscapeFix extends InspectionGadgetsFix {
+
+    private final String myText;
+
+    UnnecessaryStringEscapeFix(String text) {
+      myText = text;
+    }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -69,6 +76,9 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         return;
       }
       final String text = literalExpression.getText();
+      if (!myText.equals(text)) {
+        return;
+      }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         final StringBuilder newExpression = new StringBuilder();
         if (literalExpression.isTextBlock()) {
@@ -158,7 +168,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
           final String text = expression.getText();
           int start = findUnnecessarilyEscapedChars(text, 4);
           while (start >= 0) {
-            registerErrorAtOffset(expression, start, 2);
+            registerErrorAtOffset(expression, start, 2, text);
             start = findUnnecessarilyEscapedChars(text, start + 2);
           }
         }
@@ -170,15 +180,16 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
             final char c = text.charAt(i);
             if (slash) {
               slash = false;
-              if (c == '\'') registerErrorAtOffset(expression, i - 1, 2);
+              if (c == '\'') registerErrorAtOffset(expression, i - 1, 2, text);
             }
             else if (c == '\\') slash = true;
           }
         }
       }
       else if (reportChars && PsiType.CHAR.equals(type)) {
-        if ("'\\\"'".equals(expression.getText())) {
-          registerErrorAtOffset(expression, 1, 2);
+        final String text = expression.getText();
+        if ("'\\\"'".equals(text)) {
+          registerErrorAtOffset(expression, 1, 2, text);
         }
       }
     }

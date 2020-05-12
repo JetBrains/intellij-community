@@ -2,6 +2,7 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
+import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeEventQueue;
@@ -12,9 +13,10 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -54,17 +56,21 @@ import java.util.stream.Collectors;
 
 // cannot be final - extended by Bazel plugin
 public class CompilerManagerImpl extends CompilerManager {
-  private static final ProjectExtensionPointName<CompileTaskBean> EP_NAME = new ProjectExtensionPointName<>("com.intellij.compiler.task");
+  private static final ProjectExtensionPointName<CompilerFactory> COMPILER_FACTORY_EP = new ProjectExtensionPointName<>("com.intellij.compilerFactory");
+  private static final ProjectExtensionPointName<CompileTaskBean> COMPILER_TASK_EP = new ProjectExtensionPointName<>("com.intellij.compiler.task");
+  private static final ProjectExtensionPointName<CompilableFileTypesProvider> COMPILABLE_TYPE_EP = new ProjectExtensionPointName<>("com.intellij.compilableFileTypesProvider");
 
   private static final Logger LOG = Logger.getInstance(CompilerManagerImpl.class);
 
   private final Project myProject;
 
-  private final List<Compiler> myCompilers = new ArrayList<>();
+  private final Map<Compiler, String> myCompilers = new HashMap<>();
+  private static final String NO_FACTORY_ID = "";
 
   private final List<CompileTask> myBeforeTasks = new ArrayList<>();
   private final List<CompileTask> myAfterTasks = new ArrayList<>();
   private final Set<FileType> myCompilableTypes = new HashSet<>();
+  private volatile Set<FileType> myCachedCompilableTypes;
   private final CompilationStatusListener myEventPublisher;
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
   private final Set<ModuleType<?>> myValidationDisabledModuleTypes = new HashSet<>();
@@ -82,16 +88,35 @@ public class CompilerManagerImpl extends CompilerManager {
     myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
     // predefined compilers
-    for (CompilerFactory factory : CompilerFactory.EP_NAME.getExtensionList(project)) {
-      Compiler[] compilers = factory.createCompilers(this);
-      if (compilers != null) {
-        for (Compiler compiler : compilers) {
-          addCompiler(compiler);
+    for (ProjectExtensionPointName<?> ep : Arrays.asList(COMPILABLE_TYPE_EP, BackendCompiler.EP_NAME)) {
+      ep.addChangeListener(project, () -> {myCachedCompilableTypes = null;}, project);
+    }
+    COMPILER_FACTORY_EP.getPoint(project).addExtensionPointListener(new ExtensionPointListener<CompilerFactory>() {
+      @Override
+      public void extensionAdded(@NotNull CompilerFactory factory, @NotNull PluginDescriptor pluginDescriptor) {
+        Compiler[] compilers = factory.createCompilers(CompilerManagerImpl.this);
+        if (compilers != null) {
+          String factoryId = getFactoryId(factory);
+          for (Compiler compiler : compilers) {
+            addCompiler(compiler, factoryId);
+          }
         }
       }
-    }
 
-    addCompilableFileType(StdFileTypes.JAVA);
+      @Override
+      public void extensionRemoved(@NotNull CompilerFactory factory, @NotNull PluginDescriptor pluginDescriptor) {
+        List<Compiler> compilersToRemove = new ArrayList<>();
+        String factoryId = getFactoryId(factory);
+        for (Map.Entry<Compiler, String> entry : myCompilers.entrySet()) {
+          if (factoryId.equals(entry.getValue())) {
+            compilersToRemove.add(entry.getKey());
+          }
+        }
+        for (Compiler compiler : compilersToRemove) {
+          removeCompiler(compiler);
+        }
+      }
+    }, true, project);
 
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
     projectGeneratedSrcRoot.mkdirs();
@@ -133,7 +158,11 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public final void addCompiler(@NotNull Compiler compiler) {
-    myCompilers.add(compiler);
+    addCompiler(compiler, NO_FACTORY_ID);
+  }
+
+  private void addCompiler(@NotNull Compiler compiler, @NotNull final String factoryId) {
+    myCompilers.put(compiler, factoryId);
     // supporting file instrumenting compilers and validators for external build
     // Since these compilers are IDE-specific and use PSI, it is ok to run them before and after the build in the IDE
     if (compiler instanceof SourceInstrumentingCompiler) {
@@ -144,6 +173,10 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
+  private static String getFactoryId(@Nullable CompilerFactory factory) {
+    return factory == null? NO_FACTORY_ID : factory.getClass().getName();
+  }
+
   @Override
   @Deprecated
   public void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes) {
@@ -152,7 +185,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public final void removeCompiler(@NotNull Compiler compiler) {
-    if (myCompilers.remove(compiler)) {
+    if (myCompilers.remove(compiler) != null) {
       for (List<CompileTask> tasks : Arrays.asList(myBeforeTasks, myAfterTasks)) {
         tasks.removeIf(
           task -> task instanceof FileProcessingCompilerAdapterTask && ((FileProcessingCompilerAdapterTask)task).getCompiler() == compiler
@@ -164,7 +197,7 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   public <T  extends Compiler> T @NotNull [] getCompilers(@NotNull Class<T> compilerClass) {
     final List<T> compilers = new ArrayList<>(myCompilers.size());
-    for (final Compiler item : ContainerUtil.concat(myCompilers, Compiler.EP_NAME.getExtensions(myProject))) {
+    for (final Compiler item : ContainerUtil.concat(myCompilers.keySet(), Compiler.EP_NAME.getExtensions(myProject))) {
       T concreteCompiler = ObjectUtils.tryCast(item, compilerClass);
       if (concreteCompiler != null) {
         compilers.add(concreteCompiler);
@@ -191,7 +224,21 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public boolean isCompilableFileType(@NotNull FileType type) {
-    return myCompilableTypes.contains(type);
+    if (myCompilableTypes.contains(type)) {
+      return true;
+    }
+    Set<FileType> types = myCachedCompilableTypes;
+    if (types == null) {
+      types = new HashSet<>();
+      for (CompilableFileTypesProvider extension : COMPILABLE_TYPE_EP.getExtensions(myProject)) {
+        types.addAll(extension.getCompilableFileTypes());
+      }
+      for (BackendCompiler compiler : BackendCompiler.EP_NAME.getExtensions(myProject)) {
+        types.addAll(compiler.getCompilableFileTypes());
+      }
+      myCachedCompilableTypes = types;
+    }
+    return types.contains(type);
   }
 
   @Override
@@ -227,7 +274,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
   private @NotNull List<CompileTask> getExtensionsTasks(@NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
     List<CompileTask> list = new ArrayList<>();
-    EP_NAME.processWithPluginDescriptor(myProject, (ext, pluginDescriptor) -> {
+    COMPILER_TASK_EP.processWithPluginDescriptor(myProject, (ext, pluginDescriptor) -> {
       if (ext.executionPhase == phase) {
         list.add(ext.getInstance(myProject, pluginDescriptor));
       }

@@ -18,12 +18,6 @@ class DfIntConstantType extends DfConstantType<Integer> implements DfIntType {
 
   @NotNull
   @Override
-  public DfType tryNegate() {
-    return DfTypes.intRange(DfIntRangeType.FULL_RANGE.subtract(getRange()));
-  }
-
-  @NotNull
-  @Override
   public LongRangeSet getRange() {
     return LongRangeSet.point(getValue());
   }

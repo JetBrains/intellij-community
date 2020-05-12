@@ -16,7 +16,7 @@ import java.util.*
 
 class DiffUsagesCollector : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "vcs.diff"
-  override fun getVersion(): Int = 3
+  override fun getVersion(): Int = 4
 
   override fun getMetrics(): Set<MetricEvent> {
     val set = HashSet<MetricEvent>()
@@ -45,6 +45,8 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
         add("context.range") { it.contextRange }
         addBool("collapse.unchanged") { !it.isExpandByDefault }
         addBool("show.line.numbers") { it.isShowLineNumbers }
+        addBool("show.white.spaces") { it.isShowWhitespaces }
+        addBool("show.indent.lines") { it.isShowIndentLines }
         addBool("use.soft.wraps") { it.isUseSoftWraps }
         addBool("enable.read.lock") { it.isReadOnlyLock }
         add("show.breadcrumbs") { it.breadcrumbsPlacement }

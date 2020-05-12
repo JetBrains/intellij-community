@@ -21,7 +21,7 @@ public final class MarkdownPreviewSettings {
   @Property(surroundWithTag = false)
   @NotNull
   private MarkdownHtmlPanelProvider.ProviderInfo myHtmlPanelProviderInfo =
-    JBCefApp.isEnabled() ? new JCEFHtmlPanelProvider().getProviderInfo() : new JavaFxHtmlPanelProvider().getProviderInfo();
+    JBCefApp.isSupported() ? new JCEFHtmlPanelProvider().getProviderInfo() : new JavaFxHtmlPanelProvider().getProviderInfo();
 
   @Attribute("UseGrayscaleRendering")
   private boolean myUseGrayscaleRendering = true;

@@ -5,8 +5,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -75,11 +73,6 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   @Override
   public boolean useSmallLabels() {
     return UISettings.getInstance().getUseSmallLabelsOnTabs();
-  }
-
-  @Override
-  public boolean useBoldLabels() {
-    return SystemInfo.isMac && Registry.is("ide.mac.boldEditorTabs");
   }
 
   @Override

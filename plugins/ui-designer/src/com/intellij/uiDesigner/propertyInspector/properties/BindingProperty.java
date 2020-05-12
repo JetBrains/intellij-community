@@ -155,11 +155,12 @@ public final class BindingProperty extends Property<RadComponent, String> {
     // Show question to the user
 
     if (!isFieldUnreferenced(oldField)) {
-      final int option = Messages.showYesNoDialog(project,
-        MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldName, newName),
-        UIDesignerBundle.message("title.rename"),
-        Messages.getQuestionIcon()
-      );
+      @SuppressWarnings("UnresolvedPropertyKey") final int option =
+        Messages.showYesNoDialog(project,
+                                 MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldName, newName),
+                                 UIDesignerBundle.message("title.rename"),
+                                 Messages.getQuestionIcon()
+        );
 
       if(option != Messages.YES/*Yes*/){
         return;

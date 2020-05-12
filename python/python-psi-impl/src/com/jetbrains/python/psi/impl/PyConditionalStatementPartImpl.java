@@ -14,7 +14,7 @@ public abstract class PyConditionalStatementPartImpl extends PyStatementPartImpl
 
   @Override
   public PyExpression getCondition() {
-    ASTNode n = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    ASTNode n = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     if (n != null) {
       return (PyExpression)n.getPsi();
     }

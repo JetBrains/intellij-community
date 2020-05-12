@@ -13,9 +13,14 @@ import com.intellij.ui.layout.*
 private val vcsSettings get() = VcsApplicationSettings.getInstance()
 
 private val cdShowLSTInGutterCheckBox
-  get() = CheckboxDescriptor(ApplicationBundle.message("editor.options.highlight.modified.line"), vcsSettings::SHOW_LST_GUTTER_MARKERS)
+  get() = CheckboxDescriptor(ApplicationBundle.message("editor.options.highlight.modified.line"),
+                             vcsSettings::SHOW_LST_GUTTER_MARKERS)
+private val cdShowLSTInErrorStripesCheckBox
+  get() = CheckboxDescriptor(ApplicationBundle.message("editor.options.highlight.modified.line.error.stripe"),
+                             vcsSettings::SHOW_LST_ERROR_STRIPE_MARKERS)
 private val cdShowWhitespacesInLSTGutterCheckBox
-  get() = CheckboxDescriptor(ApplicationBundle.message("editor.options.whitespace.line.color"), vcsSettings::SHOW_WHITESPACES_IN_LST)
+  get() = CheckboxDescriptor(ApplicationBundle.message("editor.options.whitespace.line.color"),
+                             vcsSettings::SHOW_WHITESPACES_IN_LST)
 
 class VcsGeneralEditorOptionsExtension : UiDslConfigurable.Simple() {
   override fun RowBuilder.createComponentRow() {
@@ -26,6 +31,11 @@ class VcsGeneralEditorOptionsExtension : UiDslConfigurable.Simple() {
       row {
         val showLstGutter = checkBox(cdShowLSTInGutterCheckBox)
           .onApply(::fireLSTSettingsChanged)
+        row {
+          checkBox(cdShowLSTInErrorStripesCheckBox)
+            .enableIf(showLstGutter.selected)
+            .onApply(::fireLSTSettingsChanged)
+        }
         row {
           checkBox(cdShowWhitespacesInLSTGutterCheckBox)
             .enableIf(showLstGutter.selected)

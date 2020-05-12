@@ -60,21 +60,8 @@ public final class NotifyRequest extends AbstractRequest {
 	public NotifyRequest(FileObject fileObject, String path, String command, String parameters) {
 		BugLog.getInstance().assertNotNull(fileObject);
 
-		@NonNls final StringBuilder buffer = new StringBuilder();
-		buffer.append("Notify "); // NOI18N
-		buffer.append(fileObject.getName());
-		buffer.append('\n');
-		buffer.append(command);
-		buffer.append('\t');
-		buffer.append(DATE_FORMAT.format(new Date()));
-		buffer.append('\t');
-		buffer.append(HOST_NAME);
-		buffer.append('\t');
-		buffer.append(path);
-		buffer.append('\t');
-		buffer.append(parameters);
-		buffer.append('\n');
-		this.request = buffer.toString();
+		this.request = "Notify " + fileObject.getName() + '\n' +
+			       command + '\t' + DATE_FORMAT.format(new Date()) + '\t' + HOST_NAME + '\t' + path + '\t' + parameters + '\n';
 	}
 
 	// Implemented ============================================================

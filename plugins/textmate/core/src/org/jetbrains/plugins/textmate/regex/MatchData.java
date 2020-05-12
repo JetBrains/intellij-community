@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.regex;
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joni.Region;
@@ -9,7 +7,7 @@ import org.joni.Region;
 import java.util.Arrays;
 
 public class MatchData {
-  public static final MatchData NOT_MATCHED = new MatchData(false, ArrayUtilRt.EMPTY_INT_ARRAY);
+  public static final MatchData NOT_MATCHED = new MatchData(false, new int[0]);
 
   private final boolean matched;
   private final int @NotNull [] offsets;
@@ -36,32 +34,32 @@ public class MatchData {
     return offsets.length / 2;
   }
 
-  public TextRange byteOffset() {
+  public TextMateRange byteOffset() {
     return byteOffset(0);
   }
 
   @NotNull
-  public TextRange byteOffset(int group) {
+  public TextMateRange byteOffset(int group) {
     int endIndex = group * 2 + 1;
-    return TextRange.create(offsets[endIndex - 1], offsets[endIndex]);
+    return new TextMateRange(offsets[endIndex - 1], offsets[endIndex]);
   }
 
-  public TextRange charRange(String s, byte[] stringBytes) {
+  public TextMateRange charRange(String s, byte[] stringBytes) {
     return charRange(s, stringBytes, 0);
   }
 
-  public TextRange charRange(String s, byte[] stringBytes, int group) {
-    TextRange range = codePointRange(stringBytes, group);
-    return TextRange.create(s.offsetByCodePoints(0, range.getStartOffset()),
-                            s.offsetByCodePoints(0, range.getEndOffset()));
+  public TextMateRange charRange(String s, byte[] stringBytes, int group) {
+    TextMateRange range = codePointRange(stringBytes, group);
+    return new TextMateRange(s.offsetByCodePoints(0, range.start),
+                             s.offsetByCodePoints(0, range.end));
   }
 
-  public TextRange codePointRange(byte[] stringBytes) {
+  public TextMateRange codePointRange(byte[] stringBytes) {
     return codePointRange(stringBytes, 0);
   }
 
   @NotNull
-  public TextRange codePointRange(byte[] stringBytes, int group) {
+  public TextMateRange codePointRange(byte[] stringBytes, int group) {
     return RegexUtil.codePointsRangeByByteRange(stringBytes, byteOffset(group));
   }
 

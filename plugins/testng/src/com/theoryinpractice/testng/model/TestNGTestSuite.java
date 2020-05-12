@@ -17,7 +17,9 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -45,7 +47,14 @@ public class TestNGTestSuite extends TestNGTestObject {
 
   @Override
   public String getActionName() {
-    return myConfig.getPersistantData().getSuiteName();
+    String suiteName = myConfig.getPersistantData().getSuiteName();
+    if (!suiteName.isEmpty()) {
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(suiteName);
+      if (virtualFile != null) {
+        return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myConfig.getProject(), true, false);
+      }
+    }
+    return suiteName;
   }
 
   @Override

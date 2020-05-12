@@ -56,7 +56,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       val hashFilterResult = applyHashFilter(dataPack, hashFilter.hashes, sortType, commitCount)
       if (hashFilterResult != null) {
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
-                  " for filtering by " + hashFilterResult.first.filters)
+                  " for filtering by " + hashFilterResult.first.filters + ", sort type " + sortType)
         return hashFilterResult
       }
     }
@@ -115,7 +115,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits, filterResult.fileHistoryData)
     val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
 
-    LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters)
+    LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters + ", sort type " + sortType)
     return Pair(visiblePack, filterResult.commitCount)
   }
 

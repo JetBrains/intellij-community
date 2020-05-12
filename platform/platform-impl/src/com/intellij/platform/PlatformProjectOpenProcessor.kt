@@ -2,7 +2,6 @@
 package com.intellij.platform
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
-import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.ActivityCategory
@@ -42,7 +41,6 @@ import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.IdeUICustomization
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NotNull
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths

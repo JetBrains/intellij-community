@@ -59,7 +59,7 @@ public final class PluginsAdvertiser {
     Map<String, String> map = new HashMap<>();
     map.put("featureType", unknownFeature.getFeatureType());
     map.put("implementationName", unknownFeature.getImplementationName());
-    map.put("build", MarketplaceRequests.getBuildForPluginRepositoryRequests());
+    map.put("build", MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests());
     return processFeatureRequest(map, request -> {
       JsonReader jsonReader = new JsonReader(request.getReader());
       jsonReader.setLenient(true);

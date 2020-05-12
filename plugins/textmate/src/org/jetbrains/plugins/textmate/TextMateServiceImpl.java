@@ -13,7 +13,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -270,12 +269,12 @@ public class TextMateServiceImpl extends TextMateService {
   private void registerPreferences(@NotNull Bundle bundle) {
     for (File preferenceFile : bundle.getPreferenceFiles()) {
       try {
-        for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(preferenceFile, myPlistReader)) {
+        for (Map.Entry<String, Plist> settingsPair : bundle.loadPreferenceFile(preferenceFile, myPlistReader)) {
           if (settingsPair != null) {
-            CharSequence scopeName = myInterner.intern(settingsPair.first);
-            myPreferencesRegistry.fillFromPList(scopeName, settingsPair.second);
-            myShellVariablesRegistry.fillVariablesFromPlist(scopeName, settingsPair.second);
-            readCustomHighlightingColors(scopeName, settingsPair.second);
+            CharSequence scopeName = myInterner.intern(settingsPair.getKey());
+            myPreferencesRegistry.fillFromPList(scopeName, settingsPair.getValue());
+            myShellVariablesRegistry.fillVariablesFromPlist(scopeName, settingsPair.getValue());
+            readCustomHighlightingColors(scopeName, settingsPair.getValue());
           }
         }
       }

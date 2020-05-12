@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
@@ -262,7 +261,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   public void setDate(String date) {
-    this.date = Long.valueOf(date).longValue();
+    this.date = Long.valueOf(date);
   }
 
   public long getDate() {
@@ -305,12 +304,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @Override
   @Nullable
   public ClassLoader getPluginClassLoader() {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public File getPath() {
     return null;
   }
 

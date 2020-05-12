@@ -276,6 +276,14 @@ class FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  internal fun addObjectData(@NonNls key: String, value: Map<String, Any>): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  internal fun addListObjectData(@NonNls key: String, value: List<Map<String, Any>>): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
     if (!ApplicationManager.getApplication().isUnitTestMode && platformDataKeys.contains(key)) {
       LOG.warn("Collectors should not reuse platform keys: $key")

@@ -42,19 +42,22 @@ abstract class BaseSingleTaskController<Request, Result>(name: String, resultCon
     }
   }
 
-  protected open fun createProgressIndicator() = EmptyProgressIndicator()
+  protected open fun createProgressIndicator(): ProgressIndicator = EmptyProgressIndicator()
 
   abstract fun process(requests: List<Request>, previousResult: Result?): Result
 }
 
 fun runInEdt(disposable: Disposable, action: () -> Unit) {
-  val app = ApplicationManager.getApplication()
-  if (app.isDispatchThread) {
+  if (ApplicationManager.getApplication().isDispatchThread) {
     action()
   }
   else {
-    app.invokeLater(action, { Disposer.isDisposed(disposable) })
+    runInEdtAsync(disposable, action)
   }
+}
+
+fun runInEdtAsync(disposable: Disposable, action: () -> Unit) {
+  ApplicationManager.getApplication().invokeLater(action, { Disposer.isDisposed(disposable) })
 }
 
 fun ExecutorService.submitSafe(log: Logger, task: () -> Unit): Future<*> = this.submit {
@@ -66,4 +69,16 @@ fun ExecutorService.submitSafe(log: Logger, task: () -> Unit): Future<*> = this.
   catch (t: Throwable) {
     log.error(t)
   }
+}
+
+fun <R> SingleTaskController<R, *>.sendRequests(vararg requests: R?): Boolean {
+  val notNullRequests = mutableListOf<R>()
+  for (request in requests) {
+    if (request != null) notNullRequests.add(request)
+  }
+  if (notNullRequests.isNotEmpty()) {
+    request(notNullRequests)
+    return true
+  }
+  return false
 }

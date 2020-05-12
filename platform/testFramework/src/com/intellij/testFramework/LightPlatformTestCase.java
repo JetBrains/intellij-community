@@ -91,7 +91,6 @@ import static com.intellij.testFramework.RunAll.runAll;
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static Project ourProject;
   private static Module ourModule;
   private static PsiManager ourPsiManager;
@@ -113,6 +112,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * @return Project to be used in tests for example for project components retrieval.
    */
+  @SuppressWarnings("MethodMayBeStatic")
   protected Project getProject() {
     return ourProject;
   }
@@ -120,6 +120,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * @return Module to be used in tests for example for module components retrieval.
    */
+  @SuppressWarnings("MethodMayBeStatic")
   protected Module getModule() {
     return ourModule;
   }
@@ -148,17 +149,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void reportTestExecutionStatistics() {
     System.out.println("----- TEST STATISTICS -----");
     UsefulTestCase.logSetupTeardownCosts();
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']",
-                                     MockApplication.INSTANCES_CREATED));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']",
-                                     ProjectManagerImpl.TEST_PROJECTS_CREATED));
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']%n",
+                      MockApplication.INSTANCES_CREATED);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']%n",
+                      ProjectManagerImpl.TEST_PROJECTS_CREATED);
     long totalGcTime = 0;
     for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
       totalGcTime += mxBean.getCollectionTime();
     }
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.gcTimeMs' value='%d']", totalGcTime));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.classesLoaded' value='%d']",
-                                     ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.gcTimeMs' value='%d']%n", totalGcTime);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.classesLoaded' value='%d']%n",
+                      ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount());
   }
 
   protected void resetAllFields() {
@@ -337,7 +338,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
-  protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
+  protected void enableInspectionTool(@NotNull InspectionToolWrapper<?,?> toolWrapper) {
     InspectionsKt.enableInspectionTool(getProject(), toolWrapper, getTestRootDisposable());
   }
 

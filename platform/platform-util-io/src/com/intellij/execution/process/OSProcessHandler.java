@@ -72,7 +72,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
-    this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
+    this(process, commandLine, EncodingManager.getInstance().getDefaultConsoleEncoding());
   }
 
   /**

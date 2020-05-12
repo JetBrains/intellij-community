@@ -69,32 +69,36 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
   }
 
   private static void merge(PsiLiteralExpression left, PsiLiteralExpression right, StringBuilder newExpression) {
-    String leftText = Objects.requireNonNull(left.getValue()).toString();
-    String rightText = Objects.requireNonNull(right.getValue()).toString();
+    final String leftText = getLiteralExpressionText(left);
+    final String rightText = getLiteralExpressionText(right);
     if (left.isTextBlock()) {
-      String indent = StringUtil.repeat(" ", PsiLiteralUtil.getTextBlockIndent(left));
-      newExpression.append("\"\"\"").append('\n').append(indent);
-      newExpression.append(leftText.replaceAll("\n", "\n" + indent));
-      if (right.isTextBlock()) {
-        newExpression.append(rightText.replaceAll("\n", "\n" + indent));
-      }
-      else {
-        newExpression.append(StringUtil.escapeStringCharacters(rightText));
-      }
-      newExpression.append("\"\"\"");
+      newExpression.append("\"\"\"\n").append(leftText)
+        .append(right.isTextBlock() ? rightText : PsiLiteralUtil.escapeTextBlockCharacters(rightText)).append("\"\"\"");
     }
     else if (right.isTextBlock()) {
-      String indent = StringUtil.repeat(" ", PsiLiteralUtil.getTextBlockIndent(right));
-      newExpression.append("\"\"\"").append('\n').append(indent);
-      newExpression.append(StringUtil.escapeStringCharacters(leftText));
-      newExpression.append(rightText.replaceAll("\n", "\n" + indent));
-      newExpression.append("\"\"\"");
+      newExpression.append("\"\"\"\n").append(PsiLiteralUtil.escapeTextBlockCharacters(leftText)).append(rightText).append("\"\"\"");
     }
     else {
-      newExpression.append('"');
-      newExpression.append(StringUtil.escapeStringCharacters(leftText));
-      newExpression.append(StringUtil.escapeStringCharacters(rightText));
-      newExpression.append('"');
+      newExpression.append('"').append(leftText).append(rightText).append('"');
+    }
+  }
+
+  private static String getLiteralExpressionText(PsiLiteralExpression expression) {
+    final PsiType type = expression.getType();
+    if (PsiType.CHAR.equals(type)) {
+      final String result = StringUtil.unquoteString(expression.getText());
+      if (result.equals("\"")) return "\\\"";
+      if (result.equals("\\'")) return "'";
+      return result;
+    }
+    else if (type instanceof PsiPrimitiveType) {
+      return Objects.requireNonNull(expression.getValue()).toString();
+    }
+    else if (expression.isTextBlock()) {
+      return PsiLiteralUtil.getTextBlockText(expression);
+    }
+    else {
+      return PsiLiteralUtil.getStringLiteralContent(expression);
     }
   }
 }

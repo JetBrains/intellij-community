@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -29,10 +28,7 @@ import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
-import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
-import org.jetbrains.plugins.github.util.GithubUrlUtil
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
+import org.jetbrains.plugins.github.util.*
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
 
@@ -47,20 +43,21 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     return repositories.getOrPut(gitRemoteCoordinates) {
       val contextDisposable = Disposer.newDisposable()
-      LazyCancellableBackgroundProcessValue.create(ProgressManager.getInstance()) { indicator ->
-        loadContext(indicator, account, requestExecutor, gitRemoteCoordinates).also { ctx ->
-          invokeAndWaitIfNeeded {
-            if (Disposer.isDisposed(contextDisposable)) {
-              Disposer.dispose(ctx)
-            }
-            else {
-              Disposer.register(contextDisposable, ctx)
-              Disposer.register(ctx, Disposable {
-                val editorManager = FileEditorManager.getInstance(project)
-                editorManager.openFiles.filter { it is GHPRVirtualFile && it.dataContext === ctx }.forEach(editorManager::closeFile)
-              })
-            }
+      LazyCancellableBackgroundProcessValue.create { indicator ->
+        ProgressManager.getInstance().submitIOTask(indicator) {
+          loadContext(indicator, account, requestExecutor, gitRemoteCoordinates)
+        }.successOnEdt { ctx ->
+          if (Disposer.isDisposed(contextDisposable)) {
+            Disposer.dispose(ctx)
           }
+          else {
+            Disposer.register(contextDisposable, ctx)
+            Disposer.register(ctx, Disposable {
+              val editorManager = FileEditorManager.getInstance(project)
+              editorManager.openFiles.filter { it is GHPRVirtualFile && it.dataContext === ctx }.forEach(editorManager::closeFile)
+            })
+          }
+          ctx
         }
       }.also {
         it.addDropEventListener {
@@ -103,6 +100,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
         GHGQLRequests.Organization.Team.findByUserLogins(account.server, repoOwner.login, listOf(currentUser.login), it)
       }).loadAll(indicator)
     else emptyList()
+    indicator.checkCanceled()
 
     val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoWithPermissions.path)
 
@@ -135,6 +133,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor, account.server,
                                                         repoWithPermissions.path, repoOwner)
 
+    indicator.checkCanceled()
     return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
                            requestExecutor, listModel, searchHolder, listLoader, dataLoader, securityService, repoDataService)
   }

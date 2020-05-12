@@ -1,6 +1,8 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="restructured.text.html.preview.provider" interface="com.jetbrains.rest.editor.RestPreviewProvider" />
+    <extensionPoint qualifiedName="restructured.text.html.preview.provider"
+                    interface="com.jetbrains.rest.editor.RestPreviewProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

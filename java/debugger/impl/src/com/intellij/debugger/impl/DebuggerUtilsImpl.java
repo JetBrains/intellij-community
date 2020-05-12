@@ -31,7 +31,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XExpression;
@@ -68,7 +68,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public Element writeTextWithImports(TextWithImports text) {
     Element element = new Element("TextWithImports");
 
@@ -78,7 +78,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public TextWithImports readTextWithImports(Element element) {
     LOG.assertTrue("TextWithImports".equals(element.getName()));
 
@@ -294,7 +294,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   @NotNull
   public static String getIdeaRtPath() {
     if (PluginManagerCore.isRunningFromSources()) {
-      Class<JavacRunner> aClass = JavacRunner.class;
+      Class<?> aClass = CommandLineWrapper.class;
       try {
         String resourcePath = aClass.getName().replace('.', '/') + ".class";
         Enumeration<URL> urls = aClass.getClassLoader().getResources(resourcePath);

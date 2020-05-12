@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.List;
 
-class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl> {
+final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl<?>> {
   private static final Key<Integer> ORDER_BEFORE_DISPOSAL = Key.create("inlay.order.before.disposal");
 
   InlineInlayImpl(@NotNull EditorImpl editor,
@@ -24,7 +24,7 @@ class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R
   }
 
   @Override
-  RangeMarkerTree<InlineInlayImpl> getTree() {
+  RangeMarkerTree<InlineInlayImpl<?>> getTree() {
     return myEditor.getInlayModel().myInlineElementsTree;
   }
 
@@ -56,7 +56,7 @@ class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R
   public void dispose() {
     if (isValid()) {
       int offset = getOffset();
-      List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
+      List<Inlay<?>> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
       putUserData(ORDER_BEFORE_DISPOSAL, inlays.indexOf(this));
     }
     super.dispose();
@@ -82,7 +82,7 @@ class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R
   public VisualPosition getVisualPosition() {
     int offset = getOffset();
     VisualPosition pos = myEditor.offsetToVisualPosition(offset);
-    List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
+    List<Inlay<?>> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
     int order = inlays.indexOf(this);
     return new VisualPosition(pos.line, pos.column + order, true);
   }

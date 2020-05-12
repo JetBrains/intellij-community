@@ -135,7 +135,10 @@ public class VcsLogManager implements Disposable {
                                               @NotNull LogWindowKind kind,
                                               boolean isClosedOnDispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isDisposed()) throw new ProcessCanceledException();
+    if (isDisposed()) {
+      LOG.error("Trying to create new VcsLogUi on a disposed VcsLogManager instance");
+      throw new ProcessCanceledException();
+    }
 
     U ui = factory.createLogUi(myProject, myLogData);
     Disposer.register(ui, getTabsWatcher().addTabToWatch(ui.getId(), ui.getRefresher(), kind, isClosedOnDispose));

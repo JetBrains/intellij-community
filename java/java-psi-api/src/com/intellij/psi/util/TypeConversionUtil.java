@@ -551,8 +551,10 @@ public class TypeConversionUtil {
         resultTypeRank = STRING_RANK;
       }
       else if (rtype.equalsToText(JAVA_LANG_STRING)) {
-        isApplicable = !isVoidType(ltype);
-        resultTypeRank = STRING_RANK;
+        if (isVoidType(ltype)) {
+          return false;
+        }
+        return !strict || ltype.isAssignableFrom(rtype);
       }
       else if (isPrimitiveAndNotNullOrWrapper(ltype) && isPrimitiveAndNotNullOrWrapper(rtype)) {
         resultTypeRank = Math.max(ltypeRank, rtypeRank);
