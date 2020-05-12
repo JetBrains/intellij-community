@@ -63,7 +63,7 @@ class ExtractSelector {
   }
 
   private fun isControlFlowStatement(statement: PsiStatement?): Boolean {
-    return statement is PsiBreakStatement || statement is PsiContinueStatement || statement is PsiReturnStatement
+    return statement is PsiBreakStatement || statement is PsiContinueStatement || statement is PsiReturnStatement || statement is PsiYieldStatement
   }
 
   private fun alignIfStatement(ifStatement: PsiIfStatement): PsiElement {
