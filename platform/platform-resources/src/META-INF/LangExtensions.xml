@@ -1285,8 +1285,8 @@
     <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
 
     <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.Problems" doNotActivateOnStart="true" canCloseContents="false"
-                factoryClass="com.intellij.analysis.problemsView.inspection.ProblemsViewToolWindowFactory"/>
-    <projectService serviceImplementation="com.intellij.analysis.problemsView.inspection.InspectionProblemsView"/>
+                factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
+    <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewState"/>
     <notificationWhitelist groupIds="Problems View;Inspection Results;Find in Path;Dependencies;Execution;Suggest Run Dashboard;
     Parameter Name Hints;Print;Actions;Load Error;Project Template;Run Anything;Reformat changed text;Module Manager;Project Loading Error"/>
 

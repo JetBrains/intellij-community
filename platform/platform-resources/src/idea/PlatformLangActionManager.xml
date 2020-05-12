@@ -73,6 +73,50 @@
             class="com.intellij.util.indexing.diagnostic.dump.paths.DumpProjectPortableRootsAction" internal="true">
       <add-to-group group-id="Internal" />
     </action>
+
+    <group id="ProblemsView.ToolWindow.SecondaryActions">
+      <action id="ProblemsView.AutoscrollToSource"
+              icon="AllIcons.General.AutoscrollToSource"
+              class="com.intellij.analysis.problemsView.toolWindow.AutoscrollToSource"/>
+      <action id="ProblemsView.ShowPreview"
+              icon="AllIcons.Actions.PreviewDetails"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowPreview"/>
+      <separator/>
+      <action id="ProblemsView.ShowErrors"
+              icon="AllIcons.General.Error"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowErrors"/>
+      <action id="ProblemsView.ShowWarnings"
+              icon="AllIcons.General.Warning"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowWarnings"/>
+      <action id="ProblemsView.ShowInformation"
+              icon="AllIcons.General.Information"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowInformation"/>
+      <separator/>
+      <action id="ProblemsView.SortFoldersFirst"
+              icon="AllIcons.ObjectBrowser.SortByType"
+              class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
+      <action id="ProblemsView.SortBySeverity"
+              icon="AllIcons.Nodes.SortBySeverity"
+              class="com.intellij.analysis.problemsView.toolWindow.SortBySeverity"/>
+      <action id="ProblemsView.SortByName"
+              icon="AllIcons.ObjectBrowser.Sorted"
+              class="com.intellij.analysis.problemsView.toolWindow.SortByName"/>
+    </group>
+
+    <group id="ProblemsView.ToolWindow.Toolbar">
+      <group id="ProblemsView.Filter" icon="AllIcons.Actions.Show" popup="true">
+        <reference ref="ProblemsView.ShowErrors"/>
+        <reference ref="ProblemsView.ShowWarnings"/>
+        <reference ref="ProblemsView.ShowInformation"/>
+      </group>
+      <reference ref="ProblemsView.AutoscrollToSource"/>
+      <reference ref="ProblemsView.ShowPreview"/>
+      <group id="ProblemsView.Comparator" icon="AllIcons.General.GearPlain" popup="true">
+        <reference ref="ProblemsView.SortFoldersFirst"/>
+        <reference ref="ProblemsView.SortBySeverity"/>
+        <reference ref="ProblemsView.SortByName"/>
+      </group>
+    </group>
   </actions>
 
 </idea-plugin>
