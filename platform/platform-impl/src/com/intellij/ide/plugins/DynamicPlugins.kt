@@ -106,8 +106,22 @@ object DynamicPlugins {
   }
 
   @JvmStatic
+  fun allowLoadUnloadAllWithoutRestart(descriptors: List<IdeaPluginDescriptorImpl>): Boolean {
+    return descriptors.all { descriptor ->
+      checkCanUnloadWithoutRestart(descriptor, context = descriptors).also { message -> message?.let { LOG.info(it) } } == null
+    }
+  }
+
+  /**
+   * @param context Plugins which are being loaded at the same time as [descriptor]
+   */
+  @JvmStatic
   @JvmOverloads
-  fun checkCanUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): String? {
+  fun checkCanUnloadWithoutRestart(
+    descriptor: IdeaPluginDescriptorImpl,
+    baseDescriptor: IdeaPluginDescriptorImpl? = null,
+    context: List<IdeaPluginDescriptorImpl> = emptyList()
+  ): String? {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return "Not allowing load/unload without restart because of pending restart operation"
     }
@@ -189,6 +203,13 @@ object DynamicPlugins {
             continue
           }
         }
+        val contextEP = context.asSequence().mapNotNull { contextPlugin -> findPluginExtensionPoint(contextPlugin, epName) }.firstOrNull()
+        if (contextEP != null) {
+          if (!contextEP.isDynamic) {
+            return "Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
+          }
+          continue
+        }
 
         return "Plugin ${descriptor.pluginId} is not unload-safe because of unresolved extension $epName"
       }
@@ -200,7 +221,7 @@ object DynamicPlugins {
 
     descriptor.pluginDependencies?.forEach { dependency ->
       if (isPluginOrModuleLoaded(dependency.id)) {
-        val message = checkCanUnloadWithoutRestart(dependency.subDescriptor ?: return@forEach, descriptor)
+        val message = checkCanUnloadWithoutRestart(dependency.subDescriptor ?: return@forEach, descriptor, context)
         if (message != null) {
           return message
         }
@@ -212,7 +233,7 @@ object DynamicPlugins {
     if (descriptor.pluginId != null) {
       processOptionalDependenciesOnPlugin(descriptor.pluginId) { _, subDescriptor ->
         if (subDescriptor != null) {
-          optionalDependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, descriptor)
+          optionalDependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, descriptor, context)
         }
         optionalDependencyMessage == null
       }
