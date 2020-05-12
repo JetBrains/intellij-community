@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.analysis.AnalysisBundle;public class DeprecationUtil {
+import com.intellij.analysis.AnalysisBundle;
+
+public class DeprecationUtil {
   public static final String DEPRECATION_SHORT_NAME = "Deprecation";
 
   public static final String DEPRECATION_ID = "deprecation";
