@@ -491,10 +491,30 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private static void reportPointlessSameArguments(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
-    visitor.pointlessSameArguments().forEach(expr -> {
+    visitor.pointlessSameArguments().forKeyValue((expr, eq) -> {
       PsiElement name = expr.getReferenceNameElement();
       if (name != null) {
-        reporter.registerProblem(name, JavaAnalysisBundle.message("dataflow.message.pointless.same.arguments"));
+        PsiExpression[] expressions = PsiExpression.EMPTY_ARRAY;
+        if (expr.getParent() instanceof PsiMethodCallExpression) {
+          expressions = ((PsiMethodCallExpression)expr.getParent()).getArgumentList().getExpressions();
+          if (expressions.length == 2 && PsiUtil.isConstantExpression(expressions[0]) && PsiUtil.isConstantExpression(expressions[1]) &&
+              !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expressions[0], expressions[1])) {
+            return;
+          }
+        }
+        if (eq.firstArgEqualToResult) {
+          String message = eq.argsEqual ? JavaAnalysisBundle.message("dataflow.message.pointless.same.arguments") :
+                           JavaAnalysisBundle.message("dataflow.message.pointless.same.argument.and.result", 1);
+          LocalQuickFix fix = expressions.length == 2 ? new ReplaceWithArgumentFix(expressions[0], 0) : null;
+          reporter.registerProblem(name, message, fix);
+        }
+        else if (eq.argsEqual) {
+          reporter.registerProblem(name, JavaAnalysisBundle.message("dataflow.message.pointless.same.arguments"));
+        }
+        else if (eq.secondArgEqualToResult) {
+          LocalQuickFix fix = expressions.length == 2 ? new ReplaceWithArgumentFix(expressions[1], 1) : null;
+          reporter.registerProblem(name, JavaAnalysisBundle.message("dataflow.message.pointless.same.argument.and.result", 2), fix);
+        }
       }
     });
   }
