@@ -145,11 +145,13 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
-      val index = roots.withIndex().firstOrNull { it.value.url == virtualFileUrl } ?: return@update
-      if (index.index <= 0) return@update
+      val index = roots.indexOfFirst { it.url == virtualFileUrl }
+      if (index <= 0) return@update
+      val prevRootIndex = roots.subList(0, index).indexOfLast { it.type.name == rootType.name() }
+      if (prevRootIndex < 0) return@update
 
       val mutable = roots.toMutableList()
-      ContainerUtil.swapElements(mutable, index.index - 1, index.index)
+      ContainerUtil.swapElements(mutable, prevRootIndex, index)
       roots = mutable.toList()
     }
   }
@@ -160,11 +162,13 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
-      val index = roots.withIndex().firstOrNull { it.value.url == virtualFileUrl } ?: return@update
-      if (index.index < 0 || index.index + 1 >= roots.size) return@update
+      val index = roots.indexOfFirst { it.url == virtualFileUrl }
+      if (index < 0 || index + 1 >= roots.size) return@update
+      val nextRootOffset = roots.subList(index + 1, roots.size).indexOfFirst { it.type.name == rootType.name() }
+      if (nextRootOffset < 0) return@update
 
       val mutable = roots.toMutableList()
-      ContainerUtil.swapElements(mutable, index.index + 1, index.index)
+      ContainerUtil.swapElements(mutable, index + nextRootOffset + 1, index)
       roots = mutable.toList()
     }
   }
