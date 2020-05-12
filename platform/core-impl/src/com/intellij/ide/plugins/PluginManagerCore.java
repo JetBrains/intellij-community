@@ -590,10 +590,10 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                                                                         @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
-                                                                                         boolean withOptional) {
-    IdeaPluginDescriptorImpl javaDep = idToDescriptorMap.get(JAVA_MODULE_ID);
-    boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
+                                                                                         @NotNull Function<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
+                                                                                         boolean withOptional,
+                                                                                         boolean hasAllModules) {
+    IdeaPluginDescriptorImpl javaDep = idToDescriptorMap.apply(JAVA_MODULE_ID);
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
       List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
@@ -634,7 +634,7 @@ public final class PluginManagerCore {
         }
 
         // check for missing optional dependency
-        IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(dependency.id);
+        IdeaPluginDescriptorImpl dep = idToDescriptorMap.apply(dependency.id);
         // if 'dep' refers to a module we need to check the real plugin containing this module only if it's still enabled,
         // otherwise the graph will be inconsistent
         if (dep == null) {
@@ -654,7 +654,7 @@ public final class PluginManagerCore {
       }
 
       for (PluginId moduleId : incompatibleModuleIds) {
-        IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(moduleId);
+        IdeaPluginDescriptorImpl dep = idToDescriptorMap.apply(moduleId);
         if (uniqueCheck.add(dep)) {
           plugins.add(dep);
         }
@@ -667,7 +667,8 @@ public final class PluginManagerCore {
   private static void checkPluginCycles(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                         @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                         @NotNull List<PluginError> errors) {
-    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(descriptors, idToDescriptorMap, true);
+    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(descriptors, idToDescriptorMap::get, true,
+                                                                           idToDescriptorMap.containsKey(ALL_MODULES_MARKER));
     DFSTBuilder<IdeaPluginDescriptorImpl> builder = new DFSTBuilder<>(GraphGenerator.generate(graph));
     if (builder.isAcyclic()) {
       return;
@@ -1144,7 +1145,8 @@ public final class PluginManagerCore {
     checkPluginCycles(descriptors, idMap, errors);
 
     // topological sort based on required dependencies only
-    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(descriptors, idMap, false));
+    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(descriptors, idMap::get, false,
+                                                                                           idMap.containsKey(ALL_MODULES_MARKER)));
 
     Set<PluginId> enabledPluginIds = new LinkedHashSet<>();
     Set<PluginId> enabledModuleIds = new LinkedHashSet<>();
@@ -1168,7 +1170,8 @@ public final class PluginManagerCore {
     prepareLoadingPluginsErrorMessage(disabledIds, disabledRequiredIds, idMap, errors);
 
     // topological sort based on all (required and optional) dependencies
-    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(Arrays.asList(sortedRequired), idMap, true);
+    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(Arrays.asList(sortedRequired), idMap::get, true,
+                                                                           idMap.containsKey(ALL_MODULES_MARKER));
     IdeaPluginDescriptorImpl[] sortedAll = getTopologicallySorted(graph);
 
     List<IdeaPluginDescriptorImpl> enabledPlugins = getOnlyEnabledPlugins(sortedAll);
@@ -1249,6 +1252,15 @@ public final class PluginManagerCore {
       }
     });
     return sortedRequired;
+  }
+
+  public static List<IdeaPluginDescriptorImpl> getPluginsSortedByDependency(List<IdeaPluginDescriptorImpl> plugins, boolean withOptional) {
+    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(plugins,
+                                                                           (id) -> (IdeaPluginDescriptorImpl)getPlugin(id),
+                                                                           withOptional,
+                                                                           findPluginByModuleDependency(ALL_MODULES_MARKER) != null);
+    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(graph);
+    return Arrays.asList(sortedRequired);
   }
 
   @ApiStatus.Internal

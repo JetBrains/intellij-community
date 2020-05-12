@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,10 +50,13 @@ public final class PluginEnabler {
       LOG.error(e);
     }
 
-    if (ContainerUtil.all(pluginDescriptorsToDisable, DynamicPlugins::allowLoadUnloadWithoutRestart) &&
-        ContainerUtil.all(pluginDescriptorsToEnable, DynamicPlugins::allowLoadUnloadWithoutRestart)) {
+    if (DynamicPlugins.allowLoadUnloadAllWithoutRestart(pluginDescriptorsToDisable) &&
+        DynamicPlugins.allowLoadUnloadAllWithoutRestart(pluginDescriptorsToEnable)) {
+
+      List<IdeaPluginDescriptorImpl> sortedDescriptorsToDisable = PluginManagerCore.getPluginsSortedByDependency(pluginDescriptorsToDisable, true);
+      Collections.reverse(sortedDescriptorsToDisable);
       boolean needRestart = false;
-      for (IdeaPluginDescriptorImpl descriptor : pluginDescriptorsToDisable) {
+      for (IdeaPluginDescriptorImpl descriptor : sortedDescriptorsToDisable) {
         if (!DynamicPlugins.unloadPluginWithProgress(project, parentComponent, descriptor, true)) {
           needRestart = true;
           break;
@@ -62,7 +64,8 @@ public final class PluginEnabler {
       }
 
       if (!needRestart) {
-        for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
+        List<IdeaPluginDescriptorImpl> sortedDescriptorsToEnable = PluginManagerCore.getPluginsSortedByDependency(pluginDescriptorsToEnable, true);
+        for (IdeaPluginDescriptor descriptor : sortedDescriptorsToEnable) {
           DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor);
         }
         return true;
