@@ -139,7 +139,6 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun addJarDirectory(file: VirtualFile, recursive: Boolean, rootType: OrderRootType) =
     addJarDirectory(file.url, recursive, rootType)
 
-  // TODO Write a test
   override fun moveRootUp(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
@@ -155,7 +154,6 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     }
   }
 
-  // TODO Write a test
   override fun moveRootDown(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
