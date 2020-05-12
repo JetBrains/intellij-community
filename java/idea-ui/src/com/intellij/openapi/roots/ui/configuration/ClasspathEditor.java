@@ -115,7 +115,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
     ClasspathStorageProvider[] providers = ClasspathStorageProvider.EXTENSION_POINT_NAME.getExtensions();
     if (providers.length > 0) {
-      myClasspathFormatPanel = new ClasspathFormatPanel(providers, getModel());
+      myClasspathFormatPanel = new ClasspathFormatPanel(providers, getState());
       panel.add(myClasspathFormatPanel, BorderLayout.SOUTH);
     }
 
@@ -159,12 +159,12 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   private static class ClasspathFormatPanel extends JPanel {
-    private final ModifiableRootModel rootModel;
+    private final @NotNull ModuleConfigurationState myState;
     private final JComboBox<String> comboBoxClasspathFormat;
 
-    private ClasspathFormatPanel(ClasspathStorageProvider[] providers, ModifiableRootModel model) {
+    private ClasspathFormatPanel(ClasspathStorageProvider[] providers, @NotNull ModuleConfigurationState state) {
       super(new GridBagLayout());
-      rootModel = model;
+      myState = state;
 
       add(new JLabel(JavaUiBundle.message("project.roots.classpath.format.label")),
           new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(10, 6, 6, 0), 0, 0));
@@ -186,7 +186,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
 
     private String getModuleClasspathFormat() {
-      return ClassPathStorageUtil.getStorageType(rootModel.getModule());
+      return ClassPathStorageUtil.getStorageType(myState.getRootModel().getModule());
     }
 
     private boolean isModified() {
@@ -196,13 +196,13 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     public void canApply() throws ConfigurationException {
       ClasspathStorageProvider provider = ClasspathStorage.getProvider(getSelectedClasspathFormat());
       if (provider != null) {
-        provider.assertCompatible(rootModel);
+        provider.assertCompatible(myState.getRootModel());
       }
     }
 
     private void apply() throws ConfigurationException {
       canApply();
-      ClasspathStorage.setStorageType(rootModel, getSelectedClasspathFormat());
+      ClasspathStorage.setStorageType(myState.getRootModel(), getSelectedClasspathFormat());
     }
   }
 
