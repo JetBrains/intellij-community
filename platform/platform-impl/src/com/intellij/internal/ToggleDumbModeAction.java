@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,7 +27,7 @@ public class ToggleDumbModeAction extends DumbAwareAction {
       setToggledDumb(project, false);
     } else {
       setToggledDumb(project, true);
-      DumbServiceImpl.getInstance(project).queueTask(new DumbModeTask() {
+      DumbServiceImpl.getInstance(project).queueTask(new DumbModeTask(project) {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
