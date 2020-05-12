@@ -21,22 +21,26 @@ import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilin
 */
 public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   final GlobalCompilingVisitor myCompilingVisitor;
+  private final XmlWordOptimizer myOptimizer = new XmlWordOptimizer();
 
   public XmlCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {
     this.myCompilingVisitor = compilingVisitor;
   }
 
   public void compile(PsiElement[] topLevelElements) {
-    final XmlWordOptimizer optimizer = new XmlWordOptimizer();
     final CompileContext context = myCompilingVisitor.getContext();
     final CompiledPattern pattern = context.getPattern();
     final MatchOptions options = context.getOptions();
     pattern.setStrategy(new XmlMatchingStrategy(options.getDialect()));
     for (PsiElement element : topLevelElements) {
       element.accept(this);
-      element.accept(optimizer);
+      optimize(element);
       pattern.setHandler(element, new TopLevelMatchingHandler(pattern.getHandler(element)));
     }
+  }
+
+  public void optimize(PsiElement element) {
+    element.accept(myOptimizer);
   }
 
   private class XmlWordOptimizer extends XmlRecursiveElementWalkingVisitor implements WordOptimizer {
