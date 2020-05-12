@@ -31,7 +31,10 @@ public final class DumbServiceSyncTaskQueue {
   public void runTaskSynchronously(@NotNull DumbModeTask task) {
     synchronized (myLock) {
       if (myIsRunning) {
-        myTasksQueue.put(task.getEquivalenceObject(), task);
+        DumbModeTask oldTask = myTasksQueue.put(task.getEquivalenceObject(), task);
+        if (oldTask != null) {
+          Disposer.dispose(oldTask);
+        }
         return;
       }
 

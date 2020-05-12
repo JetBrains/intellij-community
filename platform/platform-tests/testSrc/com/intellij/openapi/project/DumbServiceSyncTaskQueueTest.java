@@ -42,6 +42,7 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
   }
 
   public void testEquivalentTasksAreMerged() {
+    List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
     service().runTaskSynchronously(new DumbModeTask("parent") {
       @Override
@@ -53,12 +54,18 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
             public void performInDumbMode(@NotNull ProgressIndicator indicator) {
               childLog.add(taskId);
             }
+
+            @Override
+            public void dispose() {
+              disposeLog.add(taskId);
+            }
           });
         }
       }
     });
 
     Assert.assertEquals("Only one child task should run, but were: " + childLog, 1, childLog.size());
+    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 100, disposeLog.size());
   }
 
   public void testDifferentClassesWithSameEquivalentAreNotMerged() {
