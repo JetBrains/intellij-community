@@ -172,9 +172,6 @@ public class ClassRenderer extends NodeRendererImpl{
         if (children.isEmpty()) {
           children.add(nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display")));
         }
-        else if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
-          children.sort(NodeManagerImpl.getNodeComparator());
-        }
       }
       else {
         children.add(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel()));
