@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +14,14 @@ import org.jetbrains.annotations.NotNull;
 public abstract class DumbModeTask implements Disposable {
   private final Object myEquivalenceObject;
 
+  /**
+   * @deprecated using of that constructor likely disables merging
+   * of similar tasks in the {@link DumbService#queueTask(DumbModeTask)}.
+   * Use the {@link DumbModeTask#DumbModeTask(Object)} to specify equivalence
+   * clearly.
+   * @see #getEquivalenceObject() for details
+   */
+  @Deprecated
   public DumbModeTask() {
     myEquivalenceObject = this;
   }
@@ -35,12 +30,13 @@ public abstract class DumbModeTask implements Disposable {
    * @param equivalenceObject see {@link #getEquivalenceObject()}
    */
   public DumbModeTask(@NotNull Object equivalenceObject) {
-    myEquivalenceObject = equivalenceObject;
+    myEquivalenceObject = Pair.create(getClass(), equivalenceObject);
   }
 
   /**
-   * @return an object whose {@link Object#equals(Object)} determines task equivalence. If several equivalent tasks are queued
-   * for dumb mode execution at once, only one of them will be executed. By default the task object itself is returned.
+   * @return an object whose {@link Object#equals(Object)} determines task equivalence.
+   * If several equivalent tasks of the same class are queued for dumb mode execution at once,
+   * only one of them will be executed.
    */
   @NotNull
   public final Object getEquivalenceObject() {
