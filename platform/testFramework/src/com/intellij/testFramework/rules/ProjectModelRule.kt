@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -114,6 +115,12 @@ class ProjectModelRule : TestRule {
   fun renameLibrary(library: Library, newName: String) {
     val model = library.modifiableModel
     model.name = newName
+    runWriteActionAndWait { model.commit() }
+  }
+
+  fun renameModule(module: Module, newName: String) {
+    val model = runReadAction { moduleManager.modifiableModel }
+    model.renameModule(module, newName)
     runWriteActionAndWait { model.commit() }
   }
 
