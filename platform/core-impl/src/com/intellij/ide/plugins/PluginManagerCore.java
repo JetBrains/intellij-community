@@ -596,8 +596,8 @@ public final class PluginManagerCore {
     boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
-      List<PluginDependency> dependencies = rootDescriptor.pluginDependencies; //ContainerUtil.newArrayList(rootDescriptor.getDependentPluginIds())
-      List<PluginId> incompatibleModuleIds = rootDescriptor.getIncompatibleModuleIds();
+      List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
+      List<PluginId> incompatibleModuleIds = ContainerUtil.notNullize(rootDescriptor.incompatibilities);
       if (dependencies == null) {
         dependencies = Collections.emptyList();
       }
@@ -628,7 +628,6 @@ public final class PluginManagerCore {
         }
       }
 
-      //dependencies.addAll(incompatibleModuleIds);
       for (PluginDependency dependency : dependencies) {
         if (!withOptional && dependency.isOptional) {
           continue;
@@ -653,6 +652,14 @@ public final class PluginManagerCore {
           plugins.add(dep);
         }
       }
+
+      for (PluginId moduleId : incompatibleModuleIds) {
+        IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(moduleId);
+        if (uniqueCheck.add(dep)) {
+          plugins.add(dep);
+        }
+      }
+
       return plugins;
     });
   }
@@ -1309,22 +1316,23 @@ public final class PluginManagerCore {
 
     boolean result = true;
 
-    for (PluginId incompatibleId : descriptor.getIncompatibleModuleIds()) {
+    for (PluginId incompatibleId : ContainerUtil.notNullize(descriptor.incompatibilities)) {
       if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) continue;
 
       result = false;
       String presentableName = toPresentableName(incompatibleId.getIdString());
-      errors.add(descriptor.formatErrorMessage("is incompatible with the IDE containing module " + presentableName));
+      errors.add(new PluginError(descriptor, "is incompatible with the IDE containing module " + presentableName,
+                                 "IDE contains module " + presentableName));
     }
 
     // no deps at all
-    if (result && descriptor.pluginDependencies == null) {
-      return true;
+    if (descriptor.pluginDependencies == null) {
+      return result;
     }
 
     for (PluginDependency dependency : descriptor.pluginDependencies) {
       PluginId depId = dependency.id;
-      if (dependency.isOptional || loadedPluginIds.contains(depId)) {
+      if (dependency.isOptional || loadedPluginIds.contains(depId) || loadedModuleIds.contains(depId)) {
         continue;
       }
 

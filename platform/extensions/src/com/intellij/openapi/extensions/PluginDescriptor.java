@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Date;
-import java.util.List;
 
 public interface PluginDescriptor {
   /**
@@ -49,9 +48,6 @@ public interface PluginDescriptor {
   int getReleaseVersion();
 
   boolean isLicenseOptional();
-
-  @NotNull
-  List<PluginId> getIncompatibleModuleIds();
 
   /**
    * @deprecated Do not use.

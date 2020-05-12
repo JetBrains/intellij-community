@@ -10,7 +10,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -59,7 +58,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myCategory;
   String myUrl;
   @Nullable List<PluginDependency> pluginDependencies;
-  @Nullable private List<PluginId> myIncompatibilities;
+  @Nullable List<PluginId> incompatibilities;
 
   transient List<Path> jarFiles;
 
@@ -328,10 +327,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     String pluginId = child.getTextTrim();
     if (pluginId.isEmpty()) return;
 
-    if (myIncompatibilities == null) {
-      myIncompatibilities = new ArrayList<>();
+    if (incompatibilities == null) {
+      incompatibilities = new ArrayList<>();
     }
-    myIncompatibilities.add(PluginId.getId(pluginId));
+    incompatibilities.add(PluginId.getId(pluginId));
   }
 
   private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorListLoadingContext context, @NotNull Element child) {
@@ -651,11 +650,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public boolean isLicenseOptional() {
     return myIsLicenseOptional;
-  }
-
-  @Override
-  public @NotNull List<PluginId> getIncompatibleModuleIds() {
-    return ContainerUtil.notNullize(myIncompatibilities);
   }
 
   @SuppressWarnings("deprecation")
