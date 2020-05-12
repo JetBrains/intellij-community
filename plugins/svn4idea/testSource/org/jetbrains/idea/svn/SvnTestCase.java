@@ -61,7 +61,6 @@ import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
-import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
@@ -111,38 +110,35 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   @Before
   public void setUp() throws Exception {
-    runInEdtAndWait(() -> {
-      myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-      myTempDirFixture.setUp();
-      resetCanonicalTempPathCache(myTempDirFixture.getTempDirPath());
+    myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    myTempDirFixture.setUp();
+    resetCanonicalTempPathCache(myTempDirFixture.getTempDirPath());
 
-      myPluginRoot = new File(getPluginHome());
-      myClientBinaryPath = getSvnClientDirectory();
-      myRunner =
-        SystemInfo.isMac ? createClientRunner(singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath())) : createClientRunner();
+    myPluginRoot = new File(getPluginHome());
+    myClientBinaryPath = getSvnClientDirectory();
+    myRunner =
+      SystemInfo.isMac ? createClientRunner(singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath())) : createClientRunner();
 
-      myRepoRoot = virtualToIoFile(myTempDirFixture.findOrCreateDir("svnroot"));
-      ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
+    myRepoRoot = virtualToIoFile(myTempDirFixture.findOrCreateDir("svnroot"));
+    ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
 
-      myWcRoot = virtualToIoFile(myTempDirFixture.findOrCreateDir(myWcRootName));
-      myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + toSystemIndependentName(myRepoRoot.getPath());
-      myRepositoryUrl = parseUrl(myRepoUrl);
+    myWcRoot = virtualToIoFile(myTempDirFixture.findOrCreateDir(myWcRootName));
+    myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + toSystemIndependentName(myRepoRoot.getPath());
+    myRepositoryUrl = parseUrl(myRepoUrl);
 
-      verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
+    verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
 
-      initProject(myWcRoot, this.getTestName());
-      activateVCS(SvnVcs.VCS_NAME);
+    initProject(myWcRoot, this.getTestName());
+    activateVCS(SvnVcs.VCS_NAME);
 
-      vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-      changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-      dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-      vcs = SvnVcs.getInstance(myProject);
-      myGate = new MockChangeListManagerGate(changeListManager);
+    vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+    changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+    vcs = SvnVcs.getInstance(myProject);
+    myGate = new MockChangeListManagerGate(changeListManager);
 
-      ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
-      refreshSvnMappingsSynchronously();
-    });
-
+    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
+    refreshSvnMappingsSynchronously();
     refreshChanges();
   }
 
@@ -208,14 +204,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   @After
   public void tearDown() throws Exception {
-    runInEdtAndWait(
-      () -> new RunAll(
-        this::waitChangeListManager,
-        this::tearDownProject,
-        this::tearDownTempDirectoryFixture,
-        () -> resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY)
-      ).run()
-    );
+    new RunAll(
+      this::waitChangeListManager,
+      () -> runInEdtAndWait(this::tearDownProject),
+      this::tearDownTempDirectoryFixture,
+      () -> resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY)
+    ).run();
   }
 
   private void waitChangeListManager() {
@@ -408,10 +402,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   private void setNewDirectoryMappings(@NotNull File directory) {
-    runInEdtAndWait(() -> {
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping(toSystemIndependentName(directory.getPath()), vcs.getName());
-      vcsManager.setDirectoryMappings(singletonList(mapping));
-    });
+    setVcsMappings(new VcsDirectoryMapping(toSystemIndependentName(directory.getPath()), vcs.getName()));
   }
 
   protected void createAnotherRepo() throws Exception {
