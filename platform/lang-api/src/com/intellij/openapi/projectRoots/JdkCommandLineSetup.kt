@@ -234,11 +234,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     val modulePath = javaParameters.modulePath
     if (!modulePath.isEmpty && !vmParameters.isExplicitModulePath()) {
       commandLine.addParameter("-p")
-      val pathValues = getClassPathValues(javaParameters, modulePath)
-      val pathSeparator = platform.pathSeparator.toString()
-      commandLine.addParameter(TargetValue.composite(pathValues) { values: Collection<String> ->
-        values.joinTo(StringBuilder(), pathSeparator).toString()
-      })
+      commandLine.addParameter(composeClassPathValues(javaParameters, modulePath))
     }
   }
 
@@ -249,18 +245,21 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     val classPath = javaParameters.classPath
     if (!classPath.isEmpty && !vmParameters.isExplicitClassPath()) {
       commandLine.addParameter("-classpath")
-      val pathValues = getClassPathValues(javaParameters, classPath)
-      val pathSeparator = platform.pathSeparator.toString()
-      commandLine.addParameter(TargetValue.composite(pathValues) { values: Collection<String> ->
-        values.joinTo(StringBuilder(), pathSeparator).toString()
-      })
+      commandLine.addParameter(composeClassPathValues(javaParameters, classPath))
     }
 
     appendModulePath(javaParameters, vmParameters)
   }
 
+  @JvmName("composeClassPathValues")
+  internal fun composeClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): TargetValue<String> {
+    val pathValues = getClassPathValues(javaParameters, classPath)
+    val separator = platform.pathSeparator.toString()
+    return TargetValue.composite(pathValues) { values -> values.joinTo(StringBuilder(), separator).toString() }
+  }
+
   @JvmName("getClassPathValues")
-  internal fun getClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): List<TargetValue<String>> {
+  fun getClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): List<TargetValue<String>> {
     val localJdkPath = javaParameters.jdk?.homePath
     val remoteJdkPath = languageRuntime?.homePath
     val result = ArrayList<TargetValue<String>>()

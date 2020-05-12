@@ -199,16 +199,12 @@ public final class JdkUtil {
 
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-        List<TargetValue<String>> pathValues = setup.getClassPathValues(javaParameters, classPath);
-        TargetValue<String> classPathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
-        argFile.addPromisedParameter("-classpath", classPathParameter);
+        argFile.addPromisedParameter("-classpath", setup.composeClassPathValues(javaParameters, classPath));
       }
 
       PathsList modulePath = javaParameters.getModulePath();
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-        List<TargetValue<String>> pathValues = setup.getClassPathValues(javaParameters, modulePath);
-        TargetValue<String> modulePathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
-        argFile.addPromisedParameter("-p", modulePathParameter);
+        argFile.addPromisedParameter("-p", setup.composeClassPathValues(javaParameters, modulePath));
       }
 
       if (dynamicParameters) {
@@ -232,7 +228,7 @@ public final class JdkUtil {
     }
   }
 
-  private static class ArgFile {
+  static class ArgFile {
     private final File myFile;
     private final Charset myCharset;
     private final JdkCommandLineSetup mySetup;
