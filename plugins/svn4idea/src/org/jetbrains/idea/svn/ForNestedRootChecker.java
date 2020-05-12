@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +14,8 @@ import org.jetbrains.idea.svn.info.Info;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
 
 public class ForNestedRootChecker {
 
@@ -34,7 +35,7 @@ public class ForNestedRootChecker {
     workItems.add(root);
     while (!workItems.isEmpty()) {
       VirtualFile item = workItems.removeFirst();
-      checkCancelled();
+      checkCanceled();
 
       final Node vcsElement = new VcsFileResolver(myVcs, item, root).resolve();
       if (vcsElement != null) {
@@ -42,7 +43,7 @@ public class ForNestedRootChecker {
       }
       else {
         for (VirtualFile child : item.getChildren()) {
-          checkCancelled();
+          checkCanceled();
 
           if (child.isDirectory() && myRootIterator.acceptFolderUnderVcs(root, child)) {
             workItems.add(child);
@@ -51,12 +52,6 @@ public class ForNestedRootChecker {
       }
     }
     return result;
-  }
-
-  private void checkCancelled() {
-    if (myVcs.getProject().isDisposed()) {
-      throw new ProcessCanceledException();
-    }
   }
 
   private static class VcsFileResolver {

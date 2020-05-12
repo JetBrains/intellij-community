@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 import static com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext;
 import static com.intellij.openapi.application.PluginPathManager.getPluginHomePath;
@@ -52,6 +53,7 @@ import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.RunAll.runAll;
 import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -152,7 +154,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   protected void refreshSvnMappingsSynchronously() {
-    ((SvnFileUrlMappingImpl)vcs.getSvnFileUrlMapping()).realRefresh();
+    CountDownLatch done = new CountDownLatch(1);
+    vcs.getSvnFileUrlMappingImpl().scheduleRefresh(() -> done.countDown());
+    runAll(() -> done.await());
   }
 
   protected void refreshChanges() {

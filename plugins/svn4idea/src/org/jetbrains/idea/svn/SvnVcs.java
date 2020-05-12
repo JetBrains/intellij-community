@@ -40,7 +40,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
@@ -118,8 +117,6 @@ public final class SvnVcs extends AbstractVcs {
 
   private final SvnChangelistListener myChangeListListener;
 
-  private SvnCopiesRefreshManager myCopiesRefreshManager;
-
   private Disposable myFrameStateListenerDisposable;
 
   //Consumer<Boolean>
@@ -166,11 +163,8 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   private void postStartup() {
-    if (myProject.isDefault()) {
-      return;
-    }
+    if (myProject.isDefault()) return;
 
-    myCopiesRefreshManager = new SvnCopiesRefreshManager((SvnFileUrlMappingImpl)getSvnFileUrlMapping());
     if (!myConfiguration.isCleanupRun()) {
       ApplicationManager.getApplication().invokeLater(() -> {
         cleanup17copies();
@@ -207,7 +201,7 @@ public final class SvnVcs extends AbstractVcs {
       }.execute();
     };
 
-    myCopiesRefreshManager.waitRefresh(() -> ApplicationManager.getApplication().invokeLater(callCleanupWorker));
+    getSvnFileUrlMappingImpl().scheduleRefresh(() -> ApplicationManager.getApplication().invokeLater(callCleanupWorker));
   }
 
   public boolean checkCommandLineVersion() {
@@ -218,14 +212,7 @@ public final class SvnVcs extends AbstractVcs {
     if (REFRESH_LOG.isDebugEnabled()) {
       REFRESH_LOG.debug("refresh: ", new Throwable());
     }
-    if (myCopiesRefreshManager != null) {
-      myCopiesRefreshManager.asynchRequest();
-    }
-  }
-
-  @TestOnly
-  SvnCopiesRefreshManager getCopiesRefreshManager() {
-    return myCopiesRefreshManager;
+    getSvnFileUrlMappingImpl().scheduleRefresh();
   }
 
   private void upgradeIfNeeded(@NotNull MessageBus bus) {
@@ -652,6 +639,11 @@ public final class SvnVcs extends AbstractVcs {
   @NotNull
   public SvnFileUrlMapping getSvnFileUrlMapping() {
     return myProject.getService(SvnFileUrlMapping.class);
+  }
+
+  @NotNull
+  SvnFileUrlMappingImpl getSvnFileUrlMappingImpl() {
+    return ((SvnFileUrlMappingImpl)getSvnFileUrlMapping());
   }
 
   /**
