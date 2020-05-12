@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import org.cef.network.CefCookie;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.Objects;
  *
  * @author Aleksey.Rostovskiy
  */
+@ApiStatus.Experimental
 public class JBCefCookie {
   private final CefCookie myCefCookie;
 
@@ -33,6 +35,7 @@ public class JBCefCookie {
     this(new CefCookie(name, value, domain, path, secure, httponly, creation, lastAccess, hasExpires, expires));
   }
 
+  @SuppressWarnings("unused")
   public JBCefCookie(@NotNull String name,
                      @NotNull String value,
                      @NotNull String domain,
@@ -85,6 +88,7 @@ public class JBCefCookie {
     return myCefCookie.lastAccess;
   }
 
+  @SuppressWarnings("unused")
   public boolean hasExpires() {
     return myCefCookie.hasExpires;
   }
