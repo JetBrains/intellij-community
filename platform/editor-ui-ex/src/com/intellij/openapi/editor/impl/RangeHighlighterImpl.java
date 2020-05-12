@@ -317,6 +317,33 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     }
   }
 
+  @Override
+  public void setGreedyToLeft(boolean greedy) {
+    boolean old = isGreedyToLeft();
+    super.setGreedyToLeft(greedy);
+    if (old != greedy) {
+      fireChanged(false, false);
+    }
+  }
+
+  @Override
+  public void setGreedyToRight(boolean greedy) {
+    boolean old = isGreedyToRight();
+    super.setGreedyToRight(greedy);
+    if (old != greedy) {
+      fireChanged(false, false);
+    }
+  }
+
+  @Override
+  public void setStickingToRight(boolean value) {
+    boolean old = isStickingToRight();
+    super.setStickingToRight(value);
+    if (old != value) {
+      fireChanged(false, false);
+    }
+  }
+
   private void fireChanged(boolean renderersChanged, boolean fontStyleOrColorChanged) {
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
       setFlag(CHANGED_MASK, true);

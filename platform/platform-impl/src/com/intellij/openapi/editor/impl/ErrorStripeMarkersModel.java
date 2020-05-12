@@ -72,6 +72,11 @@ public class ErrorStripeMarkersModel implements MarkupModelListener {
       return;
     }
 
+    existingErrorStripeMarker.setGreedyToLeft(highlighter.isGreedyToLeft());
+    existingErrorStripeMarker.setGreedyToRight(highlighter.isGreedyToRight());
+    if (highlighter instanceof RangeMarkerImpl) {
+      existingErrorStripeMarker.setStickingToRight(((RangeMarkerImpl)highlighter).isStickingToRight());
+    }
     myListeners.forEach(l -> l.errorMarkerChanged(existingErrorStripeMarker));
   }
 
@@ -79,8 +84,9 @@ public class ErrorStripeMarkersModel implements MarkupModelListener {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ErrorStripeMarkerImpl marker = new ErrorStripeMarkerImpl(myEditor.getDocument(), highlighter);
     RangeHighlighterEx ex = marker.getHighlighter();
+    boolean isStickingToRight = (ex instanceof RangeMarkerImpl) && ((RangeMarkerImpl)highlighter).isStickingToRight();
     treeFor(marker).addInterval(marker, ex.getStartOffset(), ex.getEndOffset(),
-                                      ex.isGreedyToLeft(), ex.isGreedyToRight(), false, ex.getLayer());
+                                      ex.isGreedyToLeft(), ex.isGreedyToRight(), isStickingToRight, ex.getLayer());
     myListeners.forEach(l -> l.errorMarkerChanged(marker));
   }
 
