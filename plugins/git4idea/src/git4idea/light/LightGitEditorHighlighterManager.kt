@@ -103,7 +103,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, BaseVersion>("Light Git Editor Highlighter", this::setBaseVersion, this) {
+    BaseSingleTaskController<Request, BaseVersion>("light.highlighter", this::setBaseVersion, this) {
     override fun process(requests: List<Request>, previousResult: BaseVersion?): BaseVersion {
       val request = requests.last()
       try {

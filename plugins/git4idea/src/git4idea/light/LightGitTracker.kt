@@ -170,7 +170,7 @@ class LightGitTracker : Disposable {
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, StateUpdater>("Light Git Tracker", this::updateCurrentState, this) {
+    BaseSingleTaskController<Request, StateUpdater>("light.tracker", this::updateCurrentState, this) {
     override fun process(requests: List<Request>, previousResult: StateUpdater?): StateUpdater {
       if (requests.contains(Request.CheckGit)) {
         checkGit()

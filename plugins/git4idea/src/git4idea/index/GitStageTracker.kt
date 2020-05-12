@@ -231,8 +231,7 @@ class GitStageTracker(val project: Project) : Disposable {
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, Pair<State, Map<VirtualFile, DirtyScope>>>("Git Stage Tracker",
-                                                                                 this::update, this) {
+    BaseSingleTaskController<Request, Pair<State, Map<VirtualFile, DirtyScope>>>("stage", this::update, this) {
     override fun process(requests: List<Request>,
                          previousState: Pair<State, Map<VirtualFile, DirtyScope>>?): Pair<State, Map<VirtualFile, DirtyScope>> {
       val rootRequests = requests.filterIsInstance<Request.RefreshRoots>()
