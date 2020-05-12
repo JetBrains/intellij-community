@@ -1087,18 +1087,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     entry.windowedDecorator?.let { windowedDecorator ->
       info.isActiveOnStart = windowedDecorator.isActive
       val frame = windowedDecorator.getFrame()
-      if (frame.isShowing) {
-        val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
-        if (maximized) {
-          frame.extendedState = Frame.NORMAL
-          frame.invalidate()
-          frame.revalidate()
-        }
-
-        val bounds = getRootBounds(frame)
-        info.floatingBounds = bounds
-        info.isMaximized = maximized
+      val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
+      if (maximized) {
+        frame.extendedState = Frame.NORMAL
+        frame.invalidate()
+        frame.revalidate()
       }
+
+      val bounds = getRootBounds(frame)
+      info.floatingBounds = bounds
+      info.isMaximized = maximized
       return
     }
   }
