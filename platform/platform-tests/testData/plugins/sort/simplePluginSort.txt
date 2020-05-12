@@ -9,6 +9,7 @@
 + duplicate0
   missing1
   missing2
++ incompatible_with_disabled_module
   missing3
 + optional_config_cycle1
   optional_config_cycle0
@@ -18,6 +19,7 @@
   optional_cycle1
 + plugin3
 + plugin0
+  incompatible_with_enabled_module
 + plugin1
 + plugin2
 
@@ -33,6 +35,7 @@ Plugins should not have cyclic dependencies: optional_cycle1 <-> optional_cycle2
 Plugin "missing2" requires "com.intellij.missing" plugin to be installed.
 Plugin "missing3" requires "missing2" plugin to be enabled.
 Plugin "missing1" requires "com.intellij.modules.missing" plugin to be installed.
+Plugin "incompatible_with_enabled_module" is incompatible (IDE contains module "com.intellij.modules.plugin0").
 Plugin "cycle0" requires "cycle1" plugin to be enabled.
 <br><a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>

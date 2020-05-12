@@ -58,6 +58,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myCategory;
   String myUrl;
   @Nullable List<PluginDependency> pluginDependencies;
+  @Nullable List<PluginId> incompatibilities;
 
   transient List<Path> jarFiles;
 
@@ -260,6 +261,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           }
           break;
 
+        case "incompatible-with":
+          readPluginIncompatibility(child);
+          break;
+
         case "category":
           myCategory = StringUtil.nullize(child.getTextTrim());
           break;
@@ -316,6 +321,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context);
     myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
     myIsLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
+  }
+
+  private void readPluginIncompatibility(@NotNull Element child) {
+    String pluginId = child.getTextTrim();
+    if (pluginId.isEmpty()) return;
+
+    if (incompatibilities == null) {
+      incompatibilities = new ArrayList<>();
+    }
+    incompatibilities.add(PluginId.getId(pluginId));
   }
 
   private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorListLoadingContext context, @NotNull Element child) {

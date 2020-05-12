@@ -149,4 +149,14 @@
     <depends>optional_config_cycle0</depends>
     <depends>optional_config_cycle1</depends>
   </idea-plugin>
+  <idea-plugin url="file://incompatible_with_disabled_module.xml">
+    <id>incompatible_with_disabled_module</id>
+    <depends>com.intellij.modules.core</depends>
+    <incompatible-with>com.intellij.modules.disabled</incompatible-with>
+  </idea-plugin>
+  <idea-plugin url="file://incompatible_with_enabled_module.xml">
+    <id>incompatible_with_enabled_module</id>
+    <depends>com.intellij.modules.core</depends>
+    <incompatible-with>com.intellij.modules.plugin0</incompatible-with>
+  </idea-plugin>
 </root>

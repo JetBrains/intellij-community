@@ -597,12 +597,13 @@ public final class PluginManagerCore {
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
       List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
+      List<PluginId> incompatibleModuleIds = ContainerUtil.notNullize(rootDescriptor.incompatibilities);
       if (dependencies == null) {
         dependencies = Collections.emptyList();
       }
 
       IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
-      int capacity = dependencies.size();
+      int capacity = dependencies.size() + incompatibleModuleIds.size();
       if (!withOptional) {
         for (PluginDependency dependency : dependencies) {
           if (dependency.isOptional) {
@@ -651,6 +652,14 @@ public final class PluginManagerCore {
           plugins.add(dep);
         }
       }
+
+      for (PluginId moduleId : incompatibleModuleIds) {
+        IdeaPluginDescriptorImpl dep = idToDescriptorMap.apply(moduleId);
+        if (uniqueCheck.add(dep)) {
+          plugins.add(dep);
+        }
+      }
+
       return plugins;
     });
   }
@@ -1139,15 +1148,16 @@ public final class PluginManagerCore {
     IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(descriptors, idMap::get, false,
                                                                                            idMap.containsKey(ALL_MODULES_MARKER)));
 
-    Set<PluginId> enabledIds = new LinkedHashSet<>();
+    Set<PluginId> enabledPluginIds = new LinkedHashSet<>();
+    Set<PluginId> enabledModuleIds = new LinkedHashSet<>();
     Map<PluginId, String> disabledIds = new LinkedHashMap<>();
     Set<PluginId> disabledRequiredIds = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptorImpl descriptor : sortedRequired) {
       boolean wasEnabled = descriptor.isEnabled();
-      if (wasEnabled && computePluginEnabled(descriptor, enabledIds, idMap, disabledRequiredIds, context.disabledPlugins, errors)) {
-        enabledIds.add(descriptor.getPluginId());
-        enabledIds.addAll(descriptor.getModules());
+      if (wasEnabled && computePluginEnabled(descriptor, enabledPluginIds, enabledModuleIds, idMap, disabledRequiredIds, context.disabledPlugins, errors)) {
+        enabledPluginIds.add(descriptor.getPluginId());
+        enabledModuleIds.addAll(descriptor.getModules());
       }
       else {
         descriptor.setEnabled(false);
@@ -1306,7 +1316,8 @@ public final class PluginManagerCore {
   }
 
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                              @NotNull Set<PluginId> loadedIds,
+                                              @NotNull Set<PluginId> loadedPluginIds,
+                                              @NotNull Set<PluginId> loadedModuleIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
@@ -1315,15 +1326,25 @@ public final class PluginManagerCore {
       return true;
     }
 
-    // no deps at all
-    if (descriptor.pluginDependencies == null) {
-      return true;
+    boolean result = true;
+
+    for (PluginId incompatibleId : ContainerUtil.notNullize(descriptor.incompatibilities)) {
+      if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) continue;
+
+      result = false;
+      String presentableName = toPresentableName(incompatibleId.getIdString());
+      errors.add(new PluginError(descriptor, "is incompatible with the IDE containing module " + presentableName,
+                                 "IDE contains module " + presentableName));
     }
 
-    boolean result = true;
+    // no deps at all
+    if (descriptor.pluginDependencies == null) {
+      return result;
+    }
+
     for (PluginDependency dependency : descriptor.pluginDependencies) {
       PluginId depId = dependency.id;
-      if (dependency.isOptional || loadedIds.contains(depId)) {
+      if (dependency.isOptional || loadedPluginIds.contains(depId) || loadedModuleIds.contains(depId)) {
         continue;
       }
 
