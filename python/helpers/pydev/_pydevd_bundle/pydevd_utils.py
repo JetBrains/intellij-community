@@ -17,7 +17,9 @@ except:
     OrderedDict = dict
 
 import inspect
-from _pydevd_bundle.pydevd_constants import IS_PY3K, dict_iter_items, get_global_debugger
+from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
+    ValuesPolicy
+
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
@@ -454,6 +456,27 @@ def is_numpy_container(type_qualifier, var_type, var):
 
 def is_numeric_container(type_qualifier, var_type, var):
     return is_numpy_container(type_qualifier, var_type, var) or is_pandas_container(type_qualifier, var_type, var)
+
+
+def is_builtin(x):
+    return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
+
+
+def is_numpy(x):
+    if not getattr(x, '__module__', None) == 'numpy':
+        return False
+    type_name = x.__name__
+    return type_name == 'dtype' or type_name == 'bool_' or type_name == 'str_' or 'int' in type_name or 'uint' in type_name \
+           or 'float' in type_name or 'complex' in type_name
+
+
+def should_evaluate_full_value(val):
+    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or ((is_builtin(type(val)) or is_numpy(type(val)))
+                                                       and not isinstance(val, (list, tuple, dict, set, frozenset)))
+
+
+def should_evaluate_shape():
+    return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
 
 
 def _series_to_str(s, max_items, show_index=True):

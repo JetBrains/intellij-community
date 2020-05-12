@@ -11,10 +11,10 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT, \
-    NUMPY_NUMERIC_TYPES
+    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, NUMPY_NUMERIC_TYPES
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, pandas_to_str, is_string
+from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, is_string, pandas_to_str, \
+    should_evaluate_full_value, should_evaluate_shape
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
     get_column_formatter_by_type, DEFAULT_DF_FORMAT
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
@@ -226,23 +226,6 @@ get_type = _TYPE_RESOLVE_HANDLER.get_type
 _str_from_providers = _TYPE_RESOLVE_HANDLER.str_from_providers
 
 
-def is_builtin(x):
-    return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
-
-
-def is_numpy(x):
-    if not getattr(x, '__module__', None) == 'numpy':
-        return False
-    type_name = x.__name__
-    return type_name == 'dtype' or type_name == 'bool_' or type_name == 'str_' or 'int' in type_name or 'uint' in type_name \
-           or 'float' in type_name or 'complex' in type_name
-
-
-def should_evaluate_full_value(val):
-    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or ((is_builtin(type(val)) or is_numpy(type(val)))
-                                                       and not isinstance(val, (list, tuple, dict, set, frozenset)))
-
-
 def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
     """Returns frame variables as the list of `DebugValue` structures
     """
@@ -355,10 +338,11 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     debug_value.value = value
 
     try:
-        if is_numeric_container(type_qualifier, typeName, v):
-            debug_value.shape = str(v.shape)
-        elif hasattr(v, '__len__') and not is_string(v):
-            debug_value.shape = str(len(v))
+        if should_evaluate_shape():
+            if is_numeric_container(type_qualifier, typeName, v):
+                debug_value.shape = str(v.shape)
+            elif hasattr(v, '__len__') and not is_string(v):
+                debug_value.shape = str(len(v))
     except:
         pass
 
