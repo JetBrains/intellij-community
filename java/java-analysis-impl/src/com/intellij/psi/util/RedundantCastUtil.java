@@ -146,25 +146,22 @@ public class RedundantCastUtil {
     private void processTypeCastWithExpectedType(PsiExpression rExpr, @Nullable PsiType lType) {
       rExpr = deparenthesizeExpression(rExpr);
       if (rExpr instanceof PsiTypeCastExpression) {
-        PsiExpression castOperand = deparenthesizeExpression(((PsiTypeCastExpression)rExpr).getOperand());
-        if (castOperand != null) {
-          if (castOperand instanceof PsiFunctionalExpression) {
-            if (lType != null) {
-              final PsiTypeElement typeElement = ((PsiTypeCastExpression)rExpr).getCastType();
-              final PsiType castType = typeElement != null ? typeElement.getType() : null;
-              if (lType.equals(castType)) {
-                addToResults((PsiTypeCastExpression)rExpr);
-              }
-            }
-            return;
-          }
+        PsiExpression castOperand = getInnerMostOperand(rExpr);
+        if (castOperand != null && lType != null) {
           PsiType opType = getOpTypeWithExpected(castOperand, lType);
           if (opType != null) {
             if (castOperand instanceof PsiConditionalExpression) {
               if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)castOperand).getThenExpression())) return;
               if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)castOperand).getElseExpression())) return;
             }
-            if (lType != null && TypeConversionUtil.isAssignable(lType, opType, false)) {
+            if (TypeConversionUtil.isAssignable(lType, opType, false)) {
+              if (castOperand instanceof PsiFunctionalExpression) {
+                final PsiTypeElement typeElement = ((PsiTypeCastExpression)rExpr).getCastType();
+                final PsiType castType = typeElement != null ? typeElement.getType() : null;
+                if (!lType.equals(castType)) {
+                  return;
+                }
+              }
               addToResults((PsiTypeCastExpression)rExpr);
             }
           }
@@ -937,7 +934,7 @@ public class RedundantCastUtil {
     private static PsiType getOpTypeWithExpected(PsiExpression operand, PsiType expectedTypeByParent) {
       PsiType opType = operand.getType();
 
-      if (expectedTypeByParent != null) {
+      if (expectedTypeByParent != null && !(operand instanceof PsiFunctionalExpression)) {
         try {
           final Project project = operand.getProject();
           final String uniqueVariableName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("l", operand, false);
