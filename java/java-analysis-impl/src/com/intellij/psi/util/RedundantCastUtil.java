@@ -396,11 +396,11 @@ public class RedundantCastUtil {
           ProgressManager.checkCanceled();
           PsiExpression returnExpression = deparenthesizeExpression(expressions.get(returnExprIdx));
           final PsiExpression newReturnExpression = deparenthesizeExpression(newReturnExpressions.get(returnExprIdx));
-          LOG.assertTrue(newReturnExpression != null);
           if (newReturnExpression instanceof PsiTypeCastExpression) {
             checkLambdaReturn(i, returnExpression, (PsiTypeCastExpression)newReturnExpression, interfaceType, newLambdaExpression, oldCall, newCall, parameters);
           }
           else if (returnExpression instanceof PsiConditionalExpression) {
+            LOG.assertTrue(newReturnExpression instanceof PsiConditionalExpression);
             PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)returnExpression;
             PsiConditionalExpression newConditionalExpression = (PsiConditionalExpression)newReturnExpression;
             
