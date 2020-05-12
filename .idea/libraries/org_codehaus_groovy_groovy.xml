@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="Groovy" type="repository">
+  <library name="org.codehaus.groovy:groovy" type="repository">
     <properties maven-id="org.codehaus.groovy:groovy:2.4.17" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy/2.4.17/groovy-2.4.17.jar!/" />

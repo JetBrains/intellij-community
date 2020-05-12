@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="library" name="cli-parser" level="project" />
