@@ -14,6 +14,7 @@ import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
@@ -24,6 +25,7 @@ import git4idea.rebase.interactive.GitRebaseTodoModel
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.DEFAULT_CELL_HEIGHT
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_COLOR
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_LINE_WIDTH
+import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_NODE_WIDTH
 import git4idea.rebase.interactive.dialog.view.CommitMessageCellEditor
 import java.awt.*
 import javax.swing.DefaultListSelectionModel
@@ -39,7 +41,10 @@ internal open class GitRebaseCommitsTableView(
 ) : JBTable(model) {
 
   companion object {
-    const val GRAPH_LINE_WIDTH = 1.5f
+    val GRAPH_LINE_WIDTH: Float
+      get() = JBUIScale.scale(1.5f)
+    val GRAPH_NODE_WIDTH: Int
+      get() = JBUI.scale(8)
     val DEFAULT_CELL_HEIGHT: Int
       get() = JBUI.scale(PaintParameters.ROW_HEIGHT)
     val GRAPH_COLOR = JBColor.namedColor("VersionControl.GitCommits.graphColor", JBColor(Color(174, 185, 192), Color(135, 146, 154)))
@@ -85,7 +90,7 @@ internal open class GitRebaseCommitsTableView(
   }
 
   private fun adjustCommitIconColumnWidth() {
-    val contentWidth = getExpandedColumnWidth(GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN) + UIUtil.DEFAULT_HGAP
+    val contentWidth = 2 * GRAPH_NODE_WIDTH + UIUtil.DEFAULT_HGAP
     val column = columnModel.getColumn(GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
     column.maxWidth = contentWidth
     column.preferredWidth = contentWidth
@@ -247,13 +252,8 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
 }
 
 private class GitRebaseCommitIconTableCellRenderer : CommitIconTableCellRenderer({ GRAPH_COLOR }, DEFAULT_CELL_HEIGHT, GRAPH_LINE_WIDTH) {
-  companion object {
-    private const val NODE_WIDTH = 8
-    private const val NODE_CENTER_X = NODE_WIDTH
-    private val NODE_CENTER_Y
-      get() = DEFAULT_CELL_HEIGHT / 2
-  }
-
+  override val nodeWidth: Int
+    get() = GRAPH_NODE_WIDTH
   private var isHead = false
   private var nodeType = NodeType.SIMPLE_NODE
 
@@ -289,10 +289,10 @@ private class GitRebaseCommitIconTableCellRenderer : CommitIconTableCellRenderer
   }
 
   private fun drawDoubleNode(g: Graphics2D) {
-    val circleRadius = NODE_WIDTH / 2
+    val circleRadius = nodeWidth / 2
     val backgroundCircleRadius = circleRadius + 1
-    val leftCircleX0 = NODE_CENTER_X
-    val y0 = NODE_CENTER_Y
+    val leftCircleX0 = nodeCenterX
+    val y0 = nodeCenterY
     val rightCircleX0 = leftCircleX0 + circleRadius
 
     // right circle
@@ -307,7 +307,7 @@ private class GitRebaseCommitIconTableCellRenderer : CommitIconTableCellRenderer
 
   private fun drawEditNode(g: Graphics2D) {
     val icon = AllIcons.Actions.Pause
-    icon.paintIcon(null, g, NODE_CENTER_X - icon.iconWidth / 2, NODE_CENTER_Y - icon.iconHeight / 2)
+    icon.paintIcon(null, g, nodeCenterX - icon.iconWidth / 2, nodeCenterY - icon.iconHeight / 2)
   }
 
 }
