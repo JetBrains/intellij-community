@@ -161,15 +161,21 @@ public final class JBCefApp {
       Function<String, Boolean> unsupported = (msg) -> {
         ourSupported = new AtomicBoolean(false);
         if (logging) {
-          LOG.warn(msg);
+          LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
         }
         return false;
       };
       // warn: do not change to Registry.is(), the method used at startup
       if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
-        return unsupported.apply("JCEF is disabled via 'ide.browser.jcef.enabled'");
+        return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled'");
       }
-      String version = JCefAppConfig.getVersion();
+      String version;
+      try {
+        version = JCefAppConfig.getVersion();
+      }
+      catch (NoSuchMethodError e) {
+        return unsupported.apply("JCEF runtime version is not supported");
+      }
       if (version == null) {
         return unsupported.apply("JCEF runtime version is not available");
       }
