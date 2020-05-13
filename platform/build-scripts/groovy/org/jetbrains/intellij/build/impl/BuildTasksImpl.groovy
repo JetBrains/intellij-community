@@ -95,7 +95,12 @@ class BuildTasksImpl extends BuildTasks {
     })
   }
 
-  static void runApplicationStarter(BuildContext context, String tempDir, List<String> modules, List<String> arguments, Map<String, Object> systemProperties = [:]) {
+  static void runApplicationStarter(BuildContext context,
+                                    String tempDir,
+                                    List<String> modules,
+                                    List<String> arguments,
+                                    Map<String, Object> systemProperties = [:],
+                                    List<String> vmOptions = ["-ea", "-Xmx512m"]) {
     context.ant.mkdir(dir: tempDir)
 
     Set<String> ideClasspath = new LinkedHashSet<String>()
@@ -120,7 +125,7 @@ class BuildTasksImpl extends BuildTasks {
 
     BuildUtils.runJava(
       context,
-      ["-ea", "-Xmx512m"],
+      vmOptions,
       ideaProperties + systemProperties,
       ideClasspath,
       "com.intellij.idea.Main",
