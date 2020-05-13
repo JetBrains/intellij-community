@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -100,6 +101,7 @@ class GitRevertAction : GitFileStatusNodeAction(GitBundle.messagePointer("stage.
 
   override fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>) {
     GitFileUtils.revertUnstagedPaths(project, root, paths)
+    LocalFileSystem.getInstance().refreshFiles(paths.mapNotNull { it.virtualFile })
   }
 
   override fun progressTitle() = GitBundle.message("stage.revert.process")
