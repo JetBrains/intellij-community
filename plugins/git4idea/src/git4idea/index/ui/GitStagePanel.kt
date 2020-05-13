@@ -76,7 +76,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
       tree.setEmptyText(GitBundle.message("stage.loading.status"))
       progressStripe.startLoadingImmediately()
     }
-    tracker.scheduleUpdateAll()
 
     Disposer.register(disposableParent, this)
 
