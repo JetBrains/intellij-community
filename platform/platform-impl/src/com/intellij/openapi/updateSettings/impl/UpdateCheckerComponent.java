@@ -161,7 +161,7 @@ final class UpdateCheckerComponent {
       if (!ConfigImportHelper.isFirstSession()) {
         String title = IdeBundle.message("update.notifications.title");
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
-        //UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, null).notify(null);
+        UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, null).notify(null);
       }
     }
 
