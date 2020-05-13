@@ -27,16 +27,16 @@ import java.util.List;
 
 public class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
   @Override
-  public boolean isApplicable(@NotNull Path projectPath, @NotNull CommandLineInspectionProgressReporter logger) {
+  public boolean isApplicable(@NotNull ConfiguratorContext context) {
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
     if (!sdks.isEmpty()) return false;
 
     try {
-      boolean hasAnyPythonFiles = Files.walk(projectPath).anyMatch(f -> {
+      boolean hasAnyPythonFiles = Files.walk(context.getProjectPath()).anyMatch(f -> {
         return f.toString().endsWith(".py");
       });
       if (!hasAnyPythonFiles) {
-        logger.reportMessage(3, "Skipping Python interpreter autodetection because the project doesn't contain any Python files");
+        context.getLogger().reportMessage(3, "Skipping Python interpreter autodetection because the project doesn't contain any Python files");
       }
 
       return hasAnyPythonFiles;
@@ -47,7 +47,8 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
   }
 
   @Override
-  public void configureEnvironment(@NotNull Path projectPath, @NotNull CommandLineInspectionProgressReporter logger) {
+  public void configureEnvironment(@NotNull ConfiguratorContext context) {
+    CommandLineInspectionProgressReporter logger = context.getLogger();
     logger.reportMessage(3, "Python environment configuration...");
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
     logger.reportMessage(3, "Python interpreters detected:");
@@ -55,7 +56,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
       logger.reportMessage(3, sdk.getHomePath());
     }
     if (sdks.isEmpty()) {
-      final List<Sdk> detectedSdks = PySdkExtKt.findAllPythonSdks(projectPath);
+      final List<Sdk> detectedSdks = PySdkExtKt.findAllPythonSdks(context.getProjectPath());
 
       if (detectedSdks.size() > 0) {
         for (Sdk sdk : detectedSdks) {
@@ -76,21 +77,22 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
   }
 
   @Override
-  public void configureProject(@NotNull Project project,
-                               @NotNull AnalysisScope scope,
-                               @NotNull CommandLineInspectionProgressReporter logger) {
+  public void configureProject(@NotNull Project project, @NotNull ConfiguratorContext context) {
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
-    if (!sdks.isEmpty()) {
-      PythonFacetType facetType = PythonFacetType.getInstance();
-      for (VirtualFile f : scope.getFiles()) {
-        if (FileTypeRegistry.getInstance().isFileOfType(f, PythonFileType.INSTANCE)) {
+    if (sdks.isEmpty()) return;
 
-          Module m = ModuleUtilCore.findModuleForFile(f, project);
-          if (m != null && FacetManager.getInstance(m).getFacetByType(facetType.getId()) == null) {
-            WriteAction.runAndWait(() -> {
-              FacetManager.getInstance(m).addFacet(facetType, facetType.getPresentableName(), null);
-            });
-          }
+    AnalysisScope scope = context.getAnalyzerScope();
+    if (scope == null) return;
+
+    PythonFacetType facetType = PythonFacetType.getInstance();
+    for (VirtualFile f : scope.getFiles()) {
+      if (FileTypeRegistry.getInstance().isFileOfType(f, PythonFileType.INSTANCE)) {
+
+        Module m = ModuleUtilCore.findModuleForFile(f, project);
+        if (m != null && FacetManager.getInstance(m).getFacetByType(facetType.getId()) == null) {
+          WriteAction.runAndWait(() -> {
+            FacetManager.getInstance(m).addFacet(facetType, facetType.getPresentableName(), null);
+          });
         }
       }
     }

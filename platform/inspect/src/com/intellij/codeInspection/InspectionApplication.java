@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
@@ -62,6 +63,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Predicate;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class InspectionApplication implements CommandLineInspectionProgressReporter {
@@ -138,6 +140,41 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     myHelpProvider.printHelpAndExit();
   }
 
+  @NotNull
+  private CommandLineInspectionProjectConfigurator.ConfiguratorContext configuratorContext(@NotNull Path projectPath, @Nullable AnalysisScope scope) {
+    return new CommandLineInspectionProjectConfigurator.ConfiguratorContext() {
+      @Override
+      public @NotNull ProgressIndicator getProgressIndicator() {
+        return new ProgressIndicatorBase();
+      }
+
+      @Override
+      public @Nullable AnalysisScope getAnalyzerScope() {
+        return scope;
+      }
+
+      @Override
+      public @NotNull CommandLineInspectionProgressReporter getLogger() {
+        return InspectionApplication.this;
+      }
+
+      @Override
+      public @NotNull Path getProjectPath() {
+        return projectPath;
+      }
+
+      @Override
+      public @NotNull Predicate<Path> getFilesFilter() {
+        return Predicates.alwaysTrue();
+      }
+
+      @Override
+      public @NotNull Predicate<VirtualFile> getVirtualFilesFilter() {
+        return Predicates.alwaysTrue();
+      }
+    };
+  }
+
   private void run(@NotNull Path projectPath, @NotNull Disposable parentDisposable) throws IOException, JDOMException {
     VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
@@ -152,8 +189,9 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getExtensionList()) {
-      if (configurator.isApplicable(projectPath, this)) {
-        configurator.configureEnvironment(projectPath, this);
+      CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, null);
+      if (configurator.isApplicable(context)) {
+        configurator.configureEnvironment(context);
       }
     }
 
@@ -275,8 +313,9 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   private void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
-      if (configurator.isApplicable(projectPath, this)) {
-        configurator.configureProject(project, scope, this);
+      CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
+      if (configurator.isApplicable(context)) {
+        configurator.configureProject(project, context);
       }
     }
   }
