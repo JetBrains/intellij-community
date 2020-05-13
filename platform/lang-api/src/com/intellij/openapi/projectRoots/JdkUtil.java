@@ -41,6 +41,8 @@ import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -262,25 +264,22 @@ public final class JdkUtil {
 
       commandLine.addParameter(commandLineWrapper.getName());
 
-      Map<String, String> commandLineContent = new HashMap<>();
-      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
-
       TargetValue<String> classPathParameter = classPathVolume.createUpload(classpathFile.getAbsolutePath());
       commandLine.addParameter(classPathParameter);
-      addCommandLineContentOnResolve(commandLineContent, classpathFile, classPathParameter);
+      setup.rememberFileContentAfterUpload(classpathFile, classPathParameter);
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
         TargetValue<String> vmParamsParameter = classPathVolume.createUpload(vmParamsFile.getAbsolutePath());
         commandLine.addParameter(vmParamsParameter);
-        addCommandLineContentOnResolve(commandLineContent, vmParamsFile, vmParamsParameter);
+        setup.rememberFileContentAfterUpload(vmParamsFile, vmParamsParameter);
       }
 
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params");
         TargetValue<String> appParamsParameter = classPathVolume.createUpload(appParamsFile.getAbsolutePath());
         commandLine.addParameter(appParamsParameter);
-        addCommandLineContentOnResolve(commandLineContent, appParamsFile, appParamsParameter);
+        setup.rememberFileContentAfterUpload(appParamsFile, appParamsParameter);
       }
     }
     catch (IOException e) {
@@ -288,16 +287,6 @@ public final class JdkUtil {
     }
   }
 
-  static void addCommandLineContentOnResolve(Map<String, String> commandLineContent, File localFile, TargetValue<String> value) {
-    value.getTargetValue().onSuccess(resolved -> {
-      try {
-        commandLineContent.put(resolved, FileUtil.loadFile(localFile));
-      }
-      catch (IOException e) {
-        LOG.error("Cannot add command line content for value " + resolved, e);
-      }
-    });
-  }
 
   /*make private*/
   static void setClasspathJarParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
@@ -310,10 +299,10 @@ public final class JdkUtil {
                                     boolean dynamicVMOptions,
                                     boolean dynamicParameters) throws CantRunException {
     try {
-      Manifest manifest = new Manifest();
-      manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
+      boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
+      ClasspathJar jarFile = new ClasspathJar(setup, notEscape);
+      jarFile.addToManifest("Created-By", ApplicationNamesInfo.getInstance().getFullProductName(), true);
 
-      String manifestText = "";
       if (dynamicVMOptions) {
         List<String> properties = new ArrayList<>();
         for (String param : vmParameters.getList()) {
@@ -324,8 +313,7 @@ public final class JdkUtil {
             setup.appendVmParameter(param);
           }
         }
-        manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(properties));
-        manifestText += "VM-Options: " + ParametersListUtil.join(properties) + "\n";
+        jarFile.addToManifest("VM-Options", ParametersListUtil.join(properties));
       }
       else {
         setup.appendVmParameters(vmParameters);
@@ -334,51 +322,69 @@ public final class JdkUtil {
       setup.appendEncoding(javaParameters, vmParameters);
 
       if (dynamicParameters) {
-        manifest.getMainAttributes()
-          .putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
-        manifestText += "Program-Parameters: " + ParametersListUtil.join(javaParameters.getProgramParametersList().getList()) + "\n";
+        jarFile.addToManifest("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
       }
 
-      String jarFileContentPrefix = manifestText + "Class-Path: ";
-      Map<String, String> commandLineContent = new HashMap<>();
-      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
+      commandLine.addFileToDeleteOnTermination(jarFile.getFile());
 
-      File classpathJarFile =
-        FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
-      commandLine.addFileToDeleteOnTermination(classpathJarFile);
-
-      String jarFilePath = classpathJarFile.getAbsolutePath();
-      commandLine.addParameter("-classpath");
+      TargetValue<String> targetJarFile = classPathVolume.createUpload(jarFile.getFile().getAbsolutePath());
       if (dynamicVMOptions || dynamicParameters) {
-        char pathSeparator = request.getTargetPlatform().getPlatform().pathSeparator;
-        commandLine
-          .addParameter(classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + pathSeparator + jarFilePath));
-        commandLine.addParameter(classPathVolume.createUpload(commandLineWrapper.getName()));
+        // -classpath path1:path2 CommandLineWrapper path2
+        commandLine.addParameter("-classpath");
+        commandLine.addParameter(setup.composePathsList(
+          classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)),
+          targetJarFile
+        ));
+        commandLine.addParameter(TargetValue.fixed(commandLineWrapper.getName()));
+        commandLine.addParameter(targetJarFile);
       }
-      TargetValue<String> jarFileValue = classPathVolume.createUpload(jarFilePath);
-      commandLine.addParameter(jarFileValue);
+      else {
+        // -classpath path2
+        commandLine.addParameter("-classpath");
+        commandLine.addParameter(targetJarFile);
+      }
 
-      Collection<TargetValue<String>> classPathParameters = setup.getClassPathValues(javaParameters, javaParameters.getClassPath());
-      Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(targetClassPathParameters -> {
+      List<TargetValue<String>> classPathParameters = setup.getClassPathValues(javaParameters, javaParameters.getClassPath());
+      jarFile.scheduleWriteFileWhenClassPathReady(classPathParameters, targetJarFile);
+    }
+    catch (IOException e) {
+      throwUnableToCreateTempFile(e);
+    }
+    setup.appendModulePath(javaParameters, vmParameters);
+  }
+
+  private static class ClasspathJar {
+    private final JdkCommandLineSetup mySetup;
+    private final boolean myNotEscapeClassPathUrl;
+    private final Manifest myManifest;
+    private final StringBuilder myManifestText;
+    private final File myFile;
+
+    ClasspathJar(JdkCommandLineSetup setup, boolean notEscapeClassPathUrl) throws IOException {
+      mySetup = setup;
+      myNotEscapeClassPathUrl = notEscapeClassPathUrl;
+      myFile = FileUtil.createTempFile(
+        CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
+
+      myManifest = new Manifest();
+      myManifestText = new StringBuilder();
+    }
+
+    public void addToManifest(String key, String value) {
+      addToManifest(key, value, false);
+    }
+
+    public void addToManifest(String key, String value, boolean skipInCommandLineContent) {
+      myManifest.getMainAttributes().putValue(key, value);
+      if (!skipInCommandLineContent) {
+        myManifestText.append(key).append(": ").append(value).append("\n");
+      }
+    }
+
+    public void scheduleWriteFileWhenClassPathReady(List<TargetValue<String>> classpath, TargetValue<String> selfUpload) {
+      Promises.collectResults(ContainerUtil.map(classpath, TargetValue::getTargetValue)).onSuccess(__ -> {
         try {
-          boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
-          StringBuilder classPath = new StringBuilder();
-          for (TargetValue<String> parameter : classPathParameters) {
-            if (classPath.length() > 0) classPath.append(' ');
-            String localValue = parameter.getLocalValue().blockingGet(0);
-            String targetValue = parameter.getTargetValue().blockingGet(0);
-            if (targetValue == null || localValue == null) {
-              throw new ExecutionException("Couldn't resolve target value", null);
-            }
-            File file = new File(targetValue);
-            @SuppressWarnings("deprecation") String url = (notEscape ? file.toURL() : file.toURI().toURL()).toString();
-            classPath.append(!StringUtil.endsWithChar(url, '/') && new File(localValue).isDirectory() ? url + "/" : url);
-          }
-          CommandLineWrapperUtil.fillClasspathJarFile(manifest, classPath.toString(), classpathJarFile);
-
-          jarFileValue.getTargetValue().onSuccess(value -> {
-            commandLineContent.put(value, jarFileContentPrefix + classPath);
-          });
+          writeFileNow(classpath, selfUpload);
         }
         catch (IOException | ExecutionException e) {
           //todo[remoteServers]: interrupt preparing environment
@@ -388,10 +394,44 @@ public final class JdkUtil {
         }
       });
     }
-    catch (IOException e) {
-      throwUnableToCreateTempFile(e);
+
+    private void writeFileNow(List<TargetValue<String>> resolvedTargetClasspath, TargetValue<String> selfUpload)
+      throws ExecutionException, TimeoutException, IOException {
+
+      StringBuilder classPath = new StringBuilder();
+      for (TargetValue<String> parameter : resolvedTargetClasspath) {
+        if (classPath.length() > 0) classPath.append(' ');
+        String localValue = parameter.getLocalValue().blockingGet(0);
+        String targetValue = parameter.getTargetValue().blockingGet(0);
+        if (targetValue == null || localValue == null) {
+          throw new ExecutionException("Couldn't resolve target value", null);
+        }
+
+        String targetUrl = pathToUrl(targetValue);
+        classPath.append(targetUrl);
+        if (!StringUtil.endsWithChar(targetUrl, '/') && new File(localValue).isDirectory()) {
+          classPath.append('/');
+        }
+      }
+
+      // todo[remoteServers]: race condition here (?), it has to be called after classpath upload BUT before selfUpload
+      CommandLineWrapperUtil.fillClasspathJarFile(myManifest, classPath.toString(), myFile);
+
+      selfUpload.getTargetValue().onSuccess(value -> {
+        String fullManifestText = myManifestText.toString() + "Class-Path: " + classPath.toString();
+        mySetup.getCommandLineContent().put(value, fullManifestText);
+      });
     }
-    setup.appendModulePath(javaParameters, vmParameters);
+
+    public File getFile() {
+      return myFile;
+    }
+
+    private String pathToUrl(String path) throws MalformedURLException {
+      File file = new File(path);
+      @SuppressWarnings("deprecation") URL url = (myNotEscapeClassPathUrl ? file.toURL() : file.toURI().toURL());
+      return url.toString();
+    }
   }
 
   @SuppressWarnings("SpellCheckingInspection")

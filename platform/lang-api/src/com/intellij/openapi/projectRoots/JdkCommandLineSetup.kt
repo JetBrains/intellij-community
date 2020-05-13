@@ -24,6 +24,7 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.collectResults
+import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
@@ -44,6 +45,11 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
 
   private val classPathVolume by lazy { request.createTempVolume() }
   private val agentVolume by lazy { request.createTempVolume() }
+
+  /* make private */
+  val commandLineContent by lazy {
+    mutableMapOf<String, String>().also { commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, it) }
+  }
 
   @Throws(CantRunException::class)
   fun setupCommandLine(javaParameters: SimpleJavaParameters) {
@@ -90,7 +96,6 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       request.setParentEnvironmentType(type)
     }
   }
-
 
   @Throws(CantRunException::class)
   private fun setupClasspathAndParameters(javaParameters: SimpleJavaParameters) {
@@ -184,15 +189,12 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
 
       argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters)
 
-      val commandLineContent = HashMap<String, String>()
-
-      commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, commandLineContent)
       appendEncoding(javaParameters, vmParameters)
 
       val argFileParameter = classPathVolume.createUpload(argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
-      JdkUtil.addCommandLineContentOnResolve(commandLineContent, argFile.file, argFileParameter)
+      rememberFileContentAfterUpload(argFile.file, argFileParameter)
     }
     catch (e: IOException) {
       JdkUtil.throwUnableToCreateTempFile(e)
@@ -217,6 +219,20 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
+    }
+  }
+
+  // todo[remoteServers]: problem here (?), it modifies the command (via commandLineContent) but has to be called AFTER value is resolved
+  /* make private*/
+  @JvmName("rememberFileContentAfterUpload")
+  internal fun rememberFileContentAfterUpload(localFile: File, fileUpload: TargetValue<String>) {
+    fileUpload.targetValue.onSuccess { resolvedTargetPath: String ->
+      try {
+        commandLineContent[resolvedTargetPath] = FileUtil.loadFile(localFile)
+      }
+      catch (e: IOException) {
+        LOG.error("Cannot add command line content for $resolvedTargetPath from $localFile", e);
+      }
     }
   }
 
@@ -329,6 +345,12 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     return result
   }
 
+  fun composePathsList(vararg targetPaths: TargetValue<String>): TargetValue<String> {
+    return TargetValue.composite(targetPaths.toList()) {
+      it.joinTo(StringBuilder(), platform.pathSeparator.toString()).toString()
+    }
+  }
+
   private fun joinPath(segments: Array<String>) = segments.joinTo(StringBuilder(), platform.fileSeparator.toString()).toString()
 
   companion object {
@@ -362,10 +384,10 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
   }
 
-  internal class ArgFile @Throws(IOException::class) constructor(private val dynamicVMOptions: Boolean,
-                                                                 private val dynamicParameters: Boolean,
-                                                                 private val charset: Charset,
-                                                                 private val platform: Platform) {
+  private class ArgFile @Throws(IOException::class) constructor(private val dynamicVMOptions: Boolean,
+                                                                private val dynamicParameters: Boolean,
+                                                                private val charset: Charset,
+                                                                private val platform: Platform) {
 
     val file = FileUtil.createTempFile("idea_arg_file" + Random().nextInt(Int.MAX_VALUE), null)
 
