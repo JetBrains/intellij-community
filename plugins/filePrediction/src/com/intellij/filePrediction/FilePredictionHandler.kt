@@ -3,7 +3,7 @@ package com.intellij.filePrediction
 import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
 import com.intellij.filePrediction.features.history.FilePredictionHistory
 import com.intellij.filePrediction.features.history.context.FilePredictionContext
-import com.intellij.filePrediction.predictor.FileUsagePredictor
+import com.intellij.filePrediction.predictor.FileUsagePredictionHandler
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -19,7 +19,7 @@ class FilePredictionHandler {
     fun getInstance(): FilePredictionHandler? = ServiceManager.getService(FilePredictionHandler::class.java)
   }
 
-  private val predictor: FileUsagePredictor = FileUsagePredictor(30, 5, 10)
+  private val predictor: FileUsagePredictionHandler = FileUsagePredictionHandler(30, 5, 10)
 
   private var session: FilePredictionSessionHolder = FilePredictionSessionHolder()
 

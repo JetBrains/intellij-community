@@ -5,14 +5,14 @@ import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
 
 interface FilePredictionCandidateProvider {
-  fun provideCandidates(project: Project, file: VirtualFile, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile>
+  fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile>
 }
 
 internal object CompositeCandidateProvider : FilePredictionCandidateProvider {
   private val refProvider: FilePredictionCandidateProvider = FilePredictionReferenceProvider()
   private val neighborProvider: FilePredictionCandidateProvider = FilePredictionNeighborFilesProvider()
 
-  override fun provideCandidates(project: Project, file: VirtualFile, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
+  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
     val result = HashSet<VirtualFile>()
     result.addAll(refProvider.provideCandidates(project, file, refs, limit / 2))
     result.addAll(neighborProvider.provideCandidates(project, file, refs, limit - result.size))
@@ -21,8 +21,8 @@ internal object CompositeCandidateProvider : FilePredictionCandidateProvider {
 }
 
 internal class FilePredictionReferenceProvider : FilePredictionCandidateProvider {
-  override fun provideCandidates(project: Project, file: VirtualFile, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
-    if (refs.isEmpty()) {
+  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
+    if (refs.isEmpty() || file == null) {
       return emptySet()
     }
 
@@ -33,7 +33,11 @@ internal class FilePredictionReferenceProvider : FilePredictionCandidateProvider
 }
 
 internal class FilePredictionNeighborFilesProvider : FilePredictionCandidateProvider {
-  override fun provideCandidates(project: Project, file: VirtualFile, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
+  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
+    if (file == null) {
+      return emptySet()
+    }
+
     val result = ArrayList<VirtualFile>()
     val fileIndex = FileIndexFacade.getInstance(project)
     var parent = file.parent

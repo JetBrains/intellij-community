@@ -20,8 +20,10 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
   private fun doTestWithPredefinedProbability(builder: FilePredictionTestProjectBuilder,
                                               expectedEvents: Int,
                                               probabilities: List<Double>,
-                                              predictor: FileUsagePredictor,
-                                              validator: FileProbabilityValidator) {
+                                              validator: FileProbabilityValidator,
+                                              candidatesLimit: Int,
+                                              logTopLimit: Int,
+                                              logTotalLimit: Int) {
     assertTrue(
       "Number of provided probabilities should not be less than expected events",
       probabilities.size >= expectedEvents
@@ -32,40 +34,46 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
       .contains("probability", "session_id")
       .withCustom(validator).build()
 
-    doTest(builder, predictor, expectedEvents, composite) { setPredefinedProbabilityModel(it, probabilities) }
+    doTest(builder, expectedEvents, composite) {
+      setPredefinedProbabilityModel(it, probabilities)
+      FileUsagePredictionHandler(candidatesLimit, logTopLimit, logTotalLimit)
+    }
   }
 
   private fun doTestWithConstant(builder: FilePredictionTestProjectBuilder, expectedEvents: Int) {
-    val predictor = FileUsagePredictor(5, 1, 3)
     val validator = TestStatisticsEventValidatorBuilder()
       .hasEventId("candidate.calculated")
       .contains("probability", "session_id").build()
 
-    doTest(builder, predictor, expectedEvents, validator) { setConstantFilePredictionModel(0.1, it) }
+    doTest(builder, expectedEvents, validator) {
+      setConstantFilePredictionModel(0.1, it)
+      FileUsagePredictionHandler(5, 1, 3)
+    }
   }
 
   private fun doTestWithoutModel(builder: FilePredictionTestProjectBuilder, expectedEvents: Int) {
-    val predictor = FileUsagePredictor(5, 1, 3)
     val validator = TestStatisticsEventValidatorBuilder()
       .hasEventId("candidate.calculated")
       .contains("session_id")
       .notContains("probability").build()
 
-    doTest(builder, predictor, expectedEvents, validator) { disableFilePredictionModel() }
+    doTest(builder, expectedEvents, validator) {
+      disableFilePredictionModel()
+      FileUsagePredictionHandler(5, 1, 3)
+    }
   }
 
   private fun doTest(builder: FilePredictionTestProjectBuilder,
-                     predictor: FileUsagePredictor,
                      expectedEvents: Int,
                      validator: TestStatisticsEventsValidator,
-                     modelConfigurator: (Disposable) -> Unit) {
+                     predictorProvider: (Disposable) -> FileUsagePredictionHandler) {
     val root = builder.create(myFixture)
     assertNotNull("Cannot create test project", root)
 
     val file = FilePredictionTestDataHelper.findMainTestFile(root)
     assertNotNull("Cannot find main project file", file)
 
-    modelConfigurator.invoke(testRootDisposable)
+    val predictor = predictorProvider.invoke(testRootDisposable)
     val events = collectLogEvents {
       predictor.predictNextFile(myFixture.project, 1, file!!)
     }
@@ -154,9 +162,8 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
       )
 
     val probabilities = listOf(0.9, 0.8, 0.7, 0.6, 0.5).shuffled()
-    val predictor = FileUsagePredictor(5, 3, 3)
     val validator = FileProbabilityValidator(listOf(0.9, 0.8, 0.7), emptyList())
-    doTestWithPredefinedProbability(builder, 3, probabilities, predictor, validator)
+    doTestWithPredefinedProbability(builder, 3, probabilities, validator, 5, 3, 3)
   }
 
   @Test
@@ -171,9 +178,8 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
       )
 
     val probabilities = listOf(0.9, 0.8, 0.7, 0.6, 0.5).shuffled()
-    val predictor = FileUsagePredictor(5, 0, 4)
     val validator = FileProbabilityValidator(emptyList(), listOf(0.9, 0.8, 0.7, 0.6, 0.5))
-    doTestWithPredefinedProbability(builder, 4, probabilities, predictor, validator)
+    doTestWithPredefinedProbability(builder, 4, probabilities, validator, 5, 0, 4)
   }
 
   @Test
@@ -188,9 +194,8 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
       )
 
     val probabilities = listOf(0.9, 0.8, 0.7, 0.6, 0.5).shuffled()
-    val predictor = FileUsagePredictor(5, 1, 3)
     val validator = FileProbabilityValidator(listOf(0.9), listOf(0.8, 0.7, 0.6, 0.5))
-    doTestWithPredefinedProbability(builder, 3, probabilities, predictor, validator)
+    doTestWithPredefinedProbability(builder, 3, probabilities, validator, 5, 1, 3)
   }
 
   @Test
@@ -207,9 +212,8 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
       )
 
     val probabilities = listOf(0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3).shuffled()
-    val predictor = FileUsagePredictor(7, 2, 5)
     val validator = FileProbabilityValidator(listOf(0.9, 0.8), listOf(0.7, 0.6, 0.5, 0.4, 0.3))
-    doTestWithPredefinedProbability(builder, 5, probabilities, predictor, validator)
+    doTestWithPredefinedProbability(builder, 5, probabilities, validator, 7, 2, 5)
   }
 }
 

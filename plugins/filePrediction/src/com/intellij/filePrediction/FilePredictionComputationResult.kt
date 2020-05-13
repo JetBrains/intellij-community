@@ -10,5 +10,5 @@ open class FilePredictionComputationResult<T>(val value: T, val start: Long) {
 internal class FileReferencesComputationResult(references: ExternalReferencesResult, start: Long):
   FilePredictionComputationResult<ExternalReferencesResult>(references, start)
 
-internal class FileFeaturesComputationResult(features: Map<String, FilePredictionFeature>, start: Long):
+class FileFeaturesComputationResult(features: Map<String, FilePredictionFeature>, start: Long):
   FilePredictionComputationResult<Map<String, FilePredictionFeature>>(features, start)

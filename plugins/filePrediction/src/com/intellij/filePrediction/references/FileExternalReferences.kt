@@ -4,7 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.ThreeState
 
-internal sealed class ExternalReferencesResult(val references: Set<VirtualFile>) {
+sealed class ExternalReferencesResult(val references: Set<VirtualFile>) {
   class SucceedReferenceComputation(refs: Set<VirtualFile>) : ExternalReferencesResult(refs) {
     override fun contains(file: VirtualFile): ThreeState {
       return if (references.contains(file)) ThreeState.YES else ThreeState.NO
