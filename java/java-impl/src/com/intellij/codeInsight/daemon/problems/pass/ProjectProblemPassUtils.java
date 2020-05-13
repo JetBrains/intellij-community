@@ -59,7 +59,7 @@ public class ProjectProblemPassUtils {
       else {
         String memberName = Objects.requireNonNull(member.getName());
         FindUtil.showInUsageView(member, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
-                                 JavaErrorBundle.message("project.problems.title", memberName), project);
+                                 JavaErrorBundle.message("project.problems.window.title", memberName), project);
       }
     });
 
