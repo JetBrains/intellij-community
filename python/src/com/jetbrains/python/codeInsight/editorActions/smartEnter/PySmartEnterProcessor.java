@@ -48,6 +48,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
     .add(new PyFunctionFixer())
     .add(new PyClassFixer())
     .add(new PyWithFixer())
+    .add(new PyCollectionLiteralFixer())
     .build();
   private static final List<EnterProcessor> ourProcessors = ImmutableList.of(new PyCommentBreakerEnterProcessor(),
                                                                              new PyPlainEnterProcessor());
