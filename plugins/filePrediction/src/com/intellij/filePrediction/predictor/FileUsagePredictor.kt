@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.predictor
 
-import com.intellij.filePrediction.CompositeCandidateProvider.provideCandidates
+import com.intellij.filePrediction.candidates.CompositeCandidateProvider.provideCandidates
 import com.intellij.filePrediction.FileFeaturesComputationResult
 import com.intellij.filePrediction.FileNavigationLogger
 import com.intellij.filePrediction.features.FilePredictionFeaturesHelper

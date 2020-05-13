@@ -1,4 +1,4 @@
-package com.intellij.filePrediction
+package com.intellij.filePrediction.references
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile

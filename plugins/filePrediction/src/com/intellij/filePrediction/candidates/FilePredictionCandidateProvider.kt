@@ -1,4 +1,4 @@
-package com.intellij.filePrediction
+package com.intellij.filePrediction.candidates
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
