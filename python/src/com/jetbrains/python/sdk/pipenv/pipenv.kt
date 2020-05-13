@@ -138,10 +138,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
                                 newProjectPath: String?,
                                 python: String?,
                                 installPackages: Boolean): Sdk? {
-  val projectPath = newProjectPath ?:
-                    module?.basePath ?:
-                    project?.basePath ?:
-                    return null
+  val projectPath = newProjectPath ?: module?.basePath ?: project?.basePath ?: return null
   val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.setting.up.pipenv.title"), true) {
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true
@@ -180,9 +177,9 @@ fun setupPipEnv(projectPath: @SystemDependent String, python: String?, installPa
  * Runs the configured pipenv for the specified Pipenv SDK with the associated project path.
  */
 fun runPipEnv(sdk: Sdk, vararg args: String): String {
-  val projectPath = sdk.associatedModulePath ?:
-                    throw PyExecutionException("Cannot find the project associated with this Pipenv environment",
-                                               "Pipenv", emptyList(), ProcessOutput())
+  val projectPath = sdk.associatedModulePath ?: throw PyExecutionException(
+    PyBundle.message("python.sdk.pipenv.execution.exception.no.project.message"),
+    "Pipenv", emptyList(), ProcessOutput())
   return runPipEnv(projectPath, *args)
 }
 
@@ -190,8 +187,9 @@ fun runPipEnv(sdk: Sdk, vararg args: String): String {
  * Runs the configured pipenv for the specified project path.
  */
 fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String {
-  val executable = getPipEnvExecutable()?.path ?:
-                   throw PyExecutionException("Cannot find Pipenv", "pipenv", emptyList(), ProcessOutput())
+  val executable = getPipEnvExecutable()?.path ?: throw PyExecutionException(
+    PyBundle.message("python.sdk.pipenv.execution.exception.no.pipenv.message"),
+    "pipenv", emptyList(), ProcessOutput())
 
   val command = listOf(executable) + args
   val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
@@ -212,7 +210,8 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
       isCancelled ->
         throw RunCanceledByUserException()
       exitCode != 0 ->
-        throw PyExecutionException("Error Running Pipenv", executable, args.asList(),
+        throw PyExecutionException(PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"),
+                                   executable, args.asList(),
                                    stdout, stderr, exitCode, emptyList())
       else -> stdout
     }
@@ -233,8 +232,7 @@ fun detectAndSetupPipEnv(project: Project?, module: Module?, existingSdks: List<
  * The URLs of package sources configured in the Pipfile.lock of the module associated with this SDK.
  */
 val Sdk.pipFileLockSources: List<String>
-  get() = parsePipFileLock()?.meta?.sources?.mapNotNull { it.url } ?:
-          listOf(PIPENV_DEFAULT_SOURCE_URL)
+  get() = parsePipFileLock()?.meta?.sources?.mapNotNull { it.url } ?: listOf(PIPENV_DEFAULT_SOURCE_URL)
 
 /**
  * The list of requirements defined in the Pipfile.lock of the module associated with this SDK.
@@ -249,8 +247,8 @@ val Sdk.pipFileLockRequirements: List<PyRequirement>?
  */
 class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
   private val quickFixName = when {
-    sdk != null && sdk.associatedModule != module -> "Fix Pipenv interpreter"
-    else -> "Use Pipenv interpreter"
+    sdk != null && sdk.associatedModule != module -> PyBundle.message("python.sdk.pipenv.quickfix.fix.pipenv.name")
+    else -> PyBundle.message("python.sdk.pipenv.quickfix.use.pipenv.name")
   }
 
   companion object {
@@ -345,22 +343,28 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
   private fun notifyPipFileChanged(module: Module) {
     if (module.getUserData(notificationActive) == true) return
     val what = when {
-      module.pipFileLock == null -> "not found"
-      else -> "out of date"
+      module.pipFileLock == null -> PyBundle.message("python.sdk.pipenv.pip.file.lock.not.found")
+      else -> PyBundle.message("python.sdk.pipenv.pip.file.lock.out.of.date")
     }
     val title = "$PIP_FILE_LOCK is $what"
-    val content = "Run <a href='#lock'>pipenv lock</a> or <a href='#update'>pipenv update</a>"
-    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title = title, content = content, listener = NotificationListener { notification, event ->
-      notification.expire()
-      module.putUserData(notificationActive, null)
-      FileDocumentManager.getInstance().saveAllDocuments()
-      when (event.description) {
-        "#lock" ->
-          runPipEnvInBackground(module, listOf("lock"), "Locking $PIP_FILE")
-        "#update" ->
-          runPipEnvInBackground(module, listOf("update", "--dev"), "Updating Pipenv environment")
-      }
-    })
+    val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
+    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title = title, content = content,
+                                                                  listener = NotificationListener { notification, event ->
+                                                                    notification.expire()
+                                                                    module.putUserData(notificationActive, null)
+                                                                    FileDocumentManager.getInstance().saveAllDocuments()
+                                                                    when (event.description) {
+                                                                      "#lock" ->
+                                                                        runPipEnvInBackground(module, listOf("lock"),
+                                                                                              PyBundle.message(
+                                                                                                "python.sdk.pipenv.pip.file.notification.locking",
+                                                                                                PIP_FILE))
+                                                                      "#update" ->
+                                                                        runPipEnvInBackground(module, listOf("update", "--dev"),
+                                                                                              PyBundle.message(
+                                                                                                "python.sdk.pipenv.pip.file.notification.updating"))
+                                                                    }
+                                                                  })
     module.putUserData(notificationActive, true)
     notification.whenExpired {
       module.putUserData(notificationActive, null)
@@ -376,7 +380,8 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
         try {
           runPipEnv(sdk, *args.toTypedArray())
         }
-        catch (e: RunCanceledByUserException) { }
+        catch (e: RunCanceledByUserException) {
+        }
         catch (e: ExecutionException) {
           runInEdt {
             Messages.showErrorDialog(project, e.toString(), CommonBundle.message("title.error"))
@@ -407,7 +412,8 @@ private val Document.virtualFile: VirtualFile?
 private fun VirtualFile.getModule(project: Project): Module? =
   ModuleUtil.findModuleForFile(this, project)
 
-private val LOCK_NOTIFICATION_GROUP = NotificationGroup("$PIP_FILE Watcher", NotificationDisplayType.STICKY_BALLOON, false)
+private val LOCK_NOTIFICATION_GROUP = NotificationGroup(PyBundle.message(  "python.sdk.pipenv.pip.file.watcher", PIP_FILE),
+                                                        NotificationDisplayType.STICKY_BALLOON, false)
 
 private val Sdk.packageManager: PyPackageManager
   get() = PyPackageManagers.getInstance().forSdk(this)
