@@ -16,12 +16,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -292,7 +292,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     public void showNotify() {
       ComponentWithBrowseButton<?> component = reference.get();
       if (component == null) return; // component is collected
-      Disposable disposable = UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
+      Disposable disposable = ApplicationManager.getApplication() == null ? null :
+                              UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
       if (disposable == null) return; // parent disposable not found
       Disposer.register(disposable, component);
     }
