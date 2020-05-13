@@ -12,9 +12,11 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 
 /**
+ * Allows simple persistence of application/project-level values.
+ * <p/>
  * Roaming is disabled for PropertiesComponent, so, use it only and only for temporary non-roamable properties.
- *
- * See http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html "Using PropertiesComponent for Simple non-roamable Persistence"
+ * <p/>
+ * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Using PropertiesComponent for Simple non-roamable Persistence</a>.
  *
  * @author max
  * @author Konstantin Bulenkov
@@ -63,10 +65,16 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
 
   public abstract void setValues(@NonNls @NotNull String name, String[] values);
 
+  /**
+   * Returns the project-level instance.
+   */
   public static PropertiesComponent getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, PropertiesComponent.class);
   }
 
+  /**
+   * Returns the application-level instance.
+   */
   public static PropertiesComponent getInstance() {
     return ServiceManager.getService(PropertiesComponent.class);
   }
@@ -107,7 +115,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   }
 
   /**
-   * @deprecated Use {@link #getLong(String, int)}
+   * @deprecated Use {@link #getLong(String, long)}
    * Init was never performed and in any case is not recommended.
    */
   @Deprecated
