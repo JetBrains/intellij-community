@@ -101,6 +101,11 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @Stubbed
+  @SubTagList("incompatible-with")
+  List<GenericDomValue<String>> getIncompatibilities();
+
+  @NotNull
+  @Stubbed
   @SubTagList("module")
   List<PluginModule> getModules();
 
