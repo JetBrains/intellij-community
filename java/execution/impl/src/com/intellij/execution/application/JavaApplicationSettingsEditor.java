@@ -29,6 +29,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     fragments.add(CommonParameterFragments.createRedirectFragment());
 
     fragments.addAll(new CommonParameterFragments<ApplicationConfiguration>(myProject).getFragments());
+    fragments.add(CommonJavaFragments.moduleClasspath(myProject));
     fragments.add(CommonJavaFragments.createBuildBeforeRun());
     fragments.add(CommonJavaFragments.createEnvParameters());
 

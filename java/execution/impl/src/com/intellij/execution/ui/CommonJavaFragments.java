@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,5 +78,19 @@ public class CommonJavaFragments {
         return buildAndRun.equals(jLabel.getText());
       }
     };
+  }
+
+  public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, ?> moduleClasspath(Project project) {
+    ModuleDescriptionsComboBox comboBox = new ModuleDescriptionsComboBox();
+    ConfigurationModuleSelector selector = new ConfigurationModuleSelector(project, comboBox);
+    LabeledComponent<ModuleDescriptionsComboBox> component = LabeledComponent.create(comboBox, ExecutionBundle.message("use.module.classpath"));
+    component.setLabelLocation(BorderLayout.WEST);
+    return new SettingsEditorFragment<>("module.classpath",
+                                        ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module"),
+                                        ExecutionBundle.message("group.java.options"),
+                                        component, 0,
+                                        (s, c) -> selector.reset(s),
+                                        (s, c) -> selector.applyTo(s),
+                                        s -> true);
   }
 }
