@@ -24,6 +24,7 @@ import java.beans.Introspector;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.time.Duration;
 import java.util.StringTokenizer;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -1506,6 +1507,12 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static @NotNull String formatDuration(long duration) {
     return formatDuration(duration, " ");
+  }
+
+  /** Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds) */
+  @Contract(pure = true)
+  public static @NotNull String formatDuration(@NotNull Duration duration) {
+    return formatDuration(duration.toMillis());
   }
 
   private static final String[] TIME_UNITS = {"ms", "s", "m", "h", "d"};
