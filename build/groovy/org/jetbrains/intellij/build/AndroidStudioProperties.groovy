@@ -82,7 +82,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                 "analytics-publisher",
                                                 "analytics-crash")
 
-    productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES +
+    productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES +
                                          [
                                            // Android Studio bundles these:
                                            "android-apk",
