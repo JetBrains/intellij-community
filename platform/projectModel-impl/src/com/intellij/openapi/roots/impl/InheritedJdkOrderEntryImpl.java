@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 final class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry, WritableOrderEntry {
@@ -63,12 +64,14 @@ final class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl impleme
   }
 
   @Override
+  @Nullable
   public Sdk getJdk() {
     final Project project = getRootModel().getModule().getProject();
     return getRootModel().getConfigurationAccessor().getProjectSdk(project);
   }
 
   @Override
+  @Nullable
   public String getJdkName() {
     final Project project = getRootModel().getModule().getProject();
     return getRootModel().getConfigurationAccessor().getProjectSdkName(project);

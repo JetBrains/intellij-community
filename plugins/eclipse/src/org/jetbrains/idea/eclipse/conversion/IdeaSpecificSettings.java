@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -302,7 +302,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
             root.setAttribute(INHERIT_JDK, "true");
           }
           else {
-            root.setAttribute("jdk", ((JdkOrderEntry)entry).getJdkName());
+            String jdkName = ((JdkOrderEntry)entry).getJdkName();
+            if (jdkName != null) {
+              root.setAttribute("jdk", jdkName);
+            }
             if (jdk != null) {
               root.setAttribute("jdk_type", jdk.getSdkType().getName());
             }

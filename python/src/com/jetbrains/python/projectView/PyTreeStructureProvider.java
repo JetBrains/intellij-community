@@ -92,7 +92,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
         final LibraryOrSdkOrderEntry entry = value.getOrderEntry();
         if (entry instanceof JdkOrderEntry) {
           final Sdk sdk = ((JdkOrderEntry)entry).getJdk();
-          final SdkTypeId type = sdk.getSdkType();
+          final SdkTypeId type = sdk == null ? null : sdk.getSdkType();
           if (type instanceof PythonSdkType) {
             return sdk;
           }
