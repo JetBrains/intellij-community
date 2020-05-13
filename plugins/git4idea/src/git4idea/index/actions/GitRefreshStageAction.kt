@@ -3,9 +3,10 @@ package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.vcs.VcsBundle
 import git4idea.index.ui.GIT_STAGE_TRACKER
 
-class GitRefreshStageAction : AnAction() {
+class GitRefreshStageAction : AnAction(VcsBundle.messagePointer("action.name.refresh")) {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.getData(GIT_STAGE_TRACKER) != null
