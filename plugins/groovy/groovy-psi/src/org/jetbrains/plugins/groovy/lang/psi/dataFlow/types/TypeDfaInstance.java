@@ -33,7 +33,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
   private final InitialTypeProvider myInitialTypeProvider;
-  private final int lastInterestingInstruction;
+  private final int lastInterestingInstructionIndex;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull DFAFlowInfo flowInfo,
@@ -43,7 +43,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     myFlowInfo = flowInfo;
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
-    lastInterestingInstruction = flowInfo.getInterestingInstructions().stream().mapToInt(Instruction::num).max().orElse(0);
+    lastInterestingInstructionIndex = flowInfo.getInterestingInstructions().stream().mapToInt(Instruction::num).max().orElse(0);
   }
 
   @Override
@@ -166,7 +166,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
     List<GrControlFlowOwner> flows = myFlowInfo.getReassignmentLocations().get(descriptor);
     if (flows != null) {
-      type = TypeDfaInstanceUtilKt.weakenTypeIfUsedInUnknownClosure(descriptor, type, instruction, myFlow, flows);
+      type = TypeDfaInstanceUtilKt.weakenTypeIfUsedInUnknownClosure(descriptor, type, instruction, flows);
     }
     state.putType(descriptor, type);
   }
@@ -181,7 +181,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
       return;
     }
-    if (instruction.num() > lastInterestingInstruction) {
+    if (instruction.num() > lastInterestingInstructionIndex) {
       return;
     }
     GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
@@ -192,12 +192,12 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (blockFlowOwner == null) {
       return;
     }
-    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
     Set<? extends VariableDescriptor> foreignDescriptors =
       getForeignVariableDescriptors(blockFlowOwner, ReadWriteVariableInstruction::isWrite);
     if (myFlowInfo.getInterestingDescriptors().stream().noneMatch(foreignDescriptors::contains)) {
       return;
     }
+    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
     switch (kind) {
       case IN_PLACE_ONCE:
         handleClosureDFAResult(state, blockFlowOwner, state::putType);

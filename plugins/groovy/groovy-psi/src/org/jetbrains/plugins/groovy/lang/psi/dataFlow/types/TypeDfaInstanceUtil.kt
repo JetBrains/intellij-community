@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.parentsWithSelf
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
@@ -20,27 +19,29 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 internal fun weakenTypeIfUsedInUnknownClosure(descriptor: VariableDescriptor,
                                               initialType: DFAType,
                                               instruction: Instruction,
-                                              mainFlow: Array<Instruction>,
                                               usages: List<GrControlFlowOwner>): DFAType {
-  val previousInstructions: Set<Instruction?> = ControlFlowUtils.getPrecedingFlow(instruction)
-  var currentType = initialType
-  loop@ for (block in usages) {
-    val topBlock: PsiElement = block.parentsWithSelf.find {
-      it is GrControlFlowOwner && ControlFlowUtils.findInstruction(it, mainFlow) != null
-    } ?: continue
-    val flowInstruction: Instruction? = ControlFlowUtils.findInstruction(topBlock, mainFlow) ?: continue
-    if (!previousInstructions.contains(flowInstruction)) continue
-    val functionalExpression: GrFunctionalExpression = when (block) {
-      is GrLambdaBody -> block.lambdaExpression
-      is GrClosableBlock -> block
-      else -> continue@loop
-    }
-    val kind = functionalExpression.getInvocationKind()
+  var currentType: DFAType = initialType
+  val interestingUsages: List<GrControlFlowOwner> = usages.filter { it.isPrecedeInstruction(instruction) }
+  for (block: GrControlFlowOwner in interestingUsages) {
+    val kind = block.getFunctionalExpression()?.getInvocationKind()
     if (kind === InvocationKind.UNKNOWN) {
       currentType = DFAType.create(currentType, DFAType.create(getLeastUpperBoundByAllWrites(block, descriptor)), block.manager)
     }
   }
   return currentType
+}
+
+private fun GrControlFlowOwner.getFunctionalExpression(): GrFunctionalExpression? = when (this) {
+  is GrLambdaBody -> lambdaExpression
+  is GrClosableBlock -> this
+  else -> null
+}
+
+private fun GrControlFlowOwner.isPrecedeInstruction(instruction: Instruction): Boolean {
+  val previousInstructions: Array<Instruction> = ControlFlowUtils.getPrecedingFlow(instruction).toTypedArray()
+  return this.parentsWithSelf.any {
+    it is GrControlFlowOwner && ControlFlowUtils.findInstruction(it, previousInstructions) != null
+  }
 }
 
 private fun getLeastUpperBoundByAllWrites(block: GrControlFlowOwner,

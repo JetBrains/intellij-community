@@ -1289,7 +1289,7 @@ class C {
   }
 
   void 'test do type inference for variables from outer context'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo(p) {
   p = 1
   def closure = {
@@ -1300,7 +1300,7 @@ def foo(p) {
   }
 
   void 'test do type inference for outer variables with explicit type'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo() {
   Integer x = 1
   def closure = {
@@ -1311,7 +1311,7 @@ def foo() {
   }
 
   void 'test do type inference for outer final variables'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo() {
   final def x = "string"
   def closure = { <caret>x }
@@ -1320,7 +1320,7 @@ def foo() {
   }
 
   void 'test do type inference for outer effectively final variables'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo() {
   def x = "string"
   def closure = { <caret>x }
@@ -1329,7 +1329,7 @@ def foo() {
   }
 
   void 'test use outer context for closures passed to DGM'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo() {
   def x = 1
   'q'.with {
@@ -1339,7 +1339,7 @@ def foo() {
   }
 
   void '_test forbid use of outer context for nested closures'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo() {
   def x = 1
   'q'.with ({
@@ -1350,7 +1350,7 @@ def foo() {
   }
 
   void 'test allow use of outer context for nested DGM closures'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo(x) {
   x = 1
   def cl1 = 1.with { 2.with { <caret>x } }
@@ -1359,7 +1359,7 @@ def foo(x) {
   }
 
   void 'test parenthesized expression'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo(def p) {
     def x = 1
     1.with (({ <caret>x }))
@@ -1367,7 +1367,7 @@ def foo(def p) {
   }
 
   void 'test assignment inside closure'() {
-    doNestedDfaTest '''
+    doTest '''
   def foo() {
     def x = 'q'
     1.with {
@@ -1379,7 +1379,7 @@ def foo(def p) {
   }
 
   void 'test assignment inside closure 2'() {
-    doNestedDfaTest '''
+    doTest '''
 class A{}
 class B extends A{}
 class C extends A{}
@@ -1394,7 +1394,7 @@ def foo() {
   }
 
   void 'test no changes for null type inside closure'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo() {
   def x
   [1].each {
@@ -1406,7 +1406,7 @@ def foo() {
   }
 
   void 'test other statements inside closure'() {
-    doNestedDfaTest '''
+    doTest '''
 def method() {
     def list = []
 
@@ -1418,7 +1418,7 @@ def method() {
   }
 
   void 'test use dfa results from conditional branch'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo(def bar) {
     if (bar instanceof String) {
         10.with {
@@ -1429,7 +1429,7 @@ def foo(def bar) {
   }
 
   void 'test use method calls inside closure block'() {
-    doNestedDfaTest '''
+    doTest '''
 def test(def x, y) {
     y = new A()
     1.with {
@@ -1446,7 +1446,7 @@ class A {
 
 
   void 'test use method calls inside closure block 2'() {
-    doNestedDfaTest '''
+    doTest '''
 def test(def x, y) {
     y = new A()
     1.with {
@@ -1464,7 +1464,7 @@ class A {
   }
 
   void 'test use method calls inside closure block 3'() {
-    doNestedDfaTest '''
+    doTest '''
 static def foo(x) {
     1.with {
         cast(x)
@@ -1480,7 +1480,7 @@ static def cast(Integer x) {}
 
 
   void 'test deep nested interconnected variables'() {
-    doNestedDfaTest '''
+    doTest '''
 
 static def foo(x, y, z) {
     1.with {
@@ -1508,7 +1508,7 @@ class B {
   }
 
   void 'test instanceof influence on nested closures'() {
-    doNestedDfaTest '''
+    doTest '''
 def test(def x) {
     1.with {
         if (x instanceof Integer) {
@@ -1521,7 +1521,7 @@ def test(def x) {
   }
 
   void 'test assignment in nested closure'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo() {
     def y
     1.with {
@@ -1535,7 +1535,7 @@ def foo() {
   }
 
   void 'test safe navigation'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class B extends A{}
 class C extends A{}
@@ -1552,7 +1552,7 @@ static def foo(x) {
   }
 
   void 'test assignment inside unknown closure'() {
-    doNestedDfaTest '''
+    doTest '''
 def foo(x) {
   def x = (Number)1
   def cl = {
@@ -1722,7 +1722,7 @@ def foo(x) {
   }
 
   void 'test assignment inside dangling closure flushes subsequent types'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class B extends A {}
 class C extends A {}
@@ -1738,7 +1738,7 @@ def foo() {
   }
 
   void 'test assignment inside dangling closure affects unrelated flow'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class B extends A {}
 class C extends A {}
@@ -1758,7 +1758,7 @@ def foo() {
   }
 
   void 'test assignment inside dangling closure does not change type in parallel flow'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class B extends A {}
 class C extends A {}
@@ -1777,7 +1777,7 @@ def foo() {
   }
 
   void 'test assignment inside dangling closure does not change types before definition'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class B extends A {}
 class C extends A {}
@@ -1792,7 +1792,7 @@ def foo() {
   }
 
   void 'test two dangling closures flush type together'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class D extends A{}
 class B extends D {}
@@ -1812,7 +1812,7 @@ def foo() {
 
 
   void 'test two assignments inside single dangling closure'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class D extends A{}
 class B extends D {}
@@ -1830,7 +1830,7 @@ def foo() {
   }
 
   void 'test assignment in nested dangling closure'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class B extends A {}
 class C extends A {}
@@ -1848,7 +1848,7 @@ def foo() {
   }
 
   void 'test assignment in nested dangling closure 2'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {}
 class B extends A {}
 class C extends A {}
@@ -1865,7 +1865,7 @@ def foo() {
   }
 
   void 'test shadowed field'() {
-    doNestedDfaTest '''
+    doTest '''
 class A {
 
     def counter = 200

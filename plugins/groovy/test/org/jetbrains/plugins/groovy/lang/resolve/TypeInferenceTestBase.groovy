@@ -1,13 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -51,10 +49,4 @@ def m() {
     def actual = expression.type
     assertType(expectedType, actual)
   }
-
-  protected void doNestedDfaTest(String text, @Nullable String type) {
-    Registry.get(FunctionalExpressionFlowUtil.GROOVY_PROCESS_NESTED_DFA).setValue(true, testRootDisposable)
-    doTest(text, type)
-  }
-
 }

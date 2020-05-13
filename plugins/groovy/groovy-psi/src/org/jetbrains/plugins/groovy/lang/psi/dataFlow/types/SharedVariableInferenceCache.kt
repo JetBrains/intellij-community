@@ -75,7 +75,7 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
       val inferredTypesForVariable: List<PsiType?> = writeInstructions.indices
         .filter { writeInstructions[it].first.descriptor == variable }
         .map { flowTypes[it] }
-      val finalType: PsiType? = TypesUtil.getLeastUpperBoundNullable(inferredTypesForVariable, scope.manager)
+      val finalType: PsiType = TypesUtil.getLeastUpperBoundNullable(inferredTypesForVariable, scope.manager) ?: PsiType.NULL
       if (!finalTypes.compareAndSet(indexInFinalTypes, null, finalType)) {
         val actualFinalType = finalTypes.get(indexInFinalTypes)
         assert(finalType == actualFinalType)

@@ -26,13 +26,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -43,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
@@ -58,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
@@ -786,33 +786,25 @@ public final class ControlFlowUtils {
     return result;
   }
 
-  public static
-  @NotNull Set<? extends @NotNull VariableDescriptor>
+  public static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
   getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner,
                                 @NotNull Predicate<? super ReadWriteVariableInstruction> instructionFilter) {
-    Set<VariableDescriptor> foreignDescriptors = new LinkedHashSet<>();
+    Set<ResolvedVariableDescriptor> usedDescriptors = new LinkedHashSet<>();
     for (Instruction instruction : owner.getControlFlow()) {
       PsiElement element = instruction.getElement();
       if (instruction instanceof ReadWriteVariableInstruction && instructionFilter.test((ReadWriteVariableInstruction)instruction)) {
         VariableDescriptor immediateDescriptor = ((ReadWriteVariableInstruction)instruction).getDescriptor();
         if (immediateDescriptor instanceof ResolvedVariableDescriptor) {
-          foreignDescriptors.add(immediateDescriptor);
+          usedDescriptors.add((ResolvedVariableDescriptor)immediateDescriptor);
         }
       }
       if (!(instruction instanceof ReadWriteVariableInstruction) && element instanceof GrControlFlowOwner) {
-        foreignDescriptors.addAll(getForeignVariableDescriptors((GrControlFlowOwner)element, instructionFilter));
+        usedDescriptors.addAll(getForeignVariableDescriptors((GrControlFlowOwner)element, instructionFilter));
       }
     }
-    GrParameter[] parameters = null;
-    if (owner instanceof GrClosableBlock) {
-      parameters = ((GrClosableBlock)owner).getAllParameters();
-    }
-    else if (owner instanceof GrLambdaExpression) {
-      parameters = ((GrLambdaExpression)owner).getParameters();
-    }
-    if (parameters != null) {
-      foreignDescriptors.removeAll(ContainerUtil.map(parameters, ResolvedVariableDescriptor::new));
-    }
+    Set<ResolvedVariableDescriptor> foreignDescriptors = usedDescriptors.stream()
+      .filter(descriptor -> PsiTreeUtil.getParentOfType(descriptor.getVariable(), GrControlFlowOwner.class) != owner)
+      .collect(Collectors.toSet());
     return Collections.unmodifiableSet(foreignDescriptors);
   }
 
