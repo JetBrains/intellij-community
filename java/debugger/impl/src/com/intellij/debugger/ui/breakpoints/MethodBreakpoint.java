@@ -16,6 +16,7 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PositionUtil;
@@ -60,6 +61,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -559,28 +561,31 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     progressIndicator.start();
     progressIndicator.setText(JavaDebuggerBundle.message("label.method.breakpoints.processing.classes"));
     try {
-      MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
+      MultiMap<ReferenceType, ReferenceType> inheritance = MultiMap.createConcurrentSet();
       List<ReferenceType> allTypes = classType.virtualMachine().allClasses();
-      for (int i = 0; i < allTypes.size(); i++) {
+      int allSize = allTypes.size();
+      CompletableFuture[] futures = new CompletableFuture[allSize];
+      for (int i = 0; i < allSize; i++) {
         if (progressIndicator.isCanceled()) {
           return;
         }
         ReferenceType type = allTypes.get(i);
         if (type.isPrepared()) {
           try {
-            DebuggerUtilsImpl.supertypes(type).forEach(st -> inheritance.putValue(st, type));
+            futures[i] = DebuggerUtilsAsync.supertypes(type).thenAccept(r -> r.forEach(st -> inheritance.putValue(st, type)));
           }
           catch (ObjectCollectedException ignored) {
           }
         }
-        progressIndicator.setText2(i + "/" + allTypes.size());
-        progressIndicator.setFraction((double)i / allTypes.size());
+        progressIndicator.setText2(i + "/" + allSize);
+        progressIndicator.setFraction((double)i / allSize);
       }
+      CompletableFuture.allOf(futures).join();
       List<ReferenceType> types = StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).toList();
 
       if (LOG.isDebugEnabled()) {
         long current = System.currentTimeMillis();
-        LOG.debug("Processed  " + allTypes.size() + " classes in " + (current - start) + "ms");
+        LOG.debug("Processed  " + allSize + " classes in " + (current - start) + "ms");
         start = current;
       }
 
