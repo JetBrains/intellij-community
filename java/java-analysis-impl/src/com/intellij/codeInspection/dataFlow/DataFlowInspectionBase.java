@@ -268,13 +268,13 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                  PsiElement scope) {
     ProblemReporter reporter = new ProblemReporter(holder, scope);
 
-    reportFailingCasts(reporter, visitor);
+    Map<PsiExpression, ConstantResult> constantExpressions = visitor.getConstantExpressions();
+    reportFailingCasts(reporter, visitor, constantExpressions);
     reportUnreachableSwitchBranches(visitor.getSwitchLabelsReachability(), holder);
 
     reportAlwaysFailingCalls(reporter, visitor);
 
     List<NullabilityProblem<?>> problems = NullabilityProblemKind.postprocessNullabilityProblems(visitor.problems().toList());
-    Map<PsiExpression, ConstantResult> constantExpressions = visitor.getConstantExpressions();
     reportNullabilityProblems(reporter, problems, constantExpressions);
     reportNullableReturns(reporter, problems, constantExpressions, scope);
 
@@ -717,13 +717,18 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     reporter.registerProblem(toHighlight, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
-  private void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
+  private void reportFailingCasts(@NotNull ProblemReporter reporter,
+                                  @NotNull DataFlowInstructionVisitor visitor,
+                                  @NotNull Map<PsiExpression, ConstantResult> constantExpressions) {
     visitor.getFailingCastExpressions().forKeyValue((typeCast, info) -> {
       boolean alwaysFails = info.getFirst();
       PsiType realType = info.getSecond();
       if (!REPORT_UNSOUND_WARNINGS && !alwaysFails) return;
       PsiExpression operand = typeCast.getOperand();
       PsiTypeElement castType = typeCast.getCastType();
+      ConstantResult result = constantExpressions.get(PsiUtil.skipParenthesizedExprDown(operand));
+      // Skip reporting if cast operand is always null: null can be cast to anything
+      if (result == ConstantResult.NULL || ExpressionUtils.isNullLiteral(operand)) return;
       assert castType != null;
       assert operand != null;
       List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, realType, reporter.isOnTheFly(), alwaysFails));
