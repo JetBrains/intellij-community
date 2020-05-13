@@ -14,18 +14,22 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.encoding.EncodingManager
+import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.collectResults
 import java.io.File
 import java.io.IOException
+import java.net.MalformedURLException
 import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.StandardCharsets
@@ -33,6 +37,8 @@ import java.nio.charset.UnsupportedCharsetException
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
+import java.util.jar.Manifest
+import kotlin.math.abs
 
 internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
                                    private val target: TargetEnvironmentConfiguration?) {
@@ -127,9 +133,8 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
       else if (!vmParameters.isExplicitClassPath() && javaParameters.jarPath == null && commandLineWrapperClass != null) {
         if (javaParameters.isUseClasspathJar) {
-          JdkUtil.setClasspathJarParams(this, commandLine, request, classPathVolume,
-                                        languageRuntime, javaParameters, vmParameters, commandLineWrapperClass,
-                                        dynamicVMOptions, dynamicParameters)
+          setClasspathJarParams(javaParameters, vmParameters, commandLineWrapperClass!!,
+                                dynamicVMOptions, dynamicParameters)
         }
         else if (javaParameters.isClasspathFile) {
           JdkUtil.setCommandLineWrapperParams(this, commandLine, request, classPathVolume,
@@ -201,6 +206,67 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
   }
 
+  /*make private*/
+  @Throws(CantRunException::class)
+  fun setClasspathJarParams(javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
+                            commandLineWrapper: Class<*>,
+                            dynamicVMOptions: Boolean,
+                            dynamicParameters: Boolean) {
+
+    try {
+      val jarFile = ClasspathJar(this, vmParameters.hasParameter(JdkUtil.PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL))
+      commandLine.addFileToDeleteOnTermination(jarFile.file)
+
+      jarFile.addToManifest("Created-By", ApplicationNamesInfo.getInstance().fullProductName, true)
+      if (dynamicVMOptions) {
+        val properties: MutableList<String> = ArrayList()
+        for (param in vmParameters.list) {
+          if (JdkUtil.isUserDefinedProperty(param)) {
+            properties.add(param)
+          }
+          else {
+            appendVmParameter(param)
+          }
+        }
+        jarFile.addToManifest("VM-Options", ParametersListUtil.join(properties))
+      }
+      else {
+        appendVmParameters(vmParameters)
+      }
+
+      appendEncoding(javaParameters, vmParameters)
+
+      if (dynamicParameters) {
+        jarFile.addToManifest("Program-Parameters", ParametersListUtil.join(javaParameters.programParametersList.list))
+      }
+
+
+      val targetJarFile = classPathVolume.createUpload(jarFile.file.absolutePath)
+      if (dynamicVMOptions || dynamicParameters) {
+        // -classpath path1:path2 CommandLineWrapper path2
+        commandLine.addParameter("-classpath")
+        commandLine.addParameter(composePathsList(
+          classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)),
+          targetJarFile
+        ))
+        commandLine.addParameter(TargetValue.fixed(commandLineWrapper.name))
+        commandLine.addParameter(targetJarFile)
+      }
+      else {
+        // -classpath path2
+        commandLine.addParameter("-classpath")
+        commandLine.addParameter(targetJarFile)
+      }
+      val classPathParameters = getClassPathValues(javaParameters, javaParameters.classPath)
+      jarFile.scheduleWriteFileWhenClassPathReady(classPathParameters, targetJarFile)
+    }
+    catch (e: IOException) {
+      JdkUtil.throwUnableToCreateTempFile(e)
+    }
+
+    appendModulePath(javaParameters, vmParameters)
+  }
+
   @JvmName("getMainClassParams")
   @Throws(CantRunException::class)
   /*make private */ internal fun getMainClassParams(javaParameters: SimpleJavaParameters): List<TargetValue<String>> {
@@ -231,7 +297,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
         commandLineContent[resolvedTargetPath] = FileUtil.loadFile(localFile)
       }
       catch (e: IOException) {
-        LOG.error("Cannot add command line content for $resolvedTargetPath from $localFile", e);
+        LOG.error("Cannot add command line content for $resolvedTargetPath from $localFile", e)
       }
     }
   }
@@ -406,7 +472,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
 
     fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
-      myAllPromises.collectResults().onSuccess { _ ->
+      myAllPromises.collectResults().onSuccess {
         try {
           writeArgFileNow(javaParameters, vmParameters)
         }
@@ -443,6 +509,76 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
 
     private fun registerPromise(value: TargetValue<String>) {
       myAllPromises.add(value.targetValue)
+    }
+  }
+
+  internal class ClasspathJar @Throws(IOException::class) constructor(private val setup: JdkCommandLineSetup,
+                                                                      private val notEscapeClassPathUrl: Boolean) {
+
+    private val manifest = Manifest()
+    private val manifestText = StringBuilder()
+    internal val file = FileUtil.createTempFile(
+      CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + abs(Random().nextInt()), ".jar", true)
+
+    fun addToManifest(key: String, value: String, skipInCommandLineContent: Boolean = false) {
+      manifest.mainAttributes.putValue(key, value)
+      if (!skipInCommandLineContent) {
+        manifestText.append(key).append(": ").append(value).append("\n")
+      }
+    }
+
+    fun scheduleWriteFileWhenClassPathReady(classpath: List<TargetValue<String>>, selfUpload: TargetValue<String>) {
+      classpath.map { it.targetValue }.collectResults().onSuccess {
+        try {
+          writeFileNow(classpath, selfUpload)
+        }
+        catch (e: IOException) {
+          //todo[remoteServers]: interrupt preparing environment
+        }
+        catch (e: ExecutionException) {
+          LOG.error("Couldn't resolve target value", e)
+        }
+        catch (e: TimeoutException) {
+          LOG.error("Couldn't resolve target value", e)
+        }
+      }
+    }
+
+    @Throws(ExecutionException::class, TimeoutException::class, IOException::class)
+    private fun writeFileNow(resolvedTargetClasspath: List<TargetValue<String>>, selfUpload: TargetValue<String>) {
+
+      val classPath = StringBuilder()
+      for (parameter in resolvedTargetClasspath) {
+        if (classPath.isNotEmpty()) classPath.append(' ')
+
+        val localValue = parameter.localValue.blockingGet(0)
+        val targetValue = parameter.targetValue.blockingGet(0)
+        if (targetValue == null || localValue == null) {
+          throw ExecutionException("Couldn't resolve target value", null)
+        }
+
+        val targetUrl = pathToUrl(targetValue)
+
+        classPath.append(targetUrl)
+        if (!StringUtil.endsWithChar(targetUrl, '/') && File(localValue).isDirectory) {
+          classPath.append('/')
+        }
+      }
+
+      // todo[remoteServers]: race condition here (?), it has to be called after classpath upload BUT before selfUpload
+      CommandLineWrapperUtil.fillClasspathJarFile(manifest, classPath.toString(), file)
+
+      selfUpload.targetValue.onSuccess { value: String ->
+        val fullManifestText = manifestText.toString() + "Class-Path: " + classPath.toString()
+        setup.commandLineContent[value] = fullManifestText
+      }
+    }
+
+    @Throws(MalformedURLException::class)
+    private fun pathToUrl(path: String): String {
+      val file = File(path)
+      @Suppress("DEPRECATION") val url = if (notEscapeClassPathUrl) file.toURL() else file.toURI().toURL()
+      return url.toString()
     }
   }
 }
