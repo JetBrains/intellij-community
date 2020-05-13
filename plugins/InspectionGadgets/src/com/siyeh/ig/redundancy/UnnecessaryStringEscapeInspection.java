@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -11,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -90,6 +93,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
             final String escape = text.substring(start, offset);
             if ("\\n".equals(escape)) {
               final int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
+              if (indent < 0) return;
               newExpression.append('\n').append(StringUtil.repeatSymbol(' ', indent));
             }
             else {
@@ -161,6 +165,11 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (type == null) {
+        return;
+      }
+      final HighlightInfo
+        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
+      if (parsingError != null) {
         return;
       }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
