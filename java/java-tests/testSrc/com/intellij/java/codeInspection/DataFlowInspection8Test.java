@@ -42,6 +42,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testOptionalOfNullable() { doTest(); }
   public void testPrimitiveOptional() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
+  public void testOptionalIntSwitch() { doTest(); }
   public void testOptionalIsPresent() {
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
