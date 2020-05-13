@@ -1,18 +1,4 @@
-/*
- * Copyright 2008-2013 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -73,9 +59,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     "getLogger";
   protected final List<String> loggerFactoryClassNames = new ArrayList<>();
   protected final List<String> loggerFactoryMethodNames = new ArrayList<>();
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public String loggerClassName = DEFAULT_FACTORY_CLASS_NAMES;
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
 
   
@@ -124,6 +110,14 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   public void writeSettings(@NotNull Element element) throws WriteExternalException {
     loggerClassName = formatString(loggerFactoryClassNames);
     loggerFactoryMethodName = formatString(loggerFactoryMethodNames);
+    if (loggerFactoryMethodName.equals(DEFAULT_FACTORY_METHOD_NAMES) && loggerClassName.equals(DEFAULT_FACTORY_CLASS_NAMES)) {
+      // to prevent changing inspection profile with new default, which is mistakenly always written because of bug in serialization below.
+      loggerFactoryMethodName = "getLogger," +
+                                "getLogger," +
+                                "getLog," +
+                                "getLogger";
+      // these broken settings are restored correctly in readSettings()
+    }
     XmlSerializer.serializeInto(this, element, new SerializationFilterBase() {
       @Override
       protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
