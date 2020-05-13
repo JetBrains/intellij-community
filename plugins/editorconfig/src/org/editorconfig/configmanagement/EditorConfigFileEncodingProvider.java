@@ -18,8 +18,8 @@ public class EditorConfigFileEncodingProvider implements FileEncodingProvider {
     Project project = ProjectLocator.getInstance().guessProjectForFile(file);
     if (project != null) {
       List<EditorConfig.OutPair> optionsList = SettingsProviderComponent.getInstance().getOutPairs(project, file);
-      String encoding = Utils.configValueForKey(optionsList, EncodingManager.charsetKey);
-      return EncodingManager.UTF8_BOM_ENCODING.equals(encoding);
+      String encoding = Utils.configValueForKey(optionsList, ConfigEncodingManager.charsetKey);
+      return ConfigEncodingManager.UTF8_BOM_ENCODING.equals(encoding);
     }
     return false;
   }
