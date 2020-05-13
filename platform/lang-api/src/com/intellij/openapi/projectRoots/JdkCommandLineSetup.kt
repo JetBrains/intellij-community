@@ -245,10 +245,10 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       if (dynamicVMOptions || dynamicParameters) {
         // -classpath path1:path2 CommandLineWrapper path2
         commandLine.addParameter("-classpath")
-        commandLine.addParameter(composePathsList(
+        commandLine.addParameter(composePathsList(listOf(
           classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)),
           targetJarFile
-        ))
+        )))
         commandLine.addParameter(TargetValue.fixed(commandLineWrapper.name))
         commandLine.addParameter(targetJarFile)
       }
@@ -411,8 +411,8 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     return result
   }
 
-  fun composePathsList(vararg targetPaths: TargetValue<String>): TargetValue<String> {
-    return TargetValue.composite(targetPaths.toList()) {
+  fun composePathsList(targetPaths: Collection<TargetValue<String>>): TargetValue<String> {
+    return TargetValue.composite(targetPaths) {
       it.joinTo(StringBuilder(), platform.pathSeparator.toString()).toString()
     }
   }

@@ -235,7 +235,7 @@ public final class JdkUtil {
         if (!(request instanceof LocalTargetEnvironmentRequest)) {
           throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
         }
-        //todo[remoteServers]: [why are they fixed below?]
+        // since request is known to be local we will simplify to TargetValue.fixed below
         classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(UrlClassLoader.class)));
         classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(StringUtilRt.class)));
         classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(THashMap.class)));
@@ -246,14 +246,14 @@ public final class JdkUtil {
           for (VirtualFile file : jdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
             String path = PathUtil.getLocalPath(file);
             if (StringUtil.isNotEmpty(path)) {
-              classpath.add(TargetValue.fixed(path)); //todo[remoteServers]: why fixed??
+              classpath.add(TargetValue.fixed(path));
             }
           }
         }
       }
+
       commandLine.addParameter("-classpath");
-      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
-      commandLine.addParameter(TargetValue.composite(classpath, values -> StringUtil.join(values, pathSeparator)));
+      commandLine.addParameter(setup.composePathsList(classpath));
 
       commandLine.addParameter(commandLineWrapper.getName());
 
