@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
@@ -56,8 +57,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
   private val classPathVolume by lazy { request.createTempVolume() }
   private val agentVolume by lazy { request.createTempVolume() }
 
-  /* make private */
-  val commandLineContent by lazy {
+  private val commandLineContent by lazy {
     mutableMapOf<String, String>().also { commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, it) }
   }
 
@@ -206,16 +206,15 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       rememberFileContentAfterUpload(argFile.file, argFileParameter)
     }
     catch (e: IOException) {
-      JdkUtil.throwUnableToCreateTempFile(e)
+      throwUnableToCreateTempFile(e)
     }
   }
 
-  /*make private*/
   @Throws(CantRunException::class)
-  fun setClasspathJarParams(javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
-                            commandLineWrapper: Class<*>,
-                            dynamicVMOptions: Boolean,
-                            dynamicParameters: Boolean) {
+  private fun setClasspathJarParams(javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
+                                    commandLineWrapper: Class<*>,
+                                    dynamicVMOptions: Boolean,
+                                    dynamicParameters: Boolean) {
 
     try {
       val jarFile = ClasspathJar(this, vmParameters.hasParameter(JdkUtil.PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL))
@@ -225,7 +224,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       if (dynamicVMOptions) {
         val properties: MutableList<String> = ArrayList()
         for (param in vmParameters.list) {
-          if (JdkUtil.isUserDefinedProperty(param)) {
+          if (isUserDefinedProperty(param)) {
             properties.add(param)
           }
           else {
@@ -265,7 +264,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       jarFile.scheduleWriteFileWhenClassPathReady(classPathParameters, targetJarFile)
     }
     catch (e: IOException) {
-      JdkUtil.throwUnableToCreateTempFile(e)
+      throwUnableToCreateTempFile(e)
     }
 
     appendModulePath(javaParameters, vmParameters)
@@ -284,14 +283,14 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       if (dynamicVMOptions) {
         val toWrite: MutableList<String> = ArrayList()
         for (param in vmParameters.list) {
-          if (JdkUtil.isUserDefinedProperty(param)) {
+          if (isUserDefinedProperty(param)) {
             toWrite.add(param)
           }
           else {
             appendVmParameter(param)
           }
         }
-        if (!toWrite.isEmpty()) {
+        if (toWrite.isNotEmpty()) {
           vmParamsFile = FileUtil.createTempFile("idea_vm_params$pseudoUniquePrefix", null)
           commandLine.addFileToDeleteOnTermination(vmParamsFile)
           CommandLineWrapperUtil.writeWrapperFile(vmParamsFile, toWrite, platform.lineSeparator, cs)
@@ -363,13 +362,12 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
     }
     catch (e: IOException) {
-      JdkUtil.throwUnableToCreateTempFile(e)
+      throwUnableToCreateTempFile(e)
     }
   }
 
-  @JvmName("getMainClassParams")
   @Throws(CantRunException::class)
-  /*make private */ internal fun getMainClassParams(javaParameters: SimpleJavaParameters): List<TargetValue<String>> {
+  private fun getMainClassParams(javaParameters: SimpleJavaParameters): List<TargetValue<String>> {
     val mainClass = javaParameters.mainClass
     val moduleName = javaParameters.moduleName
     val jarPath = javaParameters.jarPath
@@ -389,9 +387,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
   }
 
   // todo[remoteServers]: problem here (?), it modifies the command (via commandLineContent) but has to be called AFTER value is resolved
-  /* make private*/
-  @JvmName("rememberFileContentAfterUpload")
-  internal fun rememberFileContentAfterUpload(localFile: File, fileUpload: TargetValue<String>) {
+  private fun rememberFileContentAfterUpload(localFile: File, fileUpload: TargetValue<String>) {
     fileUpload.targetValue.onSuccess { resolvedTargetPath: String ->
       try {
         commandLineContent[resolvedTargetPath] = FileUtil.loadFile(localFile)
@@ -402,15 +398,13 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
   }
 
-  @JvmName("appendVmParameters")
-  /* make private*/ internal fun appendVmParameters(vmParameters: ParametersList) {
+  private fun appendVmParameters(vmParameters: ParametersList) {
     vmParameters.list.forEach {
       appendVmParameter(it)
     }
   }
 
-  @JvmName("appendVmParameter")
-  /* make private*/ internal fun appendVmParameter(vmParameter: String) {
+  private fun appendVmParameter(vmParameter: String) {
     if (request is LocalTargetEnvironmentRequest ||
         SystemProperties.getBooleanProperty("run.targets.ignore.vm.parameter", false)) {
       commandLine.addParameter(vmParameter)
@@ -442,8 +436,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     })
   }
 
-  @JvmName("appendEncoding")
-  internal fun appendEncoding(javaParameters: SimpleJavaParameters, parametersList: ParametersList) {
+  private fun appendEncoding(javaParameters: SimpleJavaParameters, parametersList: ParametersList) {
     // for correct handling of process's input and output, values of file.encoding and charset of CommandLine object should be in sync
     val encoding = parametersList.getPropertyValue("file.encoding")
     if (encoding == null) {
@@ -462,8 +455,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
   }
 
-  @JvmName("appendModulePath")
-  internal fun appendModulePath(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+  private fun appendModulePath(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
     val modulePath = javaParameters.modulePath
     if (!modulePath.isEmpty && !vmParameters.isExplicitModulePath()) {
       commandLine.addParameter("-p")
@@ -484,15 +476,13 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     appendModulePath(javaParameters, vmParameters)
   }
 
-  @JvmName("composeClassPathValues")
-  internal fun composeClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): TargetValue<String> {
+  private fun composeClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): TargetValue<String> {
     val pathValues = getClassPathValues(javaParameters, classPath)
     val separator = platform.pathSeparator.toString()
     return TargetValue.composite(pathValues) { values -> values.joinTo(StringBuilder(), separator).toString() }
   }
 
-  @JvmName("getClassPathValues")
-  internal fun getClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): List<TargetValue<String>> {
+  private fun getClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): List<TargetValue<String>> {
     val localJdkPath = javaParameters.jdk?.homePath
     val remoteJdkPath = languageRuntime?.homePath
     val result = ArrayList<TargetValue<String>>()
@@ -511,7 +501,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     return result
   }
 
-  fun composePathsList(targetPaths: Collection<TargetValue<String>>): TargetValue<String> {
+  private fun composePathsList(targetPaths: Collection<TargetValue<String>>): TargetValue<String> {
     return TargetValue.composite(targetPaths) {
       it.joinTo(StringBuilder(), platform.pathSeparator.toString()).toString()
     }
@@ -534,18 +524,24 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
 
     private fun ParametersList.isExplicitClassPath(): Boolean {
-      return JdkUtil.explicitClassPath(this)
-      //return this.hasParameter("-cp") || this.hasParameter("-classpath") || this.hasParameter("--class-path")
+      return this.hasParameter("-cp") || this.hasParameter("-classpath") || this.hasParameter("--class-path")
     }
 
     private fun ParametersList.isUrlClassloader(): Boolean {
-      return JdkUtil.isUrlClassloader(this)
-      //return UrlClassLoader::class.java.name == this.getPropertyValue("java.system.class.loader")
+      return UrlClassLoader::class.java.name == this.getPropertyValue("java.system.class.loader")
     }
 
     private fun ParametersList.isExplicitModulePath(): Boolean {
-      return JdkUtil.explicitModulePath(this)
-      //return this.hasParameter("-p") || this.hasParameter("--module-path")
+      return this.hasParameter("-p") || this.hasParameter("--module-path")
+    }
+
+    private fun isUserDefinedProperty(param: String): Boolean {
+      return param.startsWith("-D") && !(param.startsWith("-Dsun.") || param.startsWith("-Djava."))
+    }
+
+    @Throws(CantRunException::class)
+    private fun throwUnableToCreateTempFile(cause: IOException?) {
+      throw CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause)
     }
   }
 

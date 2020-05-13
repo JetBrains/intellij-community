@@ -4,7 +4,6 @@ package com.intellij.openapi.projectRoots;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
-import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
@@ -12,21 +11,17 @@ import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.util.lang.JavaVersion;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.jar.Attributes;
 
@@ -38,8 +33,6 @@ public final class JdkUtil {
    * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
    */
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
-
-  private static final Logger LOG = Logger.getInstance(JdkUtil.class);
 
   private JdkUtil() { }
 
@@ -140,37 +133,6 @@ public final class JdkUtil {
     TargetEnvironmentRequest request = environmentFactory.createRequest();
     return environmentFactory.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
       .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null).build());
-  }
-
-  /*make private */
-  static boolean isUrlClassloader(ParametersList vmParameters) {
-    return UrlClassLoader.class.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"));
-  }
-
-  /*make private */
-  static boolean explicitClassPath(ParametersList vmParameters) {
-    return vmParameters.hasParameter("-cp") || vmParameters.hasParameter("-classpath") || vmParameters.hasParameter("--class-path");
-  }
-
-  /*make private*/
-  static boolean explicitModulePath(ParametersList vmParameters) {
-    return vmParameters.hasParameter("-p") || vmParameters.hasParameter("--module-path");
-  }
-
-
-
-
-
-
-
-  @SuppressWarnings("SpellCheckingInspection")
-  /*make private */ static boolean isUserDefinedProperty(String param) {
-    return param.startsWith("-D") && !(param.startsWith("-Dsun.") || param.startsWith("-Djava."));
-  }
-
-  /*make private*/
-  static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
-    throw new CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
   public static boolean useDynamicClasspath(@Nullable Project project) {
