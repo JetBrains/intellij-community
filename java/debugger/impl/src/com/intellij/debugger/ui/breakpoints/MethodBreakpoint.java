@@ -578,6 +578,12 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
       List<ReferenceType> types = StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).toList();
 
+      if (LOG.isDebugEnabled()) {
+        long current = System.currentTimeMillis();
+        LOG.debug("Processed  " + allTypes.size() + " classes in " + (current - start) + "ms");
+        start = current;
+      }
+
       progressIndicator.setText(JavaDebuggerBundle.message("label.method.breakpoints.setting.breakpoints"));
 
       ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(allTypes);
@@ -593,7 +599,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Processed " + types.size() + " classes in " + (System.currentTimeMillis() - start) + "ms");
+        LOG.debug("Created " + types.size() + " requests in " + (System.currentTimeMillis() - start) + "ms");
       }
     }
     finally {
