@@ -805,17 +805,31 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkMaxLength(productDescriptor.getCode(), 15, holder);
 
     String releaseDate = productDescriptor.getReleaseDate().getValue();
-    if (releaseDate == null) return;
+    if (releaseDate != null && !isPlaceHolder(releaseDate)) {
+      try {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
+        dateFormat.setLenient(false);
+        dateFormat.parse(releaseDate);
+      }
+      catch (ParseException e) {
+        holder.createProblem(productDescriptor.getReleaseDate(),
+                             DevKitBundle.message("inspections.plugin.xml.product.descriptor.invalid.date"));
+      }
+    }
+    String version = productDescriptor.getReleaseVersion().getValue();
+    if (version != null && !isPlaceHolder(version)) {
+      try {
+        Integer.parseInt(version);
+      }
+      catch (NumberFormatException e) {
+        holder.createProblem(productDescriptor.getReleaseVersion(),
+                             DevKitBundle.message("inspections.plugin.xml.product.descriptor.invalid.version"));
+      }
+    }
+  }
 
-    try {
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
-      dateFormat.setLenient(false);
-      dateFormat.parse(releaseDate);
-    }
-    catch (ParseException e) {
-      holder.createProblem(productDescriptor.getReleaseDate(),
-                           DevKitBundle.message("inspections.plugin.xml.product.descriptor.invalid.date"));
-    }
+  private static boolean isPlaceHolder(@Nullable String value) {
+    return value != null && value.length() > 4 && value.startsWith("__") && value.endsWith("__");
   }
 
   private static void annotateAddToGroup(AddToGroup addToGroup, DomElementAnnotationHolder holder) {

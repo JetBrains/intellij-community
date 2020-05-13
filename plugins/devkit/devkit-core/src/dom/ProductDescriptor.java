@@ -21,7 +21,7 @@ public interface ProductDescriptor extends DomElement {
 
   @NotNull
   @Required
-  GenericAttributeValue<Integer> getReleaseVersion();
+  GenericAttributeValue<String> getReleaseVersion();
 
   @Nullable
   GenericAttributeValue<Boolean> getOptional();

@@ -728,6 +728,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     doHighlightingTest("productDescriptor.xml")
   }
 
+  void testProductDescriptorWithPlaceholders() {
+    doHighlightingTest("productDescriptorWithPlaceholders.xml")
+  }
+
   void testProductDescriptorInvalid() {
     doHighlightingTest("productDescriptorInvalid.xml")
   }
