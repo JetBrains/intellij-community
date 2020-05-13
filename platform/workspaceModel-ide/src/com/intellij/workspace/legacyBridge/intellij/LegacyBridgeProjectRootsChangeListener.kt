@@ -26,7 +26,6 @@ internal class LegacyBridgeProjectRootsChangeListener(private val project: Proje
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is LegacyBridgeProjectRootManager) return
     val performUpdate = processChanges(event, project)
-    projectRootManager.markRootsForRefresh()
     if (performUpdate) projectRootManager.fireRootsChanged(false)
   }
 
