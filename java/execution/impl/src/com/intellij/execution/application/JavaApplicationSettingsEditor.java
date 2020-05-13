@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     fragments.add(CommonParameterFragments.createRedirectFragment());
 
     fragments.addAll(new CommonParameterFragments<ApplicationConfiguration>(myProject).getFragments());
-    fragments.add(CommonJavaFragments.moduleClasspath(myProject));
+    SettingsEditorFragment<ApplicationConfiguration, LabeledComponent<ModuleDescriptionsComboBox>> moduleClasspath = CommonJavaFragments.moduleClasspath(myProject);
     fragments.add(CommonJavaFragments.createBuildBeforeRun());
     fragments.add(CommonJavaFragments.createEnvParameters());
 
@@ -58,8 +59,21 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                (configuration, component) -> component.getComponent().setText(configuration.getVMParameters()),
                                                (configuration, component) -> configuration.setVMParameters(component.getComponent().getText()),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
+    fragments.add(moduleClasspath);
+
+    ShortenCommandLineModeCombo combo =
+      new ShortenCommandLineModeCombo(myProject, jrePathEditor, moduleClasspath.component().getComponent());
+    LabeledComponent<ShortenCommandLineModeCombo> component =
+      LabeledComponent.create(combo, ExecutionBundle.message("application.configuration.shorten.command.line.label"));
+    component.setLabelLocation(BorderLayout.WEST);
+    fragments.add(new SettingsEditorFragment<>("shorten.command.line",
+                                               ExecutionBundle.message("application.configuration.shorten.command.line"),
+                                               group, component,
+                                               (configuration, c) -> c.getComponent().setItem(configuration.getShortenCommandLine()),
+                                               (configuration, c) -> configuration.setShortenCommandLine(c.getComponent().getSelectedItem()),
+                                               configuration -> configuration.getShortenCommandLine() != null));
     fragments.add(SettingsEditorFragment.createTag("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"), group,
-                                    configuration -> configuration.isSwingInspectorEnabled(),
+                                                   configuration -> configuration.isSwingInspectorEnabled(),
                                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
 
     fragments.addAll(BeforeRunFragment.createGroup());

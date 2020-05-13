@@ -80,7 +80,7 @@ public class CommonJavaFragments {
     };
   }
 
-  public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, ?> moduleClasspath(Project project) {
+  public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, LabeledComponent<ModuleDescriptionsComboBox>> moduleClasspath(Project project) {
     ModuleDescriptionsComboBox comboBox = new ModuleDescriptionsComboBox();
     ConfigurationModuleSelector selector = new ConfigurationModuleSelector(project, comboBox);
     LabeledComponent<ModuleDescriptionsComboBox> component = LabeledComponent.create(comboBox, ExecutionBundle.message("use.module.classpath"));
@@ -91,6 +91,6 @@ public class CommonJavaFragments {
                                         component, 0,
                                         (s, c) -> selector.reset(s),
                                         (s, c) -> selector.applyTo(s),
-                                        s -> true);
+                                        s -> s.getConfigurationModule() != null);
   }
 }
