@@ -58,7 +58,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
         val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
         typeParameters.add(newTypeParameter)
         virtualMethod.typeParameterList!!.add(newTypeParameter)
-        parameter.setType(newTypeParameter.type())
+        parameter.setTypeWithoutFormatting(newTypeParameter.type())
       }
       val varargParameter = targetParameters.find { it.isVarArgs }
       varargParameter?.ellipsisDots?.delete()
@@ -115,10 +115,10 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       newType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
       typeParameters.addAll(newType.typeParameters)
       if (parameter == varargParameter) {
-        newParameter.setType(newType.type.createArrayType())
+        newParameter.setTypeWithoutFormatting(newType.type.createArrayType())
       }
       else {
-        newParameter.setType(newType.type)
+        newParameter.setTypeWithoutFormatting(newType.type)
       }
     }
     val copiedVirtualMethod = createVirtualMethod(targetMethod) ?: return EmptyDriver

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
@@ -256,6 +257,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
 
 
   override fun visitExpression(expression: GrExpression) {
+    ProgressManager.checkCanceled()
     if (expression is GrOperatorExpression && builder.signatureInferenceContext.allowedToResolveOperators) {
       val operatorMethodResolveResult = expression.reference?.advancedResolve()
       if (operatorMethodResolveResult != null) {
