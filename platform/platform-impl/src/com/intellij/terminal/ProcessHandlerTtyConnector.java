@@ -89,9 +89,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   private void writeBytes(byte[] bytes) throws IOException {
     OutputStream input = myProcessHandler.getProcessInput();
-    if (input != null) {
-      input.write(bytes);
-      input.flush();
-    }
+    input.write(bytes);
+    input.flush();
   }
 }
