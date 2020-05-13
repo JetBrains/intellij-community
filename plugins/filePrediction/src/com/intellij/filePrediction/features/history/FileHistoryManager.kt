@@ -1,4 +1,4 @@
-package com.intellij.filePrediction.history
+package com.intellij.filePrediction.features.history
 
 data class FileHistoryFeatures(val position: Int?, val uniGram: NextFileProbability, val biGram: NextFileProbability)
 

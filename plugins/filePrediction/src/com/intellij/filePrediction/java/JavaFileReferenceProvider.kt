@@ -3,7 +3,7 @@ package com.intellij.filePrediction.java
 import com.intellij.filePrediction.ExternalReferencesResult
 import com.intellij.filePrediction.ExternalReferencesResult.Companion.FAILED_COMPUTATION
 import com.intellij.filePrediction.ExternalReferencesResult.Companion.succeed
-import com.intellij.filePrediction.FileExternalReferencesProvider
+import com.intellij.filePrediction.features.FileExternalReferencesProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiFile
 import org.jetbrains.uast.UFile

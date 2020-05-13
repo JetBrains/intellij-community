@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features.history.context
 
-import com.intellij.filePrediction.FilePredictionFeature
-import com.intellij.filePrediction.FilePredictionFeature.Companion.binary
+import com.intellij.filePrediction.features.FilePredictionFeature
+import com.intellij.filePrediction.features.FilePredictionFeature.Companion.binary
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
 import com.intellij.filePrediction.features.ConstFileFeaturesProducer
 import com.intellij.filePrediction.features.FileFeaturesProducer
 import com.intellij.filePrediction.features.history.FilePredictionHistoryBaseTest
-import com.intellij.filePrediction.history.context.FilePredictionContextFeatures
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 

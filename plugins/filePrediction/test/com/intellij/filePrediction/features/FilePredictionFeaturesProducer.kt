@@ -1,6 +1,5 @@
 package com.intellij.filePrediction.features
 
-import com.intellij.filePrediction.FilePredictionFeature
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase

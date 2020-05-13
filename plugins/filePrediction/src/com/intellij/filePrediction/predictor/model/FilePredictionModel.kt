@@ -1,6 +1,6 @@
 package com.intellij.filePrediction.predictor.model
 
-import com.intellij.filePrediction.FilePredictionFeature
+import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName

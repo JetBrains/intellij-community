@@ -1,7 +1,7 @@
 package com.intellij.filePrediction.candidate
 
 import com.intellij.filePrediction.CompositeCandidateProvider
-import com.intellij.filePrediction.FilePredictionFeaturesHelper
+import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
 import com.intellij.openapi.util.io.FileUtil

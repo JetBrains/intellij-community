@@ -1,5 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.vcs.FilePredictionVcsFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.vcs.FilePredictionVcsFeatures"/>
   </extensions>
 </idea-plugin>

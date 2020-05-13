@@ -4,7 +4,7 @@ package com.intellij.filePrediction.predictor
 import com.intellij.filePrediction.CompositeCandidateProvider.provideCandidates
 import com.intellij.filePrediction.FileFeaturesComputationResult
 import com.intellij.filePrediction.FileNavigationLogger
-import com.intellij.filePrediction.FilePredictionFeaturesHelper
+import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
 import com.intellij.filePrediction.FileReferencesComputationResult
 import com.intellij.filePrediction.predictor.model.FilePredictionModel
 import com.intellij.filePrediction.predictor.model.getFilePredictionModel

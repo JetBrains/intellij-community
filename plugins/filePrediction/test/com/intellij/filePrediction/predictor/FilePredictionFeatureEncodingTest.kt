@@ -1,7 +1,7 @@
 package com.intellij.filePrediction.predictor
 
-import com.intellij.filePrediction.FilePredictionFeature
-import com.intellij.filePrediction.history.NextFileProbability
+import com.intellij.filePrediction.features.FilePredictionFeature
+import com.intellij.filePrediction.features.history.NextFileProbability
 import com.intellij.filePrediction.predictor.FilePredictionFeatureEncoder.encodeBinary
 import com.intellij.filePrediction.predictor.FilePredictionFeatureEncoder.encodeCategorical
 import com.intellij.filePrediction.predictor.model.FilePredictionDecisionFunction

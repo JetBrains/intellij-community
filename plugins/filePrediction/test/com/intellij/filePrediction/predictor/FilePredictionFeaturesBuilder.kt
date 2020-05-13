@@ -1,8 +1,8 @@
 package com.intellij.filePrediction.predictor
 
-import com.intellij.filePrediction.FilePredictionFeature
-import com.intellij.filePrediction.history.FileHistoryFeatures
-import com.intellij.filePrediction.history.NextFileProbability
+import com.intellij.filePrediction.features.FilePredictionFeature
+import com.intellij.filePrediction.features.history.FileHistoryFeatures
+import com.intellij.filePrediction.features.history.NextFileProbability
 
 @Suppress("unused")
 internal class FilePredictionFeaturesBuilder {

@@ -1,4 +1,4 @@
-package com.intellij.filePrediction.history
+package com.intellij.filePrediction.features.history
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener

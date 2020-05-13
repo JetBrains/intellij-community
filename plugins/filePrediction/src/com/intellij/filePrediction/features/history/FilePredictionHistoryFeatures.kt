@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.filePrediction.history
+package com.intellij.filePrediction.features.history
 
-import com.intellij.filePrediction.FilePredictionFeature
-import com.intellij.filePrediction.FilePredictionFeature.Companion.numerical
-import com.intellij.filePrediction.FilePredictionFeatureProvider
+import com.intellij.filePrediction.features.FilePredictionFeature
+import com.intellij.filePrediction.features.FilePredictionFeature.Companion.numerical
+import com.intellij.filePrediction.features.FilePredictionFeatureProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 

@@ -1,4 +1,4 @@
-package com.intellij.filePrediction.history
+package com.intellij.filePrediction.features.history
 
 import kotlin.math.max
 

@@ -1,6 +1,5 @@
 package com.intellij.filePrediction.features
 
-import com.intellij.filePrediction.FilePredictionFeaturesHelper
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture

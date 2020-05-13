@@ -1,4 +1,4 @@
-package com.intellij.filePrediction.history.context
+package com.intellij.filePrediction.features.history.context
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project

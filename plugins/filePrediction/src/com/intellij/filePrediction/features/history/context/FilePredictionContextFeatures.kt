@@ -1,7 +1,7 @@
-package com.intellij.filePrediction.history.context
+package com.intellij.filePrediction.features.history.context
 
-import com.intellij.filePrediction.FilePredictionFeature
-import com.intellij.filePrediction.FilePredictionFeatureProvider
+import com.intellij.filePrediction.features.FilePredictionFeature
+import com.intellij.filePrediction.features.FilePredictionFeatureProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 

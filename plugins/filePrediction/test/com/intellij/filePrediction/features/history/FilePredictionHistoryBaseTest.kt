@@ -1,10 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features.history
 
-import com.intellij.filePrediction.history.FileHistoryManager
-import com.intellij.filePrediction.history.FilePredictionHistoryState
-import com.intellij.filePrediction.history.NGramMapNode
-import com.intellij.filePrediction.history.NextFileProbability
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture

@@ -1,5 +1,7 @@
 package com.intellij.filePrediction
 
+import com.intellij.filePrediction.features.FilePredictionFeature
+
 open class FilePredictionComputationResult<T>(val value: T, val start: Long) {
   val duration: Long = System.currentTimeMillis() - start
 }

@@ -9,8 +9,8 @@
   <depends optional="true" config-file="file-prediction-vcs.xml">com.jetbrains.changeReminder</depends>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.FilePredictionFeatureProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.FileExternalReferencesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.features.FilePredictionFeatureProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.features.FileExternalReferencesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.filePrediction.ml.model" interface="com.intellij.filePrediction.predictor.model.FilePredictionModelProvider" dynamic="true"/>
   </extensionPoints>
 
@@ -19,14 +19,14 @@
 
     <statistics.counterUsagesCollector groupId="file.prediction" version="4"/>
 
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionGeneralFeatures"/>
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionFileTypeFeatures"/>
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.FilePredictionHistoryFeatures"/>
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.context.FilePredictionContextFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionGeneralFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionFileTypeFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.FilePredictionHistoryFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.context.FilePredictionContextFeatures"/>
 
     <applicationService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
-    <projectService serviceImplementation="com.intellij.filePrediction.history.FilePredictionHistory"/>
-    <projectService serviceImplementation="com.intellij.filePrediction.history.context.FilePredictionContext"/>
+    <projectService serviceImplementation="com.intellij.filePrediction.features.history.FilePredictionHistory"/>
+    <projectService serviceImplementation="com.intellij.filePrediction.features.history.context.FilePredictionContext"/>
   </extensions>
 
   <projectListeners>
@@ -34,6 +34,6 @@
   </projectListeners>
 
   <applicationListeners>
-    <listener class="com.intellij.filePrediction.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.filePrediction.features.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
 </idea-plugin>

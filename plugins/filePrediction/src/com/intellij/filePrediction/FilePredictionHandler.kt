@@ -1,7 +1,8 @@
 package com.intellij.filePrediction
 
-import com.intellij.filePrediction.history.FilePredictionHistory
-import com.intellij.filePrediction.history.context.FilePredictionContext
+import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
+import com.intellij.filePrediction.features.history.FilePredictionHistory
+import com.intellij.filePrediction.features.history.context.FilePredictionContext
 import com.intellij.filePrediction.predictor.FileUsagePredictor
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
