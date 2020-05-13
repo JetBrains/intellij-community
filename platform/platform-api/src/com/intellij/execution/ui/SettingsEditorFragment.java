@@ -69,10 +69,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   public static <Settings> SettingsEditorFragment<Settings, JButton> createTag(String id, String name, String group,
                                                                                Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
     Ref<SettingsEditorFragment<Settings, JButton>> ref = new Ref<>();
-    TagButton button = new TagButton(name, () -> ref.get().setSelected(false));
-    SettingsEditorFragment<Settings, JButton> fragment = new SettingsEditorFragment<Settings, JButton>(id, name, group, button,
-                                                                                                       (settings, label) -> label.setVisible(getter.test(settings)),
-                                                                                                       (settings, label) -> setter.accept(settings, label.isVisible()),
+    TagButton tagButton = new TagButton(name, () -> ref.get().setSelected(false));
+    SettingsEditorFragment<Settings, JButton> fragment = new SettingsEditorFragment<Settings, JButton>(id, name, group, tagButton,
+                                                                                                       (settings, button) -> button.setVisible(getter.test(settings)),
+                                                                                                       (settings, button) -> setter.accept(settings, button.isVisible()),
                                                                                                        getter) {
 
       @Override
@@ -80,7 +80,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
         return true;
       }
     };
-    Disposer.register(fragment, button);
+    Disposer.register(fragment, tagButton);
     ref.set(fragment);
     return fragment;
   }
@@ -95,6 +95,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public String getGroup() {
     return myGroup;
+  }
+
+  public C component() {
+    return myComponent;
   }
 
   public boolean isTag() { return false; }

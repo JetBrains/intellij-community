@@ -70,10 +70,9 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
         addLine(new JSeparator());
         List<SettingsEditorFragment<Settings, ?>> fragments = getFragments();
         fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getCommandLinePosition));
+        buildBeforeRun(fragments);
         addLine(buildHeader(fragments));
-
-        JComponent commandLinePanel = buildCommandLinePanel(fragments);
-        addLine(commandLinePanel);
+        addLine(buildCommandLinePanel(fragments));
 
         JPanel tagsPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
         tagsPanel.setBorder(JBUI.Borders.empty(5, 0));
@@ -94,6 +93,14 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
       private void addLine(Component component) {
         result.add(component, c.clone());
         c.gridy++;
+      }
+
+      private void buildBeforeRun(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
+        SettingsEditorFragment<Settings, ?> beforeRun = ContainerUtil.find(fragments, fragment -> fragment.getCommandLinePosition() == -2);
+        if (beforeRun != null) {
+          addLine(beforeRun.getComponent());
+          fragments.remove(beforeRun);
+        }
       }
 
       private JComponent buildHeader(Collection<SettingsEditorFragment<Settings, ?>> fragments) {

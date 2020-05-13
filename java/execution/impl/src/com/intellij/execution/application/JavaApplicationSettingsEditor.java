@@ -60,6 +60,8 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     fragments.add(SettingsEditorFragment.createTag("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"), group,
                                     configuration -> configuration.isSwingInspectorEnabled(),
                                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
+
+    fragments.addAll(BeforeRunFragment.createGroup());
     return fragments;
   }
 }

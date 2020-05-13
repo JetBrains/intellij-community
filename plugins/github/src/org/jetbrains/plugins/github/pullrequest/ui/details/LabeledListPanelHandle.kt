@@ -13,7 +13,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.InlineIconButton
-import org.jetbrains.plugins.github.ui.WrapLayout
+import com.intellij.util.ui.WrapLayout
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.util.getEDTExecutor

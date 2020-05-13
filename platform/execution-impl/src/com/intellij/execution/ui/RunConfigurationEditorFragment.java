@@ -2,15 +2,19 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 public abstract class RunConfigurationEditorFragment<Settings, C extends JComponent> extends SettingsEditorFragment<Settings, C>{
   public RunConfigurationEditorFragment(String id,
                                         @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                        @Nls(capitalization = Nls.Capitalization.Sentence) String group,
+                                        @Nls(capitalization = Nls.Capitalization.Title) String group,
                                         C component,
                                         int commandLinePosition) {
     super(id, name, group, component, commandLinePosition, (settings, c) -> {}, (settings, c) -> {}, settings -> true);
@@ -20,4 +24,30 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
 
   public abstract void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s);
 
+  public static <Settings> SettingsEditorFragment<Settings, JButton> createSettingsTag(String id, String name, String group,
+                                                                                       Predicate<RunnerAndConfigurationSettingsImpl> getter,
+                                                                                       BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter) {
+    Ref<SettingsEditorFragment<?, JButton>> ref = new Ref<>();
+    TagButton button = new TagButton(name, () -> ref.get().setSelected(false));
+    RunConfigurationEditorFragment<Settings, JButton> fragment = new RunConfigurationEditorFragment<Settings, JButton>(id, name, group, button, 0) {
+
+      @Override
+      public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
+        button.setVisible(getter.test(s));
+      }
+
+      @Override
+      public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
+        setter.accept(s, button.isVisible());
+      }
+
+      @Override
+      public boolean isTag() {
+        return true;
+      }
+    };
+    Disposer.register(fragment, button);
+    ref.set(fragment);
+    return fragment;
+  }
 }

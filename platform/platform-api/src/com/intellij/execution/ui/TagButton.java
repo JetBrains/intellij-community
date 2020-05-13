@@ -8,13 +8,15 @@ import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 public class TagButton extends JButton implements Disposable {
   private final AWTEventListener myEventListener;
@@ -31,6 +33,7 @@ public class TagButton extends JButton implements Disposable {
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_BACK_SPACE == e.getKeyCode() || KeyEvent.VK_DELETE == e.getKeyCode()) {
           hidePopup();
+          setVisible(false);
           action.run();
         }
       }
@@ -48,7 +51,7 @@ public class TagButton extends JButton implements Disposable {
         else if ((MouseEvent.MOUSE_ENTERED == me.getID() || MouseEvent.MOUSE_MOVED == me.getID()) &&
                 (myPopup == null || !myPopup.isVisible())) {
           myCloseButton = new InplaceButton(new IconButton(OptionsBundle.message("tag.button.tooltip"), AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover),
-                              a -> { action.run(); hidePopup(); });
+                              a -> { action.run(); hidePopup(); setVisible(false);});
           myCloseButton.setOpaque(false);
           myCloseButton.setPreferredSize(new Dimension(16, 16));
           myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myCloseButton, null).
