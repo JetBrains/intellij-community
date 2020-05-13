@@ -2137,6 +2137,15 @@ public final class UIUtil {
     }
   }
 
+  public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull String text) {
+    if (font.canDisplayUpTo(text) != -1) {
+      return getFontWithFallback(font);
+    }
+    else {
+      return font;
+    }
+  }
+
   public static @NotNull FontUIResource getFontWithFallback(@NotNull Font font) {
     return getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
   }
