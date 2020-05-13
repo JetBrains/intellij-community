@@ -290,47 +290,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
   }
 }
 
-private class ConstFileFeaturesProducer(vararg included: Pair<String, FilePredictionFeature>) : FileFeaturesProducer {
-  val features: MutableMap<String, FilePredictionFeature> = hashMapOf()
-
-  init {
-    for (pair in included) {
-      features[pair.first] = pair.second
-    }
-  }
-
-  override fun produce(project: Project): Map<String, FilePredictionFeature> {
-    return features
-  }
-}
-
-private class FileFeaturesByProjectPathProducer(vararg included: Pair<String, FilePredictionFeature>) : FileFeaturesProducer {
-  val features: Array<out Pair<String, FilePredictionFeature>> = included
-
-  override fun produce(project: Project): Map<String, FilePredictionFeature> {
-    val dir = project.guessProjectDir()?.path
-    CodeInsightFixtureTestCase.assertNotNull(dir)
-
-    val prefixLength = dir!!.length + 1
-
-    val result: MutableMap<String, FilePredictionFeature> = hashMapOf()
-    for (feature in features) {
-      val value = feature.second.toString().toIntOrNull()
-      if (value != null) {
-        result[feature.first] = FilePredictionFeature.numerical(prefixLength + value)
-      }
-      else {
-        result[feature.first] = feature.second
-      }
-    }
-    return result
-  }
-}
-
-private interface FileFeaturesProducer {
-  fun produce(project: Project): Map<String, FilePredictionFeature>
-}
-
 private object EmptyProjectConfigurator : ProjectConfigurator {
   override fun configure(project: Project, module: Module) = Unit
 }

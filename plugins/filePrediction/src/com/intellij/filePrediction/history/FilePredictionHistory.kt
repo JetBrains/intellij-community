@@ -27,7 +27,7 @@ class FilePredictionHistory(project: Project) {
     }
   }
 
-  fun onFileOpened(fileUrl: String) = manager.onFileOpened(fileUrl)
+  fun onFileSelected(fileUrl: String) = manager.onFileOpened(fileUrl)
 
   fun calcHistoryFeatures(fileUrl: String) = manager.calcHistoryFeatures(fileUrl)
 

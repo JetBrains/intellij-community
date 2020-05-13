@@ -22,9 +22,11 @@
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionGeneralFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionFileTypeFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.FilePredictionHistoryFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.context.FilePredictionContextFeatures"/>
 
     <applicationService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
     <projectService serviceImplementation="com.intellij.filePrediction.history.FilePredictionHistory"/>
+    <projectService serviceImplementation="com.intellij.filePrediction.history.context.FilePredictionContext"/>
   </extensions>
 
   <projectListeners>

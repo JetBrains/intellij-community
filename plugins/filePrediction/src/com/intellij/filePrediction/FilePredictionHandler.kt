@@ -1,6 +1,7 @@
 package com.intellij.filePrediction
 
 import com.intellij.filePrediction.history.FilePredictionHistory
+import com.intellij.filePrediction.history.context.FilePredictionContext
 import com.intellij.filePrediction.predictor.FileUsagePredictor
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -21,7 +22,7 @@ class FilePredictionHandler {
 
   private var session: FilePredictionSessionHolder = FilePredictionSessionHolder()
 
-  fun onFileOpened(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
+  fun onFileSelected(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
     if (ProjectManagerImpl.isLight(project)) {
       return
     }
@@ -36,9 +37,26 @@ class FilePredictionHandler {
         if (newSession != null && newSession.shouldLog(CALCULATE_CANDIDATE_PROBABILITY)) {
           predictor.predictNextFile(project, newSession.id, newFile)
         }
-        FilePredictionHistory.getInstance(project).onFileOpened(newFile.url)
+        FilePredictionHistory.getInstance(project).onFileSelected(newFile.url)
       })
     }
+    FilePredictionContext.getInstance(project).onFileSelected(newFile.url)
+  }
+
+  fun onFileOpened(project: Project, file: VirtualFile) {
+    if (ProjectManagerImpl.isLight(project)) {
+      return
+    }
+
+    FilePredictionContext.getInstance(project).onFileOpened(file.url)
+  }
+
+  fun onFileClosed(project: Project, file: VirtualFile) {
+    if (ProjectManagerImpl.isLight(project)) {
+      return
+    }
+
+    FilePredictionContext.getInstance(project).onFileClosed(file.url)
   }
 
   private fun logOpenedFile(project: Project,

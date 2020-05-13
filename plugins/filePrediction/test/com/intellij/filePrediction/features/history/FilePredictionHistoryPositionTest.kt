@@ -3,7 +3,7 @@ package com.intellij.filePrediction.features.history
 
 import com.intellij.filePrediction.history.FilePredictionHistoryState
 
-class FilePredictionHistoryFeaturesTest : FilePredictionHistoryBaseTest() {
+class FilePredictionHistoryPositionTest : FilePredictionHistoryBaseTest() {
 
   private fun doTest(openedFiles: List<String>, size: Int, vararg expected: Pair<String, Int?>) {
     doTestInternal(openedFiles, size, 5) { manager ->
