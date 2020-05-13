@@ -157,6 +157,10 @@ class ContentTabLabel extends BaseLabel {
   }
 
   private void updateText() {
+    if (myText != null && myText.startsWith("<html>")) {
+      super.setText(myText); // SwingUtilities2.clipString does not support HTML
+      return;
+    }
     FontMetrics fm = getFontMetrics(getFont());
     int textWidth = UIUtilities.stringWidth(this, fm, myText);
     int prefWidth = myIconWithInsetsWidth + textWidth;
