@@ -55,7 +55,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   @Test
-  fun test_refexg_escapes() {
+  fun test_regex_escapes() {
     val foo = "[aa] \\ \\p{Lower} (a|b|c) [a-zA-Z_0-9] X?+ X*+ X?? [\\p{L}&&[^\\p{Lu}]] "
     val pattern = Pattern.compile(RegexpWhiteListRule.escapeText(foo))
     assertTrue(pattern.matcher(foo).matches())
@@ -162,6 +162,44 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   @Test
+  fun test_global_integer_regex_rule() {
+    val validator = createTestSensitiveDataValidator(
+      loadContent("test_global_regexp_rules.json")
+    )
+
+    val elg = EventLogGroup("regex.int.rule.group", 1)
+    var value = 1000
+    while (value > 0) {
+      assertEventAccepted(validator, elg, value.toString())
+      assertEventAccepted(validator, elg, (-1 * value).toString())
+      value /= 2
+    }
+    assertEventAccepted(validator, elg, value.toString())
+  }
+
+  @Test
+  fun test_global_double_regex_rule() {
+    val validator = createTestSensitiveDataValidator(
+      loadContent("test_global_regexp_rules.json")
+    )
+
+    val elg = EventLogGroup("regex.double.rule.group", 1)
+    var value = 100.0
+    while (value > 0.00001) {
+      assertEventAccepted(validator, elg, value.toString())
+      assertEventAccepted(validator, elg, (-1 * value).toString())
+      value /= 2
+    }
+
+    value = 1000000.0
+    while (value < 100000000.0) {
+      assertEventAccepted(validator, elg, value.toString())
+      assertEventAccepted(validator, elg, (-1 * value).toString())
+      value *= 2
+    }
+  }
+
+  @Test
   fun test_simple_regexp_rules_with_spaces() {
     // custom regexp is:   [AB]_(.*) => matches  'A_x', 'A x'
     val validator = createTestSensitiveDataValidator(loadContent("test_simple_regexp_rules.json"))
@@ -204,18 +242,6 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     assertEventAccepted(validator, elg, "JUST TEXT[_123456_]_xxx CCC,zzzREF:AAA;yyy")
     assertEventRejected(validator, elg, "JUSTTEXT[_123456_]_xxx!CCC_zzzREF:AAA;yyy")
   }
-//  @Test
-//  fun test_simple_util_rules() {
-//    val validator = createTestSensitiveDataValidator(loadContent("test_simple_util_rules.json"))
-//    val elg = EventLogGroup("diagram.usages.trigger", 1)
-//
-//    assertSize(1, validator.getEventRules(elg))
-//
-//    assertEventAccepted(validator, elg, "show.diagram->JAVA")
-//    assertEventAccepted(validator, elg, "show.diagram->MAVEN")
-//    assertEventAccepted(validator, elg, "show.diagram->third.party")
-//    assertEventRejected(validator, elg, "show.diagram->foo")
-//  }
 
   @Test
   fun test_regexp_rule_with_global_regexps() {
@@ -537,8 +563,10 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     }
   }
 
-  private fun assertEventAccepted(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.ACCEPTED, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+  private fun assertEventAccepted(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, eventId: String) {
+    val context = EventContext.create(eventId, Collections.emptyMap())
+    val actual = validator.validateEvent(eventLogGroup, context)
+    TestCase.assertEquals("Validation failed for $eventId", ValidationResultType.ACCEPTED, actual)
   }
 
   private fun assertUndefinedRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
