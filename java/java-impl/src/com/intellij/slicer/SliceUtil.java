@@ -118,9 +118,6 @@ class SliceUtil {
     if (expression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)expression;
       Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(variable, original);
-      if (values == null) {
-        return createAndProcessTooComplexDFAUsage(expression, parent, processor);
-      }
       PsiExpression initializer = variable.getInitializer();
       if (values.isEmpty() && initializer != null) {
         values = Collections.singletonList(initializer);
@@ -413,11 +410,6 @@ class SliceUtil {
                                      @NotNull String syntheticField, @NotNull Processor<? super SliceUsage> processor) {
     PsiElement simplified = simplify(element);
     return simplified == null || processor.process(new JavaSliceUsage(simplified, parent, substitutor, indexNesting, syntheticField));
-  }
-
-  private static boolean createAndProcessTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull Processor<? super SliceUsage> processor) {
-    PsiElement simplified = simplify(element);
-    return simplified == null || processor.process(new SliceTooComplexDFAUsage(simplified, parent));
   }
 
   private static boolean processParameterUsages(@NotNull final PsiParameter parameter,
