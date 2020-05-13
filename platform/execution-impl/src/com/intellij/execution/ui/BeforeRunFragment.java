@@ -51,6 +51,14 @@ public class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunCon
   }
 
   @Override
+  public void toggle(boolean selected) {
+    super.setSelected(selected);
+    if (selected) {
+      component().showPopup();
+    }
+  }
+
+  @Override
   public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
     component().reset(s);
   }
@@ -74,7 +82,7 @@ public class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunCon
       add(myAddButton);
     }
 
-    private void showPopup() {
+    public void showPopup() {
       DefaultActionGroup group = new DefaultActionGroup();
       for (TaskButton tag : myTags) {
         if (!tag.isVisible()) {

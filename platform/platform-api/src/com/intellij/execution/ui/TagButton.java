@@ -32,9 +32,7 @@ public class TagButton extends JButton implements Disposable {
       @Override
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_BACK_SPACE == e.getKeyCode() || KeyEvent.VK_DELETE == e.getKeyCode()) {
-          hidePopup();
-          setVisible(false);
-          action.run();
+          remove(action);
         }
       }
     });
@@ -51,7 +49,7 @@ public class TagButton extends JButton implements Disposable {
         else if ((MouseEvent.MOUSE_ENTERED == me.getID() || MouseEvent.MOUSE_MOVED == me.getID()) &&
                 (myPopup == null || !myPopup.isVisible())) {
           myCloseButton = new InplaceButton(new IconButton(OptionsBundle.message("tag.button.tooltip"), AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover),
-                              a -> { action.run(); hidePopup(); setVisible(false);});
+                              a -> remove(action));
           myCloseButton.setOpaque(false);
           myCloseButton.setPreferredSize(new Dimension(16, 16));
           myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myCloseButton, null).
@@ -62,6 +60,12 @@ public class TagButton extends JButton implements Disposable {
       }
     };
     Toolkit.getDefaultToolkit().addAWTEventListener(myEventListener, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
+  }
+
+  private void remove(Runnable action) {
+    hidePopup();
+    setVisible(false);
+    action.run();
   }
 
   private static Color getBackgroundColor() {

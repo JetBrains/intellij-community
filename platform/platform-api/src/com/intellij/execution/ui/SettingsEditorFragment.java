@@ -116,6 +116,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     fireEditorStateChanged();
   }
 
+  public void toggle(boolean selected) {
+    setSelected(selected);
+  }
+
   public int getCommandLinePosition() {
     return myCommandLinePosition;
   }

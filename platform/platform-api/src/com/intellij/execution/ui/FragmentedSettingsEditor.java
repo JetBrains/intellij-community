@@ -135,7 +135,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
         JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
                                                             actionGroup,
                                                             dataContext,
-                                                            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).showInBestPositionFor(dataContext);
+                                                            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).showUnderneathOf(linkLabel);
       }
 
       private JComponent buildCommandLinePanel(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
@@ -172,7 +172,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myFragment.setSelected(state);
+      myFragment.toggle(state);
     }
   }
 }
