@@ -15,6 +15,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
+import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle
@@ -78,6 +79,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     tracker.scheduleUpdateAll()
 
     Disposer.register(disposableParent, this)
+
+    runInEdtAsync(this, { tree.rebuildTree() })
   }
 
   private fun performCommit(amend: Boolean) {
