@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
@@ -155,12 +156,19 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   }
 
   protected void processModel(@NotNull GitRebaseTodoModel<? extends GitRebaseEntryWithDetails> rebaseTodoModel) {
+    processModel(rebaseTodoModel, (entry) -> entry.getCommitDetails().getFullMessage());
+  }
+
+  protected <T extends GitRebaseEntry> void processModel(
+    @NotNull GitRebaseTodoModel<T> rebaseTodoModel,
+    @NotNull Function<T, String> fullMessageGetter
+  ) {
     List<RewordedCommitMessageMapping> messages = new ArrayList<>();
-    for (GitRebaseTodoModel.Element<? extends GitRebaseEntryWithDetails> element : rebaseTodoModel.getElements()) {
+    for (GitRebaseTodoModel.Element<T> element : rebaseTodoModel.getElements()) {
       if (element.getType() instanceof GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword) {
         GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword type = (GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword)element.getType();
         messages.add(RewordedCommitMessageMapping.fromMapping(
-          element.getEntry().getCommitDetails().getFullMessage(),
+          fullMessageGetter.apply(element.getEntry()),
           type.getNewMessage()
         ));
       }
