@@ -7,9 +7,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +89,11 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
         addLine(tagsPanel);
         c.weighty = 1;
         result.add(new JPanel(), c);
+
+        List<PanelWithAnchor> panels =
+          fragments.stream().map(SettingsEditorFragment::component).filter(component -> component instanceof PanelWithAnchor)
+            .map(component -> (PanelWithAnchor)component).collect(Collectors.toList());
+        UIUtil.mergeComponentsWithAnchor(panels);
         return result;
       }
 
