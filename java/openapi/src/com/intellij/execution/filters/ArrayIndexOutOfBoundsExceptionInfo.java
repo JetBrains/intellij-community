@@ -24,6 +24,14 @@ public class ArrayIndexOutOfBoundsExceptionInfo extends ExceptionInfo {
     }
   }
 
+  @Override
+  public ExceptionInfo consumeStackLine(String line) {
+    if (line.contains("java.lang.System.arraycopy")) {
+      return ArrayCopyIndexOutOfBoundsExceptionInfo.tryCreate(getClassNameOffset(), getExceptionMessage());
+    }
+    return super.consumeStackLine(line);
+  }
+
   public @Nullable Integer getIndex() {
     return myIndex;
   }

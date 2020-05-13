@@ -129,6 +129,11 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     else if (info instanceof ArithmeticExceptionInfo) {
       return fromArithmeticException(anchor);
     }
+    else if (info instanceof ArrayCopyIndexOutOfBoundsExceptionInfo) {
+      if (anchor instanceof PsiExpression) {
+        return Analysis.create(DfTypes.intValue(((ArrayCopyIndexOutOfBoundsExceptionInfo)info).getValue()), (PsiExpression)anchor);
+      }
+    }
     return null;
   }
 

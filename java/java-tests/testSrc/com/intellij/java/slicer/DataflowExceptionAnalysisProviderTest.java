@@ -288,6 +288,27 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
            "  void callee(String x, String y, String z) {}\n" +
            "}");
   }
+  
+  public void testArrayCopySource() {
+    doTest("java.lang.ArrayIndexOutOfBoundsException: arraycopy: source index -1 out of bounds for int[10]\n" +
+           "\tat java.base/java.lang.System.arraycopy(Native Method)",
+           "Find why 'src' could be -1",
+           "class Test {static void test(int[] data, int src, int dst, int len) { System.arraycopy(data, src, data, dst, len); }}");
+  }
+  
+  public void testArrayCopyDest() {
+    doTest("java.lang.ArrayIndexOutOfBoundsException: arraycopy: destination index -1 out of bounds for int[10]\n" +
+           "\tat java.base/java.lang.System.arraycopy(Native Method)",
+           "Find why 'dst' could be -1",
+           "class Test {static void test(int[] data, int src, int dst, int len) { System.arraycopy(data, src, data, dst, len); }}");
+  }
+  
+  public void testArrayCopyLength() {
+    doTest("java.lang.ArrayIndexOutOfBoundsException: arraycopy: length -1 is negative\n" +
+           "\tat java.base/java.lang.System.arraycopy(Native Method)",
+           "Find why 'len' could be -1",
+           "class Test {static void test(int[] data, int src, int dst, int len) { System.arraycopy(data, src, data, dst, len); }}");
+  }
 
   private void doTest(@NotNull String exceptionLine,
                       @Nullable("If no action is expected") String expectedActionTitle,
