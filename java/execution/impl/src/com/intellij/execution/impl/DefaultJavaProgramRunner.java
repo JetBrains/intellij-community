@@ -132,6 +132,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
               proxy.destroy();
+              handler.removeProcessListener(this);
             }
           });
         }

@@ -813,6 +813,7 @@ private class ProcessExecutionListener(private val project: Project,
 
     activity?.finished()
 
+    processHandler.removeProcessListener(this)
     SaveAndSyncHandler.getInstance().scheduleRefresh()
   }
 
