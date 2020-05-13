@@ -299,7 +299,7 @@ public abstract class Decompressor {
 
           case SYMLINK:
             if (StringUtil.isEmpty(entry.linkTarget)) {
-              throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget);
+              throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
             }
             try {
               Path outputTarget = Paths.get(entry.linkTarget);
