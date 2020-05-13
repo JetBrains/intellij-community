@@ -160,55 +160,63 @@ public class ClassRenderer extends NodeRendererImpl{
     final NodeManager nodeManager = builder.getNodeManager();
     final NodeDescriptorFactory nodeDescriptorFactory = builder.getDescriptorManager();
 
-    List<DebuggerTreeNode> children = new ArrayList<>();
-    if (value instanceof ObjectReference) {
-      final ObjectReference objRef = (ObjectReference)value;
-      final ReferenceType refType = objRef.referenceType();
-      // default ObjectReference processing
-      List<Field> fields = refType.allFields();
-      if (!fields.isEmpty()) {
-        Set<String> names = new HashSet<>();
-        List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
-        int loaded = 0, total = fieldsToShow.size();
-        Map<Field, Value> cachedValues = null;
-        for (int i = 0; i < total; i++) {
-          Field field = fieldsToShow.get(i);
-          // load values in chunks
-          if (i > loaded || cachedValues == null) {
-            int chunkSize = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, total - loaded);
-            try {
-              cachedValues = objRef.getValues(fieldsToShow.subList(loaded, loaded + chunkSize));
-            } catch (Exception e) {
-              LOG.error(e);
-              cachedValues = null;
-            }
-            loaded += chunkSize;
-          }
-
-          FieldDescriptorImpl fieldDescriptor =
-            (FieldDescriptorImpl)createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);
-          if (cachedValues != null) {
-            fieldDescriptor.setValue(cachedValues.get(field));
-          }
-          String name = fieldDescriptor.getName();
-          if (names.contains(name)) {
-            fieldDescriptor.putUserData(FieldDescriptor.SHOW_DECLARING_TYPE, Boolean.TRUE);
-          }
-          else {
-            names.add(name);
-          }
-          children.add(nodeManager.createNode(fieldDescriptor, evaluationContext));
-        }
-
-        if (children.isEmpty()) {
-          children.add(nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display")));
-        }
-      }
-      else {
-        children.add(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel()));
-      }
+    if (!(value instanceof ObjectReference)) {
+      builder.setChildren(Collections.emptyList());
+      return;
     }
-    builder.setChildren(children);
+
+    final ObjectReference objRef = (ObjectReference)value;
+    final ReferenceType refType = objRef.referenceType();
+    // default ObjectReference processing
+    DebuggerUtilsAsync.allFields(refType, evaluationContext.getSuspendContext()).thenAccept(
+      fields -> {
+        List<DebuggerTreeNode> children = new ArrayList<>();
+        if (!fields.isEmpty()) {
+          Set<String> names = new HashSet<>();
+          List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
+          int loaded = 0, total = fieldsToShow.size();
+          Map<Field, Value> cachedValues = null;
+          for (int i = 0; i < total; i++) {
+            Field field = fieldsToShow.get(i);
+            // load values in chunks
+            if (i > loaded || cachedValues == null) {
+              int chunkSize = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, total - loaded);
+              try {
+                cachedValues = objRef.getValues(fieldsToShow.subList(loaded, loaded + chunkSize));
+              }
+              catch (Exception e) {
+                LOG.error(e);
+                cachedValues = null;
+              }
+              loaded += chunkSize;
+            }
+
+            FieldDescriptorImpl fieldDescriptor =
+              (FieldDescriptorImpl)createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);
+            if (cachedValues != null) {
+              fieldDescriptor.setValue(cachedValues.get(field));
+            }
+            String name = fieldDescriptor.getName();
+            if (names.contains(name)) {
+              fieldDescriptor.putUserData(FieldDescriptor.SHOW_DECLARING_TYPE, Boolean.TRUE);
+            }
+            else {
+              names.add(name);
+            }
+            children.add(nodeManager.createNode(fieldDescriptor, evaluationContext));
+          }
+
+          if (children.isEmpty()) {
+            children.add(nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display")));
+          }
+
+        }
+        else {
+          children.add(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel()));
+        }
+        builder.setChildren(children);
+      }
+    );
   }
 
   @NotNull
