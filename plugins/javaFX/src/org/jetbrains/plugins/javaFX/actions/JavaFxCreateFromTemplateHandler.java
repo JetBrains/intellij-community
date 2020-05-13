@@ -6,9 +6,7 @@ import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
 public class JavaFxCreateFromTemplateHandler extends JavaCreateFromTemplateHandler {
   @Override
@@ -20,7 +18,7 @@ public class JavaFxCreateFromTemplateHandler extends JavaCreateFromTemplateHandl
   public boolean canCreate(PsiDirectory @NotNull [] dirs) {
     if (dirs.length > 0) {
       Project project = dirs[0].getProject();
-      if (JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_SCENE_NODE, GlobalSearchScope.allScope(project)) == null) {
+      if (JavaPsiFacade.getInstance(project).findPackage("javafx") == null) {
         return false;
       }
     }
