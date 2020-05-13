@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.*;
@@ -26,7 +26,7 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE);
   }
 
   @NotNull
