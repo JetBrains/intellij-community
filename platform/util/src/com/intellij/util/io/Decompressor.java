@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.List;
@@ -296,12 +298,17 @@ public abstract class Decompressor {
             break;
 
           case SYMLINK:
-            if (StringUtil.isEmpty(entry.linkTarget) ||
-                !FileUtil.isAncestor(outputDir, new File(FileUtil.toCanonicalPath(outputFile.getParent() + '/' + entry.linkTarget)), true)) {
+            if (StringUtil.isEmpty(entry.linkTarget)) {
               throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget);
             }
-            FileUtil.createParentDirs(outputFile);
-            Files.createSymbolicLink(outputFile.toPath(), Paths.get(entry.linkTarget));
+            try {
+              Path outputTarget = Paths.get(entry.linkTarget);
+              FileUtil.createParentDirs(outputFile);
+              Files.createSymbolicLink(outputFile.toPath(), outputTarget);
+            }
+            catch (InvalidPathException e) {
+              throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
+            }
             break;
         }
 
