@@ -691,6 +691,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             settings.setConfiguration(configuration)
           }
         }
+        
+        lock.write {  templateIdToConfiguration.retainEntries { _, settings -> settings.type != extension } }
       }
     }, this)
 
