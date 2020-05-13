@@ -203,7 +203,7 @@ private fun getContainingClasses(startClass: PsiClass?): List<PsiClass> {
   return getContainingClassesMutable(startClass)
 }
 
-private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int> {
+private fun buildVirtualEnvironmentForMethod(method: GrMethod, omitBody: Boolean): Pair<String, Int> {
   val text = method.containingFile.text
   val containingClasses = getContainingClasses(method.containingClass)
   val classRepresentations = mutableListOf<String>()
@@ -217,11 +217,17 @@ private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int
   val header = classRepresentations.zip(fieldRepresentations)
     .joinToString("") { (classDef, fields) -> "$classDef {\n $fields \n " }
   val footer = " } ".repeat(containingClasses.size)
-  return header + method.text + footer to (header.length)
+  val methodText = if (omitBody) {
+    method.text.removeSuffix(method.block?.text ?: "")
+  }
+  else {
+    method.text
+  }
+  return header + methodText + footer to (header.length)
 }
 
-fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null): GrMethod? {
-  val (fileText, offset) = buildVirtualEnvironmentForMethod(method)
+fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null, omitBody: Boolean = false): GrMethod? {
+  val (fileText, offset) = buildVirtualEnvironmentForMethod(method, omitBody)
   val factory = GroovyPsiElementFactory.getInstance(method.project)
   val newFile = factory.createGroovyFile(fileText, false, method)
   val newMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
