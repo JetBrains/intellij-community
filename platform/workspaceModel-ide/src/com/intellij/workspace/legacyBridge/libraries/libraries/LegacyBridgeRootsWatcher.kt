@@ -7,13 +7,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
@@ -44,9 +44,6 @@ class LegacyBridgeRootsWatcher(
 
   private val rootsValidityChangedListener
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
-
-  private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val rootFilePointers = LegacyModelRootsFilePointers(project)
 
@@ -90,7 +87,7 @@ class LegacyBridgeRootsWatcher(
         myCollectWatchRootsFuture.cancel(false)
         myCollectWatchRootsFuture = myExecutor.submit {
           ReadAction.run<Throwable> {
-            syncNewRootsToContainer(
+            newSync(
               newRoots = roots,
               newJarDirectories = jarDirectories,
               newRecursiveJarDirectories = recursiveJarDirectories
@@ -110,18 +107,6 @@ class LegacyBridgeRootsWatcher(
         val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
 
         updateModuleName(oldUrl, newUrl)
-        updateRoots(currentRoots, oldUrl, newUrl)
-        updateRoots(currentJarDirectories, oldUrl, newUrl)
-        updateRoots(currentRecursiveJarDirectories, oldUrl, newUrl)
-      }
-
-      private fun updateRoots(map: MutableMap<VirtualFileUrl, Disposable>, oldUrl: String, newUrl: String) {
-        map.filter { it.key.url == oldUrl }.forEach { (url, disposable) ->
-          map.remove(url)
-          val newVirtualFileUrl = virtualFileManager.fromUrl(newUrl)
-          map[newVirtualFileUrl]?.let { Disposer.dispose(it) }
-          map[newVirtualFileUrl] = disposable
-        }
       }
 
       private fun updateModuleName(oldUrl: String, newUrl: String) {
@@ -159,70 +144,26 @@ class LegacyBridgeRootsWatcher(
     })
   }
 
-  private val currentRoots = mutableMapOf<VirtualFileUrl, Disposable>()
-  private val currentJarDirectories = mutableMapOf<VirtualFileUrl, Disposable>()
-  private val currentRecursiveJarDirectories = mutableMapOf<VirtualFileUrl, Disposable>()
+  private var disposable = Disposer.newDisposable()
 
-  private fun syncNewRootsToContainer(newRoots: Set<VirtualFileUrl>, newJarDirectories: Set<VirtualFileUrl>, newRecursiveJarDirectories: Set<VirtualFileUrl>) {
-    if (currentRoots.keys == newRoots && currentJarDirectories.keys == newJarDirectories && currentRecursiveJarDirectories.keys == newRecursiveJarDirectories) {
-      return
-    }
+  private fun newSync(newRoots: Set<VirtualFileUrl>,
+                      newJarDirectories: Set<VirtualFileUrl>,
+                      newRecursiveJarDirectories: Set<VirtualFileUrl>) {
+    val oldDisposable = disposable
+    val newDisposable = Disposer.newDisposable()
+    // creating a container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
+    val container = VirtualFilePointerManager.getInstance().createContainer(newDisposable, rootsValidityChangedListener)
 
-    for (removed in currentRoots.keys - newRoots) {
-      LOG.debug { "Removed root $removed" }
+    container as VirtualFilePointerContainerImpl
+    container.addAll(newRoots.map { it.url })
+    container.addAllJarDirectories(newJarDirectories.map { it.url }, false)
+    container.addAllJarDirectories(newRecursiveJarDirectories.map { it.url }, true)
 
-      Disposer.dispose(currentRoots.getValue(removed))
-      currentRoots.remove(removed)
-    }
-
-    for (removedJarDirectory in currentJarDirectories.keys - newJarDirectories) {
-      LOG.debug { "Removed jar directory root $removedJarDirectory" }
-
-      Disposer.dispose(currentJarDirectories.getValue(removedJarDirectory))
-      currentJarDirectories.remove(removedJarDirectory)
-    }
-
-    for (removedRecursiveJarDirectory in currentRecursiveJarDirectories.keys - newRecursiveJarDirectories) {
-      LOG.debug { "Removed recursive jar directory root $removedRecursiveJarDirectory" }
-
-      Disposer.dispose(currentRecursiveJarDirectories.getValue(removedRecursiveJarDirectory))
-      currentRecursiveJarDirectories.remove(removedRecursiveJarDirectory)
-    }
-
-    for (added in newRoots - currentRoots.keys) {
-      val dispose = Disposer.newDisposable()
-      currentRoots[added] = dispose
-      virtualFilePointerManager.create(added.url, dispose, rootsValidityChangedListener)
-
-      LOG.debug { "Added root $added" }
-    }
-
-    for (addedJarDirectory in newJarDirectories - currentJarDirectories.keys) {
-      val dispose = Disposer.newDisposable()
-      currentRoots[addedJarDirectory] = dispose
-      virtualFilePointerManager.createDirectoryPointer(addedJarDirectory.url, false, dispose, rootsValidityChangedListener)
-
-      LOG.debug { "Added jar directory $addedJarDirectory" }
-    }
-
-    for (addedRecursiveJarDirectory in newRecursiveJarDirectories - currentRecursiveJarDirectories.keys) {
-      val dispose = Disposer.newDisposable()
-      currentRoots[addedRecursiveJarDirectory] = dispose
-      virtualFilePointerManager.createDirectoryPointer(addedRecursiveJarDirectory.url, true, dispose, rootsValidityChangedListener)
-
-      LOG.debug { "Added recursive jar directory $addedRecursiveJarDirectory" }
-    }
+    disposable = newDisposable
+    Disposer.dispose(oldDisposable)
   }
 
   private fun clear() {
-    currentRoots.values.forEach { Disposer.dispose(it) }
-    currentJarDirectories.values.forEach { Disposer.dispose(it) }
-    currentRecursiveJarDirectories.values.forEach { Disposer.dispose(it) }
-
-    currentRoots.clear()
-    currentJarDirectories.clear()
-    currentRecursiveJarDirectories.clear()
-
     rootFilePointers.clear()
   }
 
@@ -231,6 +172,8 @@ class LegacyBridgeRootsWatcher(
 
     myCollectWatchRootsFuture.cancel(false)
     myExecutor.shutdownNow()
+
+    Disposer.dispose(disposable)
   }
 
   companion object {
