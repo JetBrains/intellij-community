@@ -434,6 +434,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);
+        handler.removeProcessListener(this);
       }
     });
   }
