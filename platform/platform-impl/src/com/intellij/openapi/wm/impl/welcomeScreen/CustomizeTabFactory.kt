@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
@@ -46,7 +45,6 @@ import javax.swing.JComponent
 private val settings get() = UISettings.instance
 private val fontOptions get() = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
 
-//private val editorFactory get() = EditorFactory.getInstance()
 private val laf get() = LafManager.getInstance()
 private val keymapManager get() = KeymapManager.getInstance() as KeymapManagerImpl
 private val editorColorsManager get() = EditorColorsManager.getInstance() as EditorColorsManagerImpl
@@ -59,11 +57,14 @@ private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize else
 private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 
 class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("Customize") {
+  private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
   private val lafProperty = GraphPropertyImpl<LafManager.LafReference>(propertyGraph) { laf.currentLookAndFeelReference }
   private val ideFontProperty = GraphPropertyImpl(propertyGraph) { getIdeFont() }
   private val editorFontProperty = GraphPropertyImpl(propertyGraph) { getEditorFont() }
   private val keymapProperty = GraphPropertyImpl(propertyGraph) { keymapManager.activeKeymap }
+  private val colorBlindnessProperty = GraphPropertyImpl(propertyGraph) { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
+  private val adjustColorsProperty = GraphPropertyImpl(propertyGraph) { settings.colorBlindness != null }
 
   init {
     lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, laf.findLaf(it), false) }, parentDisposable)
@@ -77,6 +78,16 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
                                      updateFontSettings()
                                    }, parentDisposable)
     keymapProperty.afterChange { keymapManager.activeKeymap = it }
+    adjustColorsProperty.afterChange { updateColorBlindness() }
+    colorBlindnessProperty.afterChange { updateColorBlindness() }
+  }
+
+  private fun updateColorBlindness() {
+    settings.colorBlindness = if (adjustColorsProperty.get()) colorBlindnessProperty.get() else null
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      DefaultColorSchemesManager.getInstance().reload()
+      editorColorsManager.schemeChangedOrSwitched(null)
+    })
   }
 
   private fun updateFontSettings() {
@@ -88,6 +99,15 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
     val value = settingGetter()
     if (property.get() != value) {
       property.set(value)
+    }
+  }
+
+  private fun updateAccessibilityProperties() {
+    updateProperty(editorFontProperty) { getEditorFont() }
+    val adjustColorSetting = settings.colorBlindness != null
+    updateProperty(adjustColorsProperty) { adjustColorSetting }
+    if (adjustColorSetting) {
+      updateProperty(colorBlindnessProperty) { settings.colorBlindness }
     }
   }
 
@@ -115,7 +135,7 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
         createColorBlindnessSettingBlock()
 
         busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFont() } })
-        busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { updateProperty(editorFontProperty) { getEditorFont() } })
+        busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { updateAccessibilityProperties() })
       }.largeGapAfter()
       blockRow {
         header(KeyMapBundle.message("keymap.display.name"))
@@ -141,41 +161,18 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
   }
 
   private fun Row.createColorBlindnessSettingBlock() {
-    val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
-    if (supportedValues.isNotEmpty()) {
-      val modelBinding = PropertyBinding({ settings.colorBlindness }, { settings.colorBlindness = it })
-      val onApply = {
-        // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          DefaultColorSchemesManager.getInstance().reload()
-          (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
-        })
-      }
-
+    if (supportedColorBlindness.isNotEmpty()) {
       fullRow {
-        if (supportedValues.size == 1) {
-          val jbCheckBox = JBCheckBox(UIBundle.message("color.blindness.checkbox.text"))
-          jbCheckBox.isOpaque = false
-          component(jbCheckBox)
-            .withBinding({ if (it.isSelected) supportedValues.first() else null },
-                         { it, value -> it.isSelected = value != null },
-                         modelBinding)
-            .comment(UIBundle.message("color.blindness.checkbox.comment"))
+        if (supportedColorBlindness.size == 1) {
+          checkBox(UIBundle.message("color.blindness.checkbox.text"), adjustColorsProperty,
+                   UIBundle.message("color.blindness.checkbox.comment")).applyToComponent { isOpaque = false }
         }
         else {
-          val enableColorBlindness = component(
-            JBCheckBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"))).applyToComponent {
-            isSelected = modelBinding.get() != null
-            isOpaque = false
-          }
-          component<ComboBox<ColorBlindness>>(ComboBox(supportedValues.toTypedArray()))
-            .enableIf(enableColorBlindness.selected)
-            .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
-            .comment(UIBundle.message("color.blindness.combobox.comment"))
-            .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
-                         { it, value -> it.selectedItem = value ?: supportedValues.first() },
-                         modelBinding)
-            .onApply(onApply)
+          val checkBox = checkBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"),
+                                  adjustColorsProperty).applyToComponent { isOpaque = false }.component
+          comboBox(DefaultComboBoxModel(supportedColorBlindness.toTypedArray()), colorBlindnessProperty, SimpleListCellRenderer.create("") {
+            PlatformEditorBundle.message(it?.key ?: "")
+          }).comment(UIBundle.message("color.blindness.combobox.comment")).enableIf(checkBox.selected)
         }
         component(Link(UIBundle.message("color.blindness.link.to.help"))
                   { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
@@ -197,6 +194,10 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
     return comboBox(model, fontProperty).applyToComponent {
       isEditable = true
     }
+  }
+
+  private fun getColorBlindness(): List<ColorBlindness> {
+    return ColorBlindness.values().asList().filter { ColorBlindnessSupport.get(it) != null }
   }
 
   private fun getKeymaps(): List<Keymap> {
