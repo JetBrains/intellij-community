@@ -77,7 +77,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   private static String extractValue(PsiElement element) {
     String text = element.getText();
 
-    if (!text.startsWith("\"") && !text.startsWith("\'")) {
+    if (!text.startsWith("\"") && !text.startsWith("'")) {
       if (hasInjectedEscapingQuotes(element, text)) return stripInjectedEscapingQuotes(text);
     }
     return StringUtil.stripQuotesAroundValue(text);

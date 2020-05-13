@@ -159,7 +159,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
 
     final String className = getClassName();
     if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
-      throw new ConfigurationException("\'" + className + "\' is invalid extracted class name");
+      throw new ConfigurationException("'" + className + "' is invalid extracted class name");
     }
 
     /*final String packageName = getPackageName();
@@ -169,7 +169,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     for (PsiClass innerClass : innerClasses) {
       if (className.equals(innerClass.getName())) {
         throw new ConfigurationException(
-          "Extracted class should have unique name. Name " + "\'" + className + "\' is already in use by one of the inner classes");
+          "Extracted class should have unique name. Name " + "'" + className + "' is already in use by one of the inner classes");
       }
     }
   }

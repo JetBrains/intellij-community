@@ -332,9 +332,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       inLib |= !fileIndex.isInContent(psiDirectory.getVirtualFile());
     }
 
-    return inLib ? "Package \'" +
+    return inLib ? "Package '" +
                    aPackage.getName() +
-                   "\' contains directories in libraries which cannot be moved. Do you want to move current directory" : null;
+                   "' contains directories in libraries which cannot be moved. Do you want to move current directory" : null;
   }
 
   private static boolean canMoveOrRearrangePackages(PsiElement[] elements) {

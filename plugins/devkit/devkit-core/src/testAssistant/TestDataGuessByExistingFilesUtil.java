@@ -184,7 +184,7 @@ public class TestDataGuessByExistingFilesUtil {
     Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiClass));
     Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
     ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator());
-    indicator.setText("Searching for \'" + test + "\' test data files...");
+    indicator.setText("Searching for '" + test + "' test data files...");
     indicator.setIndeterminate(false);
     int fileNamesCount = fileNames.size();
     double currentIndex = 0;

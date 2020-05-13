@@ -148,7 +148,7 @@ public class CombinePropertiesFilesAction extends AnAction {
     @Nullable
     @Override
     public String getErrorText(String inputString) {
-      return checkInput(inputString) ? null : String.format("Base name must be valid for file \'%s\'", checkBaseName(inputString).getFailedFile());
+      return checkInput(inputString) ? null : String.format("Base name must be valid for file '%s'", checkBaseName(inputString).getFailedFile());
     }
 
     @Nullable

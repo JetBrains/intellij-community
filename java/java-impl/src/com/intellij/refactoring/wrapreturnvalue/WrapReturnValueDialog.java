@@ -96,15 +96,15 @@ class WrapReturnValueDialog extends RefactoringDialog {
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
     if (myCreateInnerClassButton.isSelected()) {
       final String innerClassName = getInnerClassName().trim();
-      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + innerClassName + "\' is invalid inner class name");
+      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("'" + innerClassName + "' is invalid inner class name");
       final PsiClass containingClass = sourceMethod.getContainingClass();
       if (containingClass != null && containingClass.findInnerClassByName(innerClassName, false) != null) {
-        throw new ConfigurationException("Inner class with name \'" + innerClassName + "\' already exist");
+        throw new ConfigurationException("Inner class with name '" + innerClassName + "' already exist");
       }
     } else if (useExistingClassButton.isSelected()) {
       final String className = existingClassField.getText().trim();
       if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
-        throw new ConfigurationException("\'" + className + "\' is invalid qualified wrapper class name");
+        throw new ConfigurationException("'" + className + "' is invalid qualified wrapper class name");
       }
       final Object item = myFieldsCombo.getSelectedItem();
       if (item == null) {
@@ -113,12 +113,12 @@ class WrapReturnValueDialog extends RefactoringDialog {
     } else {
       final String className = getClassName();
       if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
-        throw new ConfigurationException("\'" + className + "\' is invalid wrapper class name");
+        throw new ConfigurationException("'" + className + "' is invalid wrapper class name");
       }
       final String packageName = getPackageName();
 
       if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
-        throw new ConfigurationException("\'" + packageName + "\' is invalid wrapper class package name");
+        throw new ConfigurationException("'" + packageName + "' is invalid wrapper class package name");
       }
     }
   }

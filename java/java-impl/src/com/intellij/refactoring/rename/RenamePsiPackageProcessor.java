@@ -146,7 +146,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     final String qualifiedNameAfterRename = getPackageQualifiedNameAfterRename(aPackage, newName, true);
     final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));
     if (psiClass != null) {
-      conflicts.putValue(psiClass, "Class with qualified name \'" + qualifiedNameAfterRename + "\'  already exist");
+      conflicts.putValue(psiClass, "Class with qualified name '" + qualifiedNameAfterRename + "'  already exist");
     }
   }
 

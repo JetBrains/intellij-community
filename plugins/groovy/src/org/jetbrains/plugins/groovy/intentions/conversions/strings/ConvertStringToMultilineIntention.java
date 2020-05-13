@@ -224,7 +224,7 @@ public class ConvertStringToMultilineIntention extends Intention {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
         return element instanceof GrLiteral && ("\"".equals(GrStringUtil.getStartQuote(element.getText())) ||
-                                                "\'".equals(GrStringUtil.getStartQuote(element.getText())))
+                                                "'".equals(GrStringUtil.getStartQuote(element.getText())))
                || element instanceof GrBinaryExpression && isAppropriateBinary((GrBinaryExpression)element, null);
       }
     };

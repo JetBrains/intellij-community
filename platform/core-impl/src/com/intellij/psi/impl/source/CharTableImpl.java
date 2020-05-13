@@ -165,7 +165,7 @@ public class CharTableImpl implements CharTable {
     r.add("</");
     r.add("/>");
     r.add("\"");
-    r.add("\'");
+    r.add("'");
     r.add("<![CDATA[");
     r.add("]]>");
     r.add("<!--");

@@ -408,7 +408,7 @@ public class PyStringFormatInspection extends PyInspection {
         if ("*".equals(width)) {
           ++myExpectedArguments;
           if (myUsedMappingKeys.size() > 0) {
-            registerProblem(formatExpression, "Can't use \'*\' in formats when using a mapping");
+            registerProblem(formatExpression, "Can't use '*' in formats when using a mapping");
           }
         }
       }

@@ -212,7 +212,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       module = ModuleManager.getInstance(project).findModuleByName(moduleName);
     }
     if (module != null) {
-      throw new ConfigurationException("Module \'" + moduleName + "\' already exist in project. Please, specify another name.");
+      throw new ConfigurationException("Module '" + moduleName + "' already exist in project. Please, specify another name.");
     }
   }
 

@@ -107,7 +107,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     if (value instanceof String) {
       String corrected = (String)value;
       if (myStrategy.isNumeric(myDebugValue.getType())) {
-        if (corrected.startsWith("\'") || corrected.startsWith("\"")) {
+        if (corrected.startsWith("'") || corrected.startsWith("\"")) {
           corrected = corrected.substring(1, corrected.length() - 1);
         }
       }

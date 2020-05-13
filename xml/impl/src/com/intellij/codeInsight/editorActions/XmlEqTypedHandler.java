@@ -89,7 +89,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   private static String tryCompleteQuotes(@Nullable PsiElement fileContext) {
     if (fileContext != null) {
       if (fileContext.getText().startsWith("\"")) return "''";
-      if (fileContext.getText().startsWith("\'")) return "\"\"";
+      if (fileContext.getText().startsWith("'")) return "\"\"";
     }
     return null;
   }

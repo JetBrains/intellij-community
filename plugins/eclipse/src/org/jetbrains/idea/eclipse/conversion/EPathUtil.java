@@ -181,7 +181,7 @@ public class EPathUtil {
       if (file.getFileSystem() instanceof JarFileSystem) {
         final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
         if (jarFile == null) {
-          LOG.error("Url: \'" + url + "\'; file: " + file);
+          LOG.error("Url: '" + url + "'; file: " + file);
           return ProjectRootManagerImpl.extractLocalPath(url);
         }
         file = jarFile;

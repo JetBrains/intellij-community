@@ -181,7 +181,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
         return new ValidationInfo("Property name must be not empty");
       }
       return PropertiesUtil.containsProperty(myCurrentResourceBundle, myCurrentPropertyName)
-             ? new ValidationInfo(String.format("Property with name \'%s\' already exists", myCurrentPropertyName))
+             ? new ValidationInfo(String.format("Property with name '%s' already exists", myCurrentPropertyName))
              : null;
     }
 

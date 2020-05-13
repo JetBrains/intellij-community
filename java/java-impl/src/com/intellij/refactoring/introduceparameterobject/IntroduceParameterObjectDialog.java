@@ -203,26 +203,28 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
     if (myCreateInnerClassRadioButton.isSelected()) {
       final String innerClassName = getInnerClassName();
-      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + innerClassName + "\' is invalid inner class name");
-      if (mySourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException("Inner class with name \'" + innerClassName + "\' already exist");
+      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("'" + innerClassName + "' is invalid inner class name");
+      if (mySourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException(
+        "Inner class with name '" + innerClassName +
+        "' already exist");
     } else if (!useExistingClass()) {
       final String className = getClassName();
       if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
-        throw new ConfigurationException("\'" + className + "\' is invalid parameter class name");
+        throw new ConfigurationException("'" + className + "' is invalid parameter class name");
       }
       final String packageName = getPackageName();
 
       if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
-        throw new ConfigurationException("\'" + packageName + "\' is invalid parameter class package name");
+        throw new ConfigurationException("'" + packageName + "' is invalid parameter class package name");
       }
     }
     else {
       final String className = getExistingClassName();
       if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
-        throw new ConfigurationException("\'" + className + "\' is invalid qualified parameter class name");
+        throw new ConfigurationException("'" + className + "' is invalid qualified parameter class name");
       }
       if (JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())) == null) {
-        throw new ConfigurationException("\'" + className + "\' does not exist");
+        throw new ConfigurationException("'" + className + "' does not exist");
       }
     }
   }

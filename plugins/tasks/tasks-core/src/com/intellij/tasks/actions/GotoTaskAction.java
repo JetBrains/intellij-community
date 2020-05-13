@@ -209,7 +209,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     private String taskName;
 
     public String getActionText() {
-      return "Create New Task \'" + taskName + "\'";
+      return "Create New Task '" + taskName + "'";
     }
 
     public void setTaskName(final String taskName) {

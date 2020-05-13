@@ -119,7 +119,7 @@ public class PyStringConcatenationToFormatIntention extends PyBaseIntentionActio
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
     final boolean useFormatMethod = languageLevel.isAtLeast(LanguageLevel.PYTHON27);
 
-    NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"\'\\");
+    NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"'\\");
     StringBuilder stringLiteral = new StringBuilder();
     List<String> parameters = new ArrayList<>();
     Pair<String, String> quotes = Pair.create("\"", "\"");

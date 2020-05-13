@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
   private static final String STATUS = "\\s*(.+?)\\s*";
-  private static final String PATH = "\\s*\'(.*?)\'\\s*";
+  private static final String PATH = "\\s*'(.*?)'\\s*";
   private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH);
 
   @Override

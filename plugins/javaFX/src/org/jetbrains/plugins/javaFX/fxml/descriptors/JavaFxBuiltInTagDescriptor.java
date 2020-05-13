@@ -247,7 +247,7 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
               }
             }
             if (!copyConstructorFound) {
-              host.addMessage(context.getNavigationElement(), "Copy constructor not found for \'" + psiClass.getName() + "\'",
+              host.addMessage(context.getNavigationElement(), "Copy constructor not found for '" + psiClass.getName() + "'",
                               ValidationHost.ErrorType.ERROR);
             }
           }

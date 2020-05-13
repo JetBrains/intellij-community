@@ -93,7 +93,7 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
         stringBuilder.append('\'');
       }
       else if (ch == '\'') {
-        stringBuilder.append("\\\'");
+        stringBuilder.append("\\'");
       }
       else if (ch == '\\' && charArr[i+1] == '\"' && !(i+2 == charArr.length)) {
         skipNext = true;

@@ -68,7 +68,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
 
       if(fileContext != null) {
         if (fileContext.getText().startsWith("\"")) toInsert = "=''";
-        if (fileContext.getText().startsWith("\'")) toInsert = "=\"\"";
+        if (fileContext.getText().startsWith("'")) toInsert = "=\"\"";
       }
       if (toInsert == null) {
         toInsert = "=" + quote + quote;

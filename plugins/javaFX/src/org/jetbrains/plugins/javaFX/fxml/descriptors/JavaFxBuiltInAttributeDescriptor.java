@@ -97,7 +97,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
         if (tagClass != null) {
           final PsiField field = controllerClass.findFieldByName(value, true);
           if (field != null && !InheritanceUtil.isInheritorOrSelf(tagClass, PsiUtil.resolveClassInType(field.getType()), true)) {
-            return "Cannot set " + tagClass.getQualifiedName() + " to field \'" + field.getName() + "\'";
+            return "Cannot set " + tagClass.getQualifiedName() + " to field '" + field.getName() + "'";
           }
         }
       }
