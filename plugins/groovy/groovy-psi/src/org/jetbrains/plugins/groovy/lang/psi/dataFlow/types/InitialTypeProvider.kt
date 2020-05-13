@@ -6,7 +6,6 @@ import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProcessingAllowed
@@ -39,13 +38,7 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
   private fun getTypeFromParentDFA(descriptor: VariableDescriptor): PsiType? {
     val parentFlowOwner = this.parentFlowOwner ?: return null
     val parentCache = TypeInferenceHelper.getInferenceCache(parentFlowOwner)
-    val resolvedDescriptor = descriptor.run {
-      if (this is ResolvedVariableDescriptor) return@run this
-      val blockInParentCache: Instruction = ControlFlowUtils.findInstruction(start, parentFlowOwner.controlFlow) ?: return@run this
-      val nestedFlowStart = blockInParentCache.allPredecessors().firstOrNull() ?: return@run this
-      ControlFlowUtils.findNearestVariableDescriptor(nestedFlowStart, getName(), false, false)
-    } ?: descriptor
     val instruction = parentInstruction ?: return null
-    return parentCache.getInferredType(resolvedDescriptor, instruction, false)
+    return parentCache.getInferredType(descriptor, instruction, false)
   }
 }

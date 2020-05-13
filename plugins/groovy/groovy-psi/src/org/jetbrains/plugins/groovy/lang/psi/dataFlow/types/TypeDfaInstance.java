@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.findNearestVariableDescriptor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableDescriptors;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -194,8 +193,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       return;
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    Set<VariableDescriptor> foreignIdentifiers = getForeignVariableDescriptors(blockFlowOwner, kind, ReadWriteVariableInstruction::isWrite);
-    if (myFlowInfo.getInterestingDescriptors().stream().noneMatch(foreignIdentifiers::contains)) {
+    Set<? extends VariableDescriptor> foreignDescriptors =
+      getForeignVariableDescriptors(blockFlowOwner, ReadWriteVariableInstruction::isWrite);
+    if (myFlowInfo.getInterestingDescriptors().stream().noneMatch(foreignDescriptors::contains)) {
       return;
     }
     switch (kind) {
@@ -228,11 +228,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     initialTypesForNestedFlow.putAll(state.getVarTypes());
     Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
     for (VariableDescriptor outerDescriptor : myFlowInfo.getInterestingDescriptors()) {
-      VariableDescriptor innerDescriptor = findNearestVariableDescriptor(blockFlow[0], outerDescriptor.getName(), true, true);
-      if (innerDescriptor == null) {
-        continue;
-      }
-      PsiType descriptorType = blockCache.getInferredType(innerDescriptor, lastBlockInstruction, false, initialTypesForNestedFlow);
+      PsiType descriptorType = blockCache.getInferredType(outerDescriptor, lastBlockInstruction, false, initialTypesForNestedFlow);
       typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
     }
   }

@@ -1358,50 +1358,6 @@ def foo(x) {
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test detect changed field'() {
-    doNestedDfaTest '''
-class A {
-  def field = 1
-  def foo() {
-    field = 'q'
-    1.with{ <caret>field }
-  }
-}
-''', JAVA_LANG_STRING
-  }
-
-  void 'test field changed inside closure'() {
-    doNestedDfaTest '''
-class A {
-
-    def counter
-
-    def foo() {
-        1.with { counter = it }
-        <caret>counter
-    }
-
-}''', JAVA_LANG_INTEGER
-  }
-
-  void 'test field changed inside closure 2'() {
-    doNestedDfaTest '''
-class E {}
-class E1 extends E{}
-class E2 extends E{}
-class A {
-
-    def counter
-
-    def foo() {
-        counter = null as E1
-        [].each { counter = null as E2 }
-        <caret>counter
-    }
-
-}''', "E"
-  }
-
   void 'test parenthesized expression'() {
     doNestedDfaTest '''
 def foo(def p) {
@@ -1922,6 +1878,6 @@ class A {
         <caret>counter
     }
 }
-''', JAVA_LANG_STRING
+''', JAVA_LANG_INTEGER
   }
 }
