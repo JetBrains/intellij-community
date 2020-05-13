@@ -14,7 +14,6 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentHashMap
-import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
@@ -117,11 +116,9 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
       return get(fileContent)
     }
     catch (e: Exception) {
+      dispose()
       LOG.error("Can't get prebuilt stub tree from ${this.javaClass.name}", e)
     }
     return null
   }
 }
-
-@TestOnly
-fun PrebuiltStubsProviderBase.reset(): Boolean = this.init()
