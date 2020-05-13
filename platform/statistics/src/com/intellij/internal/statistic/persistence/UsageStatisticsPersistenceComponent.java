@@ -1,27 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.persistence;
 
-import com.android.tools.analytics.AnalyticsPublisher;
-import com.android.tools.analytics.AnalyticsSettings;
-import com.android.tools.analytics.AnalyticsSettingsData;
-import com.android.tools.analytics.UsageTracker;
-import com.android.utils.ILogger;
-import com.intellij.concurrency.JobScheduler;
+import com.intellij.analytics.AndroidStudioAnalytics;
 import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.internal.statistic.configurable.SendPeriod;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @State(
   name = "UsagesStatistic",
@@ -40,7 +28,6 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   private static final String IS_ALLOWED_EAP_ATTR = "allowedEap";
   private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
   private long mySentTime = 0;
-  private ILogger androidLogger;
 
   public long getLastTimeSent() {
     return mySentTime;
@@ -119,58 +106,6 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     }
   }
 
-  public void updateAndroidStudioMetrics() {
-    updateAndroidStudioMetrics(getConsentOptionsProvider().isSendingUsageStatsAllowed());
-  }
-
-  private void updateAndroidStudioMetrics(boolean allowed) {
-
-    // Update the settings & tracker based on allowed state, will initialize on first call.
-    boolean updated = false;
-    try {
-        if (allowed == AnalyticsSettings.getOptedIn()) {
-          updated = false;
-        } else {
-          AnalyticsSettings.setOptedIn(allowed);
-          AnalyticsSettings.saveSettings();
-          updated = true;
-        }
-    } catch (IOException e) {
-      getAndroidLogger().error(e, "Unable to update analytics settings");
-    }
-    if (updated) {
-      initializeAndroidStudioUsageTrackerAndPublisher();
-    }
-  }
-
-  public void initializeAndroidStudioUsageTrackerAndPublisher() {
-    ILogger logger = getAndroidLogger();
-
-    ScheduledExecutorService scheduler = JobScheduler.getScheduler();
-    AnalyticsSettings.initialize(logger, scheduler);
-
-    try {
-      // If AnalyticsSettings and IJ opt-in status disagree, then we assume IJ is correct.
-      // This catches cornercases such as manual modifications as well as deal with the
-      // incorrect rename of "hasOptedIn" to "optedIn" in some early 3.3 canary builds.
-      boolean ijOptedIn = getConsentOptionsProvider().isSendingUsageStatsAllowed();
-      if (AnalyticsSettings.getOptedIn() != ijOptedIn) {
-        AnalyticsSettings.setOptedIn(ijOptedIn);
-        AnalyticsSettings.saveSettings();
-      }
-      UsageTracker.initialize(scheduler);
-    } catch (Exception e) {
-      logger.warning("Unable to initialize analytics tracker: " + e.getMessage());
-      return;
-    }
-    // Update usage tracker maximums for long-lived process.
-    UsageTracker.setMaxJournalTime(10, TimeUnit.MINUTES);
-    UsageTracker.setMaxJournalSize(1000);
-
-    ApplicationInfo application = ApplicationInfo.getInstance();
-    AnalyticsPublisher.updatePublisher(logger, scheduler, application.getStrictVersion());
-  }
-
   public boolean isAllowed() {
     /* Android Studio: we use our own mechanism
     final ConsentOptionsProvider options = getConsentOptionsProvider();
@@ -179,19 +114,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     }
     return options.isEAP() ? isAllowedForEAP : options.isSendingUsageStatsAllowed();
     */
-    // As we cannot control when IJ calls into this code, we need to load the AnalyticsSettings if
-    // we're not initialized yet, to ensure we properly return opt-in status.
-    if (!AnalyticsSettings.getInitialized()) {
-      Application application = ApplicationManager.getApplication();
-      if (application != null && application.isUnitTestMode()) {
-        AnalyticsSettingsData analyticsSettings = new AnalyticsSettingsData();
-        analyticsSettings.setOptedIn(false);
-        AnalyticsSettings.setInstanceForTest(analyticsSettings);
-      } else {
-        AnalyticsSettings.initialize(getAndroidLogger());
-      }
-    }
-    return AnalyticsSettings.getOptedIn();
+    return AndroidStudioAnalytics.getInstance().isAllowed();
   }
 
   public void setShowNotification(boolean showNotification) {
@@ -203,38 +126,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   }
 
   @Nullable
-  private static ConsentOptionsProvider getConsentOptionsProvider() {
+  public static ConsentOptionsProvider getConsentOptionsProvider() {
     return ServiceManager.getService(ConsentOptionsProvider.class);
-  }
-
-  private ILogger getAndroidLogger() {
-    if (androidLogger == null) {
-      Logger intelliJLogger = Logger.getInstance("#com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent");
-      // Create logger & scheduler based on IntelliJ/ADT helpers.
-      androidLogger = new ILogger() {
-        @Override
-        public void error(@com.android.annotations.Nullable Throwable t,
-                          @com.android.annotations.Nullable String msgFormat,
-                          Object... args) {
-          intelliJLogger.error(String.format(msgFormat, args), t);
-        }
-
-        @Override
-        public void warning(String msgFormat, Object... args) {
-          intelliJLogger.warn(String.format(msgFormat, args));
-        }
-
-        @Override
-        public void info(String msgFormat, Object... args) {
-          intelliJLogger.info(String.format(msgFormat, args));
-        }
-
-        @Override
-        public void verbose(String msgFormat, Object... args) {
-          info(msgFormat, args);
-        }
-      };
-    }
-    return androidLogger;
   }
 }

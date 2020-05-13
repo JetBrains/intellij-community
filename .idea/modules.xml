@@ -350,6 +350,7 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/analytics/analytics.iml" filepath="$PROJECT_DIR$/../adt/idea/analytics/analytics.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/crash/analytics-crash.iml" filepath="$PROJECT_DIR$/../analytics-library/crash/analytics-crash.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/inspector/analytics-inspector.iml" filepath="$PROJECT_DIR$/../analytics-library/inspector/analytics-inspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/publisher/analytics-publisher.iml" filepath="$PROJECT_DIR$/../analytics-library/publisher/analytics-publisher.iml" />
@@ -525,6 +526,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-retention/intellij.android.testRetention.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-retention/intellij.android.testRetention.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" filepath="$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/transport-database/intellij.android.transportDatabase.iml" filepath="$PROJECT_DIR$/../adt/idea/transport-database/intellij.android.transportDatabase.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/studio-updater/intellij.android.updater.studio-updater.iml" filepath="$PROJECT_DIR$/../adt/idea/studio-updater/intellij.android.updater.studio-updater.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/wizard/intellij.android.wizard.iml" filepath="$PROJECT_DIR$/../adt/idea/wizard/intellij.android.wizard.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/wizard-model/intellij.android.wizard.model.iml" filepath="$PROJECT_DIR$/../adt/idea/wizard-model/intellij.android.wizard.model.iml" />

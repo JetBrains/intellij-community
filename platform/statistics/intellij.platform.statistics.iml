@@ -17,9 +17,5 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" exported="" />
-    <orderEntry type="module" module-name="analytics-tracker" />
-    <orderEntry type="module" module-name="analytics-shared" />
-    <orderEntry type="module" module-name="analytics-publisher" />
-    <orderEntry type="module" module-name="android.sdktools.common" />
   </component>
 </module>

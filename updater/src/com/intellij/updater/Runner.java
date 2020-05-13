@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
-import com.studio.updater.StudioUpdaterAnalyticsReportingUI;
-import com.studio.updater.StudioUpdaterAnalyticsUtil;
+import com.studio.updater.UpdaterService;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -106,7 +105,7 @@ public class Runner {
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0])) ||
              args.length >= 3 && ("batch-install".equals(args[0]))) {
       // Android Studio: Analytics
-      StudioUpdaterAnalyticsUtil.logProcessStart();
+      for (UpdaterService service : UpdaterService.loader) { service.logProcessStart(); }
       String destFolder = args[1];
       checkCaseSensitivity(destFolder);
 
@@ -126,7 +125,7 @@ public class Runner {
       }
 
       // Android Studio: Analytics
-      ui = new StudioUpdaterAnalyticsReportingUI(ui);
+      for (UpdaterService service : UpdaterService.loader) { ui = service.wrap(ui); }
 
       boolean backup = !hasArgument(args, "no-backup");
       boolean success;
@@ -142,7 +141,7 @@ public class Runner {
         success = install(patches, destFolder, ui, backup);
       }
       // Android Studio: Analytics
-      StudioUpdaterAnalyticsUtil.logProcessFinish(success);
+      for (UpdaterService service : UpdaterService.loader) { service.logProcessFinish(success); }
       System.exit(success ? 0 : 1);
     }
     else {
@@ -384,7 +383,7 @@ public class Runner {
                          "More details in the log: " + logPath;
         ui.showError(message);
         // Android Studio: Analytics
-        StudioUpdaterAnalyticsUtil.logException();
+        for (UpdaterService service : UpdaterService.loader) { service.logException(); }
         return false;
       }
 

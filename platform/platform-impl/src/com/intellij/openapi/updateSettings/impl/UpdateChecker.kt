@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.analytics.AndroidStudioAnalytics
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
@@ -36,10 +37,6 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
-import com.intellij.util.analytics.logClickNotification
-import com.intellij.util.analytics.logNotificationShown
-import com.intellij.util.analytics.logUpdateDialogOpenFromNotification
-import com.intellij.util.analytics.logUpdateDialogOpenManually
 import gnu.trove.THashMap
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
@@ -449,19 +446,19 @@ object UpdateChecker {
 
       if (showDialog) {
         // Android Studio: Analytics
-        logUpdateDialogOpenManually(newBuild.number.asStringWithoutProductCode());
+        AndroidStudioAnalytics.getInstance().logUpdateDialogOpenManually(newBuild.number.asStringWithoutProductCode());
         runnable.invoke()
       }
       else {
         // Android Studio: Analytics
-        logNotificationShown(newBuild.number.asStringWithoutProductCode());
+        AndroidStudioAnalytics.getInstance().logNotificationShown(newBuild.number.asStringWithoutProductCode());
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
         val title = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName,
                                       newBuild.version)
         showNotification(project, title, "", {
           // Android Studio: Analytics
-          logClickNotification(newBuild.number.asStringWithoutProductCode());
-          logUpdateDialogOpenFromNotification(newBuild.number.asStringWithoutProductCode());
+          AndroidStudioAnalytics.getInstance().logClickNotification(newBuild.number.asStringWithoutProductCode());
+          AndroidStudioAnalytics.getInstance().logUpdateDialogOpenFromNotification(newBuild.number.asStringWithoutProductCode());
           IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
           runnable()
         }, null, NotificationUniqueType.PLATFORM)

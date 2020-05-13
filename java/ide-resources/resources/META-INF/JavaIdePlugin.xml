@@ -40,12 +40,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <!-- Android Studio: enable reporting for highlighting stats. -->
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.HighlightingStats</implementation-class>
-    </component>
-  </application-components>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"

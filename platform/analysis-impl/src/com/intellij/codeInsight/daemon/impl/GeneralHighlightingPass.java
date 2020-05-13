@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.analytics.AndroidStudioAnalytics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -233,7 +234,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
         // Android Studio: collect metrics for syntax highlighting latency.
         long latencyMs = (System.nanoTime() - start) / 1_000_000;
-        HighlightingStats.INSTANCE.recordHighlightingLatency(getDocument(), latencyMs);
+        AndroidStudioAnalytics.getInstance().recordHighlightingLatency(getDocument(), latencyMs);
       }
       else {
         cancelAndRestartDaemonLater(progress, myProject);

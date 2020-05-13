@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.analytics.AndroidStudioAnalytics;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
@@ -47,7 +48,6 @@ import java.util.*;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.analytics.StudioUpdateAnalyticsUtil.*;
 
 /**
  * @author pti
@@ -165,7 +165,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
       @Override
       public void actionPerformed(ActionEvent e) {
         // Android Studio: Analytics
-        logClickIgnore(myNewBuild.getNumber().asStringWithoutProductCode());
+        AndroidStudioAnalytics.getInstance().logClickIgnore(myNewBuild.getNumber().asStringWithoutProductCode());
         String build = myNewBuild.getNumber().asStringWithoutProductCode();
         UpdateSettings.getInstance().getIgnoredBuildNumbers().add(build);
         doCancelAction();
@@ -228,7 +228,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   // Android Studio: Analytics
   @Override
   public void doCancelAction() {
-    logClickLater(myNewBuild.getNumber().asStringWithoutProductCode());
+    AndroidStudioAnalytics.getInstance().logClickLater(myNewBuild.getNumber().asStringWithoutProductCode());
     super.doCancelAction();
   }
 
@@ -246,7 +246,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
           if (myPatches != null) {
             List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), indicator);
             // Android Studio: Analytics
-            logDownloadSuccess(myNewBuild.getNumber().asStringWithoutProductCode());
+            AndroidStudioAnalytics.getInstance().logDownloadSuccess(myNewBuild.getNumber().asStringWithoutProductCode());
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
           else {
@@ -256,7 +256,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
         catch (ProcessCanceledException e) { throw e; }
         catch (Exception e) {
           // Android Studio: Analytics
-          logDownloadFailure(myNewBuild.getNumber().asStringWithoutProductCode());
+          AndroidStudioAnalytics.getInstance().logDownloadFailure(myNewBuild.getNumber().asStringWithoutProductCode());
           Logger.getInstance(UpdateInstaller.class).warn(e);
 
           String title = IdeBundle.message("updates.error.connection.title");
