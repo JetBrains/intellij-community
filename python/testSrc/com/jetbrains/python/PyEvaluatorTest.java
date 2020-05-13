@@ -268,8 +268,8 @@ public class PyEvaluatorTest extends PyTestCase {
     assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("True")));
     assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("False")));
 
-    assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("\'a\'")));
-    assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("\'\'")));
+    assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("'a'")));
+    assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("''")));
 
     assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("1")));
     assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("0")));
@@ -285,8 +285,8 @@ public class PyEvaluatorTest extends PyTestCase {
     assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("True")));
     assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("False")));
 
-    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("\'a\'")));
-    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("\'\'")));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("'a'")));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("''")));
 
     assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("1")));
     assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("0")));
@@ -300,8 +300,8 @@ public class PyEvaluatorTest extends PyTestCase {
     assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = True\nexpr = a")));
     assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = False\nexpr = a")));
 
-    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = \'a\'\nexpr = a")));
-    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = \'\'\nexpr = a")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = 'a'\nexpr = a")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = ''\nexpr = a")));
 
     assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = 1\nexpr = a")));
     assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = 0\nexpr = a")));

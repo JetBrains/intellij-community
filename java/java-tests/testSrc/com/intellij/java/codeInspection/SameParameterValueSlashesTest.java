@@ -42,7 +42,7 @@ public class SameParameterValueSlashesTest extends LightJavaCodeInsightFixtureTe
 
   @Parameterized.Parameters(name = "\\{0}")
   public static Object[] data() {
-    return new Object[] { "n", "r", "b", "t", "f", "\"", "\'", "\\", "1"};
+    return new Object[] { "n", "r", "b", "t", "f", "\"", "'", "\\", "1"};
   }
 
   @Parameterized.Parameter

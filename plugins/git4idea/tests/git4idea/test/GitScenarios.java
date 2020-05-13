@@ -84,7 +84,7 @@ public class GitScenarios {
    * Branch must not exist at this point.
    */
   public static String conflict(GitRepository repository, String branch, String file) {
-    assert !branchExists(repository, branch) : "Branch [" + branch + "] shouldn\'t exist for this scenario";
+    assert !branchExists(repository, branch) : "Branch [" + branch + "] shouldn't exist for this scenario";
 
     cd(repository);
 

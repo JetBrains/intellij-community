@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class TextBlockBackwardMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
 
   public void testTrailingWhitespace() {
+    //noinspection UnnecessaryStringEscape
     configureFromFileText("TrailingWhitespace.java", "class TextBlockMigration {\n" +
                                                      "\n" +
                                                      "  String multipleLiterals() {\n" +

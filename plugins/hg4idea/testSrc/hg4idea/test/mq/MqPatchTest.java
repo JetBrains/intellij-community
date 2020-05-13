@@ -65,7 +65,7 @@ public class MqPatchTest extends HgPlatformTest {
     touch(FILENAME, "f1");
     myRepository.refresh(false, true);
     hg("add " + FILENAME);
-    hg("commit -m \'" + MESSAGE + "\'");
+    hg("commit -m '" + MESSAGE + "'");
     HgTestUtil.updateDirectoryMappings(myProject, myRepository);
     myHgRepository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRepository);
     assert myHgRepository != null;
