@@ -141,7 +141,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   }
 
   @Nullable
-  private static ConsentOptionsProvider getConsentOptionsProvider() {
+  public static ConsentOptionsProvider getConsentOptionsProvider() {  // Android Studio: made public by Change Iab5d02d8 / commit c12f3af8
     return ApplicationManager.getApplication().getService(ConsentOptionsProvider.class);
   }
 
