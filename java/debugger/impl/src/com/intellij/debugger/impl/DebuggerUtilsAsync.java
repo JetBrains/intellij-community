@@ -59,10 +59,8 @@ public class DebuggerUtilsAsync {
       return superinterfaces(((InterfaceType)type)).thenApply(Collection::stream);
     }
     else if (type instanceof ClassType) {
-      CompletableFuture<ClassType> superclass = superclass((ClassType)type);
-      CompletableFuture<List<InterfaceType>> interfaces = interfaces((ClassType)type);
-      return CompletableFuture.allOf(superclass, interfaces)
-        .thenApply(r -> StreamEx.<ReferenceType>ofNullable(superclass.join()).prepend(interfaces.join()));
+      return superclass((ClassType)type).thenCombine(interfaces((ClassType)type), (superclass, interfaces) ->
+        StreamEx.<ReferenceType>ofNullable(superclass).prepend(interfaces));
     }
     return CompletableFuture.completedFuture(StreamEx.empty());
   }
