@@ -120,7 +120,12 @@ public class DfaExpressionFactory {
     }
 
     DfaValue qualifier = getQualifierOrThisValue(refExpr);
-    return var.createValue(myFactory, qualifier, true);
+    DfaValue result = var.createValue(myFactory, qualifier, true);
+    if (var instanceof SpecialField) {
+      PsiType wantedType = refExpr.getType();
+      result = DfaUtil.boxUnbox(result, wantedType);
+    }
+    return result;
   }
 
   /**
