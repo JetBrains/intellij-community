@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -27,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.Html5SchemaProvider;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return XmlErrorMessages.message("switch.to.html5.quickfix.text");
+    return XmlAnalysisBundle.message("switch.to.html5.quickfix.text");
   }
 
   @NotNull

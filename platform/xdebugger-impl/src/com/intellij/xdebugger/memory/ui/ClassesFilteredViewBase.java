@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -159,7 +160,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myTable, SideBorder.TOP);
     final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
     group.setPopup(true);
-    final Presentation actionsPresentation = new Presentation("Memory View Settings");
+    final Presentation actionsPresentation = new Presentation(XDebuggerBundle.messagePointer("action.memory.view.settings.text"));
     actionsPresentation.setIcon(AllIcons.General.GearPlain);
 
     final ActionButton button = new ActionButton(group, actionsPresentation, ActionPlaces.UNKNOWN, new JBDimension(25, 25));
@@ -194,8 +195,8 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     if (ref != null && debugSession != null && debugSession.isSuspended()) {
       if (!ref.canGetInstanceInfo()) {
         XDebuggerManagerImpl.NOTIFICATION_GROUP
-          .createNotification("Unable to get instances of class " + ref.name(),
-            NotificationType.INFORMATION).notify(debugSession.getProject());
+          .createNotification(XDebuggerBundle.message("memory.unable.to.get.instances.of.class", ref.name()),
+                              NotificationType.INFORMATION).notify(debugSession.getProject());
         return;
       }
 

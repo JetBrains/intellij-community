@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author oleg
- */
 public interface ScopeVariable {
   @NotNull
   String getName();

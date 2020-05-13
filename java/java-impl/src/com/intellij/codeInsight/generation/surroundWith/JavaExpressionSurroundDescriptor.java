@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
  */
 public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
-  private Surrounder[] mySurrounders;
 
   private static final Surrounder[] SURROUNDERS = {
     new JavaWithParenthesesSurrounder(),
@@ -31,7 +31,7 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
   };
 
   @Override
-  @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
     if (expr == null) {
       expr = IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, endOffset);
@@ -44,14 +44,12 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
   }
 
   @Override
-  @NotNull public Surrounder[] getSurrounders() {
-    if (mySurrounders == null) {
-      final ArrayList<Surrounder> list = new ArrayList<>();
-      Collections.addAll(list, SURROUNDERS);
-      list.addAll(JavaExpressionSurrounder.EP_NAME.getExtensionList());
-      mySurrounders = list.toArray(Surrounder.EMPTY_ARRAY);
-    }
-    return mySurrounders;
+  public Surrounder @NotNull [] getSurrounders() {
+    List<JavaExpressionSurrounder> extensionList = JavaExpressionSurrounder.EP_NAME.getExtensionList();
+    final ArrayList<Surrounder> list = new ArrayList<>(SURROUNDERS.length + extensionList.size());
+    Collections.addAll(list, SURROUNDERS);
+    list.addAll(extensionList);
+    return list.toArray(Surrounder.EMPTY_ARRAY);
   }
 
   @Override

@@ -10,19 +10,22 @@ import com.intellij.psi.util.StringEntry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+/**
+ * A helper class to work with string concatenations with variables and interpolated strings in a language-abstract way (UAST-based).
+ * It is mostly useful for working with reference/language injections in cases when it is injected into multiple [PsiLanguageInjectionHost] joined together.
+ *
+ * @see PartiallyKnownString
+ */
+class UStringConcatenationsFacade private constructor(private val uContext: UExpression, val uastOperands: Sequence<UExpression>) {
 
-class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: UExpression) {
+  @Deprecated("use factory method `UStringConcatenationsFacade.createFromUExpression`",
+              ReplaceWith("UStringConcatenationsFacade.createFromUExpression"))
+  @ApiStatus.Experimental
+  constructor(uContext: UExpression) : this(uContext, buildLazyUastOperands(uContext, false) ?: emptySequence())
 
-  val uastOperands: Sequence<UExpression> = run {
-    when {
-      uContext is UPolyadicExpression -> uContext.operands.asSequence()
-      uContext is ULiteralExpression && uContext.uastParent !is UPolyadicExpression -> {
-        val host = uContext.sourceInjectionHost
-        if (host == null || !host.isValidHost) emptySequence() else sequenceOf(uContext)
-      }
-      else -> emptySequence()
-    }
-  }
+  @get:ApiStatus.Experimental
+  val rootUExpression: UExpression
+    get() = uContext
 
   val psiLanguageInjectionHosts: Sequence<PsiLanguageInjectionHost> =
     uastOperands.mapNotNull { (it as? ULiteralExpression)?.psiLanguageInjectionHost }.distinct()
@@ -80,7 +83,7 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
   }
 
   @ApiStatus.Experimental
-  fun asPartiallyKnownString() = PartiallyKnownString(segments.map { segment ->
+  fun asPartiallyKnownString() : PartiallyKnownString = PartiallyKnownString(segments.map { segment ->
     segment.value?.let { value ->
       StringEntry.Known(value, segment.uExpression.sourcePsi, getSegmentInnerTextRange(segment))
     } ?: StringEntry.Unknown(segment.uExpression.sourcePsi, getSegmentInnerTextRange(segment))
@@ -96,15 +99,45 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
   }
 
   companion object {
+
+    private fun buildLazyUastOperands(uContext: UExpression?, flatten: Boolean): Sequence<UExpression>? = when {
+      uContext is UPolyadicExpression && isConcatenation(uContext) -> {
+        val concatenationOperands = uContext.operands.asSequence()
+        if (flatten)
+          concatenationOperands.flatMap { operand -> buildLazyUastOperands(operand, true) ?: sequenceOf(operand) }
+        else
+          concatenationOperands
+      }
+
+      uContext is ULiteralExpression && !isConcatenation(uContext.uastParent) -> {
+        val host = uContext.sourceInjectionHost
+        if (host == null || !host.isValidHost) emptySequence() else sequenceOf(uContext)
+      }
+      else -> null
+    }
+
     @JvmStatic
-    fun create(context: PsiElement): UStringConcatenationsFacade? {
-      if (context !is PsiLanguageInjectionHost && context.firstChild !is PsiLanguageInjectionHost) {
+    fun createFromUExpression(uContext: UExpression?): UStringConcatenationsFacade? {
+      val operands = buildLazyUastOperands(uContext, false) ?: return null
+      return UStringConcatenationsFacade(uContext!!, operands)
+    }
+
+    @JvmStatic
+    fun createFromTopConcatenation(member: UExpression?): UStringConcatenationsFacade? {
+      val topConcatenation = generateSequence(member?.uastParent, UElement::uastParent).takeWhile { isConcatenation(it) }
+                               .lastOrNull() as? UExpression ?: member ?: return null
+
+      val operands = buildLazyUastOperands(topConcatenation, true) ?: return null
+      return UStringConcatenationsFacade(topConcatenation, operands)
+    }
+
+    @JvmStatic
+    fun create(context: PsiElement?): UStringConcatenationsFacade? {
+      if (context == null || context !is PsiLanguageInjectionHost && context.firstChild !is PsiLanguageInjectionHost) {
         return null
       }
-      val uElement = context.toUElement(UExpression::class.java) ?: return null
-      return UStringConcatenationsFacade(uElement)
+      val uElement = context.toUElementOfType<UExpression>() ?: return null
+      return createFromUExpression(uElement)
     }
   }
-
 }
-

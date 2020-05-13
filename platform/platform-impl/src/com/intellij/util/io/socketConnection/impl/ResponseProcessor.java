@@ -17,11 +17,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ResponseProcessor<R extends AbstractResponse> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.ResponseProcessor");
+  private static final Logger LOG = Logger.getInstance(ResponseProcessor.class);
   private final TIntObjectHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new TIntObjectHashMap<>();
   private final MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>> myClassHandlers = new MultiValuesMap<>();
   private final TIntObjectHashMap<TimeoutHandler> myTimeoutHandlers = new TIntObjectHashMap<>();

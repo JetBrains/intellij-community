@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.beanProperties;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -107,7 +107,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
 
   @Override
   public String getTypeName() {
-    return IdeBundle.message("bean.property");
+    return JavaBundle.message("bean.property");
   }
 
   @Override

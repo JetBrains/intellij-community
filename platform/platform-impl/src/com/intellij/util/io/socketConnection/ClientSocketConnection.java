@@ -15,9 +15,6 @@
  */
 package com.intellij.util.io.socketConnection;
 
-/**
- * @author nik
- */
 public interface ClientSocketConnection<Request extends AbstractRequest, Response extends AbstractResponse> extends SocketConnection<Request, Response> {
   void startPolling();
 }

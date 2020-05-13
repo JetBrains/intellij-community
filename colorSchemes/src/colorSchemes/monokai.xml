@@ -961,6 +961,9 @@
         <option name="FOREGROUND" value="E6DB74" />
       </value>
     </option>
+    <option name="JavaScript:INJECTED_LANGUAGE_FRAGMENT">
+      <value/>
+    </option>
     <option name="LABEL">
       <value>
         <option name="FOREGROUND" value="F92672" />

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -51,12 +52,6 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean reportOnlyWhenDeprecated = true;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("cached.number.constructor.call.display.name");
-  }
 
   @Override
   @NotNull
@@ -104,14 +99,13 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "cached.number.constructor.call.quickfix", className);
+      return CommonQuickFixBundle.message("fix.replace.with.x", className+".valueOf()");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with '.valueOf' call";
+      return CommonQuickFixBundle.message("fix.replace.with.x", ".valueOf()");
     }
 
     @Override

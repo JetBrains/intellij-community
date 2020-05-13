@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D> implements Disposable {
-  protected static final String INDEX = "index";
+  protected static final String INDEX = "index"; // NON-NLS
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
   @NotNull protected final StorageId myStorageId;
   @NotNull protected final String myName;
@@ -129,7 +129,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
   public void update(int commitId, @NotNull D details) {
     checkDisposed();
-    myMapReduceIndex.update(commitId, details).compute();
+    myMapReduceIndex.mapInputAndPrepareUpdate(commitId, details).compute();
   }
 
   public void flush() throws StorageException {

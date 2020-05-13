@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +19,7 @@ import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author gregsh
@@ -99,7 +100,7 @@ public class ColorSelectionComponent extends JPanel {
 
   public void initDefault(@NotNull FileColorManager manager, @Nullable String selectedColorName) {
     for (String name : manager.getColorNames()) {
-      addColorButton(name, ObjectUtils.assertNotNull(manager.getColor(name)));
+      addColorButton(name, Objects.requireNonNull(manager.getColor(name)));
     }
     addCustomColorButton();
     setSelectedColor(selectedColorName);
@@ -130,7 +131,7 @@ public class ColorSelectionComponent extends JPanel {
 
     @Override
     protected void doPerformAction(ActionEvent e) {
-      final Color color = ColorChooser.chooseColor(this, "Choose Color", myColor);
+      final Color color = ColorChooser.chooseColor(this, IdeBundle.message("dialog.title.choose.color"), myColor);
       if (color != null) {
         myColor = color;
       }

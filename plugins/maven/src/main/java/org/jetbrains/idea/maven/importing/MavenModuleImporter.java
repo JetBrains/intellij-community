@@ -97,9 +97,12 @@ public class MavenModuleImporter {
     return myRootModelAdapter.getRootModel();
   }
 
-  public void config(boolean isNewlyCreatedModule) {
-    myRootModelAdapter = new MavenRootModelAdapter(myMavenProject, myModule, myModifiableModelsProvider);
-    myRootModelAdapter.init(isNewlyCreatedModule);
+  void setRootModelAdapter(MavenRootModelAdapter mavenRootModelAdapter) { // need for new worskapce model
+    myRootModelAdapter = mavenRootModelAdapter;
+  }
+
+  public void config(MavenRootModelAdapter mavenRootModelAdapter) {
+    myRootModelAdapter = mavenRootModelAdapter;
 
     configFolders();
     configDependencies();
@@ -326,6 +329,7 @@ public class MavenModuleImporter {
     }
   }
 
+  //TODO: Rewrite
   private void addAttachArtifactDependency(@NotNull Element buildHelperCfg,
                                            @NotNull DependencyScope scope,
                                            @NotNull MavenProject mavenProject,
@@ -393,18 +397,23 @@ public class MavenModuleImporter {
   private void configLanguageLevel() {
     if ("false".equalsIgnoreCase(System.getProperty("idea.maven.configure.language.level"))) return;
 
+    LanguageLevel level = getLanguageLevel(myMavenProject);
+    myRootModelAdapter.setLanguageLevel(level);
+  }
+
+  public static LanguageLevel getLanguageLevel(MavenProject mavenProject) {
     LanguageLevel level = null;
 
-    Element cfg = myMavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
+    Element cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
     if (cfg != null) {
       level = MAVEN_IDEA_PLUGIN_LEVELS.get(cfg.getChildTextTrim("jdkLevel"));
     }
 
     if (level == null) {
-      String mavenProjectReleaseLevel = myMavenProject.getReleaseLevel();
+      String mavenProjectReleaseLevel = mavenProject.getReleaseLevel();
       level = LanguageLevel.parse(mavenProjectReleaseLevel);
       if (level == null) {
-        String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
+        String mavenProjectSourceLevel = mavenProject.getSourceLevel();
         level = LanguageLevel.parse(mavenProjectSourceLevel);
         if (level == null && (StringUtil.isNotEmpty(mavenProjectSourceLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
           level = LanguageLevel.HIGHEST;
@@ -418,13 +427,13 @@ public class MavenModuleImporter {
     }
 
     if (level.isAtLeast(LanguageLevel.JDK_11)) {
-      level = adjustPreviewLanguageLevel(level);
+      level = adjustPreviewLanguageLevel(mavenProject, level);
     }
-    myRootModelAdapter.setLanguageLevel(level);
+    return level;
   }
 
-  private LanguageLevel adjustPreviewLanguageLevel(LanguageLevel level) {
-    Element compilerConfiguration = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+  private static LanguageLevel adjustPreviewLanguageLevel(MavenProject mavenProject, LanguageLevel level) {
+    Element compilerConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
     if (compilerConfiguration != null) {
       Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
       if (compilerArgs != null) {

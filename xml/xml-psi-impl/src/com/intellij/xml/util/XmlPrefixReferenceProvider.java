@@ -34,9 +34,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlPrefixReferenceProvider extends PsiReferenceProvider {
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     XmlAttributeValue attributeValue = (XmlAttributeValue)element;
     String value = attributeValue.getValue();
     if (value == null) return PsiReference.EMPTY_ARRAY;

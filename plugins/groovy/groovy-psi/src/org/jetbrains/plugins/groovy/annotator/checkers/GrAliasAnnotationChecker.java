@@ -1,14 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 
 import java.util.ArrayList;
@@ -26,10 +31,10 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
       return false;
     }
 
-    AliasedAnnotationHolder aliasedHolder = new AliasedAnnotationHolder(holder, annotation);
-    AnnotationChecker checker = new AnnotationChecker(aliasedHolder);
+    GrCodeReferenceElement ref = annotation.getClassReference();
     for (GrAnnotation aliased : aliasedAnnotations) {
-      checker.checkApplicability(aliased, annotation.getOwner());
+      PsiElement toHighlight = AliasedAnnotationHolder.findCodeElement(ref, annotation, ref);
+      AnnotationChecker.checkApplicability(aliased, annotation.getOwner(), holder, toHighlight);
     }
 
     return true;
@@ -55,23 +60,31 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
     final ArrayList<GrAnnotation> annotations = new ArrayList<>();
     final Set<String> usedAttributes = GrAnnotationCollector.collectAnnotations(annotations, annotation, annotationCollector);
 
-    AliasedAnnotationHolder aliasedHolder = new AliasedAnnotationHolder(holder, annotation);
-    AnnotationChecker checker = new AnnotationChecker(aliasedHolder);
     for (GrAnnotation aliased : annotations) {
-      if (checker.checkAnnotationArgumentList(aliased)) return true;
+      Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(aliased, holder);
+      if (r != null && r.getSecond() != null) {
+        AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, r.getSecond());
+        PsiElement element = r.getFirst();
+        PsiElement highlightElement = element != null && PsiTreeUtil.isAncestor(annotation, element, true) ? element : null;
+        if (highlightElement != null) {
+          builder = builder.range(highlightElement);
+        }
+        builder.create();
+        return true;
+      }
     }
 
     final GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     final String aliasQName = annotation.getQualifiedName();
 
     if (attributes.length == 1 && attributes[0].getNameIdentifierGroovy() == null && !usedAttributes.contains("value")) {
-      holder.createErrorAnnotation(attributes[0], GroovyBundle.message("at.interface.0.does.not.contain.attribute", aliasQName, "value"));
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("at.interface.0.does.not.contain.attribute", aliasQName, "value")).range(attributes[0]).create();
     }
 
     for (GrAnnotationNameValuePair pair : attributes) {
       final PsiElement nameIdentifier = pair.getNameIdentifierGroovy();
       if (nameIdentifier != null && !usedAttributes.contains(pair.getName())) {
-        holder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("at.interface.0.does.not.contain.attribute", aliasQName, pair.getName()));
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("at.interface.0.does.not.contain.attribute", aliasQName, pair.getName())).range(nameIdentifier).create();
       }
     }
     return true;

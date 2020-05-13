@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -11,10 +10,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
@@ -64,11 +60,8 @@ import javax.swing.event.HyperlinkListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class XDebugSessionImpl implements XDebugSession {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl");
+  private static final Logger LOG = Logger.getInstance(XDebugSessionImpl.class);
   private static final Logger PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance");
 
   /** @deprecated Use {@link XDebuggerManagerImpl#NOTIFICATION_GROUP} */
@@ -397,8 +390,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void showSessionTab() {
     RunContentDescriptor descriptor = getRunContentDescriptor();
-    ExecutionManager.getInstance(getProject()).getContentManager()
-      .showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+    RunContentManager.getInstance(getProject()).showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
   }
 
   @Nullable

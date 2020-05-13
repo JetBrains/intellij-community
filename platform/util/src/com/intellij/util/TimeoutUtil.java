@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -25,6 +11,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Konstantin Bulenkov
  */
 public final class TimeoutUtil {
+  /**
+   * @deprecated consider another approach to execute runnable on a background thread
+   * @see com.intellij.openapi.application.Application#executeOnPooledThread(java.util.concurrent.Callable)
+   * @see com.intellij.openapi.progress.util.ProgressIndicatorUtils#withTimeout(long, com.intellij.openapi.util.Computable)
+   * @see com.intellij.util.concurrency.AppExecutorUtil#getAppScheduledExecutorService()
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static void executeWithTimeout(long timeout, long sleep, @NotNull final Runnable run) {
     final long start = System.currentTimeMillis();
     final AtomicBoolean done = new AtomicBoolean(false);
@@ -46,11 +40,18 @@ public final class TimeoutUtil {
       }
     }
     if (!thread.isInterrupted()) {
-      //noinspection deprecation
       thread.stop();
     }
   }
 
+  /**
+   * @deprecated consider another approach to execute runnable on a background thread
+   * @see com.intellij.openapi.application.Application#executeOnPooledThread(java.util.concurrent.Callable)
+   * @see com.intellij.openapi.progress.util.ProgressIndicatorUtils#withTimeout(long, com.intellij.openapi.util.Computable)
+   * @see com.intellij.util.concurrency.AppExecutorUtil#getAppScheduledExecutorService()
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static void executeWithTimeout(long timeout, @NotNull final Runnable run) {
     executeWithTimeout(timeout, 50, run);
   }

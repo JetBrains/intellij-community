@@ -120,10 +120,10 @@ public class TestNGFramework extends JavaTestFramework {
       }
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.YES :
-                 Messages.showYesNoDialog(manager.getProject(), "Method \'" + setUpName + "\' already exist but is not annotated as @BeforeMethod.",
-                                          "Create SetUp",
-                                          "Annotate",
-                                          "Create new method",
+                 Messages.showYesNoDialog(manager.getProject(), TestngBundle.message("testng.create.setup.dialog.message", setUpName),
+                                          TestngBundle.message("testng.create.setup.dialog.title"),
+                                          TestngBundle.message("testng.annotate.dialog.title" ),
+                                          TestngBundle.message("testng.create.new.method.dialog.title"),
                                           Messages.getWarningIcon());
       if (exit == Messages.YES) {
         new AddAnnotationFix(BeforeMethod.class.getName(), inClass).invoke(inClass.getProject(), null, inClass.getContainingFile());
@@ -181,11 +181,6 @@ public class TestNGFramework extends JavaTestFramework {
       return (PsiMethod)inClass.replace(patternMethod);
     }
     return inClass;
-  }
-
-  @Override
-  public char getMnemonic() {
-    return 'N';
   }
 
   @Override

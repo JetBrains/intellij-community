@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,9 +16,6 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
-/**
- * @author Sergey.Malenkov
- */
 public class SwingActionDelegate extends AnAction implements DumbAware {
   private static final Key<Function<String, JComponent>> FUNCTION = Key.create("SwingActionsMapping");
   private final String mySwingActionId;
@@ -29,9 +25,10 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
     mySwingActionId = actionId;
   }
 
+  @Nullable
   protected JComponent getComponent(AnActionEvent event) {
-    JComponent component = ComponentUtil.getParentOfType((Class<? extends JComponent>)JComponent.class, event.getData(CONTEXT_COMPONENT));
-    Function<String, JComponent> function = UIUtil.getClientProperty(component, FUNCTION);
+    JComponent component = ComponentUtil.getParentOfType(JComponent.class, event.getData(CONTEXT_COMPONENT));
+    Function<String, JComponent> function = component == null ? null : ComponentUtil.getClientProperty(component, FUNCTION);
     return function == null ? component : function.apply(mySwingActionId);
   }
 
@@ -69,7 +66,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
    * @param actions   a list of supported actions
    */
   @ApiStatus.Experimental
-  public static void configureMapping(@NotNull JComponent base, @NotNull JComponent dependant, @NotNull String... actions) {
+  public static void configureMapping(@NotNull JComponent base, @NotNull JComponent dependant, String @NotNull ... actions) {
     HashMap<String, JComponent> map = new HashMap<>();
     for (String action : actions) map.put(action, dependant);
     configureMapping(base, map::get);

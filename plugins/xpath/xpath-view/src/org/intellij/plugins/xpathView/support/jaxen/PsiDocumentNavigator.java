@@ -176,7 +176,8 @@ public class PsiDocumentNavigator extends DefaultNavigator {
 
         final XmlTag context = (XmlTag)element;
         final String namespaceUri = context.getNamespace();
-        if (!MyPsiUtil.isInDeclaredNamespace(context, namespaceUri, context.getNamespacePrefix())) {
+        if (context.getNamespacePrefix().isEmpty() ||
+            !MyPsiUtil.isInDeclaredNamespace(context, namespaceUri, context.getNamespacePrefix())) {
           return "";
         }
         return namespaceUri;
@@ -332,7 +333,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
       final Ref<XmlTag> ref = new Ref<>();
       rootTag.accept(new XmlRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (ref.get() == null) {
             super.visitElement(element);
           }

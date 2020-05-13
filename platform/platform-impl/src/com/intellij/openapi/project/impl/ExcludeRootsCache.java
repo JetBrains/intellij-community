@@ -24,10 +24,9 @@ final class ExcludeRootsCache {
 
   private static class CachedUrls {
     private final long myModificationCount;
-    @NotNull
-    private final String[] myUrls;
+    private final String @NotNull [] myUrls;
 
-    private CachedUrls(long count, @NotNull String[] urls) {
+    private CachedUrls(long count, String @NotNull [] urls) {
       myModificationCount = count;
       myUrls = urls;
     }
@@ -47,8 +46,7 @@ final class ExcludeRootsCache {
     });
   }
 
-  @NotNull
-  String[] getExcludedUrls() {
+  String @NotNull [] getExcludedUrls() {
     return ReadAction.compute(() -> {
       CachedUrls cache = myCache;
       long actualModCount = Arrays.stream(ProjectManager.getInstance().getOpenProjects())

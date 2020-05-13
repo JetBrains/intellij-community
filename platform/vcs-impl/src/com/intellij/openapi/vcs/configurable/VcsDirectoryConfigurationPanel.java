@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -56,6 +58,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private static final int POSTPONE_MAPPINGS_LOADING_PANEL = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
   private final Project myProject;
+  private final Disposable myDisposable = Disposer.newDisposable();
   private final String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<MapInfo> myDirectoryMappingTable;
@@ -76,12 +79,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JBLoadingPanel myLoadingPanel;
 
   private static class MapInfo {
-    static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
+    static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR); //NON-NLS
     static final Comparator<MapInfo> COMPARATOR = (o1, o2) -> {
       if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
         return Comparing.compare(o1.mapping.getDirectory(), o2.mapping.getDirectory());
       }
-      return o1.type.ordinal() - o2.type.ordinal();
+      return o1.type.compareTo(o2.type);
     };
 
     static MapInfo unregistered(@NotNull String path, @NotNull String vcs) {
@@ -135,7 +138,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         }
 
         if (info == MapInfo.SEPARATOR) {
-          append("Unregistered roots:", getAttributes(info));
+          append(VcsBundle.message("unregistered.roots.label"), getAttributes(info));
           return;
         }
 
@@ -404,7 +407,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     List<MapInfo> items = new ArrayList<>(myModel.getItems());
     items.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                  isMappingValid(mapping)));
-    Collections.sort(items, MapInfo.COMPARATOR);
+    items.sort(MapInfo.COMPARATOR);
     myModel.setItems(items);
     checkNotifyListeners(getActiveVcses());
   }
@@ -439,7 +442,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     else if (hasUnregistered && !hasSeparator) {
       items.add(MapInfo.SEPARATOR);
     }
-    Collections.sort(items, MapInfo.COMPARATOR);
+    items.sort(MapInfo.COMPARATOR);
   }
 
   private void editMapping() {
@@ -455,7 +458,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private void setMapping(int row, @NotNull VcsDirectoryMapping mapping) {
     List<MapInfo> items = new ArrayList<>(myModel.getItems());
     items.set(row, MapInfo.registered(mapping, isMappingValid(mapping)));
-    Collections.sort(items, MapInfo.COMPARATOR);
+    items.sort(MapInfo.COMPARATOR);
     myModel.setItems(items);
     checkNotifyListeners(getActiveVcses());
   }
@@ -491,7 +494,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
     JComponent mappingsTable = createMappingsTable();
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), myProject, POSTPONE_MAPPINGS_LOADING_PANEL * 2); // don't start loading automatically
+    // don't start loading automatically
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), myDisposable, POSTPONE_MAPPINGS_LOADING_PANEL * 2);
     myLoadingPanel.add(mappingsTable);
     panel.add(myLoadingPanel, gb.nextLine().next().fillCell().weighty(1.0));
 
@@ -651,10 +655,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return vcses;
   }
 
-  @Override
   @Nls
+  @Override
   public String getDisplayName() {
-    return "Mappings";
+    return VcsBundle.message("configurable.VcsDirectoryConfigurationPanel.display.name");
   }
 
   @Override
@@ -664,6 +668,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @Override
   public void disposeUIResources() {
+    Disposer.dispose(myDisposable);
     myLimitHistory.disposeUIResources();
     myScopeFilterConfig.disposeUIResources();
   }

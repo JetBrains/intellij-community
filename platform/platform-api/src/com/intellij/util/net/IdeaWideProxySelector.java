@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.github.markusbernhardt.proxy.ProxySearch;
@@ -6,20 +6,23 @@ import com.github.markusbernhardt.proxy.selector.misc.BufferedProxySelector;
 import com.github.markusbernhardt.proxy.selector.pac.PacProxySelector;
 import com.github.markusbernhardt.proxy.selector.pac.UrlPacScriptSource;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.proxy.CommonProxy;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.IOException;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jetbrains.annotations.NotNull;
 
 public final class IdeaWideProxySelector extends ProxySelector {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideProxySelector");
+  private final static Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
 
   private final HttpConfigurable myHttpConfigurable;
   private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<>();
@@ -69,7 +72,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
     // New instance will download configuration file and interpret it before making the connection
     String pacUrlForUse = myHttpConfigurable.USE_PAC_URL && !StringUtil.isEmpty(myHttpConfigurable.PAC_URL) ? myHttpConfigurable.PAC_URL : null;
     Pair<ProxySelector, String> pair = myPacProxySelector.get();
-    if (pair != null && !Comparing.equal(pair.second, pacUrlForUse)) {
+    if (pair != null && !Objects.equals(pair.second, pacUrlForUse)) {
       pair = null;
     }
 
@@ -115,7 +118,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
     }
 
     final InetSocketAddress isa = sa instanceof InetSocketAddress ? (InetSocketAddress) sa : null;
-    if (myHttpConfigurable.USE_HTTP_PROXY && isa != null && Comparing.equal(myHttpConfigurable.PROXY_HOST, isa.getHostName())) {
+    if (myHttpConfigurable.USE_HTTP_PROXY && isa != null && Objects.equals(myHttpConfigurable.PROXY_HOST, isa.getHostName())) {
       LOG.debug("connection failed message passed to http configurable");
       myHttpConfigurable.LAST_ERROR = ioe.getMessage();
     }

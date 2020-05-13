@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -41,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author max
- */
 public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
   JavaClassElementType(@NotNull String id) {
     super(id);
@@ -72,10 +55,12 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     boolean isDeprecatedByComment = false;
     boolean isInterface = false;
     boolean isEnum = false;
+    boolean isRecord = false;
     boolean isEnumConst = false;
     boolean isAnonymous = false;
     boolean isAnnotation = false;
     boolean isInQualifiedNew = false;
+    boolean classKindFound = false;
     boolean hasDeprecatedAnnotation = false;
     boolean hasDocComment = false;
 
@@ -85,9 +70,11 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
     if (node.getTokenType() == JavaElementType.ANONYMOUS_CLASS) {
       isAnonymous = true;
+      classKindFound = true;
     }
     else if (node.getTokenType() == JavaElementType.ENUM_CONSTANT_INITIALIZER) {
       isAnonymous = isEnumConst = true;
+      classKindFound = true;
       baseRef = ((PsiClassStub)parentStub.getParentStub()).getName();
     }
 
@@ -103,11 +90,20 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
       else if (type == JavaTokenType.AT) {
         isAnnotation = true;
       }
-      else if (type == JavaTokenType.INTERFACE_KEYWORD) {
+      else if (type == JavaTokenType.INTERFACE_KEYWORD && !classKindFound) {
         isInterface = true;
+        classKindFound = true;
       }
-      else if (type == JavaTokenType.ENUM_KEYWORD) {
+      else if (type == JavaTokenType.ENUM_KEYWORD && !classKindFound) {
         isEnum = true;
+        classKindFound = true;
+      }
+      else if (type == JavaTokenType.RECORD_KEYWORD && !classKindFound) {
+        isRecord = true;
+        classKindFound = true;
+      }
+      else if (type == JavaTokenType.CLASS_KEYWORD) {
+        classKindFound = true;
       }
       else if (!isAnonymous && type == JavaTokenType.IDENTIFIER) {
         name = RecordUtil.intern(tree.getCharTable(), child);
@@ -136,7 +132,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
 
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
-                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment);
+                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment, isRecord);
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
     return new PsiClassStubImpl(type, parentStub, qualifiedName, name, baseRef, flags);
   }

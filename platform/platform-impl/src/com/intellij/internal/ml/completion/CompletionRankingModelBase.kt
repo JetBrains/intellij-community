@@ -7,6 +7,8 @@ import com.intellij.internal.ml.ModelMetadata
 
 
 abstract class CompletionRankingModelBase(private val metadata: ModelMetadata) : DecisionFunction {
+  private val isPositionBased = metadata.checkIfPositionFeatureUsed()
+
   override fun getFeaturesOrder(): Array<FeatureMapper> {
     return metadata.featuresOrder
   }
@@ -18,6 +20,7 @@ abstract class CompletionRankingModelBase(private val metadata: ModelMetadata) :
   override fun getRequiredFeatures(): List<String> = emptyList()
 
   override fun getUnknownFeatures(features: Collection<String>): List<String> {
+    if (!isPositionBased) return emptyList()
     var unknownFeatures: MutableList<String>? = null
     for (featureName in features) {
       if (featureName !in metadata.knownFeatures) {
@@ -29,5 +32,11 @@ abstract class CompletionRankingModelBase(private val metadata: ModelMetadata) :
     }
 
     return unknownFeatures ?: emptyList()
+  }
+
+  private companion object {
+    private fun ModelMetadata.checkIfPositionFeatureUsed(): Boolean {
+      return featuresOrder.any { it.featureName == "position" || it.featureName == "relative_position" }
+    }
   }
 }

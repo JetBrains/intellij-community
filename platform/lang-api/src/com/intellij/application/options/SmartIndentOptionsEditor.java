@@ -35,7 +35,6 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_CONTINUATION_
  * @author yole
  */
 public class SmartIndentOptionsEditor extends IndentOptionsEditor {
-  public static final String CONTINUATION_INDENT_LABEL = ApplicationBundle.message("editbox.indent.continuation.indent");
   private JCheckBox myCbSmartTabs;
 
   private final ContinuationOption myContinuationOption;
@@ -56,8 +55,8 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   public SmartIndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
     super(provider);
     myContinuationOption = createContinuationOption(
-      CONTINUATION_INDENT_LABEL,
-      options -> options.CONTINUATION_INDENT_SIZE,  (options, value) -> options.CONTINUATION_INDENT_SIZE = value,
+      getContinuationIndentLabel(),
+      options -> options.CONTINUATION_INDENT_SIZE, (options, value) -> options.CONTINUATION_INDENT_SIZE = value,
       DEFAULT_CONTINUATION_INDENT_SIZE);
     myContinuationOption.setSupported(true);
 
@@ -164,6 +163,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
       smartTabsChecked && !smartTabsValid ? ApplicationBundle.message("tooltip.indent.must.be.multiple.of.tab.size.for.smart.tabs.to.operate") : null);
 
     myContinuationOption.setEnabled(enabled);
+    myCbKeepIndentsOnEmptyLines.setEnabled(enabled);
   }
 
   private static boolean isSmartTabValid(int indent, int tabSize) {
@@ -222,5 +222,9 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     myCbSmartTabs.setVisible(visible);
     myContinuationOption.setVisible(visible);
     myCbKeepIndentsOnEmptyLines.setVisible(visible);
+  }
+
+  public static String getContinuationIndentLabel() {
+    return ApplicationBundle.message("editbox.indent.continuation.indent");
   }
 }

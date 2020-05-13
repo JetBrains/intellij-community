@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,12 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class ArrayObjectsEqualsInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("array.objects.equals.display.name");
-  }
 
   @NotNull
   @Override
@@ -57,19 +52,16 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
       myDeep = deep;
     }
 
-    @Nls
-    @NotNull
     @Override
+    @NotNull
     public String getName() {
-      return myDeep ?
-             InspectionGadgetsBundle.message("replace.with.arrays.deep.equals") :
-             InspectionGadgetsBundle.message("replace.with.arrays.equals");
+      return CommonQuickFixBundle.message("fix.replace.with.x", myDeep ? "Arrays.deepEquals()" : "Arrays.equals()");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.with.arrays.equals");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Arrays.equals()");
     }
 
     @Override

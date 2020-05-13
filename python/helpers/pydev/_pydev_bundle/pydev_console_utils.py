@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 import traceback
 
@@ -10,15 +11,14 @@ from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR, Null
-from pydev_console.protocol import CompletionOption, CompletionOptionType
-import signal
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
+from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
 
 try:
-    import cStringIO as StringIO #may not always be available @UnusedImport
+    import cStringIO as StringIO  # may not always be available @UnusedImport
 except:
     try:
-        import StringIO #@Reimport
+        import StringIO  # @Reimport
     except:
         import io as StringIO
 
@@ -234,11 +234,11 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
         return pydevd_thrift.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
 
-    def evaluate(self, expression):
+    def evaluate(self, expression, do_trunc):
         # returns `DebugValue` of evaluated expression
 
         result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-        return [pydevd_thrift.var_to_struct(result, expression)]
+        return [pydevd_thrift.var_to_struct(result, expression, do_trim=do_trunc)]
 
     def do_get_completions(self, text, act_tok):
         """Retrieves completion options.
@@ -265,14 +265,15 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             completer = Completer(self.get_namespace(), None)
             return completer.complete(act_tok)
         except:
-            import traceback
-
             traceback.print_exc()
             return []
 
     def getCompletions(self, text, act_tok):
-        words = self.do_get_completions(text, act_tok)
-        return [_to_completion_option(word) for word in words]
+        try:
+            words = self.do_get_completions(text, act_tok)
+            return [_to_completion_option(word) for word in words]
+        except:
+            raise PythonUnhandledException(traceback.format_exc())
 
     def loadFullValue(self, seq, scope_attrs):
         """

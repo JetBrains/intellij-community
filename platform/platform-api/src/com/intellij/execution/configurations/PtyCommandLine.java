@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -31,7 +31,7 @@ import java.util.Map;
  * On Windows, PTY is emulated by creating an invisible console window (see Pty4j and WinPty implementation).
  */
 public class PtyCommandLine extends GeneralCommandLine {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.PtyCommandLine");
+  private static final Logger LOG = Logger.getInstance(PtyCommandLine.class);
   private static final String RUN_PROCESSES_WITH_PTY = "run.processes.with.pty";
 
   private static final String UNIX_PTY_INIT = "unix.pty.init";
@@ -134,22 +134,24 @@ public class PtyCommandLine extends GeneralCommandLine {
   @NotNull
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
-    try {
-      return startProcessWithPty(commands);
-    }
-    catch (Throwable t) {
-      String message = "Couldn't run process with PTY";
-      if (LOG.isDebugEnabled()) {
-        String logFileContent = loadLogFile();
-        if (logFileContent != null) {
-          LOG.debug(message, t, logFileContent);
+    if (getInputFile() == null) {
+      try {
+        return startProcessWithPty(commands);
+      }
+      catch (Throwable t) {
+        String message = "Couldn't run process with PTY";
+        if (LOG.isDebugEnabled()) {
+          String logFileContent = loadLogFile();
+          if (logFileContent != null) {
+            LOG.debug(message, t, logFileContent);
+          }
+          else {
+            LOG.warn(message, t);
+          }
         }
         else {
           LOG.warn(message, t);
         }
-      }
-      else {
-        LOG.warn(message, t);
       }
     }
     return super.startProcess(commands);

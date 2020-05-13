@@ -1,0 +1,2 @@
+import django
+import numpy

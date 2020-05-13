@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -83,7 +84,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
         nonPrivateMethods.add(methodSignature);
         SuperMethodsSearch.search(method, null, true, false).forEach(method1 -> {
           final MemberSignature superSignature = new MemberSignature(methodSignature.getName(), methodSignature.getModifiers(),
-                                                                     MemberSignature.createMethodSignature(method1.getMethod()));
+                                                                     ClassUtil.getAsmMethodSignature(method1.getMethod()).replace('/', '.'));
           nonPrivateMethods.add(superSignature);
           return true;
         });
@@ -249,26 +250,22 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
     return cache;
   }
 
-  @NotNull
-  public MemberSignature[] getNonPrivateConstructors() {
+  public MemberSignature @NotNull [] getNonPrivateConstructors() {
     init();
     return nonPrivateConstructors.toArray(new MemberSignature[0]);
   }
 
-  @NotNull
-  public MemberSignature[] getNonPrivateFields() {
+  public MemberSignature @NotNull [] getNonPrivateFields() {
     init();
     return nonPrivateFields.toArray(new MemberSignature[0]);
   }
 
-  @NotNull
-  public MemberSignature[] getNonPrivateMethodSignatures() {
+  public MemberSignature @NotNull [] getNonPrivateMethodSignatures() {
     init();
     return nonPrivateMethods.toArray(new MemberSignature[0]);
   }
 
-  @NotNull
-  public MemberSignature[] getStaticInitializers() {
+  public MemberSignature @NotNull [] getStaticInitializers() {
     init();
     return staticInitializers.toArray(new MemberSignature[0]);
   }
@@ -359,20 +356,16 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(
-    @NotNull PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     final PsiElement element = expression.resolve();
-    final PsiElement elementParentClass =
-      ClassUtils.getContainingClass(element);
-    final PsiElement expressionParentClass =
-      ClassUtils.getContainingClass(expression);
+    final PsiElement elementParentClass = ClassUtils.getContainingClass(element);
+    final PsiElement expressionParentClass = ClassUtils.getContainingClass(expression);
     if (expressionParentClass == null || expressionParentClass
       .equals(elementParentClass)) {
       return;
     }
-    PsiElement parentOfParentClass =
-      ClassUtils.getContainingClass(expressionParentClass);
+    PsiElement parentOfParentClass = ClassUtils.getContainingClass(expressionParentClass);
     while (parentOfParentClass != null &&
            !parentOfParentClass.equals(clazz)) {
       if (!(expressionParentClass instanceof PsiAnonymousClass)) {
@@ -396,9 +389,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
           }
           isStatic = true;
         }
-        final String returnTypeSignature =
-          MemberSignature.createTypeSignature(type).replace('/',
-                                                            '.');
+        final String returnTypeSignature = ClassUtil.getClassObjectPresentation(type);
         final String className = clazz.getQualifiedName();
         @NonNls final StringBuilder signatureBuffer =
           new StringBuilder("(");
@@ -459,25 +450,18 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       if (method.hasModifierProperty(PsiModifier.PRIVATE) && clazz.equals(method.getContainingClass())) {
         final String signature;
         if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          signature =
-            MemberSignature.createMethodSignature(method)
-              .replace('/', '.');
+          signature = ClassUtil.getAsmMethodSignature(method).replace('/', '.');
         }
         else {
-          final String returnTypeSignature =
-            MemberSignature.createTypeSignature(method.getReturnType())
-              .replace('/', '.');
+          final String returnTypeSignature = ClassUtil.getClassObjectPresentation(method.getReturnType());
           @NonNls final StringBuilder signatureBuffer =
             new StringBuilder();
           signatureBuffer.append("(L");
-          signatureBuffer.append(clazz.getQualifiedName())
-            .append(';');
-          final PsiParameter[] parameters = method.getParameterList()
-            .getParameters();
+          signatureBuffer.append(clazz.getQualifiedName()).append(';');
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
           for (final PsiParameter parameter : parameters) {
             final PsiType type = parameter.getType();
-            final String typeSignature = MemberSignature.createTypeSignature(type)
-              .replace('/', '.');
+            final String typeSignature = ClassUtil.getClassObjectPresentation(type);
             signatureBuffer.append(typeSignature);
           }
           signatureBuffer.append(')');

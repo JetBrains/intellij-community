@@ -16,7 +16,7 @@
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.framework.library.LibraryVersionProperties;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class CustomLibraryDescriptionBase extends CustomLibraryDescription {
   private final String myDefaultLibraryName;
 
@@ -41,8 +38,8 @@ public abstract class CustomLibraryDescriptionBase extends CustomLibraryDescript
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
-    descriptor.setTitle(IdeBundle.message("new.library.file.chooser.title"));
-    descriptor.setDescription(IdeBundle.message("new.library.file.chooser.description"));
+    descriptor.setTitle(JavaUiBundle.message("new.library.file.chooser.title"));
+    descriptor.setDescription(JavaUiBundle.message("new.library.file.chooser.description"));
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, parentComponent, null, contextDirectory);
     if (files.length == 0) {
       return null;

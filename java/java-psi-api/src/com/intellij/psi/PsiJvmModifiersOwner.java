@@ -16,9 +16,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiJvmModifiersOwner extends PsiModifierListOwner, JvmModifiersOwner {
 
-  @NotNull
   @Override
-  default PsiAnnotation[] getAnnotations() {
+  default PsiAnnotation @NotNull [] getAnnotations() {
     return PsiModifierListOwner.super.getAnnotations();
   }
 

@@ -33,9 +33,8 @@ public class YAMLAliasResolveNodeProvider implements FileStructureNodeProvider<S
     return YAMLBundle.message("YAMLAliasResolveNodeProvider.action.name");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     throw new IncorrectOperationException("see getActionIdForShortcut()");
   }
 

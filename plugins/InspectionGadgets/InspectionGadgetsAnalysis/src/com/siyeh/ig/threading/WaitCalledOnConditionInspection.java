@@ -28,13 +28,6 @@ public class WaitCalledOnConditionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "wait.called.on.condition.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "wait.called.on.condition.problem.descriptor");

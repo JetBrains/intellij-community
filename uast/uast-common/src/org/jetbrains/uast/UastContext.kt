@@ -17,12 +17,7 @@ package org.jetbrains.uast
 
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.psi.*
-import com.intellij.reference.SoftReference
-
-internal val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
-
 
 @Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))
 class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
@@ -59,11 +54,6 @@ object UastFacade : UastLanguagePlugin {
   override fun isFileSupported(fileName: String): Boolean = languagePlugins.any { it.isFileSupported(fileName) }
 
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
-    if (cachedElement != null) {
-      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
-    }
-
     return findPlugin(element)?.convertElement(element, parent, requiredType)
   }
 
@@ -71,12 +61,6 @@ object UastFacade : UastLanguagePlugin {
     if (element is PsiWhiteSpace) {
       return null
     }
-
-    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
-    if (cachedElement != null) {
-      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
-    }
-
     return findPlugin(element)?.convertElementWithParent(element, requiredType)
   }
 
@@ -127,14 +111,14 @@ fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementW
 fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { UastFacade.convertElementWithParent(this, cls) as T? }
 
 @Suppress("UNCHECKED_CAST")
+@SafeVarargs
 fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out T>): T? =
   this?.let {
     UastFacade.convertElementWithParent(this, if (clss.isNotEmpty()) clss else DEFAULT_TYPES_LIST) as T?
   }
 
 
-inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? =
-  this?.let { UastFacade.convertElementWithParent(this, T::class.java) as T? }
+inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? = toUElement(T::class.java)
 
 /**
  * Finds an UAST element of a given type at the given [offset] in the specified file. Returns null if there is no UAST

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.Pair;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +19,6 @@ import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-/**
- * @author max
- */
 public class SignatureParsing {
   private SignatureParsing() { }
 
@@ -62,7 +60,7 @@ public class SignatureParsing {
           jlo = true;
           continue;
         }
-        bounds = ContainerUtil.newSmartList();
+        bounds = new SmartList<>();
         if (jlo) {
           bounds.add(CommonClassNames.JAVA_LANG_OBJECT);
         }

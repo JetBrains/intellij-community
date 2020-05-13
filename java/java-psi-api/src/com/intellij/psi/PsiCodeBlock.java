@@ -33,8 +33,7 @@ public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
    *
    * @return the array of statements.
    */
-  @NotNull
-  PsiStatement[] getStatements();
+  PsiStatement @NotNull [] getStatements();
 
   /**
    * Returns the first PSI element contained in the block.

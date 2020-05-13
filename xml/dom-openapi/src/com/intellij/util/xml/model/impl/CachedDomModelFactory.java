@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface CachedDomModelFactory <T extends DomElement, M extends DomModel<T>, Scope extends UserDataHolder> {
-  @NotNull
-  Object[] computeDependencies(@Nullable M model, @Nullable Scope scope);
+  Object @NotNull [] computeDependencies(@Nullable M model, @Nullable Scope scope);
 
   Scope getModelScope(@NotNull XmlFile xmlFile);
 }

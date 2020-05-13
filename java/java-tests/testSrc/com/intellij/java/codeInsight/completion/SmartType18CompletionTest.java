@@ -83,6 +83,8 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testInCollectionForEach() { doTest();}
+
   public void testConstructorRef() {
     doTest(false);
   }
@@ -296,4 +298,6 @@ public void testConvertToObjectStream() {
   public void testNestedCollectorsCounting() { doTest(false); }
 
   public void testFilterInaccessibleConstructors() { doAntiTest(); }
+
+  public void testCastInToArrayCallWithUnresolvedType() { doAntiTest(); }
 }

@@ -70,9 +70,8 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
 
   private void initHelper() {
     myPsiTodoSearchHelper = new PsiTodoSearchHelper() {
-      @NotNull
       @Override
-      public PsiFile[] findFilesWithTodoItems() {
+      public PsiFile @NotNull [] findFilesWithTodoItems() {
         final List<Change> changes = new ArrayList<>();
         final List<LocalChangeList> changeLists = myChangeListManager.getChangeLists();
         final Map<VirtualFile, Change> allChanges = new HashMap<>();
@@ -99,27 +98,23 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
         return files.toArray(PsiFile.EMPTY_ARRAY);
       }
 
-      @NotNull
       @Override
-      public TodoItem[] findTodoItems(@NotNull PsiFile file) {
+      public TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file) {
         return findPatternedTodoItems(file, getTodoTreeStructure().getTodoFilter());
       }
 
-      @NotNull
       @Override
-      public TodoItem[] findTodoItemsLight(@NotNull PsiFile file) {
+      public TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file) {
         return findTodoItems(file);
       }
 
-      @NotNull
       @Override
-      public TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
+      public TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
         return findTodoItems(file, startOffset, endOffset);
       }
 
-      @NotNull
       @Override
-      public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
+      public TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
         final TodoItem[] todoItems = findTodoItems(file);
         if (todoItems.length == 0) {
           return todoItems;

@@ -7,8 +7,10 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -18,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see ReadAction
  */
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
+  private static final Logger LOG = Logger.getInstance(WriteAction.class);
 
   /**
    * @deprecated use {@link #run(ThrowableRunnable)}
@@ -32,7 +34,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
+    if (application.isWriteThread()) {
       AccessToken token = start(getClass());
       try {
         result.run();
@@ -47,7 +49,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    WriteThread.invokeAndWait(() -> {
       AccessToken token = start(getClass());
       try {
         result.run();
@@ -71,6 +73,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static AccessToken start() {
     // get useful information about the write action
     Class callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
@@ -84,6 +87,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   private static AccessToken start(@NotNull Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
   }
@@ -140,8 +144,12 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    */
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
     Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
+    if (application.isWriteThread()) {
       return ApplicationManager.getApplication().runWriteAction(action);
+    }
+
+    if (SwingUtilities.isEventDispatchThread()) {
+      LOG.error("You can't run blocking actions from EDT in Pure UI mode");
     }
 
     if (application.isReadAccessAllowed()) {
@@ -150,7 +158,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
     AtomicReference<T> result = new AtomicReference<>();
     AtomicReference<Throwable> exception = new AtomicReference<>();
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    WriteThread.invokeAndWait(() -> {
       try {
         result.set(compute(action));
       }

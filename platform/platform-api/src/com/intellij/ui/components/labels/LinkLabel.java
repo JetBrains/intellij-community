@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBRectangle;
@@ -47,29 +48,24 @@ public class LinkLabel<T> extends JLabel {
     this("", AllIcons.Ide.Link);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon) {
+  public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon) {
     this(text, icon, null, null, null);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
+  public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
   }
 
   @NotNull
-  public static LinkLabel<?> create(@Nullable String text, @Nullable Runnable action) {
-    return new LinkLabel<>(text, null, action == null ? null : new LinkListener<Object>() {
-      @Override
-      public void linkSelected(LinkLabel source, Object linkData) {
-        action.run();
-      }
-    }, null, null);
+  public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
+    return new LinkLabel<>(text, null, action == null ? null : (__, ___) -> action.run(), null, null);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
+  public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
-  public LinkLabel(String text,
+  public LinkLabel(@NlsContexts.LinkLabel String text,
                    @Nullable Icon icon,
                    @Nullable LinkListener<T> aListener,
                    @Nullable T aLinkData,
@@ -282,10 +278,6 @@ public class LinkLabel<T> extends JLabel {
     for (Project project : projects) {
       StatusBar.Info.set(statusBarText, project);
     }
-  }
-
-  public static void clearVisitedHistory() {
-    ourVisitedLinks.clear();
   }
 
   protected Color getVisited() {

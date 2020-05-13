@@ -20,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collections;
+import java.util.List;
+
 public abstract class CodeStyleSchemes {
   public static CodeStyleSchemes getInstance(){
     return ServiceManager.getService(CodeStyleSchemes.class);
@@ -62,5 +65,9 @@ public abstract class CodeStyleSchemes {
   public abstract CodeStyleScheme getDefaultScheme();
 
   public abstract void addScheme(@NotNull CodeStyleScheme currentScheme);
+
+  public List<CodeStyleScheme> getAllSchemes() {
+    return Collections.emptyList();
+  }
 }
 

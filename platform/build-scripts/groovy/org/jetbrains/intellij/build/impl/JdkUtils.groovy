@@ -14,9 +14,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import static com.intellij.util.io.URLUtil.*
 
-/**
- * @author nik
- */
 @CompileStatic
 class JdkUtils {
   static void defineJdk(JpsGlobal global, String jdkName, String jdkHomePath, BuildMessages messages) {

@@ -9,6 +9,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -29,7 +30,7 @@ public class AlphaUnsortedInspectionTest extends BasePlatformTestCase {
     ExtensionTestUtil.maskExtensions(AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME,
                                      Collections.<AlphaUnsortedPropertiesFileInspectionSuppressor>singletonList(new AlphaUnsortedPropertiesFileInspectionSuppressor() {
                                       @Override
-                                      public boolean suppressInspectionFor(PropertiesFile propertiesFile) {
+                                      public boolean suppressInspectionFor(@NotNull PropertiesFile propertiesFile) {
                                         return propertiesFile.getName().toLowerCase(Locale.ENGLISH).contains("suppress");
                                       }
                                     }), myFixture.getTestRootDisposable());

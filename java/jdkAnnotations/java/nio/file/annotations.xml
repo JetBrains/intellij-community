@@ -262,12 +262,14 @@
   </item>
   <item name='java.nio.file.Path boolean endsWith(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.Path boolean endsWith(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path boolean startsWith(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.Path boolean startsWith(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -295,6 +297,7 @@
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolve(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolve(java.nio.file.Path)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -307,6 +310,7 @@
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.nio.file.Path)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

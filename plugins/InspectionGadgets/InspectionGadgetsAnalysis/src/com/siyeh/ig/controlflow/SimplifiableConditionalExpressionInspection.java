@@ -18,28 +18,19 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.style.ConditionalExpressionGenerator;
+import com.siyeh.ig.style.ConditionalModel;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifiableConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.display.name");
-  }
 
   @Override
   public boolean isEnabledByDefault() {
@@ -47,11 +38,9 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final PsiConditionalExpression expression = (PsiConditionalExpression)infos[0];
-    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor",
-                                           calculateReplacementExpression(expression, new CommentTracker()));
+  public @NotNull String buildErrorString(Object... infos) {
+    final String replacement = (String)infos[0];
+    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor", replacement);
   }
 
   @Override
@@ -62,16 +51,20 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
   private static class SimplifiableConditionalFix extends InspectionGadgetsFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiConditionalExpression expression = (PsiConditionalExpression)descriptor.getPsiElement();
+      PsiConditionalExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiConditionalExpression.class);
+      if (expression == null) return;
+      ConditionalModel model = ConditionalModel.from(expression);
+      if (model == null) return;
+      ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);
+      if (generator == null || generator.getTokenType().equals("?:")) return;
       CommentTracker tracker = new CommentTracker();
-      final String newExpression = calculateReplacementExpression(expression, tracker);
+      final String newExpression = generator.generate(tracker);
       PsiReplacementUtil.replaceExpression(expression, newExpression, tracker);
     }
   }
@@ -81,69 +74,23 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
     return new SimplifiableConditionalExpressionVisitor();
   }
 
-  @NonNls
-  static String calculateReplacementExpression(PsiConditionalExpression expression, CommentTracker tracker) {
-    final PsiExpression thenExpression = expression.getThenExpression();
-    final PsiExpression elseExpression = expression.getElseExpression();
-    final PsiExpression condition = expression.getCondition();
-    assert thenExpression != null;
-    assert elseExpression != null;
-    if (BoolUtils.areExpressionsOpposite(thenExpression, elseExpression)) {
-      // EQUALITY_PRECEDENCE is technically enough here, but it may produces quite confusing code like "a == b > c"
-      // so we add (formally redundant) parentheses in this case: "a == (b > c)"
-      final int precedence = PsiPrecedenceUtil.RELATIONAL_PRECEDENCE;
-      if (BoolUtils.isNegation(thenExpression)) {
-        return ParenthesesUtils.getText(tracker.markUnchanged(condition), precedence) + " != " +
-               ParenthesesUtils.getText(tracker.markUnchanged(elseExpression), precedence);
-      } else {
-        return ParenthesesUtils.getText(tracker.markUnchanged(condition), precedence) + " == " +
-               ParenthesesUtils.getText(tracker.markUnchanged(thenExpression), precedence);
-      }
-    }
-    if (BoolUtils.isTrue(thenExpression)) {
-      final String elseExpressionText = ParenthesesUtils.getText(tracker.markUnchanged(elseExpression), ParenthesesUtils.OR_PRECEDENCE);
-      return ParenthesesUtils.getText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " + elseExpressionText;
-    }
-    else if (BoolUtils.isFalse(thenExpression)) {
-      @NonNls final String elseExpressionText = ParenthesesUtils.getText(tracker.markUnchanged(elseExpression), ParenthesesUtils.AND_PRECEDENCE);
-      return BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE, tracker) + " && " + elseExpressionText;
-    }
-    if (BoolUtils.isFalse(elseExpression)) {
-      @NonNls final String thenExpressionText = ParenthesesUtils.getText(tracker.markUnchanged(thenExpression), ParenthesesUtils.AND_PRECEDENCE);
-      return ParenthesesUtils.getText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " + thenExpressionText;
-    }
-    else {
-      @NonNls final String thenExpressionText = ParenthesesUtils.getText(tracker.markUnchanged(thenExpression), ParenthesesUtils.OR_PRECEDENCE);
-      return BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE, tracker) + " || " + thenExpressionText;
-    }
-  }
-
   private static class SimplifiableConditionalExpressionVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitConditionalExpression(PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
-      final PsiExpression thenExpression = expression.getThenExpression();
-      if (thenExpression == null) {
-        return;
+      ConditionalModel model = ConditionalModel.from(expression);
+      if (model == null) return;
+      ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);
+      if (generator == null || generator.getTokenType().equals("?:")) return;
+      PsiExpression replacement = generator.getReplacement();
+      if (replacement != null) {
+        PsiElement parent = expression.getParent();
+        if (parent instanceof PsiLambdaExpression &&
+            !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, () -> replacement)) {
+          return;
+        }
       }
-      final PsiExpression elseExpression = expression.getElseExpression();
-      if (elseExpression == null) {
-        return;
-      }
-      final PsiType thenType = thenExpression.getType();
-      if (!PsiType.BOOLEAN.equals(thenType)) {
-        return;
-      }
-      final PsiType elseType = elseExpression.getType();
-      if (!PsiType.BOOLEAN.equals(elseType)) {
-        return;
-      }
-      final boolean thenConstant = BoolUtils.isFalse(thenExpression) || BoolUtils.isTrue(thenExpression);
-      final boolean elseConstant = BoolUtils.isFalse(elseExpression) || BoolUtils.isTrue(elseExpression);
-      if (thenConstant != elseConstant || BoolUtils.areExpressionsOpposite(thenExpression, elseExpression)) {
-        registerError(expression, expression);
-      }
+      registerError(expression, generator.generate(new CommentTracker()));
     }
   }
 }

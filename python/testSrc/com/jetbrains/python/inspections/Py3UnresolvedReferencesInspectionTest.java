@@ -17,8 +17,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -211,11 +209,8 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-11208
   public void testMockPatchObject() {
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + getTestDirectoryPath() + "/lib");
-    assertNotNull(libDir);
-
     runWithAdditionalClassEntryInSdkRoots(
-      libDir,
+      getTestDirectoryPath() + "/lib",
       () -> {
         final PsiFile file = myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
         configureInspection();
@@ -300,6 +295,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                  "    \n" +
                  "def foo(ab: Union[A, B]):\n" +
                  "    print(ab.x)");
+  }
+
+  // PY-37755 PY-2700
+  public void testGlobalAndNonlocalUnresolvedAttribute() {
+    doTest();
   }
 
   public void testClassLevelDunderAll() {

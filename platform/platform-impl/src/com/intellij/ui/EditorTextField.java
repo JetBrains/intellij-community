@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -23,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -42,6 +45,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
@@ -57,12 +61,13 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
+
 public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
+  private static final Key<LineSeparator> LINE_SEPARATOR_KEY = Key.create("ETF_LINE_SEPARATOR");
+  private static final Key<Boolean> MANAGED_BY_FIELD = Key.create("MANAGED_BY_FIELD");
 
   private Document myDocument;
   private final Project myProject;
@@ -95,19 +100,20 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   public EditorTextField(@NotNull String text) {
-    this(EditorFactory.getInstance().createDocument(text), null, FileTypes.PLAIN_TEXT);
+    this(text, null, FileTypes.PLAIN_TEXT);
   }
 
   public EditorTextField(@NotNull String text, Project project, FileType fileType) {
-    this(EditorFactory.getInstance().createDocument(text), project, fileType, false, true);
+    this(EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text)), project, fileType);
+    LINE_SEPARATOR_KEY.set(myDocument, detectLineSeparators(myDocument, text));
   }
 
   public EditorTextField(Document document, Project project, FileType fileType) {
-    this(document, project, fileType, false, true);
+    this(document, project, fileType, false);
   }
 
   public EditorTextField(Project project, FileType fileType) {
-    this(null, project, fileType, false, true);
+    this((Document)null, project, fileType);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
@@ -153,7 +159,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @NotNull
   @Override
   public String getText() {
-    return myDocument.getText();
+    String text = myDocument.getText();
+    LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
+    if (separator != null) {
+      return StringUtil.convertLineSeparators(text, separator.getSeparatorString());
+    }
+    return text;
   }
 
   @Override
@@ -223,7 +234,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
       boolean isFocused = isFocusOwner();
       EditorEx newEditor = createEditor();
-      releaseEditor(myEditor);
+      releaseEditorNow();
       myEditor = newEditor;
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -252,14 +263,32 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void setText(@Nullable final String text) {
     CommandProcessor.getInstance().executeCommand(getProject(), () ->
       ApplicationManager.getApplication().runWriteAction(() -> {
-      myDocument.replaceString(0, myDocument.getTextLength(), StringUtil.notNullize(text));
-      if (myEditor != null) {
-        final CaretModel caretModel = myEditor.getCaretModel();
-        if (caretModel.getOffset() >= myDocument.getTextLength()) {
-          caretModel.moveToOffset(myDocument.getTextLength());
+        LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
+        if (separator == null) {
+          separator = detectLineSeparators(myDocument, text);
         }
-      }
-    }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
+        LINE_SEPARATOR_KEY.set(myDocument, separator);
+        myDocument.replaceString(0, myDocument.getTextLength(), normalize(text, separator));
+        if (myEditor != null) {
+          final CaretModel caretModel = myEditor.getCaretModel();
+          if (caretModel.getOffset() >= myDocument.getTextLength()) {
+            caretModel.moveToOffset(myDocument.getTextLength());
+          }
+        }
+      }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
+  }
+
+  private static @NotNull String normalize(@Nullable String text, @Nullable LineSeparator separator) {
+    if (text == null || separator == null) return StringUtil.notNullize(text);
+    return StringUtil.convertLineSeparators(text);
+  }
+
+  @Nullable
+  private static LineSeparator detectLineSeparators(@Nullable Document document, @Nullable String text) {
+    if (text == null) return null;
+    boolean doNotNormalizeDetect = document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR();
+    if (doNotNormalizeDetect) return null;
+    return StringUtil.detectSeparators(text);
   }
 
   /**
@@ -328,14 +357,21 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void addNotify() {
+    Disposable uiDisposable = UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
+    if (uiDisposable != null) {
+      // If this component is added to a dialog (for example, the settings dialog),
+      // then we have to release the editor simultaneously on close.
+      // Otherwise, a corresponding dynamic plugin cannot be unloaded.
+      Disposer.register(uiDisposable, this::releaseEditorNow);
+    }
+
     myDisposable = Disposer.newDisposable("ETF dispose");
     Disposer.register(myDisposable, this::releaseEditorLater);
     if (myProject != null) {
       ProjectManagerListener listener = new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          releaseEditor(myEditor);
-          myEditor = null;
+          releaseEditorNow();
         }
       };
       ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
@@ -384,9 +420,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
-  private void releaseEditor(Editor editor) {
-    if (editor == null) return;
-
+  private void releaseEditor(@NotNull Editor editor) {
     // todo IMHO this should be removed completely
     if (myProject != null && !myProject.isDisposed() && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -405,6 +439,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
+  private void releaseEditorNow() {
+    EditorEx editor = myEditor;
+    if (editor == null) return;
+    myEditor = null;
+    releaseEditor(editor);
+  }
+
   void releaseEditorLater() {
     // releasing an editor implies removing it from a component hierarchy
     // invokeLater is required because releaseEditor() may be called from
@@ -412,6 +453,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
     EditorEx editor = myEditor;
+    if (editor == null) return;
     ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor), ModalityState.stateForComponent(this));
     myEditor = null;
   }
@@ -467,23 +509,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
     EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
+    editor.putUserData(MANAGED_BY_FIELD, Boolean.TRUE);
 
-    final EditorSettings settings = editor.getSettings();
-    settings.setAdditionalLinesCount(0);
-    settings.setAdditionalColumnsCount(1);
-    settings.setRightMarginShown(false);
-    settings.setRightMargin(-1);
-    settings.setFoldingOutlineShown(false);
-    settings.setLineNumbersShown(false);
-    settings.setLineMarkerAreaShown(false);
-    settings.setIndentGuidesShown(false);
-    settings.setVirtualSpace(false);
-    settings.setWheelFontChangeEnabled(false);
-    settings.setAdditionalPageAtBottom(false);
-    editor.setHorizontalScrollbarVisible(false);
-    editor.setVerticalScrollbarVisible(false);
+    setupTextFieldEditor(editor);
     editor.setCaretEnabled(!myIsViewer);
-    settings.setLineCursorWidth(1);
 
     if (myProject != null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -541,6 +570,28 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return editor;
   }
 
+  public static boolean managesEditor(@NotNull Editor editor) {
+    return editor.getUserData(MANAGED_BY_FIELD) == Boolean.TRUE;
+  }
+
+  public static void setupTextFieldEditor(@NotNull EditorEx editor) {
+    EditorSettings settings = editor.getSettings();
+    settings.setAdditionalLinesCount(0);
+    settings.setAdditionalColumnsCount(1);
+    settings.setRightMarginShown(false);
+    settings.setRightMargin(-1);
+    settings.setFoldingOutlineShown(false);
+    settings.setLineNumbersShown(false);
+    settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
+    settings.setVirtualSpace(false);
+    settings.setWheelFontChangeEnabled(false);
+    settings.setAdditionalPageAtBottom(false);
+    editor.setHorizontalScrollbarVisible(false);
+    editor.setVerticalScrollbarVisible(false);
+    settings.setLineCursorWidth(1);
+  }
+
   protected void updateBorder(@NotNull final EditorEx editor) {
     if (editor.isOneLineMode()
         && !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
@@ -554,14 +605,14 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void setupBorder(@NotNull EditorEx editor) {
     if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      if (UIUtil.isUnderDefaultMacTheme()) {
-        editor.setBorder(new DarculaUIUtil.MacEditorTextFieldBorder(this, editor));
-      } else if (UIUtil.isUnderWin10LookAndFeel()) {
-        editor.setBorder(new DarculaUIUtil.WinEditorTextFieldBorder(this, editor));
-      } else {
+      LafManager lafManager = LafManager.getInstance();
+      UIManager.LookAndFeelInfo lafInfo = lafManager.getCurrentLookAndFeel();
+      if (lafInfo instanceof PluggableLafInfo) {
+        editor.setBorder(((PluggableLafInfo)lafInfo).createEditorTextFieldBorder(this, editor));
+      }
+      else {
         editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
       }
-
     }
     else {
       editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
@@ -664,8 +715,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
 
     if (toReleaseEditor) {
-      releaseEditor(myEditor);
-      myEditor = null;
+      releaseEditorNow();
       myPassivePreferredSize = size;
     }
 
@@ -682,7 +732,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
 
-      if (UIUtil.isUnderDefaultMacTheme() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
         size.height = Math.max(size.height, JBUIScale.scale(16));
       }
 

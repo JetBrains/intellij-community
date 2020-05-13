@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ public class JavaClassFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.class");
+    return JavaPsiBundle.message("filetype.description.class");
   }
 
   @Override
@@ -64,7 +64,7 @@ public class JavaClassFileType implements FileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return null;
   }
 }

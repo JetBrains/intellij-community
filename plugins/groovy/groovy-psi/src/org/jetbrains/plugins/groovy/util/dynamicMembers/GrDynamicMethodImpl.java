@@ -52,9 +52,8 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return myMethod.getReturnTypeElement();
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getParameters() {
+  public GrParameter @NotNull [] getParameters() {
     return myMethod.getParameters();
   }
 
@@ -69,20 +68,17 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods() {
+  public PsiMethod @NotNull [] findSuperMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+  public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+  public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -98,8 +94,7 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findDeepestSuperMethods() {
+  public PsiMethod @NotNull [] findDeepestSuperMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -130,9 +125,8 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return myMethod.getNamedParameters();
   }
 
-  @NotNull
   @Override
-  public GrReflectedMethod[] getReflectedMethods() {
+  public GrReflectedMethod @NotNull [] getReflectedMethods() {
     return GrReflectedMethod.EMPTY_ARRAY;
   }
 
@@ -230,8 +224,7 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return myMethod.getTypeParameters();
   }
 

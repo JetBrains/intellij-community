@@ -15,6 +15,7 @@
  */
 package com.intellij.internal;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -31,13 +32,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
   public DumpVfsInfoForExcludedFilesAction() {
-    super("Dump VFS content for files under excluded roots");
+    super(ActionsBundle.messagePointer("action.DumpVfsInfoForExcludedFilesAction.text"));
   }
 
   @Override

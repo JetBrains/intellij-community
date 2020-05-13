@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Template;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -49,7 +50,7 @@ public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor
   @Nls
   @Override
   public String getOptionName() {
-    return "Please report a bug";
+    return JavaBundle.message("please.report.a.bug");
   }
 
   @Override

@@ -39,9 +39,8 @@ public class BinaryFilePatchInProgress extends CommonBinaryFilePatchInProgress<B
   @Override
   protected BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath) {
     return new SimpleBinaryContentRevision(newFilePath) {
-      @Nullable
       @Override
-      public byte[] getBinaryContent() {
+      public byte @Nullable [] getBinaryContent() {
         return myPatch.getAfterContent();
       }
     };

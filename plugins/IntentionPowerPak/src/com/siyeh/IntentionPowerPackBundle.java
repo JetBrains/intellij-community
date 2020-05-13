@@ -15,40 +15,30 @@
  */
 package com.siyeh;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-/**
- * @author max
- */
-public class IntentionPowerPackBundle {
+public class IntentionPowerPackBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.IntentionPowerPackBundle";
+  private static final IntentionPowerPackBundle INSTANCE = new IntentionPowerPackBundle();
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+  private IntentionPowerPackBundle() { super(BUNDLE); }
+
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls private static final String BUNDLE = "com.siyeh.IntentionPowerPackBundle";
-
-  private IntentionPowerPackBundle() {
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 
   public static String defaultableMessage(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
-    return CommonBundle.messageOrDefault(getBundle(), key, "default", true, params);
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+    return INSTANCE.messageOrDefault(key, "default", true, params);
   }
 }

@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,7 +75,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         LOG.assertTrue(psiParameter != null);
       }
 
-      setText(CodeInsightBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "constructor" : "method"));
+      setText(JavaBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "constructor" : "method"));
     }
     return isAvailable(psiParameter);
   }
@@ -150,7 +150,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.bind.fields.from.parameters.family");
+    return JavaBundle.message("intention.bind.fields.from.parameters.family");
   }
 
   @Override
@@ -206,10 +206,10 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @NotNull
   private static MemberChooser<ParameterClassMember> showChooser(@NotNull Project project,
                                            @NotNull PsiMethod method,
-                                           @NotNull ParameterClassMember[] members) {
+                                           ParameterClassMember @NotNull [] members) {
     final MemberChooser<ParameterClassMember> chooser = new MemberChooser<>(members, false, true, project);
     chooser.selectElements(getInitialSelection(method, members));
-    chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters");
+    chooser.setTitle(JavaBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"));
     chooser.show();
     return chooser;
   }
@@ -218,7 +218,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
    * Exclude parameters passed to super() or this() calls from initial selection
    */
   private static ParameterClassMember[] getInitialSelection(@NotNull PsiMethod method,
-                                                            @NotNull ParameterClassMember[] members) {
+                                                            ParameterClassMember @NotNull [] members) {
     final Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
@@ -239,8 +239,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     return ContainerUtil.findAll(members, member -> !resolvedInSuperOrThis.contains(member.getParameter())).toArray(ParameterClassMember.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static ParameterClassMember[] sortByParameterIndex(@NotNull ParameterClassMember[] members, @NotNull PsiMethod method) {
+  private static ParameterClassMember @NotNull [] sortByParameterIndex(ParameterClassMember @NotNull [] members, @NotNull PsiMethod method) {
     final PsiParameterList parameterList = method.getParameterList();
     Arrays.sort(members, Comparator.comparingInt(o -> parameterList.getParameterIndex(o.getParameter())));
     return members;
@@ -264,8 +263,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     return result;
   }
 
-  @NotNull
-  private static ParameterClassMember[] toClassMemberArray(@NotNull Collection<? extends SmartPsiElementPointer<PsiParameter>> unboundedParams) {
+  private static ParameterClassMember @NotNull [] toClassMemberArray(@NotNull Collection<? extends SmartPsiElementPointer<PsiParameter>> unboundedParams) {
     final ParameterClassMember[] result = new ParameterClassMember[unboundedParams.size()];
     int i = 0;
     for (SmartPsiElementPointer<PsiParameter> pointer : unboundedParams) {

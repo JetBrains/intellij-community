@@ -23,7 +23,7 @@ import java.util.Collection;
 
 public interface ConstructorBodyGeneratorEx {
   void generateFieldInitialization(@NotNull StringBuilder buffer,
-                                   @NotNull PsiField[] fields,
-                                   @NotNull PsiParameter[] parameters,
+                                   PsiField @NotNull [] fields,
+                                   PsiParameter @NotNull [] parameters,
                                    @NotNull Collection<String> existingNames);
 }

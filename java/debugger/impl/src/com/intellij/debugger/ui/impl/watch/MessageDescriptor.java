@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -30,17 +30,21 @@ public class MessageDescriptor extends NodeDescriptorImpl {
   private final int myKind;
   private final String myMessage;
 
-  public static final MessageDescriptor DEBUG_INFO_UNAVAILABLE = new MessageDescriptor(DebuggerBundle.message("message.node.debug.info.not.available"));
+  public static final MessageDescriptor DEBUG_INFO_UNAVAILABLE = new MessageDescriptor(
+    JavaDebuggerBundle.message("message.node.debug.info.not.available"));
   public static final MessageDescriptor LOCAL_VARIABLES_INFO_UNAVAILABLE = new MessageDescriptor(
-    DebuggerBundle.message("message.node.local.variables.debug.info.not.available")
+    JavaDebuggerBundle.message("message.node.local.variables.debug.info.not.available")
   );
-  public static final MessageDescriptor ARRAY_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.empty.array"));
-  public static final MessageDescriptor CLASS_HAS_NO_FIELDS = new MessageDescriptor(DebuggerBundle.message("message.node.class.has.no.fields"));
-  public static final MessageDescriptor OBJECT_COLLECTED = new MessageDescriptor(DebuggerBundle.message("message.node.object.collected"));
-  public static final MessageDescriptor EVALUATING = new MessageDescriptor(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE);
-  public static final MessageDescriptor THREAD_IS_RUNNING = new MessageDescriptor(DebuggerBundle.message("message.node.thread.running"));
-  public static final MessageDescriptor THREAD_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.thread.has.no.frames"));
-  public static final MessageDescriptor EVALUATION_NOT_POSSIBLE = new MessageDescriptor(DebuggerBundle.message("message.node.evaluation.not.possible", WARNING));
+  public static final MessageDescriptor ARRAY_IS_EMPTY = new MessageDescriptor(JavaDebuggerBundle.message("message.node.empty.array"));
+  public static final MessageDescriptor CLASS_HAS_NO_FIELDS = new MessageDescriptor(
+    JavaDebuggerBundle.message("message.node.class.has.no.fields"));
+  public static final MessageDescriptor OBJECT_COLLECTED = new MessageDescriptor(JavaDebuggerBundle.message("message.node.object.collected"));
+  public static final MessageDescriptor EVALUATING = new MessageDescriptor(XDebuggerUIConstants.getCollectingDataMessage());
+  public static final MessageDescriptor THREAD_IS_RUNNING = new MessageDescriptor(JavaDebuggerBundle.message("message.node.thread.running"));
+  public static final MessageDescriptor THREAD_IS_EMPTY = new MessageDescriptor(
+    JavaDebuggerBundle.message("message.node.thread.has.no.frames"));
+  public static final MessageDescriptor EVALUATION_NOT_POSSIBLE = new MessageDescriptor(
+    JavaDebuggerBundle.message("message.node.evaluation.not.possible", WARNING));
 
   public MessageDescriptor(String message) {
     this(message, INFORMATION);

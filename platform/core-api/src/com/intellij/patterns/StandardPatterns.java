@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,13 +33,13 @@ public class StandardPatterns {
   }
 
   @NotNull
-  public static <T> ObjectPattern.Capture<T> instanceOf(Class<T> aClass) {
+  public static <T> ObjectPattern.Capture<T> instanceOf(@NotNull Class<T> aClass) {
     return new ObjectPattern.Capture<>(aClass);
   }
 
   @NotNull
   @SafeVarargs
-  public static <T> ElementPattern<T> instanceOf(@NotNull Class<T>... classes) {
+  public static <T> ElementPattern<T> instanceOf(Class<T> @NotNull ... classes) {
     ElementPattern[] patterns = ContainerUtil.map(classes, StandardPatterns::instanceOf, new ElementPattern[0]);
     return or(patterns);
   }
@@ -110,7 +97,7 @@ public class StandardPatterns {
 
   @NotNull
   @SafeVarargs
-  public static <E> ElementPattern<E> or(@NotNull final ElementPattern<? extends E>... patterns) {
+  public static <E> ElementPattern<E> or(final ElementPattern<? extends E> @NotNull ... patterns) {
     return new ObjectPattern.Capture<>(new InitialPatternConditionPlus(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
@@ -142,7 +129,7 @@ public class StandardPatterns {
   @NotNull
   @SafeVarargs
   public static <E> ElementPattern<E> and(final ElementPattern<? extends E>... patterns) {
-    final List<InitialPatternCondition> initial = ContainerUtil.newSmartList();
+    final List<InitialPatternCondition> initial = new SmartList<>();
     for (ElementPattern<?> pattern : patterns) {
       initial.add(pattern.getCondition().getInitialCondition());
     }

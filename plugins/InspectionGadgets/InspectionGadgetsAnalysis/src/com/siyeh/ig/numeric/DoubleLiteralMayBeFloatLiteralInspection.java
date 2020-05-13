@@ -3,21 +3,12 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class DoubleLiteralMayBeFloatLiteralInspection extends CastedLiteralMaybeJustLiteralInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("double.literal.may.be.float.literal.display.name");
-  }
 
   @NotNull
   @Override

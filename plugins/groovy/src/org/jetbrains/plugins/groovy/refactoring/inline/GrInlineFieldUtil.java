@@ -15,13 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -31,9 +31,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
  * @author Max Medvedev
  */
 public class GrInlineFieldUtil {
-
-  public static final String INLINE_FIELD = RefactoringBundle.message("inline.field.title");
-
   private GrInlineFieldUtil() {
   }
 
@@ -42,14 +39,14 @@ public class GrInlineFieldUtil {
     final Project project = field.getProject();
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-      String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", INLINE_FIELD);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, INLINE_FIELD, HelpID.INLINE_FIELD);
+      String message = JavaRefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", getInlineField());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getInlineField(), HelpID.INLINE_FIELD);
       return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
 
     if (field.getInitializerGroovy() == null) {
       String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.field");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, INLINE_FIELD, HelpID.INLINE_FIELD);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getInlineField(), HelpID.INLINE_FIELD);
       return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
 
@@ -78,5 +75,9 @@ public class GrInlineFieldUtil {
     else {
       return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
+  }
+
+  public static String getInlineField() {
+    return JavaRefactoringBundle.message("inline.field.title");
   }
 }

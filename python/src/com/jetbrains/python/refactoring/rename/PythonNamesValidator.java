@@ -18,7 +18,7 @@ public class PythonNamesValidator implements NamesValidator {
   public synchronized boolean isKeyword(@NotNull final String name, final Project project) {
     try {
       ourLexer.start(name);
-      if (!PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(ourLexer.getTokenType())) {
+      if (!PythonDialectsTokenSetProvider.getInstance().getKeywordTokens().contains(ourLexer.getTokenType())) {
         return false;
       }
       ourLexer.advance();

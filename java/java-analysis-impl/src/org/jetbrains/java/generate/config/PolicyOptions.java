@@ -32,8 +32,7 @@ public class PolicyOptions {
      * Gets the options for the the insert new method policy.
      * @return the options for the the insert new method policy.
      */
-    @NotNull
-    public static InsertWhere[] getNewMethodOptions() {
+    public static InsertWhere @NotNull [] getNewMethodOptions() {
         return newMethodOptions;
     }
 
@@ -41,8 +40,7 @@ public class PolicyOptions {
      * Gets the options for the the conflict resolution policy.
      * @return the options for the the conflict resolution policy.
      */
-    @NotNull
-    public static DuplicationPolicy[] getConflictOptions() {
+    public static DuplicationPolicy @NotNull [] getConflictOptions() {
         return conflictOptions;
     }
 }

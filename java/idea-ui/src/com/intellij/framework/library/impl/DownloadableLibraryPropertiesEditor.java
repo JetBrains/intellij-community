@@ -34,9 +34,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditorBase<LibraryVersionProperties, DownloadableLibraryType> {
   private final DownloadableLibraryDescription myDescription;
   private final DownloadableLibraryType myLibraryType;

@@ -29,12 +29,6 @@ public class ThreadRunInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("thread.run.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "CallToThreadRun";
   }
@@ -51,14 +45,6 @@ public class ThreadRunInspection extends BaseInspection {
   }
 
   private static class ThreadRunFix extends AbstractReplaceWithAnotherMethodCallFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "thread.run.replace.quickfix");
-    }
-
     @Override
     protected String getMethodName() {
       return "start";

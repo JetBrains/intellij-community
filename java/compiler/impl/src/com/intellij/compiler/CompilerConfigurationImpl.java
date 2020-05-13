@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -9,23 +9,21 @@ import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -66,8 +64,8 @@ import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normal
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
-public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
+public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(CompilerConfiguration.class);
 
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEFAULT_BUILD_PROCESS_HEAP_SIZE = 700;
@@ -85,8 +83,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludesConfiguration;
 
-  private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<>();
-  private JavacCompiler JAVAC_EXTERNAL_BACKEND;
+  private volatile Collection<BackendCompiler> myRegisteredCompilers = Collections.emptyList();
+  private final JavacCompiler JAVAC_EXTERNAL_BACKEND;
   private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
 
   {
@@ -104,10 +102,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private String myBytecodeTargetLevel = null;  // null means same as effective language level
   private final Map<String, String> myModuleBytecodeTarget = new HashMap<>();
 
-  public CompilerConfigurationImpl(Project project) {
+  public CompilerConfigurationImpl(@NotNull Project project) {
     myProject = project;
     myExcludesConfiguration = createExcludedEntriesConfiguration(project);
-    MessageBusConnection connection = project.getMessageBus().connect(project);
+    JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
+    MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
@@ -126,6 +125,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         updateModuleNames(modules.stream().collect(Collectors.toMap(oldNameProvider::fun, Module::getName)));
       }
     });
+
+    if (!project.isDefault()) {
+      // initial state
+      StartupManager.getInstance(project).runAfterOpened(() -> {myRegisteredCompilers = collectCompilers();});
+    }
+    BackendCompiler.EP_NAME.getPoint(project).addChangeListener(() -> {myRegisteredCompilers = collectCompilers();}, project);
   }
 
   // Overridden in Upsource
@@ -284,7 +289,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public void setProjectBytecodeTarget(@Nullable String level) {
     final String previous = myBytecodeTargetLevel;
     myBytecodeTargetLevel = level;
-    if (!myProject.isDefault() && !Comparing.equal(previous, level)) {
+    if (!myProject.isDefault() && !Objects.equals(previous, level)) {
       BuildManager.getInstance().clearState(myProject);
     }
   }
@@ -327,7 +332,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     else {
       previous = myModuleBytecodeTarget.put(module.getName(), level);
     }
-    if (!Comparing.equal(previous, level)) {
+    if (!Objects.equals(previous, level)) {
       final Project project = module.getProject();
       if (!project.isDefault()) {
         BuildManager.getInstance().clearState(project);
@@ -419,54 +424,35 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public JavacCompiler getJavacCompiler() {
-    createCompilers();
     return JAVAC_EXTERNAL_BACKEND;
   }
 
-  @Override
-  public void projectOpened() {
-    createCompilers();
-  }
-
-  private void createCompilers() {
-    if (JAVAC_EXTERNAL_BACKEND != null) {
-      return;
+  @NotNull
+  private List<BackendCompiler> collectCompilers() {
+    final List<BackendCompiler> compilers = new ArrayList<>();
+    compilers.add(JAVAC_EXTERNAL_BACKEND);
+    if (EclipseCompiler.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) {
+      compilers.add(new EclipseCompiler(myProject));
     }
-
-    JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
-    myRegisteredCompilers.add(JAVAC_EXTERNAL_BACKEND);
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (EclipseCompiler.isInitialized()) {
-        final EclipseCompiler eclipse = new EclipseCompiler(myProject);
-        myRegisteredCompilers.add(eclipse);
-      }
-    }
-
-    final Set<FileType> types = new HashSet<>();
-    for (BackendCompiler compiler : BackendCompiler.EP_NAME.getExtensions(myProject)) {
-      myRegisteredCompilers.add(compiler);
-      types.addAll(compiler.getCompilableFileTypes());
-    }
-
-    final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    for (FileType type : types) {
-      compilerManager.addCompilableFileType(type);
-    }
+    compilers.addAll(BackendCompiler.EP_NAME.getExtensions(myProject));
 
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
-    for (BackendCompiler compiler : myRegisteredCompilers) {
+    for (BackendCompiler compiler : compilers) {
       if (compiler.getId().equals(myState.DEFAULT_COMPILER)) {
         myDefaultJavaCompiler = compiler;
         break;
       }
     }
     myState.DEFAULT_COMPILER = myDefaultJavaCompiler.getId();
+    return compilers;
   }
 
   public Collection<BackendCompiler> getRegisteredJavaCompilers() {
-    createCompilers();
-    return myRegisteredCompilers;
+    Collection<BackendCompiler> compilers = myRegisteredCompilers;
+    if (compilers.isEmpty()) {
+      compilers = collectCompilers();
+    }
+    return Collections.unmodifiableCollection(compilers);
   }
 
   public String[] getResourceFilePatterns() {
@@ -826,7 +812,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       readByteTargetLevel(parentNode, myModuleBytecodeTarget);
     }
 
-    Map<String, String> externalState = myProject.getComponent(ExternalCompilerConfigurationStorage.class).getLoadedState();
+    Map<String, String> externalState = ExternalCompilerConfigurationStorage.getInstance(myProject).getLoadedState();
     if (externalState != null) {
       myModuleBytecodeTarget.putAll(externalState);
     }
@@ -918,7 +904,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public BackendCompiler getDefaultCompiler() {
-    createCompilers();
+    if (myRegisteredCompilers.isEmpty()) {
+      collectCompilers(); // this will properly initialize myDefaultJavaCompiler
+    }
     return myDefaultJavaCompiler;
   }
 
@@ -946,7 +934,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
       if (!ok) {
         final String initialPatternString = patternsToString(getRegexpPatterns());
-        final String message = CompilerBundle.message(
+        final String message = JavaCompilerBundle.message(
           "message.resource.patterns.format.changed",
           ApplicationNamesInfo.getInstance().getProductName(),
           initialPatternString,
@@ -954,7 +942,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
           CommonBundle.getCancelButtonText()
         );
         final String wildcardPatterns = Messages.showInputDialog(
-          myProject, message, CompilerBundle.message("pattern.conversion.dialog.title"), Messages.getWarningIcon(), initialPatternString, new InputValidator() {
+          myProject, message, JavaCompilerBundle.message("pattern.conversion.dialog.title"), Messages.getWarningIcon(), initialPatternString, new InputValidator() {
           @Override
           public boolean checkInput(String inputString) {
             return true;
@@ -978,8 +966,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
             }
 
             if (malformedPatterns.length() > 0) {
-              Messages.showErrorDialog(CompilerBundle.message("error.bad.resource.patterns", malformedPatterns.toString()),
-                                       CompilerBundle.message("bad.resource.patterns.dialog.title"));
+              Messages.showErrorDialog(JavaCompilerBundle.message("error.bad.resource.patterns", malformedPatterns.toString()),
+                                       JavaCompilerBundle.message("bad.resource.patterns.dialog.title"));
               removeWildcardPatterns();
               return false;
             }

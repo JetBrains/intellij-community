@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class ForcedCompilationTest extends JpsBuildTestCase {
   public void testRecompileDependentAfterForcedCompilation() {
     String srcRoot = PathUtil.getParentPath(createFile("src/A.java", "class A{ { new B(); } }"));

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderInfo;
 
@@ -53,7 +54,7 @@ public class OpenInSceneBuilderAction extends AnAction {
       commandLine.createProcess();
     }
     catch (Throwable ex) {
-      Messages.showErrorDialog("Failed to start SceneBuilder: " + commandLine.getCommandLineString(), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(JavaFXBundle.message("javafx.failed.to.start.scene.builder.error", commandLine.getCommandLineString()), CommonBundle.getErrorTitle());
     }
   }
 

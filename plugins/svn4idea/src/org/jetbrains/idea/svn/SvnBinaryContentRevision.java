@@ -20,8 +20,7 @@ class SvnBinaryContentRevision extends SvnContentRevision implements BinaryConte
   }
 
   @Override
-  @Nullable
-  public byte[] getBinaryContent() throws VcsException {
+  public byte @Nullable [] getBinaryContent() throws VcsException {
     return getContentAsBytes();
   }
 

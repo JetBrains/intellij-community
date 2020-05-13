@@ -35,9 +35,8 @@ public class JqlHighlighter extends SyntaxHighlighterBase {
     return new JqlLexer();
   }
 
-  @NotNull
   @Override
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     return pack(KEYS.get(tokenType));
   }
 }

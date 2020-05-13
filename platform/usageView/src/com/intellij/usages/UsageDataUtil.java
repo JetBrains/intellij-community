@@ -26,8 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class UsageDataUtil {
-  @Nullable
-  public static VirtualFile[] provideVirtualFileArray(Usage[] usages, UsageTarget[] usageTargets) {
+  public static VirtualFile @Nullable [] provideVirtualFileArray(Usage[] usages, UsageTarget[] usageTargets) {
     if (usages == null && usageTargets == null) {
       return null;
     }

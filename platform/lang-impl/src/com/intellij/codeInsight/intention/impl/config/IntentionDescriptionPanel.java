@@ -32,7 +32,7 @@ import java.util.List;
 
 // used in Rider
 public class IntentionDescriptionPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionDescriptionPanel");
+  private static final Logger LOG = Logger.getInstance(IntentionDescriptionPanel.class);
   private JPanel myPanel;
 
   private JPanel myAfterPanel;
@@ -46,8 +46,8 @@ public class IntentionDescriptionPanel {
   @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
 
   public IntentionDescriptionPanel() {
-    myBeforePanel.setBorder(IdeBorderFactory.createTitledBorder("Before:", false, JBUI.insetsTop(8)).setShowLine(false));
-    myAfterPanel.setBorder(IdeBorderFactory.createTitledBorder("After:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myBeforePanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("border.title.before"), false, JBUI.insetsTop(8)).setShowLine(false));
+    myAfterPanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("border.title.after"), false, JBUI.insetsTop(8)).setShowLine(false));
     myPoweredByPanel.setBorder(IdeBorderFactory.createTitledBorder(
       CodeInsightBundle.message("powered.by"), false, JBUI.insetsTop(8)).setShowLine(false));
 
@@ -133,7 +133,7 @@ public class IntentionDescriptionPanel {
 
   private static void showUsages(final JPanel panel,
                                  final List<IntentionUsagePanel> usagePanels,
-                                 @Nullable final TextDescriptor[] exampleUsages) throws IOException {
+                                 final TextDescriptor @Nullable [] exampleUsages) throws IOException {
     GridBagConstraints gb = null;
     boolean reuse = exampleUsages != null && panel.getComponents().length == exampleUsages.length;
     if (!reuse) {

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * Not thread-safe.
  */
 public class SegmentArray {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.SegmentArray");
+  private static final Logger LOG = Logger.getInstance(SegmentArray.class);
   protected int[] myStarts;
   protected int[] myEnds;
 
@@ -76,8 +76,7 @@ public class SegmentArray {
     return currentArraySize;
   }
 
-  @NotNull
-  private static int[] reallocateArray(@NotNull int[] array, int index) {
+  private static int @NotNull [] reallocateArray(int @NotNull [] array, int index) {
     if (index < array.length) return array;
     return ArrayUtil.realloc(array, calcCapacity(array.length, index));
   }
@@ -165,8 +164,7 @@ public class SegmentArray {
     mySegmentCount -= endIndex - startIndex;
   }
 
-  @NotNull
-  protected int[] remove(@NotNull int[] array, int startIndex, int endIndex) {
+  protected int @NotNull [] remove(int @NotNull [] array, int startIndex, int endIndex) {
     if (endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
@@ -179,9 +177,8 @@ public class SegmentArray {
     mySegmentCount += segmentArray.getSegmentCount();
   }
 
-  @NotNull
-  protected static int[] insert(@NotNull int[] array,
-                                @NotNull int[] insertArray, int startIndex, int insertLength, int mySegmentCount) {
+  protected static int @NotNull [] insert(int @NotNull [] array,
+                                          int @NotNull [] insertArray, int startIndex, int insertLength, int mySegmentCount) {
     int[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if (startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);

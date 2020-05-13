@@ -29,7 +29,8 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Ignored Variables:"/>
+              <labelFor value="b576c"/>
+              <text resource-bundle="messages/IdeBundle" key="path.macro.ignored.variables"/>
             </properties>
           </component>
           <component id="b576c" class="javax.swing.JTextField" binding="myIgnoredVariables">
@@ -47,7 +48,7 @@
             <properties>
               <componentStyle value="SMALL"/>
               <fontColor value="BRIGHTER"/>
-              <text value="use ; to separate ignored variables"/>
+              <text resource-bundle="messages/IdeBundle" key="path.macro.use.semicolon"/>
             </properties>
           </component>
         </children>

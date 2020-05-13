@@ -29,9 +29,6 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JpsLibraryTableSerializer {
   private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPES_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("CLASSES", JpsOrderRootType.COMPILED, true),

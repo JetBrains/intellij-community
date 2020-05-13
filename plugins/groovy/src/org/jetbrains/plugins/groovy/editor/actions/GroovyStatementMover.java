@@ -134,7 +134,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
       }
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (stmtLevel && element instanceof GrCodeBlock) {
           final PsiElement lBrace = ((GrCodeBlock)element).getLBrace();
           if (nlsAfter(lBrace)) {

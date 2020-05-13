@@ -47,13 +47,6 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "instance.variable.may.not.be.initialized.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final Boolean junitTestCase = (Boolean)infos[0];
     if (junitTestCase.booleanValue()) {

@@ -50,7 +50,7 @@ public class PythonOverridingBuiltinReferenceResolveProvider implements PyOverri
           if (processor.getElements().isEmpty()) {
             final PyType objectType = PyBuiltinCache.getInstance(element).getObjectType();
             if (objectType != null) {
-              final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+              final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
               final List<? extends RatedResolveResult> results =
                 objectType.resolveMember(PyNames.__CLASS__, element, AccessDirection.of(element), resolveContext);
               if (results != null) {

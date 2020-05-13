@@ -33,7 +33,7 @@ import java.util.Set;
  * @author peter
  */
 class MemoryDiskConflictResolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.MemoryDiskConflictResolver");
+  private static final Logger LOG = Logger.getInstance(MemoryDiskConflictResolver.class);
 
   private final Set<VirtualFile> myConflicts = new LinkedHashSet<>();
   private Throwable myConflictAppeared;

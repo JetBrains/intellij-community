@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.redundantCast;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -46,7 +50,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, block)) {
           if (!isVariableTypeChangeSafeForReference(cast, castType, reference)) return;
         }
-        String message = InspectionsBundle
+        String message = JavaBundle
           .message("inspection.cast.can.be.removed.narrowing.variable.type.message", variable.getName(), castType.getPresentableText());
         holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(variable, castType, isOnTheFly));
       }
@@ -113,13 +117,13 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.name", myVariableName, myType);
+      return JavaBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.name", myVariableName, myType);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.family.name");
+      return JavaBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.family.name");
     }
 
     @Override

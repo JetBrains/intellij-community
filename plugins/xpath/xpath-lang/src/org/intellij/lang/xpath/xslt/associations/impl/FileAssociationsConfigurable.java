@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ public final class FileAssociationsConfigurable implements SearchableConfigurabl
 
   @Override
   public String getDisplayName() {
-    return "XSLT File Associations";
+    return XPathBundle.message("configurable.FileAssociationsConfigurable.display.name");
   }
 
   @Override

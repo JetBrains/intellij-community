@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class MockVcsContextFactory extends VcsContextFactoryImpl {
 
-  @NotNull private final VirtualFileSystem myFileSystem;
+  @NotNull
+  private final VirtualFileSystem myFileSystem;
 
   public MockVcsContextFactory(@NotNull VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;

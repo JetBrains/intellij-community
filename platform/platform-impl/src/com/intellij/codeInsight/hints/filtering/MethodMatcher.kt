@@ -56,7 +56,7 @@ object MatcherConstructor {
     val trimmedMatcher = matcher.trim()
     if (trimmedMatcher.isEmpty()) return null
 
-    val openParenthIndex = trimmedMatcher.indexOf('(')
+    val openParenthIndex = trimmedMatcher.lastIndexOf('(')
     if (openParenthIndex < 0) {
       return Couple(trimmedMatcher, "")
     }
@@ -72,8 +72,8 @@ object MatcherConstructor {
   }
   
   private fun getParamsMatcher(matcher: String): String? {
-    val openBraceIndex = matcher.indexOf("(")
-    val closeBraceIndex = matcher.indexOf(")")
+    val openBraceIndex = matcher.lastIndexOf("(")
+    val closeBraceIndex = matcher.lastIndexOf(")")
 
     if (openBraceIndex >= 0 && closeBraceIndex > 0) {
       return matcher.substring(openBraceIndex, closeBraceIndex + 1).trim()

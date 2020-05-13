@@ -25,6 +25,6 @@ import java.lang.annotation.Target;
  * Used to indicate that a method could be called in both AWT and background threads
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledInAny {
 }

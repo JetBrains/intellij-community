@@ -33,7 +33,7 @@ import org.jetbrains.annotations.TestOnly;
  * @author dsl
  */
 public abstract class IntroduceHandlerBase implements RefactoringActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.IntroduceHandlerBase");
+  private static final Logger LOG = Logger.getInstance(IntroduceHandlerBase.class);
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
@@ -48,7 +48,7 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length >= 1 && elements[0] instanceof PsiExpression, "incorrect invoke() parameters");
     final PsiElement tempExpr = elements[0];
     final Editor editor;

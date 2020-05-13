@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -40,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * @author Dmitry Batkovich
@@ -48,6 +35,10 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
   private static final Logger LOG = Logger.getInstance(KeyAwareInspectionViewAction.class);
 
   public KeyAwareInspectionViewAction(String name) {
+    this(() -> name);
+  }
+
+  public KeyAwareInspectionViewAction(@NotNull Supplier<String> name) {
     super(name);
   }
 
@@ -68,7 +59,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
   public static class DisableInspection extends KeyAwareInspectionViewAction {
     public DisableInspection() {
-      super(DisableInspectionToolAction.NAME);
+      super(DisableInspectionToolAction.getNameText());
     }
 
     @Override
@@ -95,18 +86,23 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
           }
         }
 
-        InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(view.getProject(), it -> {
-          for (PsiElement element : files) {
-            it.disableTool(key.toString(), element);
-          }
-        });
+        if (files.isEmpty()) {
+          view.getCurrentProfile().modifyProfile(it -> it.setToolEnabled(key.toString(), false));
+        }
+        else {
+          InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(view.getProject(), it -> {
+            for (PsiElement element : files) {
+              it.disableTool(key.toString(), element);
+            }
+          });
+        }
       }
     }
   }
 
   public static class RunInspectionOn extends KeyAwareInspectionViewAction {
     public RunInspectionOn() {
-      super(InspectionsBundle.message("run.inspection.on.file.intention.text"));
+      super(InspectionsBundle.messagePointer("run.inspection.on.file.intention.text"));
     }
 
     @Override

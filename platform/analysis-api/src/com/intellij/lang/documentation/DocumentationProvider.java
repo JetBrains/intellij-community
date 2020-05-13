@@ -3,14 +3,19 @@ package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Provides documentation for PSI elements.
@@ -99,6 +104,33 @@ public interface DocumentationProvider {
     return generateDoc(element, originalElement);
   }
 
+  /**
+   * @deprecated Override {@link #generateRenderedDoc(PsiDocCommentBase)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  default @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
+    return null;
+  }
+
+  /**
+   * This is used to display rendered documentation in editor, in place of corresponding documentation comment's text.
+   *
+   * @see #collectDocComments(PsiFile, Consumer)
+   */
+  @ApiStatus.Experimental
+  default @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+    PsiElement target = comment.getOwner();
+    return generateRenderedDoc(target == null ? comment : target);
+  }
+
+  /**
+   * This defines documentation comments in file, which can be rendered in place. HTML content to be displayed will be obtained using
+   * {@link #generateRenderedDoc(PsiDocCommentBase)} method.
+   */
+  @ApiStatus.Experimental
+  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {}
+
   @Nullable
   default PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null;
@@ -117,5 +149,27 @@ public interface DocumentationProvider {
   @Nullable
   default PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
+  }
+
+  /**
+   * Override this method if standard platform's choice for target PSI element to show documentation for (element either declared or
+   * referenced at target offset) isn't suitable for your language. For example, it could be a keyword where there's no
+   * {@link com.intellij.psi.PsiReference}, but for which users might benefit from context help.
+   *
+   * @param targetOffset equals to caret offset for 'Quick Documentation' action, and to offset under mouse cursor for documentation shown
+   *                     on mouse hover
+   * @param contextElement the leaf PSI element in {@code file} at target offset
+   * @return target PSI element to show documentation for, or {@code null} if it should be determined by standard platform's logic (default
+   * behaviour)
+   */
+  @Nullable
+  default PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
+                                                   @NotNull final PsiFile file,
+                                                   @Nullable PsiElement contextElement,
+                                                   int targetOffset) {
+    //noinspection deprecation
+    return (this instanceof DocumentationProviderEx)
+           ? ((DocumentationProviderEx)this).getCustomDocumentationElement(editor, file, contextElement)
+           : null;
   }
 }

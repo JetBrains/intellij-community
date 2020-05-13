@@ -106,6 +106,12 @@ public class JsonSchemaResolver {
             value = getValue(defs);
             continue;
           }
+
+          JsonPropertyAdapter defs9 = findProperty((JsonObjectValueAdapter)value, JsonSchemaObject.DEFINITIONS_v9);
+          if (defs9 != null) {
+            value = getValue(defs9);
+            continue;
+          }
           return null;
         }
       }

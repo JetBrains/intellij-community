@@ -43,9 +43,8 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
     final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<PsiType>() {
       private final Set<PsiType> myProcessed = new HashSet<>();
 
-      @Nullable
       @Override
-      public PsiType visitType(PsiType type) {
+      public PsiType visitType(@NotNull PsiType type) {
         if (!(type instanceof PsiPrimitiveType) && PsiTypesUtil.isDenotableType(type, position) && myProcessed.add(type)) {
           int priority = type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? 1 : 1000 - myProcessed.size();
           consumer.consume(PrioritizedLookupElement.withPriority(PsiTypeLookupItem.createLookupItem(type, position), priority));

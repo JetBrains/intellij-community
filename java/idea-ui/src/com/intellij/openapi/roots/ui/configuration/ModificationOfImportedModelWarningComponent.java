@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class ModificationOfImportedModelWarningComponent {
   private final JLabel myLabel;
 

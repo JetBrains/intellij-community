@@ -29,9 +29,8 @@ public class DomFileElementNode extends BaseDomElementNode {
     myFileElement = fileElement;
   }
 
-  @NotNull
   @Override
-  public SimpleNode[] getChildren() {
+  public SimpleNode @NotNull [] getChildren() {
     return doGetChildren(myFileElement.getRootElement());
   }
 

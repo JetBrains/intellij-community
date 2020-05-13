@@ -1,13 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SpeedSearchComparator;
+import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
@@ -44,9 +48,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author max
- */
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(OptionTableWithPreviewPanel.class);
 
@@ -279,7 +280,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     //levelColumn.setResizable(false);
 
     final Dimension valueSize = new JLabel(ApplicationBundle.message("option.table.sizing.text")).getPreferredSize();
-    treeTable.setPreferredScrollableViewportSize(new Dimension(maxWidth + valueSize.width + 10, 20));
+    treeTable.setPreferredScrollableViewportSize(JBUI.size(maxWidth + valueSize.width + 10, 20));
 
     return treeTable;
   }
@@ -328,7 +329,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     addOption(fieldName, title, null);
   }
 
-  protected void addOption(@NotNull String fieldName, @NotNull String title, @NotNull String[] options, @NotNull int[] values) {
+  protected void addOption(@NotNull String fieldName, @NotNull String title, String @NotNull [] options, int @NotNull [] values) {
     addOption(fieldName, title, null, options, values);
   }
 
@@ -347,7 +348,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
-                           @NotNull String[] options, @NotNull int[] values) {
+                           String @NotNull [] options, int @NotNull [] values) {
     myOptions.add(new SelectionOption(null, fieldName, title, groupName, null, null, options, values));
   }
 
@@ -443,8 +444,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   private class SelectionOption extends FieldOption {
-    @NotNull final String[] options;
-    @NotNull final int[] values;
+    final String @NotNull [] options;
+    final int @NotNull [] values;
 
     SelectionOption(Class<? extends CustomCodeStyleSettings> clazz,
                            @NotNull String fieldName,
@@ -452,8 +453,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                            @Nullable String groupName,
                            @Nullable OptionAnchor anchor,
                            @Nullable String anchorFiledName,
-                           @NotNull String[] options,
-                           @NotNull int[] values) {
+                           String @NotNull [] options,
+                           int @NotNull [] values) {
       super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
       this.options = options;
       this.values = values;
@@ -499,8 +500,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
                      @NotNull String title,
-                     @Nullable String groupName, 
-                     @Nullable OptionAnchor anchor, 
+                     @Nullable String groupName,
+                     @Nullable OptionAnchor anchor,
                      @Nullable String anchorFiledName,
                      int minValue,
                      int maxValue,
@@ -520,7 +521,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       }
       catch (IllegalAccessException e) {
         return null;
-      }      
+      }
     }
 
     @Override
@@ -899,7 +900,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
     TableCellEditor editor = myTreeTable.getCellEditor();
     if (editor != null && !editor.stopCellEditing()) {
-      throw new ConfigurationException("Editing cannot be stopped");
+      throw new ConfigurationException(LangBundle.message("dialog.message.editing.cannot.be.stopped"));
     }
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();

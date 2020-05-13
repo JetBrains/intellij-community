@@ -18,19 +18,20 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 
 import java.util.List;
 
 public class JavaUnresolvableLocalCollisionDetector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector");
+  private static final Logger LOG = Logger.getInstance(JavaUnresolvableLocalCollisionDetector.class);
 
   private JavaUnresolvableLocalCollisionDetector() {
   }
 
   public static void findCollisions(final PsiElement element, final String newName, final List<? super UsageInfo> result) {
-    if (!(element instanceof PsiLocalVariable || element instanceof PsiParameter)) {
+    if (!PsiUtil.isJvmLocalVariable(element)) {
       return;
     }
 

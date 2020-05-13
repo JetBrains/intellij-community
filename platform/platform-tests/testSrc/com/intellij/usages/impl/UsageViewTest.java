@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -33,16 +33,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.ProjectRule;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,14 +56,16 @@ public class UsageViewTest extends BasePlatformTestCase {
     // sick and tired of hunting tests leaking documents
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
 
-    Set<Object> alreadyLeaking = new THashSet<>(TObjectHashingStrategy.IDENTITY);
+    Set<Object> alreadyLeaking = new THashSet<>(ContainerUtil.identityStrategy());
     Condition<Object> isReallyLeak = file -> {
       if (file instanceof PsiFile) {
         if (!((PsiFile)file).isPhysical()) {
           return false;
         }
         Project project = ((PsiFile)file).getProject();
-        System.err.println(project + " already leaking; its creation trace: " + HeavyPlatformTestCase.getCreationPlace(project));
+        if (alreadyLeaking.add(project)) {
+          System.err.println(project + " already leaking; its creation trace: " + ProjectRule.getCreationPlace(project));
+        }
       }
       alreadyLeaking.add(file);
       return false;
@@ -238,7 +240,7 @@ public class UsageViewTest extends BasePlatformTestCase {
   }
 
   @NotNull
-  private UsageViewImpl createUsageView(@NotNull Usage... usages) {
+  private UsageViewImpl createUsageView(Usage @NotNull ... usages) {
     UsageViewImpl usageView =
       (UsageViewImpl)UsageViewManager.getInstance(getProject())
         .createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.openapi.util.ClassExtension;
@@ -132,8 +118,8 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null && host.supportsPerl5EmbeddedComments();
   }
 
-  public boolean supportsPythonConditionalRefs(@Nullable final RegExpPyCondRef condRef) {
-    final RegExpLanguageHost host = findRegExpHost(condRef);
+  public boolean supportsConditionals(@Nullable final RegExpConditional conditional) {
+    final RegExpLanguageHost host = findRegExpHost(conditional);
     return host != null && host.supportsPythonConditionalRefs();
   }
 
@@ -155,6 +141,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public boolean isValidCategory(@NotNull final PsiElement element, @NotNull String category) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.isValidCategory(category) : myDefaultProvider.isValidCategory(category);
+  }
+
+  public boolean isValidPropertyName(@NotNull PsiElement element, @NotNull String type) {
+    final RegExpLanguageHost host = findRegExpHost(element);
+    return host == null || host.isValidPropertyName(type);
   }
   
   public boolean isValidPropertyValue(@NotNull PsiElement element, @NotNull String propertyName, @NotNull String propertyValue) {
@@ -189,14 +180,12 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host.getQuantifierValue(valueElement);
   }
 
-  @NotNull
-  public String[][] getAllKnownProperties(@NotNull final PsiElement element) {
+  public String[] @NotNull [] getAllKnownProperties(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getAllKnownProperties() : myDefaultProvider.getAllKnownProperties();
   }
 
-  @NotNull
-  public String[][] getAllPropertyValues(@NotNull PsiElement element, @NotNull String propertyName) {
+  public String[] @NotNull [] getAllPropertyValues(@NotNull PsiElement element, @NotNull String propertyName) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getAllPropertyValues(propertyName) : RegExpLanguageHost.EMPTY_COMPLETION_ITEMS_ARRAY;
   }
@@ -207,8 +196,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null ?  host.getPropertyDescription(name) : myDefaultProvider.getPropertyDescription(name);
   }
 
-  @NotNull
-  String[][] getKnownCharacterClasses(@NotNull final PsiElement element) {
+  String[] @NotNull [] getKnownCharacterClasses(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getKnownCharacterClasses() : myDefaultProvider.getKnownCharacterClasses();
   }

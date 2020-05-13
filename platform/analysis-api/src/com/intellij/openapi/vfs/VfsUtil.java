@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
+  private static final Logger LOG = Logger.getInstance(VfsUtil.class);
 
   /**
    * Specifies an average delay between a file system event and a moment the IDE gets pinged about it by fsnotifier.
@@ -43,8 +43,7 @@ public class VfsUtil extends VfsUtilCore {
     file.setBinaryContent(text.getBytes(charset.name()));
   }
 
-  @NotNull
-  public static byte[] toByteArray(@NotNull VirtualFile file, @NotNull String text) throws IOException {
+  public static byte @NotNull [] toByteArray(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     if (text.isEmpty()) {
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
@@ -114,8 +113,7 @@ public class VfsUtil extends VfsUtilCore {
    * @param files array of files
    * @return array of common ancestors for passed files
    */
-  @NotNull
-  public static VirtualFile[] getCommonAncestors(@NotNull VirtualFile[] files) {
+  public static VirtualFile @NotNull [] getCommonAncestors(VirtualFile @NotNull [] files) {
     // Separate files by first component in the path.
     HashMap<VirtualFile,Set<VirtualFile>> map = new HashMap<>();
     for (VirtualFile aFile : files) {
@@ -211,7 +209,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @Nullable
   private static VirtualFile findFile(@NotNull String filePath, boolean refreshIfNeeded) {
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem fileSystem = StandardFileSystems.local();
     VirtualFile virtualFile = fileSystem.findFileByPath(filePath);
     if (refreshIfNeeded && (virtualFile == null || !virtualFile.isValid())) {
       virtualFile = fileSystem.refreshAndFindFileByPath(filePath);
@@ -318,8 +316,7 @@ public class VfsUtil extends VfsUtilCore {
     return dir.createChildData(requestor, getNextAvailableName(dir, prefix, extension));
   }
 
-  @NotNull
-  public static String[] filterNames(@NotNull String[] names) {
+  public static String @NotNull [] filterNames(String @NotNull [] names) {
     int filteredCount = 0;
     for (String string : names) {
       if (isBadName(string)) filteredCount++;
@@ -379,7 +376,7 @@ public class VfsUtil extends VfsUtilCore {
   @NotNull
   public static List<VirtualFile> collectChildrenRecursively(@NotNull VirtualFile root) {
     List<VirtualFile> result = new ArrayList<>();
-    visitChildrenRecursively(root, new VirtualFileVisitor<Object>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+    visitChildrenRecursively(root, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         result.add(file);
@@ -419,8 +416,7 @@ public class VfsUtil extends VfsUtilCore {
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 
-  @NotNull
-  public static VirtualFile[] getChildren(@NotNull VirtualFile dir) {
+  public static VirtualFile @NotNull [] getChildren(@NotNull VirtualFile dir) {
     VirtualFile[] children = dir.getChildren();
     return children == null ? VirtualFile.EMPTY_ARRAY : children;
   }
@@ -430,7 +426,7 @@ public class VfsUtil extends VfsUtilCore {
     List<VirtualFile> result = null;
     for (VirtualFile child : dir.getChildren()) {
       if (filter.accept(child)) {
-        if (result == null) result = ContainerUtil.newSmartList();
+        if (result == null) result = new SmartList<>();
         result.add(child);
       }
     }
@@ -458,7 +454,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
+  public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     List<VirtualFile> list = ContainerUtil.filter(files, Conditions.notNull());
     if (list.isEmpty()) {
       return Collections.emptyList();
@@ -494,10 +490,19 @@ public class VfsUtil extends VfsUtilCore {
    *
    * @see VirtualFile#refresh(boolean, boolean)
    */
-  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     List<VirtualFile> list = markDirty(recursive, reloadChildren, files);
     if (list.isEmpty()) return;
     LocalFileSystem.getInstance().refreshFiles(list, async, recursive, null);
+  }
+
+  /**
+   * @see #markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)
+   */
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, File @NotNull ... files) {
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFile[] virtualFiles = ContainerUtil.map(files, fileSystem::refreshAndFindFileByIoFile, new VirtualFile[files.length]);
+    markDirtyAndRefresh(async, recursive, reloadChildren, virtualFiles);
   }
 
   @NotNull

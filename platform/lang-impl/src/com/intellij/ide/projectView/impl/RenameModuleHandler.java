@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public class RenameModuleHandler implements RenameHandler, TitledHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
+  private static final Logger LOG = Logger.getInstance(RenameModuleHandler.class);
 
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
@@ -43,7 +43,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, @NotNull DataContext dataContext) {
+  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project,

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -28,20 +29,10 @@ import java.util.*;
 public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
 
-  protected ConvertParameterToLocalQuickFix createFix() {
-    return new ConvertParameterToLocalQuickFix();
-  }
-
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CLASS_LAYOUT_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.parameter.can.be.local.display.name");
+    return InspectionsBundle.message("group.names.class.structure");
   }
 
   @Override
@@ -73,16 +64,16 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
   }
 
   @NotNull
-  private ProblemDescriptor createProblem(@NotNull InspectionManager manager,
-                                          @NotNull PsiIdentifier identifier,
-                                          boolean isOnTheFly) {
+  private static ProblemDescriptor createProblem(@NotNull InspectionManager manager,
+                                                 @NotNull PsiIdentifier identifier,
+                                                 boolean isOnTheFly) {
     return manager.createProblemDescriptor(
       identifier,
-      InspectionsBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
+      JavaBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
       true,
       ProblemHighlightType.LIKE_UNUSED_SYMBOL,
       isOnTheFly,
-      createFix()
+      new ConvertParameterToLocalQuickFix()
     );
   }
 
@@ -151,6 +142,11 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      WriteAction.run(() -> super.applyFix(project, descriptor));
+    }
+
+    @Override
     protected PsiElement applyChanges(@NotNull final Project project,
                                       @NotNull final String localName,
                                       @Nullable final PsiExpression initializer,
@@ -167,7 +163,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         for (int i = 0; i < parameters.length; i++) {
           PsiParameter psiParameter = parameters[i];
           if (psiParameter == parameter) continue;
-          info.add(new ParameterInfoImpl(i, psiParameter.getName(), psiParameter.getType()));
+          info.add(ParameterInfoImpl.create(i).withName(psiParameter.getName()).withType(psiParameter.getType()));
         }
         final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
@@ -183,9 +179,10 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
           }
 
           @Override
-          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+          protected void performRefactoring(UsageInfo @NotNull [] usages) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-            newDeclaration = moveDeclaration(elementFactory, localName, parameter, initializer, action, references);
+            newDeclaration = WriteAction.compute(
+              () -> moveDeclaration(elementFactory, localName, parameter, initializer, action, references));
             super.performRefactoring(usages);
           }
         }

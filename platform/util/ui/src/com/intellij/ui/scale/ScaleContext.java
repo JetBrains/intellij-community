@@ -94,7 +94,7 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
    * Creates a context with the provided scale factors
    */
   @NotNull
-  public static ScaleContext create(@NotNull Scale... scales) {
+  public static ScaleContext create(Scale @NotNull ... scales) {
     ScaleContext ctx = create();
     for (Scale s : scales) ctx.setScale(s);
     return ctx;

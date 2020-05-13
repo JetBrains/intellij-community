@@ -17,9 +17,6 @@ package com.intellij.ide.browsers.firefox;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class FirefoxProfile {
   private final String myName;
   private final String myPath;

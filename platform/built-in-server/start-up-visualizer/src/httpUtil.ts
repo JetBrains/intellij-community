@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-export function loadJson(url: string, processed: (() => void) | null, notificationManager: any): Promise<any> {
-  console.log("load", url)
+import { Notification } from "element-ui"
+
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+export function loadJson(url: string, processed: (() => void) | null): Promise<any> {
+  console.log(`load`, url)
 
   function showError(reason: string) {
-    notificationManager.error({
+    Notification.error({
       title: "Error",
       message: `Cannot load data from "${url}": ${reason}`,
     })

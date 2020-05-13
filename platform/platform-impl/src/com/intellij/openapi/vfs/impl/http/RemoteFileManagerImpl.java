@@ -29,9 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class RemoteFileManagerImpl extends RemoteFileManager implements Disposable {
   private final LocalFileStorage myStorage;
 

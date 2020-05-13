@@ -19,11 +19,9 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
@@ -64,13 +62,12 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   private static boolean isFilteredByCurrentUser(@NotNull VcsLogFilterCollection filters) {
     VcsLogUserFilter userFilter = filters.get(VcsLogFilterCollection.USER_FILTER);
     if (userFilter == null) return false;
-    Collection<String> filterByName = ((VcsLogUserFilterImpl)userFilter).getUserNamesForPresentation();
-    if (Collections.singleton(VcsLogFilterObject.ME).containsAll(filterByName)) return true;
+    if (Collections.singleton(VcsLogFilterObject.ME).containsAll(userFilter.getValuesAsText())) return true;
     return false;
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull public static final String ID = "MY_COMMITS";
+    @NotNull public static final String ID = "MY_COMMITS"; // NON-NLS
 
     @NotNull
     @Override
@@ -87,7 +84,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public String getTitle() {
-      return "My Commits";
+      return VcsLogBundle.message("vcs.log.action.highlight.my.commits");
     }
 
     @Override

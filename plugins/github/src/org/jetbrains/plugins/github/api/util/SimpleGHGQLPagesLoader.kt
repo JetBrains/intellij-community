@@ -10,8 +10,9 @@ import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 
 class SimpleGHGQLPagesLoader<T>(executor: GithubApiRequestExecutor,
                                 requestProducer: (GHGQLRequestPagination) -> GithubApiRequest.Post<GHGQLPagedRequestResponse<T>>,
+                                supportsTimestampUpdates: Boolean = false,
                                 pageSize: Int = GithubRequestPagination.DEFAULT_PAGE_SIZE)
-  : GHGQLPagesLoader<GHGQLPagedRequestResponse<T>, List<T>>(executor, requestProducer, pageSize) {
+  : GHGQLPagesLoader<GHGQLPagedRequestResponse<T>, List<T>>(executor, requestProducer, supportsTimestampUpdates, pageSize) {
 
   fun loadAll(progressIndicator: ProgressIndicator): List<T> {
     val list = mutableListOf<T>()

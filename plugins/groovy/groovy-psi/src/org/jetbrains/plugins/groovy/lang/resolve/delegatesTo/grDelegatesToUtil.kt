@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.openapi.util.Key
@@ -15,20 +15,21 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureSamParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 
 @JvmField
 val DELEGATES_TO_KEY: Key<DelegatesToInfo> = Key.create("groovy.closure.delegatesTo")
-@JvmField
-val DELEGATES_TO_TYPE_KEY: Key<String> = Key.create<String>("groovy.closure.delegatesTo.type")
-@JvmField
-val DELEGATES_TO_STRATEGY_KEY: Key<Int> = Key.create<Int>("groovy.closure.delegatesTo.strategy")
 
-val defaultDelegatesToInfo: DelegatesToInfo = DelegatesToInfo(null, Closure.OWNER_ONLY)
+@JvmField
+val DELEGATES_TO_TYPE_KEY: Key<String> = Key.create("groovy.closure.delegatesTo.type")
+
+@JvmField
+val DELEGATES_TO_STRATEGY_KEY: Key<Int> = Key.create("groovy.closure.delegatesTo.strategy")
 
 fun getDelegatesToInfo(closure: GrFunctionalExpression): DelegatesToInfo? = CachedValuesManager.getCachedValue(closure) {
   Result.create(doGetDelegatesToInfo(closure), PsiModificationTracker.MODIFICATION_COUNT)
@@ -80,13 +81,13 @@ fun getFromValue(delegatesTo: PsiAnnotation): PsiType? {
 
 fun getFromTarget(parameterList: PsiParameterList,
                   delegatesTo: PsiAnnotation,
-                  mapping: ArgumentMapping): PsiType? {
+                  mapping: ArgumentMapping<PsiCallParameter>): PsiType? {
   val target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target") ?: return null
 
   val parameter = findTargetParameter(parameterList, target) ?: return null
 
   val type = mapping.arguments.firstOrNull {
-    mapping.targetParameter(it) == parameter
+    mapping.targetParameter(it)?.psi == parameter
   }?.type ?: return null
 
   val index = GrAnnotationUtil.inferIntegerAttribute(delegatesTo, "genericTypeIndex")
@@ -134,7 +135,7 @@ fun getFromType(call: GrCall, result: GroovyResolveResult, delegatesTo: PsiAnnot
   val type = JavaPsiFacade.getElementFactory(context.project).createTypeFromText(typeValue, context)
   val substitutor = if (result is GroovyMethodResult) {
     result.candidate?.let { candidate ->
-      ClosureAsAnonymousParameterEnhancer.substitutorIgnoringClosures(call, candidate, result)
+      ClosureSamParameterEnhancer.substitutorIgnoringClosures(call, candidate, result)
     } ?: result.partialSubstitutor
   }
   else {
@@ -145,8 +146,7 @@ fun getFromType(call: GrCall, result: GroovyResolveResult, delegatesTo: PsiAnnot
 
 fun getStrategyValue(strategy: PsiAnnotationMemberValue?): Int {
   if (strategy == null) return Closure.OWNER_FIRST
-  val text = strategy.text
-  return when (text) {
+  return when (val text = strategy.text) {
     "0" -> Closure.OWNER_FIRST
     "1" -> Closure.DELEGATE_FIRST
     "2" -> Closure.OWNER_ONLY

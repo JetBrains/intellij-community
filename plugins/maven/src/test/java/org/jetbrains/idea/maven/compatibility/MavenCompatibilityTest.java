@@ -12,7 +12,10 @@ import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -52,7 +55,7 @@ public abstract class MavenCompatibilityTest extends MavenImportingTestCase {
     Runnable runnable = () -> {
       try {
         TestLoggerFactory.onTestStarted();
-        assertEquals(myMavenVersion, MavenServerManager.getInstance().getCurrentMavenVersion());
+        assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(myProject).getMavenDistribution().getVersion());
         throwableRunnable.run();
         TestLoggerFactory.onTestFinished(true);
       }
@@ -89,7 +92,7 @@ public abstract class MavenCompatibilityTest extends MavenImportingTestCase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    myWrapperTestFixture = new MavenWrapperTestFixture(myMavenVersion);
+    myWrapperTestFixture = new MavenWrapperTestFixture(myProject, myMavenVersion);
     myWrapperTestFixture.setUp();
   }
 
@@ -111,6 +114,7 @@ public abstract class MavenCompatibilityTest extends MavenImportingTestCase {
   @Parameterized.Parameters(name = "with Maven-{0}")
   public static List<String[]> getMavenVersions() {
     return Arrays.asList(
+      new String[]{"3.6.3"},
       new String[]{"3.6.2"},
       new String[]{"3.6.1"},
       new String[]{"3.6.0"},

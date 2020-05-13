@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
@@ -15,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class IdeaWin32PerformanceTest {
+  private static final Logger LOG = Logger.getInstance(IdeaWin32PerformanceTest.class);
   private IdeaWin32 myDriver;
   private long myJavaTotal, myIdeaTotal;
 
@@ -38,12 +40,12 @@ public class IdeaWin32PerformanceTest {
       long loss = (myIdeaTotal - myJavaTotal) * 100 / myJavaTotal;
       String message = "home=" + path + " java.io=" + myJavaTotal / 1000 + "ms IdeaWin32=" + myIdeaTotal / 1000 + "ms loss=" + loss + "%";
       assertThat(loss).describedAs(message).isLessThan(10);
-      System.out.println(message);
+      LOG.debug(message);
     }
     else {
       long gain = (myJavaTotal - myIdeaTotal) * 100 / myJavaTotal;
       String message = "home=" + path + " java.io=" + myJavaTotal / 1000 + "ms IdeaWin32=" + myIdeaTotal / 1000 + "ms gain=" + gain + "%";
-      System.out.println(message);
+      LOG.debug(message);
     }
   }
 

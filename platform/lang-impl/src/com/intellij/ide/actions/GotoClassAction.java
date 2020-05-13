@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -11,7 +11,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.navigation.AnonymousElementProvider;
@@ -48,9 +47,10 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   public GotoClassAction() {
     //we need to change the template presentation to show the proper text for the action in Settings | Keymap
     Presentation presentation = getTemplatePresentation();
-    presentation.setText(GotoClassPresentationUpdater.getActionTitle() + "...");
-    presentation.setDescription(IdeBundle.message("go.to.class.action.description",
-                                                  StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), "/")));
+    presentation.setText(() -> IdeBundle.message("go.to.class.title.prefix", GotoClassPresentationUpdater.getActionTitle() + "..."));
+    presentation.setDescription(() -> IdeBundle.message("go.to.class.action.description",
+                                                        StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), "/")));
+    addTextOverride(ActionPlaces.MAIN_MENU, () -> GotoClassPresentationUpdater.getActionTitle() + "...");
   }
 
   @Override
@@ -60,7 +60,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
     boolean dumb = DumbService.isDumb(project);
     if (Registry.is("new.search.everywhere")) {
-      if (!dumb || new ClassSearchEverywhereContributor(project, null).isDumbAware()) {
+      if (!dumb || new ClassSearchEverywhereContributor(e).isDumbAware()) {
         showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e, true, true);
       }
       else {
@@ -101,9 +101,9 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     String pluralKinds = StringUtil.capitalize(
       StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), s -> StringUtil.pluralize(s), "/"));
     String title = IdeBundle.message("go.to.class.toolwindow.title", pluralKinds);
-    showNavigationPopup(e, model, new GotoActionCallback<Language>() {
+    showNavigationPopup(e, model, new GotoActionCallback<LanguageRef>() {
       @Override
-      protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNamePopup popup) {
+      protected ChooseByNameFilter<LanguageRef> createFilter(@NotNull ChooseByNamePopup popup) {
         return new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
       }
 
@@ -242,8 +242,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return current;
   }
 
-  @NotNull
-  private static PsiElement[] getAnonymousClasses(@NotNull PsiElement element) {
+  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
     for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
       final PsiElement[] elements = provider.getAnonymousElements(element);
       if (elements.length > 0) {

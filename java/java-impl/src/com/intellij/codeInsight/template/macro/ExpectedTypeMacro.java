@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
@@ -40,7 +40,7 @@ public class ExpectedTypeMacro extends Macro {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.expected.type");
+    return JavaBundle.message("macro.expected.type");
   }
 
   @Override
@@ -50,14 +50,14 @@ public class ExpectedTypeMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length == 0) return null;
     return new PsiTypeResult(types[0], context.getProject());
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length < 2) return null;
     Set<LookupElement> set = new LinkedHashSet<>();
@@ -67,8 +67,7 @@ public class ExpectedTypeMacro extends Macro {
     return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static PsiType[] getExpectedTypes(Expression[] params, final ExpressionContext context) {
+  private static PsiType @Nullable [] getExpectedTypes(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
     final Project project = context.getProject();

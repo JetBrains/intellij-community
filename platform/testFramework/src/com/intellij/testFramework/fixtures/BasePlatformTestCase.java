@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -23,9 +24,15 @@ import org.jetbrains.annotations.NotNull;
  * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/testing_plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
  *
  * @author peter
+ * @see CodeInsightFixtureTestCase for "heavy" tests that require access to the real FS or changes project roots.
  */
 public abstract class BasePlatformTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
+
+  @Override
+  public @NotNull Disposable getTestRootDisposable() {
+    return myFixture == null ? super.getTestRootDisposable() : myFixture.getTestRootDisposable();
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -124,8 +131,7 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
     return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, language, text, false, true);
   }
 
-  @NotNull
-  protected Module getModule() {
+  protected @NotNull Module getModule() {
     return myFixture.getModule();
   }
 }

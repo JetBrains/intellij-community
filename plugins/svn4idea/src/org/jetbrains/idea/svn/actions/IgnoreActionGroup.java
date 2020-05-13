@@ -85,7 +85,7 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
           add(myRemoveExtensionAction);
         }
 
-        e.getPresentation().setText(SvnBundle.message("group.RevertIgnoreChoicesGroup.text"));
+        e.getPresentation().setText(SvnBundle.messagePointer("group.RevertIgnoreChoicesGroup.text"));
       } else if (myHelperAction.allCanBeIgnored()) {
         final String ignoreExactlyName = (fileGroupInfo.oneFileSelected()) ?
                                          fileGroupInfo.getFileName() : SvnBundle.message("action.Subversion.Ignore.ExactMatch.text");
@@ -95,7 +95,7 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
           myAddExtensionAction.setActionText(fileGroupInfo.getExtensionMask());
           add(myAddExtensionAction);
         }
-        e.getPresentation().setText(SvnBundle.message("group.IgnoreChoicesGroup.text"));
+        e.getPresentation().setText(SvnBundle.messagePointer("group.IgnoreChoicesGroup.text"));
       }
     }
   }

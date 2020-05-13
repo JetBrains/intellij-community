@@ -206,12 +206,6 @@ public interface VcsLogProvider {
     return readMetadata(root, hashes);
   }
 
-  @Deprecated
-  default void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
-    throws VcsException {
-    throw new UnsupportedOperationException(this.getClass().getName() + ".readAllFullDetails is deprecated");
-  }
-
   /**
    * @deprecated replaced by {@link VcsLogProvider#readFullDetails(VirtualFile, List, Consumer)}.
    */

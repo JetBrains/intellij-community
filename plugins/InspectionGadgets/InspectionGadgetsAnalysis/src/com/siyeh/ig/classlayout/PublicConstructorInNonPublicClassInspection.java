@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,12 +34,6 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("public.constructor.in.non.public.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     return InspectionGadgetsBundle.message("public.constructor.in.non.public.class.problem.descriptor",
@@ -51,8 +46,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public InspectionGadgetsFix[] buildFixes(Object... infos) {
+  public InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiMethod constructor = (PsiMethod)infos[0];
     final PsiClass aClass = constructor.getContainingClass();
@@ -74,7 +68,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix constructor modifier";
+      return InspectionGadgetsBundle.message("set.constructor.modifier.fix.family.name");
     }
 
     @Override
@@ -108,6 +102,11 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isRecord() &&
+          (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method))) {
+        // compact and canonical constructors in record must be public, according to spec
         return;
       }
       if (containingClass.hasModifierProperty(PsiModifier.PUBLIC) ||

@@ -22,27 +22,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.file.FileLookupInfoProvider;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.index.ImageInfoIndex;
+import org.intellij.images.util.ImageInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
  */
 public class ImageLookupInfoProvider extends FileLookupInfoProvider {
-
   @Override
   public Couple<String> getLookupInfo(@NotNull VirtualFile file, Project project) {
-    final String[] s = new String[] {null};
-    ImageInfoIndex.processValues(file, (file1, value) -> {
-      s[0] = String.format("%sx%s", value.width, value.height);
-      return true;
-    }, project);
-
-    return s[0] == null ? null : Couple.of(file.getName(), s[0]);
+    ImageInfo imageInfo = ImageInfoIndex.getInfo(file, project);
+    return imageInfo != null ? Couple.of(file.getName(), String.format("%sx%s", imageInfo.width, imageInfo.height)) : null;
   }
 
-  @NotNull
   @Override
-  public FileType[] getFileTypes() {
+  public FileType @NotNull [] getFileTypes() {
     return new FileType[]{ImageFileTypeManager.getInstance().getImageFileType()};
   }
 }

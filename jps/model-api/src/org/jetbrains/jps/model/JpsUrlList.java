@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface JpsUrlList extends JpsElement {
   @NotNull
   List<String> getUrls();

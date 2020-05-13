@@ -26,7 +26,7 @@ class ConvertMultilineStringToSingleLineTest extends GrIntentionTestCase {
   final String basePath = TestUtils.testDataPath + "intentions/convertMultilineToSingleline/"
 
   ConvertMultilineStringToSingleLineTest() {
-    super(ConvertMultilineStringToSingleLineIntention.hint)
+    super(ConvertMultilineStringToSingleLineIntention.getHint())
   }
 
   void testSimple() { doTest(true) }

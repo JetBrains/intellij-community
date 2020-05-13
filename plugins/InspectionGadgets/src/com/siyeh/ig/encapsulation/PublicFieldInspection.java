@@ -56,20 +56,13 @@ public class PublicFieldInspection extends BaseInspection {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiField field = (PsiField)infos[0];
     fixes.add(new EncapsulateVariableFix(field.getName()));
     AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations, fixes);
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("public.field.display.name");
   }
 
   @Override

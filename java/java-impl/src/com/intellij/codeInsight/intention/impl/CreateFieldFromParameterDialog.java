@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -47,7 +47,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
     myTargetClass = targetClass;
     myFieldMayBeFinal = fieldMayBeFinal;
 
-    setTitle(CodeInsightBundle.message("dialog.create.field.from.parameter.title"));
+    setTitle(JavaBundle.message("dialog.create.field.from.parameter.title"));
 
     init();
   }
@@ -63,8 +63,8 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
       if (field.getName().equals(getEnteredName())) {
         int result = Messages.showOkCancelDialog(
           getContentPane(),
-          CodeInsightBundle.message("dialog.create.field.from.parameter.already.exists.text", getEnteredName()),
-          CodeInsightBundle.message("dialog.create.field.from.parameter.already.exists.title"),
+          JavaBundle.message("dialog.create.field.from.parameter.already.exists.text", getEnteredName()),
+          JavaBundle.message("dialog.create.field.from.parameter.already.exists.title"),
           Messages.getQuestionIcon());
         if (result == Messages.OK) {
           close(OK_EXIT_CODE);
@@ -186,7 +186,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    final JLabel typeLabel = new JLabel(CodeInsightBundle.message("dialog.create.field.from.parameter.field.type.label"));
+    final JLabel typeLabel = new JLabel(JavaBundle.message("dialog.create.field.from.parameter.field.type.label"));
     panel.add(typeLabel, gbConstraints);
     gbConstraints.gridx = 1;
     if (myTypes.length > 1) {
@@ -203,7 +203,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 1;
-    JLabel namePrompt = new JLabel(CodeInsightBundle.message("dialog.create.field.from.parameter.field.name.label"));
+    JLabel namePrompt = new JLabel(JavaBundle.message("dialog.create.field.from.parameter.field.name.label"));
     panel.add(namePrompt, gbConstraints);
 
     gbConstraints.gridwidth = 1;
@@ -227,7 +227,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.gridy = 0;
     gbConstraints.insets = JBUI.emptyInsets();
 
-    myCbFinal = new JCheckBox(CodeInsightBundle.message("dialog.create.field.from.parameter.declare.final.checkbox"));
+    myCbFinal = new JCheckBox(JavaBundle.message("dialog.create.field.from.parameter.declare.final.checkbox"));
     if (myFieldMayBeFinal) {
       myCbFinal.setSelected(PropertiesComponent.getInstance().isTrueValue(PROPERTY_NAME));
     }

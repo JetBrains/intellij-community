@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
@@ -28,11 +28,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * @author max
- */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
+  private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {
@@ -49,8 +46,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return an array with the root configurable group
    */
-  @NotNull
-  public static ConfigurableGroup[] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
+  public static ConfigurableGroup @NotNull [] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
     ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
     return new ConfigurableGroup[]{group};
   }
@@ -79,7 +75,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... groups) {
+  public void showSettingsDialog(@NotNull Project project, ConfigurableGroup @NotNull ... groups) {
     try {
       getDialog(project, Arrays.asList(groups), null).show();
     }
@@ -153,7 +149,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       group = null;
     }
 
-    Configurable configurableToSelect = idToSelect == null ? null : new ConfigurableVisitor.ByID(idToSelect).find(group);
+    Configurable configurableToSelect = idToSelect == null ? null : ConfigurableVisitor.findById(idToSelect, Collections.singletonList(group));
     SettingsDialogFactory.getInstance().create(getProject(project), Collections.singletonList(group), configurableToSelect, filter).show();
   }
 
@@ -241,7 +237,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false);
     }
     if (advancedInitialization != null) {
-      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {
+      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable() {
         @Override
         public void showNotify() {
           advancedInitialization.run();

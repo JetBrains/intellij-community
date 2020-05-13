@@ -1,18 +1,14 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('a')
-          PsiWhiteSpace(' ')
-          LITERAL
-            PsiElement(word)('c')
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('a')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('c')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('d')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('d')

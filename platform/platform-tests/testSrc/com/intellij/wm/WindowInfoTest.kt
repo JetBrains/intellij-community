@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.wm
 
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -24,7 +22,7 @@ internal class WindowInfoTest {
     a.id = "a"
     doSerializerTest("""<window_info id="a" />""", a)
 
-    a.isActive = true
+    a.isActiveOnStart = true
     doSerializerTest("""<window_info active="true" id="a" />""", a)
   }
 
@@ -41,7 +39,7 @@ internal class WindowInfoTest {
   }
 
   @Test
-  fun `floatingBounds`() {
+  fun floatingBounds() {
     val a = WindowInfoImpl()
     a.id = "a"
     a.floatingBounds = Rectangle(1, 42, 23, 4)
@@ -49,7 +47,7 @@ internal class WindowInfoTest {
   }
 
   @Test
-  fun `weight`() {
+  fun weight() {
     val a = WindowInfoImpl()
     a.id = "a"
     a.weight = 0.3f

@@ -275,7 +275,9 @@ public class StreamInlining {
     if (count3 == 1) {}
     long count4 = Stream.of(arr[0]).map(String::trim).count();
     if (<warning descr="Condition 'count4 == 1' is always 'true'">count4 == 1</warning>) {}
-    long count5 = Stream.of("foo", "bar", "baz", "qux").filter(s -> s.length() > 1).count();
+    long count5 = Stream.of("foo", "bar", "baz", "qux").filter(s -> <warning descr="Condition 's.length() > 1' is always 'true'">s.length() > 1</warning>).count();
+    long count5a = Stream.of("foo", "bar", "baz", "q").filter(s -> s.length() > 1).count();
+    long count5b = Stream.of("foo", "bar", "bazzz", "qx").filter(s -> <warning descr="Condition 's.length() > 1' is always 'true'">s.length() > 1</warning>).count();
     if (count5 == 4) {}
     if (<warning descr="Condition 'count5 < 0' is always 'false'">count5 < 0</warning>) {}
     if (<warning descr="Condition 'count5 > 4' is always 'false'">count5 > 4</warning>) {}
@@ -286,7 +288,7 @@ public class StreamInlining {
     long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!<warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning></warning>).count();
     if (<warning descr="Condition 'count7 == 0' is always 'false'">count7 == 0</warning>) {}
     if (<warning descr="Condition 'count7 == 1 || count7 == 2' is always 'true'">count7 == 1 || <warning descr="Condition 'count7 == 2' is always 'true' when reached">count7 == 2</warning></warning>) {}
-    long count8 = Stream.of("foo", "bar").filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).count();
+    long count8 = <warning descr="Result of 'Stream.of(\"foo\", \"bar\").filter(x -> x.isEmpty()).count()' is always '0'">Stream.of("foo", "bar").filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).count()</warning>;
     if (<warning descr="Condition 'count8 == 0' is always 'true'">count8 == 0</warning>) {}
     long count9 = list.stream().map(String::trim).count();
     if (count9 == 0) {}

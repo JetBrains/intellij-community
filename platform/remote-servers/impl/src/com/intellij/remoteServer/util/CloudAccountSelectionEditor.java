@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -109,7 +110,7 @@ public class CloudAccountSelectionEditor {
         }
       });
     }
-    JBPopupFactory.getInstance().createActionGroupPopup("New Account", group, DataManager.getInstance().getDataContext(myMainPanel),
+    JBPopupFactory.getInstance().createActionGroupPopup(CloudBundle.message("popup.title.new.account"), group, DataManager.getInstance().getDataContext(myMainPanel),
                                                         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
       .showUnderneathOf(myNewButton);
   }
@@ -167,7 +168,7 @@ public class CloudAccountSelectionEditor {
 
   public void validate() throws ConfigurationException {
     if (getSelectedAccount() == null) {
-      throw new ConfigurationException("Account required");
+      throw new ConfigurationException(CloudBundle.message("dialog.message.account.required"));
     }
   }
 

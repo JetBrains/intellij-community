@@ -42,7 +42,10 @@ public class GroovyOverrideImplementExploreUtil {
   }
 
   @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, Collection<? extends HierarchicalMethodSignature> allMethodSignatures, boolean toImplement, boolean skipImplemented) {
+  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass,
+                                                                              Collection<? extends HierarchicalMethodSignature> allMethodSignatures,
+                                                                              boolean toImplement,
+                                                                              boolean skipImplemented) {
     Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<>();
     Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();
@@ -84,12 +87,12 @@ public class GroovyOverrideImplementExploreUtil {
     return result;
   }
 
-  public static void processMethod(GrTypeDefinition aClass,
-                                    boolean skipImplemented,
-                                    Map<MethodSignature, PsiMethod> abstracts,
-                                    Map<MethodSignature, PsiMethod> finals,
-                                    Map<MethodSignature, PsiMethod> concretes,
-                                    PsiResolveHelper resolveHelper, HierarchicalMethodSignature signature, PsiMethod method) {
+  public static void processMethod(PsiClass aClass,
+                                   boolean skipImplemented,
+                                   Map<MethodSignature, PsiMethod> abstracts,
+                                   Map<MethodSignature, PsiMethod> finals,
+                                   Map<MethodSignature, PsiMethod> concretes,
+                                   PsiResolveHelper resolveHelper, HierarchicalMethodSignature signature, PsiMethod method) {
     PsiUtilCore.ensureValid(method);
 
     if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) return;

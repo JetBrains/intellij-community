@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -35,9 +36,11 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import icons.PythonIcons
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
@@ -67,16 +70,14 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   private var panels: List<PyAddSdkView> = emptyList()
 
   init {
-    title = "Add Python Interpreter"
+    title = PyBundle.message("python.sdk.add.python.interpreter.title")
   }
 
   override fun createCenterPanel(): JComponent {
     val sdks = existingSdks
       .filter { it.sdkType is PythonSdkType && !PythonSdkUtil.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
-    val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, module, sdks),
-                                           createAnacondaPanel(project, module),
-                                           PyAddSystemWideInterpreterPanel(module, existingSdks, context))
+    val panels = createPanels(sdks).toMutableList()
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
       .mapNotNull {
         it.safeCreateView(project = project, module = module, existingSdks = existingSdks, context=context)
@@ -85,6 +86,18 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     panels.addAll(extendedPanels)
     mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
     return mainPanel
+  }
+
+  private fun createPanels(sdks: List<Sdk>): List<PyAddSdkView> {
+    val venvPanel = createVirtualEnvPanel(project, module, sdks)
+    val condaPanel = createAnacondaPanel(project, module)
+    val systemWidePanel = PyAddSystemWideInterpreterPanel(module, existingSdks, context)
+    return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
+      listOf(condaPanel, venvPanel, systemWidePanel)
+    }
+    else {
+      listOf(venvPanel, condaPanel, systemWidePanel)
+    }
   }
 
   private fun <T> T.registerIfDisposable(): T = apply { (this as? Disposable)?.let { Disposer.register(disposable, it) } }
@@ -119,7 +132,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   }
 
   @Suppress("SuspiciousPackagePrivateAccess") //todo: remove suppression when everyone update to IDEA where IDEA-210216 is fixed
-  private val nextAction: Action = object : DialogWrapperAction("Next") {
+  private val nextAction: Action = object : DialogWrapperAction(PyBundle.message("python.sdk.next")) {
     override fun doAction(e: ActionEvent) {
       selectedPanel?.let {
         if (it.actions.containsKey(NEXT)) onNext()
@@ -133,7 +146,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   private val nextButton = lazy { createJButtonForAction(nextAction) }
 
   @Suppress("SuspiciousPackagePrivateAccess")
-  private val previousAction = object : DialogWrapperAction("Previous") {
+  private val previousAction = object : DialogWrapperAction(PyBundle.message("python.sdk.previous")) {
     override fun doAction(e: ActionEvent) = onPrevious()
   }
 
@@ -223,7 +236,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       newVirtualEnvPanel != null -> newVirtualEnvPanel
       else -> existingVirtualEnvPanel
     }
-    return PyAddSdkGroupPanel("Virtualenv environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
+    return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.virtualenv.environment"),
+                              PythonIcons.Python.Virtualenv, panels, defaultPanel)
   }
 
   private fun createAnacondaPanel(project: Project?, module: Module?): PyAddSdkPanel {
@@ -234,7 +248,9 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val panels = listOf(newCondaEnvPanel,
                         PyAddExistingCondaEnvPanel(project, module, existingSdks, null, context))
       .filterNotNull()
-    return PyAddSdkGroupPanel("Conda environment", PythonIcons.Python.Anaconda, panels, panels[0])
+    val defaultPanel = if (PyCondaSdkCustomizer.instance.preferExistingEnvironments) panels[1] else panels[0]
+    return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.conda.environment"),
+                              PythonIcons.Python.Anaconda, panels, defaultPanel)
   }
 
   /**
@@ -289,7 +305,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     catch (e: Exception) {
       val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
       if (cause == null) {
-        Messages.showErrorDialog(e.localizedMessage, "Error")
+        Messages.showErrorDialog(e.localizedMessage, CommonBundle.message("title.error"))
       }
       else {
         showProcessExecutionErrorDialog(project, cause)
@@ -310,8 +326,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     it.actions.forEach { (action, isEnabled) ->
       val actionButton = when (action) {
         PREVIOUS -> previousButton.value
-        NEXT -> nextButton.value.apply { text = "Next" }
-        FINISH -> nextButton.value.apply { text = "Finish" }
+        NEXT -> nextButton.value.apply { text = PyBundle.message("python.sdk.next") }
+        FINISH -> nextButton.value.apply { text = PyBundle.message("python.sdk.finish") }
         else -> null
       }
       actionButton?.isEnabled = isEnabled

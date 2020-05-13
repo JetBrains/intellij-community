@@ -1,5 +1,3 @@
-from _pydevd_bundle.pydevd_constants import IS_PY3K
-
 class Frame(object):
     def __init__(
             self,
@@ -64,5 +62,3 @@ def cached_call(obj, func, *args):
         setattr(obj, cached_name, func(*args))
 
     return getattr(obj, cached_name)
-
-

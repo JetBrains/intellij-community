@@ -24,7 +24,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaClassSupersImpl extends JavaClassSupers {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaClassSupersImpl");
+  private static final Logger LOG = Logger.getInstance(JavaClassSupersImpl.class);
 
   @Override
   @Nullable
@@ -123,9 +123,8 @@ public class JavaClassSupersImpl extends JavaClassSupers {
           if (targetType != null && innerType.getAnnotations().length > 0) {
             PsiAnnotation[] typeAnnotations = targetType.getAnnotations();
             targetType = targetType.annotate(new TypeAnnotationProvider() {
-              @NotNull
               @Override
-              public PsiAnnotation[] getAnnotations() {
+              public PsiAnnotation @NotNull [] getAnnotations() {
                 return ArrayUtil.mergeArrays(innerType.getAnnotations(), typeAnnotations);
               }
             });

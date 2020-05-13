@@ -1,7 +1,9 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.pluginDescriptions" interface="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptionsExtension"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.pluginDescriptions" interface="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptionsExtension"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -35,7 +37,7 @@
     <weigher key="completion" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleCompletionWeigher"
              id="gradleWeigher" order="first"/>
     <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
-                     bundle="i18n.GradleInspectionBundle"
+                     bundle="messages.GradleInspectionBundle"
                      key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
 
@@ -51,7 +53,7 @@
     <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <importContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
-    <variableEnhancer order="first" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleClosureAsAnonymousParameterEnhancer"/>
+    <variableEnhancer order="first" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleClosureSamParameterEnhancer"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSettingsScriptContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectExtensionContributor"/>
@@ -67,7 +69,8 @@
     <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactCallTypeCalculator"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationClosureDelegateProvider"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDelegatesToProvider"/>
-    <expressionFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationExpressionFilter"/>
+    <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleActionDelegatesToProvider"/>
+    <elementFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationElementFilter"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
                     implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationTypeCalculator"/>
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleUnresolvedReferenceFilter"/>

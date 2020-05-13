@@ -36,10 +36,7 @@ import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.view.MethodExistsDialog;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class GenerateToStringWorker {
   private static final Logger logger = Logger.getInstance(GenerateToStringWorker.class);
@@ -72,24 +69,10 @@ public class GenerateToStringWorker {
                                          ConflictResolutionPolicy policy,
                                          Map<String, String> params,
                                          TemplateResource template) throws IncorrectOperationException, GenerateCodeException {
-    // generate code using velocity
-    String evaluatedText = GenerationUtil.velocityGenerateCode(clazz, selectedMembers, params, template.getTemplate(), config.getSortElements(), config.isUseFullyQualifiedName());
-    // create psi newMethod named toString()
-    final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
-    if (topLevelFactory == null) {
-      return null;
-    }
-    PsiMethod newMethod;
-    try {
-      newMethod = topLevelFactory.createMethodFromText(evaluatedText, clazz);
-      CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
-    }
-    catch (IncorrectOperationException e) {
-      logger.info(e);
-      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
-                                                      template.getFileName() + '\'');
-      return null;
-    }
+    PsiMethod newMethod = getMethodPrototype(selectedMembers, params, template);
+    if (newMethod == null) return null;
+
+    CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
 
     // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
     PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);
@@ -115,6 +98,26 @@ public class GenerateToStringWorker {
 
     // return the created method
     return toStringMethod;
+  }
+
+  private PsiMethod getMethodPrototype(Collection<PsiMember> selectedMembers, Map<String, String> params, TemplateResource template) {
+    // generate code using velocity
+    String evaluatedText = GenerationUtil
+      .velocityGenerateCode(clazz, selectedMembers, params, template.getTemplate(), config.getSortElements(), config.isUseFullyQualifiedName());
+    // create psi newMethod named toString()
+    final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
+    if (topLevelFactory == null) {
+      return null;
+    }
+    try {
+      return topLevelFactory.createMethodFromText(evaluatedText, clazz);
+    }
+    catch (IncorrectOperationException e) {
+      logger.info(e);
+      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
+                                                      template.getFileName() + '\'');
+      return null;
+    }
   }
 
   public void execute(Collection<PsiMember> members, TemplateResource template, final ConflictResolutionPolicy resolutionPolicy) throws IncorrectOperationException, GenerateCodeException {
@@ -161,10 +164,10 @@ public class GenerateToStringWorker {
   protected ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
     final DuplicationPolicy dupPolicy = config.getReplaceDialogInitialOption();
     if (dupPolicy == DuplicationPolicy.ASK) {
-      String targetMethodName = template.getTargetMethodName(clazz);
-      PsiMethod existingMethod = targetMethodName != null ? PsiAdapter.findMethodByName(clazz, targetMethodName) : null;
+      PsiMethod targetMethod = getMethodPrototype(Collections.emptyList(), Collections.emptyMap(), template);
+      PsiMethod existingMethod = targetMethod != null ? clazz.findMethodBySignature(targetMethod, false) : null;
       if (existingMethod != null) {
-        return MethodExistsDialog.showDialog(targetMethodName);
+        return MethodExistsDialog.showDialog(targetMethod.getName());
       }
     }
     else if (dupPolicy == DuplicationPolicy.REPLACE) {
@@ -182,9 +185,9 @@ public class GenerateToStringWorker {
    * @param template the template to use
    */
   private void beforeCreateToStringMethod(Map<String, String> params, TemplateResource template) {
-    String targetMethodName = template.getTargetMethodName(clazz);
-    if (targetMethodName == null) return;
-    PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, targetMethodName); // find the existing method
+    PsiMethod targetMethod = getMethodPrototype(Collections.emptyList(), Collections.emptyMap(), template);
+    if (targetMethod == null) return;
+    PsiMethod existingMethod = clazz.findMethodBySignature(targetMethod, false); // find the existing method
     if (existingMethod != null && existingMethod.getDocComment() != null) {
       PsiDocComment doc = existingMethod.getDocComment();
       if (doc != null) {

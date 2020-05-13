@@ -14,4 +14,10 @@ public class MockProjectEx extends MockProject implements ProjectEx {
   @Override
   public void setProjectName(@NotNull String name) {
   }
+
+  @NotNull
+  @Override
+  public final Disposable getEarlyDisposable() {
+    return this;
+  }
 }

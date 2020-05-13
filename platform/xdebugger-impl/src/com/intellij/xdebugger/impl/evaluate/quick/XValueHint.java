@@ -56,9 +56,6 @@ import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class XValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(XValueHint.class);
 
@@ -167,7 +164,7 @@ public class XValueHint extends AbstractValueHint {
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
       if (myCurrentHint == null && showEvaluating.get()) {
         SimpleColoredComponent component = HintUtil.createInformationComponent();
-        component.append(XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE);
+        component.append(XDebuggerUIConstants.getEvaluatingExpressionMessage());
         showHint(component);
       }
     }, 200, TimeUnit.MILLISECONDS);

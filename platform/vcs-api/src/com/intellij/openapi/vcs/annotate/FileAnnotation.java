@@ -115,8 +115,7 @@ public abstract class FileAnnotation {
    * The typical aspects are revision number, date, author.
    * The aspects are displayed each in own column in the returned order.
    */
-  @NotNull
-  public abstract LineAnnotationAspect[] getAspects();
+  public abstract LineAnnotationAspect @NotNull [] getAspects();
 
 
   /**
@@ -295,7 +294,7 @@ public abstract class FileAnnotation {
 
   @NotNull
   public static String formatDate(@NotNull Date date) {
-    return JBDateFormat.getFormatter("vcs.annotate").formatPrettyDate(date);
+    return JBDateFormat.getFormatter().formatPrettyDate(date);
   }
 
   @Nullable

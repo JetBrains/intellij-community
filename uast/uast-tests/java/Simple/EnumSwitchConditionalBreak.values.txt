@@ -48,3 +48,6 @@ UFile (package = ) [public final enum EnumSwitchConditionalBreak {...]
                     UBinaryExpression (operator = +) [newResult + counter] = Undetermined (depending on: (var newResult = 42), (var counter = Undetermined))
                         USimpleNameReferenceExpression (identifier = newResult) [newResult] = (var newResult = 42)
                         USimpleNameReferenceExpression (identifier = counter) [counter] = (var counter = Undetermined)
+        UMethod (name = values) [public static fun values() : EnumSwitchConditionalBreak[] = UastEmptyExpression]
+        UMethod (name = valueOf) [public static fun valueOf(name: java.lang.String) : EnumSwitchConditionalBreak = UastEmptyExpression]
+            UParameter (name = name) [var name: java.lang.String]

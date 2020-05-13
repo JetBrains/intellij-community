@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
  */
 public class GroovyGoToSymbolContributor implements ChooseByNameContributorEx {
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     StubIndex index = StubIndex.getInstance();
     if (!index.processAllKeys(GrFieldNameIndex.KEY, processor, scope, filter)) return;
     if (!index.processAllKeys(GrMethodNameIndex.KEY, processor, scope, filter)) return;
@@ -46,7 +46,7 @@ public class GroovyGoToSymbolContributor implements ChooseByNameContributorEx {
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     StubIndex index = StubIndex.getInstance();
     Project project = parameters.getProject();

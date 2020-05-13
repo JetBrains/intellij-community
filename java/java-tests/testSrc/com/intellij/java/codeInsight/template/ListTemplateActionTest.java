@@ -97,6 +97,14 @@ public class ListTemplateActionTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("template.with.desc");
   }
 
+  public void testMulticaret() {
+    doTest("simple");
+  }
+
+  public void testMulticaretWithPrefix() {
+    doTest("simple");
+  }
+
   private void doTest(@NotNull String lookupText) {
     myFixture.configureByFile(getTestName(false) + ".java");
     new ListTemplatesAction().actionPerformedImpl(myFixture.getProject(), myFixture.getEditor());

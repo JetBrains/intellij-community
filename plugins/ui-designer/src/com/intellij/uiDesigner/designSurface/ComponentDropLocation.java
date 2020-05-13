@@ -35,7 +35,7 @@ public interface ComponentDropLocation {
 
   void processDrop(GuiEditor editor,
                    RadComponent[] components,
-                   @Nullable GridConstraints[] constraintsToAdjust,
+                   GridConstraints @Nullable [] constraintsToAdjust,
                    ComponentDragObject dragObject);
 
   @Nullable

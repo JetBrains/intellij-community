@@ -46,12 +46,6 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   public boolean myWarnAboutTrailingCommas = true;
   public boolean myWarnAboutMultipleTopLevelValues = true;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return JsonBundle.message("inspection.compliance.name");
-  }
-
   @NotNull
   @Override
   public HighlightDisplayLevel getDefaultLevel() {
@@ -153,7 +147,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitComment(PsiComment comment) {
+    public void visitComment(@NotNull PsiComment comment) {
       if (!allowComments() && myWarnAboutComments) {
         if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment) &&
             comment.getContainingFile().getLanguage() instanceof JsonLanguage) {

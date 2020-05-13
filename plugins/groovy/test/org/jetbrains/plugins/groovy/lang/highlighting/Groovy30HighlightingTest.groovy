@@ -66,22 +66,14 @@ I i = {3}
   }
 
   void 'test constructor reference static access'() {
-    highlightingTest GrUnresolvedAccessInspection
-  }
-
-  void 'test reassigned var in lambda'() {
-    highlightingTest GrUnresolvedAccessInspection
-  }
-
-  void 'test reassigned var in lambda 2'() {
-    highlightingTest GrUnresolvedAccessInspection
+    fileHighlightingTest GrUnresolvedAccessInspection
   }
 
   void 'test illegal single argument lambda'() {
-    highlightingTest ()
+    fileHighlightingTest ()
   }
 
   void 'test type use in annotation description'() {
-    highlightingTest()
+    fileHighlightingTest()
   }
 }

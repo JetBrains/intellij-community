@@ -17,6 +17,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JavaReferenceEditorUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.AbstractTableCellEditor;
 
 import javax.swing.*;
@@ -96,7 +96,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-          .createInheritanceClassChooser(UIBundle.message("choose.class"), mySearchScope, null, true, true, Conditions.alwaysTrue());
+          .createInheritanceClassChooser(JavaBundle.message("choose.class"), mySearchScope, null, true, true, Conditions.alwaysTrue());
         chooser.showDialog();
         final PsiClass psiClass = chooser.getSelected();
         if (psiClass != null) {

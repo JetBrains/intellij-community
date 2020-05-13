@@ -73,7 +73,7 @@ public class OnOffButton extends JToggleButton {
 
     @Override
     public Dimension getPreferredSize(JComponent c) {
-      int vGap = JBUIScale.scale(4);
+      int vGap = JBUIScale.scale(3);
 
       OnOffButton button = (OnOffButton)c;
       String text = button.getOffText().length() > button.getOnText().length() ? button.getOffText() : button.getOnText();
@@ -82,7 +82,7 @@ public class OnOffButton extends JToggleButton {
       int w = fm.stringWidth(text);
       int h = fm.getHeight();
       h += 2 * vGap;
-      w += 3 * h / 2;
+      w += 1.25 * h;
       return new Dimension(w, h);
     }
 
@@ -92,7 +92,7 @@ public class OnOffButton extends JToggleButton {
 
       int toggleArc = JBUIScale.scale(3);
       int buttonArc = JBUIScale.scale(5);
-      int vGap = JBUIScale.scale(4);
+      int vGap = JBUIScale.scale(3);
       int hGap = JBUIScale.scale(3);
 
       OnOffButton button = (OnOffButton)c;
@@ -114,11 +114,8 @@ public class OnOffButton extends JToggleButton {
         g2.setColor(selected ? ON_BACKGROUND : OFF_BACKGROUND);
         g2.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
 
-        g2.setColor(BORDER_COLOR);
-        g2.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
-
         int knobWidth = w - SwingUtilities.computeStringWidth(g2.getFontMetrics(), button.getOffText()) - JBUIScale.scale(2);
-        knobWidth = knobWidth > h ? h : knobWidth;
+        knobWidth = Math.min(knobWidth, h);
 
         int textAscent = g2.getFontMetrics().getAscent();
 
@@ -155,6 +152,9 @@ public class OnOffButton extends JToggleButton {
           g2.setColor(OFF_FOREGROUND);
           g2.drawString(button.getOffText(), textRect.x, textRect.y + textAscent);
         }
+
+        g2.setColor(BORDER_COLOR);
+        g2.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
       }
       finally {
         g2.dispose();

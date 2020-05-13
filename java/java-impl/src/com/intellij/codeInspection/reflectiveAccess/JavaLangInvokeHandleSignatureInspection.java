@@ -1,9 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -83,7 +84,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
 
   private static void checkHandleFactory(@NotNull String factoryMethodName,
                                          @NotNull PsiReferenceExpression factoryMethodExpression,
-                                         @NotNull PsiExpression[] arguments,
+                                         PsiExpression @NotNull [] arguments,
                                          @NotNull ProblemsHolder holder) {
     if (arguments.length == 2) {
       if (FIND_CONSTRUCTOR.equals(factoryMethodName)) {
@@ -164,7 +165,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
             fix = ReplaceSignatureQuickFix
               .createFix(constructorTypeExpression, ownerClassName, validSignatures, true, holder.isOnTheFly());
           }
-          holder.registerProblem(constructorTypeExpression, JavaErrorMessages.message("cannot.resolve.constructor", declarationText), fix);
+          holder.registerProblem(constructorTypeExpression, JavaErrorBundle.message("cannot.resolve.constructor", declarationText), fix);
         }
       }
     }
@@ -180,7 +181,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     if (!ownerClass.isExact()) return;
     final PsiField field = ownerClass.getPsiClass().findFieldByName(fieldName, true);
     if (field == null) {
-      holder.registerProblem(fieldNameExpression, InspectionsBundle.message("inspection.handle.signature.field.cannot.resolve", fieldName));
+      holder.registerProblem(fieldNameExpression, JavaBundle.message("inspection.handle.signature.field.cannot.resolve", fieldName));
       return;
     }
 
@@ -189,7 +190,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       final PsiElement factoryMethodNameElement = factoryMethodExpression.getReferenceNameElement();
       if (factoryMethodName != null && factoryMethodNameElement != null) {
         final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStaticExpected);
-        final String message = InspectionsBundle.message(
+        final String message = JavaBundle.message(
           isStaticExpected ? "inspection.handle.signature.field.not.static" : "inspection.handle.signature.field.static", fieldName);
         holder.registerProblem(factoryMethodNameElement, message, fix);
         return;
@@ -199,7 +200,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     final ReflectiveType reflectiveType = getReflectiveType(fieldTypeExpression);
     if (reflectiveType != null && !reflectiveType.isEqualTo(field.getType())) {
       final String expectedTypeText = getTypeText(field.getType());
-      final String message = InspectionsBundle.message("inspection.handle.signature.field.type", fieldName, expectedTypeText);
+      final String message = JavaBundle.message("inspection.handle.signature.field.type", fieldName, expectedTypeText);
       holder.registerProblem(fieldTypeExpression, message, new FieldTypeQuickFix(expectedTypeText));
     }
   }
@@ -215,7 +216,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     if (!ownerClass.isExact()) return;
     final PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(methodName, true);
     if (methods.length == 0) {
-      holder.registerProblem(methodNameExpression, JavaErrorMessages.message("cannot.resolve.method", methodName));
+      holder.registerProblem(methodNameExpression, JavaErrorBundle.message("cannot.resolve.method", methodName));
       return;
     }
 
@@ -226,7 +227,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       final PsiElement factoryMethodNameElement = factoryMethodExpression.getReferenceNameElement();
       if (factoryMethodName != null && factoryMethodNameElement != null) {
         final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStaticExpected);
-        final String message = InspectionsBundle.message(
+        final String message = JavaBundle.message(
           isStaticExpected ? "inspection.handle.signature.method.not.static" : "inspection.handle.signature.method.static", methodName);
         holder.registerProblem(factoryMethodNameElement, message, fix);
         return;
@@ -245,7 +246,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         .collect(Collectors.toList());
       final LocalQuickFix fix =
         ReplaceSignatureQuickFix.createFix(methodTypeExpression, methodName, validSignatures, false, holder.isOnTheFly());
-      holder.registerProblem(methodTypeExpression, JavaErrorMessages.message("cannot.resolve.method", declarationText), fix);
+      holder.registerProblem(methodTypeExpression, JavaErrorBundle.message("cannot.resolve.method", declarationText), fix);
       return;
     }
     if (!isAbstractAllowed) {
@@ -254,7 +255,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         final String className = ownerClass.getPsiClass().getQualifiedName();
         if (className != null) {
           holder.registerProblem(methodNameExpression,
-                                 InspectionsBundle.message("inspection.handle.signature.method.abstract", methodName, className));
+                                 JavaBundle.message("inspection.handle.signature.method.abstract", methodName, className));
         }
       }
     }
@@ -273,7 +274,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         final String ownerName = owner.getQualifiedName();
         if (callerName != null && ownerName != null) {
           holder.registerProblem(callerClassExpression,
-                                 InspectionsBundle.message("inspection.handle.signature.not.subclass", callerName, ownerName));
+                                 JavaBundle.message("inspection.handle.signature.not.subclass", callerName, ownerName));
         }
       }
     }
@@ -283,7 +284,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     final PsiExpressionList argumentList = factoryCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length != 1) {
-      holder.registerProblem(argumentList, InspectionsBundle.message("inspection.reflection.invocation.argument.count", 1));
+      holder.registerProblem(argumentList, JavaBundle.message("inspection.reflection.invocation.argument.count", 1));
       return;
     }
     final ReflectiveType argumentType = getReflectiveType(arguments[0]);
@@ -296,7 +297,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         return;
       }
     }
-    holder.registerProblem(arguments[0], InspectionsBundle.message("inspection.reflect.handle.invocation.argument.not.array"));
+    holder.registerProblem(arguments[0], JavaBundle.message("inspection.reflect.handle.invocation.argument.not.array"));
   }
 
   @NotNull
@@ -337,7 +338,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.handle.signature.change.type.fix.name", myFieldTypeText);
+      return JavaBundle.message("inspection.handle.signature.change.type.fix.name", myFieldTypeText);
     }
 
     @Override
@@ -374,7 +375,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.handle.signature.replace.with.fix.name", myReplacementName);
+      return JavaBundle.message("inspection.handle.signature.replace.with.fix.name", myReplacementName);
     }
 
     @Override
@@ -420,12 +421,12 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     public String getText() {
       if (mySignatures.size() == 1) {
         final String declarationText = getDeclarationText(mySignatures.get(0));
-        return InspectionsBundle.message(myIsConstructor
+        return JavaBundle.message(myIsConstructor
                                          ? "inspection.handle.signature.use.constructor.fix.name"
                                          : "inspection.handle.signature.use.method.fix.name",
                                          declarationText);
       }
-      return InspectionsBundle.message(myIsConstructor
+      return JavaBundle.message(myIsConstructor
                                        ? "inspection.handle.signature.use.constructor.fix.family.name"
                                        : "inspection.handle.signature.use.method.fix.family.name");
     }

@@ -1,17 +1,16 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
+import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.*
 
-/**
- * @author nik
- */
 class ObsoleteLibraryFilesRemover(private val project: Project) {
   private val oldRoots = LinkedHashSet<VirtualFile>()
 
@@ -26,12 +25,11 @@ class ObsoleteLibraryFilesRemover(private val project: Project) {
     oldRoots.clear()
 
     if (toDelete.isNotEmpty()) {
-      val many = toDelete.size > 1
-      if (Messages.showYesNoDialog(project, "The following ${if (many) "files aren't" else "file isn't"} used anymore:\n" +
-                                            "${toDelete.joinToString("\n") { it.presentableUrl }}\n" +
-                                            "Do you want to delete ${if (many) "them" else "it"}?\n" +
-                                            "You might not be able to fully undo this operation!",
-                                   "Delete Unused Files", null) == Messages.YES) {
+      if (Messages.showYesNoDialog(project,
+                                   JavaUiBundle.message("dialog.message.obsolete.library.files.remover.delete.files", toDelete.size,
+                                                         toDelete.joinToString("\n") { it.presentableUrl }),
+                                   JavaUiBundle.message("dialog.title.obsolete.library.files.remover.delete.files"), null)
+        == Messages.YES) {
         runWriteAction {
           toDelete.forEach {
             VfsUtil.getLocalFile(it).delete(this)

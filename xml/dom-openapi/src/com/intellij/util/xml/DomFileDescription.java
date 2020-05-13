@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -13,7 +13,6 @@ import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentInstanceMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Use {@code com.intellij.dom.fileMetaData} to register.
@@ -46,17 +46,16 @@ public class DomFileDescription<T> {
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   private final List<DomReferenceInjector> myInjectors = new SmartList<>();
   private final Map<String, NotNullFunction<XmlTag, List<String>>> myNamespacePolicies =
-    ContainerUtil.newConcurrentMap();
+    new ConcurrentHashMap<>();
 
-  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls @NotNull String... allPossibleRootTagNamespaces) {
+  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls String @NotNull ... allPossibleRootTagNamespaces) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
     myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY
                                                                               : allPossibleRootTagNamespaces;
   }
 
-  @NotNull
-  public String[] getAllPossibleRootTagNamespaces() {
+  public String @NotNull [] getAllPossibleRootTagNamespaces() {
     return myAllPossibleRootTagNamespaces;
   }
 
@@ -98,8 +97,7 @@ public class DomFileDescription<T> {
   /**
    * Consider using {@link DomService#getXmlFileHeader(XmlFile)} when implementing this.
    */
-  @NotNull
-  public List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
+  public @NotNull List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
     final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(namespaceKey);
     if (function instanceof ConstantFunction) {
       return function.fun(null);
@@ -151,8 +149,7 @@ public class DomFileDescription<T> {
     return true;
   }
 
-  @Nullable
-  public Icon getFileIcon(@Iconable.IconFlags int flags) {
+  public @Nullable Icon getFileIcon(@Iconable.IconFlags int flags) {
     return null;
   }
 
@@ -172,8 +169,7 @@ public class DomFileDescription<T> {
    * {@link com.intellij.util.xml.highlighting.BasicDomElementsInspection} instance.
    * @return Annotator or null
    */
-  @Nullable
-  public DomElementsAnnotator createAnnotator() {
+  public @Nullable DomElementsAnnotator createAnnotator() {
     return null;
   }
 
@@ -185,8 +181,7 @@ public class DomFileDescription<T> {
     return myImplementations;
   }
 
-  @NotNull
-  public final Class<T> getRootElementClass() {
+  public final @NotNull Class<T> getRootElementClass() {
     return myRootElementClass;
   }
 
@@ -194,7 +189,7 @@ public class DomFileDescription<T> {
     return myRootTagName;
   }
 
-  public boolean isMyFile(@NotNull XmlFile file, @Nullable final Module module) {
+  public boolean isMyFile(@NotNull XmlFile file, final @Nullable Module module) {
     final Namespace namespace = DomReflectionUtil.findAnnotationDFS(myRootElementClass, Namespace.class);
     if (namespace != null) {
       final String key = namespace.value();
@@ -222,8 +217,7 @@ public class DomFileDescription<T> {
    * @param file XML file to get dependencies of
    * @return dependency item set
    */
-  @NotNull
-  public Set<?> getDependencyItems(XmlFile file) {
+  public @NotNull Set<?> getDependencyItems(XmlFile file) {
     return Collections.emptySet();
   }
 
@@ -231,8 +225,7 @@ public class DomFileDescription<T> {
    * @param reference DOM reference
    * @return element, whose all children will be searched for declaration
    */
-  @NotNull
-  public DomElement getResolveScope(GenericDomValue<?> reference) {
+  public @NotNull DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
 
@@ -243,16 +236,14 @@ public class DomFileDescription<T> {
    * @param element DOM element
    * @return element, whose direct children names will be compared by name. Basically it's parameter element's parent (see {@link ParentScopeProvider}).
    */
-  @NotNull
-  public DomElement getIdentityScope(DomElement element) {
+  public @NotNull DomElement getIdentityScope(DomElement element) {
     final DomElement annotation = getScopeFromAnnotation(element);
     if (annotation != null) return annotation;
 
     return element.getParent();
   }
 
-  @Nullable
-  protected final DomElement getScopeFromAnnotation(final DomElement element) {
+  protected final @Nullable DomElement getScopeFromAnnotation(final DomElement element) {
     final Scope scope = element.getAnnotation(Scope.class);
     if (scope != null) {
       return myScopeProviders.get(scope.value()).getScope(element);

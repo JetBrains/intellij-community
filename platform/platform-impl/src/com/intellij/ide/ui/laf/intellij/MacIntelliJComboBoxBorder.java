@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,8 +16,13 @@ import java.awt.geom.RoundRectangle2D;
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
- * @author Konstantin Bulenkov
+ * @deprecated This is simplified version of the original class.
+ * Not used in the main IDEA code anymore.
+ * For plugin writers: add dependency from com.intellij.laf.macos plugin
+ * which contains the full version.
  */
+@ApiStatus.ScheduledForRemoval (inVersion = "2020.2")
+@Deprecated
 public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -33,7 +39,6 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
         Shape clip = g2.getClip();
         Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
-        area.subtract(getButtonBounds(c));
         area.intersect(new Area(clip));
         g2.setClip(area);
 
@@ -78,7 +83,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
   @Override
   protected boolean isFocused(Component c) {
     if (c instanceof JComboBox) {
-      JComboBox comboBox = (JComboBox)c;
+      JComboBox<?> comboBox = (JComboBox<?>)c;
 
       if (!comboBox.isEnabled()) {
         return false;
@@ -98,17 +103,8 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
     return false;
   }
 
-  Area getButtonBounds(Component c) {
-    Rectangle bounds = null;
-    if (c instanceof JComboBox && ((JComboBox)c).getUI() instanceof MacIntelliJComboBoxUI) {
-      MacIntelliJComboBoxUI ui = (MacIntelliJComboBoxUI)((JComboBox)c).getUI();
-      bounds = ui.getArrowButtonBounds();
-    }
-    return bounds != null ? new Area(bounds) : new Area();
-  }
-
   boolean isRound(Component c) {
-    return c instanceof JComboBox && !((JComboBox)c).isEditable();
+    return c instanceof JComboBox && !((JComboBox<?>)c).isEditable();
   }
 
   @Override
@@ -121,7 +117,6 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
                  : new Rectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2);
 
     area.subtract(new Area(innerShape));
-    area.add(getButtonBounds(c));
 
     Area clip = new Area(g2.getClip());
     area.intersect(clip);

@@ -5,7 +5,7 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadReferenceProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ThreadReferenceProxyImpl");
+  private static final Logger LOG = Logger.getInstance(ThreadReferenceProxyImpl.class);
   // cached data
   private String myName;
   private int                       myFrameCount = -1;
@@ -318,7 +318,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     }
     catch (InternalException e) {
       if (e.errorCode() == JvmtiError.OPAQUE_FRAME) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("drop.frame.error.no.information"));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("drop.frame.error.no.information"));
       }
       else throw EvaluateExceptionUtil.createEvaluateException(e);
     }

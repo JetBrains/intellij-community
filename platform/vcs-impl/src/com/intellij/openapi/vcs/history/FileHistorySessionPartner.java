@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ide.DataManager;
@@ -14,9 +14,9 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.ContentManager;
@@ -34,8 +34,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.sameHistories;
 
-public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Disposable {
-
+public final class FileHistorySessionPartner implements VcsHistorySessionConsumer, Disposable {
   @NotNull private final AbstractVcs myVcs;
   @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
   @NotNull private final FilePath myPath;
@@ -121,7 +120,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
 
   @NotNull
   private static ToolWindow getToolWindow(@NotNull Project project) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
     return toolWindow;
   }
@@ -142,13 +141,21 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
     ContentManager manager = toolWindow.getContentManager();
     boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myContentPanel, true);
     if (!selectedExistingContent) {
-      String tabName = myPath.getName();
-      if (myStartingRevisionNumber != null) {
-        tabName += " (" + VcsUtil.getShortRevisionString(myStartingRevisionNumber) + ")";
-      }
-      ContentUtilEx.addTabbedContent(manager, myContentPanel, "History", tabName, true, this);
+      String tabName = getTabName(myPath, myStartingRevisionNumber);
+      ContentUtilEx.addTabbedContent(manager, myContentPanel, "History",
+                                     VcsBundle.messagePointer("file.history.tab.name"), () -> tabName,
+                                     true, this);
     }
     toolWindow.activate(null);
+  }
+
+  @NotNull
+  private static String getTabName(@NotNull FilePath path, @Nullable VcsRevisionNumber revisionNumber) {
+    String tabName = path.getName();
+    if (revisionNumber != null) {
+      tabName += " (" + VcsUtil.getShortRevisionString(revisionNumber) + ")";
+    }
+    return tabName;
   }
 
   @Override

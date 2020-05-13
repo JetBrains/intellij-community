@@ -6,7 +6,7 @@ import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
@@ -57,7 +57,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class LibraryOptionsPanel implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel");
+  private static final Logger LOG = Logger.getInstance(LibraryOptionsPanel.class);
 
   private JBLabel myMessageLabel;
   private JPanel myPanel;
@@ -426,7 +426,7 @@ public class LibraryOptionsPanel implements Disposable {
         }
         else if (item instanceof NewLibraryEditor) {
           final LibraryEditor libraryEditor = (LibraryEditor)item;
-          message = IdeBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
+          message = JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
                                       libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
         else {
@@ -438,7 +438,7 @@ public class LibraryOptionsPanel implements Disposable {
     }
 
     if (myLibraryProvider != null) {
-      myUseFromProviderRadioButton.setText("Use library from " + myLibraryProvider.getPresentableName());
+      myUseFromProviderRadioButton.setText(JavaUiBundle.message("radio.button.use.library.from.0", myLibraryProvider.getPresentableName()));
     }
 
     //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option
@@ -446,7 +446,7 @@ public class LibraryOptionsPanel implements Disposable {
       myHiddenLabel.setText(getDownloadFilesMessage());
     }
     else {
-      myHiddenLabel.setText(IdeBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
+      myHiddenLabel.setText(JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
                                               "name", 10));
     }
     ((CardLayout)myConfigurationPanel.getLayout()).show(myConfigurationPanel, showConfigurePanel ? "configure" : "empty");

@@ -35,7 +35,7 @@ import java.util.Map;
  * @author yole
  */
 public class CoreJavaDirectoryService extends JavaDirectoryService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaDirectoryService");
+  private static final Logger LOG = Logger.getInstance(CoreJavaDirectoryService.class);
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
@@ -48,15 +48,13 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
     return getPackage(dir);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getClasses(@NotNull PsiDirectory dir) {
+  public PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir) {
     LOG.assertTrue(dir.isValid());
     return getPsiClasses(dir, dir.getFiles());
   }
 
-  @NotNull
-  public static PsiClass[] getPsiClasses(@NotNull PsiDirectory dir, PsiFile[] psiFiles) {
+  public static PsiClass @NotNull [] getPsiClasses(@NotNull PsiDirectory dir, PsiFile[] psiFiles) {
     FileIndexFacade index = FileIndexFacade.getInstance(dir.getProject());
     VirtualFile virtualDir = dir.getVirtualFile();
     boolean onlyCompiled = index.isInLibraryClasses(virtualDir) && !index.isInSourceContent(virtualDir);
@@ -119,6 +117,12 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   @NotNull
   @Override
   public PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 

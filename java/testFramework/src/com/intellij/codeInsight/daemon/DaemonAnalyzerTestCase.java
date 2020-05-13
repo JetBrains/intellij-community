@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
@@ -18,7 +18,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.ExternalAnnotatorsFilter;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
@@ -79,11 +78,11 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     daemonCodeAnalyzer.prepareForTest();
     StartupManagerImpl startupManager = (StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject());
     startupManager.runStartupActivities();
-    startupManager.runPostStartupActivities();
+    startupManager.runPostStartupActivitiesRegisteredDynamically();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
     if (isStressTest()) {
-      IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
+      IntentionManager.getInstance().getAvailableIntentions();  // hack to avoid slowdowns in PyExtensionFactory
       PathManagerEx.getTestDataPath(); // to cache stuff
       ReferenceProvidersRegistry.getInstance(); // pre-load tons of classes
       InjectedLanguageManager.getInstance(getProject()); // zillion of Dom Sem classes
@@ -102,7 +101,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   protected void tearDown() throws Exception {
     try {
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-      final Project project = getProject();
+      Project project = getProject();
       if (project != null) {
         ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
@@ -114,14 +113,13 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     finally {
       super.tearDown();
     }
-    //((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
     InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
-  protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
+  protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
@@ -179,7 +177,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
-  protected HighlightTestInfo testFile(@NonNls @NotNull String... filePath) {
+  protected HighlightTestInfo testFile(@NonNls String @NotNull ... filePath) {
     return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override
       public HighlightTestInfo doTest() {
@@ -197,12 +195,12 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doTest(new VirtualFile[] { vFile }, checkWarnings, checkInfos );
   }
 
-  protected void doTest(@NotNull VirtualFile[] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(VirtualFile @NotNull [] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFiles(null, vFile);
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected void doTest(boolean checkWarnings, boolean checkInfos, @NotNull String ... files) throws Exception {
+  protected void doTest(boolean checkWarnings, boolean checkInfos, String @NotNull ... files) throws Exception {
     configureByFiles(null, files);
     doDoTest(checkWarnings, checkInfos);
   }
@@ -344,13 +342,11 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
     if (intentionAction == null) {
-      fail(String.format("Could not find action by name %s.\n" +
-                         "Actions: [%s]\n" +
-                         "HighlightInfos: [%s]", intentionActionName,
-                         StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
-                         StringUtil.join(infos, ", ")));
+      fail("Could not find action '" + intentionActionName+
+           "'.\nAvailable actions: [" +StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", ")+ "]\n" +
+           "HighlightInfos: [" +StringUtil.join(infos, ", ")+"]");
     }
-    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
+    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor);
   }
 
   @Nullable

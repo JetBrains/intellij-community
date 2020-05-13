@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import sun.swing.SwingUtilities2
@@ -37,7 +39,7 @@ class ProjectTitlePane : ShrinkingTitlePart {
       val (before, open, path, close, after) = match.destructured
 
       val project = before.trim()
-      if (project == short && path.isNotEmpty() && File(path).exists()) {
+      if (project == short && path.isNotEmpty()) {
         projectTitle.project = project
         projectTitle.openChar = " $open"
         projectTitle.closeChar = close

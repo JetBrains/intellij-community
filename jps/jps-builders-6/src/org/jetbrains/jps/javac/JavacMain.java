@@ -223,6 +223,7 @@ public class JavacMain {
         }
         else {
           diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, buildCompilerErrorMessage(e)));
+          throw e;
         }
       }
       else {

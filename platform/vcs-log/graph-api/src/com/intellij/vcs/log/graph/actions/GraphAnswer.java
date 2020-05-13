@@ -34,4 +34,6 @@ public interface GraphAnswer<Id> {
 
   @Nullable
   Runnable getGraphUpdater();
+
+  boolean isRepaintRequired();
 }

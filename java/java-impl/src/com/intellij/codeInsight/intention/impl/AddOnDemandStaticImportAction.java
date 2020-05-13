@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -44,12 +44,12 @@ import java.util.Objects;
  * @author ven
  */
 public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction");
+  private static final Logger LOG = Logger.getInstance(AddOnDemandStaticImportAction.class);
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.add.on.demand.static.import.family");
+    return JavaBundle.message("intention.add.on.demand.static.import.family");
   }
 
   /**
@@ -96,7 +96,19 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       final PsiJavaCodeReferenceElement copy = JavaPsiFacade.getElementFactory(refNameElement.getProject())
         .createReferenceFromText(refNameElement.getText(), refExpr);
       final PsiElement target = copy.resolve();
-      if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;
+      if (target != null) {
+        PsiClass parentClass = PsiTreeUtil.getParentOfType(target, PsiClass.class);
+        if (parentClass != psiClass) {
+          if (parentClass == null || parentClass.isPhysical()) {
+            return null;
+          }
+          // In preview mode we could resolve to real class instead of non-physical one
+          String qualifiedName = parentClass.getQualifiedName();
+          if (qualifiedName == null || !qualifiedName.equals(psiClass.getQualifiedName())) {
+            return null;
+          }
+        }
+      }
       PsiElement resolve = ((PsiJavaCodeReferenceElement)gParent).resolve();
       if (resolve instanceof PsiMember && !((PsiMember)resolve).hasModifierProperty(PsiModifier.STATIC)) return null;
     }
@@ -113,7 +125,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiClass classToImport = getClassToPerformStaticImport(element);
     if (classToImport != null) {
-      String text = CodeInsightBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName());
+      String text = JavaBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName());
       setText(text);
     }
     return classToImport != null;

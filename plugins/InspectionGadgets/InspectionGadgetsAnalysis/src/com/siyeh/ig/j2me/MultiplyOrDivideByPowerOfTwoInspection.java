@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -42,22 +43,13 @@ public class MultiplyOrDivideByPowerOfTwoInspection
   public boolean checkDivision = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "multiply.or.divide.by.power.of.two.display.name");
-  }
-
-  @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
+  public @Nullable JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
       "multiply.or.divide.by.power.of.two.divide.option"), this, "checkDivision");
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor",
                                            calculateReplacementShift((PsiExpression)infos[0], new CommentTracker()));
   }
@@ -128,8 +120,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
   private static class MultiplyByPowerOfTwoFix extends InspectionGadgetsFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "multiply.or.divide.by.power.of.two.replace.quickfix");
     }
@@ -155,51 +146,30 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     @Override
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      final PsiExpression rhs = expression.getROperand();
-      if (rhs == null) {
-        return;
-      }
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
+      if (rhs == null) return;
 
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.ASTERISK)) {
-        if (!checkDivision || !tokenType.equals(JavaTokenType.DIV)) {
-          return;
-        }
+      if (tokenType.equals(JavaTokenType.ASTERISK) || (checkDivision && tokenType.equals(JavaTokenType.DIV))) {
+        process(expression, rhs);
       }
-      if (!ShiftUtils.isPowerOfTwo(rhs)) {
-        return;
-      }
-      final PsiType type = expression.getType();
-      if (type == null) {
-        return;
-      }
-      if (!ClassUtils.isIntegral(type)) {
-        return;
-      }
-      registerError(expression, expression);
     }
 
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.ASTERISKEQ)) {
-        if (!checkDivision || !tokenType.equals(JavaTokenType.DIVEQ)) {
-          return;
-        }
+      if (tokenType.equals(JavaTokenType.ASTERISKEQ) || (checkDivision && tokenType.equals(JavaTokenType.DIVEQ))) {
+        process(expression, expression.getRExpression());
       }
-      final PsiExpression rhs = expression.getRExpression();
-      if (!ShiftUtils.isPowerOfTwo(rhs)) {
-        return;
-      }
-      final PsiType type = expression.getType();
-      if (type == null) {
-        return;
-      }
-      if (!ClassUtils.isIntegral(type)) {
-        return;
-      }
-      registerError(expression, expression);
+    }
+
+    private void process(PsiExpression anchor, PsiExpression rhs) {
+      rhs = PsiUtil.skipParenthesizedExprDown(rhs);
+      if (!ShiftUtils.isPowerOfTwo(rhs)) return;
+      final PsiType type = anchor.getType();
+      if (type == null || !ClassUtils.isIntegral(type)) return;
+      registerError(anchor, anchor);
     }
   }
 }

@@ -29,9 +29,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class MvcProjectStructureDetector extends ProjectStructureDetector {
   private final MvcFramework myFramework;
   private final String myDirectoryName;
@@ -43,7 +40,7 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
 
   @NotNull
   @Override
-  public DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
+  public DirectoryProcessingResult detectRoots(@NotNull File dir, File @NotNull [] children, @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
     for (File child : children) {
       if (child.getName().equals("build.gradle")) return DirectoryProcessingResult.PROCESS_CHILDREN;

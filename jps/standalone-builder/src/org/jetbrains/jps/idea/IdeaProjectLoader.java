@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.idea;
 
 import groovy.lang.Script;
@@ -13,6 +13,10 @@ import java.net.URISyntaxException;
  * @author max
  */
 public class IdeaProjectLoader {
+  /**
+   * This method is still used in some *.gant scripts via jps-build-script-dependencies-bootstrap library
+   */
+  @SuppressWarnings("unused")
   public static String guessHome(Script script) throws IOException, URISyntaxException {
     String uri = (String)script.getProperty("gant.file");
     File home = new File(new URI(uri).getSchemeSpecificPart());

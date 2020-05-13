@@ -7,9 +7,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class SdkProjectStructureElement extends ProjectStructureElement {
   private final Sdk mySdk;
 

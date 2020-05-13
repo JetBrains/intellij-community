@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.icons.AllIcons;
@@ -11,7 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FontUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -187,11 +187,11 @@ public class TestDataNavigationElementFactory {
     @Override
     public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
       Pair<String, String> relativePath = TestDataUtil.getRelativePathPairForMissingFile(myProject, myPath.getPath());
-      return ContainerUtil.newSmartList(
-        new Pair<>(myPath.getName() + FontUtil.spaceAndThinSpace(), SimpleTextAttributes.GRAYED_ATTRIBUTES),
-        new Pair<>(relativePath.first == null ? "" : relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
-        new Pair<>(relativePath.first == null ? "" : "/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      );
+      Pair<String, SimpleTextAttributes>[] elements =
+        new Pair[]{new Pair<>(myPath.getName() + FontUtil.spaceAndThinSpace(), SimpleTextAttributes.GRAYED_ATTRIBUTES),
+          new Pair<>(relativePath.first == null ? "" : relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
+          new Pair<>(relativePath.first == null ? "" : "/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES)};
+      return new SmartList<>(elements);
     }
   }
 
@@ -226,14 +226,15 @@ public class TestDataNavigationElementFactory {
       if (relativePath == null) {
         // cannot calculate module/project relative path, use absolute path
 
-        return ContainerUtil.newSmartList(new Pair<>(
+        return new SmartList<>(new Pair<String, SimpleTextAttributes>(
           String.format("%s (%s)", myFile.getName(), file.getParent().getPath() + "/"),
           SimpleTextAttributes.REGULAR_ATTRIBUTES));
       }
 
-      return ContainerUtil.newSmartList(new Pair<>(myFile.getName() + FontUtil.spaceAndThinSpace(), SimpleTextAttributes.REGULAR_ATTRIBUTES),
-                                        new Pair<>(relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
-                                        new Pair<>("/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES));
+      return new SmartList<>((Pair<String, SimpleTextAttributes>[])new Pair[]{
+        new Pair<>(myFile.getName() + FontUtil.spaceAndThinSpace(), SimpleTextAttributes.REGULAR_ATTRIBUTES),
+        new Pair<>(relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
+        new Pair<>("/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES)});
     }
   }
 }

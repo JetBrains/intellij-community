@@ -1,5 +1,8 @@
 fragment repositoryPermission on Repository {
     ...nodeInfo
+    owner {
+        ...repositoryOwnerName
+    }
     nameWithOwner
     viewerPermission
 

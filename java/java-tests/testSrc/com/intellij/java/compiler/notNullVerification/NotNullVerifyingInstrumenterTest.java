@@ -7,13 +7,12 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -127,21 +126,21 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testConstructorParam() throws Exception {
     Class<?> testClass = prepareTest();
-    Constructor method = testClass.getConstructor(Object.class);
+    Constructor<?> method = testClass.getConstructor(Object.class);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of ConstructorParam.<init> must not be null", null, method, (Object)null);
   }
 
   @Test
   public void testConstructorParamWithMessage() throws Exception {
     Class<?> testClass = prepareTest();
-    Constructor method = testClass.getConstructor(Object.class);
+    Constructor<?> method = testClass.getConstructor(Object.class);
     verifyCallThrowsException("ConstructorParam.ConstructorParam.o cant be null", null, method, (Object)null);
   }
 
   @Test
   public void testUseParameterNames() throws Exception {
     Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
-    Constructor constructor = testClass.getConstructor(Object.class, Object.class);
+    Constructor<?> constructor = testClass.getConstructor(Object.class, Object.class);
     verifyCallThrowsException("Argument for @NotNull parameter 'obj2' of UseParameterNames.<init> must not be null",
                               null, constructor, null, null);
 
@@ -173,7 +172,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testEnumConstructor() throws Exception {
-    Class testClass = prepareTest();
+    Class<?> testClass = prepareTest();
     assertNotNull(testClass.getField("Value").get(null));
   }
 
@@ -192,19 +191,19 @@ public abstract class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testEnumConstructorSecondParam() throws Exception {
-    Class testClass = prepareTest();
+    Class<?> testClass = prepareTest();
     assertNotNull(testClass.getField("Value").get(null));
   }
 
   @Test
   public void testGroovyEnum() throws Exception {
-    Class testClass = prepareTest();
+    Class<?> testClass = prepareTest();
     assertNotNull(testClass.getField("Value").get(null));
   }
 
   @Test
   public void testStaticInnerClass() throws Exception {
-    Class aClass = prepareTest();
+    Class<?> aClass = prepareTest();
     assertNotNull(aClass.newInstance());
   }
 
@@ -380,11 +379,25 @@ public abstract class NotNullVerifyingInstrumenterTest {
     verifyNotInstrumented();
   }
 
+  @Test
+  public void testInterfaceStaticMethodParameter() throws Exception {
+    Class<?> testClass = prepareTest();
+    Method method = testClass.getMethod("test");
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of I.test must not be null", null, method);
+  }
+
+  @Test
+  public void testInterfaceDefaultMethodParameter() throws Exception {
+    Class<?> testClass = prepareTest();
+    Method method = testClass.getMethod("test");
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of I.test must not be null", null, method);
+  }
+
   protected static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
     String exceptionText = null;
     try {
       if (member instanceof Constructor) {
-        ((Constructor)member).newInstance(args);
+        ((Constructor<?>)member).newInstance(args);
       }
       else {
         ((Method)member).invoke(instance, args);
@@ -394,6 +407,9 @@ public abstract class NotNullVerifyingInstrumenterTest {
       Throwable cause = ex.getCause();
       if (cause instanceof IllegalStateException || cause instanceof IllegalArgumentException) {
         exceptionText = cause.getMessage();
+      }
+      else {
+        throw ex;
       }
     }
     assertEquals(expectedError, exceptionText);
@@ -414,24 +430,24 @@ public abstract class NotNullVerifyingInstrumenterTest {
   protected Class<?> prepareTest(boolean withDebugInfo, boolean expectInstrumented, String... notNullAnnotations) throws IOException {
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
     File testFile = IdeaTestUtil.findSourceFile((JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH) + testName);
-    File classesDir = tempDir.newFolder("output");
+    File classesDir = tempDir.newDirectory("output");
     List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
     if (withDebugInfo) args.add("-g");
-    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtilRt.toStringArray(args));
+    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
     File[] files = classesDir.listFiles();
     assertNotNull(files);
     Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     boolean modified = false;
     MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
-    Class mainClass = null;
+    Class<?> mainClass = null;
     for (File file: files) {
       FailSafeClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
       int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
       ClassWriter writer = new ClassWriter(reader, flags);
       modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
-      String className = FileUtilRt.getNameWithoutExtension(file.getName());
-      Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
+      String className = FileUtil.getNameWithoutExtension(file.getName());
+      Class<?> aClass = classLoader.doDefineClass(className, writer.toByteArray());
       if (className.equals(testName)) {
         mainClass = aClass;
       }
@@ -451,7 +467,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
       super(parent);
     }
 
-    public Class doDefineClass(String name, byte[] data) {
+    public Class<?> doDefineClass(String name, byte[] data) {
       return defineClass(name, data, 0, data.length);
     }
   }

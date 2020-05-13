@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.IdeTooltipManager;
@@ -6,10 +6,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.BalloonImpl;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class BalloonPopupBuilderImpl implements BalloonBuilder {
+public final class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Nullable private final Map<Disposable, List<Balloon>> myStorage;
   @Nullable private Disposable myAnchor;
 
@@ -210,7 +211,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   @Override
-  public BalloonBuilder setTitle(@Nullable String title) {
+  public BalloonBuilder setTitle(@Nullable @NlsContexts.PopupTitle String title) {
     myTitle = title;
     return this;
   }
@@ -289,7 +290,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
         });
       }
       balloons.add(result);
-      result.addListener(new JBPopupAdapter() {
+      result.addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           if (!result.isDisposed()) {

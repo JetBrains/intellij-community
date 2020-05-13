@@ -4,6 +4,6 @@ class Top {
 
 class Bottom extends Top {
 	int overmeth() {
-		println "${super.overm<ref>eth()}" // not resolved
+		println "${super.overm<caret>eth()}" // not resolved
 	}
 }

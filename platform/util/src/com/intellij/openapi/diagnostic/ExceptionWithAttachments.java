@@ -21,6 +21,5 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public interface ExceptionWithAttachments {
-  @NotNull
-  Attachment[] getAttachments();
+  Attachment @NotNull [] getAttachments();
 }

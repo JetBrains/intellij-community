@@ -5,9 +5,11 @@ import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -16,8 +18,9 @@ import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
 import com.intellij.remoteServer.runtime.*;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +28,6 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class RemoteServersDeploymentManager {
   private static final int POLL_DEPLOYMENTS_DELAY = 2000;
@@ -36,7 +38,7 @@ public class RemoteServersDeploymentManager {
 
   private final Project myProject;
   private final ServersTreeNodeSelector myNodeSelector;
-  private final Set<RemoteServersServiceViewContributor> myContributors = ConcurrentHashMap.newKeySet();
+  private final Map<RemoteServersServiceViewContributor, Boolean> myContributors = ContainerUtil.createConcurrentWeakMap();
   private final Map<RemoteServer<?>, MessagePanel> myServerToContent = new HashMap<>();
 
   public RemoteServersDeploymentManager(@NotNull Project project) {
@@ -44,12 +46,14 @@ public class RemoteServersDeploymentManager {
     myNodeSelector = new ServersTreeNodeSelectorImpl(project);
     initListeners();
     RemoteServersView.getInstance(project)
-      .registerTreeNodeSelector(myNodeSelector, connection -> myContributors.stream()
+      .registerTreeNodeSelector(myNodeSelector, connection -> myContributors.keySet().stream()
         .anyMatch(contributor -> contributor.accept(connection.getServer())));
   }
 
   private void initListeners() {
     myProject.getMessageBus().connect().subscribe(ServerConnectionListener.TOPIC, new ServerConnectionListener() {
+      private final Set<ServerConnection<?>> myConnectionsToExpand = new SmartHashSet<>();
+
       @Override
       public void onConnectionCreated(@NotNull ServerConnection<?> connection) {
         RemoteServersServiceViewContributor contributor = findContributor(connection.getServer());
@@ -68,7 +72,11 @@ public class RemoteServersDeploymentManager {
             .handle(ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass()));
           updateServerContent(myServerToContent.get(server), connection);
           if (connection.getStatus() == ConnectionStatus.CONNECTED) {
+            myConnectionsToExpand.add(connection);
             pollDeployments(connection);
+          }
+          else {
+            myConnectionsToExpand.remove(connection);
           }
         }
       }
@@ -81,6 +89,10 @@ public class RemoteServersDeploymentManager {
           myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC)
             .handle(ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass()));
           updateServerContent(myServerToContent.get(server), connection);
+          if (myConnectionsToExpand.remove(connection)) {
+            RemoteServerNode serverNode = new RemoteServerNode(myProject, connection.getServer(), contributor);
+            ServiceViewManager.getInstance(myProject).expand(serverNode, contributor.getClass());
+          }
         }
       }
     });
@@ -102,21 +114,21 @@ public class RemoteServersDeploymentManager {
         if (contributor != null) {
           myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC)
             .handle(ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass()));
-          myServerToContent.remove(server);
         }
+        myServerToContent.remove(server);
       }
     });
   }
 
   public void registerContributor(@NotNull RemoteServersServiceViewContributor contributor) {
-    if (myContributors.add(contributor)) {
-      AppUIUtil.invokeOnEdt(() -> {
+    if (myContributors.put(contributor, Boolean.TRUE) == null) {
+      AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> {
         for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
           if (contributor.accept(server)) {
             myServerToContent.put(server, createMessagePanel());
           }
         }
-      }, myProject.getDisposed());
+      });
     }
   }
 
@@ -137,7 +149,7 @@ public class RemoteServersDeploymentManager {
     if (messagePanel == null) return;
 
     if (connection == null) {
-      messagePanel.setEmptyText("Double-click on the server node to connect");
+      messagePanel.setEmptyText(CloudBundle.message("cloud.status.double.click.to.connect"));
     }
     else {
       String text = connection.getStatusText();
@@ -150,7 +162,7 @@ public class RemoteServersDeploymentManager {
 
   @Nullable
   private RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
-    for (RemoteServersServiceViewContributor contributor : myContributors) {
+    for (RemoteServersServiceViewContributor contributor : myContributors.keySet()) {
       if (contributor.accept(server)) {
         return contributor;
       }
@@ -208,7 +220,7 @@ public class RemoteServersDeploymentManager {
 
       AbstractTreeNode<?> deploymentNode = findDeployment(contributor, connection, deploymentName);
       if (deploymentNode != null) {
-        ServiceViewManager.getInstance(myProject).select(deploymentNode, contributor.getClass(), false, false);
+        ServiceViewManager.getInstance(myProject).select(deploymentNode, contributor.getClass(), true, false);
       }
     }
 

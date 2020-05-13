@@ -15,13 +15,15 @@
  */
 package com.intellij.diff.tools.fragmented;
 
+import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.tools.util.base.DiffPanelBase;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,16 +32,16 @@ import javax.swing.*;
 import static com.intellij.diff.util.DiffUtil.createMessagePanel;
 
 public class UnifiedDiffPanel extends DiffPanelBase {
-  private static final String GOOD_CONTENT = "GoodContent";
-  private static final String LOADING_CONTENT = "LoadingContent";
-  private static final String TOO_BIG_CONTENT = "TooBigContent";
-  private static final String OPERATION_CANCELED_CONTENT = "OperationCanceledContent";
-  private static final String ERROR_CONTENT = "ErrorContent";
+  private static final @NonNls String GOOD_CONTENT = "GoodContent";
+  private static final @NonNls String LOADING_CONTENT = "LoadingContent";
+  private static final @NonNls String TOO_BIG_CONTENT = "TooBigContent";
+  private static final @NonNls String OPERATION_CANCELED_CONTENT = "OperationCanceledContent";
+  private static final @NonNls String ERROR_CONTENT = "ErrorContent";
 
   @NotNull private final AsyncProcessIcon.Big myBusyIcon;
 
   public UnifiedDiffPanel(@Nullable Project project,
-                          @NotNull UnifiedContentPanel content,
+                          @NotNull JComponent content,
                           @NotNull DataProvider provider,
                           @NotNull DiffContext context) {
     super(project, provider, context);
@@ -47,9 +49,9 @@ public class UnifiedDiffPanel extends DiffPanelBase {
     JPanel centerPanel = JBUI.Panels.simplePanel(content).addToTop(myNotificationsPanel);
     myContentPanel.add(centerPanel, GOOD_CONTENT);
     myContentPanel.add(myBusyIcon, LOADING_CONTENT);
-    myContentPanel.add(createMessagePanel("Can not calculate diff. " + DiffTooBigException.MESSAGE), TOO_BIG_CONTENT);
-    myContentPanel.add(createMessagePanel("Can not calculate diff. Operation canceled."), OPERATION_CANCELED_CONTENT);
-    myContentPanel.add(createMessagePanel("Error"), ERROR_CONTENT);
+    myContentPanel.add(createMessagePanel(DiffBundle.message("error.can.not.calculate.diff.file.too.big")), TOO_BIG_CONTENT);
+    myContentPanel.add(createMessagePanel(DiffBundle.message("error.can.not.calculate.diff.operation.canceled")), OPERATION_CANCELED_CONTENT);
+    myContentPanel.add(createMessagePanel(CommonBundle.message("title.error")), ERROR_CONTENT);
 
     setCurrentCard(LOADING_CONTENT, false);
   }

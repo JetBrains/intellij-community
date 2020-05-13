@@ -43,6 +43,18 @@ public class XMLCatalogManagerTest extends BasePlatformTestCase {
     assertTrue(filePath, new File(new URI(filePath)).exists());
   }
 
+  public void testRelativeCatalogs() {
+    XMLCatalogManager manager = new XMLCatalogManager(getTestDataPath() + "relative.properties");
+    CatalogManager catalogManager = manager.getManager();
+    Vector files = catalogManager.getCatalogFiles();
+    assertEquals(1, files.size());
+    String filePath = (String)files.get(0);
+    assertTrue(filePath, filePath.endsWith("catalog.xml"));
+    String resolve = getManager().resolve("-//W3C//DTD XHTML 1.0 Strict//EN");
+    assertNotNull(resolve);
+    assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
+  }
+
   public void testResolvePublic() {
     String resolve = getManager().resolve("-//W3C//DTD XHTML 1.0 Strict//EN");
     assertNotNull(resolve);
@@ -53,6 +65,12 @@ public class XMLCatalogManagerTest extends BasePlatformTestCase {
     String resolve = getManager().resolve("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd");
     assertNotNull(resolve);
     assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
+  }
+
+  public void testResolveUri() {
+    String resolve = getManager().resolve("test-node.xsl");
+    assertNotNull(resolve);
+    assertEquals("file:/C:/temp/catalog-test/library/test-node.xsl", resolve);
   }
 
   public void testHighlighting() {

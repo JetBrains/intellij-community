@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -31,22 +33,22 @@ import java.awt.*;
 /**
 * @author peter
 */
-public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
+public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
-  public void createToolWindowContent(@NotNull final Project project, @NotNull ToolWindow toolWindow) {
-    EventLog.getProjectComponent(project).initDefaultContent();
+  public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    EventLog.getProjectService(project).initDefaultContent();
     toolWindow.setHelpId(EventLog.HELP_ID);
   }
 
-  static void createContent(Project project, ToolWindow toolWindow, EventLogConsole console, String title) {
+  static void createContent(@NotNull Project project, @NotNull ToolWindow toolWindow, @NotNull EventLogConsole console, @NotNull String title) {
     // update default Event Log tab title
     ContentManager contentManager = toolWindow.getContentManager();
     Content generalContent = contentManager.getContent(0);
     if (generalContent != null && contentManager.getContentCount() == 1) {
-      generalContent.setDisplayName("General");
+      generalContent.setDisplayName(CommonBundle.message("tab.title.general"));
     }
 
-    final Editor editor = console.getConsoleEditor();
+    Editor editor = console.getConsoleEditor();
     JPanel editorPanel = new JPanel(new AbstractLayoutManager() {
       private int getOffset() {
         return JBUIScale.scale(4);
@@ -80,7 +82,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     panel.setContent(editorPanel);
     panel.addAncestorListener(new LogShownTracker(project));
 
-    ActionToolbar toolbar = createToolbar(project, editor, console);
+    ActionToolbar toolbar = createToolbar(project, console);
     toolbar.setTargetComponent(editor.getContentComponent());
     panel.setToolbar(toolbar.getComponent());
 
@@ -89,7 +91,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     contentManager.setSelectedContent(content);
   }
 
-  private static ActionToolbar createToolbar(Project project, Editor editor, EventLogConsole console) {
+  private static ActionToolbar createToolbar(Project project, EventLogConsole console) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_MARK_ALL_NOTIFICATIONS_AS_READ));
     group.add(new EventLogConsole.ClearLogAction(console));
@@ -103,7 +105,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     private final Project myProject;
 
     EditNotificationSettings(Project project) {
-      super("Settings", "Edit notification settings", AllIcons.General.Settings);
+      super(IdeBundle.message("action.text.settings"), IdeBundle.message("action.description.edit.notification.settings"), AllIcons.General.Settings);
       myProject = project;
     }
 
@@ -127,7 +129,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
   }
 
-  private static class LogShownTracker extends AncestorListenerAdapter {
+  private static final class LogShownTracker extends AncestorListenerAdapter {
     private final Project myProject;
 
     LogShownTracker(Project project) {

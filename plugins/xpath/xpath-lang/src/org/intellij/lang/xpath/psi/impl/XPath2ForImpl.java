@@ -33,9 +33,8 @@ public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
     return value != null ? value.getType() : XPathType.UNKNOWN;
   }
 
-  @NotNull
   @Override
-  public XPathVariableDeclaration[] getVariables() {
+  public XPathVariableDeclaration @NotNull [] getVariables() {
     return findChildrenByClass(XPathVariableDeclaration.class);
   }
 

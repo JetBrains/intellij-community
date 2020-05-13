@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -13,13 +14,14 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.encoding.EncodingManagerListener;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +43,8 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
     String failReason = Pair.getSecond(check);
     Charset charset = ObjectUtils.notNull(Pair.getFirst(check), file.getCharset());
     String charsetName = ObjectUtils.notNull(charset.displayName(), "n/a");
-    String toolTipText = failReason == null ? "File Encoding: " + charsetName : StringUtil.capitalize(failReason) + ".";
+    String toolTipText = failReason == null ? IdeBundle.message("status.bar.text.file.encoding", charsetName)
+                                            : StringUtil.capitalize(failReason) + ".";
     return new WidgetState(toolTipText, charsetName, failReason == null);
   }
 
@@ -49,21 +52,25 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   @Override
   protected ListPopup createPopup(DataContext context) {
     ChangeFileEncodingAction action = new ChangeFileEncodingAction();
-    action.getTemplatePresentation().setText("File Encoding");
+    action.getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.EncodingPanel.text"));
     return action.createPopup(context);
   }
 
   @Override
   protected void registerCustomListeners() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+
     // should update to reflect encoding-from-content
-    EncodingManager.getInstance().addPropertyChangeListener(evt -> {
-      if (evt.getPropertyName().equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
-        Document document = evt.getSource() instanceof Document ? (Document)evt.getSource() : null;
-        updateForDocument(document);
+    connection.subscribe(EncodingManagerListener.ENCODING_MANAGER_CHANGES, new EncodingManagerListener() {
+      @Override
+      public void propertyChanged(@Nullable Document document, @NotNull String propertyName, Object oldValue, Object newValue) {
+        if (propertyName.equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
+          updateForDocument(document);
+        }
       }
-    }, this);
-    ApplicationManager.getApplication().getMessageBus().connect(this)
-      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
+    });
+
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
         @Override
         public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
           if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {

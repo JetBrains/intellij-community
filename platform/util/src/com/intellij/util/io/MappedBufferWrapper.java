@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,16 +8,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.file.Path;
 
-/**
- * @author max
- */
 abstract class MappedBufferWrapper extends ByteBufferWrapper {
   private static final int MAX_FORCE_ATTEMPTS = 10;
 
   private volatile MappedByteBuffer myBuffer;
 
-  protected MappedBufferWrapper(File file, long pos, long length) {
+  protected MappedBufferWrapper(Path file, long pos, long length) {
     super(file, pos, length);
   }
 

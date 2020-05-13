@@ -25,7 +25,7 @@ import java.io.InputStream;
 */
 public abstract class BinaryOutputReader extends BaseDataReader {
   @NotNull private final InputStream myStream;
-  @NotNull private final byte[] myBuffer = new byte[8192];
+  private final byte @NotNull [] myBuffer = new byte[8192];
 
   public BinaryOutputReader(@NotNull InputStream stream, @NotNull SleepingPolicy sleepingPolicy) {
     super(sleepingPolicy);
@@ -64,7 +64,7 @@ public abstract class BinaryOutputReader extends BaseDataReader {
     return read;
   }
 
-  protected abstract void onBinaryAvailable(@NotNull byte[] data, int size);
+  protected abstract void onBinaryAvailable(byte @NotNull [] data, int size);
 
   @Override
   protected void close() throws IOException {

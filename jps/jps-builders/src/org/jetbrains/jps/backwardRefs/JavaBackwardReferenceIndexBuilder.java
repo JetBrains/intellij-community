@@ -62,6 +62,7 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
     JavaBackwardReferenceIndexWriter.closeIfNeeded(false);
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.emptyList();

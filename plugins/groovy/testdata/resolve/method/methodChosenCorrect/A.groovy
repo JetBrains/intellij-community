@@ -3,4 +3,4 @@ class X<T> {
   def foo(Map map){}
 }
 
-new X<HashMap>().f<ref>oo([:]);
+new X<HashMap>().f<caret>oo([:]);

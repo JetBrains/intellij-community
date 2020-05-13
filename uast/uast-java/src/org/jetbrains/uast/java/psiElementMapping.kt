@@ -45,8 +45,9 @@ private val conversionMapping = UElementToPsiElementMapping(
   USimpleNameReferenceExpression::class.java to ClassSet(PsiIdentifier::class.java,
                                                          PsiReferenceExpression::class.java,
                                                          PsiJavaCodeReferenceElement::class.java,
-                                                         PsiDocToken::class.java),
-  UIdentifier::class.java to ClassSet(PsiIdentifier::class.java),
+                                                         PsiDocToken::class.java,
+                                                         PsiJavaModuleReferenceElement::class.java),
+  UIdentifier::class.java to ClassSet(PsiIdentifier::class.java, PsiKeyword::class.java),
   UNamedExpression::class.java to ClassSet(PsiNameValuePair::class.java),
   UCallExpression::class.java to ClassSet(
     PsiArrayInitializerMemberValue::class.java,
@@ -97,6 +98,7 @@ private val conversionMapping = UElementToPsiElementMapping(
   UReturnExpression::class.java to ClassSet(PsiReturnStatement::class.java),
   UThrowExpression::class.java to ClassSet(PsiThrowStatement::class.java),
   UTryExpression::class.java to ClassSet(PsiTryStatement::class.java),
+  UCatchClause::class.java to ClassSet(PsiCatchSection::class.java),
   UastEmptyExpression::class.java to ClassSet(PsiEmptyStatement::class.java),
   UExpressionList::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java),
 

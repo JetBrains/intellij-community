@@ -21,7 +21,6 @@ import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -32,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -46,7 +46,7 @@ import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARAT
 
 public class VcsHistoryUtil {
   @Deprecated
-  public static final Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffUserDataKeysEx.REVISION_INFO;
+  public static final Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffVcsDataKeys.REVISION_INFO;
 
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 
@@ -105,8 +105,8 @@ public class VcsHistoryUtil {
 
     final DiffRequest request = new SimpleDiffRequest(title, diffContent1, diffContent2, title1, title2);
 
-    diffContent1.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision1));
-    diffContent2.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision2));
+    diffContent1.putUserData(DiffVcsDataKeys.REVISION_INFO, getRevisionInfo(revision1));
+    diffContent2.putUserData(DiffVcsDataKeys.REVISION_INFO, getRevisionInfo(revision2));
 
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> DiffManager.getInstance().showDiff(project, request), null, project);
   }
@@ -132,8 +132,7 @@ public class VcsHistoryUtil {
     return null;
   }
 
-  @NotNull
-  public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
+  public static byte @NotNull [] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
     byte[] content = revision.loadContent();
     if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
     return content;
@@ -154,7 +153,7 @@ public class VcsHistoryUtil {
   }
 
   @NotNull
-  private static DiffContent createContent(@NotNull Project project, @NotNull byte[] content, @NotNull VcsFileRevision revision,
+  private static DiffContent createContent(@NotNull Project project, byte @NotNull [] content, @NotNull VcsFileRevision revision,
                                            @NotNull FilePath filePath) throws IOException {
     DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
     if (isCurrent(revision)) {
@@ -185,7 +184,7 @@ public class VcsHistoryUtil {
                                                  @NotNull final FilePath filePath,
                                                  @NotNull final VcsFileRevision older,
                                                  @NotNull final VcsFileRevision newer) {
-    new Task.Backgroundable(project, "Comparing Revisions...") {
+    new Task.Backgroundable(project, VcsBundle.message("file.history.diff.revisions.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

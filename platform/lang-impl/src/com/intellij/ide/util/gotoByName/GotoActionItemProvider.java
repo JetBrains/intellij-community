@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.DataManager;
@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
@@ -36,7 +37,7 @@ import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 /**
  * @author peter
  */
-public class GotoActionItemProvider implements ChooseByNameItemProvider {
+public final class GotoActionItemProvider implements ChooseByNameItemProvider {
   private final ActionManager myActionManager = ActionManager.getInstance();
   private final GotoActionModel myModel;
   private final NotNullLazyValue<Map<String, ApplyIntentionAction>> myIntentions;
@@ -48,7 +49,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   @NotNull
   @Override
-  public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
+  public List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
     return Collections.emptyList(); // no common prefix insertion in goto action
   }
 
@@ -127,11 +128,13 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     List<Object> options = new ArrayList<>();
     final Set<String> words = registrar.getProcessedWords(pattern);
     Set<OptionDescription> optionDescriptions = null;
-    final String actionManagerName = myActionManager.getComponentName();
+    String actionManagerName = myActionManager.getComponentName();
+    boolean filterOutInspections = Registry.is("go.to.action.filter.out.inspections", true);
     for (String word : words) {
       final Set<OptionDescription> descriptions = registrar.getAcceptableDescriptions(word);
       if (descriptions != null) {
-        descriptions.removeIf(description -> actionManagerName.equals(description.getPath()));
+        descriptions.removeIf(description -> actionManagerName.equals(description.getPath()) ||
+                                             filterOutInspections && "Inspections".equals(description.getGroupName()));
         if (!descriptions.isEmpty()) {
           if (optionDescriptions == null) {
             optionDescriptions = descriptions;
@@ -140,7 +143,8 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
             optionDescriptions.retainAll(descriptions);
           }
         }
-      } else {
+      }
+      else {
         optionDescriptions = null;
         break;
       }
@@ -167,8 +171,8 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
           AnAction action = converter.provide(description);
           if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext, myModel));
-          options.add(description);
         }
+        options.add(description);
       }
     }
     return processItems(pattern, JBIterable.from(options), consumer);
@@ -220,7 +224,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private static boolean processItems(String pattern, JBIterable<?> items, Processor<? super MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     try {
-      Collections.sort(matched, (o1, o2) -> o1.compareWeights(o2));
+      matched.sort((o1, o2) -> o1.compareWeights(o2));
     }
     catch (IllegalArgumentException e) {
       LOG.error("Comparison method violates its general contract with pattern '" + pattern + "'", e);

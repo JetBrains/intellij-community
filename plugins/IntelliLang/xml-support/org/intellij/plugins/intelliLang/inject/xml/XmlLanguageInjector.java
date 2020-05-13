@@ -37,7 +37,6 @@ import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
@@ -59,11 +58,9 @@ import java.util.regex.Pattern;
 public final class XmlLanguageInjector implements MultiHostInjector {
   private final Configuration myConfiguration;
   private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
-  private final LanguageInjectionSupport mySupport;
 
   public XmlLanguageInjector(@NotNull Project project) {
     myConfiguration = Configuration.getProjectInstance(project);
-    mySupport = InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
   @Override
@@ -90,7 +87,8 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         ranges.add(textRange.shiftRight(host1.getTextRange().getStartOffset()));
       }
       InjectorUtils.registerInjection(language, list, containingFile, registrar);
-      InjectorUtils.registerSupport(mySupport, true, list.get(0).getFirst(), language);
+      InjectorUtils.registerSupport(InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID),
+                                    true, list.get(0).getFirst(), language);
       if (Boolean.TRUE.equals(unparsableRef.get())) {
         InjectorUtils.putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }
@@ -117,14 +115,17 @@ public final class XmlLanguageInjector implements MultiHostInjector {
 
           xmlTag.acceptChildren(new PsiElementVisitor() {
             @Override
-            public void visitElement(final PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
               if (element instanceof XmlText) {
                 if (!(element instanceof PsiLanguageInjectionHost) || element.getTextLength() == 0) return;
-                final List<TextRange> list = injection.getInjectedArea(element);
-                final InjectedLanguage l =
-                  InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
-                for (TextRange textRange : list) {
-                  result.add(Trinity.create((PsiLanguageInjectionHost)element, l, textRange));
+
+                if (!injection.shouldBeIgnored(element)) {
+                  List<TextRange> list = injection.getInjectedArea(element);
+                  InjectedLanguage l =
+                    InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
+                  for (TextRange textRange : list) {
+                    result.add(Trinity.create((PsiLanguageInjectionHost)element, l, textRange));
+                  }
                 }
               }
               else if (element instanceof XmlTag) {
@@ -171,7 +172,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = injections.size(); i < size; i++) {
         BaseInjection injection = injections.get(i);
-        if (injection.acceptsPsiElement(attribute)) {
+        if (injection.acceptsPsiElement(attribute) && !injection.shouldBeIgnored(value)) {
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
           if (language == null) continue;
           final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
@@ -223,7 +224,6 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     //if (areThereInjectionsWithText(tag.getNamespace(), index)) return false;
     return false;
   }
-
 
   private static boolean areThereInjectionsWithText(final String text, Trinity<Long, Pattern, Collection<String>> index) {
     if (text == null) return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing;
 
 import com.intellij.openapi.util.ClassExtension;
@@ -17,17 +17,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  */
 public interface GrTypeCalculator<T extends GrExpression> {
 
-  ClassExtension<GrTypeCalculator> EP = new ClassExtension<>("org.intellij.groovy.typeCalculator");
+  ClassExtension<GrTypeCalculator<?>> EP = new ClassExtension<>("org.intellij.groovy.typeCalculator");
 
   /**
    * @return {@code expression} type if some implementation can calculate it, otherwise {@code null}. <br/>
    * The result type is the first non-{@code null} value returned.
    */
+  @SuppressWarnings("unchecked")
   @Nullable
   static PsiType getTypeFromCalculators(@NotNull GrExpression expression) {
-    for (GrTypeCalculator calculator : EP.forKey(expression.getClass())) {
-      //noinspection unchecked
-      PsiType type = calculator.getType(expression);
+    for (GrTypeCalculator<?> calculator : EP.forKey(expression.getClass())) {
+      PsiType type = ((GrTypeCalculator<GrExpression>)calculator).getType(expression);
       if (type != null) return type;
     }
     return null;

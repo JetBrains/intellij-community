@@ -32,6 +32,5 @@ public interface IndexPatternProvider {
   /**
    * Returns index patterns the occurrences of which should be indexed.
    */
-  @NotNull
-  IndexPattern[] getIndexPatterns();
+  IndexPattern @NotNull [] getIndexPatterns();
 }

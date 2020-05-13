@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
@@ -46,14 +46,14 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public String getNodeText() {
-    return ProjectBundle.message("library.sources.node");
+    return JavaUiBundle.message("library.sources.node");
   }
 
   private static class SourcesPathEditor extends SdkPathEditor {
     private final Sdk mySdk;
 
     SourcesPathEditor(Sdk sdk, FileChooserDescriptor descriptor) {
-      super(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, descriptor);
+      super(JavaUiBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, descriptor);
       mySdk = sdk;
     }
 

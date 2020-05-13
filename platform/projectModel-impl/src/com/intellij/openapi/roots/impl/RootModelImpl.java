@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
@@ -29,6 +29,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.util.*;
 
@@ -37,13 +38,13 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
+  private static final Logger LOG = Logger.getInstance(RootModelImpl.class);
 
   private final Set<ContentEntry> myContent = new TreeSet<>(ContentComparator.INSTANCE);
 
   private final List<OrderEntry> myOrderEntries = new Order();
   // cleared by myOrderEntries modification, see Order
-  @Nullable private OrderEntry[] myCachedOrderEntries;
+  private OrderEntry @Nullable [] myCachedOrderEntries;
 
   @NotNull private final ModuleLibraryTable myModuleLibraryTable;
   final ModuleRootManagerImpl myModuleRootManager;
@@ -101,8 +102,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     }
 
     boolean moduleSourceAdded = false;
-    for (Element child : element.getChildren(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
-      final OrderEntry orderEntry = OrderEntryFactory.createOrderEntryByElement(child, this, myProjectRootManager);
+    for (Element child : element.getChildren(JpsModuleRootModelSerializer.ORDER_ENTRY_TAG)) {
+      OrderEntry orderEntry = OrderEntryFactory.createOrderEntryByElement(child, this, myProjectRootManager);
       if (orderEntry instanceof ModuleSourceOrderEntry) {
         if (moduleSourceAdded) continue;
         moduleSourceAdded = true;
@@ -209,8 +210,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   @Override
-  @NotNull
-  public OrderEntry[] getOrderEntries() {
+  public OrderEntry @NotNull [] getOrderEntries() {
     OrderEntry[] cachedOrderEntries = myCachedOrderEntries;
     if (cachedOrderEntries == null) {
       myCachedOrderEntries = cachedOrderEntries = myOrderEntries.toArray(OrderEntry.EMPTY_ARRAY);
@@ -320,24 +320,24 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private void removeOrderEntryInternal(@NotNull OrderEntry entry) {
     LOG.assertTrue(myOrderEntries.contains(entry));
     Disposer.dispose((Disposable)entry);
-    myOrderEntries.remove(entry);
+    while (myOrderEntries.remove(entry));
   }
 
   @Override
-  public void rearrangeOrderEntries(@NotNull OrderEntry[] newEntries) {
+  public void rearrangeOrderEntries(OrderEntry @NotNull [] newEntries) {
     assertWritable();
     assertValidRearrangement(newEntries);
     myOrderEntries.clear();
     ContainerUtil.addAll(myOrderEntries, newEntries);
   }
 
-  private void assertValidRearrangement(@NotNull OrderEntry[] newEntries) {
+  private void assertValidRearrangement(OrderEntry @NotNull [] newEntries) {
     String error = checkValidRearrangement(newEntries);
     LOG.assertTrue(error == null, error);
   }
 
   @Nullable
-  private String checkValidRearrangement(@NotNull OrderEntry[] newEntries) {
+  private String checkValidRearrangement(OrderEntry @NotNull [] newEntries) {
     if (newEntries.length != myOrderEntries.size()) {
       return "Size mismatch: old size=" + myOrderEntries.size() + "; new size=" + newEntries.length;
     }
@@ -378,7 +378,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     myWritable = false;
   }
 
-  void docommit() {
+  void doCommit() {
     assert isWritable();
 
     if (areOrderEntriesChanged()) {
@@ -484,7 +484,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   @Override
-  public void setInvalidSdk(@NotNull String jdkName, String jdkType) {
+  public void setInvalidSdk(@NotNull String jdkName, @NotNull String jdkType) {
     assertWritable();
     replaceEntryOfType(JdkOrderEntry.class, new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager));
   }
@@ -539,6 +539,21 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   protected Set<ContentEntry> getContent() {
     return myContent;
+  }
+
+  public void addModuleExtension(ModuleExtension extension) {
+    ModuleExtension model = extension.getModifiableModel(false);
+    myExtensions.add(model);
+    registerOnDispose(model);
+  }
+
+  public void removeModuleExtension(ModuleExtension extension) {
+    ModuleExtension instance = ContainerUtil.findInstance(myExtensions, extension.getClass());
+    if (instance != null) {
+      myExtensions.remove(instance);
+      unregisterOnDispose(instance);
+      Disposer.dispose(instance);
+    }
   }
 
   private static class ContentComparator implements Comparator<ContentEntry> {
@@ -616,21 +631,27 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       ModuleOrderEntry entry1 = (ModuleOrderEntry)orderEntry1;
       ModuleOrderEntry entry2 = (ModuleOrderEntry)orderEntry2;
       return entry1.isProductionOnTestDependency() == entry2.isProductionOnTestDependency()
-             && Comparing.equal(entry1.getModuleName(), entry2.getModuleName());
+             && Objects.equals(entry1.getModuleName(), entry2.getModuleName());
     }
 
     if (orderEntry1 instanceof LibraryOrderEntry) {
       LOG.assertTrue(orderEntry2 instanceof LibraryOrderEntry);
       LibraryOrderEntry libraryOrderEntry1 = (LibraryOrderEntry)orderEntry1;
       LibraryOrderEntry libraryOrderEntry2 = (LibraryOrderEntry)orderEntry2;
-      boolean equal = Comparing.equal(libraryOrderEntry1.getLibraryName(), libraryOrderEntry2.getLibraryName())
-                      && Comparing.equal(libraryOrderEntry1.getLibraryLevel(), libraryOrderEntry2.getLibraryLevel());
+      boolean equal = Objects.equals(libraryOrderEntry1.getLibraryName(), libraryOrderEntry2.getLibraryName())
+                      && Objects.equals(libraryOrderEntry1.getLibraryLevel(), libraryOrderEntry2.getLibraryLevel());
       if (!equal) return false;
 
-      Library library1 = libraryOrderEntry1.getLibrary();
-      Library library2 = libraryOrderEntry2.getLibrary();
+      LibraryEx library1 = (LibraryEx) libraryOrderEntry1.getLibrary();
+      LibraryEx library2 = (LibraryEx) libraryOrderEntry2.getLibrary();
       if (library1 != null && library2 != null) {
-        if (!Arrays.equals(((LibraryEx)library1).getExcludedRootUrls(), ((LibraryEx)library2).getExcludedRootUrls())) {
+        if (!Arrays.equals(library1.getExcludedRootUrls(), library2.getExcludedRootUrls())) {
+          return false;
+        }
+        if (!Comparing.equal(library1.getKind(), library2.getKind())) {
+          return false;
+        }
+        if (!Comparing.equal(library1.getProperties(), library2.getProperties())) {
           return false;
         }
       }

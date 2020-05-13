@@ -61,6 +61,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 class PathMatcher:
     def __init__(self, patterns: Sequence[str]) -> None:
+        patterns = [re.escape(os.path.join(*x.split("/"))) for x in patterns]
         self.matcher = re.compile(r"({})$".format("|".join(patterns))) if patterns else None
 
     def search(self, path: str) -> Optional[Match[str]]:
@@ -133,7 +134,7 @@ def can_run(exe: str, *, args: List[str]) -> bool:
 
 
 def _is_version(path: str, version: str) -> bool:
-    return any("{}/{}".format(d, version) in path for d in TYPESHED_SUBDIRS)
+    return any("{}{}{}".format(d, os.path.sep, version) in path for d in TYPESHED_SUBDIRS)
 
 
 def check_subdirs_discoverable(subdir_paths: List[str]) -> None:

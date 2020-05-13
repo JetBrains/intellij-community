@@ -53,9 +53,8 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
     Disposer.register(myExecutionConsole, this);
   }
 
-  @NotNull
   @Override
-  public XBreakpointHandler<?>[] getBreakpointHandlers() {
+  public XBreakpointHandler<?> @NotNull [] getBreakpointHandlers() {
     return myXBreakpointHandlers;
   }
 
@@ -196,9 +195,8 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
       return new XsltExecutionStack("Source Frames", mySourceFrame, myDebuggerSession);
     }
 
-    @NotNull
     @Override
-    public XExecutionStack[] getExecutionStacks() {
+    public XExecutionStack @NotNull [] getExecutionStacks() {
       return new XExecutionStack[]{
         getActiveExecutionStack(),
         getSourceStack()

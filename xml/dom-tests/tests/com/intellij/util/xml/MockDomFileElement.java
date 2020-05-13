@@ -34,7 +34,6 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public class MockDomFileElement extends UserDataHolderBase implements DomFileElement<DomElement> {
-  private long myModCount = 0;
   private DomFileDescription<DomElement> myFileDescription;
 
   public void setFileDescription(final DomFileDescription<DomElement> fileDescription) {
@@ -230,10 +229,7 @@ public class MockDomFileElement extends UserDataHolderBase implements DomFileEle
 
   @Override
   public long getModificationCount() {
-    return myModCount;
+    return 0;
   }
 
-  public void incModificationCount() {
-    myModCount++;
-  }
 }

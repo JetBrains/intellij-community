@@ -80,10 +80,10 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
   @Nullable
   public static JsonValueAdapter createEmptyValueAdapter(@NotNull PsiElement context, boolean pinSelf) {
     if (context instanceof YAMLKeyValue && ((YAMLKeyValue)context).getValue() == null) {
-      PsiElement next = PsiTreeUtil.skipWhitespacesForward(context);
+      PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(context);
       if (PsiUtilCore.getElementType(next) == YAMLTokenTypes.EOL) {
-        next = PsiTreeUtil.skipWhitespacesForward(next);
-        if (PsiUtilCore.getElementType(next) == YAMLTokenTypes.INDENT && !(PsiTreeUtil.skipWhitespacesForward(next) instanceof YAMLKeyValue)) {
+        next = PsiTreeUtil.skipWhitespacesAndCommentsForward(next);
+        if (PsiUtilCore.getElementType(next) == YAMLTokenTypes.INDENT && !(PsiTreeUtil.skipWhitespacesAndCommentsForward(next) instanceof YAMLKeyValue)) {
           // potentially empty object after newline+indent
           return new YamlEmptyObjectAdapter(next);
         }

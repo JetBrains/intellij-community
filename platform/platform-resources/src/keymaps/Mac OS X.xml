@@ -233,7 +233,6 @@
   </action>
   <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="meta 9"/>
-    <keyboard-shortcut first-keystroke="meta shift 9"/>
   </action>
   <action id="NextWindow">
     <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
@@ -269,6 +268,12 @@
   </action>
   <action id="Exit">
     <keyboard-shortcut first-keystroke="meta Q"/>
+  </action>
+  <action id="GotoDeclaration">
+    <keyboard-shortcut first-keystroke="meta B"/>
+    <mouse-shortcut keystroke="meta button1"/>
+    <mouse-shortcut keystroke="Force touch" />
+    <mouse-shortcut keystroke="button2" />
   </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="control shift B"/>
@@ -483,5 +488,11 @@
   </action>
   <action id="ServiceView.GroupByServiceGroups">
     <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="ToggleFindInSelection">
+    <keyboard-shortcut first-keystroke="control alt E"/>
+  </action>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
   </action>
 </keymap>

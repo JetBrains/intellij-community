@@ -1,8 +1,6 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-/**
- * @author Sergey.Malenkov
- */
 class ColorConverter {
   public int convert(int red, int green, int blue, int alpha) {
     return (fix(red) << 16) | (fix(green) << 8) | fix(blue) | (fix(alpha) << 24);
@@ -13,6 +11,6 @@ class ColorConverter {
   }
 
   private static int fix(int value) {
-    return value < 0 ? 0 : value > 255 ? 255 : value;
+    return Math.max(0, Math.min(value, 255));
   }
 }

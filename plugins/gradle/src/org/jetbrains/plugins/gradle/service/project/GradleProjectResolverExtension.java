@@ -53,6 +53,7 @@ import java.util.*;
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
+  @ApiStatus.Internal
   ExtensionPointName<GradleProjectResolverExtension> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.projectResolve");
 
   void setProjectResolverContext(@NotNull ProjectResolverContext projectResolverContext);
@@ -62,12 +63,19 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @Nullable
   GradleProjectResolverExtension getNext();
 
+  /**
+   * @deprecated is not used anymore
+   */
   @NotNull
-  ProjectData createProject();
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  default ProjectData createProject() {
+    throw new UnsupportedOperationException();
+  }
 
   void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject);
 
-  @NotNull
+  @Nullable
   DataNode<ModuleData> createModule(@NotNull IdeaModule gradleModule, @NotNull DataNode<ProjectData> projectDataNode);
 
   /**
@@ -106,7 +114,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   default void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {}
 
   @NotNull
-  Set<Class> getExtraProjectModelClasses();
+  Set<Class<?>> getExtraProjectModelClasses();
 
   /**
    * Allows to request gradle tooling models after "sync" tasks are run
@@ -121,7 +129,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * This can be used to setup "sync" tasks for the import
    *
    * @see BuildActionExecuter.Builder#projectsLoaded(org.gradle.tooling.BuildAction, org.gradle.tooling.IntermediateResultHandler)
-   * @see GradleProjectResolverExtension#requiresTaskRunning()
    */
   @Nullable
   default ProjectImportModelProvider getProjectsLoadedModelProvider() {return null;}
@@ -132,8 +139,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * {@link org.gradle.tooling.BuildActionExecuter#forTasks(String...)} called with an empty list. This will allow
    * any tasks that are scheduled by Gradle plugin in the model builders to be run.
    *
-   * Note: If nothing inside Gradle (i.e the model builders) overwrites the task list then this will cause the default task to be run.
+   * @deprecated not required anymore
    */
+  @Deprecated
   default boolean requiresTaskRunning() {
     return false;
   }
@@ -144,13 +152,13 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * @return classes to be available for gradle
    */
   @NotNull
-  Set<Class> getToolingExtensionsClasses();
+  Set<Class<?>> getToolingExtensionsClasses();
 
   /**
    * add target types to be used in the polymorphic containers
    * @return
    */
-  default Set<Class> getTargetTypes() {
+  default Set<Class<?>> getTargetTypes() {
     return Collections.emptySet();
   }
 

@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
  */
 public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   /**
-   * @return names of the methods for which this matcher may return true. For any other method it guaranteed to return false
+   * @return distinct names of the methods for which this matcher may return true. For any other method it guaranteed to return false
    */
   Stream<String> names();
 
@@ -56,14 +57,14 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   /**
    * Returns a new matcher which will return true if any of supplied matchers return true
    *
-   * @param matchers
+   * @param matchers matchers to delegate to
    * @return a new matcher
    */
   static CallMatcher anyOf(CallMatcher... matchers) {
     return new CallMatcher() {
       @Override
       public Stream<String> names() {
-        return Stream.of(matchers).flatMap(CallMatcher::names);
+        return Stream.of(matchers).flatMap(CallMatcher::names).distinct();
       }
 
       @Override
@@ -111,7 +112,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return a new matcher
    */
   @Contract(pure = true)
-  static Simple instanceCall(@NotNull String className, String... methodNames) {
+  static Simple instanceCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.INSTANCE);
   }
 
@@ -123,7 +124,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return a new matcher
    */
   @Contract(pure = true)
-  static Simple exactInstanceCall(@NotNull String className, String... methodNames) {
+  static Simple exactInstanceCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.EXACT_INSTANCE);
   }
 
@@ -135,7 +136,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return a new matcher
    */
   @Contract(pure = true)
-  static Simple staticCall(@NotNull String className, String... methodNames) {
+  static Simple staticCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.STATIC);
   }
 
@@ -215,10 +216,10 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       new Simple("", Collections.singleton("valueOf"), new String[]{CommonClassNames.JAVA_LANG_STRING}, CallType.ENUM_STATIC);
     private final @NotNull String myClassName;
     private final @NotNull Set<String> myNames;
-    private final @Nullable String[] myParameters;
+    private final String @Nullable [] myParameters;
     private final CallType myCallType;
 
-    private Simple(@NotNull String className, @NotNull Set<String> names, @Nullable String[] parameters, CallType callType) {
+    private Simple(@NotNull String className, @NotNull Set<String> names, String @Nullable [] parameters, CallType callType) {
       myClassName = className;
       myNames = names;
       myParameters = parameters;
@@ -254,7 +255,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
      * @throws IllegalStateException if this matcher is already limited to parameters count or types
      */
     @Contract(pure = true)
-    public Simple parameterTypes(@NotNull String... types) {
+    public Simple parameterTypes(String @NotNull ... types) {
       if (myParameters != null) {
         throw new IllegalStateException("Parameters are already registered");
       }

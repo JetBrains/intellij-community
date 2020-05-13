@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.storage.factors
 
 import com.intellij.codeInsight.completion.ml.ContextFeatures
@@ -9,9 +9,11 @@ import com.intellij.completion.ml.ContextFeaturesStorage
 import com.intellij.completion.sorting.RankingModelWrapper
 import com.intellij.completion.sorting.RankingSupport
 import com.intellij.lang.Language
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.stats.PerformanceTracker
@@ -19,6 +21,7 @@ import com.intellij.stats.completion.idString
 import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
 import com.intellij.stats.personalization.session.LookupSessionFactorsStorage
+import org.jetbrains.annotations.TestOnly
 
 class MutableLookupStorage(
   override val startedTimestamp: Long,
@@ -33,12 +36,26 @@ class MutableLookupStorage(
   override val contextFactors: Map<String, String>
     get() = contextFeaturesStorage?.asMap() ?: emptyMap()
 
+  private var mlUsed: Boolean = false
+
   private var _loggingEnabled: Boolean = false
   override val performanceTracker: PerformanceTracker = PerformanceTracker()
 
   companion object {
     private val LOG = logger<MutableLookupStorage>()
     private val LOOKUP_STORAGE = Key.create<MutableLookupStorage>("completion.ml.lookup.storage")
+
+    @Volatile
+    private var alwaysComputeFeaturesInTests = true
+
+    @TestOnly
+    fun setComputeFeaturesAlways(value: Boolean, parentDisposable: Disposable) {
+      val valueBefore = alwaysComputeFeaturesInTests
+      alwaysComputeFeaturesInTests = value
+      Disposer.register(parentDisposable, Disposable {
+        alwaysComputeFeaturesInTests = valueBefore
+      })
+    }
 
     fun get(lookup: LookupImpl): MutableLookupStorage? {
       return lookup.getUserData(LOOKUP_STORAGE)
@@ -61,7 +78,14 @@ class MutableLookupStorage(
     MutableElementStorage()
   }
 
-  override fun shouldComputeFeatures(): Boolean = model != null || _loggingEnabled
+  override fun mlUsed(): Boolean = mlUsed
+
+  fun fireReorderedUsingMLScores() {
+    mlUsed = true
+    performanceTracker.reorderedByML()
+  }
+
+  override fun shouldComputeFeatures(): Boolean = model != null || _loggingEnabled || (ApplicationManager.getApplication().isUnitTestMode && alwaysComputeFeaturesInTests)
 
   fun isContextFactorsInitialized(): Boolean = contextFeaturesStorage != null
 
@@ -71,10 +95,7 @@ class MutableLookupStorage(
 
   fun initUserFactors(project: Project) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (_userFactors != null) {
-      LOG.error("User factors should be initialized only once")
-    }
-    else {
+    if (_userFactors == null && UserFactorsManager.ENABLE_USER_FACTORS) {
       val userFactorValues = mutableMapOf<String, String>()
       val userFactors = UserFactorsManager.getInstance().getAllFactors()
       val applicationStorage: UserFactorStorage = UserFactorStorage.getInstance()

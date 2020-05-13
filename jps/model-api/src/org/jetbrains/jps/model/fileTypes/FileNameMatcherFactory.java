@@ -19,9 +19,6 @@ import com.intellij.openapi.fileTypes.FileNameMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-/**
- * @author nik
- */
 public abstract class FileNameMatcherFactory {
   public static FileNameMatcherFactory getInstance() {
     return JpsServiceManager.getInstance().getService(FileNameMatcherFactory.class);

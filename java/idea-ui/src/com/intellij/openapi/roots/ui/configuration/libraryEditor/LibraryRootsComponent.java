@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -14,7 +16,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
@@ -33,7 +34,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
@@ -41,6 +41,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -148,7 +149,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         if (childNodes != null) {
           for (Object childNode : childNodes) {
             LibraryTableTreeContentElement element = TreeUtil.getUserObject(LibraryTableTreeContentElement.class, childNode);
-            if (element != null) {
+            if (element != null && myTree != null) {
               myTreeModel.expand(element, myTree, path -> { });
             }
           }
@@ -163,9 +164,9 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTreePanel.setLayout(new BorderLayout());
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
-      .setRemoveActionName(ProjectBundle.message("library.remove.action"))
+      .setPanelBorder(JBUI.Borders.empty())
+      .setRemoveActionName(JavaUiBundle.message("library.remove.action"))
       .disableRemoveAction();
-    toolbarDecorator.setPanelBorder(new CustomLineBorder(1, 0, 0, 0));
     final List<AttachRootButtonDescriptor> popupItems = new ArrayList<>();
     for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
       Icon icon = descriptor.getToolbarIcon();
@@ -179,7 +180,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
     myAddExcludedRootActionButton = new AddExcludedRootActionButton();
     toolbarDecorator.addExtraAction(myAddExcludedRootActionButton);
-    toolbarDecorator.addExtraAction(new AnActionButton("Remove", IconUtil.getRemoveIcon()) {
+    toolbarDecorator.addExtraAction(new AnActionButton(JavaUiBundle.messagePointer("action.AnActionButton.text.remove"), IconUtil.getRemoveIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final List<Object> selectedElements = getSelectedElements();
@@ -215,7 +216,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         super.updateButton(e);
         Presentation presentation = e.getPresentation();
         if (ContainerUtil.and(getSelectedElements(), new FilteringIterator.InstanceOf<>(ExcludedRootElement.class))) {
-          presentation.setText("Cancel Exclusion");
+          presentation.setText(JavaUiBundle.message("action.text.cancel.exclusion"));
         }
         else {
           presentation.setText(getTemplatePresentation().getText());
@@ -543,14 +544,15 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private class AddExcludedRootActionButton extends AnActionButton {
     AddExcludedRootActionButton() {
-      super("Exclude", null, AllIcons.Modules.AddExcludedRoot);
+      super(CommonBundle.messagePointer("button.exclude"), Presentation.NULL_STRING, AllIcons.Modules.AddExcludedRoot);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-      descriptor.setTitle("Exclude from Library");
-      descriptor.setDescription("Select directories which should be excluded from the library content. Content of excluded directories won't be processed by IDE.");
+      descriptor.setTitle(JavaUiBundle.message("chooser.title.exclude.from.library"));
+      descriptor.setDescription(JavaUiBundle.message(
+        "chooser.description.select.directories.which.should.be.excluded.from.the.library.content"));
       Set<VirtualFile> roots = getNotExcludedRoots();
       descriptor.setRoots(roots.toArray(VirtualFile.EMPTY_ARRAY));
       if (roots.size() < 2) {

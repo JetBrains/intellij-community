@@ -79,6 +79,8 @@ public class ExternalProjectSerializationService implements SerializationService
           writeString(writer, "description", project.getDescription());
           writeString(writer, "group", project.getGroup());
           writeString(writer, "version", project.getVersion());
+          writeString(writer, "sourceCompatibility", project.getSourceCompatibility());
+          writeString(writer, "targetCompatibility", project.getTargetCompatibility());
           writeString(writer, "projectDir", project.getProjectDir().getPath());
           writeString(writer, "buildDir", project.getBuildDir().getPath());
           writeFile(writer, "buildFile", project.getBuildFile());
@@ -123,6 +125,7 @@ public class ExternalProjectSerializationService implements SerializationService
     writeString(writer, "name", sourceSet.getName());
     writeString(writer, "sourceCompatibility", sourceSet.getSourceCompatibility());
     writeString(writer, "targetCompatibility", sourceSet.getTargetCompatibility());
+    writeBoolean(writer,"isPreview", sourceSet.isPreview());
     writeFiles(writer, "artifacts", sourceSet.getArtifacts());
     writeDependencies(writer, context, sourceSet.getDependencies());
     writeSourceDirectorySets(writer, sourceSet.getSources());
@@ -294,6 +297,9 @@ public class ExternalProjectSerializationService implements SerializationService
           writer.writeString(FileCollectionDependency.class.getSimpleName());
           writeDependencyCommonFields(writer, context, dependency);
           writeFiles(writer, "files", dependency.getFiles());
+          if (dependency instanceof DefaultFileCollectionDependency) {
+            writeBoolean(writer, "excludedFromIndexing", ((DefaultFileCollectionDependency)dependency).isExcludedFromIndexing());
+          }
         }
         writer.stepOut();
       }
@@ -394,6 +400,8 @@ public class ExternalProjectSerializationService implements SerializationService
           externalProject.setDescription(readString(reader, "description"));
           externalProject.setGroup(assertNotNull(readString(reader, "group")));
           externalProject.setVersion(assertNotNull(readString(reader, "version")));
+          externalProject.setSourceCompatibility(readString(reader, "sourceCompatibility"));
+          externalProject.setTargetCompatibility(readString(reader, "targetCompatibility"));
           File projectDir = readFile(reader, "projectDir");
           if (projectDir != null) {
             externalProject.setProjectDir(projectDir);
@@ -480,6 +488,7 @@ public class ExternalProjectSerializationService implements SerializationService
     sourceSet.setName(readString(reader, "name"));
     sourceSet.setSourceCompatibility(readString(reader, "sourceCompatibility"));
     sourceSet.setTargetCompatibility(readString(reader, "targetCompatibility"));
+    sourceSet.setPreview(readBoolean(reader,"isPreview"));
     sourceSet.setArtifacts(readFiles(reader));
     sourceSet.getDependencies().addAll(readDependencies(reader, context));
     sourceSet.setSources(readSourceDirectorySets(reader));
@@ -623,6 +632,7 @@ public class ExternalProjectSerializationService implements SerializationService
           else if (externalDependency instanceof DefaultFileCollectionDependency) {
             DefaultFileCollectionDependency fileCollectionDependency = (DefaultFileCollectionDependency)externalDependency;
             fileCollectionDependency.getFiles().addAll(readFiles(reader));
+            fileCollectionDependency.setExcludedFromIndexing(readBoolean(reader, "excludedFromIndexing"));
           }
           else if (externalDependency instanceof DefaultUnresolvedExternalDependency) {
             DefaultUnresolvedExternalDependency unresolvedExternalDependency = (DefaultUnresolvedExternalDependency)externalDependency;

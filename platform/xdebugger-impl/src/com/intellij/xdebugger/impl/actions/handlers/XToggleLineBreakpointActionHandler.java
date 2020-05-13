@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
   private final boolean myTemporary;

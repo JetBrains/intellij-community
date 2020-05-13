@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.SingleTaskController;
@@ -21,6 +22,8 @@ import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import kotlin.Pair;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,13 +71,13 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       @Override
       protected SingleTask startNewBackgroundTask() {
         ProgressIndicator indicator = myLogData.getProgress().createProgressIndicator(new VisiblePackProgressKey(myLogId, false));
-        MyTask task = new MyTask(project, "Applying filters...");
+        MyTask task = new MyTask(project, VcsLogBundle.message("vcs.log.applying.filters.process"));
         Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, null);
         return new SingleTaskImpl(future, indicator);
       }
 
       @Override
-      protected boolean cancelRunningTasks(@NotNull Request[] requests) {
+      protected boolean cancelRunningTasks(@NotNull List<Request> requests) {
         return ContainerUtil.findInstance(requests, IndexingFinishedRequest.class) != null ||
                ContainerUtil.findInstance(requests, FilterRequest.class) != null;
       }
@@ -141,7 +144,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
   private class MyTask extends Task.Backgroundable {
 
-    MyTask(@Nullable Project project, @NotNull String title) {
+    MyTask(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
       super(project, title, false);
     }
 
@@ -368,6 +371,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "State{" +
              "myFilters=" + myFilters +

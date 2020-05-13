@@ -72,7 +72,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   @Override
   public final void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
     super.handleEvent(event, associated);
-    if(event == JavaScopeProcessorEvent.START_STATIC){
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStaticScopeFlag = true;
     }
     else if (JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT.equals(event)) {

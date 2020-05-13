@@ -38,13 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -60,7 +53,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)infos[0];
-    final boolean onTheFly = ((Boolean)infos[1]).booleanValue();
+    final boolean onTheFly = (Boolean)infos[1];
     if (LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression)) {
       return new MethodRefToLambdaFix();
     }
@@ -106,7 +99,9 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return ApplicationManager.getApplication().isUnitTestMode() ? (super.getFamilyName() + " (side effects)") : super.getFamilyName();
+      return ApplicationManager.getApplication().isUnitTestMode() ? (InspectionGadgetsBundle
+                                                                       .message("side.effects.method.ref.to.lambda.fix.family.name",
+                                                                                super.getFamilyName())) : super.getFamilyName();
     }
 
     @Override

@@ -32,7 +32,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
     final Runnable request = createRenewRequest(suite, dataManager);
     if (request != null) {
       if (myProject.isDisposed()) return;
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Loading Coverage Data", false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, CoverageBundle.message("coverage.view.loading.data"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           request.run();

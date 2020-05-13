@@ -34,14 +34,14 @@ import java.util.Collections;
 
 public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Abstract {
   private final Configurable[] myNestedConfigurables;
-  @NotNull private final Configurable[] myInnerConfigurables;
+  private final Configurable @NotNull [] myInnerConfigurables;
   private TemplateExpandShortcutPanel myTemplateExpandShortcutPanel;
   
-  public EmmetCompositeConfigurable(@NotNull Configurable... innerConfigurables) {
+  public EmmetCompositeConfigurable(Configurable @NotNull ... innerConfigurables) {
     this(Collections.emptyList(), innerConfigurables);
   }
 
-  public EmmetCompositeConfigurable(Collection<Configurable> nestedConfigurables, @NotNull Configurable... innerConfigurables) {
+  public EmmetCompositeConfigurable(Collection<Configurable> nestedConfigurables, Configurable @NotNull ... innerConfigurables) {
     myNestedConfigurables = nestedConfigurables.toArray(new Configurable[0]);
     myInnerConfigurables = innerConfigurables;
     myTemplateExpandShortcutPanel = new TemplateExpandShortcutPanel(XmlBundle.message("emmet.expand.abbreviation.with"));

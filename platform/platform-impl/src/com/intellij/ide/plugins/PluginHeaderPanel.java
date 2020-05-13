@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -55,16 +56,17 @@ public class PluginHeaderPanel {
     myName.setFont(UIUtil.getLabelFont().deriveFont(4f + UIUtil.getLabelFont().getSize()));
 
     //data
+    //noinspection HardCodedStringLiteral
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
-    myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : StringUtil.toUpperCase(plugin.getCategory()));
+    myCategory.setText(plugin.getCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getCategory()));
     String versionText;
     boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
     if (plugin instanceof PluginNode) {
       final PluginNode node = (PluginNode)plugin;
       myRating.setRate(node.getRating());
-      myDownloads.setText(node.getDownloads() + " downloads");
+      myDownloads.setText(IdeBundle.message("label.plugin.0.downloads", node.getDownloads()));
       versionText = showVersion ? "v" + node.getVersion() : null;
-      myUpdated.setText("Updated " + DateFormatUtil.formatDate(node.getDate()));
+      myUpdated.setText(IdeBundle.message("label.plugin.updated.0", DateFormatUtil.formatDate(node.getDate())));
       if (node.getRepositoryName() != null) {
         myCategory.setVisible(false);
         myDownloadsPanel.setVisible(false);

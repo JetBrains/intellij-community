@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,10 @@ public class VcsLogUsageTriggerCollector {
 
   private static void addContext(@NotNull FeatureUsageData data, boolean isFromHistory) {
     data.addData("context", isFromHistory ? "history" : "log");
+  }
+
+  public static void triggerClick(@NonNls @NotNull String target) {
+    triggerUsage(VcsLogEvent.TABLE_CLICKED, data -> data.addData("target", target));
   }
 
   public enum VcsLogEvent {

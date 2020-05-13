@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -35,14 +35,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.VirtualMachineProxyImpl");
+  private static final Logger LOG = Logger.getInstance(VirtualMachineProxyImpl.class);
   private final DebugProcessImpl myDebugProcess;
   private final VirtualMachine myVirtualMachine;
   private int myTimeStamp = 0;
   private int myPausePressedCount = 0;
 
-  // cached data
-  private final Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<>();
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
   @NotNull
@@ -93,36 +91,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   @NotNull
   public VirtualMachine getVirtualMachine() {
     return myVirtualMachine;
-  }
-
-  static final class JNITypeParserReflect {
-    static final Method typeNameToSignatureMethod;
-
-    static {
-      Method method = null;
-      try {
-        method = ReflectionUtil.getDeclaredMethod(Class.forName("com.sun.tools.jdi.JNITypeParser"), "typeNameToSignature", String.class);
-      }
-      catch (ClassNotFoundException e) {
-        LOG.warn(e);
-      }
-      typeNameToSignatureMethod = method;
-      if (typeNameToSignatureMethod == null) {
-        LOG.warn("Unable to find JNITypeParser.typeNameToSignature method");
-      }
-    }
-
-    @Nullable
-    static String typeNameToSignature(@NotNull String name) {
-      if (typeNameToSignatureMethod != null) {
-        try {
-          return (String)typeNameToSignatureMethod.invoke(null, name);
-        }
-        catch (Exception ignored) {
-        }
-      }
-      return null;
-    }
   }
 
   public ClassesByNameProvider getClassesByNameProvider() {
@@ -670,31 +638,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
 
     return proxy;
-  }
-
-  public ObjectReferenceProxyImpl getObjectReferenceProxy(ObjectReference objectReference) {
-    if (objectReference != null) {
-      if (objectReference instanceof ThreadReference) {
-        return getThreadReferenceProxy((ThreadReference)objectReference);
-      }
-      else if (objectReference instanceof ThreadGroupReference) {
-        return getThreadGroupReferenceProxy((ThreadGroupReference)objectReference);
-      }
-      else {
-        ObjectReferenceProxyImpl proxy = myObjectReferenceProxies.get(objectReference);
-        if (proxy == null) {
-          if (objectReference instanceof StringReference) {
-            proxy = new StringReferenceProxy(this, (StringReference)objectReference);
-          }
-          else {
-            proxy = new ObjectReferenceProxyImpl(this, objectReference);
-          }
-          myObjectReferenceProxies.put(objectReference, proxy);
-        }
-        return proxy;
-      }
-    }
-    return null;
   }
 
   public boolean equals(Object obj) {

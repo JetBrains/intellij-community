@@ -24,9 +24,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.vcsUtil.AuthDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 
 /**
  * Base class for any command interacting with a remote repository and which needs authentication.
@@ -93,7 +93,7 @@ class HgCommandAuthenticator {
         return;
       }
 
-      @NotNull final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
+      @NotNull final HgGlobalSettings hgGlobalSettings = HgGlobalSettings.getInstance();
       @Nullable String rememberedLoginsForUrl = null;
       String url = VirtualFileManager.extractPath(myURL);
       if (!StringUtil.isEmptyOrSpaces(myURL)) {
@@ -124,8 +124,8 @@ class HgCommandAuthenticator {
         return;
       }
 
-      final AuthDialog dialog = new AuthDialog(myProject, HgVcsMessages.message("hg4idea.dialog.login.password.required"),
-                                               HgVcsMessages.message("hg4idea.dialog.login.description", myURL),
+      final AuthDialog dialog = new AuthDialog(myProject, HgBundle.message("hg4idea.dialog.login.password.required"),
+                                               HgBundle.message("hg4idea.dialog.login.description", myURL),
                                                login, password, true);
       if (dialog.showAndGet()) {
         ok = true;

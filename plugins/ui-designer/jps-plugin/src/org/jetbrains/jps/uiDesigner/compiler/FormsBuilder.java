@@ -32,7 +32,7 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  */
 public abstract class FormsBuilder extends ModuleLevelBuilder {
-  protected static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.uiDesigner.compiler.FormsInstrumenter");
+  protected static final Logger LOG = Logger.getInstance(FormsInstrumenter.class);
   protected static final Key<Map<File, Collection<File>>> FORMS_TO_COMPILE = Key.create("_forms-to_compile_");
   protected static final String FORM_EXTENSION = "form";
   protected static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension("java");

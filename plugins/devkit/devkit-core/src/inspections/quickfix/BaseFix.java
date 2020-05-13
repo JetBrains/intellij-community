@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -21,8 +22,8 @@ abstract class BaseFix implements LocalQuickFix {
   protected final SmartPsiElementPointer<? extends PsiElement> myPointer;
   protected final boolean myOnTheFly;
 
-  protected BaseFix(@NotNull SmartPsiElementPointer<? extends PsiElement> pointer, boolean onTheFly) {
-    myPointer = pointer;
+  protected BaseFix(@NotNull PsiElement psiElement, boolean onTheFly) {
+    myPointer = SmartPointerManager.createPointer(psiElement);
     myOnTheFly = onTheFly;
   }
 
@@ -55,7 +56,7 @@ abstract class BaseFix implements LocalQuickFix {
       doFix(project, descriptor, external);
     }
     catch (IncorrectOperationException e) {
-      Logger.getInstance("#" + getClass().getName()).error(e);
+      Logger.getInstance(getClass()).error(e);
     }
   }
 

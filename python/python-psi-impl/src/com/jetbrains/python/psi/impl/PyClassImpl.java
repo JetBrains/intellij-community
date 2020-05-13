@@ -1,8 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -150,8 +150,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  @NotNull
-  public PyExpression[] getSuperClassExpressions() {
+  public PyExpression @NotNull [] getSuperClassExpressions() {
     final PyArgumentList argList = getSuperClassExpressionList();
     if (argList != null) {
       return argList.getArguments();
@@ -301,9 +300,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
-  @NotNull
   @Override
-  public PyClass[] getSuperClasses(@Nullable TypeEvalContext context) {
+  public PyClass @NotNull [] getSuperClasses(@Nullable TypeEvalContext context) {
     final List<PyClassLikeType> superTypes = getSuperClassTypes(notNullizeContext(context));
     if (superTypes.isEmpty()) {
       return EMPTY_ARRAY;
@@ -472,9 +470,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  @NotNull
-  public PyFunction[] getMethods() {
-    final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens();
+  public PyFunction @NotNull [] getMethods() {
+    final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
     return getClassChildren(functionDeclarationTokens, PyFunction.class, PyFunction.ARRAY_FACTORY);
   }
 
@@ -490,10 +487,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return getClassChildren(TokenSet.create(PyElementTypes.CLASS_DECLARATION), PyClass.class, PyClass.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private <T extends StubBasedPsiElement<? extends StubElement<T>>> T[] getClassChildren(@NotNull TokenSet elementTypes,
-                                                                                         @NotNull Class<T> childrenClass,
-                                                                                         @NotNull ArrayFactory<T> factory) {
+  private <T extends StubBasedPsiElement<? extends StubElement<T>>> T @NotNull [] getClassChildren(@NotNull TokenSet elementTypes,
+                                                                                                   @NotNull Class<T> childrenClass,
+                                                                                                   @NotNull ArrayFactory<T> factory) {
     final List<T> result = new ArrayList<>();
     processClassLevelDeclarations(new PsiScopeProcessor() {
       @Override
@@ -563,13 +559,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @NotNull
     private final List<T> myResult;
 
-    @NotNull
-    private final String[] myNames;
+    private final String @NotNull [] myNames;
 
     @Nullable
     private PyClass myLastVisitedClass;
 
-    MultiNameFinder(@NotNull String... names) {
+    MultiNameFinder(String @NotNull ... names) {
       myResult = new ArrayList<>();
       myNames = names;
       myLastVisitedClass = null;
@@ -697,7 +692,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             final QualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
               String decoName = qname.toString();
-              for (PyKnownDecoratorProvider provider : PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+              for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getExtensionList()) {
                 final String knownName = provider.toKnownDecorator(decoName);
                 if (knownName != null) {
                   decoName = knownName;
@@ -925,9 +920,21 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
           return null;
         }
-        return callable.getCallType(receiver, Collections.emptyMap(), context);
+        return callable.getCallType(receiver, buildArgumentsToParametersMap(receiver, callable, context), context);
       }
       return null;
+    }
+
+    @NotNull
+    private static Map<PyExpression, PyCallableParameter> buildArgumentsToParametersMap(@Nullable PyExpression receiver,
+                                                                                        @NotNull PyCallable callable,
+                                                                                        @NotNull TypeEvalContext context) {
+      if (receiver == null) return Collections.emptyMap();
+
+      final PyCallableParameter firstParameter = ContainerUtil.getFirstItem(callable.getParameters(context));
+      if (firstParameter == null || !firstParameter.isSelf()) return Collections.emptyMap();
+
+      return ImmutableMap.of(receiver, firstParameter);
     }
 
     @NotNull
@@ -1350,7 +1357,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         final PyReferenceExpression referenceExpr = as(expression, PyReferenceExpression.class);
         final PsiElement resolved;
         if (referenceExpr != null) {
-          resolved = referenceExpr.followAssignmentsChain(PyResolveContext.noImplicits().withTypeEvalContext(context)).getElement();
+          resolved = referenceExpr.followAssignmentsChain(PyResolveContext.defaultContext().withTypeEvalContext(context)).getElement();
         }
         else {
           final PsiReference ref = expression.getReference();
@@ -1519,7 +1526,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   private List<PyClassLikeType> getAllPossibleMetaClassTypes(@NotNull TypeEvalContext context) {
-    final List<PyClassLikeType> results = Lists.newArrayList();
+    final List<PyClassLikeType> results = new ArrayList<>();
     final PyClassLikeType ownMeta = getMetaClassType(false, context);
     if (ownMeta != null) {
       results.add(ownMeta);

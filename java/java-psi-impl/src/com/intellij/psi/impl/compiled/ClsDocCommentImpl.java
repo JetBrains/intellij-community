@@ -52,8 +52,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return getTags();
   }
 
@@ -68,14 +67,12 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getDescriptionElements() {
+  public PsiElement @NotNull [] getDescriptionElements() {
     return EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiDocTag[] getTags() {
+  public PsiDocTag @NotNull [] getTags() {
     return myTags;
   }
 
@@ -85,11 +82,11 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   @Override
-  @NotNull
-  public PsiDocTag[] findTagsByName(@NonNls String name) {
+  public PsiDocTag @NotNull [] findTagsByName(@NonNls String name) {
     return name.equals("deprecated") ? getTags() : PsiDocTag.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return JavaDocElementType.DOC_COMMENT;

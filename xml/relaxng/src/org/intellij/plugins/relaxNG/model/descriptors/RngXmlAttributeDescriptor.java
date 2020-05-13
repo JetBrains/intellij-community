@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -51,7 +50,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
     @Override
     public boolean equals(Locator o, Locator o1) {
       if ((o.getLineNumber() == o1.getLineNumber() && o.getColumnNumber() == o1.getColumnNumber())) {
-        if (Comparing.equal(o.getSystemId(), o1.getSystemId())) {
+        if (Objects.equals(o.getSystemId(), o1.getSystemId())) {
           return true;
         }
       }
@@ -106,12 +105,12 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
 
   @Override
   public boolean hasIdType() {
-    return myValues.values().contains("ID");
+    return myValues.containsValue("ID");
   }
 
   @Override
   public boolean hasIdRefType() {
-    return myValues.values().contains("IDREF");
+    return myValues.containsValue("IDREF");
   }
 
   @Override
@@ -189,9 +188,8 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
 
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies() {
+  public Object @NotNull [] getDependencies() {
     return myElementDescriptor.getDependencies();
   }
 

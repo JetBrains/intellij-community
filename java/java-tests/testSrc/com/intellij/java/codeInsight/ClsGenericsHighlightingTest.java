@@ -72,7 +72,7 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
-  protected void addLibrary(@NotNull final String... libraryPath) {
+  protected void addLibrary(final String @NotNull ... libraryPath) {
     ModuleRootModificationUtil.updateModel(myFixture.getModule(), model -> {
       commitLibraryModel(model, myFixture.getTestDataPath(), libraryPath);
 
@@ -81,7 +81,7 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     });
   }
 
-  protected static void commitLibraryModel(ModifiableRootModel model, String testDataPath, @NotNull String... libraryPath) {
+  protected static void commitLibraryModel(ModifiableRootModel model, String testDataPath, String @NotNull ... libraryPath) {
     LibraryTable libraryTable = model.getModuleLibraryTable();
     Library library = libraryTable.createLibrary("test");
 

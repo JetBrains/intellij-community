@@ -1,12 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.tree.BaseTreeModel;
@@ -27,13 +31,14 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
 import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.openapi.vfs.VfsUtilCore.isInvalidLink;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
 
 public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
-  private final Invoker invoker = new Invoker.Background(this);
+  private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final ProjectFileNodeUpdater updater;
   private final ProjectNode root;
 
@@ -63,7 +68,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
           });
         }
         else {
-          if (fromRoot) root.valid = false; // need to reload content roots
+          root.valid = false; // need to reload content roots
           pathChanged(null);
         }
       }
@@ -81,7 +86,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
   public void onValidThread(@NotNull Runnable task) {
-    invoker.runOrInvokeLater(task);
+    invoker.invoke(task);
   }
 
   @Override
@@ -124,6 +129,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
     if (visibility == ThreeState.YES) return true;
+    checkCanceled(); // ProcessCanceledException if current task is interrupted
     boolean visible = filter.accept(node.file);
     if (!visible && node.file.isDirectory()) {
       List<FileNode> children = node.getChildren();
@@ -191,6 +197,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     final List<FileNode> getChildren() {
       List<FileNode> oldList = children;
       if (valid) return oldList;
+      checkCanceled(); // ProcessCanceledException if current task is interrupted
       List<FileNode> newList = getChildren(oldList);
       oldList.forEach(node -> node.parent = null);
       newList.forEach(node -> node.parent = this);
@@ -264,6 +271,13 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
             }
           }
         }
+      }
+      for (RootType rootType : RootType.getAllRootTypes()) {
+        if (rootType.isHidden()) continue;
+        String path = ScratchFileService.getInstance().getRootPath(rootType);
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+        if (file == null) continue;
+        consumer.accept(file, ApplicationManager.getApplication());
       }
     }
   }

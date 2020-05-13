@@ -48,9 +48,8 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final boolean suppressionIdPresent = ((Boolean)infos[1]).booleanValue();
     if (infos[0] instanceof PsiAnnotation) {
       final PsiAnnotation annotation = (PsiAnnotation)infos[0];
@@ -67,13 +66,6 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inspection.suppression.annotation.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "inspection.suppression.annotation.problem.descriptor");
@@ -84,9 +76,8 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     return false;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     return SuppressQuickFix.EMPTY_ARRAY;
   }
 
@@ -107,7 +98,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove //" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME;
+      return InspectionGadgetsBundle.message("remove.suppress.comment.fix.family.name", SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
     }
   }
 
@@ -142,19 +133,19 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return "Allow these suppressions";
+      return InspectionGadgetsBundle.message("allow.suppressions.fix.text");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Allow suppressions";
+      return InspectionGadgetsBundle.message("allow.suppressions.fix.family.name");
     }
   }
 
   private class SuppressionAnnotationVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitComment(PsiComment comment) {
+    public void visitComment(@NotNull PsiComment comment) {
       super.visitComment(comment);
       final IElementType tokenType = comment.getTokenType();
       if (!tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT)

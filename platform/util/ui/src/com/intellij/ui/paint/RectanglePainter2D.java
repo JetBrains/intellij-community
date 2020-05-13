@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
 import com.intellij.ui.paint.LinePainter2D.Align;
@@ -23,7 +23,6 @@ import static com.intellij.ui.paint.PaintUtil.alignToInt;
  * It's assumed that the {@link ScaleType#USR_SCALE} factor is already applied to the values (given in the user space)
  * passed to the methods of this class. So the user scale factor is not taken into account.
  *
- * @author Sergey.Malenkov
  * @author tav
  */
 public enum RectanglePainter2D implements RegionPainter2D<Double> {

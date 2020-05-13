@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
@@ -51,7 +52,7 @@ public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
             if (Comparing.strEqual(tagName, propertyName) && !isCollectionAssignment(parentTagClass, propertyName, tag)) {
               final TextRange startTagRange = XmlTagUtil.getStartTagRange(tag);
               final TextRange rangeInElement = startTagRange != null ? startTagRange.shiftRight(-tag.getTextOffset()) : null;
-              holder.registerProblem(tag, rangeInElement, "Default property tag could be removed", new UnwrapTagFix(tagName));
+              holder.registerProblem(tag, rangeInElement, JavaFXBundle.message("inspection.javafx.default.tag.could.be.removed"), new UnwrapTagFix(tagName));
             }
           }
         }

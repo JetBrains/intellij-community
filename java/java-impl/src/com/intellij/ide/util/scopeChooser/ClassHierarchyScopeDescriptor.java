@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -56,7 +57,7 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   @Nullable
   public SearchScope getScope() {
     if (myCachedScope == null) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(IdeBundle.message("prompt.choose.base.class.of.the.hierarchy"));
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(JavaBundle.message("prompt.choose.base.class.of.the.hierarchy"));
       if (myRootClass != null) {
         chooser.select(myRootClass);
       }
@@ -78,7 +79,7 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
         });
 
         myCachedScope = new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch),
-                                             IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));
+                                             JavaBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));
       }
     }
 

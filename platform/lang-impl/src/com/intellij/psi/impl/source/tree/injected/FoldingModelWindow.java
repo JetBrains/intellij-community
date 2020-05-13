@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,8 +68,7 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   }
 
   @Override
-  @NotNull
-  public FoldRegion[] getAllFoldRegions() {
+  public FoldRegion @NotNull [] getAllFoldRegions() {
     FoldRegion[] all = myDelegate.getAllFoldRegions();
     List<FoldRegion> result = new ArrayList<>();
     for (FoldRegion region : all) {
@@ -107,18 +107,14 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   }
 
   @Override
-  public void runBatchFoldingOperation(@NotNull Runnable operation) {
-    myDelegate.runBatchFoldingOperation(operation);
+  public void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition) {
+    myDelegate.runBatchFoldingOperation(operation, allowMovingCaret, keepRelativeCaretPosition);
   }
 
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion) {
+    //noinspection deprecation
     myDelegate.runBatchFoldingOperation(operation, moveCaretFromCollapsedRegion);
-  }
-
-  @Override
-  public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
-    myDelegate.runBatchFoldingOperationDoNotCollapseCaret(operation);
   }
 
   @Override
@@ -136,7 +132,7 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
     return FoldRegion.EMPTY_ARRAY; //todo implement
   }
 
-  private static final Key<FoldingRegionWindow> FOLD_REGION_WINDOW = Key.create("FOLD_REGION_WINDOW");
+  static final Key<FoldingRegionWindow> FOLD_REGION_WINDOW = Key.create("FOLD_REGION_WINDOW");
   @Override
   public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group, boolean neverExpands) {
     TextRange hostRange = myDocumentWindow.injectedToHost(new TextRange(startOffset, endOffset));

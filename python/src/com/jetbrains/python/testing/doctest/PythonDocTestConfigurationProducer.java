@@ -72,7 +72,7 @@ public final class PythonDocTestConfigurationProducer extends PythonTestLegacyCo
     boolean hasTests = false;
 
     @Override
-    public void visitFile(PsiFile node) {
+    public void visitFile(@NotNull PsiFile node) {
       if (node instanceof PyFile) {
         List<PyElement> testClasses = PythonDocTestUtil.getDocTestCasesFromFile((PyFile)node);
         if (!testClasses.isEmpty()) hasTests = true;

@@ -44,15 +44,11 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     List<String> annotations = Arrays.asList("anno1", "anno2");
     original.setRepeatAnnotations(annotations);
     original.getPackagesToUseImportOnDemand().addEntry(new PackageEntry(false, "test2", true));
-    original.FIELD_TYPE_TO_NAME.addPair("foo", "bar");
-    original.STATIC_FIELD_TYPE_TO_NAME.addPair("one", "two");
 
     JavaCodeStyleSettings copy = (JavaCodeStyleSettings)original.clone();
     assertEquals(annotations, copy.getRepeatAnnotations());
     assertEquals("Import tables do not match", original.getImportLayoutTable(), copy.getImportLayoutTable());
     assertEquals("On demand packages do not match", original.getPackagesToUseImportOnDemand(), copy.getPackagesToUseImportOnDemand());
-    assertEquals("Field type-to-name maps do not match", original.FIELD_TYPE_TO_NAME, copy.FIELD_TYPE_TO_NAME);
-    assertEquals("Static field type-to-name maps do not match", original.STATIC_FIELD_TYPE_TO_NAME, copy.STATIC_FIELD_TYPE_TO_NAME);
 
     copy.setRepeatAnnotations(Collections.singletonList("anno1"));
     assertNotSame("Changed repeated annotations should reflect the equality relation", original, copy);
@@ -61,7 +57,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   public void testSettingsCloneNotReferencingOriginal() throws IllegalAccessException {
     CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
     JavaCodeStyleSettings original = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
-    CodeStyleSettings clonedRoot = originalRoot.clone();
+    CodeStyleSettings clonedRoot = CodeStyle.createTestSettings(originalRoot);
     JavaCodeStyleSettings copy = clonedRoot.getCustomSettings(JavaCodeStyleSettings.class);
     assertSame(clonedRoot, copy.getContainer());
     for (Field field : copy.getClass().getDeclaredFields()) {

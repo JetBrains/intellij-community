@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,14 +41,14 @@ public class RemoveTagIntentionFix extends LocalQuickFixAndIntentionActionOnPsiE
   @NotNull
   @Override
   public String getText() {
-    return XmlErrorMessages.message("remove.tag.quickfix.text", myTagName);
+    return XmlAnalysisBundle.message("remove.tag.quickfix.text", myTagName);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return XmlErrorMessages.message("remove.tag.quickfix.family");
+    return XmlAnalysisBundle.message("remove.tag.quickfix.family");
   }
 
   @Override

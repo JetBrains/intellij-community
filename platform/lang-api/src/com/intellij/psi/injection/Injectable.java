@@ -17,6 +17,7 @@ package com.intellij.psi.injection;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ public abstract class Injectable implements Comparable<Injectable> {
   public abstract String getId();
 
   @NotNull
+  @NlsContexts.Label
   public abstract String getDisplayName();
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
 import com.intellij.openapi.application.runInEdt
@@ -6,9 +6,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
@@ -24,8 +25,9 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.AbstractVcsLogUi
+import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.function.Supplier
 import kotlin.collections.ArrayList
 
 private val LOG = logger<GitUpdateInfoAsLog>()
@@ -109,7 +112,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       notificationShown = true
       projectLog.dataManager?.removeDataPackChangeListener(listener)
       val logUiFactory = object : MyLogUiFactory(logManager, createRangeFilter()) {
-        override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
+        override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
           val logUi = super.createLogUi(project, logData)
           logUi.refresher.addVisiblePackChangeListener(MyVisiblePackChangeListener(logUi, rangeFilter, commitsAndFiles, dataSupplier))
           return logUi
@@ -133,7 +136,7 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private fun findOrCreateLogUi(rangeFilter: VcsLogRangeFilter, select: Boolean) {
-    val logUi = VcsLogContentUtil.find(project, AbstractVcsLogUi::class.java, select) { ui ->
+    val logUi = VcsLogContentUtil.find(project, VcsLogUiEx::class.java, select) { ui ->
       isUpdateTabId(ui.id) && ui.filterUi.filters.get(RANGE_FILTER) == rangeFilter
     }
     if (logUi != null) return
@@ -158,14 +161,15 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean) {
-    val logUi = logManager.createLogUi(logUiFactory, true)
+    val logUi = logManager.createLogUi(logUiFactory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
+    val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
     ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info",
-                                   DateFormatUtil.formatDateTime(System.currentTimeMillis()),
+                                   VcsBundle.messagePointer("vcs.update.tab.name"), Supplier { tabName },
                                    select, panel.getUi())
     if (select) {
-      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
+      ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)?.activate(null)
     }
   }
 
@@ -174,9 +178,9 @@ class GitUpdateInfoAsLog(private val project: Project,
   private fun isUpdateTabId(id: String): Boolean = id.startsWith(updateTabPrefix)
 
   private open inner class MyLogUiFactory(val logManager: VcsLogManager, val rangeFilter: VcsLogRangeFilter)
-    : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
+    : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
 
-    override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
+    override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val logId = generateUpdateTabId()
       val properties = MyPropertiesForRange(rangeFilter, project.service<GitUpdateProjectInfoLogProperties>())
 
@@ -230,7 +234,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun calcUpdatedFilesCount(): Int {
     return calcCount { repository, range ->
-      MergeChangeCollector(project, repository.root, GitRevisionNumber(range.start.asString())).calcUpdatedFilesCount()
+      MergeChangeCollector(project, repository, GitRevisionNumber(range.start.asString())).calcUpdatedFilesCount()
     }
   }
 
@@ -247,7 +251,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     return result
   }
 
-  private inner class MyVisiblePackChangeListener(val logUi: VcsLogUiImpl,
+  private inner class MyVisiblePackChangeListener(val logUi: MainVcsLogUi,
                                                   val rangeFilter: VcsLogRangeFilter,
                                                   val commitsAndFiles: CommitsAndFiles,
                                                   val dataSupplier: CompletableFuture<NotificationData>) : VisiblePackChangeListener {

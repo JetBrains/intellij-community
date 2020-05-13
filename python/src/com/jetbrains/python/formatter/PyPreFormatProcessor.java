@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class PyPreFormatProcessor implements PreFormatProcessor {
   @NotNull
   @Override
@@ -40,9 +37,6 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     return new PyCommentFormatter(file).process(psiElement, range);
   }
 
-  /**
-   * @author traff
-   */
   public static class PyCommentFormatter extends PyRecursiveElementVisitor {
     private final Project myProject;
     private final PyCodeStyleSettings myPyCodeStyleSettings;
@@ -73,7 +67,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     }
 
     @Override
-    public void visitComment(PsiComment comment) {
+    public void visitComment(@NotNull PsiComment comment) {
       if (!myRange.contains(comment.getTextRange())) {
         return;
       }

@@ -1,3 +1,4 @@
+import attr
 from attr import dataclass
 
 @dataclass
@@ -55,3 +56,18 @@ class B5(A5):
     x: int = 15
 
 B5(<arg5>)
+
+
+@attr.s
+class A6:
+    type = attr.ib(type=int)
+
+    @type.default
+    def my_type_default(self):
+        return 1
+
+@attr.s
+class B6(A6):
+    locations = attr.ib(type=str, default="2")
+
+B6(<arg6>)

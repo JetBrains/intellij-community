@@ -21,17 +21,15 @@ public abstract class TagSetRuleProvider extends XmlTagRuleProviderBase {
 
   protected abstract void initMap(TagsRuleMap map, @NotNull String version);
 
-  @NotNull
   @Override
-  public Rule[] getTagRule(@NotNull XmlTag tag) {
+  public Rule @NotNull [] getTagRule(@NotNull XmlTag tag) {
     String namespace = getNamespace(tag);
     if (namespace == null) return Rule.EMPTY_ARRAY;
 
     return getTagRule(tag, namespace);
   }
 
-  @NotNull
-  public Rule[] getTagRule(@NotNull XmlTag tag, String namespace) {
+  public Rule @NotNull [] getTagRule(@NotNull XmlTag tag, String namespace) {
     TagsRuleMap ruleMap = map.get(namespace);
     if (ruleMap == null) {
       ruleMap = new TagsRuleMap();

@@ -23,7 +23,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +49,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlBundle.message("fix.html.family");
+    return XmlAnalysisBundle.message("fix.html.family");
   }
 
   @Override

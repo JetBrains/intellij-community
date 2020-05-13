@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static com.intellij.openapi.vcs.changes.ChangeListDataKt.getChangeListData;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static one.util.streamex.StreamEx.of;
 
@@ -24,16 +26,15 @@ import static one.util.streamex.StreamEx.of;
  * @author yole
  */
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
-  private final List<ChangeListDecorator> myDecorators;
+  private final Project myProject;
   private final ChangeListManagerEx myClManager;
   private final ChangeListRemoteState myChangeListRemoteState;
 
   public ChangesBrowserChangeListNode(Project project, ChangeList userObject, final ChangeListRemoteState changeListRemoteState) {
     super(userObject);
+    myProject = project;
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-    //noinspection deprecation
-    myDecorators = project.getComponentInstancesOfType(ChangeListDecorator.class);
   }
 
   @Override
@@ -42,12 +43,12 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       final LocalChangeList list = ((LocalChangeList)userObject);
       renderer.appendTextWithIssueLinks(list.getName(),
              list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      if (list.getData() != null) {
+      if (getChangeListData(list) != null) {
         renderer.append(" (i)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         renderer.setToolTipText(getTooltipText());
       }
       appendCount(renderer);
-      for (ChangeListDecorator decorator: myDecorators) {
+      for (ChangeListDecorator decorator : ChangeListDecorator.getDecorators(myProject)) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
       }
       final String freezed = myClManager.isFreezed();
@@ -71,11 +72,19 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   @Nullable
   private String getTooltipText() {
     if (!(userObject instanceof LocalChangeList)) return null;
-    Object data = ((LocalChangeList)userObject).getData();
-    if (!(data instanceof ChangeListData)) return null;
-    String dataInfo = XmlStringUtil.escapeString(((ChangeListData)data).getPresentation());
+    ChangeListData data = getChangeListData((LocalChangeList)userObject);
+    if (data == null) return null;
+
+    String dataInfo = data.getPresentation();
     String message = cropMessageIfNeeded(((LocalChangeList)userObject).getComment());
-    return nullize(of(dataInfo, message).nonNull().joining("\n"));
+
+    StringBuilder sb = new StringBuilder();
+    if (!StringUtil.isEmpty(dataInfo)) sb.append(dataInfo);
+    if (!StringUtil.isEmpty(message)) {
+      if (sb.length() > 0) sb.append(UIUtil.BR).append(UIUtil.BR);
+      sb.append(message);
+    }
+    return nullize(sb.toString());
   }
 
   /**
@@ -84,8 +93,8 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   @Nullable
   private static String cropMessageIfNeeded(@Nullable String comment) {
     if (comment == null) return null;
-    String[] lines = StringUtil.splitByLines(comment, false);
-    String croppedMessage = of(lines).limit(5).joining("\n");
+    String[] lines = StringUtil.splitByLines(XmlStringUtil.escapeString(comment), false);
+    String croppedMessage = of(lines).limit(5).joining(UIUtil.BR);
     return lines.length > 5 ? croppedMessage + "..." : croppedMessage;
   }
 

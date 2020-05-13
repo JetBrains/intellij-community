@@ -17,8 +17,10 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.NonExtendable
 public abstract class ModulePointerManager {
   public static ModulePointerManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ModulePointerManager.class);

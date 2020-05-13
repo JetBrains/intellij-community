@@ -36,7 +36,7 @@ import java.util.Map;
  */
 @SomeQueue
 public class RequestsMerger {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.RequestsMerger");
+  private static final Logger LOG = Logger.getInstance(RequestsMerger.class);
 
   private final MyWorker myWorker;
 
@@ -228,8 +228,7 @@ public class RequestsMerger {
       myMap.put(Couple.of(from, to), action);
     }
 
-    @Nullable
-    public static MyExitAction[] getExit(final MyState from, final MyState to) {
+    public static MyExitAction @Nullable [] getExit(final MyState from, final MyState to) {
       return myMap.get(Couple.of(from, to));
     }
   }

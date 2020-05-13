@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,14 +30,14 @@ import static java.util.Collections.*;
  * @author Maxim.Mossienko
  */
 public class FileReferenceSet {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet");
+  private static final Logger LOG = Logger.getInstance(FileReferenceSet.class);
 
   private static final FileType[] EMPTY_FILE_TYPES = {};
 
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>
     DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<>(
-      PsiBundle.message("default.path.evaluator.option"));
+      AnalysisBundle.message("default.path.evaluator.option"));
   public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new AbsoluteTopLevelEvaluator();
 
   public static final Condition<PsiFileSystemItem> FILE_FILTER = item -> item instanceof PsiFile;
@@ -55,25 +56,25 @@ public class FileReferenceSet {
   private final boolean myEndingSlashNotAllowed;
   private boolean myEmptyPathAllowed;
   @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
-  @Nullable private FileType[] mySuitableFileTypes;
+  private FileType @Nullable [] mySuitableFileTypes;
 
-  public FileReferenceSet(String str,
+  public FileReferenceSet(@NotNull String str,
                           @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,
                           boolean caseSensitive,
                           boolean endingSlashNotAllowed,
-                          @Nullable FileType[] suitableFileTypes) {
+                          FileType @Nullable [] suitableFileTypes) {
     this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, true);
   }
 
-  public FileReferenceSet(String str,
+  public FileReferenceSet(@NotNull String str,
                           @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,
                           boolean caseSensitive,
                           boolean endingSlashNotAllowed,
-                          @Nullable FileType[] suitableFileTypes,
+                          FileType @Nullable [] suitableFileTypes,
                           boolean init) {
     myElement = element;
     myStartInElement = startInElement;
@@ -280,8 +281,7 @@ public class FileReferenceSet {
     return myReferences[index];
   }
 
-  @NotNull
-  public FileReference[] getAllReferences() {
+  public FileReference @NotNull [] getAllReferences() {
     return myReferences;
   }
 
@@ -555,7 +555,7 @@ public class FileReferenceSet {
         if (helper.isFallback() && !result.isEmpty()) {
           continue;
         }
-        Collection<PsiFileSystemItem> roots = helper.getRoots(module);
+        Collection<PsiFileSystemItem> roots = helper.getRoots(module, virtualFile);
         for (PsiFileSystemItem root : roots) {
           if (root == null) {
             LOG.error("Helper " + helper + " produced a null root for " + file);
@@ -620,8 +620,7 @@ public class FileReferenceSet {
     return true;
   }
 
-  @NotNull
-  public FileType[] getSuitableFileTypes() {
+  public FileType @NotNull [] getSuitableFileTypes() {
     return mySuitableFileTypes == null ? EMPTY_FILE_TYPES : mySuitableFileTypes;
   }
 

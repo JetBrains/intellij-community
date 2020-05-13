@@ -16,8 +16,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Locates all references to a specified PSI element.
  *
- * @see PsiReference
  * @author max
+ * @see PsiReference
+ * @see ReferenceSearcher
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
@@ -27,7 +28,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     super(EP_NAME);
   }
 
-  public static class SearchParameters implements DumbAwareSearchParameters {
+  public static class SearchParameters implements DumbAwareSearchParameters, com.intellij.model.search.SearchParameters<PsiReference> {
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
     private volatile SearchScope myEffectiveScope;
@@ -41,12 +42,17 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       myScope = scope;
       myIgnoreAccessScope = ignoreAccessScope;
       isSharedOptimizer = optimizer != null;
-      myOptimizer = optimizer == null ? new SearchRequestCollector(new SearchSession()) : optimizer;
+      myOptimizer = optimizer == null ? new SearchRequestCollector(new SearchSession(elementToSearch)) : optimizer;
       myProject = PsiUtilCore.getProjectInReadAction(elementToSearch);
     }
 
-    public SearchParameters(@NotNull PsiElement elementToSearch, @NotNull SearchScope scope, final boolean ignoreAccessScope) {
+    public SearchParameters(@NotNull PsiElement elementToSearch, @NotNull SearchScope scope, boolean ignoreAccessScope) {
       this(elementToSearch, scope, ignoreAccessScope, null);
+    }
+
+    @Override
+    public final boolean areValid() {
+      return isQueryValid();
     }
 
     @Override
@@ -154,17 +160,15 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
    * @return the query allowing to enumerate the references.
    */
   @NotNull
-  public static Query<PsiReference> search(@NotNull final SearchParameters parameters) {
-    final Query<PsiReference> result = INSTANCE.createQuery(parameters);
+  public static Query<PsiReference> search(@NotNull SearchParameters parameters) {
+    Query<PsiReference> result = INSTANCE.createQuery(parameters);
     if (parameters.isSharedOptimizer) {
       return uniqueResults(result);
     }
 
-    final SearchRequestCollector requests = parameters.getOptimizer();
+    SearchRequestCollector requests = parameters.getOptimizer();
 
-    final PsiElement element = parameters.getElementToSearch();
-
-    return uniqueResults(new MergeQuery<>(result, new SearchRequestQuery(PsiUtilCore.getProjectInReadAction(element), requests)));
+    return uniqueResults(new MergeQuery<>(result, new SearchRequestQuery(parameters.getProject(), requests)));
   }
 
   @NotNull
@@ -176,7 +180,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
                                      @NotNull SearchScope searchScope,
                                      boolean ignoreAccessScope,
                                      @NotNull SearchRequestCollector collector,
-                                     @NotNull final Processor<? super PsiReference> processor) {
+                                     @NotNull Processor<? super PsiReference> processor) {
     searchOptimized(element, searchScope, ignoreAccessScope, collector, false,
                     (psiReference, collector1) -> processor.process(psiReference));
   }
@@ -185,9 +189,9 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
                                      @NotNull SearchScope searchScope,
                                      boolean ignoreAccessScope,
                                      @NotNull SearchRequestCollector collector,
-                                     final boolean inReadAction,
+                                     boolean inReadAction,
                                      @NotNull PairProcessor<? super PsiReference, ? super SearchRequestCollector> processor) {
-    final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
+    SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
     Query<PsiReference> query = search(new SearchParameters(element, searchScope, ignoreAccessScope, nested));
     collector.searchQuery(new QuerySearchRequest(query, nested, inReadAction, processor));
   }

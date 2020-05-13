@@ -31,8 +31,6 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   private DictionaryLevel myLevel = DictionaryLevel.NOT_SPECIFIED;
   private String myWord;
 
-  public static final String FIX_NAME = SpellCheckerBundle.message("save.0.to.1", "", DOTS);
-
   private SaveTo(@NotNull DictionaryLevel level) {
     myLevel = level;
   }
@@ -106,5 +104,9 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   @Override
   public Icon getIcon(int flags) {
     return SpellcheckerIcons.Spellcheck;
+  }
+
+  public static String getFixName() {
+    return SpellCheckerBundle.message("save.0.to.1", "", DOTS);
   }
 }

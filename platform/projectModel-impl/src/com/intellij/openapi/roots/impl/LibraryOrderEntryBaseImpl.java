@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *  @author dsl
  */
 abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements LibraryOrSdkOrderEntry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
+  private static final Logger LOG = Logger.getInstance(LibraryOrderEntryBaseImpl.class);
   final ProjectRootManagerImpl myProjectRootManagerImpl;
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
   @Nullable private RootProvider myCurrentlySubscribedRootProvider;
@@ -32,21 +32,18 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
+  public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
     return getRootFiles(type);
   }
 
   @Override
-  @NotNull
-  public String[] getUrls(@NotNull OrderRootType type) {
+  public String @NotNull [] getUrls(@NotNull OrderRootType type) {
     LOG.assertTrue(!getRootModel().getModule().isDisposed());
     return getRootUrls(type);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
+  public VirtualFile @NotNull [] getRootFiles(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();
     return rootProvider == null ? VirtualFile.EMPTY_ARRAY : rootProvider.getFiles(type);
   }
@@ -55,8 +52,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
   protected abstract RootProvider getRootProvider();
 
   @Override
-  @NotNull
-  public String[] getRootUrls(@NotNull OrderRootType type) {
+  public String @NotNull [] getRootUrls(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();
     return rootProvider == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : rootProvider.getUrls(type);
   }

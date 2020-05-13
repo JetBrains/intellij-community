@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class JavaTypeHierarchyProvider implements HierarchyProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.JavaTypeHierarchyProvider");
+  private static final Logger LOG = Logger.getInstance(JavaTypeHierarchyProvider.class);
   @Override
   public PsiElement getTarget(@NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -76,7 +76,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
   public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
     final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)hierarchyBrowser;
     final String typeName =
-      browser.isInterface() ? TypeHierarchyBrowserBase.SUBTYPES_HIERARCHY_TYPE : TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE;
+      browser.isInterface() ? TypeHierarchyBrowserBase.getSubtypesHierarchyType() : TypeHierarchyBrowserBase.getTypeHierarchyType();
     browser.changeView(typeName);
   }
 }

@@ -79,9 +79,6 @@
   <action id="RestoreDefaultLayout">
     <keyboard-shortcut first-keystroke="shift alt F12"/>
   </action>
-  <action id="RunToCursor">
-    <keyboard-shortcut first-keystroke="shift alt 9"/>
-  </action>
   <action id="SelectIn">
     <keyboard-shortcut first-keystroke="shift alt 1"/>
   </action>

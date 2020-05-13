@@ -14,7 +14,6 @@ import java.util.List;
  * @author peter
  */
 public abstract class DomHighlightingHelper {
-  private final List<DomCustomAnnotationChecker> myCustomCheckers = DomCustomAnnotationChecker.EP_NAME.getExtensionList();
 
   @NotNull
   public abstract List<DomElementProblemDescriptor> checkRequired(DomElement element, DomElementAnnotationHolder holder);
@@ -37,7 +36,7 @@ public abstract class DomHighlightingHelper {
   @NotNull
   public List<DomElementProblemDescriptor> checkCustomAnnotations(final DomElement element, final DomElementAnnotationHolder holder) {
     List<DomElementProblemDescriptor> result = null;
-    for (final DomCustomAnnotationChecker<?> checker : myCustomCheckers) {
+    for (DomCustomAnnotationChecker<?> checker : DomCustomAnnotationChecker.EP_NAME.getExtensionList()) {
       final List<DomElementProblemDescriptor> list = checkAnno(element, checker, holder);
       if (!list.isEmpty()) {
         if (result == null) result = new SmartList<>();

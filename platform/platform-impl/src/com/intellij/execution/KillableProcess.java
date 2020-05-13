@@ -15,9 +15,6 @@
  */
 package com.intellij.execution;
 
-/**
- * @author nik
- */
 public interface KillableProcess {
   boolean canKillProcess();
 

@@ -9,12 +9,12 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultFileTypeSpecificInputFilter implements FileBasedIndex.FileTypeSpecificInputFilter {
   private final FileType[] myFileTypes;
 
-  public DefaultFileTypeSpecificInputFilter(@NotNull FileType... fileTypes) {
+  public DefaultFileTypeSpecificInputFilter(FileType @NotNull ... fileTypes) {
     myFileTypes = fileTypes;
   }
 
   @Override
-  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink) {
     for (FileType ft : myFileTypes) {
       fileTypeSink.consume(ft);
     }

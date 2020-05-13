@@ -32,7 +32,7 @@ import java.util.Set;
 */
 public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ExtendedTagInsertHandler");
+  private static final Logger LOG = Logger.getInstance(ExtendedTagInsertHandler.class);
 
   protected final String myElementName;
   @Nullable protected final String myNamespace;

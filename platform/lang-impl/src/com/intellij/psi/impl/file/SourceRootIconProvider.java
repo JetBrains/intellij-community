@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ public class SourceRootIconProvider {
 
   @Nullable
   private static Icon calcFileLayerIcon(VirtualFile vFile, Project project) {
-    ProjectFileIndexImpl index = (ProjectFileIndexImpl)ProjectFileIndex.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     if (vFile != null) {
       VirtualFile parent = vFile.getParent();
       

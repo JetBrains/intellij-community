@@ -1,18 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+
+import static java.util.Collections.unmodifiableSet;
 
 public class OptionsEditorContext {
   CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<>();
@@ -22,7 +27,7 @@ public class OptionsEditorContext {
   Map<Configurable, ConfigurationException> myErrors = new THashMap<>();
   private boolean myHoldingFilter;
   private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<>();
-  private final MultiValuesMap<Configurable, Configurable> myParentToChildrenMap = new MultiValuesMap<>();
+  private final MultiMap<Configurable, Configurable> myParentToChildrenMap = new MultiMap<>();
 
   @NotNull
   Promise<? super Object> fireSelected(@Nullable final Configurable configurable, @NotNull OptionsEditorColleague requestor) {
@@ -106,7 +111,7 @@ public class OptionsEditorContext {
     }
 
     if (myErrors.containsKey(configurable)) {
-      Map<Configurable, ConfigurationException> newErrors = new THashMap<>();
+      Map<Configurable, ConfigurationException> newErrors = new THashMap<>(myErrors);
       newErrors.remove(configurable);
       fireErrorsChanged(newErrors, null);
     }
@@ -129,13 +134,13 @@ public class OptionsEditorContext {
   }
 
   public void registerKid(final Configurable parent, final Configurable kid) {
-    myConfigurableToParentMap.put(kid,parent);
-    myParentToChildrenMap.put(parent, kid);
+    myConfigurableToParentMap.put(kid, parent);
+    myParentToChildrenMap.putValue(parent, kid);
   }
 
+  @NotNull
   public Collection<Configurable> getChildren(final Configurable parent) {
-    Collection<Configurable> result = myParentToChildrenMap.get(parent);
-    return result == null ? Collections.emptySet() : result;
+    return myParentToChildrenMap.get(parent);
   }
 
   interface ColleagueAction {
@@ -148,7 +153,7 @@ public class OptionsEditorContext {
   }
 
   public Set<Configurable> getModified() {
-    return myModified;
+    return unmodifiableSet(myModified);
   }
 
   public Map<Configurable, ConfigurationException> getErrors() {
@@ -157,5 +162,12 @@ public class OptionsEditorContext {
 
   public void addColleague(@NotNull OptionsEditorColleague colleague) {
     myColleagues.add(colleague);
+  }
+
+  public void reload() {
+    myCurrentConfigurable = null;
+    myErrors.clear();
+    myConfigurableToParentMap.clear();
+    myParentToChildrenMap.clear();
   }
 }

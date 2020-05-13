@@ -28,7 +28,7 @@ public class KeymapGenerator implements ApplicationStarter {
   }
 
   @Override
-  public void main(@NotNull String[] args) {
+  public void main(String @NotNull [] args) {
     ActionManager actionManager = ActionManager.getInstance();
     StringBuilder xml = new StringBuilder();
     xml.append("<Keymaps>\n");

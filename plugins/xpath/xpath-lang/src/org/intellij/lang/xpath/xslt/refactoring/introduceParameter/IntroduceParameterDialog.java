@@ -68,8 +68,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
         return myForceDefault ? super.createActions() : new Action[]{ getOKAction(), getPreviewAction(), getCancelAction() };
     }
 

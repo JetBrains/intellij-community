@@ -29,16 +29,11 @@ SYSLOG_UDP_PORT: int
 SYSLOG_TCP_PORT: int
 
 class WatchedFileHandler(FileHandler):
-    @overload
-    def __init__(self, filename: _Path) -> None: ...
-    @overload
-    def __init__(self, filename: _Path, mode: str) -> None: ...
-    @overload
-    def __init__(self, filename: _Path, mode: str,
-                 encoding: Optional[str]) -> None: ...
-    @overload
-    def __init__(self, filename: _Path, mode: str, encoding: Optional[str],
-                 delay: bool) -> None: ...
+    dev: int
+    ino: int
+    def __init__(self, filename: _Path, mode: str = ..., encoding: Optional[str] = ...,
+                 delay: bool = ...) -> None: ...
+    def _statstream(self) -> None: ...
 
 
 if sys.version_info >= (3,):
@@ -170,6 +165,7 @@ class SMTPHandler(Handler):
 
 
 class BufferingHandler(Handler):
+    buffer: List[LogRecord]
     def __init__(self, capacity: int) -> None: ...
     def shouldFlush(self, record: LogRecord) -> bool: ...
 

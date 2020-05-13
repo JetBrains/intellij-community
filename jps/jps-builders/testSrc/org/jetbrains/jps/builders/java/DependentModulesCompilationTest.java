@@ -37,9 +37,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class DependentModulesCompilationTest extends JpsBuildTestCase {
   public void testSimpleDependency() {
     String depRoot = PathUtil.getParentPath(createFile("dep/A.java", "class A{}"));

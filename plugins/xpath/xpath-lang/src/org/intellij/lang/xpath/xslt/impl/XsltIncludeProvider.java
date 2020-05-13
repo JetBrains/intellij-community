@@ -29,18 +29,17 @@ public class XsltIncludeProvider extends FileIncludeProvider {
   }
 
   @Override
-  public boolean acceptFile(VirtualFile file) {
+  public boolean acceptFile(@NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE);
   }
 
   @Override
-  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink) {
     fileTypeSink.consume(XmlFileType.INSTANCE);
   }
 
   @Override
-  @NotNull
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(@NotNull FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XsltSupport.XSLT_NS, 0) == -1) return FileIncludeInfo.EMPTY;
     final ArrayList<FileIncludeInfo> infos = new ArrayList<>();

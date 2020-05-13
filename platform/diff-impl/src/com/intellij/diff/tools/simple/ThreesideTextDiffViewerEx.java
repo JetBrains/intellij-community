@@ -21,6 +21,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
+import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffDividerDrawUtil.DividerPaintable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
@@ -32,7 +33,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -217,7 +217,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
    * Some changes (ex: applied ones) can be excluded from general processing, but should be painted/used for synchronized scrolling
    */
   @NotNull
-  protected List<? extends ThreesideDiffChangeBase> getAllChanges() {
+  public List<? extends ThreesideDiffChangeBase> getAllChanges() {
     return getChanges();
   }
 
@@ -426,15 +426,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       if (myChangesCount == 0 && myConflictsCount == 0) {
         return DiffBundle.message("merge.dialog.all.conflicts.resolved.message.text");
       }
-      return makeCounterWord(myChangesCount, "change") + ". " + makeCounterWord(myConflictsCount, "conflict");
-    }
-
-    @NotNull
-    private String makeCounterWord(int number, @NotNull String word) {
-      if (number == 0) {
-        return "No " + StringUtil.pluralize(word);
-      }
-      return number + " " + StringUtil.pluralize(word, number);
+      return DiffBundle.message("merge.differences.status.text", myChangesCount, myConflictsCount);
     }
   }
 
@@ -442,7 +434,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     private final MyPaintable myPaintable1 = new MyPaintable(0, 1);
     private final MyPaintable myPaintable2 = new MyPaintable(1, 2);
 
-    public MyFoldingModel(@Nullable Project project, @NotNull EditorEx[] editors, @NotNull Disposable disposable) {
+    public MyFoldingModel(@Nullable Project project, EditorEx @NotNull [] editors, @NotNull Disposable disposable) {
       super(project, editors, disposable);
       assert editors.length == 3;
     }
@@ -450,6 +442,24 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     @Nullable
     public Data createState(@Nullable List<? extends MergeLineFragment> fragments,
                             @NotNull FoldingModelSupport.Settings settings) {
+      return createState(fragments, countLines(myEditors), settings);
+    }
+
+    @Nullable
+    public Data createState(@Nullable List<? extends MergeLineFragment> fragments,
+                            @NotNull List<LineOffsets> lineOffsets,
+                            @NotNull FoldingModelSupport.Settings settings) {
+      int[] lineCount = new int[myEditors.length];
+      for (int i = 0; i < myEditors.length; i++) {
+        lineCount[i] = lineOffsets.get(i).getLineCount();
+      }
+      return createState(fragments, lineCount, settings);
+    }
+
+    @Nullable
+    private Data createState(@Nullable List<? extends MergeLineFragment> fragments,
+                             int @NotNull [] lineCount,
+                             @NotNull FoldingModelSupport.Settings settings) {
       Iterator<int[]> it = map(fragments, fragment -> new int[]{
         fragment.getStartLine(ThreeSide.LEFT),
         fragment.getEndLine(ThreeSide.LEFT),
@@ -458,12 +468,37 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
         fragment.getStartLine(ThreeSide.RIGHT),
         fragment.getEndLine(ThreeSide.RIGHT)
       });
-      return computeFoldedRanges(it, settings);
+      return computeFoldedRanges(it, lineCount, settings);
+    }
+
+    @Nullable
+    private Data computeFoldedRanges(@Nullable final Iterator<int[]> changedLines,
+                                     int @NotNull [] lineCount,
+                                     @NotNull final Settings settings) {
+      if (changedLines == null || settings.range == -1) return null;
+
+      FoldingBuilderBase builder = new MyFoldingBuilder(myEditors, lineCount, settings);
+      return builder.build(changedLines);
     }
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider, @NotNull Side side) {
       MyPaintable paintable = side.select(myPaintable1, myPaintable2);
       paintable.paintOnDivider(gg, divider);
+    }
+
+    private static class MyFoldingBuilder extends FoldingBuilderBase {
+      private final EditorEx @NotNull [] myEditors;
+
+      private MyFoldingBuilder(EditorEx @NotNull [] editors, int @NotNull [] lineCount, @NotNull Settings settings) {
+        super(lineCount, settings);
+        myEditors = editors;
+      }
+
+      @Nullable
+      @Override
+      protected FoldedRangeDescription getDescription(@NotNull Project project, int lineNumber, int index) {
+        return getLineSeparatorDescription(project, myEditors[index].getDocument(), lineNumber);
+      }
     }
   }
 

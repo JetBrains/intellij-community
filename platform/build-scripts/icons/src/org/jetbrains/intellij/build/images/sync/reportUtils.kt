@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
-import java.util.*
 import java.util.stream.Collectors
 import kotlin.streams.toList
 
@@ -10,8 +9,7 @@ internal fun report(context: Context, skipped: Int): String {
   val (devIcons, icons) = context.devIcons.size to context.icons.size
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
-  @Suppress("Duplicates")
-  var report = when {
+  return when {
     context.iconsCommitHashesToSync.isNotEmpty() -> """
       |${context.iconsRepoName} commits ${context.iconsCommitHashesToSync.joinToString()} are synced into ${context.devRepoName}:
       | ${context.byDesigners.added.logIcons("added")}
@@ -36,49 +34,26 @@ internal fun report(context: Context, skipped: Int): String {
       |${context.consistent.size} consistent icons in both repos
     """.trimMargin()
   }
-  if (context.createdReviews.isNotEmpty()) {
-    report += "\nCreated reviews: ${context.createdReviews.joinToString { it.url }}"
-  }
-  return report
 }
 
 internal fun findCommitsToSync(context: Context) {
   if (context.doSyncDevRepo && context.devSyncRequired()) {
-    context.iconsCommitsToSync = findCommitsByRepo(context, UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.byDesigners)
+    context.iconsCommitsToSync = findCommitsByRepo(context, context.iconsRepoDir, context.byDesigners)
   }
   if (context.doSyncIconsRepo && context.iconsSyncRequired()) {
-    context.devCommitsToSync = findCommitsByRepo(context, UPSOURCE_ICONS_PROJECT_ID, context.devRepoDir, context.byDev)
+    context.devCommitsToSync = findCommitsByRepo(context, context.devRepoDir, context.byDev)
   }
 }
 
-private fun Map<File, Collection<CommitInfo>>.commitMessage() = entries.joinToString("\n\n") { entry ->
-  entry.value.joinToString("\n") {
-    "'${it.subject}' from ${it.hash.substring(0..8)}"
-  } + " from ${getOriginUrl(entry.key)}"
-}
+internal fun Map<File, Collection<CommitInfo>>.commitMessage() =
+  entries.joinToString("\n\n") { entry ->
+    entry.value.joinToString("\n") {
+      "'${it.subject}' from ${it.hash.substring(0..8)}"
+    } + " from ${getOriginUrl(entry.key)}"
+  }
 
-private fun withTmpBranch(repos: Collection<File>, master: String, action: (String) -> Review?): Review? {
-  val branch = "icons-sync/${UUID.randomUUID()}"
-  return try {
-    action(branch)
-  }
-  catch (e: Throwable) {
-    repos.parallelStream().forEach {
-      deleteBranch(it, branch)
-    }
-    throw e
-  }
-  finally {
-    repos.parallelStream().forEach {
-      callSafely {
-        checkout(it, master)
-      }
-    }
-  }
-}
-
-internal fun createReviewForDev(context: Context): Review? {
-  if (context.iconsCommitsToSync.isEmpty()) return null
+internal fun commitAndPush(context: Context) {
+  if (context.iconsCommitsToSync.isEmpty()) return
   val repos = context.iconsChanges().map {
     findRepo(context.devRepoRoot.resolve(it))
   }.distinct()
@@ -86,55 +61,19 @@ internal fun createReviewForDev(context: Context): Review? {
   if (repos.all { gitStage(it).isEmpty() }) {
     log("Nothing to commit")
     context.byDesigners.clear()
-    return null
   }
-  val user = triggeredBy()
-  val master = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
-  return withTmpBranch(repos, master) { branch ->
-    val commitsForReview = commitAndPush(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), repos)
-    val projectId = UPSOURCE_DEV_PROJECT_ID
-    if (projectId.isNullOrEmpty()) {
-      log("WARNING: unable to create Upsource review for ${context.devRepoName}, just plain old branch review")
-      PlainOldReview(branch, projectId)
-    }
-    else {
-      val review = createReview(projectId, branch, master, commitsForReview.map(CommitInfo::hash))
-      try {
-        addReviewer(projectId, review, user.email)
-        postVerificationResultToReview(review)
-        removeReviewer(projectId, review, UpsourceUser.email)
-        review
-      }
-      catch (e: Exception) {
-        closeReview(projectId, review)
-        throw e
-      }
-    }
+  else {
+    val user = triggeredBy()
+    val branch = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
+    commitAndPush(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), repos)
   }
 }
 
 private fun verifyDevIcons(context: Context, repos: Collection<File>) {
-  callSafely {
-    context.verifyDevIcons(repos)
-  }
+  context.verifyDevIcons(repos)
   repos.forEach { repo ->
-    val status = gitStatus(repo)
-    if (status.isNotEmpty()) {
-      log("Staging ${status.joinToString("," + System.lineSeparator()) {
-        repo.resolve(it).toString()
-      }}")
-      status.forEach {
-        stageFiles(listOf(it), repo)
-      }
-      log("Staged: " + gitStage(repo))
-    }
+    stageFiles(gitStatus(repo).all(), repo)
   }
-}
-
-private fun postVerificationResultToReview(review: Review) {
-  val runConfigurations = System.getProperty("sync.dev.icons.checks")?.splitNotBlank(";") ?: return
-  postComment(UPSOURCE_DEV_PROJECT_ID, review,
-              "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
 }
 
 internal fun pushToIconsRepo(context: Context): Collection<CommitInfo> {
@@ -161,11 +100,11 @@ internal fun pushToIconsRepo(context: Context): Collection<CommitInfo> {
     }
 }
 
-private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes
+private fun findCommitsByRepo(context: Context, root: File, changes: Changes
 ): Map<File, Collection<CommitInfo>> {
   val commits = findCommits(context, root, changes)
   if (commits.isEmpty()) return emptyMap()
-  log("$projectId: ${commits.size} commits found")
+  log("${commits.size} commits found")
   return commits.map { it.key }.groupBy(CommitInfo::repo)
 }
 

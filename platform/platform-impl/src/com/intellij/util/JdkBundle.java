@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.ExecutionException;
@@ -10,9 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Version;
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -89,13 +87,16 @@ public class JdkBundle {
     if (myBoot) return true;
 
     File javaPath = getVMExecutable();
+    if (SystemInfo.isUnix && !javaPath.canExecute()) {
+      return false;
+    }
 
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(javaPath.getPath(), "-version"));
       return output.getExitCode() == 0;
     }
     catch (ExecutionException e) {
-      Logger.getInstance(JdkBundle.class).error(e);
+      Logger.getInstance(JdkBundle.class).debug(e);
       return false;
     }
   }
@@ -155,28 +156,4 @@ public class JdkBundle {
 
     return null;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #getBundleVersion()} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public Version getVersion() {
-    JavaVersion v = myVersionInfo.version;
-    return v.feature <= 8 ? new Version(1, v.feature, 0) : new Version(v.feature, 0, v.update);
-  }
-
-  /** @deprecated use {@link #createBundle(File)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public static JdkBundle createBundle(@NotNull File jvm, boolean boot, @SuppressWarnings("unused") boolean bundled) {
-    JdkBundle bundle = createBundle(jvm, boot);
-    if (bundle != null) {
-      Bitness arch = SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32;
-      if (arch != bundle.myVersionInfo.bitness) {
-        bundle = null;
-      }
-    }
-    return bundle;
-  }
-  //</editor-fold>
 }

@@ -44,9 +44,8 @@ class ClsJavaTokenImpl extends ClsElementImpl implements PsiJavaToken {
     return myTokenText;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return EMPTY_ARRAY;
   }
 

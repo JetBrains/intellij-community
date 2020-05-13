@@ -16,9 +16,10 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 
 public class RegExpElementType extends IElementType {
-    RegExpElementType(String s) {
-        super(s, RegExpLanguage.INSTANCE);
+    RegExpElementType(@NonNls String debugName) {
+        super(debugName, RegExpLanguage.INSTANCE);
     }
 }

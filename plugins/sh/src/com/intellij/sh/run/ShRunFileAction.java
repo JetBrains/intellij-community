@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +33,7 @@ public class ShRunFileAction extends DumbAwareAction {
     ShRunConfiguration runConfiguration = (ShRunConfiguration)configurationSettings.getConfiguration();
     runConfiguration.setScriptPath(virtualFile.getPath());
     runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
-    String defaultShell = ObjectUtils.notNull(EnvironmentUtil.getValue("SHELL"), "/bin/sh");
+    String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
     runConfiguration.setInterpreterPath(ObjectUtils.notNull(ShShebangParserUtil.getShebangExecutable((ShFile)file), defaultShell));
 
     ExecutionEnvironmentBuilder builder =

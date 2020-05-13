@@ -13,9 +13,9 @@
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.profile.codeInspection.ProjectInspectionProfileManager"
+    <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
                     serviceImplementation="com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager"
-                    preload="true" overrides="true"/>
+                    preload="notHeadless" overrides="true"/>
 
     <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
 

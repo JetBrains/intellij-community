@@ -34,9 +34,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworksTree extends CheckboxTree {
   private boolean myProcessingMouseEventOnCheckbox;
 
@@ -50,7 +47,7 @@ public class FrameworksTree extends CheckboxTree {
 
   public void setRoots(List<? extends FrameworkSupportNodeBase> roots) {
     CheckedTreeNode root = new CheckedTreeNode(null);
-    for (FrameworkSupportNodeBase base : roots) {
+    for (FrameworkSupportNodeBase<?> base : roots) {
       root.add(base);
     }
     setModel(new DefaultTreeModel(root));
@@ -86,9 +83,9 @@ public class FrameworksTree extends CheckboxTree {
   @Override
   protected void installSpeedSearch() {
     new TreeSpeedSearch(this, path -> {
-      final Object node = path.getLastPathComponent();
+      Object node = path.getLastPathComponent();
       if (node instanceof FrameworkSupportNodeBase) {
-        return ((FrameworkSupportNodeBase)node).getTitle();
+        return ((FrameworkSupportNodeBase<?>)node).getTitle();
       }
       return "";
     });
@@ -111,8 +108,9 @@ public class FrameworksTree extends CheckboxTree {
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof FrameworkSupportNodeBase) {
-        final FrameworkSupportNodeBase node = (FrameworkSupportNodeBase)value;
-        SimpleTextAttributes attributes = node instanceof FrameworkGroupNode ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        FrameworkSupportNodeBase<?> node = (FrameworkSupportNodeBase<?>)value;
+        SimpleTextAttributes attributes = node instanceof FrameworkGroupNode ?
+                                          SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
         getTextRenderer().append(node.getTitle(), attributes);
         if (node.isChecked()) {
           FrameworkOrGroup object = node.getUserObject();

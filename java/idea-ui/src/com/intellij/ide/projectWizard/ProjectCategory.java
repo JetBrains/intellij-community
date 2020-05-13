@@ -46,8 +46,7 @@ public abstract class ProjectCategory {
   /**
    * Describes "main" frameworks to be shown on top of the tree
    */
-  @NotNull
-  public String[] getAssociatedFrameworkIds() {
+  public String @NotNull [] getAssociatedFrameworkIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 

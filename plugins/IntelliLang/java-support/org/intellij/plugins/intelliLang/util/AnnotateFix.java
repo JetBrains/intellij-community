@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ public class AnnotateFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Annotate with @" + StringUtil.getShortName(myAnnotationName);
+    return IntelliLangBundle.message("annotate.fix.family.name", StringUtil.getShortName(myAnnotationName));
   }
 
   public static boolean canApplyOn(PsiModifierListOwner element) {

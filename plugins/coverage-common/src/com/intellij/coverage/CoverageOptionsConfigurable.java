@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -11,15 +13,18 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions> implements SearchableConfigurable {
+public final class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions>implements SearchableConfigurable,
+                                                                                                  Configurable.WithEpDependencies {
   private CoverageOptionsPanel myPanel;
   private final CoverageOptionsProvider myManager;
   private final Project myProject;
 
-  public CoverageOptionsConfigurable(CoverageOptionsProvider manager, Project project) {
-    myManager = manager;
+  public CoverageOptionsConfigurable(Project project) {
+    myManager = CoverageOptionsProvider.getInstance(project);
     myProject = project;
   }
 
@@ -32,7 +37,7 @@ public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageO
   @Nls
   @Override
   public String getDisplayName() {
-    return "Coverage";
+    return CoverageBundle.message("configurable.CoverageOptionsConfigurable.display.name");
   }
 
   @Override
@@ -84,7 +89,7 @@ public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageO
   @NotNull
   @Override
   protected List<CoverageOptions> createConfigurables() {
-    return CoverageOptions.EP_NAME.getExtensionList(myProject);
+    return CoverageOptions.EP_NAME.getExtensions(myProject);
   }
 
   @Override
@@ -145,6 +150,11 @@ public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageO
   public void disposeUIResources() {
     myPanel = null;
     super.disposeUIResources();
+  }
+
+  @Override
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Collections.singletonList(CoverageOptions.EP_NAME);
   }
 
   private static class CoverageOptionsPanel {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.infos;
 
 import com.intellij.openapi.project.Project;
@@ -25,16 +11,15 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,7 +47,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                              boolean staticsProblem,
                              PsiElement argumentList,
                              PsiElement currFileContext,
-                             @Nullable PsiType[] argumentTypes,
+                             PsiType @Nullable [] argumentTypes,
                              PsiType[] typeArguments) {
     this(candidate, substitutor, accessProblem, staticsProblem, argumentList, currFileContext, argumentTypes, typeArguments,
          PsiUtil.getLanguageLevel(argumentList));
@@ -74,7 +59,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                              boolean staticsProblem,
                              PsiElement argumentList,
                              PsiElement currFileContext,
-                             @Nullable PsiType[] argumentTypes,
+                             PsiType @Nullable [] argumentTypes,
                              PsiType[] typeArguments,
                              @NotNull LanguageLevel languageLevel) {
     super(candidate, substitutor, accessProblem, staticsProblem, currFileContext);
@@ -86,7 +71,7 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   /**
    * To use during overload resolution to choose if method can be applicable by strong/loose invocation.
-   * 
+   *
    * @return true only for java 8+ varargs methods.
    */
   public boolean isVarargs() {
@@ -168,7 +153,8 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
       return level1;
     }, substitutor);
-    @ApplicabilityLevelConstant int level = ObjectUtils.assertNotNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
+    @ApplicabilityLevelConstant int level =
+      Objects.requireNonNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
@@ -178,9 +164,20 @@ public class MethodCandidateInfo extends CandidateInfo{
   private <T> T computeWithKnownTargetType(final Computable<T> computable, PsiSubstitutor substitutor) {
     if (myArgumentList instanceof PsiExpressionList) {
       PsiExpressionList argumentList = (PsiExpressionList)myArgumentList;
+      PsiElement parent = argumentList.getParent();
+      boolean prohibitCaching = CachedValuesManager.getCachedValue(parent,
+                                                                   () -> new CachedValueProvider.Result<>(
+                                                                     !(parent instanceof PsiCallExpression) ||
+                                                                     JavaPsiFacade.getInstance(parent.getProject())
+                                                                       .getResolveHelper()
+                                                                       .hasOverloads((PsiCallExpression)parent),
+                                                                     PsiModificationTracker.MODIFICATION_COUNT));
+
       PsiExpression[] expressions = Arrays.stream(argumentList.getExpressions())
         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-        .filter(expression -> expression != null && !(expression instanceof PsiFunctionalExpression))
+        .filter(expression -> expression != null &&
+                              !(expression instanceof PsiFunctionalExpression) &&
+                              PsiPolyExpressionUtil.isPolyExpression(expression))
         .toArray(PsiExpression[]::new);
       return ThreadLocalTypes.performWithTypes(expressionTypes -> {
         PsiMethod method = getElement();
@@ -190,14 +187,14 @@ public class MethodCandidateInfo extends CandidateInfo{
                                     PsiTypesUtil.getTypeByMethod(context, argumentList, method, varargs, substitutor, false));
         }
         return computable.compute();
-      });
+      }, prohibitCaching);
     }
     else {
       return computable.compute();
     }
   }
- 
-  
+
+
   public boolean isOnArgumentList(PsiExpressionList argumentList) {
     return myArgumentList == argumentList;
   }
@@ -331,6 +328,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return incompleteSubstitutor;
   }
+  
+  @NotNull
+  public PsiSubstitutor getSubstitutorFromQualifier() {
+    return super.getSubstitutor();
+  }
 
   @NotNull
   @Override
@@ -429,7 +431,7 @@ public class MethodCandidateInfo extends CandidateInfo{
    */
   @NotNull
   public PsiSubstitutor inferTypeArguments(@NotNull final ParameterTypeInferencePolicy policy,
-                                           @NotNull final PsiExpression[] arguments,
+                                           final PsiExpression @NotNull [] arguments,
                                            boolean includeReturnConstraint) {
     final Computable<PsiSubstitutor> computable = () -> {
       final PsiMethod method = getElement();
@@ -450,7 +452,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     if (!includeReturnConstraint) {
       return myArgumentList == null
              ? PsiSubstitutor.EMPTY
-             : ObjectUtils.assertNotNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
+             : Objects.requireNonNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
     }
     else {
       return computable.compute();
@@ -473,8 +475,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
 
-  @Nullable
-  public PsiType[] getArgumentTypes() {
+  public PsiType @Nullable [] getArgumentTypes() {
     return myArgumentTypes;
   }
 

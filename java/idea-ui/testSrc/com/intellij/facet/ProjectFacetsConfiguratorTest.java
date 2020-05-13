@@ -12,9 +12,6 @@ import com.intellij.openapi.application.WriteAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class ProjectFacetsConfiguratorTest extends FacetTestCase {
 
   public void testAddFacet() {

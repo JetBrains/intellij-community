@@ -39,7 +39,7 @@ public class ZipFileObject extends JpsFileObject {
       return new URI("jar", null, buf.toString(), null);
     }
     catch (URISyntaxException e) {
-      throw new Error("Cannot create URI " + buf.toString(), e);
+      throw new Error("Cannot create URI " + buf, e);
     }
   }
 

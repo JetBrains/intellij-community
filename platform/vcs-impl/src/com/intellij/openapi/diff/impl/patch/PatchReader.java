@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -570,6 +571,7 @@ public class PatchReader {
           }
         }
       }
+      if (gitPatch) fileName = VcsFileUtil.unescapeGitPath(fileName);
       String newFileName = stripPatchNameIfNeeded(fileName, gitPatch, before);
       if (newFileName == null) return;
       if (before) {
@@ -582,8 +584,8 @@ public class PatchReader {
 
     @Nullable
     static String stripPatchNameIfNeeded(@NotNull String fileName, boolean p1Patch, boolean before) {
-      if ("/dev/null".equals(fileName)) return null;
-      String prefix = before ? "a/" : "b/";
+      if ("/dev/null".equals(fileName)) return null; //NON-NLS
+      String prefix = before ? "a/" : "b/"; //NON-NLS
       if (p1Patch && fileName.startsWith(prefix)) return fileName.substring(prefix.length());
       return fileName;
     }

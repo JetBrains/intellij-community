@@ -1,21 +1,15 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('.')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('.')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('.')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('.')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('source')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('source')

@@ -15,21 +15,28 @@
  */
 package org.jetbrains.plugins.gradle.util;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+
+import java.util.function.Supplier;
 
 /**
  * @author Denis Zhdanov
  */
-public class GradleBundle extends AbstractBundle {
+public class GradleBundle extends DynamicBundle {
+  @NonNls public static final String PATH_TO_BUNDLE = "messages.GradleBundle";
+  private static final GradleBundle BUNDLE = new GradleBundle();
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return BUNDLE.getMessage(key, params);
   }
 
-  public static final String PATH_TO_BUNDLE = "i18n.GradleBundle";
-  private static final GradleBundle BUNDLE = new GradleBundle();
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
+    return BUNDLE.getLazyMessage(key, params);
+  }
 
   public GradleBundle() {
     super(PATH_TO_BUNDLE);

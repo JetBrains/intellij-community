@@ -44,15 +44,13 @@ public class LightTypeParameterBuilder extends LightPsiClassBuilder implements P
     return myIndex;
   }
 
-  @NotNull
   @Override
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     return getModifierList().getAnnotations();
   }
 
-  @NotNull
   @Override
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return getModifierList().getApplicableAnnotations();
   }
 

@@ -15,9 +15,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
-/**
- * @author nik
- */
 public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLibraryProperties> {
   private JpsMavenRepositoryLibraryDescriptor myDescriptor;
 

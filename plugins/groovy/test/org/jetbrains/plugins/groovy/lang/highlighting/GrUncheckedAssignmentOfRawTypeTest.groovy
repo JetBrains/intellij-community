@@ -25,19 +25,19 @@ class GrUncheckedAssignmentOfRawTypeTest extends GroovyLatestTest implements Hig
   final Collection<Class<? extends LocalInspectionTool>> inspections = singletonList(GroovyUncheckedAssignmentOfMemberOfRawTypeInspection)
 
   @Test
-  void rawMethodAccess() { highlightingTest() }
+  void rawMethodAccess() { fileHighlightingTest() }
 
   @Test
-  void rawFieldAccess() { highlightingTest() }
+  void rawFieldAccess() { fileHighlightingTest() }
 
   @Test
-  void rawArrayStyleAccess() { highlightingTest() }
+  void rawArrayStyleAccess() { fileHighlightingTest() }
 
   @Test
-  void rawArrayStyleAccessToMap() { highlightingTest() }
+  void rawArrayStyleAccessToMap() { fileHighlightingTest() }
 
   @Test
-  void rawArrayStyleAccessToList() { highlightingTest() }
+  void rawArrayStyleAccessToList() { fileHighlightingTest() }
 
   @Test
   void rawClosureReturnType() {

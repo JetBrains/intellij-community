@@ -52,9 +52,8 @@ public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
     return myInitialInfo.getProject();
   }
 
-  @NotNull
   @Override
-  public ParameterInfo[] getParameterInfos() {
+  public ParameterInfo @NotNull [] getParameterInfos() {
     Collection<ParameterInfo> collection = myInputNamesMap.values();
     ParameterInfo[] infos = new ParameterInfo[collection.size()];
     for (ParameterInfo info : collection) {
@@ -66,8 +65,7 @@ public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
   }
 
   @Override
-  @NotNull
-  public VariableInfo[] getOutputVariableInfos() {
+  public VariableInfo @NotNull [] getOutputVariableInfos() {
     return myInitialInfo.getOutputVariableInfos();
   }
 
@@ -76,9 +74,8 @@ public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
    *
    * @return array of argument names
    */
-  @NotNull
   @Override
-  public String[] getArgumentNames() {
+  public String @NotNull [] getArgumentNames() {
     Collection<ParameterInfo> infos = myInputNamesMap.values();
     String[] argNames = new String[infos.size()];
     for (ParameterInfo info : infos) {
@@ -97,14 +94,12 @@ public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getInnerElements() {
+  public PsiElement @NotNull [] getInnerElements() {
     return myInitialInfo.getInnerElements();
   }
 
   @Override
-  @NotNull
-  public GrStatement[] getStatements() {
+  public GrStatement @NotNull [] getStatements() {
     return myInitialInfo.getStatements();
   }
 

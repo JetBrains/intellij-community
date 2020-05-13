@@ -40,12 +40,10 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
   @NonNls private static final String COVERAGE_MERGE_ATTRIBUTE_NAME = "merge";
   @NonNls private static final String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
 
-  private final JavaCoverageEngine myCoverageProvider;
 
   public JavaCoverageEnabledConfiguration(final RunConfigurationBase configuration,
                                           final JavaCoverageEngine coverageProvider) {
     super(configuration);
-    myCoverageProvider = coverageProvider;
     setCoverageRunner(CoverageRunner.getInstance(IDEACoverageRunner.class));
   }
 
@@ -66,7 +64,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
         assert path != null; // cannot be null here if runner != null
 
         String sourceMapPath = null;
-        if (myCoverageProvider.isSourceMapNeeded(configuration)) {
+        if (JavaCoverageEngine.isSourceMapNeeded(configuration)) {
           sourceMapPath = getSourceMapPath(path);
         }
 
@@ -88,18 +86,11 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return coverageDataFilePath + ".sourceMap";
   }
 
-  @NotNull
-  public JavaCoverageEngine getCoverageProvider() {
-    return myCoverageProvider;
-  }
-
-  @Nullable
-  public ClassFilter[] getCoveragePatterns() {
+  public ClassFilter @Nullable [] getCoveragePatterns() {
     return myCoveragePatterns;
   }
 
-  @Nullable
-  public String [] getPatterns() {
+  public String @Nullable [] getPatterns() {
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {
@@ -110,8 +101,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return null;
   }
 
-  @Nullable
-  public String [] getExcludePatterns() {
+  public String @Nullable [] getExcludePatterns() {
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {

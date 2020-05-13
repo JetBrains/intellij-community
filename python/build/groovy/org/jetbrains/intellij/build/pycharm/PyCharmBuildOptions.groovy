@@ -31,6 +31,17 @@ class PyCharmBuildOptions {
    */
   static final String prebuiltStubsArchive = System.getProperty("intellij.build.pycharm.prebuilt.stubs.archive")
 
+  /**
+   * Build PyCharm with Anaconda plugin distributions together with regular PyCharm
+   */
+  static final boolean buildWithAnacondaEdition = SystemProperties.getBooleanProperty("intellij.build.pycharm.anaconda.edition", false)
+
+  /**
+   * Miniconda installer folder name
+   * The same folder should be specified at com.jetbrains.python.conda.PythonMinicondaLocator#getMinicondaInstallerFolder()
+   * */
+  static final String minicondaInstallerFolderName = "minicondaInstaller"
+
   static File getFolderForIndicesAndStubs(BuildContext context) {
     return new File(context.paths.buildOutputRoot, "index")
   }

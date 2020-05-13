@@ -1,14 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +29,7 @@ public abstract class Compressor implements Closeable {
     //<editor-fold desc="Implementation">
     private final TarArchiveOutputStream myStream;
 
-    private Tar(OutputStream stream, Compression compression) throws IOException {
+    public Tar(@NotNull OutputStream stream, @NotNull Compression compression) throws IOException {
       myStream = new TarArchiveOutputStream(compressedStream(stream, compression));
       myStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
     }
@@ -134,20 +132,6 @@ public abstract class Compressor implements Closeable {
 
   private BiPredicate<String, File> myFilter = null;
 
-  /** @deprecated use {@link #filter(BiPredicate)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public Compressor filter(@Nullable Condition<? super String> filter) {
-    myFilter = filter == null ? null : (entryName, file) -> {
-      int p = -1;
-      while ((p = entryName.indexOf('/', p + 1)) > 0) {
-        if (!filter.value(entryName.substring(0, p))) return false;
-      }
-      return filter.value(entryName);
-    };
-    return this;
-  }
-
   /**
    * Allows filtering entries being added to the archive.
    * Please note that <b>the second parameter of a filter ({@code File}) could be {@code null}</b> when the filter is applied
@@ -166,11 +150,11 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  public final void addFile(@NotNull String entryName, @NotNull byte[] content) throws IOException {
+  public final void addFile(@NotNull String entryName, byte @NotNull [] content) throws IOException {
     addFile(entryName, content, -1);
   }
 
-  public final void addFile(@NotNull String entryName, @NotNull byte[] content, long timestamp) throws IOException {
+  public final void addFile(@NotNull String entryName, byte @NotNull [] content, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accepts(entryName, null)) {
       writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));

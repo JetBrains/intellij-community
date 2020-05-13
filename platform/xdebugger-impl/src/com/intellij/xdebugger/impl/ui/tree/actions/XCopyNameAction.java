@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
-/**
- * @author nik
- */
 public class XCopyNameAction extends XDebuggerTreeActionBase {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {

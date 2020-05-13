@@ -20,9 +20,8 @@ public class NullableAnnotationProvider implements AnnotationProvider {
     return AddAnnotationPsiFix.isNullabilityAnnotationApplicable(owner);
   }
 
-  @NotNull
   @Override
-  public String[] getAnnotationsToRemove(Project project) {
+  public String @NotNull [] getAnnotationsToRemove(Project project) {
     return ArrayUtilRt.toStringArray(NullableNotNullManager.getInstance(project).getNotNulls());
   }
 }

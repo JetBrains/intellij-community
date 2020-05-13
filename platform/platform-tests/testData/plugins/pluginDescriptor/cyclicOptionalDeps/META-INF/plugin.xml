@@ -1,5 +1,4 @@
-
-  <idea-plugin>
+<idea-plugin>
   <id>someId</id>
   <name>someName</name>
   <version>someVersion</version>
@@ -7,8 +6,7 @@
   <description>this description is looooooooooong enough</description>
   <change-notes>these change-notes are looooooooooong enough</change-notes>
   <idea-version since-build="131.1"/>
-  
-  
-  <depends>com.intellij.modules.lang</depends><depends optional="true" config-file="a.xml">a</depends>
-  
-  </idea-plugin>
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends optional="true" config-file="a.xml">a</depends>
+</idea-plugin>

@@ -1,10 +1,11 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import org.gradle.internal.os.OperatingSystem
 
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+apply from: 'archivesCleanup.gradle'
 
 def jbrVersionToUnpack = System.getProperty('intellij.build.jdk.version', '8').toInteger()
 task setupJdks(dependsOn: ["setupJbr$jbrVersionToUnpack"])
@@ -14,6 +15,9 @@ def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   new File(it).mkdirs()
   it
 } ?: "${intellijProjectDir()}/build/jdk"
+
+ext.jbsdkDir = "$project.buildDir/jbsdk"
+def deleteObsoleteJdkArchives = ext.deleteObsoleteArchivesTask('Jdk', jbsdkDir)
 
 /**
  * Update this method together with:
@@ -53,14 +57,14 @@ static def splitJbrBuild(String jreBuild, String version) {
     def jbrUrl = jbrUrl(jbrVersion.toString(), jbrBuild.toString(), jbrArtifactPrefix)
     def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), jbrVersion.toString())
     def artifactName = "$jbrArtifactPrefix${update}-${platform}-${arch}-${buildNumber}.tar.gz"
-    def outputFile = "$project.buildDir/jbsdk/${artifactName}"
+    def outputFile = "$jbsdkDir/${artifactName}"
 
     inputs.property('version', jbrVersion)
     inputs.property('build', jbrBuild)
     inputs.property('url', jbrUrl)
     outputs.file(outputFile)
     doLast {
-      logger.info("Downloading up JBR $jbrVersion to compile (using $jbrUrl)")
+      logger.info("Downloading JBR $jbrVersion to compile (using $jbrUrl)")
       download {
         src jbrUrl
         dest outputFile
@@ -85,6 +89,7 @@ static def splitJbrBuild(String jreBuild, String version) {
     }
   }
   setupJbr.finalizedBy(checkJbr(jbrVersion, jbrOutputDir))
+  setupJbr.finalizedBy(deleteObsoleteJdkArchives)
 }
 
 def unpackJdk(jbrArchive, outputDir) {

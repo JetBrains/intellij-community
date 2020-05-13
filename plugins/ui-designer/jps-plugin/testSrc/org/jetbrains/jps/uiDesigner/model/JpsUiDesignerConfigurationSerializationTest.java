@@ -17,9 +17,6 @@ package org.jetbrains.jps.uiDesigner.model;
 
 import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
 
-/**
- * @author nik
- */
 public class JpsUiDesignerConfigurationSerializationTest extends JpsSerializationTestCase {
   public void testLoad() {
     loadProject("plugins/ui-designer/jps-plugin/testData/uiDesigner");

@@ -30,7 +30,18 @@ public final class XsltRunConfigType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   public XsltRunConfigType() {
-    myFactory = new MyConfigurationFactory(this);
+    myFactory = new ConfigurationFactory(this) {
+      @Override
+      @NotNull
+      public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
+        return new XsltRunConfiguration(project, this);
+      }
+
+      @Override
+      public @NotNull String getId() {
+        return "XSLT";
+      }
+    };
   }
 
   public static XsltRunConfigType getInstance() {
@@ -68,17 +79,5 @@ public final class XsltRunConfigType implements ConfigurationType {
   @Override
   public String getHelpTopic() {
     return "reference.dialogs.rundebug.XSLT";
-  }
-
-  private static class MyConfigurationFactory extends ConfigurationFactory {
-    MyConfigurationFactory(XsltRunConfigType type) {
-      super(type);
-    }
-
-    @Override
-    @NotNull
-    public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
-      return new XsltRunConfiguration(project, this);
-    }
   }
 }

@@ -23,7 +23,7 @@ import com.intellij.util.config.ExternalizablePropertyContainer;
 import java.util.Arrays;
 
 public class CompositePropertyContainer extends AbstractProperty.AbstractPropertyContainer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.CompositePropertyContainer");
+  private static final Logger LOG = Logger.getInstance(CompositePropertyContainer.class);
   private final AbstractProperty.AbstractPropertyContainer[] myContainers;
 
   public CompositePropertyContainer(AbstractProperty.AbstractPropertyContainer[] containers) {

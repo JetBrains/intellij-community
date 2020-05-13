@@ -112,6 +112,10 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
+    onPropertyChanged(property);
+  }
+
+  protected <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
     myListeners.forEach(l -> l.onPropertyChanged(property));
   }
 

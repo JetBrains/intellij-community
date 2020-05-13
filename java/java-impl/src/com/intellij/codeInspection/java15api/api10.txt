@@ -1,4 +1,4 @@
-dk.net.ExtendedSocketOptions#TCP_QUICKACK
+jdk.net.ExtendedSocketOptions#TCP_QUICKACK
 java.io.Reader#transferTo(java.io.Writer;)
 java.io.PrintStream#PrintStream(java.io.OutputStream;boolean;java.nio.charset.Charset;)
 java.io.PrintStream#PrintStream(java.lang.String;java.nio.charset.Charset;)

@@ -22,10 +22,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +36,10 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.committed.*;
+import com.intellij.openapi.vcs.changes.committed.ChangesBrowserDialog;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTableModel;
+import com.intellij.openapi.vcs.changes.committed.RepositoryLocationCommittedChangesPanel;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.FileHistoryRefresher;
 import com.intellij.openapi.vcs.history.FileHistoryRefresherI;
@@ -45,10 +48,10 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -80,7 +83,7 @@ import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
 import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
+  private static final Logger LOG = Logger.getInstance(AbstractVcsHelperImpl.class);
   private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";
 
   private Consumer<VcsException> myCustomHandler = null;
@@ -131,14 +134,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showRollbackChangesDialog(List<? extends Change> changes) {
-    RollbackChangesDialog.rollbackChanges(myProject, changes);
-  }
-
-  @Override
   @Nullable
   public Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
-                                                      String title,
+                                                      @NlsContexts.DialogTitle String title,
                                                       @Nullable String prompt,
                                                       @Nullable String singleFileTitle,
                                                       @Nullable String singleFilePromptTemplate,
@@ -382,21 +380,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     AnnotateToggleAction.doAnnotate(editor, myProject, annotation, vcs);
   }
 
-  @Override
-  public void showChangesBrowser(List<CommittedChangeList> changelists) {
-    showChangesBrowser(changelists, null);
-  }
-
-  @Override
-  public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(new CommittedChangesTableModel(changelists, false), title, false, null);
-  }
-
   private ChangesBrowserDialog createChangesBrowserDialog(CommittedChangesTableModel changelists,
-                                                          String title,
-                                                          boolean showSearchAgain,
-                                                          @Nullable final Component parent, Consumer<? super ChangesBrowserDialog> initRunnable) {
-    final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
+                                                          @Nullable String title,
+                                                          @Nullable Component parent,
+                                                          Consumer<? super ChangesBrowserDialog> initRunnable) {
+    final ChangesBrowserDialog.Mode mode = ChangesBrowserDialog.Mode.Browse;
     final ChangesBrowserDialog dlg = parent != null
                                      ? new ChangesBrowserDialog(myProject, parent, changelists, mode, initRunnable)
                                      : new ChangesBrowserDialog(myProject, changelists, mode, initRunnable);
@@ -406,14 +394,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return dlg;
   }
 
-  private void showChangesBrowser(CommittedChangesTableModel changelists,
-                                  String title,
-                                  boolean showSearchAgain,
-                                  @Nullable final Component parent) {
-    final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
-    final ChangesBrowserDialog dlg = parent != null
-                                     ? new ChangesBrowserDialog(myProject, parent, changelists, mode, null)
-                                     : new ChangesBrowserDialog(myProject, changelists, mode, null);
+  @Override
+  public void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @Nls String title) {
+    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist, null);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -421,8 +404,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showChangesListBrowser(CommittedChangeList changelist, @Nullable VirtualFile toSelect, @Nls String title) {
-    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist, toSelect);
+  public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls String title) {
+    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changes);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -430,38 +413,29 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
-    showChangesListBrowser(changelist, null, title);
+  @NotNull
+  public List<VirtualFile> showMergeDialog(@NotNull List<? extends VirtualFile> files,
+                                           @NotNull MergeProvider provider,
+                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+    if (files.isEmpty()) return Collections.emptyList();
+    RefreshVFsSynchronously.refreshVirtualFiles(files);
+    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
+    AppIcon.getInstance().requestAttention(myProject, true);
+    fileMergeDialog.show();
+    return fileMergeDialog.getProcessedFiles();
   }
 
   @Override
-  public void showWhatDiffersBrowser(final Component parent, final Collection<Change> changes, @Nls final String title) {
-    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(parent, myProject, changes);
-    if (title != null) {
-      dlg.setTitle(title);
-    }
-    dlg.show();
-  }
+  public void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
+                                          @NotNull RepositoryLocation location,
+                                          @Nullable @Nls String title,
+                                          @Nullable Component parent) {
+    ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
+    CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, filterUI, provider.createDefaultSettings());
 
-  @Override
-  public void showChangesBrowser(final CommittedChangesProvider provider,
-                                 final RepositoryLocation location,
-                                 @Nls String title,
-                                 Component parent) {
-    final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
-    ChangeBrowserSettings settings = provider.createDefaultSettings();
-    boolean ok;
-    if (filterUI != null) {
-      final CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(myProject, filterUI, settings);
-      dlg.show();
-      ok = dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE;
-      settings = dlg.getSettings();
-    }
-    else {
-      ok = true;
-    }
+    if (filterDialog.showAndGet()) {
+      ChangeBrowserSettings settings = filterDialog.getSettings();
 
-    if (ok) {
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
           (!ModalityState.NON_MODAL.equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<>();
@@ -471,9 +445,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         }
         final CommittedChangesTableModel model = new CommittedChangesTableModel(versions, true);
         final AsynchronousListsLoader[] task = new AsynchronousListsLoader[1];
-        final ChangeBrowserSettings finalSettings = settings;
-        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, filterUI != null, parent, changesBrowserDialog -> {
-          task[0] = new AsynchronousListsLoader(myProject, provider, location, finalSettings, changesBrowserDialog);
+        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, parent, changesBrowserDialog -> {
+          task[0] = new AsynchronousListsLoader(myProject, provider, location, settings, changesBrowserDialog);
           ProgressManager.getInstance().run(task[0]);
         });
 
@@ -501,41 +474,21 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  @NotNull
-  public List<VirtualFile> showMergeDialog(@NotNull List<? extends VirtualFile> files,
-                                           @NotNull MergeProvider provider,
-                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    if (files.isEmpty()) return Collections.emptyList();
-    VfsUtil.markDirtyAndRefresh(false, false, false, files.toArray(VirtualFile.EMPTY_ARRAY));
-    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
-    AppIcon.getInstance().requestAttention(myProject, true);
-    fileMergeDialog.show();
-    return fileMergeDialog.getProcessedFiles();
-  }
-
-  @Override
-  public void openCommittedChangesTab(final AbstractVcs vcs,
-                                      final VirtualFile root,
-                                      final ChangeBrowserSettings settings,
-                                      final int maxCount,
-                                      String title) {
-    RepositoryLocationCache cache = CommittedChangesCache.getInstance(myProject).getLocationCache();
-    RepositoryLocation location = cache.getLocation(vcs, VcsUtil.getFilePath(root), false);
-    openCommittedChangesTab(vcs.getCommittedChangesProvider(), location, settings, maxCount, title);
-  }
-
-  @Override
-  public void openCommittedChangesTab(final CommittedChangesProvider provider,
-                                      final RepositoryLocation location,
-                                      final ChangeBrowserSettings settings,
-                                      final int maxCount,
-                                      String title) {
+  public void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
+                                      @NotNull RepositoryLocation location,
+                                      @NotNull ChangeBrowserSettings settings,
+                                      int maxCount,
+                                      @Nullable String title) {
     DefaultActionGroup extraActions = new DefaultActionGroup();
-    CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings, location, extraActions);
+    //noinspection unchecked
+    RepositoryLocationCommittedChangesPanel panel =
+      new RepositoryLocationCommittedChangesPanel(myProject, provider, location, extraActions);
     panel.setMaxCount(maxCount);
-    panel.refreshChanges(false);
+    //noinspection unchecked
+    panel.setSettings(settings);
+    panel.refreshChanges();
     final ContentFactory factory = ContentFactory.SERVICE.getInstance();
-    if (title == null && location != null) {
+    if (title == null) {
       title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());
     }
     final Content content = factory.createContent(panel, title, false);
@@ -636,7 +589,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
         //noinspection unchecked
         final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, 1);
-        if (changes != null && changes.size() == 1) {
+        if (changes.size() == 1) {
           return Pair.create(changes.get(0), null);
         }
       }
@@ -660,11 +613,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       final ChangeBrowserSettings settings = provider.createDefaultSettings();
       //noinspection unchecked
       final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
-      if (changes != null) {
-        for (CommittedChangeList change : changes) {
-          if (number.equals(String.valueOf(change.getNumber()))) {
-            return change;
-          }
+      for (CommittedChangeList change : changes) {
+        if (number.equals(String.valueOf(change.getNumber()))) {
+          return change;
         }
       }
     }
@@ -677,8 +628,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   private static class AsynchronousListsLoader extends Task.Backgroundable {
-    private final CommittedChangesProvider myProvider;
-    private final RepositoryLocation myLocation;
+    @NotNull private final CommittedChangesProvider myProvider;
+    @NotNull private final RepositoryLocation myLocation;
     private final ChangeBrowserSettings mySettings;
     private final ChangesBrowserDialog myDlg;
     private final List<VcsException> myExceptions;
@@ -686,9 +637,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private boolean myRevisionsReturned;
 
     private AsynchronousListsLoader(@Nullable Project project,
-                                    final CommittedChangesProvider provider,
-                                    final RepositoryLocation location,
-                                    final ChangeBrowserSettings settings,
+                                    @NotNull CommittedChangesProvider provider,
+                                    @NotNull RepositoryLocation location,
+                                    @NotNull ChangeBrowserSettings settings,
                                     final ChangesBrowserDialog dlg) {
       super(project, VcsBundle.message("browse.changes.progress.title"), true);
       myProvider = provider;

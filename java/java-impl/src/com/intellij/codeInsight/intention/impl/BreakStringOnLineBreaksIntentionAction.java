@@ -1,17 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @author Danila Ponomarenko
@@ -35,12 +35,12 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
     }
 
     final int indexOfSlashN = text.indexOf("\\n");
-    if (indexOfSlashN == -1 || Comparing.equal(text.substring(indexOfSlashN), "\\n\"")){
+    if (indexOfSlashN == -1 || Objects.equals(text.substring(indexOfSlashN), "\\n\"")){
       return false;
     }
 
     final int indexOfSlashNSlashR = text.indexOf("\\n\\r");
-    if (indexOfSlashNSlashR != -1 && Comparing.equal(text.substring(indexOfSlashNSlashR), "\\n\\r\"")){
+    if (indexOfSlashNSlashR != -1 && Objects.equals(text.substring(indexOfSlashNSlashR), "\\n\\r\"")){
       return false;
     }
 
@@ -86,7 +86,7 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.break.string.on.line.breaks.text");
+    return JavaBundle.message("intention.break.string.on.line.breaks.text");
   }
 
   @NotNull

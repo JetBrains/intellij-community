@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
@@ -36,9 +37,9 @@ public class DiffDrawUtil {
   private static final Logger LOG = Logger.getInstance(DiffDrawUtil.class);
 
   public static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
-  public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
-  public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
-  public static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
+  public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 102;
+  public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 101;
+  public static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 100;
   public static final int LST_LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
 
   private static final double CTRL_PROXIMITY_X = 0.3;
@@ -197,16 +198,57 @@ public class DiffDrawUtil {
   //
 
   public static int lineToY(@NotNull Editor editor, int line) {
+    return lineToY(editor, line, true, false);
+  }
+
+  public static int lineToY(@NotNull Editor editor, int line, boolean lineStart) {
+    return lineToY(editor, line, lineStart, false);
+  }
+
+  public static int lineToY(@NotNull Editor editor, int line, boolean lineStart, boolean includeInlays) {
+    if (line < 0) return 0;
+
     Document document = editor.getDocument();
     if (line >= getLineCount(document)) {
       int y = editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getTextLength())).y;
-      return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
+      int tailLines = line - getLineCount(document) + (lineStart ? 0 : 1);
+      return y + editor.getLineHeight() * tailLines;
     }
-    return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
+
+    if (lineStart) {
+      int visualLine = editor.offsetToVisualPosition(document.getLineStartOffset(line), false, false).line;
+      int inlay = includeInlays ? EditorUtil.getInlaysHeight(editor, visualLine, true) : 0;
+      return editor.visualLineToY(visualLine) - inlay;
+    }
+    else {
+      int visualLine = editor.offsetToVisualPosition(document.getLineEndOffset(line), true, true).line;
+      int inlay = includeInlays ? EditorUtil.getInlaysHeight(editor, visualLine, false) : 0;
+      return editor.visualLineToY(visualLine) + editor.getLineHeight() + inlay;
+    }
   }
 
   public static int yToLine(@NotNull Editor editor, int y) {
     return editor.xyToLogicalPosition(new Point(0, y)).line;
+  }
+
+  @NotNull
+  public static MarkerRange getGutterMarkerPaintRange(@NotNull Editor editor, int startLine, int endLine) {
+    int y1;
+    int y2;
+    if (startLine == endLine) {
+      if (startLine == 0) {
+        y1 = lineToY(editor, 0, true, true) + 1;
+      }
+      else {
+        y1 = lineToY(editor, startLine - 1, false, true);
+      }
+      y2 = y1;
+    }
+    else {
+      y1 = lineToY(editor, startLine, true, false);
+      y2 = lineToY(editor, endLine - 1, false, false);
+    }
+    return new MarkerRange(y1, y2);
   }
 
   @Nullable
@@ -264,7 +306,7 @@ public class DiffDrawUtil {
                                                                     final boolean resolved) {
     return new LineMarkerRendererEx() {
       @Override
-      public void paint(Editor editor, Graphics g, Rectangle r) {
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
         EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
         Graphics2D g2 = (Graphics2D)g;
 
@@ -693,5 +735,23 @@ public class DiffDrawUtil {
 
   enum BorderType {
     NONE, LINE, DOTTED
+  }
+
+  public static class MarkerRange {
+    public final int y1;
+    public final int y2;
+
+    public MarkerRange(int y1, int y2) {
+      this.y1 = y1;
+      this.y2 = y2;
+    }
+
+    public int component1() {
+      return y1;
+    }
+
+    public int component2() {
+      return y2;
+    }
   }
 }

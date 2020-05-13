@@ -21,7 +21,7 @@ class GroovyWordsScanner extends VersionedWordsScanner {
   private Lexer myLexer;
 
   @Override
-  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<? super WordOccurrence> processor) {
     if (myLexer == null) {
       myLexer = new GroovyLexer();
     }

@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,18 +13,10 @@ import javax.swing.*;
 
 public class FindFurtherAction extends AnAction implements DumbAware {
 
-  //private static final Logger logger = Logger.getInstance(FindFurtherAction.class);
-
-  private static final String TEXT_FIND_ADD_NEXT = "Find and Add Next Matches";
-  private static final String TEXT_FIND_ADD_PREV = "Find and Add Previous Matches";
-
-  private static final String DESCRIPTION_FIND_ADD_NEXT =
-    "Search for matches toward the end of the file and add them to existing results";
-  private static final String DESCRIPTION_FIND_ADD_PREV =
-    "Search for matches toward the beginning of the file and add them to existing results";
-
-  private static final Icon ICON_FIND_ADD_NEXT = AllIcons.Actions.FindAndShowNextMatches;
-  private static final Icon ICON_FIND_ADD_PREV = AllIcons.Actions.FindAndShowPrevMatches;
+  private static class Holder {
+    private static final Icon ICON_FIND_ADD_NEXT = AllIcons.Actions.FindAndShowNextMatches;
+    private static final Icon ICON_FIND_ADD_PREV = AllIcons.Actions.FindAndShowPrevMatches;
+  }
 
   private final boolean directionForward;
   private final RangeSearch myRangeSearch;
@@ -37,14 +30,14 @@ public class FindFurtherAction extends AnAction implements DumbAware {
     Icon icon;
 
     if (directionForward) {
-      text = TEXT_FIND_ADD_NEXT;
-      description = DESCRIPTION_FIND_ADD_NEXT;
-      icon = ICON_FIND_ADD_NEXT;
+      text = EditorBundle.message("large.file.editor.find.further.forward.action.text");
+      description = EditorBundle.message("large.file.editor.find.further.forward.action.description");
+      icon = Holder.ICON_FIND_ADD_NEXT;
     }
     else {
-      text = TEXT_FIND_ADD_PREV;
-      description = DESCRIPTION_FIND_ADD_PREV;
-      icon = ICON_FIND_ADD_PREV;
+      text = EditorBundle.message("large.file.editor.find.further.backward.action.text");
+      description = EditorBundle.message("large.file.editor.find.further.backward.action.description");
+      icon = Holder.ICON_FIND_ADD_PREV;
     }
 
     getTemplatePresentation().setText(text);

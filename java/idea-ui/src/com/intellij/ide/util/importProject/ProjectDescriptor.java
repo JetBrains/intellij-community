@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ProjectDescriptor {
   private List<ModuleDescriptor> myModules = Collections.emptyList();
   private List<LibraryDescriptor> myLibraries = Collections.emptyList();

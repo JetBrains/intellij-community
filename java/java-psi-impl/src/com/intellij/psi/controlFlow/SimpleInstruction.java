@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SimpleInstruction extends InstructionBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.SimpleInstruction");
+  private static final Logger LOG = Logger.getInstance(SimpleInstruction.class);
 
   @Override
   public int nNext() { return 1; }

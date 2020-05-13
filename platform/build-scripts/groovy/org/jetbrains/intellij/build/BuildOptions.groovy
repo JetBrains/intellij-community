@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 
-/**
- * @author nik
- */
 @CompileStatic
 class BuildOptions {
   /**
@@ -19,11 +18,13 @@ class BuildOptions {
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  String targetOS = System.getProperty("intellij.build.target.os", OS_ALL)
+  String targetOS
   static final String OS_LINUX = "linux"
   static final String OS_WINDOWS = "windows"
   static final String OS_MAC = "mac"
   static final String OS_ALL = "all"
+  static final String OS_CURRENT = "current"
+
   /**
    * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
    * will be built.
@@ -31,9 +32,14 @@ class BuildOptions {
   static final String OS_NONE = "none"
 
   /**
+   * Pass comma-separated names of build steps (see below) to this system property to skip them.
+   */
+  public static final String BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
+
+  /**
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
    */
-  Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
+  Set<String> buildStepsToSkip = StringUtil.split(System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, ""), ",") as Set<String>
   /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
   static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
@@ -65,6 +71,12 @@ class BuildOptions {
   static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
   /** Build community distributives */
   static final String COMMUNITY_DIST_STEP = "community_dist"
+  /**
+   * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
+   * Comprises many small publication steps.
+   * Note: skipping this step won't affect publication of 'Artifact paths' in TeamCity build settings and vice versa
+   */
+  static final String TEAMCITY_ARTIFACTS_PUBLICATION = "teamcity_artifacts_publication"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
@@ -123,14 +135,23 @@ class BuildOptions {
    * <p>By default 'development mode' is enabled if build is not running under continuous integration server (TeamCity).</p>
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
-                                                                    System.getProperty("teamcity.buildType.id") == null)
+                                                                    System.getenv("TEAMCITY_VERSION") == null)
 
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
-  List<String> bundledPluginDirectoriesToSkip = System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "").split(",") as List<String>
+  List<String> bundledPluginDirectoriesToSkip = StringUtil.split(System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", ""), ",") as List<String>
+
+  /**
+   * Specifies list of names of directories of non-bundled plugins (determined by {@link ProductModulesLayout#pluginsToPublish} and
+   * {@link ProductModulesLayout#buildAllCompatiblePlugins}) which should be actually built. This option can be used to speed up updating
+   * the IDE from sources. By default all plugins determined by {@link ProductModulesLayout#pluginsToPublish} and
+   * {@link ProductModulesLayout#buildAllCompatiblePlugins} are built. In order to skip building all non-bundled plugins, set the property to
+   * {@code none}.
+   */
+  List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",") as List<String>
 
   /**
    * Specifies JRE version to be bundled with distributions, 11 by default.
@@ -143,13 +164,13 @@ class BuildOptions {
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   * Directory path to unpack Jetbrains JDK builds into
+   * Directory path to unpack JetBrains JDK builds into
    */
   static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 
   /**
-   * Specifies Jetbrains JBR version to be used by build scripts, 8 by default.
+   * Specifies JetBrains JDK version to be used by build scripts, 8 by default.
    */
   static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
   int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
@@ -158,4 +179,22 @@ class BuildOptions {
    * Specifies an algorithm to build distribution checksums.
    */
   String hashAlgorithm = "SHA-384"
+
+  /**
+   * Enables module structure validation, false by default
+   */
+  static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
+  boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
+
+  BuildOptions() {
+    targetOS = System.getProperty("intellij.build.target.os")
+    if (targetOS == OS_CURRENT) {
+      targetOS = SystemInfo.isWindows ? OS_WINDOWS :
+                 SystemInfo.isMac ? OS_MAC :
+                 SystemInfo.isLinux ? OS_LINUX : null
+    }
+    else if (targetOS == null || targetOS.isEmpty()) {
+      targetOS = OS_ALL
+    }
+  }
 }

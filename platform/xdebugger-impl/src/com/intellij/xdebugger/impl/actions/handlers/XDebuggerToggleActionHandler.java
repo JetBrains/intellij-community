@@ -23,9 +23,6 @@ import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerToggleActionHandler extends DebuggerToggleActionHandler {
   @Override
   public final boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {

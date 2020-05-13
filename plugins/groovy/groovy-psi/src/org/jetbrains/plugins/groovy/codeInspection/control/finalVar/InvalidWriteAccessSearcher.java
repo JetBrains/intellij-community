@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 public class InvalidWriteAccessSearcher {
   @Nullable
-  public static List<ReadWriteVariableInstruction> findInvalidWriteAccess(@NotNull Instruction[] flow,
+  public static List<ReadWriteVariableInstruction> findInvalidWriteAccess(Instruction @NotNull [] flow,
                                                                           @NotNull Set<? extends GrVariable> variables,
                                                                           @NotNull Set<? extends GrVariable> alreadyInitialized) {
     DFAEngine<MyData> engine = new DFAEngine<>(flow, new MyDFAInstance(), new MySemilattice());

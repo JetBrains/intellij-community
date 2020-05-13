@@ -45,7 +45,6 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class GrIntroduceParameterHandler implements RefactoringActionHandler, MethodOrClosureScopeChooser.JBPopupOwner {
-  static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private JBPopup myEnclosingMethodsPopup;
 
   @Override
@@ -171,7 +170,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     // Does nothing
   }
 
@@ -181,5 +180,9 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     GrVariable var = GroovyIntroduceParameterUtil.findVar(info);
     StringPartInfo stringPart = info.getStringPartInfo();
     return new GrIntroduceVariableHandler().getContext(info.getProject(), editor, expr, var, stringPart, info.getToReplaceIn());
+  }
+
+  static String getRefactoringName() {
+    return RefactoringBundle.message("introduce.parameter.title");
   }
 }

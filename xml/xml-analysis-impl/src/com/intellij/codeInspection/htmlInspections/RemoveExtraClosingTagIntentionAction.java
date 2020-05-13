@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -36,6 +35,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -48,7 +48,7 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
+    return XmlAnalysisBundle.message("remove.extra.closing.tag.quickfix");
   }
 
 

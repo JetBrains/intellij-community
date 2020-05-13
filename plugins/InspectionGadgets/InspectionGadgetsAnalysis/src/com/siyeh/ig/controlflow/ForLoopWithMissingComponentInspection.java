@@ -35,12 +35,6 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("for.loop.with.missing.component.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final boolean hasInitializer = ((Boolean)infos[0]).booleanValue();
     final boolean hasCondition = ((Boolean)infos[1]).booleanValue();

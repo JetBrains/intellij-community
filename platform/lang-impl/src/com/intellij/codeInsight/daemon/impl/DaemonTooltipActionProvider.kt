@@ -20,7 +20,7 @@ import java.util.*
 class DaemonTooltipActionProvider : TooltipActionProvider {
   override fun getTooltipAction(info: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {
     val intention = extractMostPriorityFixFromHighlightInfo(info, editor, psiFile) ?: return null
-    return wrapIntentionToTooltipAction(intention, info)
+    return wrapIntentionToTooltipAction(intention, info, editor)
   }
 
 }
@@ -53,7 +53,7 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
     editor.caretModel.moveToOffset(myActualOffset)
     val project = editor.project ?: return
 
-    TooltipActionsLogger.logShowAll(project)
+    TooltipActionsLogger.showAllEvent.log(project)
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     ShowIntentionActionsHandler().invoke(project, editor, psiFile)
   }
@@ -112,7 +112,14 @@ fun getFirstAvailableAction(psiFile: PsiFile,
   return null
 }
 
-fun wrapIntentionToTooltipAction(intention: IntentionAction, info: HighlightInfo): TooltipAction {
+fun wrapIntentionToTooltipAction(intention: IntentionAction,
+                                 info: HighlightInfo,
+                                 editor: Editor): TooltipAction {
+  val editorOffset = editor.caretModel.offset
+  if ((info.actualStartOffset .. info.actualEndOffset).contains(editorOffset)) {
+    //try to avoid caret movements
+    return DaemonTooltipAction(intention.text, editorOffset)
+  }
   val pair = info.quickFixActionMarkers?.find { it.first?.action == intention }
   val offset = if (pair?.second?.isValid == true) pair.second.startOffset else info.actualStartOffset
   return DaemonTooltipAction(intention.text, offset)

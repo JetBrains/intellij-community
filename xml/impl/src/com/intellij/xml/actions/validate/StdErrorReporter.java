@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions.validate;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -36,7 +22,7 @@ import org.xml.sax.SAXParseException;
 import java.util.concurrent.Future;
 
 public class StdErrorReporter extends ErrorReporter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.validate.StdErrorReporter");
+  private static final Logger LOG = Logger.getInstance(StdErrorReporter.class);
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
 
   private final NewErrorTreeViewPanel myErrorsView;
@@ -48,7 +34,7 @@ public class StdErrorReporter extends ErrorReporter {
     myProject = psiFile.getProject();
     myContentName =  XmlBundle.message("xml.validate.tab.content.title", psiFile.getName());
     myErrorsView = new NewErrorTreeViewPanel(myProject, null, true, true, rerunAction);
-    myErrorsView.getEmptyText().setText("No errors found");
+    myErrorsView.getEmptyText().setText(XmlBundle.message("no.errors.found"));
   }
 
   @Override
@@ -138,7 +124,7 @@ public class StdErrorReporter extends ErrorReporter {
     }
   }
 
-  private class CloseListener extends ContentManagerAdapter {
+  private class CloseListener implements ContentManagerListener {
     private Content myContent;
     private final ContentManager myContentManager;
 

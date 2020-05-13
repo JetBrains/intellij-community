@@ -69,7 +69,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class PreviewFormAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.PreviewFormAction");
+  private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**
    * The problem is that this class is in a default package so it's not
@@ -81,7 +81,7 @@ public final class PreviewFormAction extends AnAction{
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
   @NotNull
-  public static InstrumentationClassFinder createClassFinder(@Nullable URL[] platformUrls, @NotNull final String classPath) {
+  public static InstrumentationClassFinder createClassFinder(URL @Nullable [] platformUrls, @NotNull final String classPath) {
     final ArrayList<URL> urls = new ArrayList<>();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
@@ -362,7 +362,7 @@ public final class PreviewFormAction extends AnAction{
 
         @Override
         @NotNull
-        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
           try {
             ExecutionResult executionResult = super.execute(executor, runner);
             executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
@@ -388,8 +388,7 @@ public final class PreviewFormAction extends AnAction{
     }
 
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       return new Module[] {myModule};
     }
   }

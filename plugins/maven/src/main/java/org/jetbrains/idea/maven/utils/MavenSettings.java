@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenSettings implements SearchableConfigurable.Parent {
-  public static final String DISPLAY_NAME = "Maven";
-
   private final Project myProject;
   private final Configurable myConfigurable;
   private final List<Configurable> myChildren;
@@ -91,9 +89,8 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     myConfigurable.disposeUIResources();
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     return myChildren.toArray(new Configurable[0]);
   }
 
@@ -106,7 +103,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
   @Override
   @Nls
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return MavenProjectBundle.message("configurable.MavenSettings.display.name");
   }
 
   @Override

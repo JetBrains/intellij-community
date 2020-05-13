@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -26,20 +12,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 abstract class DebuggerTreeWithHistoryContainer<D> {
   private static final Logger LOG = Logger.getInstance(DebuggerTreeWithHistoryContainer.class);
   private static final int HISTORY_SIZE = 11;
@@ -54,11 +39,12 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     myHistory.add(initialItem);
   }
 
-  protected JPanel createMainPanel(Tree tree) {
-    JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.add(ScrollPaneFactory.createScrollPane(tree), BorderLayout.CENTER);
-    mainPanel.add(createToolbar(mainPanel, tree), BorderLayout.NORTH);
-    return mainPanel;
+  protected BorderLayoutPanel createMainPanel(Tree tree) {
+    return fillMainPanel(JBUI.Panels.simplePanel(), tree);
+  }
+
+  protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
+    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree)).addToTop(createToolbar(mainPanel, tree));
   }
 
   private void updateTree() {
@@ -100,7 +86,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
 
   private class GoForwardAction extends AnAction {
     GoForwardAction() {
-      super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
+      super(CodeInsightBundle.messagePointer("quick.definition.forward"), AllIcons.Actions.Forward);
     }
 
     @Override
@@ -119,7 +105,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
 
   private class GoBackwardAction extends AnAction {
     GoBackwardAction() {
-      super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
+      super(CodeInsightBundle.messagePointer("quick.definition.back"), AllIcons.Actions.Back);
     }
 
     @Override
@@ -149,7 +135,12 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     @Override
     public void update(@NotNull AnActionEvent e) {
       TreePath path = myTree.getSelectionPath();
-      e.getPresentation().setEnabled(path != null && path.getPathCount() > 1);
+      boolean enabled = path != null && path.getPathCount() > (myTree.isRootVisible() ? 1 : 2);
+      Object component = myTree.getLastSelectedPathComponent();
+      if (enabled && component instanceof XValueNodeImpl) {
+        enabled = !((XValueNodeImpl)component).isLeaf();
+      }
+      e.getPresentation().setEnabled(enabled);
     }
 
     @Override

@@ -40,7 +40,7 @@ public class RenameElementAction extends BaseRefactoringAction {
   }
 
   @Override
-  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  public boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     if (elements.length != 1) return false;
 
     PsiElement element = elements[0];
@@ -71,6 +71,15 @@ public class RenameElementAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
-    return RenameHandlerRegistry.getInstance().hasAvailableHandler(context);
+    return isEnabledOnDataContext(context);
+  }
+
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context,
+                                                        @NotNull String place) {
+    return isEnabledOnDataContext(context);
   }
 }

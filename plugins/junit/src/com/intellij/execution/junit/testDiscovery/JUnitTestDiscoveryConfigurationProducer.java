@@ -51,7 +51,7 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
 
   @NotNull
   @Override
-  public RunProfileState createProfile(@NotNull Location<PsiMethod>[] testMethods,
+  public RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
                                        Module module,
                                        RunConfiguration configuration,
                                        ExecutionEnvironment environment) {
@@ -70,6 +70,7 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
         super.fillForkModule(perModule, toRoot.get(module), name);
       }
 
+      @NotNull
       @Override
       protected String getRunner() {
         return JUnitStarter.JUNIT4_PARAMETER;
@@ -77,7 +78,7 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
     };
   }
 
-  private static Map<Module, Module> splitModulesIntoChunks(@NotNull Location<PsiMethod>[] testMethods, Module module) {
+  private static Map<Module, Module> splitModulesIntoChunks(Location<PsiMethod> @NotNull [] testMethods, Module module) {
     Map<Module, Module> toRoot = new HashMap<>();
     if (module == null) {
       Set<Module> usedModules = Arrays.stream(testMethods).map(Location::getModule).collect(Collectors.toSet());

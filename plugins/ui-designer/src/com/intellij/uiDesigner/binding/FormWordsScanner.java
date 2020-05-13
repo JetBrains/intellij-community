@@ -19,10 +19,10 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class FormWordsScanner extends SimpleWordsScanner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormWordsScanner");
+  private static final Logger LOG = Logger.getInstance(FormWordsScanner.class);
 
   @Override
-  public void processWords(@NotNull CharSequence fileText, @NotNull final Processor<WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, @NotNull final Processor<? super WordOccurrence> processor) {
     super.processWords(fileText, processor);
 
     try {

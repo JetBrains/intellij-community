@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation.docstrings;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -18,10 +17,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -37,7 +33,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   public enum ReferenceType {PARAMETER, PARAMETER_TYPE, KEYWORD, VARIABLE, CLASS_VARIABLE, INSTANCE_VARIABLE, GLOBAL_VARIABLE}
 
   @Override
-  public PsiElement resolve() {
+  public PyElement resolve() {
     PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
     if (owner instanceof PyFunction) {
       return resolveParameter((PyFunction)owner);
@@ -45,7 +41,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     if (owner instanceof PyClass) {
       final PyFunction init = ((PyClass)owner).findMethodByName(PyNames.INIT, false, null);
       if (init != null) {
-        PsiElement element = resolveParameter(init);
+        PyElement element = resolveParameter(init);
         if (element == null && (myType.equals(ReferenceType.CLASS_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE))) {
           element = resolveClassVariable((PyClass)owner);
         }
@@ -55,7 +51,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
         return element;
       }
       else {
-        PsiElement element = null;
+        PyElement element = null;
         if (myType.equals(ReferenceType.CLASS_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE)) {
           element = resolveClassVariable((PyClass)owner);
         }
@@ -72,7 +68,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   }
 
   @Nullable
-  private PsiElement resolveGlobalVariable(@NotNull PyFile owner) {
+  private PyTargetExpression resolveGlobalVariable(@NotNull PyFile owner) {
     for (PyTargetExpression assignment : owner.getTopLevelAttributes()) {
       if (getCanonicalText().equals(assignment.getName())) {
         return assignment;
@@ -82,7 +78,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   }
 
   @Nullable
-  private PsiElement resolveInstanceVariable(final PyClass owner) {
+  private PyTargetExpression resolveInstanceVariable(final PyClass owner) {
     final List<PyTargetExpression> attributes = owner.getInstanceAttributes();
     for (PyTargetExpression element : attributes) {
       if (getCanonicalText().equals(element.getName())) {
@@ -93,7 +89,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   }
 
   @Nullable
-  private PsiElement resolveClassVariable(@NotNull final PyClass owner) {
+  private PyTargetExpression resolveClassVariable(@NotNull final PyClass owner) {
     final List<PyTargetExpression> attributes = owner.getClassAttributes();
     for (PyTargetExpression element : attributes) {
       if (getCanonicalText().equals(element.getName())) {
@@ -104,7 +100,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   }
 
   @Nullable
-  private PsiElement resolveParameter(PyFunction owner) {
+  private PyNamedParameter resolveParameter(PyFunction owner) {
     final PyParameterList parameterList = owner.getParameterList();
     final PyNamedParameter resolved = parameterList.findParameterByName(getCanonicalText());
     if (resolved != null) {
@@ -121,9 +117,8 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     return null;
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     // see PyDocstringCompletionContributor
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
@@ -132,7 +127,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   public List<PyNamedParameter> collectParameterVariants() {
     PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
     if (owner instanceof PyFunction) {
-      List<PyNamedParameter> result = Lists.newArrayList();
+      List<PyNamedParameter> result = new ArrayList<>();
       final List<PyNamedParameter> namedParameters = ParamHelper.collectNamedParameters(((PyFunction)owner).getParameterList());
       Set<String> usedParameters = new HashSet<>();
       PyStringLiteralExpression expression = PsiTreeUtil.getParentOfType(getElement(), PyStringLiteralExpression.class, false);

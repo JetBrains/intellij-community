@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -53,11 +38,11 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   @Override
   @NotNull
   public final String getFamilyName() {
-    return InspectionsBundle.message("inspection.convert.to.local.quickfix");
+    return JavaBundle.message("inspection.convert.to.local.quickfix");
   }
 
   @Override
-  public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final V variable = getVariable(descriptor);
     if (variable == null || !variable.isValid()) return; //weird. should not get here when field becomes invalid
     final PsiFile myFile = variable.getContainingFile();
@@ -81,14 +66,12 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     if (newVariable != null) {
       final PsiExpression initializer = ParenthesesUtils.stripParentheses(newVariable.getInitializer());
 
-      WriteAction.run(() -> {
-        if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
-          for (PsiReference reference : ReferencesSearch.search(newVariable).findAll()) {
-            InlineUtil.inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference);
-          }
-          declaration.delete();
+      if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
+        for (PsiReference reference : ReferencesSearch.search(newVariable).findAll()) {
+          InlineUtil.inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference);
         }
-      });
+        declaration.delete();
+      }
     }
   }
 
@@ -106,6 +89,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   protected abstract V getVariable(@NotNull ProblemDescriptor descriptor);
 
   protected static void positionCaretToDeclaration(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement declaration) {
+    if (!psiFile.isPhysical()) return;
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor != null && (IJSwingUtilities.hasFocus(editor.getComponent()) || ApplicationManager.getApplication().isUnitTestMode())) {
       final PsiFile openedFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -124,7 +108,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
     if (references.isEmpty()) return Collections.emptyList();
 
-    return Collections.singletonList(ObjectUtils.notNull(moveDeclaration(project, variable, references, true)));
+    return Collections.singletonList(Objects.requireNonNull(moveDeclaration(project, variable, references, true)));
   }
 
   protected PsiElement moveDeclaration(Project project, V variable, final Collection<? extends PsiReference> references, boolean delete) {
@@ -180,13 +164,11 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                     final boolean delete, @NotNull final NotNullFunction<? super PsiDeclarationStatement, ? extends PsiElement> action) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
-    return WriteAction.compute(() -> {
-      final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
-      if (delete) {
-        deleteSourceVariable(project, variable, newDeclaration);
-      }
-      return newDeclaration;
-    });
+    final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
+    if (delete) {
+      deleteSourceVariable(project, variable, newDeclaration);
+    }
+    return newDeclaration;
   }
 
   protected void deleteSourceVariable(@NotNull Project project, @NotNull V variable, PsiElement newDeclaration) {
@@ -206,8 +188,8 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
     if (references.stream()
                   .map(PsiReference::getElement)
-                  .anyMatch(element -> element instanceof PsiExpression && 
-                                       PsiUtil.isAccessedForWriting((PsiExpression)element))) { 
+                  .anyMatch(element -> element instanceof PsiExpression &&
+                                       PsiUtil.isAccessedForWriting((PsiExpression)element))) {
       PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
     }
     final PsiElement newDeclaration = action.fun(declaration);

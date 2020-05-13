@@ -41,7 +41,7 @@ import java.util.HashMap;
  * @author Vladimir Kondratyev
  */
 public final class Generator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.Generator");
+  private static final Logger LOG = Logger.getInstance(Generator.class);
 
   private Generator() {
   }
@@ -325,15 +325,15 @@ public final class Generator {
 
     final String textOfMethods =
       "public void setData(" + dataBeanClassName + " data){\n" +
-      setDataBody.toString() +
+      setDataBody +
       "}\n" +
       "\n" +
       "public void getData(" + dataBeanClassName + " data){\n" +
-      getDataBody.toString() +
+      getDataBody +
       "}\n" +
       "\n" +
       "public boolean isModified(" + dataBeanClassName + " data){\n" +
-      isModifiedBody.toString() +
+      isModifiedBody +
       "}\n";
 
     // put them to the bound class

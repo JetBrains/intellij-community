@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.Language;
@@ -16,18 +16,20 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
-public class Divider {
+public final class Divider {
   private static final int STARTING_TREE_HEIGHT = 10;
 
-  public static class DividedElements {
+  public static final class DividedElements {
     private final long modificationStamp;
-    @NotNull private final TextRange restrictRange;
-    @NotNull private final TextRange priorityRange;
+    private final @NotNull TextRange restrictRange;
+    private final @NotNull TextRange priorityRange;
     public final List<PsiElement> inside = new ArrayList<>();
     final List<ProperTextRange> insideRanges = new ArrayList<>();
     public final List<PsiElement> outside = new ArrayList<>();
@@ -47,12 +49,12 @@ public class Divider {
   public static void divideInsideAndOutsideAllRoots(@NotNull PsiFile file,
                                                      @NotNull TextRange restrictRange,
                                                      @NotNull TextRange priorityRange,
-                                                     @NotNull Condition<? super PsiFile> rootFilter,
+                                                     @Nullable Predicate<? super PsiFile> rootFilter,
                                                      @NotNull Processor<? super DividedElements> processor) {
-    final FileViewProvider viewProvider = file.getViewProvider();
+    FileViewProvider viewProvider = file.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
-      final PsiFile root = viewProvider.getPsi(language);
-      if (!rootFilter.value(root)) {
+      PsiFile root = viewProvider.getPsi(language);
+      if (rootFilter == null || !rootFilter.test(root)) {
         continue;
       }
       divideInsideAndOutsideInOneRoot(root, restrictRange, priorityRange, processor);
@@ -94,7 +96,7 @@ public class Divider {
     int startOffset = restrictRange.getStartOffset();
     int endOffset = restrictRange.getEndOffset();
 
-    final Condition<PsiElement>[] filters = CollectHighlightsUtil.FiltersHolder.FILTERS;
+    final Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
 
     final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
     starts.push(startOffset);

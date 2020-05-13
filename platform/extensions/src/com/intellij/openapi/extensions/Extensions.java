@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
@@ -30,8 +31,9 @@ public final class Extensions {
   }
 
   /**
-   * @return instance containing application-level extensions
+   * @deprecated Use {@link ComponentManager#getExtensionArea()}
    */
+  @Deprecated
   public static ExtensionsArea getRootArea() {
     return ourRootArea;
   }
@@ -39,18 +41,16 @@ public final class Extensions {
   /**
    * @deprecated Use {@link AreaInstance#getExtensionArea()}
    */
-  @NotNull
   @Deprecated
-  public static ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
+  public static @NotNull ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
     return areaInstance == null ? ourRootArea : areaInstance.getExtensionArea();
   }
 
   /**
    * @deprecated Use {@link ExtensionPointName#getExtensions()}
    */
-  @NotNull
   @Deprecated
-  public static Object[] getExtensions(@NonNls @NotNull String extensionPointName) {
+  public static Object @NotNull [] getExtensions(@NonNls @NotNull String extensionPointName) {
     return getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
@@ -58,8 +58,7 @@ public final class Extensions {
    * @deprecated Use {@link ExtensionPointName#getExtensionList()}
    */
   @Deprecated
-  @NotNull
-  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
+  public static <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return extensionPointName.getExtensions();
   }
 
@@ -67,8 +66,7 @@ public final class Extensions {
    * @deprecated Use {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
    */
   @Deprecated
-  @NotNull
-  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
+  public static <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
     return extensionPointName.getExtensions(areaInstance);
   }
 
@@ -76,8 +74,7 @@ public final class Extensions {
    * @deprecated Use {@link ExtensionPointName#getExtensions()}
    */
   @Deprecated
-  @NotNull
-  public static <T> T[] getExtensions(@NotNull String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
+  public static <T> T @NotNull [] getExtensions(@NotNull String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
     return getArea(areaInstance).<T>getExtensionPoint(extensionPointName).getExtensions();
   }
 
@@ -85,8 +82,7 @@ public final class Extensions {
    * @deprecated Use {@link ExtensionPointName#findExtensionOrFail(Class)}
    */
   @Deprecated
-  @NotNull
-  public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
+  public static @NotNull <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
     return extensionPointName.findExtensionOrFail(extClass);
   }
 

@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,15 +36,21 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
-import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
-import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class JarFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
+
+  @After
+  public void testDown() {
+    JarFileSystemImpl.cleanupForNextTest();
+  }
 
   @Test
   public void testFindFile() throws IOException {
@@ -94,8 +99,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(vFile);
 
     VirtualFile jarRoot = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    VirtualFile child = assertOneElement(jarRoot.getChildren());
-    assertEquals("META-INF", child.getName());
+    assertThat(ContainerUtil.map(jarRoot.getChildren(), VirtualFile::getName)).containsExactly("META-INF");
 
     VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
     assertEquals("", VfsUtilCore.loadText(entry));
@@ -122,9 +126,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertTrue(updated.get());
     assertTrue(entry.isValid());
     assertEquals("update", VfsUtilCore.loadText(entry));
-    List<String> children = ContainerUtil.map(jarRoot.getChildren(), f -> f.getName());
-    assertEquals(2, children.size());
-    assertSameElements(children, "META-INF", "some.txt");
+    assertThat(ContainerUtil.map(jarRoot.getChildren(), VirtualFile::getName)).containsExactlyInAnyOrder("META-INF", "some.txt");
 
     VirtualFile newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
     assertEquals("some text", VfsUtilCore.loadText(newEntry));
@@ -163,7 +165,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
       int N = Math.max(2, Runtime.getRuntime().availableProcessors());
       for (int iteration = 0; iteration < 200; ++iteration) {
-        List<Future> futuresToWait = new ArrayList<>();
+        List<Future<?>> futuresToWait = new ArrayList<>();
         CountDownLatch sameStartCondition = new CountDownLatch(N);
 
         for (int i = 0; i < N; ++i) {
@@ -188,17 +190,14 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
           }));
         }
 
-        for (Future future : futuresToWait) future.get(2, TimeUnit.SECONDS);
+        for (Future<?> future : futuresToWait) future.get(2, TimeUnit.SECONDS);
       }
+
+      for (BasicJarHandler handler : handlers) handler.dispose();
     }
     catch (TimeoutException e) {
       fail("Deadlock detected");
     }
-  }
-
-  @After
-  public void testDown() {
-    JarFileSystemImpl.cleanupForNextTest();
   }
 
   @Test
@@ -223,14 +222,42 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testInvalidJar() {
-    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/maven-toolchain-1.0.jar";
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
-    assertNotNull(vFile);
-    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
-    assertNotNull(manifest);
-    VirtualFile classFile = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/apache/maven/toolchain/java/JavaToolChain.class");
-    assertNotNull(classFile);
+  public void testInvalidZip() throws IOException {
+    File testZip = tempDir.newFile("test.zip");
+    try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(testZip))) {
+      writeEntry(zip, "a");
+      writeEntry(zip, "a/b");
+      writeEntry(zip, "a/b/c.txt");
+      writeEntry(zip, "x\\y\\z.txt");
+      writeEntry(zip, "/x/f.txt");
+      writeEntry(zip, "d1/aB");
+      writeEntry(zip, "d1/ab");
+      writeEntry(zip, "D2/f1");
+      writeEntry(zip, "d2/f2");
+    }
+
+    String rootPath = FileUtil.toSystemIndependentName(testZip.getPath()) + JarFileSystem.JAR_SEPARATOR;
+    VirtualFile jarRoot = JarFileSystem.getInstance().findFileByPath(rootPath);
+    assertNotNull(jarRoot);
+    List<String> entries = new ArrayList<>();
+    VfsUtilCore.visitChildrenRecursively(jarRoot, new VirtualFileVisitor<Object>() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!jarRoot.equals(file)) {
+          String path = file.getPath().substring(rootPath.length());
+          entries.add(file.isDirectory() ? path + '/' : path);
+        }
+        return true;
+      }
+    });
+    assertThat(entries).containsExactlyInAnyOrder(
+      "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/f.txt", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2");
+  }
+
+  private static void writeEntry(ZipOutputStream zip, String name) throws IOException {
+    ZipEntry entry = new ZipEntry(name);
+    zip.putNextEntry(entry);
+    zip.closeEntry();
   }
 
   @Test
@@ -254,7 +281,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testEnormousFileInputStream() throws IOException {
-    File root = tempDir.newFolder("out");
+    File root = tempDir.newDirectory("out");
     FileUtil.writeToFile(new File(root, "small1"), "some text");
     FileUtil.writeToFile(new File(root, "small2"), "another text");
     try (InputStream is = new ZeroInputStream(); OutputStream os = new FileOutputStream(new File(root, "large"))) {
@@ -278,6 +305,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
   }
 
+  @NotNull
   private static VirtualFile findByPath(String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
     assertNotNull(file);
@@ -292,7 +320,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) {
+    public int read(byte @NotNull [] b, int off, int len) {
       return len;
     }
   }

@@ -63,13 +63,12 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     @Override
     @NotNull
-    protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
+    protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
         return new MyUsageViewDescriptorAdapter();
     }
 
     @Override
-    @NotNull
-    protected UsageInfo[] findUsages() {
+    protected UsageInfo @NotNull [] findUsages() {
         int usageCount = myOtherExpressions.size() + 1;
 
         final List<PsiElement> callsToUpdate;
@@ -104,7 +103,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  protected void performRefactoring(UsageInfo @NotNull [] usageInfos) {
         XmlTag tag;
         if (myTemplate != null) {
             tag = myTemplate.getTag();
@@ -170,8 +169,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     private class MyUsageViewDescriptorAdapter extends UsageViewDescriptorAdapter {
 
         @Override
-        @NotNull
-        public PsiElement[] getElements() {
+        public PsiElement @NotNull [] getElements() {
             return new PsiElement[]{ myTemplate };
         }
 

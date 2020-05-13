@@ -26,7 +26,7 @@ public class JavaInternalTemplatesHandler extends JavaCreateFromTemplateHandler 
   }
 
   @Override
-  public boolean canCreate(@NotNull PsiDirectory[] dirs) {
+  public boolean canCreate(PsiDirectory @NotNull [] dirs) {
     return false;
   }
 }

@@ -17,17 +17,20 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 public class RuntimeConfigurationException extends ConfigurationException {
-  public RuntimeConfigurationException(final String message, final String title) {
+  public RuntimeConfigurationException(@DialogMessage String message, @DialogTitle String title) {
     super(message, title);
   }
 
-  public RuntimeConfigurationException(final String message) {
+  public RuntimeConfigurationException(@DialogMessage String message) {
     super(message, ExecutionBundle.message("run.configuration.error.dialog.title"));
   }
 
-  public RuntimeConfigurationException(final String message, Throwable cause) {
+  public RuntimeConfigurationException(@DialogMessage String message, Throwable cause) {
     super(message, cause, ExecutionBundle.message("run.configuration.error.dialog.title"));
   }
 }

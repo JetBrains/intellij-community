@@ -8,7 +8,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.net.URL;
 
 /**
- * Consider using {@link NotificationAction} instead of links in HTML content.
+ * Consider using {@link NotificationAction} instead of "action" links in HTML content.
+ * Use {@link #URL_OPENING_LISTENER} to open external links in browser.
  *
  * @see NotificationAction
  */

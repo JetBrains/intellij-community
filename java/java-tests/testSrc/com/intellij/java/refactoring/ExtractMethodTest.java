@@ -940,6 +940,22 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   public void testParametrizedDuplicateExpression() throws Exception {
     doDuplicatesTest();
   }
+  
+  public void testPatternVariable() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+  }
+
+  public void testPatternVariableIntroduced() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testPatternVariableIntroduced2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testPatternVariableIntroduced3() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+  }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1170,6 +1186,15 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testEmptyParenthesis() throws Exception {
+    try {
+      doTest();
+      fail("Should not work for empty parenthesis");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
   public void testQualifyWhenConflictingNamePresent() throws Exception {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
@@ -1396,6 +1421,15 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testExtractFromAnnotation1() throws Exception {
+    try {
+      doTest();
+      fail("Should not work for annotations");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
@@ -1495,7 +1529,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
                                               final boolean extractChainedConstructor,
-                                              @NotNull int... disabledParams) throws PrepareFailedException, IncorrectOperationException {
+                                              int @NotNull ... disabledParams) throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null, false, null, disabledParams);
   }
 
@@ -1508,7 +1542,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
                                               PsiType returnType,
                                               boolean makeStatic,
                                               String newNameOfFirstParam,
-                                              @NotNull int... disabledParams) throws PrepareFailedException, IncorrectOperationException {
+                                              int @NotNull ... disabledParams) throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, returnType, makeStatic,
                                 newNameOfFirstParam, null, null, disabledParams);
   }
@@ -1524,7 +1558,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
                                               String newNameOfFirstParam,
                                               PsiClass targetClass,
                                               @Nullable @PsiModifier.ModifierConstant String methodVisibility,
-                                              @NotNull int... disabledParams) throws PrepareFailedException, IncorrectOperationException {
+                                              int @NotNull ... disabledParams) throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 

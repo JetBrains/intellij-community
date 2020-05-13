@@ -16,7 +16,6 @@ public interface GrReferenceList extends GroovyPsiElement, PsiReferenceList {
   @Nullable
   PsiElement getKeyword();
 
-  @NotNull
-  GrCodeReferenceElement[] getReferenceElementsGroovy();
+  GrCodeReferenceElement @NotNull [] getReferenceElementsGroovy();
 
 }

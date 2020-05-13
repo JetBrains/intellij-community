@@ -55,19 +55,19 @@ public class HgRegularUpdater implements HgUpdater {
   @Override
   public boolean update(final UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> warnings)
     throws VcsException {
-    indicator.setText(HgVcsMessages.message("hg4idea.progress.updating", repoRoot.getPath()));
+    indicator.setText(HgBundle.message("hg4idea.progress.updating", repoRoot.getPath()));
 
     String defaultPath = HgUtil.getRepositoryDefaultPath(project, repoRoot);
 
     if (StringUtil.isEmptyOrSpaces(defaultPath)) {
-      throw new VcsException(HgVcsMessages.message("hg4idea.warning.no-default-update-path", repoRoot.getPath()));
+      throw new VcsException(HgBundle.message("hg4idea.warning.no-default-update-path", repoRoot.getPath()));
     }
 
 
     List<HgRevisionNumber> branchHeadsBeforePull = new HgHeadsCommand(project, repoRoot).executeInCurrentThread();
 
     if (branchHeadsBeforePull.size() > 1) {
-      reportWarning(warnings, HgVcsMessages.message("hg4idea.update.warning.multipleHeadsBeforeUpdate", repoRoot.getPath()));
+      reportWarning(warnings, HgBundle.message("hg4idea.update.warning.multipleHeadsBeforeUpdate", repoRoot.getPath()));
     }
 
     //TODO perhaps report a warning in this case ?
@@ -87,10 +87,10 @@ public class HgRegularUpdater implements HgUpdater {
 
     List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repoRoot);
     if (parentsBeforeUpdate.size() > 1) {
-      throw new VcsException(HgVcsMessages.message("hg4idea.update.error.uncommittedMerge", repoRoot.getPath()));
+      throw new VcsException(HgBundle.message("hg4idea.update.error.uncommittedMerge", repoRoot.getPath()));
     }
 
-    indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
+    indicator.setText2(HgBundle.message("hg4idea.progress.countingHeads"));
 
     List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).executeInCurrentThread();
     List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
@@ -148,19 +148,19 @@ public class HgRegularUpdater implements HgUpdater {
 
   private void abortOnMultipleLocalHeads(List<HgRevisionNumber> originalBranchHeadsRemaining) throws VcsException {
     if (originalBranchHeadsRemaining.size() != 1) {
-      throw new VcsException(HgVcsMessages.message("hg4idea.update.error.merge.multipleLocalHeads", repoRoot.getPath()));
+      throw new VcsException(HgBundle.message("hg4idea.update.error.merge.multipleLocalHeads", repoRoot.getPath()));
     }
   }
 
   private void abortOnMultiplePulledHeads(List<HgRevisionNumber> newBranchHeadsAfterPull) throws VcsException {
     if (newBranchHeadsAfterPull.size() != 1) {
-      throw new VcsException(HgVcsMessages.message("hg4idea.update.error.merge.multipleRemoteHeads", newBranchHeadsAfterPull.size(),
-                                                   repoRoot.getPath()));
+      throw new VcsException(HgBundle.message("hg4idea.update.error.merge.multipleRemoteHeads", newBranchHeadsAfterPull.size(),
+                                              repoRoot.getPath()));
     }
   }
 
   private void updateToPulledHead(VirtualFile repo, UpdatedFiles updatedFiles, HgRevisionNumber newHead, ProgressIndicator indicator) {
-    indicator.setText2(HgVcsMessages.message("hg4idea.update.progress.updating.to.pulled.head"));
+    indicator.setText2(HgBundle.message("hg4idea.update.progress.updating.to.pulled.head"));
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
     HgUpdateCommand updateCommand = new HgUpdateCommand(project, repoRoot);
     updateCommand.setRevision(newHead.getChangeset());
@@ -200,12 +200,12 @@ public class HgRegularUpdater implements HgUpdater {
       }
     }
     else {
-      reportWarning(exceptions, HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repoRoot.getPath()));
+      reportWarning(exceptions, HgBundle.message("hg4idea.update.warning.merge.conflicts", repoRoot.getPath()));
     }
   }
 
   private HgCommandResult doMerge(ProgressIndicator indicator) throws VcsException {
-    indicator.setText2(HgVcsMessages.message("hg4idea.update.progress.merging"));
+    indicator.setText2(HgBundle.message("hg4idea.update.progress.merging"));
     HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repoRoot);
     if (repository == null) {
       LOG.error("Couldn't find repository for " + repoRoot.getName());
@@ -219,7 +219,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void processRebase(ProgressIndicator indicator, final UpdatedFiles updatedFiles) throws VcsException {
-    indicator.setText2(HgVcsMessages.message("hg4idea.progress.rebase"));
+    indicator.setText2(HgBundle.message("hg4idea.progress.rebase"));
     HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repoRoot);
     if (repository == null) {
       throw new VcsException("Repository not found for root " + repoRoot);
@@ -227,7 +227,8 @@ public class HgRegularUpdater implements HgUpdater {
     HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
     HgCommandResult result = new HgRebaseCommand(project, repository).startRebase();
     if (HgErrorUtil.isCommandExecutionFailed(result)) {
-      new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't rebase repository.");
+      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+                                                       HgBundle.message("action.hg4idea.Rebase.error"));
       return;
     }
     //noinspection ConstantConditions
@@ -238,7 +239,8 @@ public class HgRegularUpdater implements HgUpdater {
       }
       result = rebaseCommand.continueRebase();
       if (HgErrorUtil.isAbort(result)) {
-        new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
+        new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+                                                         HgBundle.message("action.hg4idea.Rebase.Continue.error"));
         break;
       }
     }
@@ -248,7 +250,7 @@ public class HgRegularUpdater implements HgUpdater {
 
   private void abortOnLocalChanges() throws VcsException {
     if (getLocalChanges().size() != 0) {
-      throw new VcsException(HgVcsMessages.message("hg4idea.update.error.localchanges", repoRoot.getPath()));
+      throw new VcsException(HgBundle.message("hg4idea.update.error.localchanges", repoRoot.getPath()));
     }
   }
 
@@ -262,7 +264,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private HgCommandExitCode pull(@NotNull VirtualFile repo, @NotNull ProgressIndicator indicator) {
-    indicator.setText2(HgVcsMessages.message("hg4idea.progress.pull.with.update"));
+    indicator.setText2(HgBundle.message("hg4idea.progress.pull.with.update"));
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);
     final String defaultPath = HgUtil.getRepositoryDefaultPath(project, repo);
     hgPullCommand.setSource(defaultPath);
@@ -270,7 +272,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void update(@NotNull VirtualFile repo, ProgressIndicator indicator, UpdatedFiles updatedFiles, List<VcsException> warnings) throws VcsException {
-    indicator.setText2(HgVcsMessages.message("hg4idea.progress.updatingworkingdir"));
+    indicator.setText2(HgBundle.message("hg4idea.progress.updatingworkingdir"));
 
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
     HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(project, repo);

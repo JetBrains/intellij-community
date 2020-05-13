@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,6 +18,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.file.PsiDirectoryImpl;
+import com.intellij.psi.impl.file.UpdateAddedFileProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -68,10 +57,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   @Nullable
   @Override
   public String getActionName(PsiElement[] elements) {
-    if (elements.length == 1 && !(elements[0] instanceof PsiPackage) && !(elements [0] instanceof PsiDirectory)) {
-      return "Copy Class...";
+    if (elements.length == 1 && !(elements[0] instanceof PsiPackage) && !(elements[0] instanceof PsiDirectory)) {
+      return JavaRefactoringBundle.message("copy.handler.copy.class.with.dialog");
     }
-    return "Copy Classes...";
+    return JavaRefactoringBundle.message("copy.handler.copy.classes.with.dialog");
   }
 
   public static boolean canCopyClass(PsiElement... elements) {
@@ -182,7 +171,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
     Project project = defaultTargetDirectory.getProject();
     if (DumbService.isDumb(elements[0].getProject())) {
-      DumbService.getInstance(project).showDumbModeNotification("Copy classes is not available during indexing");
+      DumbService.getInstance(project).showDumbModeNotification(JavaRefactoringBundle.message(
+        "copy.handler.is.not.available.during.indexing"));
       return;
     }
 
@@ -218,9 +208,9 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           return qualifiedName;
         }
       };
-      dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));
+      dialog.setTitle(JavaRefactoringBundle.message("copy.handler.copy.class"));
       if (dialog.showAndGet()) {
-        openInEditor = dialog.openInEditor();
+        openInEditor = dialog.isOpenInEditor();
         targetDirectory = dialog.getTargetDirectory();
         className = dialog.getClassName();
         if (className == null || className.length() == 0) return;
@@ -246,12 +236,12 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           if (files.length == 1) { //strip file extension when multiple classes exist in one file
             className = StringUtil.trimEnd(newName, "." + getFileExtension(files[0]));
           }
-          openInEditor = dialog.openInEditor();
+          openInEditor = dialog.isOpenInEditor();
         }
       }
     }
     if (targetDirectory != null) {
-      copyClassesImpl(className, project, classes, relativePathsMap, targetDirectory, defaultTargetDirectory, RefactoringBundle.message(
+      copyClassesImpl(className, project, classes, relativePathsMap, targetDirectory, defaultTargetDirectory, JavaRefactoringBundle.message(
         "copy.handler.copy.class"), false, openInEditor);
     }
   }
@@ -275,12 +265,12 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     Project project = element.getProject();
 
     CopyClassDialog dialog = new CopyClassDialog(classes[0], null, project, true);
-    dialog.setTitle(RefactoringBundle.message("copy.handler.clone.class"));
+    dialog.setTitle(JavaRefactoringBundle.message("copy.handler.clone.class"));
     if (dialog.showAndGet()) {
       String className = dialog.getClassName();
       PsiDirectory targetDirectory = element.getContainingFile().getContainingDirectory();
       copyClassesImpl(className, project, Collections.singletonMap(classes[0].getContainingFile(), classes), null, targetDirectory,
-                      targetDirectory, RefactoringBundle.message("copy.handler.clone.class"), true, true);
+                      targetDirectory, JavaRefactoringBundle.message("copy.handler.clone.class"), true, true);
     }
   }
 
@@ -345,44 +335,48 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
     List<PsiFile> files = new ArrayList<>();
-    for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
-      final PsiFile psiFile = entry.getKey();
-      final PsiClass[] sources = entry.getValue();
-      if (psiFile instanceof PsiClassOwner && sources != null) {
-        final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
-        if (createdFile == null) {
-          //do not touch unmodified classes
-          for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
-            oldToNewMap.remove(aClass);
+    ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> {
+      for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
+        final PsiFile psiFile = entry.getKey();
+        final PsiClass[] sources = entry.getValue();
+        if (psiFile instanceof PsiClassOwner && sources != null) {
+          final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
+          if (createdFile == null) {
+            //do not touch unmodified classes
+            for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
+              oldToNewMap.remove(aClass);
+            }
+            continue;
           }
-          continue;
-        }
 
-        List<PsiClass> nonSyntheticClasses = new ArrayList<>();
-        for (final PsiClass aClass : ((PsiClassOwner)createdFile).getClasses()) {
-          if (!isSynthetic(aClass)) {
-            nonSyntheticClasses.add(aClass);
+          Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
+          for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
+            if (!isSynthetic(destination)) {
+              PsiClass source = findByName(sources, destination.getName());
+              if (source == null) {
+                WriteAction.run(() -> destination.delete());
+              }
+              else {
+                sourceToDestination.put(source, destination);
+              }
+            }
           }
-        }
 
-        for (final PsiClass destination : nonSyntheticClasses) {
-          PsiClass source = findByName(sources, destination.getName());
-          if (source != null) {
-            final PsiClass copy = copy(source, nonSyntheticClasses.size() > 1 ? null : copyClassName);
-            PsiElement newElement = WriteAction.compute(() -> destination.replace(copy));
-            oldToNewMap.put(source, newElement);
+          for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
+            final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
+            PsiElement newElement = WriteAction.compute(() -> classEntry.getValue().replace(copy));
+            oldToNewMap.put(classEntry.getKey(), newElement);
           }
-          else {
-            WriteAction.run(() -> destination.delete());
-          }
+          createdFiles.add(createdFile);
         }
-        createdFiles.add(createdFile);
+        else {
+          files.add(psiFile);
+        }
       }
-      else {
-        files.add(psiFile);
-      }
-    }
+    });
 
+    DumbService.getInstance(project).completeJustSubmittedTasks();
+    WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(createdFiles));
 
     for (PsiFile file : files) {
       try {
@@ -541,8 +535,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
   }
 
-  @Nullable
-  private static PsiClass[] getTopLevelClasses(PsiElement element) {
+  private static PsiClass @Nullable [] getTopLevelClasses(PsiElement element) {
     while (true) {
       if (element == null || element instanceof PsiFile) break;
       if (element instanceof PsiClass &&

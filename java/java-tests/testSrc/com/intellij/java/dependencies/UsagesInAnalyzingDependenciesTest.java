@@ -144,7 +144,7 @@ public class UsagesInAnalyzingDependenciesTest extends LightJavaCodeInsightFixtu
     checkResult(new String[]{"2 String myName;"}, psiUsages);
   }
 
-  private static void checkResult(@NotNull String[] usages, @NotNull String[] psiUsages) {
+  private static void checkResult(String @NotNull [] usages, String @NotNull [] psiUsages) {
     assertEquals(usages.length, psiUsages.length);
     for (int i = 0; i < psiUsages.length; i++) {
       assertEquals(usages[i], psiUsages[i]);

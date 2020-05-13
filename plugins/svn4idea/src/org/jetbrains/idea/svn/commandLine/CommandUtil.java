@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +18,7 @@ import java.io.File;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CommandUtil {
@@ -240,6 +240,6 @@ public class CommandUtil {
       LOG.error("Existing parent not found for " + file.getAbsolutePath());
     }
 
-    return ObjectUtils.assertNotNull(result);
+    return Objects.requireNonNull(result);
   }
 }

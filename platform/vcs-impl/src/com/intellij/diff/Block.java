@@ -36,7 +36,7 @@ import java.util.List;
 public class Block {
   private static final Logger LOG = Logger.getInstance(Block.class);
 
-  @NotNull private final String[] mySource;
+  private final String @NotNull [] mySource;
   private final int myStart;
   private final int myEnd;
 
@@ -44,14 +44,13 @@ public class Block {
     this(tokenize(source), start, end);
   }
 
-  public Block(@NotNull String[] source, int start, int end) {
+  public Block(String @NotNull [] source, int start, int end) {
     mySource = source;
     myStart = DiffUtil.bound(start, 0, source.length);
     myEnd = DiffUtil.bound(end, myStart, source.length);
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull String text) {
+  public static String @NotNull [] tokenize(@NotNull String text) {
     return LineTokenizer.tokenize(text, false, false);
   }
 
@@ -61,7 +60,7 @@ public class Block {
   }
 
   @NotNull
-  public Block createPreviousBlock(@NotNull String[] prevContent) {
+  public Block createPreviousBlock(String @NotNull [] prevContent) {
     try {
       FairDiffIterable iterable = ByLine.compare(Arrays.asList(prevContent), Arrays.asList(mySource),
                                                  ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);

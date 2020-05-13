@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -49,13 +49,13 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
       PsiParameter parameter = parameters[i];
       PsiParameter superParameter = superParameters[i];
       PsiType superParameterType = superSubstitutor.substitute(superParameter.getType());
-      infos[i] = new ParameterInfoImpl(i, parameter.getName(), superParameterType);
+      infos[i] = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(superParameterType);
     }
 
     ChangeSignatureProcessor processor =
       new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(), infos);
 
-    TransactionGuard.submitTransaction(project, processor);
+    processor.run();
   }
 
   @Override
@@ -86,14 +86,14 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
   public String getText() {
     PsiMethod method = methodPtr.getElement();
     if (method == null || !method.isValid()) return getFamilyName();
-    return "Fix method '"+method.getName()+"' parameters with bounded wildcards";
+    return JavaBundle.message("intention.text.fix.method.0.parameters.with.bounded.wildcards", method.getName());
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Fix bounded wildcards";
+    return JavaBundle.message("intention.family.fix.bounded.wildcards");
   }
 
   @Override

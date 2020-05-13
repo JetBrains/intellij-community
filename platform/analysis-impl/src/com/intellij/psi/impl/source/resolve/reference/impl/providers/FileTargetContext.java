@@ -18,8 +18,7 @@ public class FileTargetContext {
 
   @NotNull
   private final PsiFileSystemItem myContext;
-  @NotNull
-  private final String[] myPathToCreate;
+  private final String @NotNull [] myPathToCreate;
 
   /**
    * Constructs new target context.
@@ -27,7 +26,7 @@ public class FileTargetContext {
    * @param context      file system item that will be used as target directory
    * @param pathToCreate additional existing or non-existing paths
    */
-  public FileTargetContext(@NotNull PsiFileSystemItem context, @NotNull String[] pathToCreate) {
+  public FileTargetContext(@NotNull PsiFileSystemItem context, String @NotNull [] pathToCreate) {
     myContext = context;
     myPathToCreate = pathToCreate;
   }
@@ -45,8 +44,7 @@ public class FileTargetContext {
     return myContext;
   }
 
-  @NotNull
-  public String[] getPathToCreate() {
+  public String @NotNull [] getPathToCreate() {
     return myPathToCreate;
   }
 

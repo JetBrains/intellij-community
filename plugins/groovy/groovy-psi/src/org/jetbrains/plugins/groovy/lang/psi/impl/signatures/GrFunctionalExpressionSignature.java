@@ -28,9 +28,8 @@ class GrFunctionalExpressionSignature implements GrSignature {
     return PsiSubstitutor.EMPTY;
   }
 
-  @NotNull
   @Override
-  public GrClosureParameter[] getParameters() {
+  public GrClosureParameter @NotNull [] getParameters() {
     GrParameter[] parameters = myExpression.getAllParameters();
     return ContainerUtil.map(
       parameters,

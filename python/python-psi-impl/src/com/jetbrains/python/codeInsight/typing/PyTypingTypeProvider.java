@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -79,6 +78,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String NEW_TYPE = "typing.NewType";
   public static final String CALLABLE = "typing.Callable";
   public static final String MAPPING = "typing.Mapping";
+  public static final String MAPPING_GET = "typing.Mapping.get";
   private static final String LIST = "typing.List";
   private static final String DICT = "typing.Dict";
   private static final String DEFAULT_DICT = "typing.DefaultDict";
@@ -432,7 +432,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (callee == null) {
       return null;
     }
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final ResolveResult[] resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false);
 
     for (PsiElement element : PyUtil.filterTopPriorityResults(resolveResults)) {
@@ -443,6 +443,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getTypedDictTypeForTarget(@NotNull PyTargetExpression referenceTarget, @NotNull TypeEvalContext context) {
+    if (PyTypedDictTypeProvider.Companion.isTypedDict(referenceTarget, context)) {
+      return new PyCustomType(TYPED_DICT, null, false, true,
+                              PyBuiltinCache.getInstance(referenceTarget).getDictType());
+    }
+
     return null;
   }
 
@@ -516,6 +526,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return Ref.create(newType);
       }
 
+      final PyType typedDictType = getTypedDictTypeForTarget(target, context);
+      if (typedDictType != null) {
+        return Ref.create(typedDictType);
+      }
+
       final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
       if (annotatedType != null) {
         return annotatedType;
@@ -539,7 +554,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
       if (target.isQualified()) {
         if (pyClass != null && scopeOwner instanceof PyFunction) {
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
           boolean isInstanceAttribute;
           if (context.maySwitchToAST(target)) {
@@ -777,7 +792,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
-    final List<PyType> members = Lists.newArrayList();
+    final List<PyType> members = new ArrayList<>();
     boolean foundAny = false;
     for (Pair<PyTargetExpression, PsiElement> pair : tryResolvingWithAliases(expression, context.getTypeContext())) {
       final Ref<PyType> typeRef = getTypeForResolvedElement(pair.getFirst(), pair.getSecond(), context);
@@ -1006,11 +1021,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
 
     return null;
-  }
-
-  public static boolean isTypedDict(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    Collection<String> qualifiedNames = resolveToQualifiedNames(expression, context);
-    return qualifiedNames.stream().anyMatch(name -> TYPED_DICT.equals(name) || TYPED_DICT_EXT.equals(name));
   }
 
   public static boolean isFinal(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
@@ -1310,7 +1320,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getGenericTypeBound(@NotNull PyExpression[] typeVarArguments, @NotNull Context context) {
+  private static PyType getGenericTypeBound(PyExpression @NotNull [] typeVarArguments, @NotNull Context context) {
     final List<PyType> types = new ArrayList<>();
     for (int i = 1; i < typeVarArguments.length; i++) {
       final PyExpression argument = typeVarArguments[i];
@@ -1394,11 +1404,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   private static List<Pair<PyTargetExpression, PsiElement>> tryResolvingWithAliases(@NotNull PyExpression expression,
                                                                                     @NotNull TypeEvalContext context) {
-    final List<Pair<PyTargetExpression, PsiElement>> elements = Lists.newArrayList();
+    final List<Pair<PyTargetExpression, PsiElement>> elements = new ArrayList<>();
     if (expression instanceof PyReferenceExpression) {
       final List<PsiElement> results;
       if (context.maySwitchToAST(expression)) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
         results = PyUtil.multiResolveTopPriority(expression, resolveContext);
       }
       else {
@@ -1430,17 +1440,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             continue;
           }
         }
-        if (isBuiltinPathLike(element)) {
-          // see https://github.com/python/typeshed/commit/41561f11c7b06368aebe512acf69d8010662266d
-          // or comment in typeshed/stdlib/3/builtins.pyi near _PathLike class
-          final QualifiedName osPathLikeQName = QualifiedName.fromComponents("os", PyNames.PATH_LIKE);
-          final PsiElement osPathLike =
-            PyResolveImportUtil.resolveTopLevelMember(osPathLikeQName, PyResolveImportUtil.fromFoothold(element));
-          if (osPathLike != null) {
-            elements.add(Pair.create(null, osPathLike));
-            continue;
-          }
-        }
         if (element != null) {
           elements.add(Pair.create(null, element));
         }
@@ -1460,12 +1459,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, pyFile, context);
     }
     return Collections.singletonList(expression);
-  }
-
-  private static boolean isBuiltinPathLike(@Nullable PsiElement element) {
-    return element instanceof PyClass &&
-           PyBuiltinCache.getInstance(element).isBuiltin(element) &&
-           ("_" + PyNames.PATH_LIKE).equals(((PyClass)element).getName());
   }
 
   @NotNull

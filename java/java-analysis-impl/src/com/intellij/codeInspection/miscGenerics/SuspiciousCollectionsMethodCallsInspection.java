@@ -1,14 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
@@ -34,7 +33,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("report.suspicious.but.possibly.correct.method.calls"), this, "REPORT_CONVERTIBLE_METHOD_CALLS");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.suspicious.but.possibly.correct.method.calls"), this, "REPORT_CONVERTIBLE_METHOD_CALLS");
   }
 
   @Override
@@ -73,14 +72,8 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.suspicious.collections.method.calls.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.BUGS_GROUP_NAME;
+    return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override
@@ -99,12 +92,10 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     final String plainMessage = SuspiciousMethodCallUtil
       .getSuspiciousMethodCallMessage(methodCall, arg, argType, exactType || reportConvertibleMethodCalls, patternMethods, i);
     if (plainMessage != null && !exactType) {
-      TypeConstraint constraint = CommonDataflow.getExpressionFact(arg, DfaFactType.TYPE_CONSTRAINT);
-      if (constraint != null) {
-        PsiType type = constraint.getPsiType();
-        if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {
-          return null;
-        }
+      TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
+      PsiType type = constraint.getPsiType(methodCall.getProject());
+      if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {
+        return null;
       }
     }
 

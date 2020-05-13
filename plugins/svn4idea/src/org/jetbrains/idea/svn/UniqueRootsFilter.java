@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,6 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
 import static com.intellij.util.containers.ContainerUtil.exists;
-import static java.util.Collections.sort;
 import static java.util.Comparator.comparing;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
@@ -18,7 +17,7 @@ public class UniqueRootsFilter {
   public <T extends RootUrlPair> List<T> filter(@NotNull List<T> list) {
     List<T> result = new ArrayList<>();
 
-    sort(list, comparing(item -> item.getVirtualFile().getPath()));
+    list.sort(comparing(item -> item.getVirtualFile().getPath()));
     for (T child : list) {
       if (!alreadyRegistered(child, result)) {
         result.add(child);

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.core.JavaCoreBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -30,7 +30,7 @@ import java.util.List;
 public abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
   public static final Key<PsiCompiledElement> COMPILED_ELEMENT = Key.create("COMPILED_ELEMENT");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
+  private static final Logger LOG = Logger.getInstance(ClsElementImpl.class);
 
   private volatile Pair<TextRange, Identikit.ByType> myMirror;
 
@@ -75,8 +75,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return this;
   }
 
-  @NotNull
-  protected PsiElement[] getChildren(@Nullable PsiElement... children) {
+  protected PsiElement @NotNull [] getChildren(PsiElement @Nullable ... children) {
     if (children == null) {
       return PsiElement.EMPTY_ARRAY;
     }
@@ -99,7 +98,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   static IncorrectOperationException cannotModifyException(@NotNull PsiCompiledElement element) {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     String path = virtualFile == null ? "?" : virtualFile.getPresentableUrl();
-    return new IncorrectOperationException(JavaCoreBundle.message("psi.error.attempt.to.edit.class.file", path));
+    return new IncorrectOperationException(JavaPsiBundle.message("psi.error.attempt.to.edit.class.file", path));
   }
 
   @Override
@@ -195,8 +194,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     PsiElement mirror = getMirror();
     return mirror != null ? mirror.textToCharArray() : ArrayUtilRt.EMPTY_CHAR_ARRAY;
   }
@@ -273,7 +271,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     }
   }
 
-  protected static <T extends  PsiElement> void setMirrors(@NotNull T[] stubs, @NotNull T[] mirrors) throws InvalidMirrorException {
+  protected static <T extends  PsiElement> void setMirrors(T @NotNull [] stubs, T @NotNull [] mirrors) throws InvalidMirrorException {
     setMirrors(Arrays.asList(stubs), Arrays.asList(mirrors));
   }
 

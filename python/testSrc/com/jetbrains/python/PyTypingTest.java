@@ -1486,6 +1486,9 @@ public class PyTypingTest extends PyTestCase {
                          "a: Literal[\"f<caret>oo\"]\n");
 
     doTestNoInjectedText("from typing import Literal\n" +
+                         "a: Literal[42, \"f<caret>oo\", True]\n");
+
+    doTestNoInjectedText("from typing import Literal\n" +
                          "MyType = Literal[42, \"f<caret>oo\", True]\n" +
                          "a: MyType\n");
   }

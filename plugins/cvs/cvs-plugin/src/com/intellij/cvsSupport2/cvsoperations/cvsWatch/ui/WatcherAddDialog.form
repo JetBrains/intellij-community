@@ -24,7 +24,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.add.watching.watching.actions"/>
+              <text resource-bundle="messages/CvsBundle" key="label.add.watching.watching.actions"/>
             </properties>
           </component>
           <component id="d6278" class="javax.swing.JComboBox" binding="myWatchingActions">

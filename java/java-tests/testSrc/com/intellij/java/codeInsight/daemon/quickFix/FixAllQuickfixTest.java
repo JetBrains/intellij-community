@@ -29,15 +29,15 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.InspectionTestUtil;
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class FixAllQuickfixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new DataFlowInspection(),
       new UnnecessaryFullyQualifiedNameInspection(),
@@ -48,7 +48,7 @@ public class FixAllQuickfixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTool(new GlobalInspectionToolWrapper(new VisibilityInspection()));
+    enableInspectionTool(new GlobalInspectionToolWrapper(InspectionTestUtil.instantiateTool(VisibilityInspection.class)));
     enableInspectionTool(new UnusedDeclarationInspection(true));
     new MyTestInjector(getPsiManager()).injectAll(getTestRootDisposable());
   }

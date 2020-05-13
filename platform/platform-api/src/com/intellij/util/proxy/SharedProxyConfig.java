@@ -37,14 +37,13 @@ public class SharedProxyConfig {
     public final int port;
     @Nullable
     public final String login;
-    @NotNull
-    public final char[] password;
+    public final char @NotNull [] password;
 
     public ProxyParameters(@Nullable String host, int port) {
       this(host, port, null, new char[0]);
     }
 
-    public ProxyParameters(@Nullable String host, int port, @Nullable String login, @NotNull char[] password) {
+    public ProxyParameters(@Nullable String host, int port, @Nullable String login, char @NotNull [] password) {
       this.host = host;
       this.port = port;
       this.login = login;

@@ -282,12 +282,14 @@ class AsyncioLogger:
             if IS_PY36_OR_GREATER:
                 if self_obj.__class__ == AsyncioTaskWrapper:
                     method_name = frame.f_code.co_name
-                    if method_name == "__init__":
+                    if method_name == "__init__" and "obj" in frame.f_locals:
                         original_task = frame.f_locals["obj"]
                         task_id = id(original_task)
                         task_name = self.task_mgr.get(str(task_id))
-                        send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,
-                                     frame.f_lineno, frame)
+                        if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_back"):
+                            frame = frame.f_back.f_back
+                            send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,
+                                         frame.f_lineno, frame)
                     if method_name == "call_end" and "attr" in frame.f_locals:
                         real_method = frame.f_locals["attr"]
                         if real_method == "done":

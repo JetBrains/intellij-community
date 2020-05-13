@@ -17,6 +17,7 @@ package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -27,10 +28,10 @@ import com.jetbrains.python.psi.LanguageLevel;
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyMakeFunctionReturnTypeQuickFixTest/")
 public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
     public void testOneReturn() {
-      doQuickFixTest(PyTypeCheckerInspection.class, PyBundle.message("QFIX.NAME.make.$0.return.$1", "f", "int"), LanguageLevel.PYTHON27);
+      doQuickFixTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.NAME.make.$0.return.$1", "f", "int"), LanguageLevel.PYTHON27);
     }
 
     public void testPy3OneReturn() {
-      doQuickFixTest(PyTypeCheckerInspection.class, PyBundle.message("QFIX.NAME.make.$0.return.$1", "f", "int"), LanguageLevel.PYTHON34);
+      doQuickFixTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.NAME.make.$0.return.$1", "f", "int"), LanguageLevel.PYTHON34);
     }
 }

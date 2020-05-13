@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,8 +24,8 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -36,14 +37,14 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class SurroundWithIfFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.SurroundWithIfFix");
+  private static final Logger LOG = Logger.getInstance(SurroundWithIfFix.class);
   private final String myText;
   private final String mySuffix;
 
   @Override
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.surround.if.quickfix", myText, mySuffix);
+    return JavaBundle.message("inspection.surround.if.quickfix", myText, mySuffix);
   }
 
   public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert, String suffix) {
@@ -60,7 +61,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
       final PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)anchorStatement.getParent());
       anchorStatement = body.getStatements()[0];
     }
-    Editor editor = PsiUtilBase.findEditor(anchorStatement);
+    Editor editor = PsiEditorUtil.findEditor(anchorStatement);
     if (editor == null) return;
     PsiFile file = anchorStatement.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -94,7 +95,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.surround.if.family");
+    return JavaBundle.message("inspection.surround.if.family");
   }
 
   public static boolean isAvailable(PsiExpression qualifier) {

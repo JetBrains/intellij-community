@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.properties.ResourceBundleReference;
+import com.intellij.codeInspection.i18n.NlsInfo;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.references.PropertyReference;
@@ -19,7 +20,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -28,29 +28,37 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Action;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.*;
 
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-public class PluginXmlCapitalizationInspection extends BasicDomElementsInspection<IdeaPlugin> {
-
-  public PluginXmlCapitalizationInspection() {
-    super(IdeaPlugin.class);
-  }
-
+public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
       checkActionOrGroup((ActionOrGroup)element, holder);
     }
+    else if (element instanceof OverrideText) {
+      checkOverrideText((OverrideText)element, holder);
+    }
     else if (element instanceof Extension) {
       checkExtension((Extension)element, holder);
     }
+    else if (element instanceof IdeaPlugin) {
+      checkCapitalization(holder, ((IdeaPlugin)element).getName(), Nls.Capitalization.Title);
+    }
+  }
+
+  private static void checkOverrideText(OverrideText overrideText, DomElementAnnotationHolder holder) {
+    if (checkCapitalization(holder, overrideText.getText(), Nls.Capitalization.Title)) return;
+
+    Action action = overrideText.getParentOfType(Action.class, true);
+    assert action != null;
+    final String resourceKey = "action." + action.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";
+    checkPropertyCapitalization(holder, overrideText, Nls.Capitalization.Title,
+                                resourceKey, true);
   }
 
   private static void checkActionOrGroup(ActionOrGroup actionOrGroup, DomElementAnnotationHolder holder) {
@@ -90,28 +98,26 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
     final Nls.Capitalization capitalization = actionOrGroupText.myCapitalization;
     if (checkCapitalization(holder, genericDomValue, capitalization)) return;
 
-    final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(actionOrGroup, IdeaPlugin.class, true);
-    if (ideaPlugin == null) return;
+    checkPropertyCapitalization(holder, actionOrGroup, capitalization,
+                                "action." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix,
+                                actionOrGroupText.myRequired.apply(actionOrGroup));
+  }
 
-    final XmlElement resourceBundleTag = ideaPlugin.getResourceBundle().getXmlElement();
-    if (resourceBundleTag == null) return;
-
-    final ResourceBundleReference bundleReference =
-      ContainerUtil.findInstance(resourceBundleTag.getReferences(), ResourceBundleReference.class);
-    if (bundleReference == null) return;
-
-    final PropertiesFileImpl bundleFile = ObjectUtils.tryCast(bundleReference.resolve(), PropertiesFileImpl.class);
+  private static void checkPropertyCapitalization(DomElementAnnotationHolder holder,
+                                                  DomElement domElement,
+                                                  Nls.Capitalization capitalization,
+                                                  String resourceKey, boolean required) {
+    final PropertiesFileImpl bundleFile = findBundlePropertiesFile(domElement);
     if (bundleFile == null) return;
 
-    final String resourceKey = "action." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix;
     final Property property = ObjectUtils.tryCast(bundleFile.findPropertyByKey(resourceKey), Property.class);
     if (property == null) {
-      if (actionOrGroupText.myRequired.apply(actionOrGroup)) {
-        holder.createProblem(actionOrGroup, "Missing resource bundle key '" + resourceKey + "'");
+      if (required) {
+        holder.createProblem(domElement, "Missing resource bundle key '" + resourceKey + "'");
       }
     }
     else {
-      highlightCapitalization(holder, actionOrGroup, property.getValue(), capitalization, property);
+      highlightCapitalization(holder, domElement, property.getValue(), capitalization, property);
     }
   }
 
@@ -157,8 +163,8 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
     if (attributeType != String.class) return;
 
     final PsiElement declaration = childrenDescription.getDeclaration(extension.getManager().getProject());
-    if (declaration instanceof PsiField) {
-      final Nls.Capitalization capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno((PsiModifierListOwner)declaration);
+    if (declaration instanceof PsiModifierListOwner) {
+      final Nls.Capitalization capitalization = NlsInfo.getCapitalization((PsiModifierListOwner)declaration);
       if (capitalization == Nls.Capitalization.NotSpecified) return;
 
       checkCapitalizationWithKey(holder, genericDomValue, capitalization);
@@ -214,11 +220,20 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
       return;
     }
 
-    final LocalQuickFix quickFix = new LocalQuickFixBase("Properly capitalize '" + escapedValue + '\'', "Properly capitalize") {
-
+    final LocalQuickFix quickFix = new LocalQuickFix() {
       @Override
       public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
         return property != null ? property : currentFile;
+      }
+
+      @Override
+      public @IntentionName @NotNull String getName() {
+        return "Properly capitalize '" + escapedValue + '\'';
+      }
+
+      @Override
+      public @IntentionFamilyName @NotNull String getFamilyName() {
+        return "Properly capitalize";
       }
 
       @Override

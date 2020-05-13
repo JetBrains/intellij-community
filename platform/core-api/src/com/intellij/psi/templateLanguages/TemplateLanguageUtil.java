@@ -16,6 +16,7 @@
 
 package com.intellij.psi.templateLanguages;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,5 +47,45 @@ public class TemplateLanguageUtil {
 
   public static boolean isInsideTemplateFile(@NotNull PsiElement element) {
     return element.getContainingFile().getViewProvider() instanceof TemplateLanguageFileViewProvider;
+  }
+
+  public static boolean isTemplateDataFile(@NotNull PsiFile file) {
+    FileViewProvider viewProvider = file.getViewProvider();
+    return viewProvider instanceof TemplateLanguageFileViewProvider &&
+                file == viewProvider.getPsi(((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage());
+  }
+
+  @Nullable
+  public static ASTNode getSameLanguageTreePrev(@NotNull ASTNode node) {
+    ASTNode current = node.getTreePrev();
+    while (current instanceof OuterLanguageElement) {
+      current = current.getTreePrev();
+    }
+    return current;
+  }
+
+  @Nullable
+  public static ASTNode getSameLanguageTreeNext(@NotNull ASTNode node) {
+    ASTNode current = node.getTreeNext();
+    while (current instanceof OuterLanguageElement) {
+      current = current.getTreeNext();
+    }
+    return current;
+  }
+
+  public static PsiElement getSameLanguageTreePrev(@NotNull PsiElement element) {
+    PsiElement current = element.getNextSibling();
+    while (current instanceof OuterLanguageElement) {
+      current = current.getPrevSibling();
+    }
+    return current;
+  }
+
+  public static PsiElement getSameLanguageTreeNext(@NotNull PsiElement element) {
+    PsiElement current = element.getNextSibling();
+    while (current instanceof OuterLanguageElement) {
+      current = current.getNextSibling();
+    }
+    return current;
   }
 }

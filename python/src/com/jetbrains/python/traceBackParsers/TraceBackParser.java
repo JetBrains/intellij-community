@@ -35,7 +35,7 @@ public interface TraceBackParser {
   @Nullable
   LinkInTrace findLinkInTrace(@NotNull String line);
 
-  @NotNull // TODO: use EP instead?
+  // TODO: use EP instead?
   @SuppressWarnings("PublicStaticArrayField") // Noone will change it, anyway.
-  TraceBackParser[] PARSERS = {new PyTestTracebackParser(), new PyTracebackParser()};
+    TraceBackParser @NotNull [] PARSERS = {new PyTestTracebackParser(), new PyTracebackParser()};
 }

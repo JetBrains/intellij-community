@@ -1,21 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
  */
-public class ObjectUtils {
+public final class ObjectUtils {
   private ObjectUtils() {
   }
 
@@ -33,8 +35,7 @@ public class ObjectUtils {
    *             it's recommended to supply that field name (possibly qualified with the class name).
    * @return a new sentinel object
    */
-  @NotNull
-  public static Object sentinel(@NotNull String name) {
+  public static @NotNull Object sentinel(@NotNull @NonNls String name) {
     return new Sentinel(name);
   }
 
@@ -44,7 +45,7 @@ public class ObjectUtils {
   */
   public static void reachabilityFence(@SuppressWarnings("unused") Object o) {}
 
-  private static class Sentinel {
+  private static final class Sentinel {
     private final String myName;
 
     Sentinel(@NotNull String name) {
@@ -63,8 +64,7 @@ public class ObjectUtils {
    * {@code ofInterface} must represent an interface class.
    * Useful for stubs in generic code, e.g. for storing in {@code List<T>} to represent empty special value.
    */
-  @NotNull
-  public static <T> T sentinel(@NotNull final String name, @NotNull Class<T> ofInterface) {
+  public static @NotNull <T> T sentinel(final @NotNull String name, @NotNull Class<T> ofInterface) {
     if (!ofInterface.isInterface()) {
       throw new IllegalArgumentException("Expected interface but got: " + ofInterface);
     }
@@ -79,12 +79,15 @@ public class ObjectUtils {
     });
   }
 
-  @NotNull
-  public static <T> T assertNotNull(@Nullable T t) {
-    return notNull(t);
+  /**
+   * @deprecated Use {@link Objects#requireNonNull(Object)}
+   */
+  @Deprecated
+  public static @NotNull <T> T assertNotNull(@Nullable T t) {
+    return Objects.requireNonNull(t);
   }
 
-  public static <T> void assertAllElementsNotNull(@NotNull T[] array) {
+  public static <T> void assertAllElementsNotNull(T @NotNull [] array) {
     for (int i = 0; i < array.length; i++) {
       T t = array[i];
       if (t == null) {
@@ -108,8 +111,7 @@ public class ObjectUtils {
     return t1 != null ? t1 : t2 != null ? t2 : t3;
   }
 
-  @Nullable
-  public static <T> T coalesce(@Nullable Iterable<? extends T> o) {
+  public static @Nullable <T> T coalesce(@Nullable Iterable<? extends T> o) {
     if (o == null) return null;
     for (T t : o) {
       if (t != null) return t;
@@ -117,34 +119,32 @@ public class ObjectUtils {
     return null;
   }
 
-  @NotNull
+  /**
+   * @deprecated Use {@link Objects#requireNonNull(Object)}
+   */
+  @Deprecated
   public static <T> T notNull(@Nullable T value) {
-    //noinspection ConstantConditions
-    return notNull(value, value);
+    return Objects.requireNonNull(value);
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
+  public static @NotNull <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
     return value == null ? defaultValue : value;
   }
 
-  @NotNull
-  public static <T> T notNull(@Nullable T value, @NotNull NotNullFactory<? extends T> defaultValue) {
+  public static @NotNull <T> T notNull(@Nullable T value, @NotNull NotNullFactory<? extends T> defaultValue) {
     return value == null ? defaultValue.create() : value;
   }
 
   @Contract(value = "null, _ -> null", pure = true)
-  @Nullable
-  public static <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
+  public static @Nullable <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
     if (clazz.isInstance(obj)) {
       return clazz.cast(obj);
     }
     return null;
   }
 
-  @Nullable
-  public static <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Convertor<? super T, ? extends S> convertor) {
+  public static @Nullable <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Convertor<? super T, ? extends S> convertor) {
     if (clazz.isInstance(obj)) {
       //noinspection unchecked
       return convertor.convert((T)obj);
@@ -153,8 +153,7 @@ public class ObjectUtils {
   }
 
   @Contract("null, _ -> null")
-  @Nullable
-  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super T, ? extends S> function) {
+  public static @Nullable <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super T, ? extends S> function) {
     return obj == null ? null : function.fun(obj);
   }
 
@@ -171,18 +170,16 @@ public class ObjectUtils {
     }
   }
 
-  @Nullable
   @Contract("null, _ -> null")
-  public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<? super T> condition) {
+  public static @Nullable <T> T nullizeByCondition(final @Nullable T obj, final @NotNull Condition<? super T> condition) {
     if (condition.value(obj)) {
       return null;
     }
     return obj;
   }
 
-  @Nullable
   @Contract("null, _ -> null")
-  public static <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
+  public static @Nullable <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
     if (obj == defaultValue) {
       return null;
     }

@@ -27,9 +27,8 @@ public class VcsTopHitProvider extends ActionsTopHitProvider {
      {"appl", "apply patch ", "ChangesView.ApplyPatch"},
   };
 
-  @NotNull
   @Override
-  protected String[][] getActionsMatrix() {
+  protected String[] @NotNull [] getActionsMatrix() {
     return ACTION_MATRIX;
   }
 }

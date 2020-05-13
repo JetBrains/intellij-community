@@ -23,16 +23,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 
-/**
- * @author nik
- */
 public abstract class DownloadableLibraryService {
   public static DownloadableLibraryService getInstance() {
     return ServiceManager.getService(DownloadableLibraryService.class);
   }
 
   @NotNull
-  public abstract DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull URL... localUrls);
+  public abstract DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, URL @NotNull ... localUrls);
 
   @NotNull
   public abstract CustomLibraryDescription createDescriptionForType(Class<? extends DownloadableLibraryType> typeClass);

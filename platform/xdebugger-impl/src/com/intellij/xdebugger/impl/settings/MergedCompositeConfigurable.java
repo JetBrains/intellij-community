@@ -35,7 +35,7 @@ class MergedCompositeConfigurable extends CompositeConfigurable<Configurable> im
   MergedCompositeConfigurable(@NotNull String id,
                                      @NotNull String displayName,
                                      @Nullable String helpTopic,
-                                     @NotNull Configurable[] children) {
+                                     Configurable @NotNull [] children) {
     this.children = children;
     this.id = id;
     this.displayName = displayName;

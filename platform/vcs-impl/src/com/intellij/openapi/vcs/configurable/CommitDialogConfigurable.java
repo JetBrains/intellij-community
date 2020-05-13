@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public class CommitDialogConfigurable extends ConfigurableBase<CommitDialogSettingsPanel, VcsConfiguration> {
 
   public static final String ID = "project.propVCSSupport.CommitDialog";
-  public static final String DISPLAY_NAME = "Commit Dialog";
   @NonNls private static final String HELP_ID = "reference.settings.VCS.CommitDialog";
 
   @NotNull private final Project myProject;
 
   public CommitDialogConfigurable(@NotNull Project project) {
-    super(ID, DISPLAY_NAME, HELP_ID);
+    super(ID, VcsBundle.message("commit.dialog.configurable"), HELP_ID);
     myProject = project;
   }
 

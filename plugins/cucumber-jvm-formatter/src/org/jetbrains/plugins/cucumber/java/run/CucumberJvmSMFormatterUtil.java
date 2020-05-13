@@ -1,5 +1,8 @@
 package org.jetbrains.plugins.cucumber.java.run;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -45,7 +48,7 @@ public class CucumberJvmSMFormatterUtil {
     if (source == null) {
       return "";
     }
-    return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'");
+    return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'").replace("]", "|]");
   }
 
   /**
@@ -89,5 +92,35 @@ public class CucumberJvmSMFormatterUtil {
       return line;
     }
     return featureHeader;
+  }
+
+  public static String getStepKeyword(String filePath, int lineNumber) throws IOException {
+    String line = readLineWithNumber(filePath, lineNumber);
+    if (line != null) {
+      return line.trim().split(" ", 2)[0];
+    }
+    return null;
+  }
+
+  private static String readLineWithNumber(String filePath, int lineNumber) throws IOException {
+    int currentLineNumber = 0;
+    FileReader fileStream = null;
+    try {
+      fileStream = new FileReader(filePath);
+      BufferedReader bufferedReader = new BufferedReader(fileStream);
+      String line;
+      while ((line = bufferedReader.readLine()) != null) {
+        currentLineNumber++;
+        if (currentLineNumber == lineNumber) {
+          return line;
+        }
+      }
+    }
+    finally {
+      if (fileStream != null) {
+        fileStream.close();
+      }
+    }
+    return null;
   }
 }

@@ -10,14 +10,13 @@ import org.jetbrains.annotations.NotNull;
 public class SortingException extends RuntimeException {
   private final LoadingOrder.Orderable[] myConflictingElements;
 
-  SortingException(String message, @NotNull LoadingOrder.Orderable... conflictingElements) {
+  SortingException(String message, LoadingOrder.Orderable @NotNull ... conflictingElements) {
     super(message + ": " + StringUtil.join(conflictingElements,
                                            item -> item.getOrderId() + "(" + item.getOrder() + ")", "; "));
     myConflictingElements = conflictingElements;
   }
 
-  @NotNull
-  public LoadingOrder.Orderable[] getConflictingElements() {
+  public LoadingOrder.Orderable @NotNull [] getConflictingElements() {
     return myConflictingElements;
   }
 }

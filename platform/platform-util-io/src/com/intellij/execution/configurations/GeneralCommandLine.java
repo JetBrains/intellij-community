@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CommandLineUtil;
@@ -6,21 +6,21 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.IllegalEnvVarException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.CommandLineArgumentEncoder;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,9 +46,9 @@ import java.util.*;
  * <h3>Parent Environment</h3>
  * {@link ParentEnvironmentType Three options here}.
  * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
- * (typical cases: version controls, Node.js and all the stuff around it, Python and Ruby interpreters and utilities, etc).
- * For GUI apps and CLI tools which aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
- * (examples: UI builders, browsers, XCode components). For the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
+ * (typical cases: version controls, Node.js and all the surrounding stuff, Python and Ruby interpreters and utilities, etc).
+ * For GUI apps and CLI tools that aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
+ * (examples: UI builders, browsers, XCode components). And for the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
  * According to an extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
  * (no one was harmed), most of them are either insensitive to an environment or fall into the first category,
  * thus backing up the choice of CONSOLE as the default value.
@@ -57,7 +57,7 @@ import java.util.*;
  * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
  * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
  * the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
- * because a platform-dependent guessing behind {@link Charset#defaultCharset()} is used by default and a child process
+ * because a platform-dependent guessing behind {@link EncodingManager#getDefaultConsoleEncoding()} is used by default and a child process
  * may happen to use a similar heuristic.
  * If the above automagic fails or more control is needed, the charset may be set explicitly. Again, do not forget the other side -
  * call {@code addParameter("-Dfile.encoding=...")} for Java-based tools, or use {@code withEnvironment("HGENCODING", "...")}
@@ -86,18 +86,18 @@ public class GeneralCommandLine implements UserDataHolder {
   private final Map<String, String> myEnvParams = new MyTHashMap();
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
-  private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
-  private boolean myRedirectErrorStream = false;
+  private Charset myCharset = EncodingManager.getInstance().getDefaultConsoleEncoding();
+  private boolean myRedirectErrorStream;
   private File myInputFile;
   private Map<Object, Object> myUserData;
 
   public GeneralCommandLine() { }
 
-  public GeneralCommandLine(@NotNull String... command) {
+  public GeneralCommandLine(@NonNls String @NotNull ... command) {
     this(Arrays.asList(command));
   }
 
-  public GeneralCommandLine(@NotNull List<String> command) {
+  public GeneralCommandLine(@NonNls @NotNull List<String> command) {
     int size = command.size();
     if (size > 0) {
       setExePath(command.get(0));
@@ -116,8 +116,7 @@ public class GeneralCommandLine implements UserDataHolder {
     myCharset = original.myCharset;
     myRedirectErrorStream = original.myRedirectErrorStream;
     myInputFile = original.myInputFile;
-    // this is intentional memory waste, to avoid warning suppression. We should not copy UserData, but can't suppress a warning for a single field
-    myUserData = new HashMap<>();
+    myUserData = null;  // user data should not be copied over
   }
 
   @NotNull
@@ -229,7 +228,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return env;
   }
 
-  public void addParameters(@NotNull String... parameters) {
+  public void addParameters(String @NotNull ... parameters) {
     withParameters(parameters);
   }
 
@@ -238,7 +237,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(@NotNull String... parameters) {
+  public GeneralCommandLine withParameters(String @NotNull ... parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
@@ -287,6 +286,10 @@ public class GeneralCommandLine implements UserDataHolder {
     withRedirectErrorStream(redirectErrorStream);
   }
 
+  public File getInputFile() {
+    return myInputFile;
+  }
+
   @NotNull
   public GeneralCommandLine withInput(@Nullable File file) {
     myInputFile = file;
@@ -313,15 +316,7 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   public String getCommandLineString(@Nullable String exeName) {
-    return getCommandLineString(exeName, CommandLineArgumentEncoder.DEFAULT_ENCODER);
-  }
-
-  /**
-   * @see GeneralCommandLine#getCommandLineString(String)
-   * @param commandLineArgumentEncoder used to handle (quote or escape) special characters in command line argument
-   */
-  public String getCommandLineString(@Nullable String exeName, @NotNull CommandLineArgumentEncoder commandLineArgumentEncoder) {
-    return ParametersListUtil.join(getCommandLineList(exeName), commandLineArgumentEncoder);
+    return ParametersListUtil.join(getCommandLineList(exeName));
   }
 
   @NotNull
@@ -380,15 +375,15 @@ public class GeneralCommandLine implements UserDataHolder {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
-          throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
+          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
         }
         if (!myWorkDirectory.isDirectory()) {
-          throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
+          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
         }
       }
 
       if (StringUtil.isEmptyOrSpaces(myExePath)) {
-        throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
+        throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.executable.not.specified"));
       }
     }
     catch (ExecutionException e) {
@@ -397,14 +392,16 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     for (Map.Entry<String, String> entry : myEnvParams.entrySet()) {
-      String name = entry.getKey(), value = entry.getValue();
-      if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeBundle.message("run.configuration.invalid.env.name", name));
-      if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeBundle.message("run.configuration.invalid.env.value", name, value));
+      String name = entry.getKey();
+      String value = entry.getValue();
+      if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
+      if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
 
     String exePath = myExePath;
     if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
-      String systemPath = System.getenv("PATH"), shellPath = EnvironmentUtil.getValue("PATH");
+      String systemPath = System.getenv("PATH");
+      String shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
         if (exeFile != null) {
@@ -427,18 +424,18 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * @implNote for subclasses:
-   *   On Windows the escapedCommands argument must never be modified or augmented in any way.
-   *   Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
-   *   depending on values of the preceding arguments.
-   *
-   *       [foo] [^]       -> [foo] [^^]
-   *
-   *   but:
-   *       [foo] ["] [^]   -> [foo] [\"] ["^"]
-   *
-   *   Notice how the last parameter escaping changes after prepending another argument.
-   *
-   *   If you need to alter the command line passed in, override the {@link #prepareCommandLine(String, List, Platform)} method instead.
+   * <p>On Windows the escapedCommands argument must never be modified or augmented in any way.
+   * Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
+   * depending on values of the preceding arguments.
+   * <pre>
+   *   [foo] [^] -> [foo] [^^]
+   * </pre>
+   * but:
+   * <pre>
+   *   [foo] ["] [^] -> [foo] [\"] ["^"]
+   * </pre>
+   * Notice how the last parameter escaping changes after prepending another argument.</p>
+   * <p>If you need to alter the command line passed in, override the {@link #prepareCommandLine(String, List, Platform)} method instead.</p>
    */
   @NotNull
   protected Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
@@ -495,8 +492,8 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * Normally, double quotes in parameters are escaped so they arrive to a called program as-is.
-   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get they quotes non-escaped.
+   * Normally, double quotes in parameters are escaped, so they arrive to a called program as-is.
+   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get their quotes non-escaped.
    * Wrapping a parameter by this method (instead of using quotes) will do exactly this.
    *
    * @see com.intellij.execution.util.ExecUtil#getTerminalCommand(String, String)
@@ -514,11 +511,9 @@ public class GeneralCommandLine implements UserDataHolder {
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
-    if (myUserData != null) {
-      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) T t = (T)myUserData.get(key);
-      return t;
-    }
-    return null;
+    if (myUserData == null) return null;
+    @SuppressWarnings("unchecked") T t = (T)myUserData.get(key);
+    return t;
   }
 
   @Override

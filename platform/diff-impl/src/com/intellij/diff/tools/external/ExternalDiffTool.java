@@ -24,15 +24,19 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.execution.ExecutionException;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.util.ListSelection;
+import com.intellij.util.ThrowableConvertor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +81,7 @@ public class ExternalDiffTool {
     }
     catch (Throwable e) {
       LOG.warn(e);
-      Messages.showErrorDialog(project, e.getMessage(), "Can't Show Diff In External Tool");
+      Messages.showErrorDialog(project, e.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
     }
   }
 
@@ -85,7 +89,7 @@ public class ExternalDiffTool {
   private static List<DiffRequest> loadRequestsUnderProgress(@Nullable Project project,
                                                              @NotNull DiffRequestChain chain) throws Throwable {
     if (chain instanceof AsyncDiffRequestChain) {
-      return VcsUtil.computeWithModalProgress(project, "Loading Requests", true, indicator -> {
+      return computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), true, indicator -> {
         ListSelection<? extends DiffRequestProducer> listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
         return collectRequests(project, listSelection.getList(), listSelection.getSelectedIndex(), indicator);
       });
@@ -94,7 +98,7 @@ public class ExternalDiffTool {
       List<? extends DiffRequestProducer> allProducers = chain.getRequests();
       int index = chain.getIndex();
 
-      return VcsUtil.computeWithModalProgress(project, "Loading Requests", true, indicator -> {
+      return computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), true, indicator -> {
         return collectRequests(project, allProducers, index, indicator);
       });
     }
@@ -131,10 +135,23 @@ public class ExternalDiffTool {
     }
 
     if (!errorRequests.isEmpty()) {
-      new Notification("Diff", "Can't Load Some Changes", StringUtil.join(errorRequests, "<br>"), NotificationType.ERROR).notify(project);
+      new Notification("Diff", DiffBundle.message("can.t.load.some.changes"), StringUtil.join(errorRequests, "<br>"), NotificationType.ERROR).notify(project);
     }
 
     return requests;
+  }
+
+  private static <T> T computeWithModalProgress(@Nullable Project project,
+                                        @NotNull @Nls String title,
+                                        boolean canBeCancelled,
+                                        @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
+    throws Exception {
+    return ProgressManager.getInstance().run(new Task.WithResult<T, Exception>(project, title, canBeCancelled) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws Exception {
+        return computable.convert(indicator);
+      }
+    });
   }
 
   public static void showRequest(@Nullable Project project, @NotNull DiffRequest request) throws ExecutionException, IOException {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -142,7 +143,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
 
     protected CreateServiceInterfaceDialog(@Nullable Project project, @NotNull Map<Module, PsiDirectory[]> psiRootDirs) {
       super(project);
-      setTitle("Create Service");
+      setTitle(QuickFixBundle.message("create.service"));
 
       myModuleCombo.setRenderer(SimpleListCellRenderer.create("", Module::getName));
 
@@ -166,9 +167,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(moduleRootDirs));
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
@@ -183,10 +183,14 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       JTextField nameTextField = new JTextField(myInterfaceName);
       nameTextField.setEditable(false);
       PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(nameTextField).withLabel("Name:"));
-      if (myModuleCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Module:"));
-      if (myRootDirCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
-      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"));
+      builder.add(UI.PanelFactory.panel(nameTextField).withLabel(CommonBundle.message("label.name") + ":"));
+      if (myModuleCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel(CommonBundle.message("label.module") + ":"));
+      }
+      if (myRootDirCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
+      }
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("label.kind") + ":"));
       return builder.createPanel();
     }
 

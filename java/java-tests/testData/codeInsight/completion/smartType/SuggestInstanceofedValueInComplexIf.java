@@ -1,11 +1,11 @@
-public class TestCase extends Zzz {
+public class TestCase {
   boolean foo(String s) {
    }
 
 
     {
         Object ooo;
-        if (ooo instanceof String && foo(o<caret>)) {
+        if (ooo instanceof String && foo(oo<caret>)) {
         }
     }
 }

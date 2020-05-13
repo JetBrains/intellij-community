@@ -24,7 +24,7 @@
           <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="6" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <toolTipText value="Current slice."/>
+          <toolTipText resource-bundle="messages/PyBundle" key="form.data.viewer.current.slice"/>
         </properties>
       </component>
       <grid id="db2ae" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="true" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -42,7 +42,7 @@
             <properties>
               <horizontalAlignment value="4"/>
               <horizontalTextPosition value="4"/>
-              <text value="Format:"/>
+              <text resource-bundle="messages/PyBundle" key="form.data.viewer.format"/>
               <verticalAlignment value="3"/>
               <verticalTextPosition value="3"/>
             </properties>
@@ -54,7 +54,7 @@
               </grid>
             </constraints>
             <properties>
-              <toolTipText value="Format"/>
+              <toolTipText resource-bundle="messages/PyBundle" key="form.data.viewer.dialog.show.svn.map.table.header.column.format.title"/>
             </properties>
           </component>
         </children>

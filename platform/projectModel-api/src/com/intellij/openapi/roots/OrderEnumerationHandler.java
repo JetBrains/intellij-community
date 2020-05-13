@@ -17,8 +17,8 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,17 +29,11 @@ public abstract class OrderEnumerationHandler {
     ExtensionPointName.create("com.intellij.orderEnumerationHandlerFactory");
 
   public abstract static class Factory {
-    /**
-     * @deprecated this method isn't called anymore, override {@link #isApplicable(Module)} instead
-     */
-    @Deprecated
-    public boolean isApplicable(@NotNull Project project) {
-      return true;
-    }
-
+    @Contract(pure = true)
     public abstract boolean isApplicable(@NotNull Module module);
 
     @NotNull
+    @Contract(pure = true)
     public abstract OrderEnumerationHandler createHandler(@NotNull Module module);
   }
 

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointFileGroup> {
   public XBreakpointFileGroupingRule() {
     super("by-file", XDebuggerBundle.message("rule.name.group.by.file"));

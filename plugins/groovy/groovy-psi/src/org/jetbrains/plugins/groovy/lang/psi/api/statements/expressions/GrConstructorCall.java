@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 /**
  * @author ven
@@ -12,5 +12,5 @@ public interface GrConstructorCall extends GrCall {
   GroovyResolveResult[] multiResolveClass();
 
   @Nullable
-  GroovyCallReference getConstructorReference();
+  GroovyConstructorReference getConstructorReference();
 }

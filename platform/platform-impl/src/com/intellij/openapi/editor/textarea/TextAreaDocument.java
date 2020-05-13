@@ -21,10 +21,10 @@ import javax.swing.text.BadLocationException;
 /**
  * @author yole
  */
-public class TextAreaDocument extends TextComponentDocument {
+class TextAreaDocument extends TextComponentDocument {
   private final JTextArea myTextArea;
 
-  public TextAreaDocument(final JTextArea textComponent) {
+  TextAreaDocument(final JTextArea textComponent) {
     super(textComponent);
     myTextArea = textComponent;
   }

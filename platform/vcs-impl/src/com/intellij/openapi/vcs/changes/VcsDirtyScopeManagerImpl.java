@@ -2,9 +2,10 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -15,35 +16,36 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.impl.VcsStartupActivity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements ProjectComponent {
+public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsDirtyScopeManagerImpl.class);
 
   private final Project myProject;
 
-  private final DirtBuilder myDirtBuilder;
+  @NotNull private DirtBuilder myDirtBuilder = new DirtBuilder();
   @Nullable private DirtBuilder myDirtInProgress;
 
   private boolean myReady;
   private final Object LOCK = new Object();
 
-  public VcsDirtyScopeManagerImpl(Project project) {
+  public VcsDirtyScopeManagerImpl(@NotNull Project project) {
     myProject = project;
 
-    myDirtBuilder = new DirtBuilder();
-
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
@@ -55,14 +57,11 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     return ProjectLevelVcsManager.getInstance(project);
   }
 
-  @Override
-  public void projectOpened() {
-    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, () -> {
-      boolean ready = false;
+  private void startListenForChanges() {
+    ReadAction.run(() -> {
+      boolean ready = !myProject.isDisposed() && myProject.isOpen();
       synchronized (LOCK) {
-        if (!myProject.isDisposed() && myProject.isOpen()) {
-          myReady = ready = true;
-        }
+        myReady = ready;
       }
       if (ready) {
         VcsDirtyScopeVfsListener.install(myProject);
@@ -81,55 +80,53 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       LOG.debug("everything dirty: " + findFirstInterestingCallerClass());
     }
 
+    boolean wasReady;
     synchronized (LOCK) {
-      if (myReady) {
-        myDirtBuilder.everythingDirty();
+      wasReady = myReady;
+      if (wasReady) {
+        myDirtBuilder.setEverythingDirty(true);
       }
     }
 
-    ChangeListManager.getInstance(myProject).scheduleUpdate();
+    if (wasReady) {
+      ChangeListManager.getInstance(myProject).scheduleUpdate();
+      myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).everythingDirty();
+    }
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     synchronized (LOCK) {
       myReady = false;
-      myDirtBuilder.reset();
+      myDirtBuilder = new DirtBuilder();
       myDirtInProgress = null;
     }
   }
 
   @NotNull
-  private MultiMap<AbstractVcs, FilePath> groupByVcs(@Nullable Collection<? extends FilePath> from) {
-    if (from == null) {
-      return MultiMap.empty();
-    }
+  private Map<VcsRoot, Set<FilePath>> groupByVcs(@Nullable Iterable<? extends FilePath> from) {
+    if (from == null) return Collections.emptyMap();
 
-    MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
+    ProjectLevelVcsManager vcsManager = getVcsManager(myProject);
+    Map<VcsRoot, Set<FilePath>> map = new HashMap<>();
     for (FilePath path : from) {
-      AbstractVcs vcs = getVcsManager(myProject).getVcsFor(path);
-      if (vcs != null) {
-        map.putValue(vcs, path);
+      VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
+      if (vcsRoot != null && vcsRoot.getVcs() != null) {
+        Set<FilePath> pathSet = map.computeIfAbsent(vcsRoot, key -> new THashSet<>(getDirtyScopeHashingStrategy(key.getVcs())));
+        pathSet.add(path);
       }
     }
     return map;
   }
 
   @NotNull
-  private MultiMap<AbstractVcs, FilePath> groupFilesByVcs(@Nullable final Collection<? extends VirtualFile> from) {
-    if (from == null) return MultiMap.empty();
-    MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
-    for (VirtualFile file : from) {
-      AbstractVcs vcs = getVcsManager(myProject).getVcsFor(file);
-      if (vcs != null) {
-        map.putValue(vcs, VcsUtil.getFilePath(file));
-      }
-    }
-    return map;
+  private Map<VcsRoot, Set<FilePath>> groupFilesByVcs(@Nullable Collection<? extends VirtualFile> from) {
+    if (from == null) return Collections.emptyMap();
+    return groupByVcs(() -> ContainerUtil.mapIterator(from.iterator(), file -> VcsUtil.getFilePath(file)));
   }
 
-  private void fileVcsPathsDirty(@NotNull MultiMap<AbstractVcs, FilePath> filesConverted,
-                                 @NotNull MultiMap<AbstractVcs, FilePath> dirsConverted) {
+  private void fileVcsPathsDirty(@NotNull Map<VcsRoot, Set<FilePath>> filesConverted,
+                                 @NotNull Map<VcsRoot, Set<FilePath>> dirsConverted) {
     if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
     if (LOG.isDebugEnabled()) {
@@ -137,36 +134,38 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
                               toString(filesConverted), toString(dirsConverted), findFirstInterestingCallerClass()));
     }
 
-    boolean hasSomethingDirty;
-    synchronized (LOCK) {
-      if (!myReady) return;
-      markDirty(myDirtBuilder, filesConverted, false);
-      markDirty(myDirtBuilder, dirsConverted, true);
-      hasSomethingDirty = !myDirtBuilder.isEmpty();
+    boolean hasSomethingDirty = false;
+    for (VcsRoot vcsRoot : ContainerUtil.union(filesConverted.keySet(), dirsConverted.keySet())) {
+      AbstractVcs vcs = Objects.requireNonNull(vcsRoot.getVcs());
+      VirtualFile root = vcsRoot.getPath();
+
+      Set<FilePath> files = ContainerUtil.notNullize(filesConverted.get(vcsRoot));
+      Set<FilePath> dirs = ContainerUtil.notNullize(dirsConverted.get(vcsRoot));
+
+      synchronized (LOCK) {
+        if (!myReady || myDirtBuilder.isEverythingDirty()) return;
+        VcsDirtyScopeImpl scope = myDirtBuilder.getScope(vcs);
+
+        for (FilePath filePath : files) {
+          scope.addDirtyPathFast(root, filePath, false);
+        }
+        for (FilePath filePath : dirs) {
+          scope.addDirtyPathFast(root, filePath, true);
+        }
+
+        hasSomethingDirty |= !myDirtBuilder.isEmpty();
+      }
     }
 
     if (hasSomethingDirty) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
     }
-  }
-
-  private static void markDirty(@NotNull DirtBuilder dirtBuilder,
-                                @NotNull MultiMap<AbstractVcs, FilePath> filesOrDirs,
-                                boolean recursively) {
-    for (AbstractVcs vcs : filesOrDirs.keySet()) {
-      for (FilePath path : filesOrDirs.get(vcs)) {
-        if (recursively) {
-          dirtBuilder.addDirtyDirRecursively(vcs, path);
-        }
-        else {
-          dirtBuilder.addDirtyFile(vcs, path);
-        }
-      }
-    }
+    myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).filePathsDirty(filesConverted, dirsConverted);
   }
 
   @Override
-  public void filePathsDirty(@Nullable final Collection<? extends FilePath> filesDirty, @Nullable final Collection<? extends FilePath> dirsRecursivelyDirty) {
+  public void filePathsDirty(@Nullable Collection<? extends FilePath> filesDirty,
+                             @Nullable Collection<? extends FilePath> dirsRecursivelyDirty) {
     try {
       fileVcsPathsDirty(groupByVcs(filesDirty), groupByVcs(dirsRecursivelyDirty));
     }
@@ -175,20 +174,13 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   @Override
-  public void filesDirty(@Nullable final Collection<? extends VirtualFile> filesDirty, @Nullable final Collection<? extends VirtualFile> dirsRecursivelyDirty) {
+  public void filesDirty(@Nullable Collection<? extends VirtualFile> filesDirty,
+                         @Nullable Collection<? extends VirtualFile> dirsRecursivelyDirty) {
     try {
       fileVcsPathsDirty(groupFilesByVcs(filesDirty), groupFilesByVcs(dirsRecursivelyDirty));
     }
     catch (ProcessCanceledException ignore) {
     }
-  }
-
-  @NotNull
-  private static Collection<FilePath> toFilePaths(@Nullable Collection<? extends VirtualFile> files) {
-    if (files == null) {
-      return Collections.emptyList();
-    }
-    return ContainerUtil.map(files, virtualFile -> VcsUtil.getFilePath(virtualFile));
   }
 
   @Override
@@ -217,46 +209,34 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     DirtBuilder dirtBuilder;
     synchronized (LOCK) {
       if (!myReady) return null;
-      dirtBuilder = new DirtBuilder(myDirtBuilder);
+      dirtBuilder = myDirtBuilder;
       myDirtInProgress = dirtBuilder;
-      myDirtBuilder.reset();
+      myDirtBuilder = new DirtBuilder();
     }
     return calculateInvalidated(dirtBuilder);
   }
 
   @NotNull
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
-    MultiMap<AbstractVcs, FilePath> files = dirt.getFilesForVcs();
-    MultiMap<AbstractVcs, FilePath> dirs = dirt.getDirsForVcs();
     boolean isEverythingDirty = dirt.isEverythingDirty();
     if (isEverythingDirty) {
-      dirs.putAllValues(getEverythingDirtyRoots());
-    }
-    Set<AbstractVcs> keys = ContainerUtil.union(files.keySet(), dirs.keySet());
-
-    Map<AbstractVcs, VcsDirtyScopeImpl> scopes = new HashMap<>();
-    for (AbstractVcs key : keys) {
-      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject, isEverythingDirty);
-      scopes.put(key, scope);
-      scope.addDirtyData(dirs.get(key), files.get(key));
-    }
-
-    return new VcsInvalidated(new ArrayList<>(scopes.values()), isEverythingDirty);
-  }
-
-  @NotNull
-  private MultiMap<AbstractVcs, FilePath> getEverythingDirtyRoots() {
-    MultiMap<AbstractVcs, FilePath> dirtyRoots = MultiMap.createSet();
-
-    VcsRoot[] roots = getVcsManager(myProject).getAllVcsRoots();
-    for (VcsRoot root : roots) {
-      AbstractVcs vcs = root.getVcs();
-      VirtualFile path = root.getPath();
-      if (vcs != null) {
-        dirtyRoots.putValue(vcs, VcsUtil.getFilePath(path));
+      // Mark roots explicitly dirty
+      VcsRoot[] roots = getVcsManager(myProject).getAllVcsRoots();
+      for (VcsRoot root : roots) {
+        AbstractVcs vcs = root.getVcs();
+        VirtualFile path = root.getPath();
+        if (vcs != null) {
+          dirt.getScope(vcs).addDirtyPathFast(path, VcsUtil.getFilePath(path), true);
+        }
       }
     }
-    return dirtyRoots;
+
+    List<VcsDirtyScopeImpl> scopes = dirt.getScopes();
+    for (VcsDirtyScopeImpl scope : scopes) {
+      scope.pack();
+    }
+
+    return new VcsInvalidated(scopes, isEverythingDirty);
   }
 
   @Override
@@ -269,36 +249,52 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   @NotNull
   @Override
   public Collection<FilePath> whatFilesDirty(@NotNull final Collection<? extends FilePath> files) {
-    DirtBuilder dirtBuilder;
-    DirtBuilder dirtBuilderInProgress;
-    synchronized (LOCK) {
-      if (!myReady) return Collections.emptyList();
-      dirtBuilder = new DirtBuilder(myDirtBuilder);
-      dirtBuilderInProgress = myDirtInProgress != null ? new DirtBuilder(myDirtInProgress) : new DirtBuilder();
-    }
+    return ReadAction.compute(() -> {
+      Collection<FilePath> result = new ArrayList<>();
+      synchronized (LOCK) {
+        if (!myReady) return Collections.emptyList();
 
-    VcsInvalidated invalidated = calculateInvalidated(dirtBuilder);
-    VcsInvalidated inProgress = calculateInvalidated(dirtBuilderInProgress);
-    Collection<FilePath> result = new ArrayList<>();
-    for (FilePath fp : files) {
-      if (invalidated.isFileDirty(fp) || inProgress.isFileDirty(fp)) {
-        result.add(fp);
+        for (FilePath fp : files) {
+          if (myDirtBuilder.isFileDirty(fp) ||
+              myDirtInProgress != null && myDirtInProgress.isFileDirty(fp)) {
+            result.add(fp);
+          }
+        }
       }
-    }
-    return result;
+      return result;
+    });
   }
 
   @NotNull
-  private static String toString(@NotNull MultiMap<AbstractVcs, FilePath> filesByVcs) {
-    return StringUtil.join(filesByVcs.keySet(), vcs -> vcs.getName() + ": " + StringUtil.join(filesByVcs.get(vcs), path -> path.getPath(), "\n"), "\n");
+  private static String toString(@NotNull Map<VcsRoot, Set<FilePath>> filesByVcs) {
+    return StringUtil.join(filesByVcs.keySet(), vcs
+      -> vcs.getVcs() + ": " + StringUtil.join(filesByVcs.get(vcs), path -> path.getPath(), "\n"), "\n");
   }
 
   @Nullable
   private static Class<?> findFirstInterestingCallerClass() {
-    for (int i = 1; i <= 5; i++) {
+    for (int i = 1; i <= 7; i++) {
       Class<?> clazz = ReflectionUtil.findCallerClass(i);
       if (clazz == null || !clazz.getName().contains(VcsDirtyScopeManagerImpl.class.getName())) return clazz;
     }
     return null;
+  }
+
+  @NotNull
+  public static TObjectHashingStrategy<FilePath> getDirtyScopeHashingStrategy(@NotNull AbstractVcs vcs) {
+    return vcs.needsCaseSensitiveDirtyScope() ? ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+                                              : ContainerUtil.canonicalStrategy();
+  }
+
+  static final class MyStartupActivity implements VcsStartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ((VcsDirtyScopeManagerImpl)getInstance(project)).startListenForChanges();
+    }
+
+    @Override
+    public int getOrder() {
+      return VcsInitObject.DIRTY_SCOPE_MANAGER.getOrder();
+    }
   }
 }

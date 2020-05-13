@@ -236,4 +236,114 @@ public class ConstantValuesTest extends LightJavaCodeInsightFixtureTestCase {
     assertNotNull(field);
     assertEquals("", JavaConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false));
   }
+
+  public void testStringConstExpression1() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CONST1", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("\"a\" + \"b\"", initializer.getText());
+
+    assertEquals("ab", field.computeConstantValue());
+  }
+
+  public void testStringConstExpression2() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CONST2", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("\"a\" + 123", initializer.getText());
+
+    assertEquals("a123", field.computeConstantValue());
+  }
+
+  public void testStringConstExpression3() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CONST3", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("123 + \"b\"", initializer.getText());
+
+    assertEquals("123b", field.computeConstantValue());
+  }
+
+  public void testStringConstExpression4() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CONST4", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("INT_CONST1 + \"aaa\"", initializer.getText());
+
+    assertEquals("1aaa", field.computeConstantValue());
+  }
+
+  public void testStringExpressionClass() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CLASS", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("Integer.class + \"xxx\"", initializer.getText());
+
+    assertEquals("class java.lang.Integerxxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionClassArray() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CLASS_ARRAY", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("Integer[].class + \"xxx\"", initializer.getText());
+
+    assertEquals("class [Ljava.lang.Integer;xxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionInterface() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_INTERFACE", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("Runnable.class + \"xxx\"", initializer.getText());
+
+    assertEquals("interface java.lang.Runnablexxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionPrimitive() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_PRIMITIVE", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("int.class + \"xxx\"", initializer.getText());
+
+    assertEquals("intxxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionPrimitiveArray() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_PRIMITIVE_ARRAY", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("int[].class + \"xxx\"", initializer.getText());
+
+    assertEquals("class [Ixxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionMethod() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_METHOD", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("val() + \"xxx\"", initializer.getText());
+
+    assertNull(field.computeConstantValue());
+  }
 }

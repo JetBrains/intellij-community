@@ -62,9 +62,9 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
     myHolders = createEditorHolders(factory);
 
-    List<JComponent> titlePanel = createTitles();
     myFocusTrackerSupport = new FocusTrackerSupport.Threeside(myHolders);
-    myContentPanel = new ThreesideContentPanel(myHolders, titlePanel);
+    myContentPanel = new ThreesideContentPanel.Holders(myHolders);
+    myContentPanel.setTitles(createTitles());
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 300);
     myLoadingPanel.add(myContentPanel, BorderLayout.CENTER);

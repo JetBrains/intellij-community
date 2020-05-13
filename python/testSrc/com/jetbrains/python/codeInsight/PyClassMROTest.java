@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtilRt;
@@ -34,6 +35,7 @@ public class PyClassMROTest extends PyTestCase {
   }
 
   public void testCircularInheritance() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     final String testName = getTestName(false);
     myFixture.configureByFiles(getPath(testName), getPath(testName + "2"));
     final PyClass cls = myFixture.findElementByText("Foo", PyClass.class);
@@ -97,7 +99,7 @@ public class PyClassMROTest extends PyTestCase {
               "LockableItem", "EtagSupport", "Traversable", "object", "unknown");
   }
 
-  public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
+  public void assertMRO(@NotNull PyClass cls, String @NotNull ... mro) {
     final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.deepCodeInsight(cls.getProject()));
     final List<String> classNames = new ArrayList<>();
     for (PyClassLikeType type : types) {

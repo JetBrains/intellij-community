@@ -17,11 +17,11 @@
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -108,7 +108,7 @@ public class SpecialAnnotationsUtil {
           Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(injectionList));
           if (project == null) project = ProjectManager.getInstance().getDefaultProject();
           TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-            .createWithInnerClassesScopeChooser(InspectionsBundle.message("special.annotations.list.annotation.class"),
+            .createWithInnerClassesScopeChooser(JavaBundle.message("special.annotations.list.annotation.class"),
                                                 GlobalSearchScope.allScope(project), new ClassFilter() {
               @Override
               public boolean isAccepted(PsiClass aClass) {
@@ -121,24 +121,24 @@ public class SpecialAnnotationsUtil {
             listModel.add(selected.getQualifiedName());
           }
         }
-      }).setAddActionName(InspectionsBundle.message("special.annotations.list.add.annotation.class")).disableUpDownActions();
+      }).setAddActionName(JavaBundle.message("special.annotations.list.add.annotation.class")).disableUpDownActions();
 
     if (acceptPatterns) {
       toolbarDecorator
         .setAddIcon(IconUtil.getAddClassIcon())
         .addExtraAction(
-          new AnActionButton(InspectionsBundle.message("special.annotations.list.annotation.pattern"), IconUtil.getAddPatternIcon()) {
+          new AnActionButton(JavaBundle.message("special.annotations.list.annotation.pattern"), IconUtil.getAddPatternIcon()) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-              String selectedPattern = Messages.showInputDialog(InspectionsBundle.message("special.annotations.list.annotation.pattern"),
-                                                                InspectionsBundle.message("special.annotations.list.annotation.pattern"),
+              String selectedPattern = Messages.showInputDialog(JavaBundle.message("special.annotations.list.annotation.pattern"),
+                                                                JavaBundle.message("special.annotations.list.annotation.pattern"),
                                                                 Messages.getQuestionIcon());
               if (selectedPattern != null) {
                 listModel.add(selectedPattern);
               }
             }
-          }).setButtonComparator(InspectionsBundle.message("special.annotations.list.add.annotation.class"),
-                                 InspectionsBundle.message("special.annotations.list.annotation.pattern"), "Remove");
+          }).setButtonComparator(JavaBundle.message("special.annotations.list.add.annotation.class"),
+                                 JavaBundle.message("special.annotations.list.annotation.pattern"), "Remove");
     }
 
     if (borderTitle == null) {

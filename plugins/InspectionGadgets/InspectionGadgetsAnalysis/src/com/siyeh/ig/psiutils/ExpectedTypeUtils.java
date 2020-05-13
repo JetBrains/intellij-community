@@ -679,13 +679,13 @@ public class ExpectedTypeUtils {
       private boolean modified = false;
 
       @Override
-      public Object visitType(PsiType type) {
+      public Object visitType(@NotNull PsiType type) {
         typeString.append(type.getCanonicalText());
         return super.visitType(type);
       }
 
       @Override
-      public Object visitWildcardType(PsiWildcardType wildcardType) {
+      public Object visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         if (wildcardType.isExtends()) {
           final PsiType extendsBound = wildcardType.getExtendsBound();
           if (extendsBound instanceof PsiClassType) {
@@ -701,7 +701,7 @@ public class ExpectedTypeUtils {
       }
 
       @Override
-      public Object visitClassType(PsiClassType classType) {
+      public Object visitClassType(@NotNull PsiClassType classType) {
         final PsiClassType rawType = classType.rawType();
         typeString.append(rawType.getCanonicalText());
         final PsiType[] parameterTypes = classType.getParameters();

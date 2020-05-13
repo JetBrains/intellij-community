@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +7,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.local.DirectoryAccessChecker;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
@@ -23,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.text.FilePathHashingStrategy;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +42,6 @@ import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
-/**
- * @author max
- */
 public class RefreshWorker {
   private final boolean myIsRecursive;
   private final Queue<NewVirtualFile> myRefreshQueue = new Queue<>(100);
@@ -148,27 +149,27 @@ public class RefreshWorker {
                                  @NotNull PersistentFS persistence,
                                  @NotNull TObjectHashingStrategy<String> strategy,
                                  @NotNull VirtualDirectoryImpl dir) {
-    Pair<String[], VirtualFile[]> snapshot = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
+    Pair<List<String>, List<VirtualFile>> snapshot = LocalFileSystemRefreshWorker.getDirectorySnapshot(dir);
     if (snapshot == null) return false;
-    String[] persistedNames = snapshot.getFirst();
-    VirtualFile[] children = snapshot.getSecond();
+    List<String> persistedNames = snapshot.getFirst();
+    List<VirtualFile> children = snapshot.getSecond();
 
     String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-    Set<String> newNames = newTroveSet(strategy, upToDateNames);
-    if (dir.allChildrenLoaded() && children.length < upToDateNames.length) {
+    Set<String> newNames = new THashSet<>(Arrays.asList(upToDateNames), strategy);
+    if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
       for (VirtualFile child : children) {
         newNames.remove(child.getName());
       }
     }
     else {
-      ContainerUtil.removeAll(newNames, persistedNames);
+      newNames.removeAll(persistedNames);
     }
 
     Set<String> deletedNames = newTroveSet(strategy, persistedNames);
     ContainerUtil.removeAll(deletedNames, upToDateNames);
 
     OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
-    if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(persistedNames) + " +" + newNames + " -" + deletedNames);
+    if (LOG.isTraceEnabled()) LOG.trace("current=" + persistedNames + " +" + newNames + " -" + deletedNames);
 
     List<ChildInfo> newKids = new ArrayList<>(newNames.size());
     for (String newName : newNames) {
@@ -182,7 +183,7 @@ public class RefreshWorker {
       }
     }
 
-    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.length);
+    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.size());
     for (VirtualFile child : children) {
       checkCancelled(dir);
       if (!deletedNames.contains(child.getName())) {
@@ -190,7 +191,7 @@ public class RefreshWorker {
       }
     }
 
-    if (isDirectoryChanged(persistence, dir, persistedNames, children)) {
+    if (isFullScanDirectoryChanged(dir, persistedNames, children)) {
       return false;
     }
 
@@ -219,16 +220,13 @@ public class RefreshWorker {
       }
     }
 
-    return !isDirectoryChanged(persistence, dir, persistedNames, children);
+    return !isFullScanDirectoryChanged(dir, persistedNames, children);
   }
 
-  private boolean isDirectoryChanged(@NotNull PersistentFS persistence,
-                                     @NotNull VirtualDirectoryImpl dir,
-                                     @NotNull String[] persistedNames,
-                                     @NotNull VirtualFile[] children) {
+  private boolean isFullScanDirectoryChanged(VirtualDirectoryImpl dir, List<String> names, List<VirtualFile> children) {
     return ReadAction.compute(() -> {
       checkCancelled(dir);
-      return !Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren());
+      return LocalFileSystemRefreshWorker.areChildrenOrNamesChanged(dir, names, children);
     });
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.Disposable
@@ -17,7 +17,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.systemIndependentPath
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -39,7 +39,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = createDefaultVirtualTracker(componentManager)) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val storageLock = ReentrantReadWriteLock()
-  private val storages = THashMap<String, StateStorage>()
+  private val storages = Object2ObjectOpenHashMap<String, StateStorage>()
 
   val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
 
@@ -66,7 +66,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     else -> ThreeState.UNSURE // unsure because depends on stream provider state
   }
 
-  open fun getFileBasedStorageConfiguration(fileSpec: String): FileBasedStorageConfiguration = defaultFileBasedStorageConfiguration
+  open fun getFileBasedStorageConfiguration(fileSpec: String) = defaultFileBasedStorageConfiguration
 
   protected open val isUseXmlProlog: Boolean
     get() = true
@@ -99,6 +99,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   /**
    * @param expansion System-independent
+   * @return `false` if the [key] was updated, `true` if the new key was attached
    */
   fun addMacro(key: String, expansion: String): Boolean {
     LOG.assertTrue(key.isNotEmpty())
@@ -176,7 +177,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   private fun computeStorageKey(storageClass: Class<out StateStorage>, normalizedCollapsedPath: String, collapsedPath: String, storageCreator: StorageCreator?): String {
     if (storageClass != StateStorage::class.java) {
-      return storageClass.name!!
+      return storageClass.name
     }
     if (normalizedCollapsedPath.isEmpty()) {
       throw Exception("Normalized path is empty, raw path '$collapsedPath'")
@@ -353,7 +354,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     storageLock.write {
       val storage = getOrCreateStorage(collapseMacros(path), RoamingType.DEFAULT) as FileBasedStorage
 
-      val file = storage.virtualFile
+      val file = storage.getVirtualFile(StateStorageOperation.WRITE)
       try {
         if (file != null) {
           file.rename(storage, newName)
@@ -375,10 +376,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   fun clearStorages() {
     storageLock.write {
       try {
-        virtualFileTracker?.let {
-          storages.forEachEntry { collapsedPath, _ ->
-            it.remove(expandMacros(collapsedPath))
-            true
+        if (virtualFileTracker != null) {
+          for (collapsedPath in storages.keys) {
+            virtualFileTracker.remove(expandMacros(collapsedPath))
           }
         }
       }

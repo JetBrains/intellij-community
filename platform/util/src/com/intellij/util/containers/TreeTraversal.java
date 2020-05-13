@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
@@ -9,10 +9,7 @@ import com.intellij.util.NotNullizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -55,6 +52,18 @@ public abstract class TreeTraversal {
     this.debugName = debugName;
   }
 
+  /**
+   * Creates a new iterator for this type of traversal.
+   *
+   * @param roots tree roots
+   * @param tree  tree structure the children for parent function.
+   *              May return null (useful for map representation).
+   */
+  @NotNull
+  public abstract <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                           @NotNull Function<? super T, ? extends Iterable<? extends T>> tree);
+
+
   @NotNull
   public final <T> JBIterable<T> traversal(@NotNull final Iterable<? extends T> roots, @NotNull final Function<? super T, ? extends Iterable<? extends T>> tree) {
     return new JBIterable<T>() {
@@ -90,14 +99,12 @@ public abstract class TreeTraversal {
    * @param identity function
    */
   @NotNull
-  public TreeTraversal unique(@NotNull final Function<?, ?> identity) {
-    final TreeTraversal original = this;
-    return new TreeTraversal(debugName + " (UNIQUE)") {
-
+  public final TreeTraversal unique(@NotNull final Function<?, ?> identity) {
+    return intercept("UNIQUE", new TraversalInterceptor() {
       @NotNull
       @Override
-      public <TT> It<TT> createIterator(@NotNull Iterable<? extends TT> roots,
-                                        @NotNull final Function<? super TT, ? extends Iterable<? extends TT>> tree) {
+      public <TT> TraversalArgs<TT> intercept(@NotNull TraversalArgs<TT> args) {
+        final Function<? super TT, ? extends Iterable<? extends TT>> tree = args.tree;
         class WrappedTree implements Condition<TT>, Function<TT, Iterable<? extends TT>> {
           final Function<?, ?> inner = identity;
           java.util.HashSet<Object> visited;
@@ -115,12 +122,38 @@ public abstract class TreeTraversal {
           }
         }
         if (tree instanceof WrappedTree && Comparing.equal(identity, ((WrappedTree)tree).inner)) {
-          return original.createIterator(roots, tree);
+          return args;
         }
         WrappedTree wrappedTree = new WrappedTree();
-        return original.createIterator(JBIterable.from(roots).filter(wrappedTree), wrappedTree);
+        return new TraversalArgs<>(JBIterable.from(args.roots).filter(wrappedTree), wrappedTree);
       }
-    };
+    });
+  }
+
+  /**
+   * Configures the traversal to cache its structure.
+   */
+  @NotNull
+  public final TreeTraversal cached(final Map<Object, Object> cache) {
+    return intercept("CACHED", new TraversalInterceptor() {
+      @NotNull
+      @Override
+      public <TT> TraversalArgs<TT> intercept(@NotNull TraversalArgs<TT> args) {
+        final Function<? super TT, ? extends Iterable<? extends TT>> tree = args.tree;
+        class WrappedTree implements Function<TT, Iterable<? extends TT>> {
+          @Override
+          public Iterable<? extends TT> fun(TT t) {
+            //noinspection unchecked
+            return (Iterable<? extends TT>)cache.computeIfAbsent(t, o -> JBIterable.from(tree.fun((TT)o)).collect());
+          }
+        }
+        if (tree instanceof WrappedTree) {
+          return args;
+        }
+        WrappedTree wrappedTree = new WrappedTree();
+        return new TraversalArgs<>(args.roots, wrappedTree);
+      }
+    });
   }
 
   /**
@@ -131,13 +164,12 @@ public abstract class TreeTraversal {
    * stops when the {@code rangeCondition} return false after that.
    */
   @NotNull
-  public <T> TreeTraversal onRange(@NotNull final Condition<T> rangeCondition) {
-    final TreeTraversal original = this;
-    return new TreeTraversal(original.toString() + " (ON_RANGE)") {
+  public final <T> TreeTraversal onRange(@NotNull final Condition<T> rangeCondition) {
+    return intercept("ON_RANGE", new TraversalInterceptor() {
       @NotNull
       @Override
-      public <TT> It<TT> createIterator(@NotNull Iterable<? extends TT> roots,
-                                        @NotNull final Function<? super TT, ? extends Iterable<? extends TT>> tree) {
+      public <TT> TraversalArgs<TT> intercept(@NotNull TraversalArgs<TT> args) {
+        final Function<? super TT, ? extends Iterable<? extends TT>> tree = args.tree;
         final Condition<? super TT> inRangeCondition = (Condition<? super TT>)rangeCondition;
         final Condition<? super TT> notInRangeCondition = (Condition<? super TT>)not(rangeCondition);
         class WrappedTree implements Function<TT, Iterable<? extends TT>> {
@@ -151,23 +183,71 @@ public abstract class TreeTraversal {
           }
         }
         if (tree instanceof WrappedTree && Comparing.equal(rangeCondition, ((WrappedTree)tree).inner)) {
-          return original.createIterator(roots, tree);
+          return args;
         }
         WrappedTree wrappedTree = new WrappedTree();
-        return original.createIterator(JBIterable.from(roots).filter(inRangeCondition), wrappedTree);
+        return new TraversalArgs<>(JBIterable.from(args.roots).filter(inRangeCondition), wrappedTree);
       }
-    };
+    });
   }
 
-  /**
-   * Creates a new iterator for this type of traversal.
-   * @param roots tree roots
-   * @param tree tree structure the children for parent function.
-   *             May return null (useful for map representation).
-   */
   @NotNull
-  public abstract <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
-                                           @NotNull Function<? super T, ? extends Iterable<? extends T>> tree);
+  public final TreeTraversal intercept(@NotNull String debugName, @NotNull final TraversalInterceptor interceptor) {
+    String nextName = debugName + "." + this.debugName;
+    if (this instanceof Intercepted) {
+      Intercepted intercepted = (Intercepted)this;
+      return new Intercepted(nextName, intercepted.original, TraversalInterceptor.compose(intercepted.interceptor, interceptor));
+    }
+    return new Intercepted(nextName, this, interceptor);
+  }
+
+  public interface TraversalInterceptor {
+    @NotNull
+    <T> TraversalArgs<T> intercept(@NotNull TraversalArgs<T> args);
+
+    @NotNull
+    static TraversalInterceptor compose(@NotNull TraversalInterceptor interceptor1, @NotNull TraversalInterceptor interceptor2) {
+      return new TraversalInterceptor() {
+        @NotNull
+        @Override
+        public <TT> TraversalArgs<TT> intercept(@NotNull TraversalArgs<TT> args) {
+          return interceptor2.intercept(interceptor1.intercept(args));
+        }
+      };
+    }
+  }
+
+  public static final class TraversalArgs<T> {
+    public final Iterable<? extends T> roots;
+    public final Function<? super T, ? extends Iterable<? extends T>> tree;
+
+    public TraversalArgs(@NotNull Iterable<? extends T> roots,
+                         @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+      this.roots = roots;
+      this.tree = tree;
+    }
+  }
+
+  private static class Intercepted extends TreeTraversal {
+    final TreeTraversal original;
+    final TraversalInterceptor interceptor;
+
+    protected Intercepted(@NotNull String debugName,
+                          @NotNull TreeTraversal original,
+                          @NotNull TraversalInterceptor interceptor) {
+      super(debugName);
+      this.original = original;
+      this.interceptor = interceptor;
+    }
+
+    @NotNull
+    @Override
+    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                    @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+      TraversalArgs<T> adjusted = interceptor.intercept(new TraversalArgs<>(roots, tree));
+      return original.createIterator(adjusted.roots, adjusted.tree);
+    }
+  }
 
   @Override
   public final String toString() {
@@ -202,7 +282,7 @@ public abstract class TreeTraversal {
 
     protected JBIterable<T> _transform(JBIterable<?> original) {
       JBIterable<?> result = original;
-      for (Function<Object, Object> f : getTransformations()) {
+      for (Function<Object, Object> f : _transformations()) {
         result = result.map(f);
       }
       //noinspection unchecked
@@ -211,11 +291,18 @@ public abstract class TreeTraversal {
 
     protected T _transform(Object original) {
       Object result = original;
-      for (Function<Object, ?> f : getTransformations()) {
+      for (Function<Object, ?> f : _transformations()) {
         result = f.fun(result);
       }
       //noinspection unchecked
       return (T)result;
+    }
+
+    private JBIterable<Function<Object, Object>> cachedTransform;
+
+    @NotNull
+    private JBIterable<Function<Object, Object>> _transformations() {
+      return cachedTransform == null ? cachedTransform = getTransformations() : cachedTransform;
     }
   }
 
@@ -584,7 +671,7 @@ public abstract class TreeTraversal {
   private final static class TracingBfsIt<T> extends TracingIt<T> {
 
     final ArrayDeque<T> queue = new ArrayDeque<>();
-    final Map<T, T> paths = ContainerUtil.newIdentityHashMap();
+    final Map<T, T> paths = new IdentityHashMap<>();
     P1<T> top;
     P1<T> cur;
 
@@ -715,7 +802,7 @@ public abstract class TreeTraversal {
     }
 
     final Iterable<? extends T> iterable(@NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
-      return itle != null ? itle : JBIterable.from(itle = tree.fun(node));
+      return itle != null ? itle : (itle = tree.fun(node)) != null ? itle : JBIterable.empty();
     }
 
     /** @noinspection unchecked */
@@ -749,9 +836,7 @@ public abstract class TreeTraversal {
     }
 
     P1<T> remove() {
-      P1<T> p = parent;
-      //parent = null;
-      return p;
+      return parent;
     }
 
     @Override

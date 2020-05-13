@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
@@ -20,6 +21,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +45,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected final Project myProject;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
-                                    @NotNull String title,
+                                    @NotNull @NlsContexts.DialogTitle String title,
                                     @NotNull DataKey<Stream<FilePath>> shownDataKey,
                                     @NotNull List<? extends FilePath> initDataFiles) {
     super(project, true);
@@ -59,20 +61,12 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
         }
         return super.getData(dataId);
       }
-
-      @Override
-      protected void installEnterKeyHandler() {
-        EditSourceOnEnterKeyHandler.install(this, closer);
-      }
-
-      @Override
-      protected void installDoubleClickHandler() {
-        EditSourceOnDoubleClickHandler.install(this, closer);
-      }
     };
+    EditSourceOnEnterKeyHandler.install(myView, closer);
+    EditSourceOnDoubleClickHandler.install(myView, closer);
     myChangeListManager = ChangeListManager.getInstance(project);
     createPanel();
-    setOKButtonText("Close");
+    setOKButtonText(CommonBundle.getCancelButtonText());
 
     init();
     initData(initDataFiles);
@@ -89,9 +83,8 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   }
 
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
 

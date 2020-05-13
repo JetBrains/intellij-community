@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,15 +27,15 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class DomImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomImplUtil");
+public final class DomImplUtil {
+  private static final Logger LOG = Logger.getInstance(DomImplUtil.class);
 
   private DomImplUtil() {
   }
 
   public static void assertValidity(DomElement element, String msg) {
     if (element instanceof DomFileElementImpl) {
-      final String s = ((DomFileElementImpl)element).checkValidity();
+      final String s = ((DomFileElementImpl<?>)element).checkValidity();
       if (s != null) {
         throw new AssertionError(s);
       }
@@ -113,8 +99,8 @@ public class DomImplUtil {
   }
 
   @Nullable
-  public static DomNameStrategy getDomNameStrategy(final Class<?> rawType, boolean isAttribute) {
-    Class aClass = null;
+  public static DomNameStrategy getDomNameStrategy(Class<?> rawType, boolean isAttribute) {
+    Class<?> aClass = null;
     if (isAttribute) {
       NameStrategyForAttributes annotation = DomReflectionUtil.findAnnotationDFS(rawType, NameStrategyForAttributes.class);
       if (annotation != null) {
@@ -211,13 +197,13 @@ public class DomImplUtil {
   @Nullable
   private static Class<?> getErasure(Type type) {
     if (type instanceof Class) {
-      return (Class)type;
+      return (Class<?>)type;
     }
     if (type instanceof ParameterizedType) {
       return getErasure(((ParameterizedType)type).getRawType());
     }
     if (type instanceof TypeVariable) {
-      for (final Type bound : ((TypeVariable)type).getBounds()) {
+      for (final Type bound : ((TypeVariable<?>)type).getBounds()) {
         final Class<?> aClass = getErasure(bound);
         if (aClass != null) {
           return aClass;
@@ -267,7 +253,7 @@ public class DomImplUtil {
       usedNames.add(description.getXmlName());
     }
     return ContainerUtil.findAll(subTags, tag -> {
-      if (StringUtil.isEmpty(tag.getName())) return false;
+      if (StringUtil.isEmpty(tag.getLocalName())) return false;
 
       for (final XmlName name : usedNames) {
         if (isNameSuitable(name, tag, handler, file)) {
@@ -280,7 +266,7 @@ public class DomImplUtil {
 
   static XmlFile getFile(DomElement domElement) {
     if (domElement instanceof DomFileElement) {
-      return ((DomFileElement)domElement).getFile();
+      return ((DomFileElement<?>)domElement).getFile();
     }
     DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
     assert handler != null : domElement;

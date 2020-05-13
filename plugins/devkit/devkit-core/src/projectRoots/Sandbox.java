@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 public class Sandbox implements ValidatableSdkAdditionalData {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.Sandbox");
+  private static final Logger LOG = Logger.getInstance(Sandbox.class);
 
   @SuppressWarnings("WeakerAccess")
   public String mySandboxHome;

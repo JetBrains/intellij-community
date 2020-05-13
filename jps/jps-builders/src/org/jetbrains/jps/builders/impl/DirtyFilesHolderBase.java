@@ -30,9 +30,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class DirtyFilesHolderBase<R extends BuildRootDescriptor, T extends BuildTarget<R>> implements DirtyFilesHolder<R, T> {
   protected final CompileContext myContext;
 

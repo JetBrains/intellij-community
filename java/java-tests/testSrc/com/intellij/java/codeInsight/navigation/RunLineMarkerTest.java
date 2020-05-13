@@ -19,6 +19,11 @@ import com.intellij.application.options.editor.GutterIconsConfigurable;
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.application.ApplicationConfigurationProducer;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -26,12 +31,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 import java.util.List;
@@ -199,5 +208,35 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     TestActionEvent event = new TestActionEvent();
     action.update(event);
     assertTrue(event.getPresentation().getText().startsWith("Edit"));
+  }
+
+  public void testActionNameFromPreferredProducer() {
+    myFixture.configureByText("Main.java", "public class Main {\n" +
+                                           "    public static void ma<caret>in(String[] args) {}\n" +
+                                           "}");
+    RunConfigurationProducer.EP_NAME.getPoint(null).registerExtension(new ApplicationConfigurationProducer() {
+      @Override
+      protected boolean setupConfigurationFromContext(@NotNull ApplicationConfiguration configuration,
+                                                      @NotNull ConfigurationContext context,
+                                                      @NotNull Ref<PsiElement> sourceElement) {
+        boolean result = super.setupConfigurationFromContext(configuration, context, sourceElement);
+        if (result) {
+          configuration.setName("Foo");
+          configuration.setMainClassName("FooMain");
+        }
+        return result;
+      }
+
+      @Override
+      public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+        return false;
+      }
+    }, LoadingOrder.FIRST, getTestRootDisposable());
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
+    String text = mark.getTooltipText();
+    assertTrue(text.startsWith("Run 'Main.main()'\n" +
+                               "Debug 'Main.main()'\n" +
+                               "Run 'Main.main()' with Coverage"));
   }
 }

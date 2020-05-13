@@ -5,12 +5,8 @@ package com.intellij.facet;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.mock.MockFacetConfiguration;
 import com.intellij.facet.mock.MockFacetType;
-import com.intellij.testFramework.UsefulTestCase;
 
-/**
- * @author nik
- */
-public class FacetTreeModelTest extends UsefulTestCase {
+public class FacetTreeModelTest extends FacetTestCase {
   private FacetTreeModel myModel;
 
   public void testTopLevelFacets() {

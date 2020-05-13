@@ -21,13 +21,6 @@ public class NewObjectEqualityInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inspection.new.object.equality.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "inspection.new.object.equality.message");
@@ -38,9 +31,8 @@ public class NewObjectEqualityInspection extends BaseInspection {
     return new NumberEqualityVisitor();
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return EqualityToEqualsFix.buildEqualityFixes((PsiBinaryExpression)infos[0]);
   }
 

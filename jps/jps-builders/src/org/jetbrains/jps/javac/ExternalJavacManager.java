@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  * @author Eugene Zhuravlev
  */
 public class ExternalJavacManager extends ProcessAdapter {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.javac.ExternalJavacServer");
+  private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
 
   public static final GlobalContextKey<ExternalJavacManager> KEY = GlobalContextKey.create("_external_javac_server_");
   public static final int DEFAULT_SERVER_PORT = 7878;
@@ -492,16 +492,16 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     public synchronized long getIdleTime() {
       final long idleSince = myIdleSince;
-      return idleSince <= 0L? 0L : (System.currentTimeMillis() - idleSince);
+      return idleSince == -42L? 0L : TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - idleSince);
     }
 
     public synchronized void unlock() {
-      myIdleSince = System.currentTimeMillis();
+      myIdleSince = System.nanoTime();
       myIsBusy = false;
     }
 
     public synchronized boolean lock() {
-      myIdleSince = 0L;
+      myIdleSince = -42L;
       return !myIsBusy && (myIsBusy = true);
     }
 

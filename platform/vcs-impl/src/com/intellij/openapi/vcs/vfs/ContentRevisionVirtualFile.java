@@ -47,8 +47,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() {
+  public byte @NotNull [] contentsToByteArray() {
     if (myContentLoadFailed) {
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }

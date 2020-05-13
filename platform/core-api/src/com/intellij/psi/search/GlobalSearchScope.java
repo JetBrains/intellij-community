@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -190,7 +190,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope union(@NotNull GlobalSearchScope[] scopes) {
+  public static GlobalSearchScope union(GlobalSearchScope @NotNull [] scopes) {
     if (scopes.length == 0) {
       throw new IllegalArgumentException("Empty scope array");
     }
@@ -412,7 +412,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public String getDisplayName() {
       if (myDisplayName == null) {
-        return PsiBundle.message("psi.search.scope.intersection", myScope1.getDisplayName(), myScope2.getDisplayName());
+        return CoreBundle.message("psi.search.scope.intersection", myScope1.getDisplayName(), myScope2.getDisplayName());
       }
       return myDisplayName;
     }
@@ -482,7 +482,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final GlobalSearchScope[] myScopes;
 
     @NotNull
-    static GlobalSearchScope create(@NotNull GlobalSearchScope[] scopes) {
+    static GlobalSearchScope create(GlobalSearchScope @NotNull [] scopes) {
       Set<GlobalSearchScope> result = new THashSet<>(scopes.length);
       Project project = null;
       for (GlobalSearchScope scope : scopes) {
@@ -501,7 +501,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return new UnionScope(project, result.toArray(EMPTY_ARRAY));
     }
 
-    private UnionScope(Project project, @NotNull GlobalSearchScope[] scopes) {
+    private UnionScope(Project project, GlobalSearchScope @NotNull [] scopes) {
       super(project);
       myScopes = scopes;
     }
@@ -509,7 +509,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @NotNull
     @Override
     public String getDisplayName() {
-      return PsiBundle.message("psi.search.scope.union", myScopes[0].getDisplayName(), myScopes[1].getDisplayName());
+      return CoreBundle.message("psi.search.scope.union", myScopes[0].getDisplayName(), myScopes[1].getDisplayName());
     }
 
     @Override
@@ -600,7 +600,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope getScopeRestrictedByFileTypes(@NotNull GlobalSearchScope scope, @NotNull FileType... fileTypes) {
+  public static GlobalSearchScope getScopeRestrictedByFileTypes(@NotNull GlobalSearchScope scope, FileType @NotNull ... fileTypes) {
     if (scope == EMPTY_SCOPE) {
       return EMPTY_SCOPE;
     }
@@ -611,7 +611,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   private static class FileTypeRestrictionScope extends DelegatingGlobalSearchScope {
     private final FileType[] myFileTypes;
 
-    private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, @NotNull FileType[] fileTypes) {
+    private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, FileType @NotNull [] fileTypes) {
       super(scope);
       myFileTypes = fileTypes;
     }

@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a comment in a code.
@@ -24,5 +25,6 @@ public interface PsiComment extends PsiElement {
   /**
    * Returns the token type of the comment (like {@code JavaTokenType.END_OF_LINE_COMMENT} or {@code JavaTokenType.C_STYLE_COMMENT}).
    */
+  @NotNull
   IElementType getTokenType();
 }

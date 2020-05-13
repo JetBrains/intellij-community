@@ -1,1 +1,1 @@
-Cls<caret>
+SomeCls<caret>

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class EverywhereContextType extends TemplateContextType {
   public EverywhereContextType() {
-    super("OTHER", "Everywhere", null);
+    super("OTHER", CodeInsightBundle.message("template.context.everywhere"), null);
   }
 
   @Override

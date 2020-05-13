@@ -15,9 +15,11 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,22 +30,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 class VfsEventsMerger {
-  private static final boolean DEBUG = false;
-  //static final boolean DEBUG = (true);
+  private static final boolean DEBUG = FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE;
+  private static final Logger LOG = Logger.getInstance(VfsEventsMerger.class);
 
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
-    if (DEBUG) System.out.println("Request build indices for file:" + file.getPath() + ", contentChange:" + contentChange);
-    updateChange(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file), file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
+    if (DEBUG) LOG.info("Request build indices for file:" + getFileIdOrPath(file) + ", contentChange:" + contentChange);
+    updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
   void recordBeforeFileEvent(@NotNull VirtualFile file, boolean contentChanged) {
-    if (DEBUG) System.out.println("Request invalidate indices for file:" + file.getPath() + ", contentChange:" + contentChanged);
-    updateChange(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file), file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
+    if (DEBUG) LOG.info("Request invalidate indices for file:" + getFileIdOrPath(file) + ", contentChange:" + contentChanged);
+    updateChange(file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
   }
 
   void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
-    if (DEBUG) System.out.println("Transient state changed for file:" + file.getPath());
-    updateChange(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file), file, FILE_TRANSIENT_STATE_CHANGED);
+    if (DEBUG) LOG.info("Transient state changed for file:" + getFileIdOrPath(file));
+    updateChange(file, FILE_TRANSIENT_STATE_CHANGED);
   }
 
   private final AtomicInteger myPublishedEventIndex = new AtomicInteger();
@@ -51,7 +53,13 @@ class VfsEventsMerger {
   int getPublishedEventIndex() {
     return myPublishedEventIndex.get();
   }
-  
+
+  private void updateChange(@NotNull VirtualFile file, @EventMask short mask) {
+    if (file instanceof VirtualFileWithId) {
+      updateChange(((VirtualFileWithId)file).getId(), file, mask);
+    }
+  }
+
   // NB: this code is executed not only during vfs events dispatch (in write action) but also during requestReindex (in read action)
   private void updateChange(int fileId, @NotNull VirtualFile file, @EventMask short mask) {
     while (true) {
@@ -187,5 +195,9 @@ class VfsEventsMerger {
       if (fileId < 0) fileId = -fileId;
       return fileId;
     }
+  }
+
+  private static String getFileIdOrPath(@NotNull VirtualFile file) {
+    return file instanceof VirtualFileWithId ? String.valueOf(((VirtualFileWithId)file).getId()) : file.getPath();
   }
 }

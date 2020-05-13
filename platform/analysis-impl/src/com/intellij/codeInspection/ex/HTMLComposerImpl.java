@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.HTMLComposer;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.lang.HTMLComposerExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author max
- */
 public abstract class HTMLComposerImpl extends HTMLComposer {
   private final int[] myListStack;
   private int myListStackTop;
@@ -61,7 +58,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     if (refEntity instanceof RefElement) {
       RefElement refElement = (RefElement)refEntity;
 
-      appendHeading(buf, InspectionsBundle.message("inspection.export.results.capitalized.location"));
+      appendHeading(buf, AnalysisBundle.message("inspection.export.results.capitalized.location"));
       buf.append("<div class=\"location\">");
       appendShortName(buf, refElement);
       buf.append(BR);
@@ -78,7 +75,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       extension.appendLocation(refElement, buf);
     }
     if (refElement instanceof RefFile){
-      buf.append(InspectionsBundle.message("inspection.export.results.file"));
+      buf.append(AnalysisBundle.message("inspection.export.results.file"));
       buf.append(NBSP);
       appendElementReference(buf, refElement, false);
     }
@@ -215,7 +212,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @Override
   public void appendElementInReferences(@NotNull StringBuilder buf, RefElement refElement) {
     if (refElement.getInReferences().size() > 0) {
-      appendHeading(buf, InspectionsBundle.message("inspection.export.results.used.from"));
+      appendHeading(buf, AnalysisBundle.message("inspection.export.results.used.from"));
       startList(buf);
       for (RefElement refCaller : refElement.getInReferences()) {
         appendListItem(buf, refCaller);
@@ -227,7 +224,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @Override
   public void appendElementOutReferences(@NotNull StringBuilder buf, RefElement refElement) {
     if (refElement.getOutReferences().size() > 0) {
-      appendHeading(buf, InspectionsBundle.message("inspection.export.results.uses"));
+      appendHeading(buf, AnalysisBundle.message("inspection.export.results.uses"));
       startList(buf);
       for (RefElement refCallee : refElement.getOutReferences()) {
         appendListItem(buf, refCallee);
@@ -255,7 +252,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       for (final String text : quickFixes) {
         if (text == null) continue;
         if (!listStarted) {
-          appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
+          appendHeading(buf, AnalysisBundle.message("inspection.problem.resolution"));
           startList(buf);
           listStarted = true;
         }
@@ -306,7 +303,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @Override
   public void appendNoProblems(@NotNull StringBuilder buf) {
     buf.append("<p class=\"problem-description-group\">");
-    buf.append(InspectionsBundle.message("inspection.export.results.no.problems.found"));
+    buf.append(AnalysisBundle.message("inspection.export.results.no.problems.found"));
     buf.append("</p>");
   }
 

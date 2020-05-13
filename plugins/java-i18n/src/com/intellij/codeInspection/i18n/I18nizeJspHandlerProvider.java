@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
@@ -47,7 +47,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
       // must not contain scriptlets or custom tags
       PsiFile root = jspFile.getBaseLanguageRoot();
       root.accept(new PsiRecursiveElementVisitor(){
-        @Override public void visitElement(PsiElement element) {
+        @Override public void visitElement(@NotNull PsiElement element) {
           TextRange elementRange = element.getTextRange();
           if (elementRange.intersectsStrict(selectedRange)) {
             // in JSPX base language root is a Jspx file itself
@@ -56,7 +56,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
                 element instanceof XmlTag
                 && !selectedRange.contains(elementRange)
                 && (!elementRange.contains(selectedRange) || !((XmlTag)element).getValue().getTextRange().contains(selectedRange))) {
-              throw new IncorrectOperationException(CodeInsightBundle.message("i18nize.jsp.error"));
+              throw new IncorrectOperationException(JavaI18nBundle.message("i18nize.jsp.error"));
             }
           }
           super.visitElement(element);

@@ -65,7 +65,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     final String name = getDummyFileName();
     final LightVirtualFile virtualFile = new LightVirtualFile(name, PythonFileType.INSTANCE, contents);
-    virtualFile.putUserData(LanguageLevel.KEY, langLevel);
+    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, langLevel);
     final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), physical, true);
     assert psiFile != null;
     return psiFile;
@@ -269,13 +269,8 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public PyExpression createExpressionFromText(final String text) {
-    return createExpressionFromText(LanguageLevel.getDefault(), text);
-  }
-
-  @Override
   @NotNull
-  public PyExpression createExpressionFromText(final LanguageLevel languageLevel, final String text) {
+  public PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) {
     final PsiFile dummyFile = createDummyFile(languageLevel, text);
     final PsiElement element = dummyFile.getFirstChild();
     if (element instanceof PyExpressionStatement) {
@@ -422,7 +417,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   @NotNull
   @Override
-  public PyDecoratorList createDecoratorList(@NotNull final String... decoratorTexts) {
+  public PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts) {
     assert decoratorTexts.length > 0;
     StringBuilder functionText = new StringBuilder();
     for (String decoText : decoratorTexts) {

@@ -3,8 +3,11 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.DocumentReferenceProvider
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -20,12 +23,20 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.mockito.Mockito
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 abstract class BaseChangeListsTest : LightPlatformTestCase() {
   companion object {
-    val DEFAULT = LocalChangeList.DEFAULT_NAME
+    val DEFAULT = LocalChangeList.getDefaultName()
+
+    fun createMockFileEditor(document: Document): FileEditor {
+      val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
+      val references = listOf(DocumentReferenceManager.getInstance().create(document))
+      Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references)
+      return editor
+    }
   }
 
   protected lateinit var vcs: MyMockVcs
@@ -104,10 +115,10 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   private fun resetChangelists() {
-    clm.addChangeList(LocalChangeList.DEFAULT_NAME, null)
-    clm.setDefaultChangeList(LocalChangeList.DEFAULT_NAME)
+    clm.addChangeList(LocalChangeList.getDefaultName(), null)
+    clm.setDefaultChangeList(LocalChangeList.getDefaultName())
     for (changeListName in clm.changeLists.map { it.name }) {
-      if (changeListName != LocalChangeList.DEFAULT_NAME) clm.removeChangeList(changeListName)
+      if (changeListName != LocalChangeList.getDefaultName()) clm.removeChangeList(changeListName)
     }
     clm.waitUntilRefreshed()
   }

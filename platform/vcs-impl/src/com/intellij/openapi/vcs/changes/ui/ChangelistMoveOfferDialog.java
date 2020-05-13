@@ -26,8 +26,7 @@ public class ChangelistMoveOfferDialog extends OptionsDialog {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     setOKButtonText(CommonBundle.getYesButtonText());
     setCancelButtonText(CommonBundle.getNoButtonText());
     return new Action[] {getOKAction(), getCancelAction()};

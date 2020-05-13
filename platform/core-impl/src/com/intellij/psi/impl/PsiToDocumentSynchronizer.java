@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl;
 
@@ -41,14 +27,15 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiToDocumentSynchronizer");
+  private static final Logger LOG = Logger.getInstance(PsiToDocumentSynchronizer.class);
   private static final Key<Boolean> PSI_DOCUMENT_ATOMIC_ACTION = Key.create("PSI_DOCUMENT_ATOMIC_ACTION");
 
   private final PsiDocumentManagerBase myPsiDocumentManager;
   private final MessageBus myBus;
-  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = ContainerUtil.newConcurrentMap();
+  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new ConcurrentHashMap<>();
 
   private volatile Document mySyncDocument;
 
@@ -57,8 +44,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     myBus = bus;
   }
 
-  @Nullable
-  public DocumentChangeTransaction getTransaction(@NotNull Document document) {
+  public @Nullable DocumentChangeTransaction getTransaction(@NotNull Document document) {
     final Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(document);
     return Pair.getFirst(pair);
   }
@@ -78,7 +64,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event);
   }
 
-  private void checkPsiModificationAllowed(@NotNull final PsiTreeChangeEvent event) {
+  private void checkPsiModificationAllowed(final @NotNull PsiTreeChangeEvent event) {
     if (!toProcessPsiEvent()) return;
     final PsiFile psiFile = event.getFile();
     if (!(psiFile instanceof PsiFileEx) || !((PsiFileEx)psiFile).isContentsLoaded()) return;
@@ -97,7 +83,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     return document;
   }
 
-  private void doSync(@NotNull final PsiTreeChangeEvent event, boolean force, @NotNull final DocSyncAction syncAction) {
+  private void doSync(final @NotNull PsiTreeChangeEvent event, boolean force, final @NotNull DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
     final PsiFile psiFile = event.getFile();
     if (!(psiFile instanceof PsiFileEx) || !((PsiFileEx)psiFile).isContentsLoaded()) return;
@@ -151,21 +137,21 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   @Override
-  public void childAdded(@NotNull final PsiTreeChangeEvent event) {
+  public void childAdded(final @NotNull PsiTreeChangeEvent event) {
     if (!(event.getChild() instanceof ForeignLeafPsiElement)) {
       doSync(event, false, (document, event1) -> insertString(document, event1.getOffset(), event1.getChild().getText()));
     }
   }
 
   @Override
-  public void childRemoved(@NotNull final PsiTreeChangeEvent event) {
+  public void childRemoved(final @NotNull PsiTreeChangeEvent event) {
     if (!(event.getChild() instanceof ForeignLeafPsiElement)) {
       doSync(event, false, (document, event1) -> deleteString(document, event1.getOffset(), event1.getOffset() + event1.getOldLength()));
     }
   }
 
   @Override
-  public void childReplaced(@NotNull final PsiTreeChangeEvent event) {
+  public void childReplaced(final @NotNull PsiTreeChangeEvent event) {
     doSync(event, false, (document, event1) -> {
       int oldLength = event1.getOldChild() instanceof ForeignLeafPsiElement ? 0 : event1.getOldLength();
       String newText = event1.getNewChild() instanceof ForeignLeafPsiElement ? "" : event1.getNewChild().getText();
@@ -174,7 +160,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   @Override
-  public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
+  public void childrenChanged(final @NotNull PsiTreeChangeEvent event) {
     doSync(event, false, (document, event1) ->
       replaceString(document, event1.getOffset(), event1.getOffset() + event1.getOldLength(), event1.getParent().getText(), event1
              .getParent()));
@@ -235,7 +221,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public boolean commitTransaction(@NotNull Document document){
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return false;
     final PsiFile changeScope = documentChangeTransaction.myChangeScope;
@@ -277,8 +263,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
-  @Nullable
-  private DocumentChangeTransaction removeTransaction(@NotNull Document doc) {
+  private @Nullable DocumentChangeTransaction removeTransaction(@NotNull Document doc) {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if(pair == null) return null;
     int nestedCount = pair.getSecond().intValue();
@@ -305,8 +290,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       myPsiText = CharArrayUtil.createImmutableCharSequence(doc.getImmutableCharSequence());
     }
 
-    @NotNull
-    public Map<TextRange, CharSequence> getAffectedFragments() {
+    public @NotNull Map<TextRange, CharSequence> getAffectedFragments() {
       return myAffectedFragments;
     }
 

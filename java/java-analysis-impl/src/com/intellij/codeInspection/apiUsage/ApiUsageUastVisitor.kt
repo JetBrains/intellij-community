@@ -37,6 +37,9 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     ) {
       return true
     }
+    if (isSuperOrThisCall(node)) {
+      return true
+    }
     val resolved = node.resolve()
     if (resolved is PsiMethod) {
       if (isClassReferenceInConstructorInvocation(node) || isClassReferenceInKotlinSuperClassConstructor(node)) {
@@ -164,7 +167,7 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       return true
     }
 
-    if (node.methodName == "super" && node.valueArgumentCount == 0) {
+    if (node.kind == UastCallKind.CONSTRUCTOR_CALL) {
       //Java does not resolve constructor for subclass constructor's "super()" statement
       // if the superclass has the default constructor, which is not declared in source code and lacks PsiMethod.
       val superClass = node.getContainingUClass()?.javaPsi?.superClass ?: return true
@@ -253,9 +256,8 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
 
   private fun maybeProcessJavaModuleReference(node: UElement): Boolean {
     val sourcePsi = node.sourcePsi
-    val psiParent = sourcePsi?.parent
-    if (sourcePsi is PsiIdentifier && psiParent is PsiJavaModuleReferenceElement && sourcePsi == psiParent.lastChild) {
-      val reference = psiParent.reference
+    if (sourcePsi is PsiJavaModuleReferenceElement) {
+      val reference = sourcePsi.reference
       val target = reference?.resolve()
       if (target != null) {
         apiUsageProcessor.processJavaModuleReference(reference, target)
@@ -324,13 +326,13 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     val superClass = containingUClass.javaPsi.superClass ?: return
     val uastBody = constructor.uastBody
     val uastAnchor = constructor.uastAnchor
-    if (uastAnchor != null && isImplicitCallOfSuperConstructorFromSubclassConstructorBody(uastBody)) {
+    if (uastAnchor != null && isImplicitCallOfSuperEmptyConstructorFromSubclassConstructorBody(uastBody)) {
       val emptyConstructor = superClass.constructors.find { it.parameterList.isEmpty }
       apiUsageProcessor.processConstructorInvocation(uastAnchor, superClass, emptyConstructor, null)
     }
   }
 
-  private fun isImplicitCallOfSuperConstructorFromSubclassConstructorBody(constructorBody: UExpression?): Boolean {
+  private fun isImplicitCallOfSuperEmptyConstructorFromSubclassConstructorBody(constructorBody: UExpression?): Boolean {
     if (constructorBody == null || constructorBody is UBlockExpression && constructorBody.expressions.isEmpty()) {
       //Empty constructor body => implicit super() call.
       return true
@@ -340,7 +342,12 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       //First expression is not super() => the super() is implicit.
       return true
     }
-    return firstExpression.methodName != "super"
+    if (firstExpression.valueArgumentCount > 0) {
+      //Invocation of non-empty super(args) constructor.
+      return false
+    }
+    val methodName = firstExpression.methodIdentifier?.name ?: firstExpression.methodName
+    return methodName != "super" && methodName != "this"
   }
 
   private fun checkMethodOverriding(node: UMethod) {
@@ -395,7 +402,16 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     return callExpression.kind == UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
   }
 
+  private fun isSuperOrThisCall(simpleReference: USimpleNameReferenceExpression): Boolean {
+    val callExpression = simpleReference.uastParent as? UCallExpression ?: return false
+    return callExpression.kind == UastCallKind.CONSTRUCTOR_CALL &&
+           (callExpression.methodIdentifier?.name == "super" || callExpression.methodIdentifier?.name == "this")
+  }
+
   private fun isClassReferenceInConstructorInvocation(simpleReference: USimpleNameReferenceExpression): Boolean {
+    if (isSuperOrThisCall(simpleReference)) {
+      return false
+    }
     val callExpression = simpleReference.uastParent as? UCallExpression ?: return false
     if (callExpression.kind != UastCallKind.CONSTRUCTOR_CALL) {
       return false
@@ -404,7 +420,7 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     if (classReferenceNameElement != null) {
       return haveSameSourceElement(classReferenceNameElement, simpleReference.referenceNameElement)
     }
-    return callExpression.classReference?.resolvedName == simpleReference.resolvedName
+    return callExpression.resolve()?.name == simpleReference.resolvedName
   }
 
   private fun isMethodReferenceOfCallExpression(expression: USimpleNameReferenceExpression): Boolean {
@@ -413,10 +429,6 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       return false
     }
     val expressionNameElement = expression.referenceNameElement
-    if (expressionNameElement == null && expression.identifier == "super") {
-      //UAST for Java returns null for "referenceNameElement" of "super()" statement : IDEA-210418
-      return true
-    }
     val methodIdentifier = callExpression.methodIdentifier
     return methodIdentifier != null && haveSameSourceElement(expressionNameElement, methodIdentifier)
   }

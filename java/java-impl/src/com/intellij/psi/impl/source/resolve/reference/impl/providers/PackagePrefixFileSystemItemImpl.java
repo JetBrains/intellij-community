@@ -105,8 +105,7 @@ class PackagePrefixFileSystemItemImpl extends PsiElementBase implements PsiFileS
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return ArrayUtilRt.EMPTY_CHAR_ARRAY;
   }
 
@@ -209,8 +208,7 @@ class PackagePrefixFileSystemItemImpl extends PsiElementBase implements PsiFileS
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return myIndex == myPackages.length -1? myDirectory.getChildren() : new PsiElement[] {new PackagePrefixFileSystemItemImpl(myDirectory, myIndex + 1, myPackages)};
   }
 

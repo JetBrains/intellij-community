@@ -29,9 +29,8 @@ public class DefaultPlatformTopHitProvider extends ActionsTopHitProvider {
      {"ren", "rename  ", "RenameElement"},
    };
 
-  @NotNull
   @Override
-  protected String[][] getActionsMatrix() {
+  protected String[] @NotNull [] getActionsMatrix() {
     return ACTION_MATRIX;
   }
 }

@@ -1,7 +1,7 @@
 // "Add missing annotation parameters - value4, value3, value2, value1" "true"
 class Test {
 
-  @MyAnnotation(value = "xxx", value4 = , value3 = , value2 = , value1 = )
+  @MyAnnotation(value = "xxx", value4 = "", value3 = "", value2 = "", value1 = "")
   void m() {
 
   }

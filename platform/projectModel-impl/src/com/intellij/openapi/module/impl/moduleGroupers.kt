@@ -8,9 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
-/**
- * @author nik
- */
 @ApiStatus.Internal
 fun createGrouper(project: Project, moduleModel: ModifiableModuleModel? = null): ModuleGrouper {
   val hasGroups = moduleModel?.hasModuleGroups() ?: ModuleManager.getInstance(project).hasModuleGroups()

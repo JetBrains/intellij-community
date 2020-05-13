@@ -24,9 +24,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class RenamedFileContainer extends Container {
   private String filePath;
   private String newName;

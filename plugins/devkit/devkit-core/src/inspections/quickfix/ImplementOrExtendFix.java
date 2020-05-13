@@ -11,20 +11,17 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-import static org.jetbrains.idea.devkit.util.PsiUtil.createPointer;
-
 public class ImplementOrExtendFix extends BaseFix {
   private final SmartPsiElementPointer<PsiClass> myCompClassPointer;
 
   private ImplementOrExtendFix(@NotNull PsiClass compClass,
                                @NotNull PsiClass checkedClass,
                                boolean onTheFly) {
-    super(createPointer(checkedClass), onTheFly);
-    myCompClassPointer = createPointer(compClass);
+    super(checkedClass, onTheFly);
+    myCompClassPointer = SmartPointerManager.createPointer(compClass);
   }
 
-  @NotNull
-  public static LocalQuickFix[] createFix(PsiClass compClass, PsiClass checkedClass, boolean onTheFly) {
+  public static LocalQuickFix @NotNull [] createFix(PsiClass compClass, PsiClass checkedClass, boolean onTheFly) {
     ImplementOrExtendFix fix = null;
 
     if (compClass.isInterface() && compClass.getImplementsList() != null) {

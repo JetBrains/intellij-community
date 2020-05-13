@@ -42,12 +42,15 @@
           <option name="issueRegexp" value="IDEA-COMMUNITY-CR-\d+" />
           <option name="linkRegexp" value="https://upsource.jetbrains.com/idea-community/review/$0" />
         </IssueNavigationLink>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="JDK\-\d+" />
+          <option name="linkRegexp" value="https://bugs.openjdk.java.net/browse/$0" />
+        </IssueNavigationLink>
       </list>
     </option>
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/android" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/android/tools-base" vcs="Git" />
   </component>
 </project>

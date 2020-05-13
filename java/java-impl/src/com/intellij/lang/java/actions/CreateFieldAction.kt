@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
+import com.intellij.psi.util.JavaElementKind
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 
@@ -25,7 +26,8 @@ internal class CreateFieldAction(target: PsiClass, request: CreateFieldRequest) 
 
   override fun getActionGroup(): JvmActionGroup = CreateFieldActionGroup
 
-  override fun getText(): String = message("create.field.from.usage.full.text", request.fieldName, getNameForClass(target, false))
+  override fun getText(): String = message("create.element.in.class", JavaElementKind.FIELD.`object`(),
+                                           request.fieldName, getNameForClass(target, false))
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     JavaFieldRenderer(project, false, target, request).doRender()

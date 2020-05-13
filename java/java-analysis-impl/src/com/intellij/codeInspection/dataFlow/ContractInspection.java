@@ -2,9 +2,13 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,10 +45,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
         boolean ownContract = annotation.getOwner() == method.getModifierList();
         for (StandardMethodContract contract : JavaMethodContractUtil.getMethodContracts(method)) {
           Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, ownContract);
-          for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
-            PsiElement element = entry.getKey();
-            holder.registerProblem(element, entry.getValue());
-          }
+          errors.forEach(holder::registerProblem);
         }
       }
 
@@ -78,7 +79,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
           boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
           String error;
           if (pure) {
-            error = "Pure method cannot have mutation contract";
+            error = JavaAnalysisBundle.message("inspection.contract.checker.pure.method.mutation.contract");
           } else {
             error = MutationSignature.checkSignature(mutationContract, method);
           }
@@ -108,32 +109,16 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
     for (int clauseIndex = 0; clauseIndex < contracts.size(); clauseIndex++) {
       StandardMethodContract contract = contracts.get(clauseIndex);
       if (contract.getParameterCount() != paramCount) {
-        return ParseException.forClause("Method takes " + paramCount + " parameters, " +
-                                        "while contract clause '" + contract + "' expects " + contract.getParameterCount(), text,
-                                        clauseIndex);
+        String message = JavaAnalysisBundle
+          .message("inspection.contract.checker.parameter.count.mismatch", paramCount, contract, contract.getParameterCount());
+        return ParseException.forClause(message, text, clauseIndex);
       }
       for (int i = 0; i < parameters.length; i++) {
         ValueConstraint constraint = contract.getParameterConstraint(i);
-        PsiType type = parameters[i].getType();
-        switch (constraint) {
-          case ANY_VALUE:
-            break;
-          case NULL_VALUE:
-          case NOT_NULL_VALUE:
-            if (type instanceof PsiPrimitiveType) {
-              String message =
-                "Contract clause '" + contract + "': parameter #" + (i + 1) + " has primitive type '" + type.getPresentableText() + "'";
-              return ParseException.forConstraint(message, text, clauseIndex, i);
-            }
-            break;
-          case TRUE_VALUE:
-          case FALSE_VALUE:
-            if (!PsiType.BOOLEAN.equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
-              String message = "Contract clause '" + contract + "': parameter #" + (i + 1) + " has '" +
-                               type.getPresentableText() + "' type (expected boolean)";
-              return ParseException.forConstraint(message, text, clauseIndex, i);
-            }
-            break;
+        PsiParameter parameter = parameters[i];
+        String message = getConstraintProblem(method, contract, constraint, parameter);
+        if (message != null) {
+          return ParseException.forConstraint(message, text, clauseIndex, i);
         }
       }
       String problem = contract.getReturnValue().getMethodCompatibilityProblem(method);
@@ -143,11 +128,11 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       if (possibleContracts != null) {
         if (possibleContracts.isEmpty()) {
           return ParseException
-            .forClause("Contract clause '" + contract + "' is unreachable: previous contracts cover all possible cases", text, clauseIndex);
+            .forClause(JavaAnalysisBundle.message("inspection.contract.checker.unreachable.contract.clause", contract), text, clauseIndex);
         }
         if (StreamEx.of(possibleContracts).allMatch(c -> c.intersect(contract) == null)) {
           return ParseException.forClause(
-            "Contract clause '" + contract + "' is never satisfied as its conditions are covered by previous contracts", text, clauseIndex);
+            JavaAnalysisBundle.message("inspection.contract.checker.contract.clause.never.satisfied", contract), text, clauseIndex);
         }
         possibleContracts = StreamEx.of(possibleContracts).flatMap(c -> c.excludeContract(contract))
                                      .limit(DataFlowRunner.MAX_STATES_PER_BRANCH).toList();
@@ -157,5 +142,55 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static String getConstraintProblem(PsiMethod method,
+                                             StandardMethodContract contract,
+                                             ValueConstraint constraint, PsiParameter parameter) {
+    PsiType type = parameter.getType();
+    switch (constraint) {
+      case NULL_VALUE: {
+        if (type instanceof PsiPrimitiveType) {
+          return JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability",
+                                            parameter.getName(), type.getPresentableText(), constraint);
+        }
+        NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityInfo(parameter);
+        if (info != null && info.getNullability() == Nullability.NOT_NULL) {
+          if (info.isInferred() && contract.getReturnValue().isFail()) {
+            // null -> fail is ok if not-null was inferred
+            return null;
+          }
+          return JavaAnalysisBundle.message(info.isInferred()
+                                            ? "inspection.contract.checker.inferred.notnull.parameter.null"
+                                            : "inspection.contract.checker.notnull.parameter.null",
+                                            parameter.getName(), constraint);
+        }
+        return null;
+      }
+      case NOT_NULL_VALUE: {
+        if (type instanceof PsiPrimitiveType) {
+          return JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability",
+                                            parameter.getName(), type.getPresentableText(), constraint);
+        }
+        NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityInfo(parameter);
+        if (info != null && info.getNullability() == Nullability.NOT_NULL) {
+          return JavaAnalysisBundle.message(info.isInferred()
+                                            ? "inspection.contract.checker.inferred.notnull.parameter.notnull"
+                                            : "inspection.contract.checker.notnull.parameter.notnull",
+                                            parameter.getName(), constraint);
+        }
+        return null;
+      }
+      case TRUE_VALUE:
+      case FALSE_VALUE:
+        if (!PsiType.BOOLEAN.equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+          return JavaAnalysisBundle.message("inspection.contract.checker.boolean.condition.for.nonboolean.parameter",
+                                            parameter.getName(), type.getPresentableText());
+        }
+        return null;
+      default:
+        return null;
+    }
   }
 }

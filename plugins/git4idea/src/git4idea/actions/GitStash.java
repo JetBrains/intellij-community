@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -8,8 +8,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
@@ -22,7 +22,9 @@ public class GitStash extends GitRepositoryAction {
 
   @Override
   protected void perform(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not stash changes now")) return;
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(GitBundle.message("stash.error.can.not.stash.changes.now"))) {
+      return;
+    }
     GitStashDialog d = new GitStashDialog(project, gitRoots, defaultRoot);
     if (!d.showAndGet()) {
       return;
@@ -34,10 +36,10 @@ public class GitStash extends GitRepositoryAction {
         try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (result.success()) {
-            VfsUtil.markDirtyAndRefresh(false, true, false, d.getGitRoot());
+            GitUtil.refreshVfsInRoot(d.getGitRoot());
           }
           else {
-            VcsNotifier.getInstance(project).notifyError("Stash Failed", result.getErrorOutputAsHtmlString());
+            VcsNotifier.getInstance(project).notifyError("Stash Failed", result.getErrorOutputAsHtmlString(), true);
           }
         }
       }

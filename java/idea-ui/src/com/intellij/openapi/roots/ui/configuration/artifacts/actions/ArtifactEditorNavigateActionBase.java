@@ -15,22 +15,19 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.packaging.ui.TreeNodePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class ArtifactEditorNavigateActionBase extends DumbAwareAction {
   public ArtifactEditorNavigateActionBase(JComponent contextComponent) {
-    super(ProjectBundle.message("action.name.facet.navigate"));
+    super(JavaUiBundle.message("action.name.facet.navigate"));
     registerCustomShortcutSet(CommonShortcuts.getEditSource(), contextComponent);
   }
 

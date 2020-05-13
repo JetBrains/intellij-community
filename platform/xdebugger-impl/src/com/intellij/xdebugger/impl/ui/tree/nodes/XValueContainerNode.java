@@ -24,9 +24,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XValueContainerNode<ValueContainer extends XValueContainer> extends XDebuggerTreeNode implements XCompositeNode, TreeNode {
   private List<XValueNodeImpl> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;
@@ -117,7 +114,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   private List<XValueNodeImpl> initChildrenList(int initialSize) {
     XDebuggerPinToTopManager pinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(myTree.getProject());
     boolean needBaseSorting = !myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues();
-    boolean isPinToTopSupported = pinToTopManager.isPinToTopSupported(this);
+    boolean isPinToTopSupported = pinToTopManager.isEnabled() && pinToTopManager.isPinToTopSupported(this);
 
     if (!needBaseSorting && !isPinToTopSupported) {
       return new ArrayList<>(initialSize);

@@ -120,6 +120,12 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(STATIC);
         }
       }
+      if (((PsiClass)parent).isRecord()) {
+        if (!(grandParent instanceof PsiFile)) {
+          implicitModifiers.add(STATIC);
+        }
+        implicitModifiers.add(FINAL);
+      }
       if (((PsiClass)parent).isEnum()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
@@ -154,6 +160,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       else if (aClass != null && aClass.isEnum() && ((PsiMethod)parent).isConstructor()) {
         implicitModifiers.add(PRIVATE);
       }
+    }
+    else if (parent instanceof PsiRecordComponent) {
+      implicitModifiers.add(FINAL);
     }
     else if (parent instanceof PsiField) {
       if (parent instanceof PsiEnumConstant) {
@@ -202,7 +211,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     // changes horizontal position of parameters list start, hence, we need to reformat them in order to preserve alignment.
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
-      CodeEditUtil.markToReformat(method.getParameterList().getNode(), true);
+      ASTNode node = method.getParameterList().getNode();
+      if (node != null) { // could be a compact constructor parameter list
+        CodeEditUtil.markToReformat(node, true);
+      }
     }
 
     if (value) {
@@ -258,16 +270,14 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     final PsiAnnotation[] own = getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
     final List<PsiAnnotation> ext = PsiAugmentProvider.collectAugments(this, PsiAnnotation.class);
     return ArrayUtil.mergeArrayAndCollection(own, ext, PsiAnnotation.ARRAY_FACTORY);
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), annotation -> {
       PsiAnnotation.TargetType target = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);

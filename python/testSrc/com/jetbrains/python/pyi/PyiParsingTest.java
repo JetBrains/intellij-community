@@ -17,7 +17,10 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PythonDialectsTokenSetContributor;
+import com.jetbrains.python.PythonParserDefinition;
+import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.PythonTokenSetContributor;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
@@ -34,7 +37,6 @@ public class PyiParsingTest extends ParsingTestCase {
     super.setUp();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override
@@ -50,6 +52,6 @@ public class PyiParsingTest extends ParsingTestCase {
     doTest();
     assertInstanceOf(myFile, PyiFile.class);
     final PyiFile pyiFile = (PyiFile)myFile;
-    assertEquals(LanguageLevel.PYTHON38, pyiFile.getLanguageLevel());
+    assertEquals(LanguageLevel.getLatest(), pyiFile.getLanguageLevel());
   }
 }

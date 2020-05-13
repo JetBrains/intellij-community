@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiMethod;
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 class MigrateGetterNameSetting {
   private static final String CODE_ALWAYS_YES = "Always Migrate Method Names";
   private static final String CODE_ALWAYS_NO = "Never Migrate Method Names";
-  private static final String[] CODES = new String[]{CODE_ALWAYS_YES, Messages.YES_BUTTON, CODE_ALWAYS_NO, Messages.NO_BUTTON};
+  private static final String[] CODES = new String[]{CODE_ALWAYS_YES, Messages.getYesButton(), CODE_ALWAYS_NO, Messages.getNoButton()};
 
   private final AtomicReference<Boolean> myGlobalValue = new AtomicReference<>();
 
@@ -71,7 +72,7 @@ class MigrateGetterNameSetting {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return messageText.contains("dontMigrateName") ? 3 : 1;
     } else {
-      return Messages.showIdeaMessageDialog(null, messageText, "Type Migration", CODES, 0, null, null);
+      return Messages.showIdeaMessageDialog(null, messageText, JavaRefactoringBundle.message("type.migration.action.name"), CODES, 0, null, null);
     }
   }
 }

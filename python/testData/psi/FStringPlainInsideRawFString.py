@@ -1,0 +1,1 @@
+s = rf'foo{f"\n"}bar\n'

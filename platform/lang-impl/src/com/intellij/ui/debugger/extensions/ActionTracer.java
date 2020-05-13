@@ -2,12 +2,15 @@
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +34,9 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
     if (myComponent == null) {
       myText = new JTextArea();
       final JBScrollPane log = new JBScrollPane(myText);
-      final AnAction clear = new AnAction("Clear", "Clear log", AllIcons.General.Reset) {
+      final AnAction clear = new AnAction(IdeBundle.messagePointer("action.ActionTracer.Anonymous.text.Clear"),
+                                          IdeBundle.messagePointer("action.ActionTracer.Anonymous.description.clear.log"),
+                                          AllIcons.General.Reset) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myText.setText(null);
@@ -51,8 +56,8 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
   }
 
   @Override
-  public String getName() {
-    return "Actions";
+  public @TabTitle String getName() {
+    return LangBundle.message("tab.title.actions");
   }
 
   @Override

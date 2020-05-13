@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.Pair;
@@ -7,13 +7,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,7 +51,7 @@ public class PythonStringUtil {
 
   public static boolean isPath(@Nullable String s) {
     if (!StringUtil.isEmpty(s)) {
-      s = ObjectUtils.assertNotNull(s);
+      s = Objects.requireNonNull(s);
       s = FileUtil.toSystemIndependentName(s);
       final List<String> components = StringUtil.split(s, "/");
       for (String name : components) {

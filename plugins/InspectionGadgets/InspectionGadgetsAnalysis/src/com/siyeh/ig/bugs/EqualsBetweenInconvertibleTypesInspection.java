@@ -22,24 +22,18 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
+import java.util.Objects;
 
 public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean WARN_IF_NO_MUTUAL_SUBCLASS_FOUND = true;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "equals.between.inconvertible.types.display.name");
-  }
 
   @Nullable
   @Override
@@ -99,24 +93,29 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
           !TypeUtils.areConvertible(lhsType, rhsType) /* red code */) {
         return;
       }
-      createInconvertibleTypesChecker().deepCheck(lhsType, rhsType, expression.getOperationSign(), new HashMap<>(), WARN_IF_NO_MUTUAL_SUBCLASS_FOUND, isOnTheFly());
+      InconvertibleTypesChecker.TypeMismatch mismatch =
+        InconvertibleTypesChecker.deepCheck(lhsType, rhsType, getMutualSubclassMode());
+      if (mismatch != null) {
+        registerError(expression.getOperationSign(), mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+      }
+    }
+    
+    private InconvertibleTypesChecker.LookForMutualSubclass getMutualSubclassMode() {
+      if (!WARN_IF_NO_MUTUAL_SUBCLASS_FOUND) {
+        return InconvertibleTypesChecker.LookForMutualSubclass.NEVER;
+      }
+      return isOnTheFly()
+             ? InconvertibleTypesChecker.LookForMutualSubclass.IF_CHEAP
+             : InconvertibleTypesChecker.LookForMutualSubclass.ALWAYS;
     }
 
     @Override
     public void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
-      createInconvertibleTypesChecker().checkTypes(expression, leftType, rightType, WARN_IF_NO_MUTUAL_SUBCLASS_FOUND, isOnTheFly());
-    }
-
-    private InconvertibleTypesChecker createInconvertibleTypesChecker() {
-      return new InconvertibleTypesChecker() {
-        @Override
-        protected void registerEqualsError(PsiElement highlightLocation,
-                                           @NotNull PsiType leftType,
-                                           @NotNull PsiType rightType,
-                                           boolean convertible) {
-          registerError(highlightLocation, leftType, rightType, convertible);
-        }
-      };
+      InconvertibleTypesChecker.TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(leftType, rightType, getMutualSubclassMode());
+      if (mismatch != null) {
+        registerError(Objects.requireNonNull(expression.getReferenceNameElement()), 
+                      mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+      }
     }
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
@@ -62,7 +61,7 @@ public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
 
   @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-    return CodeInsightBundle.message("error.unknown.enum.value.message", s);
+    return XmlDomBundle.message("error.unknown.enum.value.message", s);
   }
 
   @Override

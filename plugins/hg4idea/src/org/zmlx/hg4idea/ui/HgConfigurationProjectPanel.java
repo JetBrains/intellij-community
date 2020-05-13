@@ -14,15 +14,14 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.VcsExecutablePathSelector;
@@ -35,7 +34,7 @@ import org.zmlx.hg4idea.util.HgVersion;
 import javax.swing.*;
 import java.util.Objects;
 
-public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConfigurable.HgSettingsHolder> {
+public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConfigurable.HgSettingsHolder>, Disposable {
   private final BorderLayoutPanel myMainPanel;
   private final VcsExecutablePathSelector myExecutablePathSelector;
   private final JBCheckBox myCheckIncomingOutgoingCbx;
@@ -50,19 +49,19 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-    myExecutablePathSelector = new VcsExecutablePathSelector("Mercurial", this::testExecutable);
+    myExecutablePathSelector = new VcsExecutablePathSelector("Mercurial", this, this::testExecutable);
     panel.add(myExecutablePathSelector.getMainPanel());
 
-    myCheckIncomingOutgoingCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.check.incoming.outgoing"));
+    myCheckIncomingOutgoingCbx = new JBCheckBox(HgBundle.message("hg4idea.configuration.check.incoming.outgoing"));
     panel.add(UI.PanelFactory.panel(myCheckIncomingOutgoingCbx).createPanel());
 
-    myIgnoredWhitespacesInAnnotationsCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.ignore.whitespace.in.annotate"));
+    myIgnoredWhitespacesInAnnotationsCbx = new JBCheckBox(HgBundle.message("hg4idea.configuration.ignore.whitespace.in.annotate"));
     panel.add(UI.PanelFactory.panel(myIgnoredWhitespacesInAnnotationsCbx).createPanel());
 
     mySyncControl = new JBCheckBox(DvcsBundle.getString("sync.setting"));
-    JPanel mySyncControlPanel = ObjectUtils.notNull(UI.PanelFactory.panel(mySyncControl)
-      .withTooltip(DvcsBundle.message("sync.setting.description", "Mercurial"))
-      .createPanel());
+    JPanel mySyncControlPanel = Objects.requireNonNull(UI.PanelFactory.panel(mySyncControl)
+                                                         .withTooltip(DvcsBundle.message("sync.setting.description", "Mercurial"))
+                                                         .createPanel());
     if (!project.isDefault()) {
       final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
       mySyncControlPanel.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
@@ -76,8 +75,12 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     myMainPanel.addToTop(panel);
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private void testExecutable(@NotNull String executable) {
-    new Task.Modal(myProject, "Identifying Mercurial Version", true) {
+    new Task.Modal(myProject, HgBundle.message("hg4idea.configuration.identifying.version"), true) {
       HgVersion version;
 
       @Override
@@ -92,13 +95,13 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
 
       @Override
       public void onSuccess() {
-        Messages.showInfoMessage(myMainPanel, String.format("Mercurial version is %s", version.toString()),
-                                 HgVcsMessages.message("hg4idea.run.success.title"));
+        Messages.showInfoMessage(myMainPanel, HgBundle.message("hg4idea.configuration.version", version.toString()),
+                                 HgBundle.message("hg4idea.run.success.title"));
       }
 
       @Override
       public void onThrowable(@NotNull Throwable error) {
-        Messages.showErrorDialog(myMainPanel, error.getCause().getMessage(), HgVcsMessages.message("hg4idea.run.failed.title"));
+        Messages.showErrorDialog(myMainPanel, error.getCause().getMessage(), HgBundle.message("hg4idea.run.failed.title"));
       }
     }.queue();
   }
@@ -146,12 +149,6 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     projectSettings.setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
     projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     Objects.requireNonNull(HgVcs.getInstance(myProject)).checkVersion();
-    if (myCheckIncomingOutgoingCbx.isSelected()) {
-      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).show();
-    }
-    else {
-      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
-    }
   }
 
   @NotNull

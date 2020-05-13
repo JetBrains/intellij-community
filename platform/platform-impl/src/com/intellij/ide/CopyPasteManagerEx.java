@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * This implementation attempts to limit memory occupied by clipboard history. To make it work, {@link Transferable} instances passed to
@@ -65,7 +66,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   @Override
-  public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+  public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
     return flavors.length > 0 && ClipboardSynchronizer.getInstance().areDataFlavorsAvailable(flavors);
   }
 
@@ -220,8 +221,8 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     int maxMemory = Math.max(0, Registry.intValue("clipboard.history.max.memory"));
     int smallItemSizeLimit = maxMemory / maxCount / 10;
 
-    for (int i = myData.size() - 1; i >= maxCount; i--) {
-      myData.remove(i);
+    if (myData.size() > maxCount) {
+      myData.subList(maxCount, myData.size()).clear();
     }
 
     LinkedListWithSum<Transferable>.ListIterator it = myData.listIterator(myData.size());
@@ -248,11 +249,10 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return null;
   }
 
-  @NotNull
   @Override
-  public Transferable[] getAllContents() {
+  public Transferable @NotNull [] getAllContents() {
     String clipString = getContents(DataFlavor.stringFlavor);
-    if (clipString != null && (myData.isEmpty() || !Comparing.equal(clipString, getStringContent(myData.get(0))))) {
+    if (clipString != null && (myData.isEmpty() || !Objects.equals(clipString, getStringContent(myData.get(0))))) {
       addToTheTopOfTheStack(new StringSelection(clipString));
     }
     return myData.toArray(new Transferable[0]);

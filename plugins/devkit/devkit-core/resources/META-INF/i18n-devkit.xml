@@ -1,0 +1,14 @@
+<idea-plugin>
+  <resource-bundle>messages.DevKitBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij.java-i18n">
+    <resourceBundleManager implementation="org.jetbrains.idea.devkit.i18n.IntelliJProjectResourceBundleManager"/>
+  </extensions>
+  
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="XML" displayName="Plugin.xml i18n verification" applyToDialects="false"
+                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlI18nInspection"/>
+  </extensions>
+</idea-plugin>

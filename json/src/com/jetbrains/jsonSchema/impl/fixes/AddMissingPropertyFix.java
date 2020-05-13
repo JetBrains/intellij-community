@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.impl.EmptyNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInspection.*;
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -51,14 +52,14 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Add missing properties";
+    return JsonBundle.message("add.missing.properties");
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getName() {
-    return "Add missing " + myData.getMessage(true);
+    return JsonBundle.message("add.missing.0", myData.getMessage(true));
   }
 
   @Override
@@ -134,9 +135,9 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
           }
         }
         PsiElement adjusted = myQuickFixAdapter.adjustNewProperty(newElement);
-        hadComma.set(myQuickFixAdapter.ensureComma(adjusted, PsiTreeUtil.skipWhitespacesForward(newElement)));
+        hadComma.set(myQuickFixAdapter.ensureComma(adjusted, PsiTreeUtil.skipWhitespacesAndCommentsForward(newElement)));
         if (!hadComma.get()) {
-          hadComma.set(processedElement == element && myQuickFixAdapter.ensureComma(PsiTreeUtil.skipWhitespacesBackward(newElement), adjusted));
+          hadComma.set(processedElement == element && myQuickFixAdapter.ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(newElement), adjusted));
         }
         processedElement = adjusted;
         if (isSingle) {
@@ -173,7 +174,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
 
   @Override
   public void applyFix(@NotNull Project project,
-                       @NotNull CommonProblemDescriptor[] descriptors,
+                       CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
     List<Pair<AddMissingPropertyFix, PsiElement>> propFixes = new ArrayList<>();
@@ -191,7 +192,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
   }
 
   @Nullable
-  private static AddMissingPropertyFix getWorkingQuickFix(@NotNull QuickFix[] fixes) {
+  private static AddMissingPropertyFix getWorkingQuickFix(QuickFix @NotNull [] fixes) {
     for (QuickFix fix : fixes) {
       if (fix instanceof AddMissingPropertyFix) {
         return (AddMissingPropertyFix)fix;

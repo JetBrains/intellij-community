@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,8 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MakeStaticHandler implements RefactoringActionHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("make.method.static.title");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticHandler");
+  private static final Logger LOG = Logger.getInstance(MakeStaticHandler.class);
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -52,7 +52,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
     if(!(element instanceof PsiTypeParameterListOwner)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MAKE_METHOD_STATIC);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MAKE_METHOD_STATIC);
       return;
     }
     if(LOG.isDebugEnabled()) {
@@ -62,7 +62,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if(elements.length != 1 || !(elements[0] instanceof PsiTypeParameterListOwner)) return;
 
     final PsiTypeParameterListOwner member = (PsiTypeParameterListOwner)elements[0];
@@ -71,7 +71,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     String error = validateTarget(member);
     if (error != null) {
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, error, REFACTORING_NAME, HelpID.MAKE_METHOD_STATIC);
+      CommonRefactoringUtil.showErrorHint(project, editor, error, getRefactoringName(), HelpID.MAKE_METHOD_STATIC);
       return;
     }
 
@@ -96,7 +96,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
           (Runnable)() -> hasMethodReferenceOnInstance[0] = !MethodReferencesSearch.search((PsiMethod)member).forEach(reference -> {
             final PsiElement element = reference.getElement();
             return !(element instanceof PsiMethodReferenceExpression);
-          }), "Search for method references", true, project)) return;
+          }), JavaRefactoringBundle.message("make.static.method.references.progress"), true, project)) return;
       }
 
       if (classRefsInMember.length > 0 || hasMethodReferenceOnInstance[0]) {
@@ -145,5 +145,9 @@ public class MakeStaticHandler implements RefactoringActionHandler {
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("inner.classes.cannot.have.static.members"));
     }
     return null;
+  }
+
+  public static String getRefactoringName() {
+    return JavaRefactoringBundle.message("make.method.static.title");
   }
 }

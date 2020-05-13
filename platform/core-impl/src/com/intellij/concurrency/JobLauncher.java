@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,8 +26,12 @@ public abstract class JobLauncher {
   }
 
   /**
-   * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
-   * With checkCanceled in each thread delegated to our current progress
+   * Schedules concurrent execution of {@code thingProcessor} over each element of {@code things} and waits for completion
+   * with checkCanceled in each thread delegated to the {@code progress} (or the current global progress if null).
+   * Note: When the {@code thingProcessor} throws an exception or returns {@code false}  or the current indicator is canceled,
+   * the method is finished with {@code false} as soon as possible,
+   * which means some workers might still be in flight to completion. On the other hand, when the method returns {@code true},
+   * it's guaranteed that the whole list was processed and all tasks completed.
    *
    * @param things                      data to process concurrently
    * @param progress                    progress indicator
@@ -41,7 +45,7 @@ public abstract class JobLauncher {
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
-    Application app = ApplicationManager.getApplication();
+    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     return invokeConcurrentlyUnderProgress(things, progress, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor);
   }
   /**

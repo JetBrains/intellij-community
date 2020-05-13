@@ -33,8 +33,6 @@ import java.util.Set;
 
 /**
  * Implementation of {@link FrameworkDetector} for frameworks configured via facets
- *
- * @author nik
  */
 public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends FacetConfiguration> extends FrameworkDetector {
   private static final Logger LOG = Logger.getInstance(FacetBasedFrameworkDetector.class);
@@ -86,7 +84,7 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
   }
 
   @Override
-  public FrameworkType getFrameworkType() {
+  public @NotNull FrameworkType getFrameworkType() {
     FacetType<F, C> type = getFacetType();
     //noinspection ConstantConditions todo[nik] remove later: this is added to find implementations which incorrectly return 'null' from 'getFacetType'
     LOG.assertTrue(type != null, "'getFacetType' returns 'null' in " + getClass());

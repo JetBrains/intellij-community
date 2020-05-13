@@ -16,9 +16,9 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,7 @@ import java.util.List;
  * @author yole
  */
 public class FormClassAnnotator implements Annotator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormClassAnnotator");
+  private static final Logger LOG = Logger.getInstance(FormClassAnnotator.class);
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
@@ -49,15 +49,13 @@ public class FormClassAnnotator implements Annotator {
       PsiClass aClass = (PsiClass) psiElement;
       final List<PsiFile> formsBoundToClass = FormClassIndex.findFormsBoundToClass(aClass.getProject(), aClass);
       if (formsBoundToClass.size() > 0) {
-        Annotation boundClassAnnotation = holder.createInfoAnnotation(aClass.getNameIdentifier(), null);
-        boundClassAnnotation.setGutterIconRenderer(new BoundIconRenderer(aClass));
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(aClass.getNameIdentifier()).gutterIconRenderer(new BoundIconRenderer(aClass)).create();
       }
     }
   }
 
   private static void annotateFormField(final PsiField field, final PsiFile boundForm, final AnnotationHolder holder) {
-    Annotation boundFieldAnnotation = holder.createInfoAnnotation(field, null);
-    boundFieldAnnotation.setGutterIconRenderer(new BoundIconRenderer(field));
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).gutterIconRenderer(new BoundIconRenderer(field)).create();
 
     LOG.assertTrue(boundForm instanceof PsiPlainTextFile);
     final PsiType guiComponentType = FormReferenceProvider.getGUIComponentType((PsiPlainTextFile)boundForm, field.getName());
@@ -66,16 +64,16 @@ public class FormClassAnnotator implements Annotator {
       if (!fieldType.isAssignableFrom(guiComponentType)) {
         String message = UIDesignerBundle.message("bound.field.type.mismatch", guiComponentType.getCanonicalText(),
                                                   fieldType.getCanonicalText());
-        Annotation annotation = holder.createErrorAnnotation(field.getTypeElement(), message);
-        annotation.registerFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), null, null);
-        annotation.registerFix(new ChangeBoundFieldTypeFix(field, guiComponentType), null, null);
+        holder.newAnnotation(HighlightSeverity.ERROR, message).range(field.getTypeElement())
+        .withFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()))
+        .withFix(new ChangeBoundFieldTypeFix(field, guiComponentType)).create();
       }
     }
 
     if (field.hasInitializer()) {
       final String message = UIDesignerBundle.message("field.is.overwritten.by.generated.code", field.getName());
-      Annotation annotation = holder.createWarningAnnotation(field.getInitializer(), message);
-      annotation.registerFix(new IntentionAction() {
+      holder.newAnnotation(HighlightSeverity.WARNING, message).range(field.getInitializer())
+      .withFix(new IntentionAction() {
         @Override
         @NotNull
         public String getText() {
@@ -104,7 +102,7 @@ public class FormClassAnnotator implements Annotator {
         public boolean startInWriteAction() {
           return true;
         }
-      });
+      }).create();
     }
   }
 }

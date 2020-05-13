@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +25,9 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -44,7 +43,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.
 
 public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
   @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(REQUIRED_ATTRIBUTES_SHORT_NAME);
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection");
+  protected static final Logger LOG = Logger.getInstance(RequiredAttributesInspectionBase.class);
   public String myAdditionalRequiredHtmlAttributes = "";
 
   private static String appendName(String toAppend, String text) {
@@ -55,18 +54,6 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
       toAppend = text;
     }
     return toAppend;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.HTML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.required.attributes.display.name");
   }
 
   @Override
@@ -87,7 +74,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
   }
 
   public static LocalQuickFix getIntentionAction(String name) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlBundle.message("add.optional.html.attribute", name));
+    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlAnalysisBundle.message("add.optional.html.attribute", name));
   }
 
   @Override
@@ -123,7 +110,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           LocalQuickFix insertRequiredAttributeIntention = isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
-          final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
+          final String localizedMessage = XmlAnalysisBundle.message("element.doesnt.have.required.attribute", name, attrName);
           reportOneTagProblem(
             tag,
             attrName,

@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class EnumerationCanBeIterationInspection extends BaseInspection {
@@ -57,13 +56,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new EnumerationCanBeIterationFix();
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "enumeration.can.be.iteration.display.name");
   }
 
   @Override
@@ -270,8 +262,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
         final PsiElement referenceElement = reference.getElement();
         referenceElements.add(referenceElement);
       }
-      Collections.sort(referenceElements,
-                       PsiElementOrderComparator.getInstance());
+      referenceElements.sort(PsiElementOrderComparator.getInstance());
       int result = 0;
       for (PsiElement referenceElement : referenceElements) {
         if (!(referenceElement instanceof PsiReferenceExpression)) {

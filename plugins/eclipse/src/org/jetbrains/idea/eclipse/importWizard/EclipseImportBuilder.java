@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.application.options.CodeStyle;
@@ -112,7 +112,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           }
           return true;
         });
-        Collections.sort(roots, (path1, path2) -> {
+        roots.sort((path1, path2) -> {
           final String projectName1 = EclipseProjectFinder.findProjectName(path1);
           final String projectName2 = EclipseProjectFinder.findProjectName(path2);
           return projectName1 != null && projectName2 != null ? projectName1.compareToIgnoreCase(projectName2) : 0;
@@ -207,8 +207,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       else {
         naturesByProject = StringUtil.join(naturesNames.keySet(), projectPath -> projectPath + "(" + naturesNames.get(projectPath) + ")", "<br>");
       }
-      Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + naturesByProject + "<br>" +
-                                                              "Some settings may be lost after import.", NotificationType.WARNING));
+      Notifications.Bus.notify(new Notification(title, title, EclipseBundle
+        .message("notification.content.imported.projects.contain.unknown.natures",
+                 naturesByProject), NotificationType.WARNING));
     }
 
     return true;
@@ -246,10 +247,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         }
       }
       if (!files.isEmpty()) {
-        final int resultCode = Messages.showYesNoCancelDialog(ApplicationNamesInfo.getInstance().getFullProductName() +
-                                                              " module files found:\n" +
-                                                              StringUtil.join(files, file -> file.getPath(), "\n") +
-                                                              ".\n Would you like to reuse them?", "Module Files Found",
+        final int resultCode = Messages.showYesNoCancelDialog(EclipseBundle.message(
+          "dialog.message.0.module.files.found.1.would.you.like.to.reuse.them", ApplicationNamesInfo.getInstance().getFullProductName(),
+          StringUtil.join(files, file -> file.getPath(), "\n")), EclipseBundle.message("dialog.title.module.files.found"),
                                                               Messages.getQuestionIcon());
         if (resultCode != Messages.YES) {
           if (resultCode == Messages.NO) {

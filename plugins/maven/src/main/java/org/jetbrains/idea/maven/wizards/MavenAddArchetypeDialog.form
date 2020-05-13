@@ -13,7 +13,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="GroupId"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.archetype.add.groupid"/>
         </properties>
       </component>
       <vspacer id="97e6a">
@@ -34,7 +34,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="ArtifactId"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.archetype.add.artifactid"/>
         </properties>
       </component>
       <component id="19a16" class="javax.swing.JTextField" binding="myArtifactIdField">
@@ -50,7 +50,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Version"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.archetype.add.version"/>
         </properties>
       </component>
       <component id="195ea" class="javax.swing.JTextField" binding="myVersionField">
@@ -66,7 +66,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&lt;html&gt;Repository &lt;i&gt;(optional)&lt;/i&gt;&lt;/html&gt;"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.archetype.add.repository"/>
         </properties>
       </component>
       <component id="3f1eb" class="javax.swing.JTextField" binding="myRepositoryField">

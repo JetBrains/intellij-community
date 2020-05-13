@@ -14,7 +14,7 @@ import java.util.Map;
  * @author yole
  */
 public final class SimpleTransferable<T> implements Transferable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.SimpleTransferable");
+  private static final Logger LOG = Logger.getInstance(SimpleTransferable.class);
   private static final Map<String, DataFlavor> ourDataFlavorMap = new HashMap<>();
 
   private final T myDataProxy;

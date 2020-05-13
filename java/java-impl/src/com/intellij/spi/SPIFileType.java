@@ -2,14 +2,13 @@
 package com.intellij.spi;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.spi.SPILanguage;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +30,6 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
       final VirtualFile gParent = parent.getParent();
       if (gParent != null && Comparing.equal("META-INF", gParent.getNameSequence())) {
         final String fileName = file.getName();
-        for (Object condition : Extensions.getRootArea().getExtensionPoint("com.intellij.vetoSPICondition").getExtensions()) {
-          if (((Condition<String>)condition).value(fileName)) return false;
-        }
         return FileTypeRegistry.getInstance().getFileTypeByFileName(fileName) == FileTypes.UNKNOWN;
       }
     }
@@ -49,7 +45,7 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
   @NotNull
   @Override
   public String getDescription() {
-    return "Service Provider Interface";
+    return JavaBundle.message("spi.file.type.description");
   }
 
   @NotNull
@@ -66,7 +62,7 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
 
   @Nullable
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
 }

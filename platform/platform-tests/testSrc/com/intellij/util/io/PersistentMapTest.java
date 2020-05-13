@@ -456,7 +456,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.put("Foo", "Bar");
       assertTrue(myMap.containsMapping("Foo"));
       myMap.close();
-      assertEquals(55,PersistentHashMap.getDataFile(myFile).length());
+      assertEquals(55,PersistentHashMap.getDataFile(myFile.toPath()).toFile().length());
     }
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(compressionFlag);

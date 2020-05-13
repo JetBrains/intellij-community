@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 
-/**
- * @author nik
- */
 public interface JpsLibraryDependency extends JpsDependencyElement {
   @NotNull
   JpsLibraryReference getLibraryReference();

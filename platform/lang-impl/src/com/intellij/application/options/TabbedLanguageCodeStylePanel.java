@@ -14,6 +14,8 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.Configurable;
@@ -29,8 +31,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +65,34 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
     myPredefinedCodeStyles = getPredefinedStyles();
+    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(
+      new ExtensionPointListener<CodeStyleSettingsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+          if (!extension.hasSettingsPage() && getDefaultLanguage() == extension.getLanguage()) {
+            createTab(extension);
+          }
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          if (!extension.hasSettingsPage() && getDefaultLanguage() == extension.getLanguage()) {
+            final String tabTitle = extension.getConfigurableDisplayName();
+            for (int i = 0; i < myTabbedPane.getTabCount(); i ++) {
+              if (myTabbedPane.getTitleAt(i).equals(tabTitle)) {
+                myTabbedPane.removeTabAt(i);
+                myTabs.stream().filter(
+                  panel -> panel.getTabTitle().equals(tabTitle)
+                ).findFirst().ifPresent(panel -> myTabs.remove(panel));
+                return;
+              }
+            }
+          }
+        }
+      }, this
+    );
   }
 
   /**
@@ -133,9 +166,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   public void showSetFrom(Component component) {
     initCopyFromMenu();
     DefaultActionGroup group = new DefaultActionGroup();
-    for (Component c : myCopyFromMenu.getComponents()) {
+    JBTreeTraverser<Component> traverser = JBTreeTraverser.<Component>of(
+      o -> o instanceof JMenu ? new Component[] { new TitledSeparator(((JMenu)o).getText()), ((JMenu)o).getPopupMenu()} :
+           o instanceof JPopupMenu ? ((JPopupMenu)o).getComponents() : null)
+        .withRoot(myCopyFromMenu);
+    for (Component c : traverser.traverse(TreeTraversal.LEAVES_DFS)) {
       if (c instanceof JSeparator) {
         group.addSeparator();
+      }
+      else if (c instanceof TitledSeparator) {
+        group.addSeparator(((TitledSeparator)c).getText());
       }
       else if (c instanceof JMenuItem) {
         group.add(new DumbAwareAction(((JMenuItem)c).getText(), "", ObjectUtils.notNull(((JMenuItem)c).getIcon(), EmptyIcon.ICON_16)) {

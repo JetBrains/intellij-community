@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -15,9 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/**
- * @author Sergey.Malenkov
- */
 public class KeyStrokeAdapter implements KeyListener {
   private static final Logger LOG = Logger.getInstance(KeyStrokeAdapter.class);
 
@@ -301,7 +299,7 @@ public class KeyStrokeAdapter implements KeyListener {
 
   private static final class LazyVirtualKeys {
     private static final Map<String, Integer> myNameToCode = new HashMap<>();
-    private static final Map<Integer, String> myCodeToName = new HashMap<>();
+    private static final Int2ObjectOpenHashMap<String> myCodeToName = new Int2ObjectOpenHashMap<>();
 
     static {
       try {

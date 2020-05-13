@@ -39,10 +39,10 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
     final MultiMap<PsiElement, String> conflictsMap = new MultiMap<>();
     doTest(() -> {
       final PsiClass srcClass = myFixture.findClass("a.A");
-      assertTrue("Source class not found", srcClass != null);
+      assertNotNull("Source class not found", srcClass);
 
       final PsiClass targetClass = myFixture.findClass("b.B");
-      assertTrue("Target class not found", targetClass != null);
+      assertNotNull("Target class not found", targetClass);
 
       final PsiMethod[] methods = srcClass.getMethods();
       assertTrue("No methods found", methods.length > 0);
@@ -57,7 +57,7 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
         PullUpConflictsUtil.checkConflicts(membersToMove, srcClass, targetClass, targetPackage, targetDirectory,
                                            psiMethod -> PullUpProcessor.checkedInterfacesContain(Arrays.asList(membersToMove), psiMethod)));
 
-      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
     });
 
     if (conflicts.length != 0 && conflictsMap.isEmpty()) {
@@ -96,10 +96,10 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
   public void testClassPackageConflict() {
     doTest(() -> {
       final PsiClass srcClass = myFixture.findClass("a.a");
-      assertTrue("Source class not found", srcClass != null);
+      assertNotNull("Source class not found", srcClass);
 
       final PsiClass targetClass = myFixture.findClass("a.B");
-      assertTrue("Target class not found", targetClass != null);
+      assertNotNull("Target class not found", targetClass);
 
       final PsiMethod[] methods = srcClass.getMethods();
       assertTrue("No methods found", methods.length > 0);
@@ -107,7 +107,7 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
       final MemberInfo memberInfo = new MemberInfo(methods[0]);
       memberInfo.setChecked(true);
       membersToMove[0] = memberInfo;
-      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
     });
   }
 }

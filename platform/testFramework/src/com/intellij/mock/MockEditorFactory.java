@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,9 @@ import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MockEditorFactory extends EditorFactory {
+import java.util.stream.Stream;
+
+public final class MockEditorFactory extends EditorFactory {
   public Document createDocument(String text) {
     return new DocumentImpl(text);
   }
@@ -75,14 +77,12 @@ public class MockEditorFactory extends EditorFactory {
   }
 
   @Override
-  @NotNull
-  public Editor[] getEditors(@NotNull Document document, Project project) {
-    return Editor.EMPTY_ARRAY;
+  public @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
+    return Stream.empty();
   }
 
   @Override
-  @NotNull
-  public Editor[] getAllEditors() {
+  public Editor @NotNull [] getAllEditors() {
     return Editor.EMPTY_ARRAY;
   }
 
@@ -112,7 +112,7 @@ public class MockEditorFactory extends EditorFactory {
 
   @Override
   @NotNull
-  public Document createDocument(@NotNull char[] text) {
+  public Document createDocument(char @NotNull [] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 

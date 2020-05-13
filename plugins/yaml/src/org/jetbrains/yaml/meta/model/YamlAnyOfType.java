@@ -34,7 +34,7 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
     return anyOf(types);
   }
 
-  private YamlAnyOfType(@NotNull String typeName, List<YamlMetaType> types) {
+  protected YamlAnyOfType(@NotNull String typeName, List<YamlMetaType> types) {
     super(typeName, types);
   }
 

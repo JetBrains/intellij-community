@@ -23,9 +23,6 @@ import org.codehaus.gant.ant.Gant;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 
-/**
- * @author nik
- */
 public class GantWithClasspathTask extends Gant {
   public static PrintStream out = null;
 

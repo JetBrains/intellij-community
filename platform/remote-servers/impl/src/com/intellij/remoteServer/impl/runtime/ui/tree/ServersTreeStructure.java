@@ -36,7 +36,7 @@ import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
@@ -170,9 +170,9 @@ public class ServersTreeStructure {
             }
             if (runConfigOrSourceType instanceof SingletonDeploymentSourceType) {
               String displayName = ((SingletonDeploymentSourceType)runConfigOrSourceType).getPresentableName();
-              return CloudBundle.getText("create.new.deployment.configuration.for.singleton.type", displayName);
+              return CloudBundle.message("create.new.deployment.configuration.for.singleton.type", displayName);
             }
-            return CloudBundle.getText("create.new.deployment.configuration.generic");
+            return CloudBundle.message("create.new.deployment.configuration.generic");
           }
 
           @Override
@@ -305,7 +305,7 @@ public class ServersTreeStructure {
       if (task != null) {
         RunnerAndConfigurationSettings settings = task.getExecutionEnvironment().getRunnerAndConfigurationSettings();
         if (settings != null) {
-          RunDialog.editConfiguration(myProject, settings, "Edit Deployment Configuration");
+          RunDialog.editConfiguration(myProject, settings, CloudBundle.message("dialog.title.edit.deployment.configuration"));
         }
       }
     }

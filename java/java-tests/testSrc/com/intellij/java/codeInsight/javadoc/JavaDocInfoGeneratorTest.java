@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -54,6 +55,11 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     return IdeaTestUtil.getMockJdk(JavaVersion.compose(myJdkVersion));
   }
 
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_14_PREVIEW;
+  }
+
   public void testSimpleField() { doTestField(); }
   public void testFieldValue() { doTestField(); }
   public void testValueInMethod() { doTestMethod(); }
@@ -86,6 +92,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testFieldInitializedWithSizedArray() { doTestField(); }
   public void testDoubleLt() { doTestClass(); }
   public void testNoSpaceAfterTagName() { doTestClass(); }
+  public void testRecordParameters() { doTestClass(); } //j.l.Record is unresolved as there is no mock jdk 14 yet
   public void testLambdaParameter() { doTestLambdaParameter(); }
   public void testLocalClassInsideAnonymous() { doTestAtCaret(); }
   public void testPackageInfoFromComment() { doTestPackageInfo("some"); }
@@ -104,6 +111,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testPackageHtml() { doTestPackageInfo(); }
   public void testSyntheticEnumValues() { doTestAtCaret(); }
   public void testVariableDoc() { doTestAtCaret(); }
+  public void testTypeAnnotation() { useJava8(); doTestAtCaret(); }
+  public void testTypeAnnotationArray() { useJava8(); doTestAtCaret(); }
+  public void testTypeAnnotationClass() { useJava8(); doTestClass(); }
 
   public void testAnonymousAndSuperJavadoc() {
     PsiClass psiClass = PsiTreeUtil.findChildOfType(getTestClass(), PsiAnonymousClass.class);
@@ -184,6 +194,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static Sdk removeAnnotationsJar(Sdk sdk) {
     SdkModificator modificator = sdk.getSdkModificator();
     VirtualFile annotationsJar = ContainerUtil.find(modificator.getRoots(OrderRootType.CLASSES), r -> r.getName().contains("annotations"));
+    modificator.setName(modificator.getName() + "-" + annotationsJar.getPath());
     modificator.removeRoot(annotationsJar, OrderRootType.CLASSES);
     modificator.commitChanges();
     return sdk;

@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-/**
- * @author nik
- */
 public class JavaResourceRootType extends JpsElementTypeBase<JavaResourceRootProperties> implements
                                                                                          JpsModuleSourceRootType<JavaResourceRootProperties> {
   public static final JavaResourceRootType RESOURCE = new JavaResourceRootType(false);

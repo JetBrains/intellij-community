@@ -24,14 +24,14 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.VirtualFilePattern;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated use {@link com.intellij.framework.detection.FrameworkDetector} instead
- *
- * @author nik
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public interface FacetDetectorRegistry<C extends FacetConfiguration> {
   /**
    * Customize text of popup which will be shown when facet is detected

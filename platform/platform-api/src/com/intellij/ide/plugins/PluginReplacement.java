@@ -18,8 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * &nbsp;&nbsp;&lt;pluginReplacement implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- *
- * @author nik
  */
 public abstract class PluginReplacement implements PluginAware {
   public static final ExtensionPointName<PluginReplacement> EP_NAME = ExtensionPointName.create("com.intellij.pluginReplacement");

@@ -25,4 +25,10 @@ public interface IntentionActionDelegate {
   static IntentionAction unwrap(@NotNull IntentionAction action) {
     return action instanceof IntentionActionDelegate ? unwrap(((IntentionActionDelegate)action).getDelegate()) : action;
   }
+
+  // optimization method: it's not necessary to build extension delegate to know its class
+  @NotNull
+  default String getImplementationClassName() {
+    return unwrap(getDelegate()).getClass().getName();
+  }
 }

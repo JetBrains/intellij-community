@@ -29,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
 
@@ -68,9 +69,10 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
           methodName = StringUtil.getShortName(methodName, '#');
         }
       }
-      PsiMethod[] methods = cls.findMethodsByName(methodName, false);
+      PsiMethod[] methods = cls.findMethodsByName(methodName, true);
+      final PsiClass finalCls = cls;
       return Arrays.stream(methods)
-        .filter(MethodSourceReference::staticNoParams)
+        .filter(method -> staticOrOneInstancePerClassNoParams(method, finalCls))
         .findFirst()
         .orElse(methods.length == 0 ? null : methods[0]);
     }
@@ -78,16 +80,18 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final List<Object> list = new ArrayList<>();
     final PsiClass topLevelClass = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
     if (topLevelClass != null) {
       final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
-      final PsiMethod[] methods = topLevelClass.getMethods();
+      final PsiMethod[] methods = topLevelClass.getAllMethods();
       for (PsiMethod method : methods) {
+        PsiClass aClass = method.getContainingClass();
+        if (aClass == null) continue;
+        if (JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
         if (current != null && method.getName().equals(current.getName())) continue;
-        if (!staticNoParams(method)) continue;
+        if (!staticOrOneInstancePerClassNoParams(method, topLevelClass)) continue;
         final LookupElementBuilder builder = LookupElementBuilder.create(method);
         list.add(builder.withAutoCompletionPolicy(AutoCompletionPolicy.SETTINGS_DEPENDENT));
       }
@@ -95,8 +99,8 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     return list.toArray();
   }
 
-  private static boolean staticNoParams(PsiMethod method) {
+  private static boolean staticOrOneInstancePerClassNoParams(PsiMethod method, PsiClass psiClass) {
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    return (TestUtils.testInstancePerClass(Objects.requireNonNull(method.getContainingClass())) != isStatic) && method.getParameterList().isEmpty();
+    return (TestUtils.testInstancePerClass(psiClass) != isStatic) && method.getParameterList().isEmpty();
   }
 }

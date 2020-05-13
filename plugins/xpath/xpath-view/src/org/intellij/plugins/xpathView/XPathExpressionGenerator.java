@@ -16,7 +16,6 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,6 +27,7 @@ import org.intellij.plugins.xpathView.util.MyPsiUtil;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -87,104 +87,11 @@ public class XPathExpressionGenerator {
 
         @Nullable
         private String getXPathNameStep(XmlTag tag) {
-            String uri = tag.getNamespace();
-
-            if ((uri.length() == 0)) {
-                return tag.getName();
-            }
-
-            if (MyPsiUtil.isInDeclaredNamespace(tag, uri, tag.getNamespacePrefix())) {
-                String prefix = tag.getNamespacePrefix();
-
-                if (prefix.length() == 0) {
-                    final String guessedPrefix = guessPrefix(tag);
-                    return guessedPrefix != null ? guessedPrefix + ":" + tag.getLocalName() : "*[name()='" + tag.getName() + "']";
-                }
-            }
             return tag.getName();
         }
 
-        @Nullable
-        private String guessPrefix(XmlTag tag) {
-            final String prefix = usedPrefixes.get(tag.getNamespace());
-            if (prefix != null) {
-                return prefix;
-            }
-            return tryUseUri(tag);
-        }
-
-        @Nullable
-        private String tryUseUri(XmlTag context) {
-            String segment = chooseSegment(context.getNamespace());
-            if (segment == null) {
-                return null;
-            }
-
-            if (segment.length() <= 3 && tryUsePrefix(segment, context)) {
-                return segment;
-            }
-
-            for (int i = 1; i <= segment.length(); i++) {
-                String prefix = segment.substring(0, i);
-                if (tryUsePrefix(prefix, context)) return prefix;
-            }
-            return null;
-        }
-
-        private boolean tryUsePrefix(String prefix, XmlTag context) {
-            if (!prefixOk(prefix, context)) return false;
-            usePrefix(prefix, context.getNamespace());
-            return true;
-        }
-
-        private boolean prefixOk(String prefix, XmlTag context) {
-            final String namespace = context.getNamespace();
-            if (!usedPrefixes.containsKey(prefix)) {
-                final String ns = context.getNamespaceByPrefix(prefix);
-                if (ns.length() == 0 || ns.equals(namespace)) {
-                    return true;
-                }
-            }
-            return namespace.equals(usedPrefixes.get(prefix));
-        }
-
-        private void usePrefix(String prefix, String namespace) {
-            usedPrefixes.put(prefix, namespace);
-        }
-
-        static private String chooseSegment(String ns) {
-            int off = ns.indexOf('#');
-            if (off >= 0) {
-                String segment = StringUtil.toLowerCase(ns.substring(off + 1));
-                if (isValidPrefix(segment)) return segment;
-            } else {
-                off = ns.length();
-            }
-            for (; ;) {
-                int i = ns.lastIndexOf('/', off - 1);
-                if (i < 0 || (i > 0 && ns.charAt(i - 1) == '/')) break;
-                String segment = StringUtil.toLowerCase(ns.substring(i + 1, off));
-                if (segmentOk(segment)) return segment;
-                off = i;
-            }
-            off = ns.indexOf(':');
-            if (off >= 0) {
-                String segment = StringUtil.toLowerCase(ns.substring(off + 1));
-                if (segmentOk(segment)) return segment;
-            }
-            return null;
-        }
-
-        private static boolean isValidPrefix(String segment) {
-            return segment.matches("\\p{Alpha}\\p{Alnum}*");
-        }
-
-        private static boolean segmentOk(String segment) {
-            return isValidPrefix(segment) && !segment.equals("ns") && !segment.equals("namespace");
-        }
-
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
             if (element instanceof XmlProcessingInstruction) {
                 visitProcessingInstruction(((XmlProcessingInstruction)element));
             } else {

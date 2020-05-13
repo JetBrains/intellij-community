@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
@@ -25,23 +11,22 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
-public class SidePanel extends JPanel {
+public final class SidePanel extends JPanel {
   private final JList<SidePanelItem> myList;
   private final DefaultListModel<SidePanelItem> myModel;
   private final Place.Navigator myNavigator;
 
-  private final Map<Integer, String> myIndex2Separator = new HashMap<>();
+  private final Int2ObjectOpenHashMap<String> myIndex2Separator = new Int2ObjectOpenHashMap<>();
 
   public SidePanel(Place.Navigator navigator) {
     myNavigator = navigator;
@@ -51,7 +36,7 @@ public class SidePanel extends JPanel {
     myModel = new DefaultListModel<>();
     myList = new JBList<>(myModel);
     myList.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    myList.setBorder(new EmptyBorder(5, 0, 0, 0));
+    myList.setBorder(JBUI.Borders.emptyTop(5));
     final ListItemDescriptor<SidePanelItem> descriptor = new ListItemDescriptor<SidePanelItem>() {
       @Override
       public String getTextFor(final SidePanelItem value) {
@@ -119,7 +104,7 @@ public class SidePanel extends JPanel {
           bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
           AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
           myExtraPanel.setSize((int)myExtraPanel.getPreferredSize().getWidth(), myExtraPanel.getHeight());
-          UIUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+          ComponentUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
           return myExtraPanel;
         }
         return component;
@@ -168,7 +153,7 @@ public class SidePanel extends JPanel {
     repaint();
   }
 
-  public void addSeparator(String text) {
+  public void addSeparator(@Nls String text) {
     myIndex2Separator.put(myModel.size(), text);
   }
 

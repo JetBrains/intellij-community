@@ -26,7 +26,7 @@ import java.util.*;
  * @author yole
  */
 public class SetupTaskIntrospector {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector");
+  private static final Logger LOG = Logger.getInstance(SetupTaskIntrospector.class);
 
   private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<>();
   private static final Map<String, List<SetupTask>> ourSetuptoolsTaskCache = new HashMap<>();
@@ -97,7 +97,7 @@ public class SetupTaskIntrospector {
     return result;
   }
 
-  private static SetupTask createTaskFromFile(PyFile file, String name, boolean setuptools) {
+  private static SetupTask createTaskFromFile(PyFile file, @NotNull String name, boolean setuptools) {
     SetupTask task = new SetupTask(name);
     // setuptools wraps the build_ext command class in a way that we cannot understand; use the distutils class which it delegates to
     final PyClass taskClass = (name.equals("build_ext") && setuptools)
@@ -156,7 +156,7 @@ public class SetupTaskIntrospector {
       }
     }
     else if (value instanceof PyReferenceExpression) {
-      final PsiElement resolveResult = ((PyReferenceExpression)value).getReference(PyResolveContext.noImplicits()).resolve();
+      final PsiElement resolveResult = ((PyReferenceExpression)value).getReference(PyResolveContext.defaultContext()).resolve();
       collectSequenceElements(resolveResult, result);
     }
     else if (value instanceof PyTargetExpression) {

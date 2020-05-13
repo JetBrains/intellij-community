@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,7 +26,7 @@ public class SuggestVariableNameMacro extends Macro {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.suggest.variable.name");
+    return JavaBundle.message("macro.suggest.variable.name");
   }
 
   @Override
@@ -35,7 +36,7 @@ public class SuggestVariableNameMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length == 0) return null;
     return new TextResult(names[0]);
@@ -43,12 +44,12 @@ public class SuggestVariableNameMacro extends Macro {
 
   @Nullable
   @Override
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, final ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length < 2) return null;
     LookupElement[] items = new LookupElement[names.length];
@@ -90,5 +91,9 @@ public class SuggestVariableNameMacro extends Macro {
     return context instanceof JavaCodeContextType;
   }
 
-
+  @NotNull
+  @Override
+  public LookupFocusDegree getLookupFocusDegree() {
+    return LookupFocusDegree.UNFOCUSED;
+  }
 }

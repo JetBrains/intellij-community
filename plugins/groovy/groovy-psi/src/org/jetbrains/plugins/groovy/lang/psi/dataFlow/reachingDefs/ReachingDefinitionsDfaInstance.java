@@ -18,7 +18,7 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
   protected final TObjectIntHashMap<VariableDescriptor> myVarToIndexMap;
   private final Instruction[] myFlow;
 
-  public ReachingDefinitionsDfaInstance(@NotNull Instruction[] flow, @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
+  public ReachingDefinitionsDfaInstance(Instruction @NotNull [] flow, @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
     myVarToIndexMap = varIndexes;
     myFlow = flow;
   }

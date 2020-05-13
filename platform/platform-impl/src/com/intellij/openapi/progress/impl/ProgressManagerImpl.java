@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.Disposable;
@@ -8,11 +6,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.PingProgress;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
+import com.intellij.util.concurrency.PlainEdtExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
@@ -38,13 +38,13 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   private static boolean isUnsafeIndicator(ProgressIndicator indicator) {
-    return indicator instanceof ProgressWindow && ((ProgressWindow)indicator).getUserData(SAFE_PROGRESS_INDICATOR) == null;
+    return indicator instanceof ProgressIndicatorBase && ((ProgressIndicatorBase)indicator).getUserData(SAFE_PROGRESS_INDICATOR) == null;
   }
 
   /**
    * The passes progress won't count in {@link #hasUnsafeProgressIndicator()} and won't stop from application exiting.
    */
-  public void markProgressSafe(@NotNull ProgressWindow progress) {
+  public void markProgressSafe(@NotNull ProgressIndicatorBase progress) {
     progress.putUserData(SAFE_PROGRESS_INDICATOR, true);
   }
 
@@ -101,10 +101,17 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    ProgressIndicator progressIndicator = ApplicationManager.getApplication().isHeadlessEnvironment() ?
-                                          new EmptyProgressIndicator() :
-                                          new BackgroundableProcessIndicator(task);
-    return runProcessWithProgressAsynchronously(task, progressIndicator, null);
+    CompletableFuture<ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(
+      () -> {
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          return new BackgroundableProcessIndicator(task);
+        }
+
+        return shouldRunHeadlessTasksSynchronously()
+               ? new ProgressIndicatorBase()
+               : new EmptyProgressIndicator();
+      }, PlainEdtExecutor.INSTANCE);
+    return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
   }
 
   @Override

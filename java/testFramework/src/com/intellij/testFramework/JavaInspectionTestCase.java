@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -13,6 +13,8 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -35,10 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author max
- */
-@SuppressWarnings("HardCodedStringLiteral")
 public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
   private static final boolean MIGRATE_TEST = false;
   private static final DefaultLightProjectDescriptor ourDescriptor = new DefaultLightProjectDescriptor() {
@@ -53,12 +51,11 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   private VirtualFile ext_src;
   private LightTestMigration myMigration;
 
-  public static GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
-    InspectionEP ep = new InspectionEP();
+  public static @NotNull GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
+    InspectionEP ep = new InspectionEP(UnusedDeclarationInspection.class.getName(), new DefaultPluginDescriptor(PluginId.getId("JavaInspectionTestCase.getUnusedDeclarationWrapper"), JavaInspectionTestCase.class.getClassLoader()));
     ep.presentation = UnusedDeclarationPresentation.class.getName();
-    ep.implementationClass = UnusedDeclarationInspection.class.getName();
     ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
-    ep.displayName = UnusedDeclarationInspectionBase.DISPLAY_NAME;
+    ep.displayName = UnusedDeclarationInspectionBase.getDisplayNameText();
     return new GlobalInspectionToolWrapper(ep);
   }
 
@@ -96,12 +93,17 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
                      @NotNull InspectionToolWrapper<?,?> toolWrapper,
                      boolean checkRange,
                      boolean runDeadCodeFirst,
-                     @NotNull InspectionToolWrapper<?,?>... additional) {
+                     InspectionToolWrapper<?,?> @NotNull ... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
     final List<InspectionToolWrapper<?, ?>> tools = getTools(runDeadCodeFirst, toolWrapper, additional);
     GlobalInspectionContextImpl context = runTool(folderName, toolWrapper, tools);
 
-    InspectionTestUtil.compareToolResults(context, checkRange, testDir, ContainerUtil.append(Collections.singletonList(toolWrapper), additional));
+    try {
+      InspectionTestUtil.compareToolResults(context, checkRange, testDir, ContainerUtil.append(Collections.singletonList(toolWrapper), additional));
+    }
+    finally {
+      context.cleanup();
+    }
 
     if (MIGRATE_TEST) {
       myMigration = new LightTestMigration(getTestName(false), getClass(), testDir, tools);
@@ -141,7 +143,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   @NotNull
   private static List<InspectionToolWrapper<?, ?>> getTools(boolean runDeadCodeFirst,
                                                             @NotNull InspectionToolWrapper<?,?> toolWrapper,
-                                                            @NotNull InspectionToolWrapper<?,?>[] additional) {
+                                                            InspectionToolWrapper<?,?> @NotNull [] additional) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = new ArrayList<>();
     if (runDeadCodeFirst) {
       toolWrappers.add(getUnusedDeclarationWrapper());
@@ -201,7 +203,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
       }
     };
 
-    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, getTestRootDisposable());
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, myFixture.getProjectDisposable());
   }
 
   @Override

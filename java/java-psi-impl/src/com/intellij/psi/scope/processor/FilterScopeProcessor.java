@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.scope.processor;
 
 import com.intellij.openapi.util.Key;
@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author ik
- */
 public class FilterScopeProcessor<T> implements PsiScopeProcessor {
   protected final List<T> myResults;
   private PsiElement myCurrentDeclarationHolder;

@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBList;
+import com.jetbrains.python.PyBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -41,7 +42,7 @@ public class PythonDocumentationEntryEditor extends DialogWrapper {
   public PythonDocumentationEntryEditor(Component parent) {
     super(parent, true);
     init();
-    setTitle("Edit Documentation URL");
+    setTitle(PyBundle.message("external.documentation.edit.documentation.url"));
     myInsertButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

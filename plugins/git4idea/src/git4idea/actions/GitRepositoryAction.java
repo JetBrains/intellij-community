@@ -47,10 +47,10 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
 
   @NotNull
   @CalledInAwt
-  private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<? extends VirtualFile> roots, @Nullable VirtualFile[] vFiles) {
+  private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<? extends VirtualFile> roots, VirtualFile @Nullable [] vFiles) {
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {
-        GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
+        GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file);
         if (repository != null) {
           return repository.getRoot();
         }

@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.scope.DelegatingScopeProcessor
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
@@ -74,7 +73,7 @@ class AccessorAwareProcessor(
           }
         }
         else {
-          return ContainerUtil.newSmartList(properties[0])
+          return listOf(properties[0])
         }
       }
 

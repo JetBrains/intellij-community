@@ -40,6 +40,14 @@ public class PythonCodeStyleService {
     return false;
   }
 
+  public boolean isOptimizeImportsSortNamesInFromImports(@NotNull PsiFile file) {
+    return false;
+  }
+
+  public boolean isOptimizeImportsSortImports(@NotNull PsiFile file) {
+    return false;
+  }
+
   public void reparseOpenEditorFiles(@NotNull Project project) {
   }
 

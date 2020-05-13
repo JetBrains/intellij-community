@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -44,7 +46,7 @@ public class InstallButton extends ColorButton {
   }
 
   protected void setTextAndSize() {
-    setText("Install");
+    setText(IdeBundle.message("action.AnActionButton.text.install"));
     setWidth72(this);
   }
 
@@ -53,7 +55,7 @@ public class InstallButton extends ColorButton {
     super.setEnabled(b);
   }
 
-  public void setEnabled(boolean enabled, @Nullable String statusText) {
+  public void setEnabled(boolean enabled, @Nullable @Nls String statusText) {
     super.setEnabled(enabled);
     if (enabled) {
       setTextAndSize();

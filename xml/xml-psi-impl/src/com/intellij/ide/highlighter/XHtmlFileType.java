@@ -16,8 +16,8 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +38,7 @@ public class XHtmlFileType extends HtmlFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.xhtml");
+    return XmlPsiBundle.message("filetype.description.xhtml");
   }
 
   @Override

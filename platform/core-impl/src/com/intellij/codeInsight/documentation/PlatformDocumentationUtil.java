@@ -32,7 +32,7 @@ public class PlatformDocumentationUtil {
   private static final @NonNls String LT_ENTITY = "&lt;";
 
   @Nullable
-  public static List<String> getHttpRoots(@NotNull String[] roots, String relPath) {
+  public static List<String> getHttpRoots(String @NotNull [] roots, String relPath) {
     List<String> result = new SmartList<>();
     for (String root : roots) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);

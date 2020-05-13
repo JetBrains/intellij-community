@@ -7,17 +7,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class JpsForceUpdateCachesAction extends DumbAwareAction {
-
   @Override
-  public void actionPerformed(AnActionEvent actionEvent) {
+  public void actionPerformed(@NotNull AnActionEvent actionEvent) {
     Project project = actionEvent.getProject();
     if (project == null) return;
     JpsOutputLoaderManager.getInstance(project).load(true);
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    Project project = event.getProject();
-    event.getPresentation().setEnabled(project != null && JpsOutputLoaderManager.getInstance(project).isInitialized());
   }
 }

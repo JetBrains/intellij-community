@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectIconHelper;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -57,10 +58,10 @@ public class ChangeProjectIconForm {
   }
 
   private void createUIComponents() {
-    mySetIcon = new ActionLink("Change...", new ChangeProjectIcon(false));
-    mySetIconDark = new ActionLink("Change...", new ChangeProjectIcon(true));
-    myClear = new ActionLink("Reset", new ResetProjectIcon(false));
-    myClearDark = new ActionLink("Reset", new ResetProjectIcon(true));
+    mySetIcon = new ActionLink(IdeBundle.message("link.change.icon"), new ChangeProjectIcon(false));
+    mySetIconDark = new ActionLink(IdeBundle.message("link.change.icon"), new ChangeProjectIcon(true));
+    myClear = new ActionLink(IdeBundle.message("link.reset.icon"), new ResetProjectIcon(false));
+    myClearDark = new ActionLink(IdeBundle.message("link.reset.icon"), new ResetProjectIcon(true));
   }
 
   public void apply() throws IOException {

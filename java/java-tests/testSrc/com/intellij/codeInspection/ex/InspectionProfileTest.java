@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -104,6 +105,16 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
     return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), base);
+  }
+
+  public void testModificationWithoutModification() {
+    InspectionProfileImpl profile = createProfile();
+    profile.getAllTools();
+    assertTrue(profile.wasInitialized());
+    assertNotEmpty(profile.myTools.keySet());
+    profile.modifyProfile(m -> {});
+    assertTrue(profile.wasInitialized());
+    assertNotEmpty(profile.myTools.keySet());
   }
 
   public void testSameNameSharedProfile() {
@@ -259,7 +270,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(unusedProfile);
     profile.modifyProfile(it -> {
-      InspectionToolWrapper toolWrapper = it.getInspectionTool("unused", getProject());
+      InspectionToolWrapper<?, ?> toolWrapper = it.getInspectionTool("unused", getProject());
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
       tool.ADD_NONJAVA_TO_ENTRIES = true;
       UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
@@ -782,10 +793,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testLockProfile() {
-    final List<InspectionToolWrapper> list = new ArrayList<>();
+    List<InspectionToolWrapper<?, ?>> list = new ArrayList<>();
     list.add(createTool("foo", true));
 
     InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(list);
+    Disposer.register(getTestRootDisposable(), toolSupplier);
     InspectionProfileImpl profile = createProfile(toolSupplier);
 
     List<ScopeToolState> tools = profile.getAllTools();
@@ -876,15 +888,15 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   public void testDoNotInstantiateOnSave() {
     InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileKt.getBASE_PROFILE());
     assertEquals(0, countInitializedTools(profile));
-    InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
-    assertTrue(toolWrappers.length > 0);
-    InspectionToolWrapper toolWrapper = profile.getInspectionTool(new DataFlowInspection().getShortName(), getProject());
+    List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionTools(null);
+    assertTrue(toolWrappers.size() > 0);
+    InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(new DataFlowInspection().getShortName(), getProject());
     assertNotNull(toolWrapper);
     String id = toolWrapper.getShortName();
     profile.setToolEnabled(id, !profile.isToolEnabled(HighlightDisplayKey.findById(id)));
     assertThat(countInitializedTools(profile)).isEqualTo(0);
     profile.writeScheme();
-    List<InspectionToolWrapper> initializedTools = getInitializedTools(profile);
+    List<InspectionToolWrapper<?, ?>> initializedTools = getInitializedTools(profile);
     assertEmpty(initializedTools.stream().map(InspectionToolWrapper::getShortName).collect(Collectors.joining(", ")), initializedTools);
   }
 
@@ -906,8 +918,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   @NotNull
-  public static List<InspectionToolWrapper> getInitializedTools(@NotNull InspectionProfileImpl foo) {
-    List<InspectionToolWrapper> initialized = null;
+  public static List<InspectionToolWrapper<?, ?>> getInitializedTools(@NotNull InspectionProfileImpl foo) {
+    List<InspectionToolWrapper<?, ?>> initialized = null;
     List<ScopeToolState> tools = foo.getAllTools();
     for (ScopeToolState tool : tools) {
       InspectionToolWrapper toolWrapper = tool.getTool();

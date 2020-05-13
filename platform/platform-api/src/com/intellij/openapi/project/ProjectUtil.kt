@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -177,19 +177,27 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
 /**
  * Add one-time projectOpened listener.
  */
-fun Project.runWhenProjectOpened(handler: Runnable): Unit = runWhenProjectOpened(this) { handler.run() }
+fun runWhenProjectOpened(project : Project, handler: Runnable) {
+  runWhenProjectOpened(project) {
+    handler.run()
+  }
+}
 
 /**
  * Add one-time first projectOpened listener.
  */
 @JvmOverloads
-fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>): Unit = runWhenProjectOpened(project) { handler.accept(it) }
+fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>) {
+  runWhenProjectOpened(project) {
+    handler.accept(it)
+  }
+}
 
 /**
  * Add one-time projectOpened listener.
  */
 inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (project: Project) -> Unit) {
-  val connection = (project ?: ApplicationManager.getApplication()).messageBus.connect()
+  val connection = (project ?: ApplicationManager.getApplication()).messageBus.simpleConnect()
   connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
     override fun projectOpened(eventProject: Project) {
       if (project == null || project === eventProject) {
@@ -202,7 +210,7 @@ inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (
 
 inline fun processOpenedProjects(processor: (Project) -> Unit) {
   for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
-    if (project.isDisposedOrDisposeInProgress || !project.isInitialized) {
+    if (project.isDisposed || !project.isInitialized) {
       continue
     }
 

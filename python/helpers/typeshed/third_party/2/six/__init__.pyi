@@ -21,6 +21,8 @@ _T = TypeVar('_T')
 _K = TypeVar('_K')
 _V = TypeVar('_V')
 
+__version__: str
+
 # TODO make constant, then move this stub to 2and3
 # https://github.com/python/typeshed/issues/17
 PY2 = True
@@ -34,9 +36,6 @@ text_type = unicode
 binary_type = str
 
 MAXSIZE: int
-
-# def add_move
-# def remove_move
 
 def advance_iterator(it: typing.Iterator[_T]) -> _T: ...
 next = advance_iterator
@@ -94,3 +93,21 @@ def ensure_binary(s: Union[bytes, Text], encoding: str = ..., errors: str = ...)
 def ensure_str(s: Union[bytes, Text], encoding: str = ..., errors: str = ...) -> str: ...
 def ensure_text(s: Union[bytes, Text], encoding: str = ..., errors: str = ...) -> Text: ...
 def python_2_unicode_compatible(klass: _T) -> _T: ...
+
+class _LazyDescriptor:
+    name: str
+    def __init__(self, name: str) -> None: ...
+    def __get__(self, obj: Optional[object], type: Optional[type] = ...) -> Any: ...
+
+class MovedModule(_LazyDescriptor):
+    mod: str
+    def __init__(self, name: str, old: str, new: Optional[str] = ...) -> None: ...
+    def __getattr__(self, attr: str) -> Any: ...
+
+class MovedAttribute(_LazyDescriptor):
+    mod: str
+    attr: str
+    def __init__(self, name: str, old_mod: str, new_mod: str, old_attr: Optional[str] = ..., new_attr: Optional[str] = ...) -> None: ...
+
+def add_move(move: Union[MovedModule, MovedAttribute]) -> None: ...
+def remove_move(name: str) -> None: ...

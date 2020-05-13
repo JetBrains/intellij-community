@@ -35,7 +35,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   }
 
   @SafeVarargs
-  public SmartList(@NotNull E... elements) {
+  public SmartList(E @NotNull ... elements) {
     int length = elements.length;
     switch (length) {
       case 0:
@@ -88,8 +88,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     return true;
   }
 
-  @NotNull
-  private E[] resizeIfNecessary(int size) {
+  private E @NotNull [] resizeIfNecessary(int size) {
     E[] array = asArray();
     int oldCapacity = array.length;
     if (size >= oldCapacity) {
@@ -209,9 +208,8 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     return modCount;
   }
 
-  @NotNull
   @Override
-  public <T> T[] toArray(@NotNull T[] a) {
+  public <T> T @NotNull [] toArray(T @NotNull [] a) {
     int aLength = a.length;
     int size = mySize;
     switch (size) {

@@ -27,10 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ExpectedTypeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeUtil");
+  private static final Logger LOG = Logger.getInstance(ExpectedTypeUtil.class);
 
-  @NotNull
-  public static ExpectedTypeInfo[] intersect(List<ExpectedTypeInfo[]> typeInfos) {
+  public static ExpectedTypeInfo @NotNull [] intersect(List<ExpectedTypeInfo[]> typeInfos) {
     if (typeInfos.isEmpty()) return ExpectedTypeInfo.EMPTY_ARRAY;
 
     ExpectedTypeInfos result = new ExpectedTypeInfos(typeInfos.get(0));
@@ -89,8 +88,7 @@ public class ExpectedTypeUtil {
       return myInfos.iterator();
     }
 
-    @NotNull
-    public ExpectedTypeInfo[] toArray() {
+    public ExpectedTypeInfo @NotNull [] toArray() {
       return myInfos.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
   }
@@ -147,9 +145,8 @@ public class ExpectedTypeUtil {
       myOccurrenceClasses = occurrenceClasses;
     }
 
-    @NotNull
     @Override
-    public PsiField[] findDeclaredFields(@NotNull final PsiManager manager, @NotNull String name) {
+    public PsiField @NotNull [] findDeclaredFields(@NotNull final PsiManager manager, @NotNull String name) {
       List<PsiField> fields = new ArrayList<>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiField field = aClass.findFieldByName(name, true);
@@ -158,9 +155,8 @@ public class ExpectedTypeUtil {
       return fields.toArray(PsiField.EMPTY_ARRAY);
     }
 
-    @NotNull
     @Override
-    public PsiMethod[] findDeclaredMethods(@NotNull final PsiManager manager, @NotNull String name) {
+    public PsiMethod @NotNull [] findDeclaredMethods(@NotNull final PsiManager manager, @NotNull String name) {
       List<PsiMethod> methods = new ArrayList<>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiMethod[] occMethod = aClass.findMethodsByName(name, true);

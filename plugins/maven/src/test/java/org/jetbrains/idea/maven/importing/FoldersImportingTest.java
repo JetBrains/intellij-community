@@ -15,9 +15,14 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.execution.CommonProgramRunConfigurationParameters;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
@@ -28,6 +33,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FoldersImportingTest extends MavenImportingTestCase {
 
@@ -98,9 +105,9 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                 getModule("project"),
-                                                                new IdeModifiableModelsProviderImpl(myProject));
+                                                                new IdeModifiableModelsProviderImpl(myProject)));
       adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE);
       adapter.addExcludedFolder(dir2.getPath());
       adapter.getRootModel().commit();
@@ -1330,7 +1337,102 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  private void createProjectSubDirsWithFile(String ... dirs) throws IOException {
+
+  public void testModuleWorkingDirWithMultiplyContentRoots() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>AA</module>" +
+                     "  <module>BB</module>" +
+                     "</modules>");
+    createModulePom("AA", "<parent>" +
+                          "        <artifactId>project</artifactId>" +
+                          "        <groupId>test</groupId>" +
+                          "        <version>1</version>" +
+                          "    </parent>" +
+                          "<artifactId>AA</artifactId>");
+
+    VirtualFile pomBB = createModulePom("BB", "<parent>" +
+                                           "        <artifactId>project</artifactId>" +
+                                           "        <groupId>test</groupId>" +
+                                           "        <version>1</version>" +
+                                           "    </parent>" +
+                                           "<artifactId>BB</artifactId>" +
+                                           " <build>" +
+                                           "        <testResources>" +
+                                           "            <testResource>" +
+                                           "                <targetPath>${project.build.testOutputDirectory}</targetPath>" +
+                                           "                <directory>" +
+                                           "                    ${project.basedir}/src/test/resources" +
+                                           "                </directory>" +
+                                           "            </testResource>" +
+                                           "            <testResource>" +
+                                           "                <targetPath>${project.build.testOutputDirectory}</targetPath>" +
+                                           "                <directory>" +
+                                           "                     ${project.basedir}/../AA/src/test/resources" +
+                                           "                </directory>" +
+                                           "            </testResource>" +
+                                           "" +
+                                           "        </testResources>" +
+                                           "    </build>"
+    );
+    createProjectSubDirs("AA/src/test/resources");
+    createProjectSubDirs("BB/src/test/resources");
+    importProject();
+    CommonProgramRunConfigurationParameters parameters = new CommonProgramRunConfigurationParameters() {
+      @Override
+      public Project getProject() {
+        return myProject;
+      }
+
+      @Override
+      public void setProgramParameters(@Nullable String value) {
+
+      }
+
+      @Override
+      public @Nullable String getProgramParameters() {
+        return null;
+      }
+
+      @Override
+      public void setWorkingDirectory(@Nullable String value) {
+      }
+
+      @Override
+      public @Nullable String getWorkingDirectory() {
+        return "$MODULE_WORKING_DIR$";
+      }
+
+      @Override
+      public void setEnvs(@NotNull Map<String, String> envs) {
+
+      }
+
+      @Override
+      public @NotNull Map<String, String> getEnvs() {
+        return new HashMap<>();
+      }
+
+      @Override
+      public void setPassParentEnvs(boolean passParentEnvs) {
+
+      }
+
+      @Override
+      public boolean isPassParentEnvs() {
+        return false;
+      }
+    };
+    assertModules("project", "AA", "BB");
+    String workingDir = ProgramParametersUtil.getWorkingDir(parameters, myProject, getModule("BB"));
+    assertEquals(pomBB.getCanonicalFile().getParent().getPath(), workingDir);
+  }
+
+  private void createProjectSubDirsWithFile(String... dirs) throws IOException {
     for (String dir : dirs) {
       createProjectSubFile(dir + "/a.txt");
     }

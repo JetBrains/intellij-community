@@ -3,7 +3,8 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
   private final ClasspathPanel myPanel;
 
   AnalyzeModuleDependencyAction(final ClasspathPanel panel) {
-    super("Analyze This Dependency");
+    super(JavaUiBundle.message("action.text.analyze.this.dependency"));
     myPanel = panel;
   }
 
@@ -67,8 +68,8 @@ class AnalyzeModuleDependencyAction extends AnAction {
         Set<GlobalSearchScope> usedScopes = findUsedScopes(builders, scopes);
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
-                                   "Dependencies were successfully collected in \"" +
-                                   ToolWindowId.DEPENDENCIES + "\" toolwindow",
+                                   JavaUiBundle
+                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.DEPENDENCIES),
                                    getTemplateText());
           return true;
         }
@@ -76,7 +77,8 @@ class AnalyzeModuleDependencyAction extends AnAction {
         List<OrderEntry> usedEntries = usedScopes.stream().map(additionalScopes::get).filter(Objects::nonNull).distinct().collect(Collectors.toList());
         if (usedEntries.isEmpty()) {
           String message = "No code dependencies were found." + generateSkipImportsWarning() + " Would you like to remove the dependency?";
-          if (Messages.showOkCancelDialog(myProject, message, getTemplateText(), CommonBundle.message("button.remove"), Messages.CANCEL_BUTTON,
+          if (Messages.showOkCancelDialog(myProject, message, getTemplateText(), CommonBundle.message("button.remove"),
+                                          Messages.getCancelButton(),
                                           Messages.getWarningIcon()) == Messages.OK) {
             myPanel.getRootModel().removeOrderEntry(selectedEntry);
           }
@@ -95,7 +97,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
         String message = "No direct code dependencies were found." + generateSkipImportsWarning() + "\nHowever " + usedExportedEntriesText + " exported by '"
                          + StringUtil.decapitalize(selectedEntry.getPresentableName()) + "' " + (usedEntries.size() > 1 ? "are" : "is") + " used in code.\n" +
                          "Do you want to replace dependency on '" + selectedEntry.getPresentableName() + "' by " + replacementText + "?";
-        String[] options = {"Replace", "Show Dependencies", Messages.CANCEL_BUTTON};
+        String[] options = {"Replace", "Show Dependencies", Messages.getCancelButton()};
         switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
           case 0:
             InlineModuleDependencyAction.inlineEntry(myPanel, selectedEntry, usedEntries::contains);
@@ -116,7 +118,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
 
   private String generateSkipImportsWarning() {
     if (DependencyVisitorFactory.VisitorOptions.fromSettings(myPanel.getProject()).skipImports()) {
-      return " " + AnalysisScopeBundle.message("dependencies.in.imports.message");
+      return " " + CodeInsightBundle.message("dependencies.in.imports.message");
     }
     return "";
   }

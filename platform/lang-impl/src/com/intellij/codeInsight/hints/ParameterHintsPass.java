@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SyntaxTraverser;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,10 +28,19 @@ import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.putCurren
 public class ParameterHintsPass extends EditorBoundHighlightingPass {
   private final TIntObjectHashMap<List<HintData>> myHints = new TIntObjectHashMap<>();
   private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
-  private final SyntaxTraverser<PsiElement> myTraverser;
   private final PsiElement myRootElement;
   private final HintInfoFilter myHintInfoFilter;
   private final boolean myForceImmediateUpdate;
+
+  public ParameterHintsPass(@NotNull PsiElement element,
+                            @NotNull Editor editor,
+                            @NotNull HintInfoFilter hintsFilter,
+                            boolean forceImmediateUpdate) {
+    super(editor, element.getContainingFile(), true);
+    myRootElement = element;
+    myHintInfoFilter = hintsFilter;
+    myForceImmediateUpdate = forceImmediateUpdate;
+  }
 
   public static void syncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
     MethodInfoBlacklistFilter filter = MethodInfoBlacklistFilter.forLanguage(element.getLanguage());
@@ -46,20 +54,8 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     pass.applyInformationToEditor();
   }
 
-  public ParameterHintsPass(@NotNull PsiElement element,
-                            @NotNull Editor editor,
-                            @NotNull HintInfoFilter hintsFilter,
-                            boolean forceImmediateUpdate) {
-    super(editor, element.getContainingFile(), true);
-    myRootElement = element;
-    myTraverser = SyntaxTraverser.psiTraverser(element);
-    myHintInfoFilter = hintsFilter;
-    myForceImmediateUpdate = forceImmediateUpdate;
-  }
-
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    assert myDocument != null;
     myHints.clear();
 
     Language language = myFile.getLanguage();
@@ -67,26 +63,26 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (provider == null || !provider.canShowHintsWhenDisabled() && !isEnabled(language) || DiffUtil.isDiffEditor(myEditor)) return;
     if (!HighlightingLevelManager.getInstance(myFile.getProject()).shouldHighlight(myFile)) return;
 
-    myTraverser.forEach(element -> process(element, provider));
+    provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
   }
 
   private static boolean isEnabled(Language language) {
     return HintUtilsKt.isParameterHintsEnabledForLanguage(language);
   }
 
-  private void process(PsiElement element, InlayParameterHintsProvider provider) {
-    List<InlayInfo> hints = provider.getParameterHints(element);
+  private void process(@NotNull PsiElement element, @NotNull InlayParameterHintsProvider provider) {
+    List<InlayInfo> hints = provider.getParameterHints(element, myFile);
     if (hints.isEmpty()) return;
-    HintInfo info = provider.getHintInfo(element);
+    HintInfo info = provider.getHintInfo(element, myFile);
 
     boolean showHints = info == null || info instanceof HintInfo.OptionInfo || myHintInfoFilter.showHint(info);
 
     Stream<InlayInfo> inlays = hints.stream();
     if (!showHints) {
-      inlays = inlays.filter((inlayInfo -> !inlayInfo.isFilterByBlacklist()));
+      inlays = inlays.filter(inlayInfo -> !inlayInfo.isFilterByBlacklist());
     }
 
-    inlays.forEach((hint) -> {
+    inlays.forEach(hint -> {
       int offset = hint.getOffset();
       if (!canShowHintsAtOffset(offset)) return;
 
@@ -138,8 +134,6 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
 
   @NotNull
   private List<Inlay> hintsInRootElementArea(ParameterHintsPresentationManager manager) {
-    assert myDocument != null;
-
     TextRange range = myRootElement.getTextRange();
     int elementStart = range.getStartOffset();
     int elementEnd = range.getEndOffset();
@@ -166,15 +160,15 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (!rootRange.containsOffset(offset)) return false;
     if (offset > rootRange.getStartOffset() && offset < rootRange.getEndOffset()) return true;
 
-    return myDocument != null && myDocument.getTextLength() == rootRange.getLength();
+    return myDocument.getTextLength() == rootRange.getLength();
   }
 
-  public static class HintData {
-    public final String presentationText;
-    public final boolean relatesToPrecedingText;
-    public final HintWidthAdjustment widthAdjustment;
+  static class HintData {
+    final String presentationText;
+    final boolean relatesToPrecedingText;
+    final HintWidthAdjustment widthAdjustment;
 
-    public HintData(String text, boolean relatesToPrecedingText, HintWidthAdjustment widthAdjustment) {
+    HintData(@NotNull String text, boolean relatesToPrecedingText, HintWidthAdjustment widthAdjustment) {
       presentationText = text;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.widthAdjustment = widthAdjustment;

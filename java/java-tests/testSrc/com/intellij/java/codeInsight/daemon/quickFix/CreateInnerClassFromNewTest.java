@@ -16,11 +16,20 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class CreateInnerClassFromNewTest extends LightQuickFixParameterizedTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
+  }
+
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createInnerClassFromNew";

@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.ui.OptionsTopHitProvider
+import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchMode
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
-import com.intellij.idea.IdeaTestApplication
 import com.intellij.java.navigation.ChooseByNameTest
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -17,15 +16,16 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.CollectConsumer
 import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 
-import java.awt.Component
+import java.awt.*
+import java.util.List
 import java.util.concurrent.TimeUnit
 
 /**
@@ -89,7 +89,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assert actionMatches('invalidate caches', action) == MatchMode.NAME
     assert actionMatches('cache invalid', action) == MatchMode.NAME
     assert actionMatches('rebuild of all caches', action) == MatchMode.DESCRIPTION
-    assert actionMatches('restart', action) == ApplicationManager.application.isRestartCapable() ? MatchMode.NAME : MatchMode.NONE
+    assert actionMatches('restart', action) == (ApplicationManager.application.isRestartCapable() ? MatchMode.NAME : MatchMode.NONE)
     assert actionMatches('invcach', action) == MatchMode.NAME
   }
 
@@ -103,17 +103,16 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       new TestBooleanOption("Just another boolean option"),
     ]
 
-    OptionsTopHitProvider provider = new OptionsTopHitProvider() {
-      @NotNull
-      @Override
-      Collection<OptionDescription> getOptions(@Nullable Project project) {
-        return options
-      }
-
+    OptionsSearchTopHitProvider.ApplicationLevelProvider provider = new OptionsSearchTopHitProvider.ApplicationLevelProvider() {
       @NotNull
       @Override
       String getId() {
         return "testprovider"
+      }
+
+      @Override
+      Collection<OptionDescription> getOptions() {
+        return options
       }
     }
 
@@ -261,6 +260,26 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  void "test navigable settings options appear in results"() {
+    def contributor = createActionContributor(project)
+    def patterns = [
+      "support screen readers",
+      "show line numbers",
+      "tab placement"
+    ]
+
+    patterns.forEach { String pattern ->
+      def elements = ChooseByNameTest.calcContributorElements(contributor, pattern)
+      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue) matchedValue).value)
+      }
+    }
+  }
+
+  private static boolean isNavigableOption(Object o) {
+    return o instanceof OptionDescription && !(o instanceof BooleanOptionDescription)
+  }
+
+
   private static List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
     def wrappers = getActionsFromPopup(project, pattern)
     wrappers.every { it.getPresentation() } // update best group name
@@ -310,7 +329,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private static <T> T computeWithCustomDataProvider(passHiddenFlag, Computable<T> task) {
-    IdeaTestApplication.getInstance().setDataProvider(new DataProvider() {
+    TestApplicationManager.getInstance().setDataProvider(new DataProvider() {
       @Override
       Object getData(@NotNull @NonNls String dataId) {
         if (SHOW_HIDDEN_KEY.is(dataId) && passHiddenFlag) return Boolean.TRUE
@@ -322,7 +341,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       return task.compute()
     }
     finally {
-      IdeaTestApplication.getInstance().setDataProvider(null)
+      TestApplicationManager.getInstance().setDataProvider(null)
     }
   }
 

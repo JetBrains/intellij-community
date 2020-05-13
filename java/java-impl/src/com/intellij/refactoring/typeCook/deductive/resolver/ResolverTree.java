@@ -41,7 +41,7 @@ import java.util.*;
  * @author db
  */
 public class ResolverTree {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree");
+  private static final Logger LOG = Logger.getInstance(ResolverTree.class);
 
   private ResolverTree[] mySons = new ResolverTree[0];
   private final BindingFactory myBindingFactory;
@@ -80,7 +80,7 @@ public class ResolverTree {
     final Set<PsiTypeVariable> mySet = new HashSet<>();
 
     @Override
-    public Object visitTypeVariable(final PsiTypeVariable var) {
+    public Object visitTypeVariable(@NotNull final PsiTypeVariable var) {
       mySet.add(var);
 
       return null;

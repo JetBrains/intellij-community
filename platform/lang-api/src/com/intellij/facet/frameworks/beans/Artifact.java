@@ -7,11 +7,13 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated this class will be removed from open API in IDEA 11. Use {@link com.intellij.util.download.DownloadableFileService} instead
  */
 @Deprecated
+@ApiStatus.Internal
 @Tag("artifact")
 public class Artifact {
   public static final Artifact[] EMPTY_ARRAY = new Artifact[0];

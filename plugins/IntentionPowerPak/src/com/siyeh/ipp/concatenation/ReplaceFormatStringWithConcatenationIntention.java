@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -107,7 +105,7 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
         builder.append("String.valueOf(").append(commentTracker.text(argument)).append(')');
       }
       else {
-        builder.append(commentTracker.text(argument));
+        builder.append(commentTracker.text(argument, ParenthesesUtils.ADDITIVE_PRECEDENCE));
       }
       start = end + 2;
       end = value.indexOf("%s", start);

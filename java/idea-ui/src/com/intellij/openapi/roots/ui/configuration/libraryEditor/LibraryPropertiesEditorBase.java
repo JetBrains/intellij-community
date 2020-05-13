@@ -28,9 +28,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author nik
- */
 public abstract class LibraryPropertiesEditorBase<P extends LibraryProperties, T extends LibraryType<P>> extends LibraryPropertiesEditor {
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;

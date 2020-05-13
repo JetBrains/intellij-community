@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,17 +19,19 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class PythonDebugConsoleCommunication extends AbstractConsoleCommunication {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.console.pydev.PythonDebugConsoleCommunication");
+  private static final Logger LOG = Logger.getInstance(PythonDebugConsoleCommunication.class);
   private final PyDebugProcess myDebugProcess;
   private boolean myNeedsMore = false;
+  private boolean firstExecution = true;
+  @NotNull private final PythonConsoleView myConsoleView;
 
-  public PythonDebugConsoleCommunication(Project project, PyDebugProcess debugProcess) {
+  public PythonDebugConsoleCommunication(@NotNull Project project,
+                                         @NotNull PyDebugProcess debugProcess,
+                                         @NotNull PythonConsoleView consoleView) {
     super(project);
     myDebugProcess = debugProcess;
+    myConsoleView = consoleView;
   }
 
   @NotNull
@@ -58,7 +60,11 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     return false;
   }
 
-  protected void exec(final ConsoleCodeFragment command, final PyDebugCallback<Pair<String, Boolean>> callback) {
+  protected void exec(ConsoleCodeFragment command, final PyDebugCallback<Pair<String, Boolean>> callback) {
+    if (firstExecution) {
+      firstExecution = false;
+      myConsoleView.addConsoleFolding(true, false);
+    }
     myDebugProcess.consoleExec(command.getText(), new PyDebugCallback<String>() {
       @Override
       public void ok(String value) {

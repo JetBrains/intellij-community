@@ -22,9 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class DetectionExcludesConfiguration {
   public static DetectionExcludesConfiguration getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, DetectionExcludesConfiguration.class);

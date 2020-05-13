@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -16,7 +16,7 @@ public class ExtendableEditorSupport {
                                      Color background,
                                      ExtendableTextComponent.Extension extension) {
     JLabel label = ExpandableSupport.createLabel(extension);
-    label.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
+    label.setBorder(JBUI.Borders.emptyLeft(2));
     editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     editor.getScrollPane().getVerticalScrollBar().setBackground(background);

@@ -1,96 +1,68 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
-import com.intellij.psi.*
-import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
-import com.intellij.psi.util.InheritanceUtil.isInheritor
-import com.intellij.util.SmartList
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil.enclosingClass
-import org.jetbrains.plugins.groovy.lang.resolve.BaseMethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.DiamondResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
-import org.jetbrains.plugins.groovy.lang.resolve.impl.chooseOverloads
-import org.jetbrains.plugins.groovy.lang.resolve.impl.getAllConstructors
+import org.jetbrains.plugins.groovy.lang.resolve.impl.*
 
-abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachingReference<T>(element), GroovyCallReference {
+abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachingReference<T>(element),
+                                                                    GroovyConstructorReference {
 
-  // TODO consider introducing GroovyConstructorCallReference and putting it there
-  protected abstract fun resolveClass(): GroovyResolveResult?
+  final override fun resolveClass(): GroovyResolveResult? = myConstructedClassReference.resolve(false).singleOrNull()
+
+  private val myConstructedClassReference = object : GroovyCachingReference<T>(element) {
+    override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+      return doResolveClass()?.let(::listOf) ?: emptyList()
+    }
+  }
+
+  protected abstract fun doResolveClass(): GroovyResolveResult?
 
   protected open val supportsMapInvocation: Boolean get() = true
 
-  override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
-    val classCandidate = resolveClass() ?: return emptyList()
-    val constructedClass = classCandidate.element as? PsiClass ?: return emptyList()
-    val substitutor = classCandidate.contextSubstitutor
-    val needsInference = classCandidate is DiamondResolveResult
+  protected open val supportsEnclosingInstance: Boolean get() = true
 
-    val allConstructors = getAllConstructors(constructedClass, element)
-    val userArguments = arguments
-    if (incomplete || userArguments == null) {
-      return allConstructors.map(::ElementResolveResult)
+  final override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+    val classCandidate: GroovyResolveResult = resolveClass() ?: return emptyList()
+    val clazz: PsiClass = classCandidate.element as? PsiClass ?: return emptyList()
+    val place: T = element
+    val arguments: Arguments? = arguments
+
+    val constructors: List<PsiMethod> = getAllConstructors(clazz, place)
+    if (incomplete || arguments == null) {
+      return constructors.toResolveResults()
     }
 
-    val state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor)
+    val withArguments: WithArguments = withArguments(place, classCandidate.contextSubstitutor, classCandidate is DiamondResolveResult)
+    val withEnclosingClassArguments: WithArguments = withEnclosingClassArguments(clazz, withArguments)
+    return chooseConstructors(constructors, arguments, supportsMapInvocation, withEnclosingClassArguments)
+  }
 
-    val enclosingClassArgument = enclosingClassArgument(element, constructedClass)?.let(::listOf) ?: emptyList()
-    val realArguments = enclosingClassArgument + userArguments
-    val (realApplicable, realResults) = tryArguments(allConstructors, state, needsInference, realArguments)
-    if (realApplicable || !supportsMapInvocation) {
-      return realResults
+  private fun withEnclosingClassArguments(clazz: PsiClass, withArguments: WithArguments): WithArguments {
+    if (!supportsEnclosingInstance) {
+      return withArguments
     }
-
-    val singleArgument = userArguments.singleOrNull()
-    if (singleArgument == null || !isInheritor(singleArgument.runtimeType, JAVA_UTIL_MAP)) {
-      // not a map constructor call,
-      // no real applicable results =>
-      // result all results
-      return realResults
+    val enclosingClassArgument: Argument? = enclosingClassArgument(element, clazz)
+    if (enclosingClassArgument == null) {
+      return withArguments
     }
-
-    return tryArguments(allConstructors, state, needsInference, enclosingClassArgument).second
+    else {
+      val enclosingClassArguments: Arguments = listOf(enclosingClassArgument)
+      return { arguments: Arguments, mapConstructor: Boolean ->
+        withArguments(enclosingClassArguments + arguments, mapConstructor)
+      }
+    }
   }
 
   private fun enclosingClassArgument(place: PsiElement, constructedClass: PsiClass): Argument? {
     val enclosingClass = enclosingClass(element, constructedClass) ?: return null
     val type = JavaPsiFacade.getElementFactory(place.project).createType(enclosingClass)
     return JustTypeArgument(type)
-  }
-
-  private fun tryArguments(constructors: List<PsiMethod>,
-                           state: ResolveState,
-                           diamond: Boolean,
-                           arguments: Arguments): Pair<Boolean, List<GroovyMethodResult>> {
-    val allResults = constructors.map {
-      if (diamond || it.typeParameters.isNotEmpty()) {
-        MethodResolveResult(it, element, state, arguments)
-      }
-      else {
-        BaseMethodResolveResult(it, element, state, arguments)
-      }
-    }
-    val applicable = chooseConstructors(allResults)
-    return if (applicable != null) {
-      Pair(true, applicable)
-    }
-    else {
-      Pair(false, allResults)
-    }
-  }
-
-  private fun chooseConstructors(candidates: List<GroovyMethodResult>): List<GroovyMethodResult>? {
-    val applicable = candidates.filterTo(SmartList()) {
-      it.isApplicable
-    }
-    if (applicable.isNotEmpty()) {
-      return chooseOverloads(applicable)
-    }
-    else {
-      return null
-    }
   }
 }

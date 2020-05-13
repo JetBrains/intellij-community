@@ -2,7 +2,6 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -13,6 +12,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +43,8 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
     return myDescriptor.getValueDeclaration(getElement(), getValue());
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     if (myDescriptor.isFixed()) {
       String defaultValue = myDescriptor.getDefaultValue();
       return defaultValue == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : new Object[] {defaultValue};
@@ -61,7 +60,7 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
   public String getUnresolvedMessagePattern() {
     String name = getElement() instanceof XmlTag ? "tag" : "attribute";
     return myDescriptor.isFixed()
-           ? XmlErrorMessages.message("should.have.fixed.value", StringUtil.capitalize(name), myDescriptor.getDefaultValue())
-           : XmlErrorMessages.message("wrong.value", name);
+           ? XmlPsiBundle.message("should.have.fixed.value", StringUtil.capitalize(name), myDescriptor.getDefaultValue())
+           : XmlPsiBundle.message("wrong.value", name);
   }
 }

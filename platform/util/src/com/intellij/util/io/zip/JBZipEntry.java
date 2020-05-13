@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -11,6 +11,8 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.ZipEntry;
@@ -114,7 +116,7 @@ public class JBZipEntry implements Cloneable {
    * @param mode an {@code int} value
    */
   public void setUnixMode(int mode) {
-    setExternalAttributes((mode << 16)
+    setExternalAttributes(((long)(mode & SHORT_MASK) << 16)
                           // MS-DOS read-only attribute
                           | ((mode & 0200) == 0 ? 1 : 0)
                           // MS-DOS directory flag
@@ -442,6 +444,19 @@ public class JBZipEntry implements Cloneable {
     }
   }
 
+  public void setDataFromPath(@NotNull Path file) throws IOException {
+    long size = Files.size(file);
+    if (size < FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+      //for small files its faster to load their whole content into memory so we can write it to zip sequentially
+      setData(Files.readAllBytes(file));
+    }
+    else {
+      try(InputStream input = new BufferedInputStream(Files.newInputStream(file))) {
+        myFile.getOutputStream().putNextEntryContent(this, size, input);
+      }
+    }
+  }
+
   public void writeDataTo(OutputStream output) throws IOException {
     if (size == -1) throw new IOException("no data");
 
@@ -457,7 +472,7 @@ public class JBZipEntry implements Cloneable {
     }
   }
 
-  private long calcDataOffset() throws IOException {
+  public long calcDataOffset() throws IOException {
     long offset = getHeaderOffset();
     myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     byte[] b = new byte[JBZipFile.WORD];
@@ -483,7 +498,7 @@ public class JBZipEntry implements Cloneable {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
+    public int read(byte @NotNull [] b, int off, int len) throws IOException {
       if (remaining <= 0) {
         if (addDummyByte) {
           addDummyByte = false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -6,8 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
-import kotlin.Lazy;
-import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -25,17 +23,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrNewExpressionReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 /**
  * @author ilyas
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private final Lazy<GroovyCallReference> myConstructorReference = LazyKt.lazy(
-    () -> getArrayCount() > 0 || getReferenceElement() == null ? null : new GrNewExpressionReference(this)
-  );
+  private final GroovyConstructorReference myConstructorReference = new GrNewExpressionReference(this);
 
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -136,8 +132,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @Override
-  @NotNull
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
     return multiResolve(true);
   }
 
@@ -146,16 +141,15 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return findChildByClass(GrTypeElement.class);
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     GroovyReference reference = getConstructorReference();
     return reference == null ? GroovyResolveResult.EMPTY_ARRAY : reference.multiResolve(incompleteCode);
   }
 
   @Nullable
   @Override
-  public GroovyCallReference getConstructorReference() {
-    return myConstructorReference.getValue();
+  public GroovyConstructorReference getConstructorReference() {
+    return getArrayCount() > 0 || getReferenceElement() == null ? null : myConstructorReference;
   }
 }

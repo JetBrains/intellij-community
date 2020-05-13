@@ -39,10 +39,9 @@ public class SideEffectVisitor extends StandardInstructionVisitor {
     return super.visitFlushVariable(instruction, runner, memState);
   }
 
-  @NotNull
   @Override
-  public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
-                                                    @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
+  public DfaInstructionState @NotNull [] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
+                                                              @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
     if (instruction instanceof ReturnInstruction && (((ReturnInstruction)instruction).getAnchor() != null ||
                                                      ((ReturnInstruction)instruction).isViaException())) {
       runner.cancel();
@@ -54,7 +53,7 @@ public class SideEffectVisitor extends StandardInstructionVisitor {
   public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
                                                DataFlowRunner runner,
                                                DfaMemoryState memState) {
-    if (instruction.shouldFlushFields()) {
+    if (!instruction.getMutationSignature().isPure()) {
       runner.cancel();
     }
     return super.visitMethodCall(instruction, runner, memState);

@@ -17,7 +17,6 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
@@ -59,15 +58,8 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     }
 
   @Override
-  @NotNull
-    public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
+  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
-    }
-
-    @Override
-    @NotNull
-    public AnAction[] createGroupingActions(@NotNull UsageView view) {
-        return AnAction.EMPTY_ARRAY;
     }
 
     private static class TemplateUsageGroup implements UsageGroup {
@@ -95,7 +87,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
                 if (sb.length() > 0) sb.append(", ");
                 sb.append("mode='").append(mode.toString()).append("'");
             }
-            return "Template (" + sb.toString() + ")";
+            return "Template (" + sb + ")";
         }
 
         @Override
@@ -154,7 +146,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     private static class TemplateUsageGroupingRule extends SingleParentUsageGroupingRule {
         @Nullable
         @Override
-        protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+        protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
             if (usage instanceof UsageInfo2UsageAdapter) {
                 final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
                 final UsageInfo usageInfo = u.getUsageInfo();

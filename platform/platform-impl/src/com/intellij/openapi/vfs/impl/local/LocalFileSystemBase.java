@@ -1,22 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.core.CoreBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,41 +28,18 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public abstract class LocalFileSystemBase extends LocalFileSystem {
+public abstract class LocalFileSystemBase extends LocalFileSystemApi {
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
   private static final FileAttributes FAKE_ROOT_ATTRIBUTES =
     new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
-
-  @Override
-  @Nullable
-  public VirtualFile findFileByPath(@NotNull String path) {
-    return VfsImplUtil.findFileByPath(this, path);
-  }
-
-  @Override
-  public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return VfsImplUtil.findFileByPathIfCached(this, path);
-  }
-
-  @Override
-  @Nullable
-  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    return VfsImplUtil.refreshAndFindFileByPath(this, path);
-  }
-
-  @Override
-  public VirtualFile findFileByIoFile(@NotNull File file) {
-    return findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
-  }
 
   @NotNull
   private static File convertToIOFile(@NotNull VirtualFile file) {
@@ -68,6 +48,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       path += '/';  // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
     }
     return new File(path);
+  }
+
+  @Override
+  @Nullable
+  public Path getNioPath(@NotNull VirtualFile file) {
+    if (file.getFileSystem() != this) return null;
+    return convertToIOFile(file).toPath();
   }
 
   @NotNull
@@ -121,14 +108,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public String resolveSymLink(@NotNull VirtualFile file) {
-    return FileSystemUtil.resolveSymLink(file.getPath());
+    String result = FileSystemUtil.resolveSymLink(file.getPath());
+    return result != null ? FileUtil.toSystemIndependentName(result) : null;
   }
 
-  @NotNull
   @Override
-  public String[] list(@NotNull VirtualFile file) {
-    File directory = convertToIOFile(file);
-    String[] names = directory.list(DirectoryAccessChecker.getFileFilter(directory));
+  public String @NotNull [] list(@NotNull VirtualFile file) {
+    String[] names = myChildrenGetter.accessDiskWithCheckCanceled(convertToIOFile(file));
     return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
   }
 
@@ -143,20 +129,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return false;
   }
 
-  @Override
   @Nullable
+  @Override
   protected String normalize(@NotNull String path) {
-    if (path.isEmpty()) {
-      try {
-        path = new File("").getCanonicalPath();
-      }
-      catch (IOException e) {
-        return path;
-      }
-    }
-    else if (SystemInfo.isWindows) {
-      if (path.charAt(0) == '/' && !path.startsWith("//")) {
-        path = path.substring(1);  // hack over new File(path).toURI().toURL().getFile()
+    if (SystemInfo.isWindows) {
+      if (path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) != '/') {
+        path = path.substring(1);  // hack around `new File(path).toURI().toURL().getFile()`
       }
 
       try {
@@ -167,33 +145,18 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    File file = new File(path);
-    if (!isAbsoluteFileOrDriveLetter(file)) {
-      path = file.getAbsolutePath();
+    try {
+      Path file = Paths.get(path);
+      if (!file.isAbsolute() && !(SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':')) {
+        path = file.toAbsolutePath().toString();
+      }
+    }
+    catch (InvalidPathException | IOError e) {
+      Logger.getInstance(getClass()).trace(e);
+      return null;
     }
 
     return FileUtil.normalize(path);
-  }
-
-  private static boolean isAbsoluteFileOrDriveLetter(@NotNull File file) {
-    String path = file.getPath();
-    if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
-      // just drive letter.
-      // return true, despite the fact that technically it's not an absolute path
-      return true;
-    }
-    return file.isAbsolute();
-  }
-
-  @Override
-  public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
-    String path = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    return refreshAndFindFileByPath(path);
-  }
-
-  @Override
-  public void refreshIoFiles(@NotNull Iterable<? extends File> files) {
-    refreshIoFiles(files, false, false, null);
   }
 
   @Override
@@ -221,10 +184,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  @Override
-  public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files) {
-    refreshFiles(files, false, false, null);
-  }
 
   @Override
   public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
@@ -300,25 +259,25 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     if (!isValidName(dir)) {
-      throw new IOException(VfsBundle.message("directory.invalid.name.error", dir));
+      throw new IOException(CoreBundle.message("directory.invalid.name.error", dir));
     }
 
     if (!parent.exists() || !parent.isDirectory()) {
-      throw new IOException(VfsBundle.message("vfs.target.not.directory.error", parent.getPath()));
+      throw new IOException(IdeBundle.message("vfs.target.not.directory.error", parent.getPath()));
     }
     if (parent.findChild(dir) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + dir));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + dir));
     }
 
     File ioParent = convertToIOFile(parent);
     if (!ioParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("target.not.directory.error", ioParent.getPath()));
+      throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
 
     if (!auxCreateDirectory(parent, dir)) {
       File ioDir = new File(ioParent, dir);
       if (!(ioDir.mkdirs() || ioDir.isDirectory())) {
-        throw new IOException(VfsBundle.message("new.directory.failed.error", ioDir.getPath()));
+        throw new IOException(IdeBundle.message("new.directory.failed.error", ioDir.getPath()));
       }
     }
 
@@ -331,25 +290,25 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     if (!isValidName(file)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", file));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", file));
     }
 
     if (!parent.exists() || !parent.isDirectory()) {
-      throw new IOException(VfsBundle.message("vfs.target.not.directory.error", parent.getPath()));
+      throw new IOException(IdeBundle.message("vfs.target.not.directory.error", parent.getPath()));
     }
     if (parent.findChild(file) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + file));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + file));
     }
 
     File ioParent = convertToIOFile(parent);
     if (!ioParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("target.not.directory.error", ioParent.getPath()));
+      throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
 
     if (!auxCreateFile(parent, file)) {
       File ioFile = new File(ioParent, file);
       if (!FileUtil.createIfDoesntExist(ioFile)) {
-        throw new IOException(VfsBundle.message("new.file.failed.error", ioFile.getPath()));
+        throw new IOException(IdeBundle.message("new.file.failed.error", ioFile.getPath()));
       }
     }
 
@@ -361,13 +320,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException {
     if (file.getParent() == null) {
-      throw new IOException(VfsBundle.message("cannot.delete.root.directory", file.getPath()));
+      throw new IOException(IdeBundle.message("cannot.delete.root.directory", file.getPath()));
     }
 
     if (!auxDelete(file)) {
       File ioFile = convertToIOFile(file);
       if (!FileUtil.delete(ioFile)) {
-        throw new IOException(VfsBundle.message("delete.failed.error", ioFile.getPath()));
+        throw new IOException(IdeBundle.message("delete.failed.error", ioFile.getPath()));
       }
     }
 
@@ -391,8 +350,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     try (InputStream stream = new FileInputStream(convertToIOFileAndCheck(file))) {
       long l = file.getLength();
       if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
@@ -404,8 +362,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  @NotNull
-  private static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+  private static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
     byte[] bytes = new byte[length];
     int count = 0;
     while (count < length) {
@@ -424,7 +381,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
     File ioFile = convertToIOFileAndCheck(file);
-    OutputStream stream = SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
+    OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new FileOutputStream(ioFile) :
+                          Registry.is("ide.io.preemptive.safe.write") ? new PreemptiveSafeFileOutputStream(ioFile.toPath()) :
+                          new SafeFileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override
       public void close() throws IOException {
@@ -443,34 +402,34 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     String name = file.getName();
 
     if (!file.exists()) {
-      throw new IOException(VfsBundle.message("vfs.file.not.exist.error", file.getPath()));
+      throw new IOException(IdeBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
     if (file.getParent() == null) {
-      throw new IOException(VfsBundle.message("cannot.rename.root.directory", file.getPath()));
+      throw new IOException(CoreBundle.message("cannot.rename.root.directory", file.getPath()));
     }
     if (!newParent.exists() || !newParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("vfs.target.not.directory.error", newParent.getPath()));
+      throw new IOException(IdeBundle.message("vfs.target.not.directory.error", newParent.getPath()));
     }
     if (newParent.findChild(name) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + name));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + name));
     }
 
     File ioFile = convertToIOFile(file);
     if (FileSystemUtil.getAttributes(ioFile) == null) {
-      throw new FileNotFoundException(VfsBundle.message("file.not.exist.error", ioFile.getPath()));
+      throw new FileNotFoundException(IdeBundle.message("file.not.exist.error", ioFile.getPath()));
     }
     File ioParent = convertToIOFile(newParent);
     if (!ioParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("target.not.directory.error", ioParent.getPath()));
+      throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
     File ioTarget = new File(ioParent, name);
     if (ioTarget.exists()) {
-      throw new IOException(VfsBundle.message("target.already.exists.error", ioTarget.getPath()));
+      throw new IOException(IdeBundle.message("target.already.exists.error", ioTarget.getPath()));
     }
 
     if (!auxMove(file, newParent)) {
       if (!ioFile.renameTo(ioTarget)) {
-        throw new IOException(VfsBundle.message("move.failed.error", ioFile.getPath(), ioParent.getPath()));
+        throw new IOException(IdeBundle.message("move.failed.error", ioFile.getPath(), ioParent.getPath()));
       }
     }
 
@@ -480,34 +439,34 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void renameFile(Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException {
     if (!isValidName(newName)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
     boolean sameName = !isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
 
     if (!file.exists()) {
-      throw new IOException(VfsBundle.message("vfs.file.not.exist.error", file.getPath()));
+      throw new IOException(IdeBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
     VirtualFile parent = file.getParent();
     if (parent == null) {
-      throw new IOException(VfsBundle.message("cannot.rename.root.directory", file.getPath()));
+      throw new IOException(CoreBundle.message("cannot.rename.root.directory", file.getPath()));
     }
     if (!sameName && parent.findChild(newName) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + newName));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + newName));
     }
 
     File ioFile = convertToIOFile(file);
     if (!ioFile.exists()) {
-      throw new FileNotFoundException(VfsBundle.message("file.not.exist.error", ioFile.getPath()));
+      throw new FileNotFoundException(IdeBundle.message("file.not.exist.error", ioFile.getPath()));
     }
     File ioTarget = new File(convertToIOFile(parent), newName);
     if (!sameName && ioTarget.exists()) {
-      throw new IOException(VfsBundle.message("target.already.exists.error", ioTarget.getPath()));
+      throw new IOException(IdeBundle.message("target.already.exists.error", ioTarget.getPath()));
     }
 
     if (!auxRename(file, newName)) {
       if (!FileUtil.rename(ioFile, newName)) {
-        throw new IOException(VfsBundle.message("rename.failed.error", ioFile.getPath(), newName));
+        throw new IOException(IdeBundle.message("rename.failed.error", ioFile.getPath(), newName));
       }
     }
 
@@ -521,33 +480,33 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                               @NotNull VirtualFile newParent,
                               @NotNull String copyName) throws IOException {
     if (!isValidName(copyName)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", copyName));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", copyName));
     }
 
     if (!file.exists()) {
-      throw new IOException(VfsBundle.message("vfs.file.not.exist.error", file.getPath()));
+      throw new IOException(IdeBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
     if (!newParent.exists() || !newParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("vfs.target.not.directory.error", newParent.getPath()));
+      throw new IOException(IdeBundle.message("vfs.target.not.directory.error", newParent.getPath()));
     }
     if (newParent.findChild(copyName) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + copyName));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + copyName));
     }
 
     FileAttributes attributes = getAttributes(file);
     if (attributes == null) {
-      throw new FileNotFoundException(VfsBundle.message("file.not.exist.error", file.getPath()));
+      throw new FileNotFoundException(IdeBundle.message("file.not.exist.error", file.getPath()));
     }
     if (attributes.isSpecial()) {
       throw new FileNotFoundException("Not a file: " + file);
     }
     File ioParent = convertToIOFile(newParent);
     if (!ioParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("target.not.directory.error", ioParent.getPath()));
+      throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
     File ioTarget = new File(ioParent, copyName);
     if (ioTarget.exists()) {
-      throw new IOException(VfsBundle.message("target.already.exists.error", ioTarget.getPath()));
+      throw new IOException(IdeBundle.message("target.already.exists.error", ioTarget.getPath()));
     }
 
     if (!auxCopy(file, newParent, copyName)) {
@@ -587,59 +546,37 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   static {
     //noinspection SpellCheckingInspection
     List<String> roots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
-    Collections.sort(roots, (o1, o2) -> o2.length() - o1.length());  // longest first
+    roots.sort((o1, o2) -> o2.length() - o1.length());  // longest first
     ourRootPaths = ArrayUtil.toStringArray(roots);
   }
 
   @NotNull
   @Override
-  protected String extractRootPath(@NotNull String path) {
-    if (path.isEmpty()) {
-      try {
-        path = new File("").getCanonicalPath();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
+  protected String extractRootPath(@NotNull String normalizedPath) {
     for (String customRootPath : ourRootPaths) {
-      if (path.startsWith(customRootPath)) return customRootPath;
+      if (normalizedPath.startsWith(customRootPath)) return customRootPath;
     }
 
     if (SystemInfo.isWindows) {
-      if (path.length() >= 2 && path.charAt(1) == ':') {
-        // Drive letter
-        return StringUtil.toUpperCase(path.substring(0, 2));
+      if (normalizedPath.length() >= 2 && normalizedPath.charAt(1) == ':') {
+        // drive letter
+        return StringUtil.toUpperCase(normalizedPath.substring(0, 2));
       }
-
-      if (path.startsWith("//") || path.startsWith("\\\\")) {
-        // UNC. Must skip exactly two path elements like [\\ServerName\ShareName]\pathOnShare\file.txt
-        // Root path is in square brackets here.
-
-        int slashCount = 0;
-        int idx;
-        boolean isSlash = false;
-        for (idx = 2; idx < path.length() && slashCount < 2; idx++) {
-          char c = path.charAt(idx);
-          isSlash = c == '\\' || c == '/';
-          if (isSlash) {
-            slashCount++;
-            if (slashCount == 2) {
-              idx--;
-            }
-          }
-        }
-
-        if (slashCount == 2 || slashCount == 1 && !isSlash) {
-          return path.substring(0, idx);
+      if (normalizedPath.startsWith("//")) {
+        // UNC (https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc)
+        int p1 = normalizedPath.indexOf('/', 2);
+        if (p1 > 2) {
+          int p2 = normalizedPath.indexOf('/', p1 + 1);
+          if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
+          if (p2 < 0) return normalizedPath;
         }
       }
-
-      return "";
+    }
+    else if (StringUtil.startsWithChar(normalizedPath, '/')) {
+      return "/";
     }
 
-    return StringUtil.startsWithChar(path, '/') ? "/" : "";
+    return "";
   }
 
   @Override
@@ -715,13 +652,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    String path = normalize(file.getPath());
-    if (path == null) return null;
-    if (file.getParent() == null && path.startsWith("//")) {
-      return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
+    String path = file.getPath();
+    if (SystemInfo.isWindows && file.getParent() == null && path.startsWith("//")) {
+      return FAKE_ROOT_ATTRIBUTES;  // UNC roots
     }
-    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(path));
+    else {
+      return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
+    }
   }
+
+  private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
+  private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list(DirectoryAccessChecker.getFileFilter(dir)));
 
   @Override
   public void refresh(boolean asynchronous) {

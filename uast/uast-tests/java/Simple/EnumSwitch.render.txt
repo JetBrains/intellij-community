@@ -28,4 +28,6 @@ public final enum EnumSwitch {
 
         return result
     }
+    public static fun values() : EnumSwitch[] = UastEmptyExpression
+    public static fun valueOf(name: java.lang.String) : EnumSwitch = UastEmptyExpression
 }

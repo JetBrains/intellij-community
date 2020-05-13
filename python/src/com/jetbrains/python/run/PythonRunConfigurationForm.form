@@ -15,7 +15,7 @@
         <properties>
           <anchor value=""/>
           <labelFor value=""/>
-          <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.script_parameters"/>
+          <text resource-bundle="messages/PyBundle" key="runcfg.labels.script_parameters"/>
         </properties>
       </component>
       <vspacer id="f8c96">
@@ -76,7 +76,7 @@
           </grid>
         </constraints>
         <properties>
-          <dialogCaption resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.captions.script_parameters_dialog"/>
+          <dialogCaption resource-bundle="messages/PyBundle" key="runcfg.captions.script_parameters_dialog"/>
           <text value=""/>
         </properties>
       </component>
@@ -99,7 +99,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Emulate terminal in output console"/>
+                  <text resource-bundle="messages/PyBundle" key="form.python.run.configuration.emulate.terminal.in.output.console"/>
                 </properties>
               </component>
               <component id="99b13" class="com.intellij.ui.components.JBCheckBox" binding="myShowCommandLineCheckbox">
@@ -108,7 +108,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Run with Python Console"/>
+                  <text resource-bundle="messages/PyBundle" key="form.python.run.configuration.run.with.python.console"/>
                 </properties>
               </component>
               <component id="e1d2e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myInputFileTextFieldWithBrowseButton">
@@ -127,7 +127,7 @@
                 <properties>
                   <anchor value="73466"/>
                   <enabled value="true"/>
-                  <text value="Redirect input from:"/>
+                  <text resource-bundle="messages/PyBundle" key="form.python.run.configuration.redirect.input.from"/>
                 </properties>
               </component>
             </children>

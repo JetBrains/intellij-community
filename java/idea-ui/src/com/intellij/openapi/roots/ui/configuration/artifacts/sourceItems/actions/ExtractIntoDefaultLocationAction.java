@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -36,9 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActionBase {
   public ExtractIntoDefaultLocationAction(SourceItemsTree sourceItemsTree, ArtifactEditorEx artifactEditor) {
     super(sourceItemsTree, artifactEditor);
@@ -49,7 +47,7 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
     final String pathForClasses = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES);
     final Presentation presentation = e.getPresentation();
     if (onlyJarsSelected() && pathForClasses != null) {
-      presentation.setText("Extract Into " + getTargetLocationText(Collections.singleton(pathForClasses)));
+      presentation.setText(JavaUiBundle.message("action.text.extract.source.item.into.0", getTargetLocationText(Collections.singleton(pathForClasses))));
       presentation.setVisible(true);
     }
     else {

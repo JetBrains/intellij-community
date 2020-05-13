@@ -37,7 +37,8 @@ public class PlainEnterProcessor implements EnterProcessor {
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     if (expandCodeBlock(editor, psiElement)) return true;
 
-    getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE).execute(editor, ((EditorEx)editor).getDataContext());
+    getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE).execute(editor, editor.getCaretModel().getCurrentCaret(),
+                                                                     ((EditorEx)editor).getDataContext());
     return true;
   }
 
@@ -66,7 +67,7 @@ public class PlainEnterProcessor implements EnterProcessor {
     editor.getCaretModel().moveToOffset(firstElement != null ?
                                         firstElement.getTextRange().getStartOffset() :
                                         block.getTextRange().getEndOffset());
-    enterHandler.execute(editor, ((EditorEx)editor).getDataContext());
+    enterHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), ((EditorEx)editor).getDataContext());
     return true;
   }
 
@@ -191,16 +192,7 @@ public class PlainEnterProcessor implements EnterProcessor {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
     final DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
-    if (dataContext == null) {
-      i = CharArrayUtil.shiftForwardUntil(whiteSpaceText, i, "\n");
-      if (i >= whiteSpaceText.length()) {
-        i = whiteSpaceText.length();
-      }
-      editor.getCaretModel().moveToOffset(i + textRange.getStartOffset());
-    }
-    else {
-      actionHandler.execute(editor, dataContext);
-    }
+    actionHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
     return  true;
   }
 }

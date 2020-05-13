@@ -2,8 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.codeInspection.ex.ToolsImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -28,11 +27,8 @@ final class InspectionsTopHitProvider implements OptionsSearchTopHitProvider.Pro
   public Collection<OptionDescription> getOptions(@NotNull Project project) {
     InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     List<OptionDescription> result = new ArrayList<>();
-    for (ScopeToolState toolState : inspectionProfile.getAllTools()) {
-      ToolsImpl tools = inspectionProfile.getToolsOrNull(toolState.getTool().getShortName(), project);
-      if (tools != null) {
-        result.add(new ToolOptionDescription(tools, project));
-      }
+    for (InspectionToolWrapper<?, ?> toolWrapper : inspectionProfile.getInspectionTools(null)) {
+      result.add(new ToolOptionDescription(toolWrapper, project));
     }
     return result;
   }

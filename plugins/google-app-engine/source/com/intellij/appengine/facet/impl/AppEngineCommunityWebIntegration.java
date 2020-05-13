@@ -39,9 +39,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineCommunityWebIntegration extends AppEngineWebIntegration {
   private static final Logger LOG = Logger.getInstance(AppEngineCommunityWebIntegration.class);
 

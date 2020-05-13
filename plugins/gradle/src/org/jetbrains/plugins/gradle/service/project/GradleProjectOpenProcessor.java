@@ -70,7 +70,7 @@ import java.util.Collection;
 @Deprecated
 public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
 
-  @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION};
+  public static final String @NotNull [] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION};
 
   @NotNull
   @Override
@@ -285,7 +285,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
   private static boolean setupGradleJvm(@Nullable Project project, @NotNull GradleProjectSettings projectSettings) {
     final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
     if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first) ||
-        ExternalSystemJdkUtil.isValidJdk(sdkPair.second.getHomePath())) {
+        ExternalSystemJdkUtil.isValidJdk(sdkPair.second)) {
       projectSettings.setGradleJvm(sdkPair.first);
       return true;
     }

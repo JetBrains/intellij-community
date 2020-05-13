@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
@@ -27,8 +13,13 @@ import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
 import com.intellij.ui.*;
@@ -83,18 +74,18 @@ class CompoundRendererConfigurable extends JPanel {
       myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     }
 
-    myRbDefaultLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
-    myRbExpressionLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
+    myRbDefaultLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
+    myRbExpressionLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
     final ButtonGroup labelButtonsGroup = new ButtonGroup();
     labelButtonsGroup.add(myRbDefaultLabel);
     labelButtonsGroup.add(myRbExpressionLabel);
 
-    myShowTypeCheckBox = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.show.type"));
-    myOnDemandCheckBox = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.ondemand"));
+    myShowTypeCheckBox = new JBCheckBox(JavaDebuggerBundle.message("label.compound.renderer.configurable.show.type"));
+    myOnDemandCheckBox = new JBCheckBox(JavaDebuggerBundle.message("label.compound.renderer.configurable.ondemand"));
 
-    myRbDefaultChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
-    myRbExpressionChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
-    myRbListChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression.list"));
+    myRbDefaultChildrenRenderer = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
+    myRbExpressionChildrenRenderer = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
+    myRbListChildrenRenderer = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression.list"));
     final ButtonGroup childrenButtonGroup = new ButtonGroup();
     childrenButtonGroup.add(myRbDefaultChildrenRenderer);
     childrenButtonGroup.add(myRbExpressionChildrenRenderer);
@@ -121,7 +112,7 @@ class CompoundRendererConfigurable extends JPanel {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         PsiClass psiClass = DebuggerUtils.getInstance()
-          .chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
+          .chooseClassDialog(JavaDebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if (psiClass != null) {
           String qName = JVMNameUtil.getNonAnonymousClassName(psiClass);
           myClassNameField.setText(qName);
@@ -129,23 +120,37 @@ class CompoundRendererConfigurable extends JPanel {
         }
       }
     }, myProject);
-    myClassNameField.getEditorTextField().addFocusListener(new FocusAdapter() {
+    EditorTextField editorTextField = myClassNameField.getEditorTextField();
+    editorTextField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(@NotNull FocusEvent e) {
         updateContext(myClassNameField.getText());
       }
     });
+    ComponentValidator validator = new ComponentValidator(myProject).withValidator(() -> {
+      String text = myClassNameField.getText();
+      if (StringUtil.containsAnyChar(text, "<>")) {
+        return new ValidationInfo(JavaDebuggerBundle.message("error.compound.renderer.configurable.fqn.generic"), editorTextField);
+      }
+      return null;
+    }).installOn(editorTextField);
+    myClassNameField.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        validator.revalidate();
+      }
+    });
 
-    myAppendDefaultChildren = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.append.default.children"));
+    myAppendDefaultChildren = new JBCheckBox(JavaDebuggerBundle.message("label.compound.renderer.configurable.append.default.children"));
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
+    panel.add(new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.emptyInsets(), 0, 0));
     panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                        GridBagConstraints.HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.rendering")),
+    panel.add(new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.when.rendering")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.insetsTop(20), 0, 0));
     panel.add(myShowTypeCheckBox,
@@ -162,7 +167,7 @@ class CompoundRendererConfigurable extends JPanel {
     panel.add(myOnDemandCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
 
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.expanding")),
+    panel.add(new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.when.expanding")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.insetsTop(20), 0, 0));
     panel.add(myRbDefaultChildrenRenderer,
@@ -173,7 +178,7 @@ class CompoundRendererConfigurable extends JPanel {
                                      JBUI.insetsLeft(10), 0, 0));
     panel.add(myChildrenEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                                       GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
-    myExpandedLabel = new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.test.can.expand"));
+    myExpandedLabel = new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.test.can.expand"));
     panel.add(myExpandedLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.insets(4, 30, 0, 0), 0, 0));
@@ -494,11 +499,11 @@ class CompoundRendererConfigurable extends JPanel {
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
         case NAME_TABLE_COLUMN:
-          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
+          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
         case EXPRESSION_TABLE_COLUMN:
-          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
+          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
         case ONDEMAND_TABLE_COLUMN:
-          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
+          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
         default:
           return "";
       }

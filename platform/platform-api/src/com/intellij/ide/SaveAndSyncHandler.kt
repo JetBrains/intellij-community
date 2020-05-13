@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.ApiStatus
 
 abstract class SaveAndSyncHandler {
@@ -15,6 +18,8 @@ abstract class SaveAndSyncHandler {
       return ApplicationManager.getApplication().getService(SaveAndSyncHandler::class.java)
     }
   }
+
+  protected val externalChangesModificationTracker = SimpleModificationTracker()
 
   /**
    * Schedule to save documents, all opened projects (or only passed project if not null) and application.
@@ -53,6 +58,8 @@ abstract class SaveAndSyncHandler {
 
   abstract fun refreshOpenFiles()
 
+  open fun disableAutoSave(): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
+
   abstract fun blockSaveOnFrameDeactivation()
 
   abstract fun unblockSaveOnFrameDeactivation()
@@ -70,5 +77,12 @@ abstract class SaveAndSyncHandler {
   }
 
   @ApiStatus.Experimental
-  abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager, isSaveAppAlso: Boolean = false): Boolean
+  abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean
+
+  /**
+   * @return a modification tracker incrementing when external commands are likely run.
+   *         Currently it happens on IDE frame deactivation and/or [scheduleRefresh] invocation.
+   */
+  @ApiStatus.Experimental
+  fun getExternalChangesTracker(): ModificationTracker = externalChangesModificationTracker
 }

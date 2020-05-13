@@ -3,12 +3,15 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +41,7 @@ public abstract class CompletionService {
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
   @Deprecated
-  public abstract void setAdvertisementText(@Nullable String text);
+  public abstract void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text);
 
   /**
    * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
@@ -51,8 +54,15 @@ public abstract class CompletionService {
   }
 
   protected void getVariantsFromContributors(CompletionParameters parameters,
-                                           @Nullable CompletionContributor from,
-                                           PrefixMatcher matcher, Consumer<? super CompletionResult> consumer) {
+                                             @Nullable CompletionContributor from,
+                                             PrefixMatcher matcher, Consumer<? super CompletionResult> consumer) {
+    getVariantsFromContributors(parameters, from, matcher, consumer, null);
+  }
+
+  protected void getVariantsFromContributors(CompletionParameters parameters,
+                                             @Nullable CompletionContributor from,
+                                             PrefixMatcher matcher, Consumer<? super CompletionResult> consumer,
+                                             CompletionSorter customSorter) {
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
 
     for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
@@ -60,6 +70,9 @@ public abstract class CompletionService {
       CompletionContributor contributor = contributors.get(i);
 
       CompletionResultSet result = createResultSet(parameters, consumer, contributor, matcher);
+      if (customSorter != null) {
+        result = result.withRelevanceSorter(customSorter);
+      }
       contributor.fillCompletionVariants(parameters, result);
       if (result.isStopped()) {
         return;
@@ -126,4 +139,19 @@ public abstract class CompletionService {
   public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
 
   public abstract CompletionSorter emptySorter();
+
+  @ApiStatus.Internal
+  public static boolean isStartMatch(LookupElement element, WeighingContext context) {
+    return getItemMatcher(element, context).isStartMatch(element);
+  }
+
+  @ApiStatus.Internal
+  public static PrefixMatcher getItemMatcher(LookupElement element, WeighingContext context) {
+    PrefixMatcher itemMatcher = context.itemMatcher(element);
+    String pattern = context.itemPattern(element);
+    if (!pattern.equals(itemMatcher.getPrefix())) {
+      return itemMatcher.cloneWithPrefix(pattern);
+    }
+    return itemMatcher;
+  }
 }

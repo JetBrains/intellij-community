@@ -1,34 +1,40 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="dom.fileDescription"
-                    interface="com.intellij.util.xml.DomFileDescription"/>
+                    interface="com.intellij.util.xml.DomFileDescription"
+                    dynamic="true"/>
     <extensionPoint name="dom.fileMetaData"
-                    beanClass="com.intellij.util.xml.impl.DomFileMetaData">
+                    beanClass="com.intellij.util.xml.impl.DomFileMetaData"
+                    dynamic="true">
       <with attribute="implementation" implements="com.intellij.util.xml.DomFileDescription"/>
     </extensionPoint>
 
     <extensionPoint name="dom.implementation"
-                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP">
-      <with attribute="interfaceName" implements="com.intellij.util.xml.DomElement"/>
-      <with attribute="implementationName" implements="com.intellij.util.xml.DomElement"/>
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"
+                    dynamic="true">
+      <with attribute="interfaceClass" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="implementationClass" implements="com.intellij.util.xml.DomElement"/>
     </extensionPoint>
 
     <extensionPoint name="dom.converter"
-                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"
+                    dynamic="true"/>
 
     <extensionPoint name="dom.extender"
-                    beanClass="com.intellij.util.xml.reflect.DomExtenderEP">
-      <with attribute="domClassName" implements="com.intellij.util.xml.DomElement"/>
+                    beanClass="com.intellij.util.xml.reflect.DomExtenderEP"
+                    dynamic="true">
+      <with attribute="domClass" implements="com.intellij.util.xml.DomElement"/>
       <with attribute="extenderClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
     </extensionPoint>
 
     <extensionPoint name="dom.customAnnotationChecker"
-                    interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"/>
+                    interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"
+                    dynamic="true"/>
 
     <extensionPoint name="dom.uiControlsProvider"
                     interface="com.intellij.util.Consumer"/>
 
-    <extensionPoint name="moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider"/>
+    <extensionPoint name="moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

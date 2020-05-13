@@ -4,7 +4,6 @@ package com.intellij.ide.actions
 import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.DebugLogManager.DebugLogLevel
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -16,10 +15,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.xml.util.XmlStringUtil
 import javax.swing.JTextArea
 
-class DebugLogConfigureAction : DumbAwareAction() {
+internal class DebugLogConfigureAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: ProjectManager.getInstance().defaultProject
-    val logCustomizer = ApplicationManager.getApplication().getComponent(DebugLogManager::class.java)!!
+    val logCustomizer = DebugLogManager.getInstance()
     val currentCategories = logCustomizer.getSavedCategories()
     val dialog = DebugLogConfigureDialog(project, currentCategories)
     if (dialog.showAndGet()) {

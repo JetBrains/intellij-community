@@ -52,8 +52,7 @@ public interface ChangeListManagerGate {
   FileStatus getStatus(@NotNull FilePath filePath);
 
   /**
-   * Use {@link #getStatus(FilePath)
-   * @deprecated to remove in IDEA 16
+   * @deprecated use {@link #getStatus(FilePath)}
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2016")

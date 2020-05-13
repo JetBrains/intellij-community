@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
@@ -41,20 +41,20 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public String getNodeText() {
-    return ProjectBundle.message("library.javadocs.node");
+    return JavaUiBundle.message("library.javadocs.node");
   }
 
   private static class JavadocPathsEditor extends SdkPathEditor {
     private final Sdk mySdk;
 
     JavadocPathsEditor(Sdk sdk, FileChooserDescriptor descriptor) {
-      super(ProjectBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.getInstance(), descriptor);
+      super(JavaUiBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.getInstance(), descriptor);
       mySdk = sdk;
     }
 
     @Override
     protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-      AnActionButton specifyUrlButton = new DumbAwareActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
+      AnActionButton specifyUrlButton = new DumbAwareActionButton(JavaUiBundle.messagePointer("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           onSpecifyUrlButtonClicked();
@@ -72,7 +72,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
         addElement(virtualFile);
         setModified(true);
         requestDefaultFocus();
-        setSelectedRoots(new Object[]{virtualFile});
+        setSelectedRoots(new VirtualFile[]{virtualFile});
       }
     }
 

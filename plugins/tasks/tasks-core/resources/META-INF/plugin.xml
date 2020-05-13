@@ -5,6 +5,7 @@
 <idea-plugin>
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
+  <category>Other Tools</category>
   <description>Enables task and context management</description>
   <vendor>JetBrains</vendor>
 
@@ -17,13 +18,6 @@
   -->
   <!--suppress PluginXmlValidity -->
   <depends optional="true">XPathView</depends>
-
-  <project-components>
-    <component>
-      <interface-class>com.intellij.tasks.TaskManager</interface-class>
-      <implementation-class>com.intellij.tasks.impl.TaskManagerImpl</implementation-class>
-    </component>
-  </project-components>
 
   <actions>
 
@@ -92,23 +86,31 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType"/>
+    <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType" dynamic="true"/>
     <extensionPoint name="dialogPanelProvider" interface="com.intellij.tasks.ui.TaskDialogPanelProvider"/>
     <extensionPoint name="commitPlaceholderProvider" interface="com.intellij.tasks.CommitPlaceholderProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks" displayName="Tasks" nonDefaultProject="true">
-      <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable" displayName="Servers" id="tasks.servers"/>
+    <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks"
+                         bundle="messages.TaskBundle"
+                         key="configurable.TaskConfigurable.display.name"
+                         nonDefaultProject="true">
+      <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable"
+                    bundle="messages.TaskBundle"
+                    key="configurable.TaskRepositoriesConfigurable.display.name"
+                    id="tasks.servers"/>
     </projectConfigurable>
     <tasks.dialogPanelProvider implementation="com.intellij.tasks.actions.vcs.VcsTaskDialogPanelProvider"/>
 
     <editChangelistSupport implementation="com.intellij.tasks.impl.TaskChangelistSupport"/>
 
+    <projectService serviceInterface="com.intellij.tasks.TaskManager" serviceImplementation="com.intellij.tasks.impl.TaskManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.tasks.impl.TaskManagerImpl$Activity"/>
     <projectService serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
-    <applicationInitializedListener implementation="com.intellij.tasks.config.PasswordConversionEnforcer"/>
+    <applicationService serviceImplementation="com.intellij.tasks.config.PasswordConversionEnforcer" preload="notHeadless"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.TaskSettings"/>
     <search.optionContributor implementation="com.intellij.tasks.config.TaskSearchableOptionContributor"/>
 
@@ -145,6 +147,9 @@
                             implementationClass="com.intellij.tasks.youtrack.lang.codeinsight.YouTrackCompletionContributor"/>
     <externalAnnotator language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>
     <tasks.commitPlaceholderProvider implementation="com.intellij.tasks.impl.DefaultCommitPlaceholderProvider"/>
+
+    <vcs.changeListDecorator implementation="com.intellij.tasks.impl.TaskManagerDecorator"/>
+    <notificationWhitelist groupIds="Task Group;Tasks"/>
   </extensions>
 
 </idea-plugin>

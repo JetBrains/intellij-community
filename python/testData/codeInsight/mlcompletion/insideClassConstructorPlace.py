@@ -1,0 +1,2 @@
+class Claaass:
+    def <caret>

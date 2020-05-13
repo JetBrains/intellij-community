@@ -25,15 +25,13 @@ public class RedundantThrowsInspectionMerger extends InspectionElementsMerger {
     return "RedundantThrows";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {"RedundantThrowsDeclaration"};
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return getSourceToolNames();
   }
 }

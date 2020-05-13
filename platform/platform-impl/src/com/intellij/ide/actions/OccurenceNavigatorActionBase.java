@@ -1,5 +1,4 @@
-
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -8,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -83,8 +83,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
 
   protected abstract String getDescription(OccurenceNavigator navigator);
 
-  @Nullable
-  protected OccurenceNavigator getNavigator(DataContext dataContext) {
+  protected @Nullable OccurenceNavigator getNavigator(DataContext dataContext) {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(dataContext, false);
     if (contentManager != null) {
       Content content = contentManager.getSelectedContent();
@@ -96,8 +95,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
     return (OccurenceNavigator)getOccurenceNavigatorFromContext(dataContext);
   }
 
-  @Nullable
-  private static OccurenceNavigator findNavigator(JComponent parent) {
+  private static @Nullable OccurenceNavigator findNavigator(JComponent parent) {
     LinkedList<JComponent> queue = new LinkedList<>();
     queue.addLast(parent);
     while (!queue.isEmpty()) {
@@ -120,8 +118,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
     return null;
   }
 
-  @Nullable
-  private static Component getOccurenceNavigatorFromContext(DataContext dataContext) {
+  private static @Nullable Component getOccurenceNavigatorFromContext(DataContext dataContext) {
     Window window = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
     if (window != null) {
@@ -138,13 +135,12 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
       return null;
     }
 
-    ToolWindowManagerEx mgr = ToolWindowManagerEx.getInstanceEx(project);
-
-    String id = mgr.getLastActiveToolWindowId(component -> findNavigator(component) != null);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    String id = toolWindowManager instanceof ToolWindowManagerEx ? ((ToolWindowManagerEx)toolWindowManager).getLastActiveToolWindowId(component -> findNavigator(component) != null) : null;
     if (id == null) {
       return null;
     }
-    return (Component)findNavigator(mgr.getToolWindow(id).getComponent());
+    return (Component)findNavigator(toolWindowManager.getToolWindow(id).getComponent());
   }
 
 }

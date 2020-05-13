@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public interface ArtifactCompilerInstructionCreator {
 
   void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName);

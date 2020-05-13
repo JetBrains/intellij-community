@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ModalityState;
@@ -8,10 +8,10 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.CommittedChangeListPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -36,7 +36,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
-public class SvnMergeSourceDetails extends MasterDetailsComponent {
+public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   private final Project myProject;
   private final SvnFileRevision myRevision;
   private final VirtualFile myFile;
@@ -55,7 +55,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
 
   public static void showMe(final Project project, final SvnFileRevision revision, final VirtualFile file) {
     if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     final ContentManager contentManager = toolWindow.getContentManager();
 
     final MyDialog dialog = new MyDialog(project, revision, file);
@@ -182,7 +182,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     }
 
     private SvnChangeList getList() {
-      SvnChangeList list = myListsMap.get(myRevision);
+      SvnChangeList list = myListsMap.get(myRevision.getRevision().getNumber());
       if (list == null) {
         list = (SvnChangeList)SvnVcs.getInstance(myProject).loadRevisions(myFile, myRevision.getRevisionNumber());
         myListsMap.put(myRevision.getRevision().getNumber(), list);

@@ -17,9 +17,6 @@ package com.intellij.facet.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class FacetEditorValidator {
   @NotNull
   public abstract ValidationResult check();

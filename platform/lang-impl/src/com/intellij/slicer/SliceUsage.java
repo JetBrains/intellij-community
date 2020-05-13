@@ -81,6 +81,13 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
       }) {
         @Override
         public boolean process(SliceUsage usage) {
+          SliceValueFilter filter = usage.params.valueFilter;
+          if (filter != null) {
+            PsiElement psiElement = usage.getElement();
+            if (psiElement != null && !filter.allowed(psiElement)) {
+              return true;
+            }
+          }
           return transformToLanguageSpecificUsage(usage).stream().allMatch(super::process);
         }
       };
@@ -95,9 +102,9 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     });
   }
 
-  protected abstract void processUsagesFlownFromThe(PsiElement element, Processor<SliceUsage> uniqueProcessor);
+  protected abstract void processUsagesFlownFromThe(PsiElement element, Processor<? super SliceUsage> uniqueProcessor);
 
-  protected abstract void processUsagesFlownDownTo(PsiElement element, Processor<SliceUsage> uniqueProcessor);
+  protected abstract void processUsagesFlownDownTo(PsiElement element, Processor<? super SliceUsage> uniqueProcessor);
 
   public SliceUsage getParent() {
     return myParent;

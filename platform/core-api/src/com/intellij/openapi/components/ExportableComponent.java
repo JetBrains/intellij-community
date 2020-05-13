@@ -16,6 +16,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -24,9 +25,9 @@ import java.io.File;
 public interface ExportableComponent {
   ExtensionPointName<ServiceBean> EXTENSION_POINT = new ExtensionPointName<>("com.intellij.exportable");
 
-  @NotNull
-  File[] getExportFiles();
+  File @NotNull [] getExportFiles();
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getPresentableName();
 }

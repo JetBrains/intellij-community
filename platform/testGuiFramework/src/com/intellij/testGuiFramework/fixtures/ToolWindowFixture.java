@@ -59,9 +59,14 @@ public abstract class ToolWindowFixture {
     pause(new Condition("Find tool window with ID '" + toolWindowId + "'") {
       @Override
       public boolean test() {
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
-        toolWindowRef.set(toolWindow);
-        return toolWindow != null;
+        try {
+          ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
+          toolWindowRef.set(toolWindow);
+          return toolWindow != null;
+        }
+        catch (Exception e) {
+          return false;
+        }
       }
     }, Timeouts.INSTANCE.getMinutes02());
     myRobot = robot;
@@ -86,7 +91,8 @@ public abstract class ToolWindowFixture {
           return false;
         }
       }, Timeouts.INSTANCE.getMinutes02());
-    } catch (WaitTimedOutError e) {
+    }
+    catch (WaitTimedOutError e) {
       throw new ComponentLookupException("Cannot find content with " + displayName);
     }
     return contentRef.get();
@@ -164,8 +170,7 @@ public abstract class ToolWindowFixture {
     waitUntilIsVisible(Timeout.timeout(budget));
   }
 
-  @NotNull
-  public Content[] getContents() {
+  public Content @NotNull [] getContents() {
     //noinspection ConstantConditions
     return GuiTestUtilKt.INSTANCE.computeOnEdt(() -> myToolWindow.getContentManager().getContents());
   }
@@ -237,16 +242,20 @@ public abstract class ToolWindowFixture {
       protected void executeInEDT() throws Throwable {
         Stream<Content> contentStream = Arrays.stream(myToolWindow.getContentManager().getContents());
         Optional<Content> contentOptional = contentStream.filter(content -> content.getTabName().equals(tabName)).findAny();
-        if (!contentOptional.isPresent()) throw new ComponentLookupException("Unable to find content with tab name: \"" + tabName +
-                                                                             "\" for ToolWindow with id: \"" + myToolWindowId + "\"");
+        if (!contentOptional.isPresent()) {
+          throw new ComponentLookupException("Unable to find content with tab name: \"" + tabName +
+                                             "\" for ToolWindow with id: \"" + myToolWindowId + "\"");
+        }
         Content content = contentOptional.get();
-        if(Objects.equals(myToolWindow.getContentManager().getSelectedContent(), content)) return; // no need to select already selected content
+        if (Objects.equals(myToolWindow.getContentManager().getSelectedContent(), content)) {
+          return; // no need to select already selected content
+        }
         myToolWindow.getContentManager().setSelectedContent(content);
       }
     });
   }
 
-  public static void clickToolwindowButton(String toolWindowStripeButtonName, Robot robot){
+  public static void clickToolwindowButton(String toolWindowStripeButtonName, Robot robot) {
     final StripeButton stripeButton = robot.finder().find(new GenericTypeMatcher<StripeButton>(StripeButton.class) {
       @Override
       protected boolean isMatching(@NotNull StripeButton button) {
@@ -256,7 +265,7 @@ public abstract class ToolWindowFixture {
     robot.click(stripeButton);
   }
 
-  public static void showToolwindowStripes(Robot robot){
+  public static void showToolwindowStripes(Robot robot) {
     if (UISettings.getInstance().getHideToolStripes()) {
       final JLabel toolwindowsWidget = robot.finder().find(new GenericTypeMatcher<JLabel>(JLabel.class) {
         @Override

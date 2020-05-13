@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.codeStyleSettings;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
     ourSetupMap.put("nonDefaultSettings", () -> {
       CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance();
       manager.USE_PER_PROJECT_SETTINGS = true;
-      CodeStyleSettings testSettings = new CodeStyleSettings();
+      CodeStyleSettings testSettings = CodeStyle.createTestSettings();
       manager.setMainProjectCodeStyle(testSettings);
       testSettings.setDefaultRightMargin(77);
     });

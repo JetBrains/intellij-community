@@ -2,6 +2,7 @@
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -29,7 +30,7 @@ public class PluginConflictDialog extends DialogWrapper {
   public static final int WIDTH = 450;
 
   @NotNull
-  private final List<? extends PluginId> myConflictingPlugins;
+  private final List<PluginId> myConflictingPlugins;
 
   private final boolean myIsConflictWithPlatform;
   @Nullable
@@ -41,7 +42,7 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private JPanel myConflictingPluginsListPanel;
 
-  public PluginConflictDialog(@NotNull List<? extends PluginId> conflictingPlugins,
+  public PluginConflictDialog(@NotNull List<PluginId> conflictingPlugins,
                               boolean isConflictWithPlatform) {
     super(false);
 
@@ -67,7 +68,7 @@ public class PluginConflictDialog extends DialogWrapper {
     myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
 
-  private static String getTopMessageText(@NotNull List<? extends PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
+  private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     final int pluginsNumber = conflictingPlugins.size();
     if (isConflictWithPlatform) {
       return DiagnosticBundle.message("error.dialog.conflict.plugin.header.platform", pluginsNumber);
@@ -199,9 +200,8 @@ public class PluginConflictDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
 
@@ -219,7 +219,7 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private class DisableAction extends DialogWrapperAction {
     protected DisableAction() {
-      super("Disable");
+      super(IdeBundle.message("button.disable"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -247,7 +247,7 @@ public class PluginConflictDialog extends DialogWrapper {
     protected void doAction(ActionEvent e) {
       for (int i = 0; i < myConflictingPlugins.size(); ++i) {
         if (myRadioButtons == null || !myRadioButtons.get(i).isSelected()) {
-          PluginManagerCore.disablePlugin(myConflictingPlugins.get(i).getIdString());
+          PluginManagerCore.disablePlugin(myConflictingPlugins.get(i));
         }
       }
       close(OK_EXIT_CODE);

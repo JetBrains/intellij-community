@@ -6,6 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.ui.layout.*
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import javax.swing.JPanel
 
@@ -28,7 +29,7 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
   fun getBaseLanguage(): Language = GroovyLanguage
 
   override val name: String
-    get() = "Parameter types"
+    get() = GroovyBundle.message("settings.inlay.parameter.types")
 
   override val key: SettingsKey<Settings>
     get() = ourKey
@@ -44,13 +45,13 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
     override val cases: List<ImmediateConfigurable.Case> = listOf(
-      ImmediateConfigurable.Case("Inferred parameter types", "inferred.parameter.types", settings::showInferredParameterTypes),
-      ImmediateConfigurable.Case("Type parameter list", "type.parameter.list", settings::showTypeParameterList)
+      ImmediateConfigurable.Case(GroovyBundle.message("settings.inlay.inferred.parameter.types"), "inferred.parameter.types", settings::showInferredParameterTypes),
+      ImmediateConfigurable.Case(GroovyBundle.message("settings.inlay.type.parameter.list"), "type.parameter.list", settings::showTypeParameterList)
     )
 
     override fun createComponent(listener: ChangeListener): JPanel = panel {}
 
     override val mainCheckboxText: String
-      get() = "Show type hints for:"
+      get() = GroovyBundle.message("settings.inlay.show.type.hints.for")
   }
 }

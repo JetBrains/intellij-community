@@ -33,11 +33,10 @@ import java.util.List;
  * @author peter
  */
 public class GenericValueReferenceProvider extends PsiReferenceProvider {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericValueReferenceProvider");
+  private final static Logger LOG = Logger.getInstance(GenericValueReferenceProvider.class);
 
   @Override
-  @NotNull
-  public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
+  public final PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
     final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());
 
     final DomInvocationHandler handler;
@@ -117,8 +116,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static PsiReference[] doCreateReferences(GenericDomValue domValue, XmlElement psiElement, Object converter, ConvertContext context) {
+  private static PsiReference @NotNull [] doCreateReferences(GenericDomValue domValue, XmlElement psiElement, Object converter, ConvertContext context) {
     if (converter instanceof CustomReferenceConverter) {
       //noinspection unchecked
       final PsiReference[] references = ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, context);

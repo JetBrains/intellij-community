@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -39,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveUnusedVariableFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix");
+  private static final Logger LOG = Logger.getInstance(RemoveUnusedVariableFix.class);
   private final PsiVariable myVariable;
 
   public RemoveUnusedVariableFix(PsiVariable variable) {
@@ -49,14 +51,13 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message(myVariable instanceof PsiField ? "remove.unused.field" : "remove.unused.variable",
-                                  myVariable.getName());
+    return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.fromElement(myVariable).object(), myVariable.getName());
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("remove.unused.variable.family");
+    return QuickFixBundle.message("remove.unused.element.family", JavaElementKind.VARIABLE.object());
   }
 
   @Override

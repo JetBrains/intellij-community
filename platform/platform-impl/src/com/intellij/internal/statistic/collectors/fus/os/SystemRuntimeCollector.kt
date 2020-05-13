@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.os
 
+import com.intellij.internal.DebugAttachDetector
 import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.beans.newBooleanMetric
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
@@ -19,7 +21,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   }
 
   override fun getVersion(): Int {
-    return 2
+    return 3
   }
 
   override fun getMetrics(): Set<MetricEvent> {
@@ -43,6 +45,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
         result.add(newMetric("jvm.option", data))
       }
     }
+    result.add(newBooleanMetric("debug.agent", DebugAttachDetector.isDebugEnabled()))
     return result
   }
 

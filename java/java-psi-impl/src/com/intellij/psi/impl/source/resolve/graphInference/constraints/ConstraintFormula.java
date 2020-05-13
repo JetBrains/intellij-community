@@ -21,6 +21,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import java.util.List;
 
 public interface ConstraintFormula {
-  boolean reduce(InferenceSession session, List<ConstraintFormula> constraints);
+  boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints);
   void apply(PsiSubstitutor substitutor, boolean cache);
 }

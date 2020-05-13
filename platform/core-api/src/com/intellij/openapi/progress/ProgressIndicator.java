@@ -19,6 +19,9 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.NlsContexts.ProgressText;
+import static com.intellij.openapi.util.NlsContexts.ProgressDetails;
+
 /**
  * An object accompanying a computation, usually in a background thread. It allows to display process status to the user
  * ({@link #setText}, {@link #setText2}, {@link #setFraction}, {@link #setIndeterminate}) and
@@ -49,6 +52,13 @@ import org.jetbrains.annotations.Nullable;
  *   that separate thread's indicator to be canceled independently from the main thread.</li>
  * </ul>
  *
+ * Calling ProgressIndicator methods must conform to these simple lifecycle rules:
+ * <ul>
+ *   <li>{@link #start()} can be called only once after the indicator was created. (Or also after {@link #stop()}, if the indicator is reusable - see {@link com.intellij.openapi.progress.util.AbstractProgressIndicatorBase#isReuseable()})</li>
+ *   <li>{@link #stop()} can be called only once after {@link #start()}</li>
+ *   <li>{@link #setModalityProgress(ProgressIndicator)} can be called only before {@link #start()}</li>
+ *   <li>{@link #setFraction(double)}/{@link #getFraction()} can be called only after {@code setIndeterminate(false)}</li>
+ * </ul>
  */
 public interface ProgressIndicator {
   /**
@@ -87,7 +97,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText2(String)
    */
-  void setText(String text);
+  void setText(@ProgressText String text);
 
   /**
    * @return text above the progress bar, set by {@link #setText(String)}
@@ -99,7 +109,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText(String)
    */
-  void setText2(String text);
+  void setText2(@ProgressDetails String text);
 
   /**
    * @return text under the progress bar, set by {@link #setText2(String)}

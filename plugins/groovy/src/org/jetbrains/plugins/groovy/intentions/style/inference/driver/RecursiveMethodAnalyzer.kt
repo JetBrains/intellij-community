@@ -1,14 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
-import org.jetbrains.plugins.groovy.intentions.style.inference.properResolve
-import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.upperBound
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
@@ -16,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
@@ -24,18 +23,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.*
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference
 import kotlin.LazyThreadSafetyMode.NONE
 
 
-internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveElementVisitor() {
-  val builder = TypeUsageInformationBuilder(method)
+internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceContext : SignatureInferenceContext) : GroovyRecursiveElementVisitor() {
+  val builder = TypeUsageInformationBuilder(method, signatureInferenceContext)
 
   private fun processMethod(result: GroovyResolveResult, arguments: Arguments = emptyList()) {
     val methodResult = result as? GroovyMethodResult ?: return
@@ -65,7 +65,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private fun processArgumentConstraints(parameterType: PsiType, argument: Argument, resolveResult: GroovyMethodResult) {
     val argumentTypes = when (argument) {
       is ExpressionArgument ->
-        unwrapExpression(argument.expression).flatMap { it.type?.flattenComponents() ?: emptyList() }
+        unwrapElvisExpression(argument.expression).flatMap { it.type?.flattenComponents() ?: emptyList() }
       else -> argument.type?.flattenComponents() ?: emptyList()
     }.filterNotNull()
     val erasureSubstitutor = lazy(NONE) { methodTypeParametersErasureSubstitutor(resolveResult.element) }
@@ -89,11 +89,12 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
    * Visits every parameter of [lowerType] (which is probably parameterized with type parameters) and sets restrictions found in [upperType]
    * We need to distinguish containing and subtyping relations, so this is why there are [UPPER] and [EQUAL] bounds
    */
-  private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType) {
-    var currentLowerType = lowerType as? PsiClassType ?: return
+  private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType) = with(builder.signatureInferenceContext) {
+    val (unwrappedLowerType, unwrappedUpperType) = coherentDeepComponentType(lowerType, upperType)
+    var currentLowerType = unwrappedLowerType as? PsiClassType ?: return
     var firstVisit = true
-    val context = lowerType.resolve()?.context ?: return
-    upperType.accept(object : PsiTypeVisitor<Unit>() {
+    val context = currentLowerType.resolve()?.context ?: return
+    unwrappedUpperType.accept(object : PsiTypeVisitor<Unit>() {
 
       fun visitClassParameters(currentUpperType: PsiClassType) {
         val lowerTypeParameter = currentLowerType.typeParameter()
@@ -102,13 +103,12 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
           TypesUtil.canAssign(currentUpperType.rawType(), lowerType.rawType(), context, METHOD_PARAMETER) == OK
         } ?: return
         for (classParameterIndex in currentUpperType.parameters.indices) {
-          currentLowerType = matchedLowerBound.parameters.getOrNull(classParameterIndex) as? PsiClassType ?: continue
-          currentUpperType.parameters[classParameterIndex].accept(this)
+          currentLowerType = matchedLowerBound.getTypeArguments().getOrNull(classParameterIndex) as? PsiClassType ?: continue
+          currentUpperType.getTypeArguments()[classParameterIndex]?.accept(this)
         }
       }
 
-      override fun visitClassType(classType: PsiClassType?) {
-        classType ?: return
+      override fun visitClassType(classType: PsiClassType) {
         val lowerTypeParameter = currentLowerType.typeParameter()
         val upperTypeParameter = classType.typeParameter()
         if (firstVisit) {
@@ -133,8 +133,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         super.visitClassType(classType)
       }
 
-      override fun visitIntersectionType(intersectionType: PsiIntersectionType?) {
-        intersectionType ?: return
+      override fun visitIntersectionType(intersectionType: PsiIntersectionType) {
         val memorizedFirstVisit = firstVisit
         intersectionType.conjuncts.forEach {
           firstVisit = memorizedFirstVisit
@@ -142,8 +141,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         }
       }
 
-      override fun visitWildcardType(wildcardType: PsiWildcardType?) {
-        wildcardType ?: return
+      override fun visitWildcardType(wildcardType: PsiWildcardType) {
         val bound = wildcardType.bound as? PsiClassType ?: return
         val lowerTypeParameter = currentLowerType.typeParameter()
         val upperTypeParameter = bound.typeParameter()
@@ -167,21 +165,32 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         super.visitWildcardType(wildcardType)
       }
 
-      override fun visitPrimitiveType(primitiveType: PsiPrimitiveType?) {
-        primitiveType?.getBoxedType(context)?.accept(this)
+      override fun visitPrimitiveType(primitiveType: PsiPrimitiveType) {
+        primitiveType.getBoxedType(context)?.accept(this)
       }
     })
   }
 
+  private tailrec fun coherentDeepComponentType(lowerType: PsiType, upperType: PsiType) : Pair<PsiType, PsiType> =
+    if (lowerType is PsiArrayType && upperType is PsiArrayType) {
+      coherentDeepComponentType(lowerType.componentType, upperType.componentType)
+    }
+    else {
+      lowerType to upperType
+    }
+
 
   override fun visitCallExpression(callExpression: GrCallExpression) {
+    if (callExpression.resolveMethod() in builder.signatureInferenceContext.ignored) {
+      return
+    }
     processMethod(callExpression.advancedResolve())
-    builder.addConstraint(ExpressionConstraint(null, callExpression))
+    builder.addConstrainingExpression(callExpression)
     super.visitCallExpression(callExpression)
   }
 
   override fun visitAssignmentExpression(expression: GrAssignmentExpression) {
-    builder.addConstraint(ExpressionConstraint(null, expression))
+    builder.addConstrainingExpression(expression)
     val lValueReference = (expression.lValue as? GrReferenceExpression)?.lValueReference
     if (lValueReference != null) {
       processSetter(lValueReference)
@@ -198,18 +207,17 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private fun processFieldAssignment(fieldReference: GroovyReference, expression: GrAssignmentExpression) {
     val fieldResult = fieldReference.resolve() as? GrField ?: return
     val leftType = fieldResult.type
-    val rightExpressions = unwrapExpression(expression.rValue)
+    val rightExpressions = unwrapElvisExpression(expression.rValue)
     for (rightExpression in rightExpressions) {
       val rightType = rightExpression.type ?: continue
       processRequiredParameters(rightType, leftType)
-      builder.addConstraint(TypeConstraint(leftType, rightType, method))
     }
   }
 
-  private fun unwrapExpression(expression: GrExpression?): List<GrExpression> =
+  private fun unwrapElvisExpression(expression: GrExpression?): List<GrExpression> =
     when (expression) {
       null -> emptyList()
-      is GrConditionalExpression -> listOfNotNull(expression.thenBranch, expression.elseBranch).flatMap { unwrapExpression(it) }
+      is GrConditionalExpression -> listOfNotNull(expression.thenBranch, expression.elseBranch).flatMap { unwrapElvisExpression(it) }
       else -> listOf(expression)
     }
 
@@ -223,23 +231,39 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val initializer = variable.initializerGroovy ?: continue
       val initializerType = initializer.type ?: continue
       processRequiredParameters(initializerType, variable.type)
-      val declaredType = variable.declaredType
-      val expectedType = if (declaredType == null) null else ExpectedType(declaredType, ASSIGNMENT)
-      builder.addConstraint(ExpressionConstraint(expectedType, initializer))
     }
     super.visitVariableDeclaration(variableDeclaration)
   }
 
+  override fun visitForInClause(forInClause: GrForInClause) {
+    val rightType: PsiType? = forInClause.iteratedExpression?.type
+    val rightTypeParameter: PsiTypeParameter? = rightType.typeParameter()
+    if (rightType != null && rightTypeParameter != null) {
+      val (iterable: PsiClassType, map: PsiClassType) = with(GroovyPsiElementFactory.getInstance(forInClause.project)) {
+        val iterable: PsiClassType = createTypeByFQClassName(CommonClassNames.JAVA_LANG_ITERABLE)
+        val map: PsiClassType = createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP)
+        (iterable to map)
+      }
+      if (TypesUtil.canAssign(map, rightType, forInClause, METHOD_PARAMETER) == OK) {
+        processRequiredParameters(rightType, map)
+      }
+      else {
+        processRequiredParameters(rightType, iterable)
+      }
+    }
+    super.visitForInClause(forInClause)
+  }
+
 
   override fun visitExpression(expression: GrExpression) {
-    if (expression is GrOperatorExpression) {
+    if (expression is GrOperatorExpression && builder.signatureInferenceContext.allowedToResolveOperators) {
       val operatorMethodResolveResult = expression.reference?.advancedResolve()
       if (operatorMethodResolveResult != null) {
         processMethod(operatorMethodResolveResult)
       }
-      builder.addConstraint(OperatorExpressionConstraint(expression))
+      builder.addConstrainingExpression(expression)
     }
-    if (expression is GrIndexProperty) {
+    if (expression is GrIndexProperty && builder.signatureInferenceContext.allowedToResolveOperators) {
       expression.lValueReference?.advancedResolve()?.run {
         val lValueArguments = extractArguments(expression, expression.lValueReference as? GrIndexPropertyReference)
         processMethod(this, lValueArguments)
@@ -267,7 +291,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val candidate = (outerCall.properResolve() as? GroovyMethodResult)?.candidate ?: continue
       val argumentMapping = candidate.argumentMapping ?: continue
       argumentMapping.arguments.forEach { argument ->
-        val param = mapping[argumentMapping.targetParameter(argument)?.name] ?: return@forEach
+        val param = mapping[argumentMapping.targetParameter(argument)?.psi?.name] ?: return@forEach
         processOuterArgument(argument, param)
       }
     }
@@ -293,7 +317,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
                               rightType: PsiType,
                               builder: TypeUsageInformationBuilder,
                               method: GrMethod,
-                              targetMarker: ContainMarker) {
+                              targetMarker: ContainMarker) : Unit = with(builder.signatureInferenceContext) {
       val variableParameters = method.typeParameters.toSet()
       val leftTypeParameter = leftType.typeParameter()
       val rightTypeParameter = rightType.typeParameter()
@@ -312,8 +336,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       }
       val leftBound = leftTypeParameter?.upperBound() ?: leftType
       val rightBound = rightTypeParameter?.upperBound() ?: rightType
-      val leftTypeArguments = (leftBound as? PsiClassType)?.parameters ?: return
-      val rightTypeArguments = (rightBound as? PsiClassType)?.parameters ?: return
+      val leftTypeArguments = (leftBound as? PsiClassType)?.getTypeArguments() ?: return
+      val rightTypeArguments = (rightBound as? PsiClassType)?.getTypeArguments() ?: return
       val rangedRightTypeArguments = rightTypeArguments.map {
         val typeParameter = it.typeParameter()
         when {
@@ -344,10 +368,12 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   }
 
   private fun processExitExpression(expression: GrExpression) {
-    val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
-    builder.addConstraint(ExpressionConstraint(ExpectedType(returnType, RETURN_VALUE), expression))
-    val typeParameter = expression.type.typeParameter() ?: return
-    builder.generateRequiredTypes(typeParameter, returnType, UPPER)
+    if (builder.signatureInferenceContext.allowedToProcessReturnType) {
+      val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
+      builder.addConstrainingExpression(expression)
+      val typeParameter = expression.type.typeParameter() ?: return
+      builder.generateRequiredTypes(typeParameter, returnType, UPPER)
+    }
   }
 
   fun buildUsageInformation(): TypeUsageInformation = builder.build()

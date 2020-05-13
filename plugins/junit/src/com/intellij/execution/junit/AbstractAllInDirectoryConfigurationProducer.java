@@ -4,6 +4,7 @@ package com.intellij.execution.junit;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.LocationUtil;
+import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,7 @@ public class AbstractAllInDirectoryConfigurationProducer extends JUnitConfigurat
     final Project project = configuration.getProject();
     final PsiElement element = context.getPsiLocation();
     if (!(element instanceof PsiDirectory)) return false;
-    final PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(element);
+    final PsiPackage aPackage = AbstractJavaTestConfigurationProducer.checkPackage(element);
     if (aPackage == null) return false;
     final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);

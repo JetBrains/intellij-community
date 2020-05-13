@@ -15,10 +15,11 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +27,12 @@ import javax.swing.*;
 public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
   public GenerateSetterHandler() {
-    super(CodeInsightBundle.message("generate.setter.fields.chooser.title"));
+    super(JavaBundle.message("generate.setter.fields.chooser.title"));
+  }
+
+  @Override
+  protected boolean hasMembers(@NotNull PsiClass aClass) {
+    return GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass).stream().anyMatch(ecm -> !ecm.isReadOnlyMember());
   }
 
   @Override
@@ -37,7 +43,7 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
   @Nullable
   @Override
   protected JComponent getHeaderPanel(final Project project) {
-    return getHeaderPanel(project, SetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.equals.hashcode.template"));
+    return getHeaderPanel(project, SetterTemplatesManager.getInstance(), JavaBundle.message("generate.equals.hashcode.template"));
   }
 
   @Override

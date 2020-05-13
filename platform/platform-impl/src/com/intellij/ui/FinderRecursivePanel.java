@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
@@ -28,9 +30,11 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +69,9 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   @Nullable
   private JComponent myChild = null;
 
+  // whether panel should call getListItems() from NonBlockingReadAction
+  private boolean myNonBlockingLoad = false;
+
   protected JBList<T> myList;
   protected final CollectionListModel<T> myListModel = new CollectionListModel<>();
 
@@ -72,6 +79,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   private volatile boolean isMergeListItemsRunning;
 
   private final AtomicBoolean myUpdateSelectedPathModeActive = new AtomicBoolean();
+
+  private final Object myUpdateCoalesceKey = new Object();
 
   private final CopyProvider myCopyProvider = new CopyProvider() {
     @Override
@@ -117,6 +126,14 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
   }
 
+  protected boolean isNonBlockingLoad() {
+    return myNonBlockingLoad;
+  }
+
+  protected void setNonBlockingLoad(boolean nonBlockingLoad) {
+    myNonBlockingLoad = nonBlockingLoad;
+  }
+
   public void initPanel() {
     initWithoutUpdatePanel();
     updatePanel();
@@ -139,8 +156,9 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   @NotNull
   protected abstract List<T> getListItems();
 
+  @Nls
   protected String getListEmptyText() {
-    return "No entries";
+    return IdeBundle.message("empty.text.no.entries");
   }
 
   @NotNull
@@ -190,7 +208,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   @Nullable
   protected JComponent createDefaultRightComponent() {
-    return new JBPanelWithEmptyText().withEmptyText("Nothing selected");
+    return new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.nothing.selected"));
   }
 
   protected JComponent createLeftComponent() {
@@ -247,7 +265,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   private void installListActions(JBList list) {
-    AnAction previousPanelAction = new AnAction("Previous", null, AllIcons.Actions.Back) {
+    AnAction previousPanelAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.previous"), AllIcons.Actions.Back) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!isRootPanel());
@@ -261,7 +279,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     };
     previousPanelAction.registerCustomShortcutSet(KeyEvent.VK_LEFT, 0, list);
 
-    AnAction nextPanelAction = new AnAction("Next", null, AllIcons.Actions.Forward) {
+    AnAction nextPanelAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.next"), AllIcons.Actions.Forward) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final T value = getSelectedValue();
@@ -278,7 +296,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     };
     nextPanelAction.registerCustomShortcutSet(KeyEvent.VK_RIGHT, 0, list);
 
-    AnAction editAction = new AnAction("Edit", null, AllIcons.Actions.Edit) {
+    AnAction editAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.edit"), AllIcons.Actions.Edit) {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -321,7 +339,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   private void installEditOnDoubleClick(JBList list) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         performEditAction();
         return true;
       }
@@ -480,38 +498,65 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
 
     myList.setPaintBusy(true);
-    myMergingUpdateQueue.queue(new Update("update") {
-      @Override
-      public void run() {
-        final T oldValue = getSelectedValue();
-        final int oldIndex = myList.getSelectedIndex();
+    myMergingUpdateQueue.queue(Update.create("update", () -> {
+      T oldValue = getSelectedValue();
+      int oldIndex = myList.getSelectedIndex();
 
-        ApplicationManager.getApplication()
-          .executeOnPooledThread(() -> DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
-            try {
-              final List<T> listItems = getListItems();
-
-              SwingUtilities.invokeLater(() -> {
-                mergeListItems(myListModel, myList, listItems);
-
-                if (myList.isEmpty()) {
-                  createRightComponent(true);
-                }
-                else if (myList.getSelectedIndex() < 0) {
-                  myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
-                }
-                else {
-                  Object newValue = myList.getSelectedValue();
-                  updateRightComponent(oldValue == null || !oldValue.equals(newValue) || myList.isEmpty());
-                }
-              });
-            }
-            finally {
-              myList.setPaintBusy(false);
-            }
-          }));
+      if (myNonBlockingLoad) {
+        scheduleUpdateNonBlocking(oldValue, oldIndex);
       }
-    });
+      else {
+        scheduleUpdateBlocking(oldValue, oldIndex);
+      }
+    }));
+  }
+
+  private void scheduleUpdateBlocking(T oldSelectedValue, int oldSelectedIndex) {
+    ApplicationManager.getApplication()
+      .executeOnPooledThread(() -> DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+        try {
+          List<T> listItems = getListItems();
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            updateList(oldSelectedValue, oldSelectedIndex, listItems);
+          });
+        }
+        finally {
+          myList.setPaintBusy(false);
+        }
+      }));
+  }
+
+  private void scheduleUpdateNonBlocking(T oldSelectedValue, int oldSelectedIndex) {
+    ReadAction
+      .nonBlocking(this::getListItems)
+      .finishOnUiThread(ModalityState.any(), listItems -> {
+        try {
+          updateList(oldSelectedValue, oldSelectedIndex, listItems);
+        }
+        finally {
+          myList.setPaintBusy(false);
+        }
+      })
+      .coalesceBy(myUpdateCoalesceKey)
+      .expireWith(this)
+      .inSmartMode(myProject)
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  private void updateList(T oldValue, int oldIndex, List<T> listItems) {
+    mergeListItems(myListModel, myList, listItems);
+
+    if (myList.isEmpty()) {
+      createRightComponent(true);
+    }
+    else if (myList.getSelectedIndex() < 0) {
+      myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
+    }
+    else {
+      Object newValue = myList.getSelectedValue();
+      updateRightComponent(oldValue == null || !oldValue.equals(newValue) || myList.isEmpty());
+    }
   }
 
   protected void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull JList<? extends T> list, @NotNull List<? extends T> newItems) {
@@ -684,9 +729,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         childrenLabel.setBackground(bg);
 
         final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground(true));
-        childrenLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
-                                                  : AllIcons.Icons.Ide.NextStep
-                                         : AllIcons.Icons.Ide.NextStepGrayed);
+        childrenLabel.setIcon(isDark ? AllIcons.Icons.Ide.NextStepInverted
+                                     : AllIcons.Icons.Ide.NextStep);
         result.add(this, BorderLayout.CENTER);
         result.add(childrenLabel, BorderLayout.EAST);
         return result;

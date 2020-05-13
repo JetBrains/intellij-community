@@ -35,7 +35,7 @@ public class GroovyImportUtil {
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!(element instanceof GrImportStatement) && !(element instanceof GrPackageDefinition)) {
           super.visitElement(element);
         }

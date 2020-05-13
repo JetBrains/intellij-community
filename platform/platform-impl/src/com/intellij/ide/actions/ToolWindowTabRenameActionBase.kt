@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
-import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.awt.RelativePoint
@@ -34,7 +33,7 @@ private const val ERROR_VALUE = "error"
 
 open class ToolWindowTabRenameActionBase(val toolWindowId: String, val labelText: String) : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, selectedContent: Content?) {
-    val id = (toolWindow as ToolWindowImpl).id
+    val id = toolWindow.id
     e.presentation.isEnabledAndVisible = e.project != null && id == toolWindowId && selectedContent != null
   }
 

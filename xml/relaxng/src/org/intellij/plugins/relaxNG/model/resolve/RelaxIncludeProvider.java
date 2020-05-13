@@ -28,20 +28,19 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
   }
 
   @Override
-  public boolean acceptFile(VirtualFile file) {
+  public boolean acceptFile(@NotNull VirtualFile file) {
     final FileType type = file.getFileType();
     return type == XmlFileType.INSTANCE || type == RncFileType.getInstance();
   }
 
   @Override
-  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink) {
     fileTypeSink.consume(XmlFileType.INSTANCE);
     fileTypeSink.consume(RncFileType.getInstance());
   }
 
-  @NotNull
   @Override
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(@NotNull FileContent content) {
     final ArrayList<FileIncludeInfo> infos;
 
     if (content.getFileType() == XmlFileType.INSTANCE) {

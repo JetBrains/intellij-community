@@ -20,9 +20,9 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.EmptySubstitutorImpl;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiExpressionEvaluator;
+import com.intellij.psi.impl.PsiSubstitutorFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.search.MethodSuperSearcher;
@@ -61,11 +61,12 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerParserDefinition(new JavaParserDefinition());
     addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());
 
+    registerApplicationExtensionPoint(ContainerProvider.EP_NAME, ContainerProvider.class);
     addExtension(ContainerProvider.EP_NAME, new JavaContainerProvider());
 
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
-    myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
+    myApplication.registerService(PsiSubstitutorFactory.class, new PsiSubstitutorFactoryImpl());
     myApplication.registerService(JavaDirectoryService.class, createJavaDirectoryService());
     myApplication.registerService(JavaVersionService.class, new JavaVersionService());
 

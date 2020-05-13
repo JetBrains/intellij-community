@@ -35,23 +35,19 @@ private inline fun processFactories(factories: Array<ConfigurationFactory>,
   }
 }
 
-
 internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
-  private val definitionBuilder = StringBuilder()
-  private val definitions = JsonObjectBuilder(definitionBuilder, indentLevel = 1)
+  private val objectSchemaGenerator = OptionClassJsonSchemaGenerator("runConfigurationDefinitions")
 
-  companion object {
-    const val definitionNodeKey = "runConfigurationDefinitions"
-    private const val definitionPointerPrefix = "#/$definitionNodeKey/"
-  }
+  override val definitionNodeKey: CharSequence?
+    get() = objectSchemaGenerator.definitionNodeKey
 
   override fun generate(rootBuilder: JsonObjectBuilder) {
     rootBuilder.map(Keys.runConfigurations) {
-      definitionReference(definitionPointerPrefix, Keys.runConfigurations)
+      definitionReference(objectSchemaGenerator.definitionPointerPrefix, Keys.runConfigurations)
     }
   }
 
-  fun generate(): CharSequence {
+  override fun generateDefinitions(): CharSequence {
     val properties = JsonObjectBuilder(StringBuilder(), indentLevel = 1)
     addTemplatesNode(properties)
 
@@ -68,7 +64,7 @@ internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
           describeFactory(factory, factoryDefinitionId, if (StringUtil.equals(factoryPropertyName, factory.name)) null else factory.name)
         }
 
-        definitions.map(typeDefinitionId) {
+        objectSchemaGenerator.definitions.map(typeDefinitionId) {
           "type" to "object"
 
           if (typeDescription != null) {
@@ -91,22 +87,23 @@ internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
     }
 
     // must be after generation
-    definitions.map(Keys.runConfigurations) {
+    objectSchemaGenerator.definitions.map(Keys.runConfigurations) {
       "type" to "object"
       "description" to "The run configurations"
       rawBuilder("properties", properties)
       "additionalProperties" to false
     }
-    return definitionBuilder
+
+    return objectSchemaGenerator.describe()
   }
 
   private fun addTemplatesNode(properties: JsonObjectBuilder) {
     val description = "The run configuration templates"
     properties.map(Keys.templates) {
-      definitionReference(definitionPointerPrefix, Keys.templates)
+      definitionReference(objectSchemaGenerator.definitionPointerPrefix, Keys.templates)
     }
 
-    definitions.map(Keys.templates) {
+    objectSchemaGenerator.definitions.map(Keys.templates) {
       "type" to "object"
       "description" toUnescaped description
       map("properties") {
@@ -142,17 +139,17 @@ internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
     properties.map(typePropertyName) {
       if (isSingleChildOnly) {
         "type" to "object"
-        definitionReference(definitionPointerPrefix, definitionId)
+        definitionReference(objectSchemaGenerator.definitionPointerPrefix, definitionId)
       }
       else {
         rawArray("oneOf") {
           it.json {
-            definitionReference(definitionPointerPrefix, definitionId)
+            definitionReference(objectSchemaGenerator.definitionPointerPrefix, definitionId)
           }
           it.json {
             "type" to "array"
             map("items") {
-              definitionReference(definitionPointerPrefix, definitionId)
+              definitionReference(objectSchemaGenerator.definitionPointerPrefix, definitionId)
             }
             "additionalProperties" to false
           }
@@ -170,10 +167,10 @@ internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
         "type" toRaw """["array", "object"]"""
 
         map("items") {
-          definitionReference(definitionPointerPrefix, factoryDefinitionId)
+          definitionReference(objectSchemaGenerator.definitionPointerPrefix, factoryDefinitionId)
         }
       }
-      definitionReference(definitionPointerPrefix, factoryDefinitionId)
+      definitionReference(objectSchemaGenerator.definitionPointerPrefix, factoryDefinitionId)
     }
   }
 
@@ -190,13 +187,13 @@ internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
       state = ReflectionUtil.newInstance(optionsClass)
     }
 
-    definitions.map(definitionId) {
+    objectSchemaGenerator.definitions.map(definitionId) {
       "type" to "object"
       if (description != null) {
         "description" toUnescaped description
       }
       map("properties") {
-        buildJsonSchema(state, this) { name ->
+        buildJsonSchema(state, this, objectSchemaGenerator) { name ->
           // we don't specify default value ("default") because it is tricky - not value from factory, but from RC template maybe used,
           // and on time when schema is generated, we cannot compute efficient default value
           if (name == "isAllowRunningInParallel") {

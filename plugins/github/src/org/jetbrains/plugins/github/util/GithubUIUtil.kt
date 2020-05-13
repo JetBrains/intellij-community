@@ -1,47 +1,47 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
-import com.intellij.CommonBundle
+import com.intellij.UtilBundle
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.pullrequest.GHPRAccountsComponent
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.HyperlinkEvent
 
 object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
+
+  fun focusPanel(panel: JComponent) {
+    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
+    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
+    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
+  }
 
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     background = getLabelBackground(label)
@@ -55,15 +55,6 @@ object GithubUIUtil {
 
   fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
 
-  fun setTransparentRecursively(component: Component) {
-    if (component is JComponent) {
-      component.isOpaque = false
-      for (c in component.components) {
-        setTransparentRecursively(c)
-      }
-    }
-  }
-
   fun getFontEM(component: JComponent): Float {
     val metrics = component.getFontMetrics(component.font)
     //em dash character
@@ -72,8 +63,8 @@ object GithubUIUtil {
 
   fun formatActionDate(date: Date): String {
     val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
-    val datePrefix = if (prettyDate.equals(CommonBundle.message("date.format.today"), true) ||
-                         prettyDate.equals(CommonBundle.message("date.format.yesterday"), true)) ""
+    val datePrefix = if (prettyDate.equals(UtilBundle.message("date.format.today"), true) ||
+                         prettyDate.equals(UtilBundle.message("date.format.yesterday"), true)) ""
     else "on "
     return datePrefix + prettyDate
   }
@@ -87,6 +78,63 @@ object GithubUIUtil {
       registerKeyboardAction({ action() },
                              KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
                              JComponent.WHEN_FOCUSED)
+    }
+  }
+
+  fun createHtmlErrorPanel(errorPrefix: String, error: Throwable,
+                           errorAction: Action? = null,
+                           horizontalAlignment: Float = JComponent.CENTER_ALIGNMENT): JComponent {
+    val alignmentText = when (horizontalAlignment) {
+      JComponent.LEFT_ALIGNMENT -> "left"
+      JComponent.RIGHT_ALIGNMENT -> "right"
+      else -> "center"
+    }
+
+    //language=HTML
+    val errorDescription = "<p align='$alignmentText'>$errorPrefix</p><p align='$alignmentText'>${error.message}<p/>"
+    val body = if (errorAction == null) errorDescription
+    else {
+      //language=HTML
+      errorDescription + "<br/><p align='$alignmentText'><a href=''>${errorAction.getName()}</a><p/>"
+    }
+
+    return HtmlEditorPane(body).apply {
+      foreground = UIUtil.getErrorForeground()
+
+      if (errorAction != null) {
+        registerKeyboardAction(errorAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
+        removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+        addHyperlinkListener(object : HyperlinkAdapter() {
+          override fun hyperlinkActivated(e: HyperlinkEvent?) {
+            errorAction.actionPerformed(ActionEvent(this@apply, ActionEvent.ACTION_PERFORMED, "perform"))
+          }
+        })
+      }
+    }
+  }
+
+  object Lists {
+    fun installSelectionOnFocus(list: JList<*>): FocusListener {
+      val listener: FocusListener = object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent) {
+          if (list.isSelectionEmpty && list.model.size > 0) list.selectedIndex = 0
+        }
+      }
+      list.addFocusListener(listener)
+      return listener
+    }
+
+    fun installSelectionOnRightClick(list: JList<*>): MouseListener {
+      val listener: MouseListener = object : MouseAdapter() {
+        override fun mousePressed(e: MouseEvent) {
+          if (SwingUtilities.isRightMouseButton(e)) {
+            val row = list.locationToIndex(e.point)
+            if (row != -1) list.selectedIndex = row
+          }
+        }
+      }
+      list.addMouseListener(listener)
+      return listener
     }
   }
 
@@ -175,15 +223,15 @@ object GithubUIUtil {
       .addListener(object : JBPopupListener {
         override fun beforeShown(event: LightweightWindowEvent) {
           list.setPaintBusy(true)
-          list.emptyText.text = "Loading..."
+          list.emptyText.text = ApplicationBundle.message("label.loading.page.please.wait")
 
           availableListFuture
             .thenApplyAsync { available ->
               available.map { SelectableWrapper(it, originalSelection.contains(it)) }
                 .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.selected }
                               .thenComparing({ listCellRenderer.getText(it.value) }) { a, b -> StringUtil.compare(a, b, true) })
-            }.thenAcceptAsync(Consumer { possibilities ->
-              listModel.replaceAll(possibilities)
+            }.successOnEdt {
+              listModel.replaceAll(it)
 
               list.setPaintBusy(false)
               list.emptyText.text = UIBundle.message("message.noMatchesFound")
@@ -193,7 +241,7 @@ object GithubUIUtil {
               if (list.selectedIndex == -1) {
                 list.selectedIndex = 0
               }
-            }, EDT_EXECUTOR)
+            }
         }
 
         override fun onClosed(event: LightweightWindowEvent) {
@@ -204,22 +252,6 @@ object GithubUIUtil {
       .createPopup()
       .showUnderneathOf(parentComponent)
     return result
-  }
-
-  fun findAndSelectGitHubContent(project: Project, select: Boolean) {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS) ?: return
-
-    val manager = toolWindow.contentManager
-    val component = ContentUtilEx.findContentComponent(manager) { c ->
-      return@findContentComponent c is GHPRAccountsComponent
-    } ?: return
-
-    if (select) {
-      if (!toolWindow.isVisible)
-        toolWindow.activate(null)
-
-      ContentUtilEx.selectContent(manager, component, true)
-    }
   }
 
   data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
@@ -262,6 +294,12 @@ object GithubUIUtil {
     abstract fun getText(value: T): String
     abstract fun getIcon(value: T): Icon
 
+    class PRReviewers(private val iconsProvider: CachingGithubAvatarIconsProvider)
+      : SelectionListCellRenderer<GHPullRequestRequestedReviewer>() {
+      override fun getText(value: GHPullRequestRequestedReviewer) = value.shortName
+      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl)
+    }
+
     class Users(private val iconsProvider: CachingGithubAvatarIconsProvider)
       : SelectionListCellRenderer<GHUser>() {
       override fun getText(value: GHUser) = value.login
@@ -274,3 +312,5 @@ object GithubUIUtil {
     }
   }
 }
+
+fun Action.getName(): String = (getValue(Action.NAME) as? String).orEmpty()

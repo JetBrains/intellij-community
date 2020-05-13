@@ -61,9 +61,8 @@ class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpress
     return myParent;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return new PsiElement[]{myOperator, myOperand};
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.lang.ASTNode
@@ -15,8 +15,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl
+import org.jetbrains.plugins.groovy.lang.typing.GroovyPsiClosureType
 
 class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaExpression {
 
@@ -26,7 +28,7 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
 
   override fun accept(visitor: GroovyElementVisitor) = visitor.visitLambdaExpression(this)
 
-  override fun isVarArgs(): Boolean = false
+  override fun isVarArgs(): Boolean = PsiImplUtil.isVarArgs(parameters)
 
   override fun getBody(): GrLambdaBody? = lastChild as? GrLambdaBody
 
@@ -46,7 +48,7 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
 
   override fun getReturnType(): PsiType? = body?.returnType
 
-  override fun getType(): PsiType? = GrClosureType.create(this, true)
+  override fun getType(): PsiType? = TypeInferenceHelper.getCurrentContext().getExpressionType(this, ::GroovyPsiClosureType)
 
   override fun toString(): String = "Lambda expression"
 }

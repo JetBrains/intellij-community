@@ -18,8 +18,8 @@ package com.intellij.util.xml.converters.values;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomBundle;
 import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,6 +90,6 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
 
   @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-    return DomBundle.message("value.converter.format.exception", s, BOOLEAN);
+    return XmlDomBundle.message("value.converter.format.exception", s, BOOLEAN);
   }
 }

@@ -15,8 +15,8 @@
  */
 package com.intellij.testIntegration.createTest;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,14 +48,14 @@ public class MissedTestsDialog extends DialogWrapper {
   private final PsiClass myTestClass;
   private final TestFramework myDescriptor;
   private MemberSelectionTable myTable;
-  private final JBCheckBox myIncludeInheritedCb = new JBCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
+  private final JBCheckBox myIncludeInheritedCb = new JBCheckBox(JavaBundle.message("intention.create.test.dialog.show.inherited"));
 
   public MissedTestsDialog(@Nullable Project project, PsiClass sourceClass, PsiClass testClass, TestFramework descriptor) {
     super(project, true);
     mySourceClass = sourceClass;
     myTestClass = testClass;
     myDescriptor = descriptor;
-    setTitle("Create Missed Tests");
+    setTitle(JavaBundle.message("dialog.title.create.missed.tests"));
     init();
   }
 

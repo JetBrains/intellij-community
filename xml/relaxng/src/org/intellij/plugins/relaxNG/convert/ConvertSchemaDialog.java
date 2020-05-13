@@ -16,9 +16,11 @@
 
 package org.intellij.plugins.relaxNG.convert;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +35,13 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
 
   protected ConvertSchemaDialog(Project project, SchemaType input, VirtualFile firstFile) {
     super(project, false);
-    setTitle("Convert Schema File");
+    setTitle(RelaxngBundle.message("convert.schema.file"));
 
     mySettings = new ConvertSchemaSettingsImpl(project, input, firstFile);
     mySettings.addPropertyChangeListener(ConvertSchemaSettingsImpl.OUTPUT_TYPE, this);
     mySettings.addPropertyChangeListener(ConvertSchemaSettingsImpl.OUTPUT_PATH, this);
 
-    myAdvancedAction = new AbstractAction("Advanced...") {
+    myAdvancedAction = new AbstractAction(CommonBundle.message("action.text.advanced.ellipsis")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         mySettings.showAdvancedSettings();
@@ -52,9 +54,8 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
     getOKAction().setEnabled(mySettings.getOutputDestination().trim().length() > 0);
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[]{
             myAdvancedAction
     };

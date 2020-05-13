@@ -13,7 +13,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Remote Folder URL:"/>
+          <text resource-bundle="messages/SvnBundle" key="label.remote.folder.url"/>
         </properties>
       </component>
       <component id="d6988" class="javax.swing.JLabel" binding="myURLLabel">
@@ -29,24 +29,21 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Remote Folder Name:"/>
+          <text resource-bundle="messages/SvnBundle" key="label.remote.folder.name"/>
         </properties>
       </component>
       <component id="a259" class="javax.swing.JTextField" binding="myNameField">
         <constraints>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <selectionEnd value="9"/>
-          <text value="NewFolder"/>
-        </properties>
+        <properties/>
       </component>
       <component id="8b69b" class="javax.swing.JLabel">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Commit Message:"/>
+          <text resource-bundle="messages/SvnBundle" key="label.commit.message"/>
         </properties>
       </component>
       <scrollpane id="e742e" class="com.intellij.ui.components.JBScrollPane">
@@ -72,7 +69,7 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Recent Messages: "/>
+          <text resource-bundle="messages/SvnBundle" key="label.recent.messages"/>
         </properties>
       </component>
       <component id="e6438" class="com.intellij.openapi.ui.ComboBox" binding="myMessagesBox">

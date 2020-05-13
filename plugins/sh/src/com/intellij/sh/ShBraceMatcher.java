@@ -24,8 +24,7 @@ public class ShBraceMatcher implements PairedBraceMatcher, ShTokenTypes {
   };
 
   @Override
-  @NotNull
-  public BracePair[] getPairs() {
+  public BracePair @NotNull [] getPairs() {
     return PAIRS;
   }
 

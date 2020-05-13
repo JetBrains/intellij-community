@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,7 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Annotate Externally";
+    return JavaBundle.message("intention.text.annotate.externally");
   }
 
   @Override
@@ -51,7 +52,7 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(modifierListOwner);
         if (JavaCodeStyleSettings.getInstance(file).USE_EXTERNAL_ANNOTATIONS ||
             virtualFile != null && ExternalAnnotationsManager.getInstance(project).hasAnnotationRootsForFile(virtualFile)) {
-          setText("Annotate externally");
+          setText(JavaBundle.message("intention.text.annotate.externally"));
           return true;
         }
       }

@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
-/**
- * @author traff
- */
 public class PyConsoleIndentUtil {
   private static final int TAB_INDENT = 4;
 
@@ -46,8 +31,8 @@ public class PyConsoleIndentUtil {
   public static String normalize(@NotNull String codeFragment, int addIndent) {
     Scanner s = new Scanner(codeFragment);
 
-    List<String> lines = Lists.newArrayList();
-    List<Integer> indents = Lists.newArrayList();
+    List<String> lines = new ArrayList<>();
+    List<Integer> indents = new ArrayList<>();
     while (s.hasNextLine()) {
       String line = s.nextLine();
       int indent = 0;

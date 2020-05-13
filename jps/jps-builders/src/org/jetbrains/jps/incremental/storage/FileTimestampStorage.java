@@ -78,8 +78,7 @@ public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPe
     update(file, updateTimestamp(getState(file), targetId, stamp.asLong()));
   }
 
-  @NotNull
-  private static TimestampPerTarget[] updateTimestamp(TimestampPerTarget[] oldState, final int targetId, long timestamp) {
+  private static TimestampPerTarget @NotNull [] updateTimestamp(TimestampPerTarget[] oldState, final int targetId, long timestamp) {
     final TimestampPerTarget newItem = new TimestampPerTarget(targetId, timestamp);
     if (oldState == null) {
       return new TimestampPerTarget[]{newItem};

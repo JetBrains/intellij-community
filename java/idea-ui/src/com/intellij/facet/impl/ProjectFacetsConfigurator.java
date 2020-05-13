@@ -39,11 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ProjectFacetsConfigurator implements FacetsProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
+  private static final Logger LOG = Logger.getInstance(ProjectFacetsConfigurator.class);
   private final Map<Module, ModifiableFacetModel> myModifiableModels = new HashMap<>();
   private final Map<Facet, FacetEditorImpl> myEditors = new LinkedHashMap<>();
   private final Map<Module, FacetTreeModel> myTreeModels = new HashMap<>();
@@ -238,7 +235,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     for (Facet facet : myChangedFacets) {
       Module module = facet.getModule();
       if (!module.isDisposed()) {
-        module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+        FacetManager.getInstance(module).facetConfigurationChanged(facet);
       }
     }
     myChangedFacets.clear();
@@ -305,8 +302,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   @Override
-  @NotNull
-  public Facet[] getAllFacets(final Module module) {
+  public Facet @NotNull [] getAllFacets(final Module module) {
     return getFacetModel(module).getAllFacets();
   }
 

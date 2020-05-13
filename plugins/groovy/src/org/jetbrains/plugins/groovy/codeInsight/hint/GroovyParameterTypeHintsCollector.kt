@@ -3,13 +3,19 @@ package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
 import com.intellij.codeInsight.hints.InlayHintsSink
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.getBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer
 
 class GroovyParameterTypeHintsCollector(editor: Editor,
@@ -21,13 +27,15 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
       return false
     }
     if (element is GrParameter && element.typeElement == null && !element.isVarArgs) {
-      val type = if (getBlock(element) == null) {
-        MethodParameterAugmenter().inferType(element)
-      } else {
-        GrVariableEnhancer.getEnhancedType(element)
-      }?: return true
+      val type: PsiType = getRepresentableType(element) ?: return true
       val typeRepresentation = factory.buildRepresentation(type, " ").run { factory.roundWithBackground(this) }
       sink.addInlineElement(element.textOffset, false, typeRepresentation)
+    }
+    if (element is GrClosableBlock && element.parameterList.isEmpty) {
+      val itParameter: GrParameter = element.allParameters.singleOrNull() ?: return true
+      val type: PsiType = getRepresentableType(itParameter) ?: return true
+      val textRepresentation: InlayPresentation = factory.roundWithBackground(factory.buildRepresentation(type, " it -> "))
+      sink.addInlineElement(element.lBrace.endOffset, true, textRepresentation)
     }
     if (settings.showTypeParameterList &&
         element is GrMethod &&
@@ -44,6 +52,11 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
       }
     }
     return true
+  }
+
+  private fun getRepresentableType(variable: GrVariable): PsiType? {
+    val inferredType: PsiType? = GrVariableEnhancer.getEnhancedType(variable) ?: TypeAugmenter.inferAugmentedType(variable)
+    return inferredType?.takeIf { !it.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) }
   }
 
 }

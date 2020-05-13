@@ -42,7 +42,7 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
   }
 
   @Override
-  public void visitElement(final PsiElement element) {
+  public void visitElement(@NotNull final PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
 
     myWalkingState.elementStarted(element);
@@ -53,7 +53,7 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
   }
 
   @Override
-  public void visitFile(final PsiFile file) {
+  public void visitFile(@NotNull final PsiFile file) {
     if (myVisitAllFileRoots) {
       final FileViewProvider viewProvider = file.getViewProvider();
       final List<PsiFile> allFiles = viewProvider.getAllFiles();

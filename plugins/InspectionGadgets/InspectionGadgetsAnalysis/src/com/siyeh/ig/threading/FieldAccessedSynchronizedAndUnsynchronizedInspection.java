@@ -40,13 +40,6 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends BaseIn
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "field.accessed.synchronized.and.unsynchronized.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.accessed.synchronized.and.unsynchronized.problem.descriptor");

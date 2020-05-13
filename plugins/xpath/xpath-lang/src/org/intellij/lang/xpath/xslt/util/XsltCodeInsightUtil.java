@@ -20,12 +20,8 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class XsltCodeInsightUtil {
-    public static final PsiElementFilter XSLT_PARAM_FILTER = element -> element instanceof XmlTag && XsltSupport.isParam((XmlTag)element);
     public static final Comparator<PsiElement> POSITION_COMPARATOR = Comparator.comparingInt(PsiElement::getTextOffset);
 
     private XsltCodeInsightUtil() {
@@ -106,12 +101,7 @@ public class XsltCodeInsightUtil {
 
     @Nullable
     public static XmlTag findLastParam(XmlTag templateTag) {
-        final ArrayList<XmlTag> list = new ArrayList<>();
-        final PsiElementProcessor.CollectFilteredElements<XmlTag> processor =
-          new PsiElementProcessor.CollectFilteredElements<>(XSLT_PARAM_FILTER, list);
-        templateTag.processElements(processor, templateTag);
-
-        return list.size() > 0 ? list.get(list.size() - 1) : null;
+        return SyntaxTraverser.psiTraverser(templateTag).filter(XmlTag.class).filter(XsltSupport::isParam).last();
     }
 
   @NotNull
@@ -171,7 +161,7 @@ public class XsltCodeInsightUtil {
       // collect all other possible unresolved references with the same name in the current template
       usageBlock.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (element instanceof XPathVariableReference) {
             visitXPathVariableReference(((XPathVariableReference)element));
           }

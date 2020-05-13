@@ -25,92 +25,55 @@ interface Mappings {
   fun getColumn(mapping: MappingEntry): Int
 }
 
-abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings {
+abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
   val size: Int
     get() = mappings.size
 
-  protected abstract val comparator: Comparator<MappingEntry>
+  private val comparator: Comparator<MappingEntry> = Comparator.comparing(::getLine).thenComparing(::getColumn)
 
-  override fun indexOf(line: Int, column: Int): Int {
-    var low = 0
-    var high = mappings.size - 1
-    if (mappings.isEmpty() || getLine(mappings[low]) > line || getLine(mappings[high]) < line) {
-      return -1
-    }
+  private val mappings: List<MappingEntry>
 
-    while (low <= high) {
-      val middle = (low + high).ushr(1)
-      val mapping = mappings[middle]
-      val mappingLine = getLine(mapping)
-      if (line == mappingLine) {
-        if (column == getColumn(mapping)) {
-          // find first
-          var firstIndex = middle
-          while (firstIndex > 0) {
-            val prevMapping = mappings[firstIndex - 1]
-            if (getLine(prevMapping) == line && getColumn(prevMapping) == column) {
-              firstIndex--
-            }
-            else {
-              break
-            }
-          }
-          return firstIndex
-        }
-        else if (column < getColumn(mapping)) {
-          if (column == 0 || column == -1) {
-            // find first
-            var firstIndex = middle
-            while (firstIndex > 0 && getLine(mappings[firstIndex - 1]) == line) {
-              firstIndex--
-            }
-            return firstIndex
-          }
-
-          if (middle == 0) {
-            return -1
-          }
-
-          val prevMapping = mappings[middle - 1]
-          when {
-            line != getLine(prevMapping) -> return -1
-            column >= getColumn(prevMapping) -> return middle - 1
-            else -> high = middle - 1
-          }
-        }
-        else {
-          // https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
-          // We skipIfColumnEquals because GWT has two entries - source position equals, but generated no. We must use first entry (at least, in case of GWT it is correct)
-          val nextMapping = getNextOnTheSameLine(middle)
-          if (nextMapping == null) {
-            return middle
-          }
-          else {
-            low = middle + 1
-          }
-        }
-      }
-      else if (line > mappingLine) {
-        low = middle + 1
-      }
-      else {
-        high = middle - 1
-      }
-    }
-
-    return -1
+  init {
+    // optimization: generated mappings already sorted
+    this.mappings = if (this is GeneratedMappingList) mappings else mappings.sortedWith(comparator).toList()
   }
 
-  // todo honor Google Chrome bug related to paused location
+  override fun indexOf(line: Int, column: Int): Int {
+    var middle = mappings.binarySearch(comparison = {
+      val compareLines = getLine(it).compareTo(line)
+      if (compareLines != 0) compareLines else getColumn(it).compareTo(column)
+    })
+
+    if (middle == -1) middle = 0 // use first mapping for all points before it
+    else if (middle < -1) middle = -middle - 2 // previous mapping includes this point
+
+    // if mapping is from the previous line, take the first point from the needed line
+    if (getLine(mappings[middle]) < line && middle < mappings.size) {
+      var lastOfEquivalent = middle
+      while (lastOfEquivalent < mappings.size - 1 &&
+             getLine(mappings[lastOfEquivalent]) == getLine(mappings[lastOfEquivalent + 1]) &&
+             getColumn(mappings[lastOfEquivalent]) == getColumn(mappings[lastOfEquivalent + 1])) {
+        lastOfEquivalent++
+      }
+
+      if (lastOfEquivalent == mappings.size - 1) return -1
+      middle = lastOfEquivalent + 1
+    }
+
+    while (middle > 0 &&
+           getLine(mappings[middle]) == getLine(mappings[middle - 1]) &&
+           getColumn(mappings[middle]) == getColumn(mappings[middle - 1])) {
+      middle--
+    }
+
+    return if (line == getLine(mappings[middle])) middle else -1
+  }
+
   override fun get(line: Int, column: Int): MappingEntry? = mappings.getOrNull(indexOf(line, column))
 
   private fun getNext(index: Int) = mappings.getOrNull(index + 1)
 
   override fun getNext(mapping: MappingEntry): MappingEntry? {
-    if (comparator == MAPPING_COMPARATOR_BY_GENERATED_POSITION) {
-      return mapping.nextGenerated
-    }
-
     var index = mappings.binarySearch(mapping, comparator)
     if (index < 0) {
       return null

@@ -1,8 +1,13 @@
 print(<error descr="Python version 3.4 does not support <>, use != instead.">a <> 3</error>)
 <error descr="Python version 3.4 does not support backquotes, use repr() instead">`foo()`</error>
-a = <error descr="Python version 3.4 does not support a trailing 'l' or 'L'.">123l</error>
+a = <error descr="Python version 3.4 does not support a trailing 'l'.">123l</error>
 a = <error descr="Python version 3.4 does not support this syntax. It requires '0o' prefix for octal literals">043</error>
 a = 0X43
+a = 0X43
+a = 0x43
+a = 0O43
+a = 0o43
+a = 0B1
 a = 0b1
 a = 0.0
 s = u"text"

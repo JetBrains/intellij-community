@@ -307,7 +307,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   }
 
   private void registerChangeListManager(@NotNull ChangeListManager manager) {
-    ServiceContainerUtil.registerComponentInstance(getProject(), ChangeListManager.class, manager, getTestRootDisposable());
+    ServiceContainerUtil.replaceService(getProject(), ChangeListManager.class, manager, getTestRootDisposable());
   }
 
   private void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
@@ -318,14 +318,14 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), VcsContextFactory.class, factory, getTestRootDisposable());
   }
 
-  private void doTest(@NotNull String committed, @NotNull String modified, @NotNull ChangedLines... lines) {
+  private void doTest(@NotNull String committed, @NotNull String modified, ChangedLines @NotNull ... lines) {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
     PsiFile file = fs.createFile("Test.java", committed, modified);
     reformatDirectory(myWorkingDirectory);
     assertFormattedRangesEqualsTo(file, lines);
   }
 
-  private void assertFormattedLines(@NotNull ChangedLines[] expectedLines, @NotNull PsiFile... files) {
+  private void assertFormattedLines(ChangedLines @NotNull [] expectedLines, PsiFile @NotNull ... files) {
     for (PsiFile file : files)
       assertFormattedRangesEqualsTo(file, expectedLines);
   }
@@ -376,13 +376,13 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
       return file;
     }
 
-    private void registerCommittedRevision(@NotNull String committedContent, @NotNull PsiFile... files) {
+    private void registerCommittedRevision(@NotNull String committedContent, PsiFile @NotNull ... files) {
       List<Change> changes = createChanges(committedContent, files);
       injectChanges(changes);
     }
 
     @NotNull
-    private List<Change> createChanges(@NotNull String committed, @NotNull PsiFile... files) {
+    private List<Change> createChanges(@NotNull String committed, PsiFile @NotNull ... files) {
       List<Change> changes = new ArrayList<>();
       for (PsiFile file : files) {
         changes.add(createChange(committed, file));

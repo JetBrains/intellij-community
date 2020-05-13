@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
@@ -7,7 +7,6 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -16,6 +15,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,11 +25,7 @@ import java.util.List;
 
 import static com.jetbrains.python.debugger.PyDebugSupportUtils.DEBUGGER_WARNING_MESSAGE;
 
-/**
- * @author traff
- */
 public class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private final PyDebuggerOptionsProvider mySettings;
   private JPanel myMainPanel;
   private JCheckBox myAttachToSubprocess;
   private JCheckBox mySaveSignatures;
@@ -44,9 +40,8 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
 
   private final Project myProject;
 
-  public PyDebuggerConfigurable(Project project, final PyDebuggerOptionsProvider settings) {
+  public PyDebuggerConfigurable(Project project) {
     myProject = project;
-    mySettings = settings;
     myPyQtBackendsList.forEach(e -> myPyQtBackend.addItem(e));
 
     mySupportQt.addItemListener(new ItemListener() {
@@ -56,12 +51,12 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
       }
     });
 
-    myAttachFilterLabel.setText("<html>For <b>Attach To Process</b> show processes with names containing:</html>");
+    myAttachFilterLabel.setText(PyBundle.message("debugger.attach.to.process.filter.names"));
   }
 
   @Override
   public String getDisplayName() {
-    return "Python Debugger";
+    return PyBundle.message("configurable.PyDebuggerConfigurable.display.name");
   }
 
   @Override
@@ -82,32 +77,35 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
 
   @Override
   public boolean isModified() {
-    return myAttachToSubprocess.isSelected() != mySettings.isAttachToSubprocess() ||
-           mySaveSignatures.isSelected() != mySettings.isSaveCallSignatures() ||
-           mySupportGevent.isSelected() != mySettings.isSupportGeventDebugging() ||
-           mySupportQt.isSelected() != mySettings.isSupportQtDebugging() ||
-           (myPyQtBackend.getSelectedItem() != null && !myPyQtBackend.getSelectedItem().equals(mySettings.getPyQtBackend())) ||
-           !myAttachProcessFilter.getText().equals(mySettings.getAttachProcessFilter());
+    PyDebuggerOptionsProvider settings = PyDebuggerOptionsProvider.getInstance(myProject);
+    return myAttachToSubprocess.isSelected() != settings.isAttachToSubprocess() ||
+           mySaveSignatures.isSelected() != settings.isSaveCallSignatures() ||
+           mySupportGevent.isSelected() != settings.isSupportGeventDebugging() ||
+           mySupportQt.isSelected() != settings.isSupportQtDebugging() ||
+           (myPyQtBackend.getSelectedItem() != null && !myPyQtBackend.getSelectedItem().equals(settings.getPyQtBackend())) ||
+           !myAttachProcessFilter.getText().equals(settings.getAttachProcessFilter());
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-    mySettings.setAttachToSubprocess(myAttachToSubprocess.isSelected());
-    mySettings.setSaveCallSignatures(mySaveSignatures.isSelected());
-    mySettings.setSupportGeventDebugging(mySupportGevent.isSelected());
-    mySettings.setSupportQtDebugging(mySupportQt.isSelected());
-    mySettings.setPyQtBackend(myPyQtBackendsList.get(myPyQtBackend.getSelectedIndex()));
-    mySettings.setAttachProcessFilter(myAttachProcessFilter.getText());
+  public void apply() {
+    PyDebuggerOptionsProvider settings = PyDebuggerOptionsProvider.getInstance(myProject);
+    settings.setAttachToSubprocess(myAttachToSubprocess.isSelected());
+    settings.setSaveCallSignatures(mySaveSignatures.isSelected());
+    settings.setSupportGeventDebugging(mySupportGevent.isSelected());
+    settings.setSupportQtDebugging(mySupportQt.isSelected());
+    settings.setPyQtBackend(myPyQtBackendsList.get(myPyQtBackend.getSelectedIndex()));
+    settings.setAttachProcessFilter(myAttachProcessFilter.getText());
   }
 
   @Override
   public void reset() {
-    myAttachToSubprocess.setSelected(mySettings.isAttachToSubprocess());
-    mySaveSignatures.setSelected(mySettings.isSaveCallSignatures());
-    mySupportGevent.setSelected(mySettings.isSupportGeventDebugging());
-    mySupportQt.setSelected(mySettings.isSupportQtDebugging());
-    myPyQtBackend.setSelectedItem(mySettings.getPyQtBackend());
-    myAttachProcessFilter.setText(mySettings.getAttachProcessFilter());
+    PyDebuggerOptionsProvider settings = PyDebuggerOptionsProvider.getInstance(myProject);
+    myAttachToSubprocess.setSelected(settings.isAttachToSubprocess());
+    mySaveSignatures.setSelected(settings.isSaveCallSignatures());
+    mySupportGevent.setSelected(settings.isSupportGeventDebugging());
+    mySupportQt.setSelected(settings.isSupportQtDebugging());
+    myPyQtBackend.setSelectedItem(settings.getPyQtBackend());
+    myAttachProcessFilter.setText(settings.getAttachProcessFilter());
   }
 
   @Override
@@ -121,7 +119,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
       new TooltipWithClickableLinks.ForBrowser(warningIcon,
                                                DEBUGGER_WARNING_MESSAGE));
 
-    myActionLink = new ActionLink("Clear caches", new AnAction() {
+    myActionLink = new ActionLink(PyBundle.message("form.debugger.clear.caches.action"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         PySignatureCacheManager.getInstance(myProject).clearCache();

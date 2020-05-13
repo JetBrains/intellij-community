@@ -4,6 +4,8 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.Comparator;
+import java.util.List;
 
 public abstract class ActionManagerEx extends ActionManager {
   public static ActionManagerEx getInstanceEx() {
@@ -72,8 +75,7 @@ public abstract class ActionManagerEx extends ActionManager {
   }
 
 
-  @NotNull
-  public abstract String[] getPluginActions(@NotNull PluginId pluginId);
+  public abstract String @NotNull [] getPluginActions(@NotNull PluginId pluginId);
 
   public abstract void queueActionPerformedEvent(@NotNull AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event);
 
@@ -94,5 +96,7 @@ public abstract class ActionManagerEx extends ActionManager {
    */
   @SuppressWarnings("unused")  // used in Rider
   public abstract void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable);
+
+  public abstract @NotNull List<EditorActionHandlerBean> getRegisteredHandlers(@NotNull EditorAction editorAction);
 }
 

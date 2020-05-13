@@ -15,34 +15,34 @@
  */
 package com.intellij.java.psi;
 
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class OptimizeImportsTestCase extends LightJavaCodeInsightFixtureTestCase {
-  protected void doTest(final String extension) {
-    CommandProcessor.getInstance().executeCommand(
-      getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
-        String fileName = getTestName(false) + extension;
-        try {
-          PsiFile file = myFixture.configureByFile(fileName);
+  protected void doTest(@NotNull String extension) {
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      String fileName = getTestName(false) + extension;
+      try {
+        PsiFile file = myFixture.configureByFile(fileName);
 
-          JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
-          PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          myFixture.checkResultByFile(getTestName(false) + "_after" + extension);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }), "", "");
-
+        JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
+        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        myFixture.checkResultByFile(getTestName(false) + "_after" + extension);
+        PsiTestUtil.checkFileStructure(file);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 }

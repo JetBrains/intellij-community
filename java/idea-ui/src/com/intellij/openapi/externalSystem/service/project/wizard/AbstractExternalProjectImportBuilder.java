@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -22,7 +23,6 @@ import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelecto
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -39,7 +39,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,8 +159,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
     final boolean isFromUI = model != null;
 
-    final List<Module> modules = ContainerUtil.newSmartList();
-    final Map<ModifiableRootModel, Module> moduleMap = ContainerUtil.newIdentityHashMap();
+    final List<Module> modules = new SmartList<>();
+    final Map<ModifiableRootModel, Module> moduleMap = new IdentityHashMap<>();
     final IdeModifiableModelsProvider modelsProvider = isFromUI ? new IdeUIModifiableModelsProvider(
       project, model, (ModulesConfigurator)modulesProvider, artifactModel) {
 
@@ -298,7 +298,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final String externalSystemName = myExternalSystemId.getReadableName();
     File projectFile = getProjectFile();
     if (projectFile == null) {
-      throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
+      throw new ConfigurationException(JavaUiBundle.message("error.project.undefined"));
     }
     projectFile = getExternalProjectConfigToUse(projectFile);
     final Ref<ConfigurationException> error = new Ref<>();
@@ -314,8 +314,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
           LOG.warn(errorDetails);
         }
         error.set(new ConfigurationException(
-          ExternalSystemBundle.message("error.resolve.with.log_link", errorMessage, PathManager.getLogPath()),
-          ExternalSystemBundle.message("error.resolve.generic")));
+          JavaUiBundle.message("error.resolve.with.log_link", errorMessage, PathManager.getLogPath()),
+          JavaUiBundle.message("error.resolve.generic")));
       }
     };
 
@@ -333,7 +333,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       }
       catch (IllegalArgumentException e) {
         exRef.set(
-          new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName)));
+          new ConfigurationException(e.getMessage(), JavaUiBundle.message("error.cannot.parse.project", externalSystemName)));
       }
     });
     ConfigurationException ex = exRef.get();

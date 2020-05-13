@@ -41,8 +41,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
     final List<AbstractTestProxy> failedTests = getFailedTests(configuration.getProject());
     return new MyRunProfile(configuration) {
       @Override
-      @NotNull
-      public Module[] getModules() {
+      public Module @NotNull [] getModules() {
         return configuration.getModules();
       }
 

@@ -13,7 +13,12 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated duplicate behaviour with {@link com.intellij.externalSystem.JavaModuleDataService}
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class ModuleDataServiceJavaExtension implements ModuleDataServiceExtension {
   private static final Logger LOG = Logger.getInstance(ModuleDataServiceJavaExtension.class);
 
@@ -28,6 +33,7 @@ public class ModuleDataServiceJavaExtension implements ModuleDataServiceExtensio
   }
 
   private static void setLanguageLevel(@NotNull ModifiableRootModel modifiableRootModel, ModuleData data) {
+    if (!data.isSetSourceCompatibility()) return;
     LanguageLevel level = LanguageLevel.parse(data.getSourceCompatibility());
     if (level != null) {
       try {
@@ -40,6 +46,7 @@ public class ModuleDataServiceJavaExtension implements ModuleDataServiceExtensio
   }
 
   private static void setBytecodeTargetLevel(@NotNull Module module, @NotNull ModuleData data) {
+    if (!data.isSetTargetCompatibility()) return;
     String targetLevel = data.getTargetCompatibility();
     if (targetLevel != null) {
       CompilerConfiguration configuration = CompilerConfiguration.getInstance(module.getProject());

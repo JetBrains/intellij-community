@@ -14,32 +14,32 @@ public interface PsiInferenceHelper {
    *         inferred type otherwise
    */
   PsiType inferTypeForMethodTypeParameter(@NotNull PsiTypeParameter typeParameter,
-                                          @NotNull PsiParameter[] parameters,
-                                          @NotNull PsiExpression[] arguments,
+                                          PsiParameter @NotNull [] parameters,
+                                          PsiExpression @NotNull [] arguments,
                                           @NotNull PsiSubstitutor partialSubstitutor,
                                           @Nullable PsiElement parent,
                                           @NotNull ParameterTypeInferencePolicy policy);
 
   @NotNull
-  PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                    @NotNull PsiParameter[] parameters,
-                                    @NotNull PsiExpression[] arguments,
-                                    @Nullable MethodCandidateInfo currentMethod, 
+  PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                    PsiParameter @NotNull [] parameters,
+                                    PsiExpression @NotNull [] arguments,
+                                    @Nullable MethodCandidateInfo currentMethod,
                                     @NotNull PsiSubstitutor partialSubstitutor,
                                     @NotNull PsiElement parent,
                                     @NotNull ParameterTypeInferencePolicy policy,
                                     @NotNull LanguageLevel languageLevel);
   @NotNull
-  PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                    @NotNull PsiType[] leftTypes,
-                                    @NotNull PsiType[] rightTypes,
+  PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                    PsiType @NotNull [] leftTypes,
+                                    PsiType @NotNull [] rightTypes,
                                     @NotNull LanguageLevel languageLevel);
 
 
   @NotNull
-  default PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                            @NotNull PsiType[] leftTypes,
-                                            @NotNull PsiType[] rightTypes,
+  default PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                            PsiType @NotNull [] leftTypes,
+                                            PsiType @NotNull [] rightTypes,
                                             @NotNull PsiSubstitutor partialSubstitutor,
                                             @NotNull LanguageLevel languageLevel){
     return inferTypeArguments(typeParameters, leftTypes, rightTypes, languageLevel);

@@ -27,10 +27,28 @@ import java.util.concurrent.ConcurrentMap;
  * @author peter
  */
 public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {
+  public static final int DEFAULT_CAPACITY = 16;
+  public static final float DEFAULT_LOAD_FACTOR = 0.75f;
+  public static final int DEFAULT_CONCURRENCY_LEVEL = ConcurrentIntObjectHashMap.NCPU;
+
+  public ConcurrentMultiMap() {
+    super();
+  }
+
+  public ConcurrentMultiMap(int initialCapacity, float loadFactor) {
+    super(initialCapacity, loadFactor);
+  }
+
   @NotNull
   @Override
   protected ConcurrentMap<K, Collection<V>> createMap() {
-    return ContainerUtil.newConcurrentMap();
+    return createMap(DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR);
+  }
+
+  @Override
+  @NotNull
+  protected ConcurrentMap<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+    return ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL);
   }
 
   @NotNull

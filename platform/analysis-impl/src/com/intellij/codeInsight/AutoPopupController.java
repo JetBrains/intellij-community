@@ -3,7 +3,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public abstract class AutoPopupController implements Disposable {
+public abstract class AutoPopupController {
   /**
    * Settings this user data key to the editor with a completion provider
    * makes the autopopup scheduling ignore the state of the corresponding setting.

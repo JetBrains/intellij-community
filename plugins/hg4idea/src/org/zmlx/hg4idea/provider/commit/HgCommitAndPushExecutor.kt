@@ -7,13 +7,14 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.vcs.commit.commitProperty
 import org.jetbrains.annotations.Nls
+import org.zmlx.hg4idea.HgBundle
 
 private val IS_PUSH_AFTER_COMMIT_KEY = Key.create<Boolean>("Hg.Commit.IsPushAfterCommit")
 internal var CommitContext.isPushAfterCommit: Boolean by commitProperty(IS_PUSH_AFTER_COMMIT_KEY)
 
 class HgCommitAndPushExecutor : CommitExecutor {
   @Nls
-  override fun getActionText(): String = "Commit and &Push..."
+  override fun getActionText(): String = HgBundle.message("action.hg4idea.CommitAndPush")
 
   override fun useDefaultAction(): Boolean = false
 

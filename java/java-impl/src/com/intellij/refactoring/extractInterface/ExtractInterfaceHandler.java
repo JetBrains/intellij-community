@@ -20,8 +20,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -44,9 +43,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
-
-  public static final String REFACTORING_NAME = RefactoringBundle.message("extract.interface.title");
+  private static final Logger LOG = Logger.getInstance(ExtractInterfaceHandler.class);
 
   private Project myProject;
   private PsiClass myClass;
@@ -68,7 +65,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INTERFACE);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
         return;
       }
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
@@ -80,7 +77,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;
@@ -96,31 +93,24 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     ExtractSuperClassUtil.checkSuperAccessible(dialog.getTargetDirectory(), conflicts, myClass);
     if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      myInterfaceName = dialog.getExtractedSuperName();
-      mySelectedMembers = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
-      myTargetDir = dialog.getTargetDirectory();
-      myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
-      try {
-        doRefactoring();
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }), REFACTORING_NAME, null);
-  }
 
-  private void doRefactoring() throws IncorrectOperationException {
-    LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
-    final PsiClass anInterface;
-    try {
-      anInterface = extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
-    }
-    finally {
-      a.finish();
-    }
-
-    ExtractClassUtil.suggestToTurnRefsToSuper(myProject, anInterface, myClass);
+    PsiClass anInterface = WriteCommandAction
+      .writeCommandAction(project)
+      .withName(getRefactoringName())
+      .compute(() -> {
+        myInterfaceName = dialog.getExtractedSuperName();
+        mySelectedMembers = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
+        myTargetDir = dialog.getTargetDirectory();
+        myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
+        LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
+        try {
+          return extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
+        }
+        finally {
+          a.finish();
+        }
+      });
+    ExtractClassUtil.askAndTurnRefsToSuper(myClass, anInterface);
   }
 
   static PsiClass extractInterface(PsiDirectory targetDir,
@@ -154,5 +144,9 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass;
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("extract.interface.title");
   }
 }

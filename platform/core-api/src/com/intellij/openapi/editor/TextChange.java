@@ -56,6 +56,5 @@ public interface TextChange {
    *
    * @return    stored change text as a char array
    */
-  @NotNull
-  char[] getChars();
+  char @NotNull [] getChars();
 }

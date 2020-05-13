@@ -21,13 +21,11 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
     return getOrderRootType(JavadocOrderRootType.class);
   }
 
-  @NotNull
-  public static String[] getUrls(@NotNull OrderEntry entry) {
+  public static String @NotNull [] getUrls(@NotNull OrderEntry entry) {
     return ((JavadocOrderRootType)getInstance()).doGetUrls(entry);
   }
 
-  @NotNull
-  private String[] doGetUrls(@NotNull OrderEntry entry) {
+  private String @NotNull [] doGetUrls(@NotNull OrderEntry entry) {
     List<String> result = new ArrayList<>();
     RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
       @Override

@@ -98,7 +98,7 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
-  private void assertPointersUnder(@NotNull VirtualFile file, @NotNull String childName, @NotNull VirtualFilePointer... pointers) {
+  private void assertPointersUnder(@NotNull VirtualFile file, @NotNull String childName, VirtualFilePointer @NotNull ... pointers) {
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(file, childName), pointers);
   }
 

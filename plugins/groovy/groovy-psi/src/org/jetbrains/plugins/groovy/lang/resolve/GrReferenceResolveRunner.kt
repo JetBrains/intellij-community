@@ -7,7 +7,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.strictParents
+import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -96,7 +96,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   // We are in `com.foo` from `com.foo.bar.Baz`.
   // Go up and find if any parent resolves to a class => this expression is a package reference.
   // This expression may also be a class reference, and this is handled in [resolveUnqualifiedType].
-  for (parent in strictParents()) {
+  for (parent in this.parents) {
     if (parent !is GrReferenceExpression) {
       // next parent is not a reference expression
       // => next parent is not a class fully qualified name

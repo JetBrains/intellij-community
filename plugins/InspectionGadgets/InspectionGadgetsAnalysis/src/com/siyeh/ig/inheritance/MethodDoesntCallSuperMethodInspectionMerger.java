@@ -29,9 +29,8 @@ public class MethodDoesntCallSuperMethodInspectionMerger extends InspectionEleme
     return "RefusedBequest";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       "RefusedBequest",
       "CloneCallsSuperClone",
@@ -41,9 +40,8 @@ public class MethodDoesntCallSuperMethodInspectionMerger extends InspectionEleme
     };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] {
       "CloneDoesntCallSuperClone",
       "SetUpDoesntCallSuperSetUp",

@@ -47,12 +47,6 @@ public class AntResolveInspection extends AntInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Ant references resolve problems";
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

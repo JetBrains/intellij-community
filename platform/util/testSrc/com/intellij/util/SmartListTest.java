@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -9,9 +9,6 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author max
- */
 public class SmartListTest {
   @Test
   public void testEmpty() {
@@ -98,6 +95,7 @@ public class SmartListTest {
     l.set(1, 3);
   }
 
+  @SuppressWarnings("RedundantOperationOnEmptyContainer")
   @Test(expected = IndexOutOfBoundsException.class)
   public void testFourElement2() {
     SmartList<Integer> l = new SmartList<>();
@@ -122,7 +120,7 @@ public class SmartListTest {
     l.get(1);
   }
 
-  @SuppressWarnings("CollectionAddedToSelf")
+  @SuppressWarnings({"CollectionAddedToSelf", "RedundantOperationOnEmptyContainer"})
   @Test(expected = ConcurrentModificationException.class)
   public void testFourElement3() {
     SmartList<Integer> l = new SmartList<>();
@@ -199,6 +197,7 @@ public class SmartListTest {
     assertThat(l.get(2)).isEqualTo(1);
   }
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @Test
   public void testEmptyToArray() {
     SmartList<Integer> l = new SmartList<>();

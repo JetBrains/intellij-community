@@ -1,8 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.find.ngrams.TrigramIndex
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.java.index.StringIndex
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -15,19 +20,22 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
+import com.intellij.openapi.fileTypes.ExactFileNameMatcher
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -44,15 +52,11 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
-import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
-import com.intellij.psi.stubs.SerializedStubTree
-import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.stubs.StubIndexImpl
-import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.psi.stubs.*
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -61,10 +65,10 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
-import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
+import com.intellij.util.indexing.impl.forward.IntForwardIndex
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
@@ -73,6 +77,8 @@ import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.GroovyLanguage
 
 import java.util.concurrent.CountDownLatch
 
@@ -108,11 +114,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     try {
       // build index
-      index.update("com/ppp/a.java", "a b c d", null)
-      index.update("com/ppp/b.java", "a b g h", null)
-      index.update("com/ppp/c.java", "a z f", null)
-      index.update("com/ppp/d.java", "a a u y z", null)
-      index.update("com/ppp/e.java", "a n chj e c d", null)
+      index.update("com/ppp/a.java", "a b c d")
+      index.update("com/ppp/b.java", "a b g h")
+      index.update("com/ppp/c.java", "a z f")
+      index.update("com/ppp/d.java", "a a u y z")
+      index.update("com/ppp/e.java", "a n chj e c d")
 
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
       assertDataEquals(index.getFilesByWord("b"), "com/ppp/a.java", "com/ppp/b.java")
@@ -129,17 +135,17 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertDataEquals(index.getFilesByWord("e"), "com/ppp/e.java")
 
       // update index
-      index.update("com/ppp/d.java", "a u y z", "a a u y z")
+      index.update("com/ppp/d.java", "a u y z")
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
-      index.update("com/ppp/d.java", "u y z", "a u y z")
+      index.update("com/ppp/d.java", "u y z")
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/e.java")
-      index.update("com/ppp/d.java", "a a a u y z", "u y z")
+      index.update("com/ppp/d.java", "a a a u y z")
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
 
-      index.update("com/ppp/e.java", "a n chj e c d z", "a n chj e c d")
+      index.update("com/ppp/e.java", "a n chj e c d z")
       assertDataEquals(index.getFilesByWord("z"), "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
 
-      index.update("com/ppp/b.java", null, "a b g h")
+      index.update("com/ppp/b.java", null)
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
       assertDataEquals(index.getFilesByWord("b"), "com/ppp/a.java")
       assertDataEquals(index.getFilesByWord("g"))
@@ -153,13 +159,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testUpdateWithCustomEqualityPolicy() {
     def index = createIndex(getTestName(false), new CaseInsensitiveEnumeratorStringDescriptor(), false)
     try {
-      index.update("a.java", "x", null)
+      index.update("a.java", "x")
       assertDataEquals(index.getFilesByWord("x"), "a.java")
       assertDataEquals(index.getFilesByWord("X"), "a.java")
 
-      index.update("b.java", "y", null)
+      index.update("b.java", "y")
       assertDataEquals(index.getFilesByWord("y"), "b.java")
-      index.update("c.java", "Y", null)
+      index.update("c.java", "Y")
       assertDataEquals(index.getFilesByWord("y"), "b.java", "c.java")
     }
     finally {
@@ -170,7 +176,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor, boolean readOnly) {
     final File storageFile = FileUtil.createTempFile("index_test", "storage")
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage")
-    final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(),
+    final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile.toPath(), keyDescriptor, new EnumeratorStringDescriptor(),
                                                                              16 * 1024, readOnly)
     return new StringIndex(testName, indexStorage, metaIndexFile, !readOnly)
   }
@@ -256,7 +262,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assertEquals(stamp, ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject()))
 
-    FileContentUtilCore.reparseFiles(vFile)
+    FileContentUtilCore.reparseFiles(Collections.singletonList(vFile))
 
     def provider = PsiManager.getInstance(project).findViewProvider(vFile)
     def stubTree = ((PsiFileImpl)provider.getPsi(provider.getBaseLanguage())).getGreenStubTree()
@@ -396,9 +402,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     CodeStyleManager.getInstance(getProject()).reformat(psiFile)
     assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
 
+    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
+
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
 
     assert ((PsiJavaFile)psiFile).importList.node
+
+    assert stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
   }
 
   void "test rename file with indexed associated unsaved document don't lost its data"() {
@@ -415,13 +425,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     CodeStyleManager.getInstance(getProject()).reformat(vp.getPsi(vp.baseLanguage))
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
-    FileContentUtilCore.reparseFiles(file)
+    FileContentUtilCore.reparseFiles(Collections.singletonList(file))
 
     vp = PsiManager.getInstance(project).findViewProvider(file)
     ((PsiFileImpl)vp.getPsi(vp.baseLanguage)).greenStubTree
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
-    FileContentUtilCore.reparseFiles(file)
+    FileContentUtilCore.reparseFiles(Collections.singletonList(file))
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, level)
@@ -498,7 +508,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     //noinspection GroovyUnusedAssignment
     psiFile = null
-    GCWatcher.tracking(((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)).tryGc()
+    GCWatcher.tracking(((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)).ensureCollected()
     assert !((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)
 
     VfsUtil.saveText(vFile, "class Foo3 {}")
@@ -632,7 +642,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
 
-    GCWatcher.fromClearedRef(clazz).tryGc()
+    GCWatcher.fromClearedRef(clazz).ensureCollected()
 
     assertNull(findClass("Foo"))
 
@@ -646,7 +656,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo2")
 
-    GCWatcher.fromClearedRef(clazz).tryGc()
+    GCWatcher.fromClearedRef(clazz).ensureCollected()
 
     assertNull(findClass("Foo2"))
   }
@@ -680,6 +690,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     catch (AssertionError ignored) {
       // stub mismatch
     }
+
+    assertTrue(((StubIndexImpl)StubIndex.instance).areAllProblemsProcessedInTheCurrentThread())
 
     try {
       StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
@@ -863,7 +875,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("file: $fileName\n" +
                  "operation: UPDATE-REMOVE UPDATE ADD", listener.indexingOperation(testFile))
 
-    FileContentUtil.reparseFiles(testFile)
+    FileContentUtilCore.reparseFiles(Collections.singletonList(testFile))
 
     assertEquals("file: $fileName\n" +
                  "operation: REMOVE ADD", listener.indexingOperation(testFile))
@@ -907,7 +919,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true)
 
     try {
-      assertFalse(index.update("qwe/asd", "some_string", null))
+      assertFalse(index.update("qwe/asd", "some_string"))
       def rebuildThrowable = index.getRebuildThrowable()
       assertInstanceOf(rebuildThrowable, StorageException.class)
       def rebuildCause = rebuildThrowable.getCause()
@@ -1218,5 +1230,121 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     } finally {
       index.dispose()
     }
+  }
+
+  void "test unsaved document is still indexed on dumb mode ignoring access"() {
+    def file = (PsiJavaFile)myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def nameIdentifier = file.getClasses()[0].getNameIdentifier()
+
+    def project = getProject()
+    def dumbService = (DumbServiceImpl)DumbService.getInstance(project)
+    def virtualFile = file.getVirtualFile()
+
+    assertTrue(findWordInDumbMode("Foo", virtualFile, false))
+    assertFalse(findWordInDumbMode("Bar", virtualFile, false))
+
+    dumbService.setDumb(true)
+    try {
+      assertTrue(findWordInDumbMode("Foo", virtualFile, true))
+      assertFalse(findWordInDumbMode("Bar", virtualFile, true))
+
+      nameIdentifier.replace(JavaPsiFacade.getElementFactory(project).createIdentifier("Bar"))
+      assertTrue(FileDocumentManager.instance.isDocumentUnsaved(PsiDocumentManager.getInstance(project).getDocument(file)))
+
+      assertTrue(findWordInDumbMode("Bar", virtualFile, true))
+      assertFalse(findWordInDumbMode("Foo", virtualFile, true))
+
+    } finally {
+      dumbService.setDumb(false)
+    }
+
+    assertTrue(findWordInDumbMode("Bar", virtualFile, false))
+    assertFalse(findWordInDumbMode("Foo", virtualFile, false))
+  }
+
+  void "test change file type association from groovy to java"() {
+    def file = myFixture.addFileToProject("Foo.groovy", "class Foo { void m() {" +
+                                                        " String x = 'qwerty';" +
+                                                        "}}")
+    def virtualFile = file.virtualFile
+
+    def idIndexData = getIdIndexData(virtualFile)
+    assertTrue(idIndexData.containsKey(new IdIndexEntry("Foo", false)))
+    assertTrue(idIndexData.containsKey(new IdIndexEntry("qwerty", false)))
+    assertEquals(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_CODE, idIndexData.get(new IdIndexEntry("qwerty", false)))
+    assertEquals(GroovyFileType.GROOVY_FILE_TYPE, FileTypeIndex.getIndexedFileType(virtualFile, getProject()))
+    def stub = StubTreeLoader.getInstance().readFromVFile(getProject(), virtualFile)
+    assertStubLanguage(GroovyLanguage.INSTANCE, stub)
+    assertEquals(GroovyLanguage.INSTANCE, file.getLanguage())
+    assert findClass("Foo")
+    def matcher = new ExactFileNameMatcher("Foo.groovy")
+    try {
+      FileTypeManager.getInstance().associate(JavaFileType.INSTANCE, matcher)
+
+      assertEquals(JavaFileType.INSTANCE, FileTypeIndex.getIndexedFileType(virtualFile, getProject()))
+      stub = StubTreeLoader.getInstance().readFromVFile(getProject(), virtualFile)
+      assertStubLanguage(JavaLanguage.INSTANCE, stub)
+      idIndexData = getIdIndexData(virtualFile)
+      assertTrue(idIndexData.containsKey(new IdIndexEntry("Foo", false)))
+      assertFalse(idIndexData.containsKey(new IdIndexEntry("qwerty", false)))
+      def javaFooClass = findClass("Foo")
+      assertEquals(JavaLanguage.INSTANCE, javaFooClass.getLanguage())
+    } finally {
+      FileTypeManager.getInstance().removeAssociation(JavaFileType.INSTANCE, matcher)
+    }
+  }
+
+  void "test composite index with snapshot mappings hash id"() {
+    def groovyFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.groovy", "class Foo {}").virtualFile).getId()
+    def javaFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.java", "class Foo {}").virtualFile).getId()
+
+    def fbi = FileBasedIndex.getInstance()
+    fbi.ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()))
+    fbi.ensureUpToDate(TrigramIndex.INDEX_ID, getProject(), GlobalSearchScope.allScope(getProject()))
+    def idIndex = ((FileBasedIndexImpl)fbi).getIndex(IdIndex.NAME)
+    def trigramIndex = ((FileBasedIndexImpl)fbi).getIndex(TrigramIndex.INDEX_ID)
+
+    assertTrue(FileBasedIndex.ourSnapshotMappingsEnabled)
+    def idIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)idIndex).getForwardIndex()
+    def trigramIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)trigramIndex).getForwardIndex()
+
+    // id index depends on file type
+    assertFalse(idIndexForwardIndex.getInt(javaFileId) == 0)
+    assertFalse(idIndexForwardIndex.getInt(groovyFileId) == 0)
+    assertFalse(idIndexForwardIndex.getInt(groovyFileId) == idIndexForwardIndex.getInt(javaFileId))
+
+    // trigram index is not a composite index
+    assertFalse(trigramIndexForwardIndex.getInt(javaFileId) == 0)
+    assertFalse(trigramIndexForwardIndex.getInt(groovyFileId) == 0)
+    assertEquals(trigramIndexForwardIndex.getInt(groovyFileId), trigramIndexForwardIndex.getInt(javaFileId))
+  }
+
+  private boolean findWordInDumbMode(String word, VirtualFile file, boolean inDumbMode) {
+    assertTrue(DumbService.isDumb(getProject()) == inDumbMode)
+    assertTrue(FileBasedIndex.isIndexAccessDuringDumbModeEnabled())
+
+    def wordHash = new IdIndexEntry(word, true)
+    def scope = GlobalSearchScope.allScope(project)
+    def fileBasedIndex = FileBasedIndex.instance
+    boolean found = false
+    def runnable = {
+      found = fileBasedIndex.getContainingFiles(IdIndex.NAME, wordHash, scope).contains(file)
+    }
+    if (inDumbMode) {
+      fileBasedIndex.ignoreDumbMode(runnable, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE)
+    } else {
+      runnable.run()
+    }
+    return found
+  }
+
+  private static assertStubLanguage(@NotNull Language expectedLanguage, @NotNull ObjectStubTree stub) {
+    def parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(expectedLanguage)
+    assertEquals(parserDefinition.getFileNodeType(), stub.getPlainList().get(0).getType())
+  }
+
+  @NotNull
+  private Map<IdIndexEntry, Integer> getIdIndexData(@NotNull VirtualFile file) {
+    FileBasedIndex.getInstance().getFileData(IdIndex.NAME, file, getProject())
   }
 }

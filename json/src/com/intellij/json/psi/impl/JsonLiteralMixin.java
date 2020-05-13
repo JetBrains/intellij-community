@@ -14,9 +14,8 @@ abstract class JsonLiteralMixin extends JsonElementImpl implements JsonLiteral {
     super(node);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,12 +11,10 @@ import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public interface BusyObject {
-
   @NotNull
   ActionCallback getReady(@NotNull Object requestor);
 
   abstract class Impl implements BusyObject {
-
     private final Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<>();
 
     public abstract boolean isReady();
@@ -34,7 +32,8 @@ public interface BusyObject {
         for (ActionCallback each : callbacks.getSecond()) {
           each.setRejected();
         }
-      } else {
+      }
+      else {
         ActionCallback[] callbacks = getReadyCallbacks();
         for (ActionCallback each : callbacks) {
           each.setDone();
@@ -69,8 +68,7 @@ public interface BusyObject {
       }
     }
 
-    @NotNull
-    private ActionCallback[] getReadyCallbacks() {
+    private ActionCallback @NotNull [] getReadyCallbacks() {
       synchronized (myReadyCallbacks) {
         ActionCallback[] result = myReadyCallbacks.values().toArray(new ActionCallback[0]);
         myReadyCallbacks.clear();
@@ -93,8 +91,7 @@ public interface BusyObject {
       }
     }
 
-    public static class Simple extends Impl {
-
+    public static final class Simple extends Impl {
       private final AtomicInteger myBusyCount = new AtomicInteger();
 
       @Override
@@ -116,5 +113,4 @@ public interface BusyObject {
       }
     }
   }
-
 }

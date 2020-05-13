@@ -1,123 +1,220 @@
+from __future__ import print_function
+
+import collections
+import errno
 import os
 import subprocess
 import sys
 import textwrap
 import unittest
 
-import generator3
-from generator3_tests import GeneratorTestCase, python3_only, python2_only
-from pycharm_generator_utils.constants import (
+import generator3.core
+import json
+import six
+from generator3.constants import (
     CACHE_DIR_NAME,
     ENV_REQUIRED_GEN_VERSION_FILE,
-    ENV_STANDALONE_MODE_FLAG,
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
-)
-from pycharm_generator_utils.util_methods import mkdir
+    STATE_FILE_NAME)
+from generator3.core import file_modification_timestamp
+from generator3.util_methods import ignored_os_errors, mkdir
+from generator3_tests import GeneratorTestCase, python2_only, python3_only, test_data_dir
 
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
+_helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__file__)))
+
+ProcessResult = collections.namedtuple('GeneratorResults', ('exit_code', 'stdout', 'stderr'))
 
 
-class SkeletonCachingTest(GeneratorTestCase):
-    PYTHON_STUBS_DIR = 'python_stubs'
+class GeneratorResult(object):
+    def __init__(self, process_result, skeletons_dir):
+        self.skeletons_dir = skeletons_dir
+        # self.__dict__.update(process_result._as_dict())
+        self.exit_code = process_result.exit_code
+        self.stdout = process_result.stdout
+        self.stderr = process_result.stderr
+
+    @property
+    def control_messages(self):
+        result = []
+        for line in self.stdout.splitlines(False):  # type: str
+            if line.startswith('{'):
+                result.append(json.loads(line))
+        return result
+
+    @property
+    def state_json(self):
+        with ignored_os_errors(errno.ENOENT):
+            with open(os.path.join(self.skeletons_dir, STATE_FILE_NAME)) as f:
+                return json.load(f)
+        # noinspection PyUnreachableCode
+        return None
+
+
+class FunctionalGeneratorTestCase(GeneratorTestCase):
     SDK_SKELETONS_DIR = 'sdk_skeletons'
+    PYTHON_STUBS_DIR = 'python_stubs'
+
+    default_generator_extra_args = []
+    default_generator_extra_syspath = []
+
+    @property
+    def temp_python_stubs_root(self):
+        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR)
+
+    @property
+    def temp_skeletons_dir(self):
+        return os.path.join(self.temp_python_stubs_root, self.SDK_SKELETONS_DIR)
+
+    @property
+    def temp_cache_dir(self):
+        return os.path.join(self.temp_python_stubs_root, CACHE_DIR_NAME)
+
+    def setUp(self):
+        super(FunctionalGeneratorTestCase, self).setUp()
+        self.process_stdout = six.StringIO()
+        self.process_stderr = six.StringIO()
+
+    def tearDown(self):
+        super(FunctionalGeneratorTestCase, self).tearDown()
+        self.process_stdout.close()
+        self.process_stderr.close()
+
+    def tearDownForFailedTest(self):
+        print("Launched processes stdout:\n" + self.process_stdout.getvalue() + '-' * 80, file=sys.stdout)
+        print("Launched processes stderr:\n" + self.process_stderr.getvalue() + '-' * 80, file=sys.stderr)
 
     def get_test_data_path(self, rel_path):
         return os.path.join(self.test_data_dir, rel_path)
 
-    def run_generator(self, mod_qname=None, mod_path=None, builtins=False, extra_syspath_entry=None, gen_version=None,
-                      required_gen_version_file_path=None, extra_env=None, extra_args=None, output_dir=None):
+    def run_generator(self, mod_qname=None,
+                      mod_path=None,
+                      extra_syspath=None,
+                      gen_version=None,
+                      required_gen_version_file_path=None,
+                      extra_env=None,
+                      extra_args=None,
+                      output_dir=None,
+                      input=None):
         if output_dir is None:
             output_dir = self.temp_skeletons_dir
         else:
             output_dir = os.path.join(self.temp_dir, output_dir)
 
-        if not extra_syspath_entry:
-            extra_syspath_entry = self.test_data_dir
+        if extra_syspath is None:
+            extra_syspath = self.default_generator_extra_syspath
+        if not extra_syspath:
+            extra_syspath = [self.test_data_dir]
 
-        env = {
+        extra_syspath = [p if os.path.isabs(p) else self.get_test_data_path(p) for p in extra_syspath]
+
+        if mod_path and not os.path.isabs(mod_path):
+            mod_path = os.path.join(extra_syspath[0], mod_path)
+
+        # On Windows we have to propagate entire parent environment explicitly to a subprocess
+        # see https://www.scivision.dev/python-calling-python-subprocess/
+        env = dict(os.environ)
+        env.update({
             ENV_TEST_MODE_FLAG: 'True',
             ENV_VERSION: gen_version or TEST_GENERATOR_VERSION,
-        }
+            'PYTHONPATH': _helpers_root,
+        })
         if required_gen_version_file_path:
             env[ENV_REQUIRED_GEN_VERSION_FILE] = required_gen_version_file_path
 
         if extra_env:
             env.update(extra_env)
 
-        generator3_path = os.path.abspath(generator3.__file__)
-        base, ext = os.path.splitext(generator3_path)
-        if ext == '.pyc':
-            generator3_path = base + '.py'
         args = [
             sys.executable,
-            generator3_path,
+            '-m',
+            'generator3',
             '-d', output_dir,
-            '-s', extra_syspath_entry,
+            '-s', os.pathsep.join(extra_syspath),
         ]
+
+        if extra_args is None:
+            extra_args = self.default_generator_extra_args
 
         if extra_args:
             args.extend(extra_args)
 
-        if builtins:
-            args.append('-b')
-        else:
+        elif mod_qname:
             args.append(mod_qname)
             if mod_path:
                 args.append(mod_path)
 
         self.log.info('Launching generator3 as: ' + ' '.join(args))
-        process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process.wait()
-        sys.stdout.write(process.stdout.read().decode('utf-8'))
-        process.stdout.close()
-        sys.stderr.write(process.stderr.read().decode('utf-8'))
-        process.stderr.close()
-        return process.returncode == 0
+        result = self.run_process(args, input=input, env=env)
+        return GeneratorResult(result, skeletons_dir=output_dir)
 
-    @property
-    def temp_skeletons_dir(self):
-        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
+    def run_process(self, args, input=None, env=None):
+        # Remove possible (NAME: None) pairs
+        env = {k: v for k, v in env.items() if v is not None}
+        process = subprocess.Popen(args,
+                                   env=env,
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   universal_newlines=True)
+        stdout, stderr = process.communicate(input)
+        self.process_stdout.write(stdout)
+        self.process_stderr.write(stderr)
+        return ProcessResult(process.returncode, stdout, stderr)
 
-    @property
-    def temp_cache_dir(self):
-        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, CACHE_DIR_NAME)
+    def check_generator_output(self, mod_name=None, mod_path=None, custom_required_gen=False, success=True, **kwargs):
+        if custom_required_gen:
+            kwargs.setdefault('required_gen_version_file_path', self.get_test_data_path('required_gen_version'))
 
+        with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
+            result = self.run_generator(mod_name, mod_path=mod_path, **kwargs)
+            self.assertEqual(success, result.exit_code == 0)
+
+    def assertDirLayoutEquals(self, dir_path, expected_layout):
+        def format_dir(dir_path, indent=''):
+            for child_name in sorted(os.listdir(dir_path)):
+                child_path = os.path.join(dir_path, child_name)
+                if os.path.isdir(child_path):
+                    yield indent + child_name + '/'
+                    for line in format_dir(child_path, indent + '    '):
+                        yield line
+                else:
+                    yield indent + child_name
+
+        formatted_dir_tree = '\n'.join(format_dir(dir_path))
+        expected = textwrap.dedent(expected_layout).strip()
+        actual = formatted_dir_tree.strip()
+        self.assertMultiLineEqual(expected, actual)
+
+
+class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     def test_layout_for_builtin_module(self):
         self.run_generator(mod_qname='_ast')
-        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
+        self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
             {hash}/
                 _ast.py
         sdk_skeletons/
             _ast.py
-        """.format(hash=generator3.module_hash('_ast', None)))
-
-    def test_builtins_generation_mode_stores_all_skeletons_in_same_cache_directory(self):
-        self.run_generator(builtins=True)
-        builtins_hash = generator3.module_hash('sys', None)
-        builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
-        self.assertTrue(os.path.isdir(builtins_cache_dir))
-        builtin_mod_skeletons = os.listdir(builtins_cache_dir)
-        self.assertIn('_ast.py', builtin_mod_skeletons)
-        self.assertIn('sys.py', builtin_mod_skeletons)
+        """.format(hash=generator3.core.module_hash('_ast', None)))
 
     def test_layout_for_toplevel_physical_module(self):
-        mod_path = os.path.join(self.test_data_dir, 'mod.py')
+        mod_path = self.get_test_data_path('mod.py')
         self.run_generator(mod_qname='mod', mod_path=mod_path)
-        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
+        self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
             {hash}/
                 mod.py
         sdk_skeletons/
             mod.py
-        """.format(hash=generator3.module_hash('mod', mod_path)))
+        """.format(hash=generator3.core.module_hash('mod', mod_path)))
 
     def test_layout_for_physical_module_inside_package(self):
         mod_path = self.get_test_data_path('pkg/subpkg/mod.py')
         self.run_generator(mod_qname='pkg.subpkg.mod', mod_path=mod_path)
-        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
+        self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
             {hash}/
                 pkg/
@@ -131,7 +228,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                 subpkg/
                     __init__.py
                     mod.py
-        """.format(hash=generator3.module_hash('mod', mod_path)))
+        """.format(hash=generator3.core.module_hash('mod', mod_path)))
 
     # PY-36884
     def test_pregenerated_skeletons_mode(self):
@@ -141,10 +238,10 @@ class SkeletonCachingTest(GeneratorTestCase):
 
     # PY-36884
     def test_pregenerated_skeletons_mode_for_builtin_module(self):
-        self.run_generator('sys', builtins=True, extra_env={
+        self.run_generator('sys', extra_env={
             'IS_PREGENERATED_SKELETONS': '1'
         })
-        sys_cached_skeleton_path = os.path.join(self.temp_cache_dir, generator3.module_hash('sys', None), 'sys.py')
+        sys_cached_skeleton_path = os.path.join(self.temp_cache_dir, generator3.core.module_hash('sys', None), 'sys.py')
         self.assertTrue(os.path.exists(sys_cached_skeleton_path))
         with open(sys_cached_skeleton_path, 'r') as f:
             self.assertTrue('# from (pre-generated)\n' in f.read())
@@ -155,7 +252,7 @@ class SkeletonCachingTest(GeneratorTestCase):
             self.assertTrue('# from (built-in)\n' in f.read())
 
     def test_skeleton_regenerated_for_changed_module(self):
-        self.check_generator_output('mod', mod_path='mod.py', mod_root='versions/v2')
+        self.check_generator_output('mod', mod_path='mod.py', extra_syspath=['versions/v2'])
 
     def test_skeleton_regenerated_for_upgraded_generator_with_explicit_update_stamp(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
@@ -182,8 +279,7 @@ class SkeletonCachingTest(GeneratorTestCase):
         # We can't safely updated cache from SDK skeletons (backwards) because of binaries declaring
         # multiple modules. Skeletons for them are scattered across SDK skeletons directory, and we can't
         # collect them reliably.
-        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True,
-                                    standalone_mode=True)
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
     def test_cache_skeleton_reused_when_sdk_skeleton_is_missing(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
@@ -202,7 +298,7 @@ class SkeletonCachingTest(GeneratorTestCase):
 
     def test_cache_skeleton_not_regenerated_when_sdk_skeleton_generation_failed_for_same_version_and_same_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True,
-                                    standalone_mode=True, success=False)
+                                    success=False)
 
     def test_cache_skeleton_regenerated_when_sdk_skeleton_generation_failed_for_modified_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
@@ -225,7 +321,7 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.check_generator_output('mod', mod_path='mod.py')
 
     def test_origin_stamp_for_pregenerated_builtins_is_updated(self):
-        mod_hash = generator3.module_hash('_abc', None)
+        mod_hash = generator3.core.module_hash('_abc', None)
         template = textwrap.dedent("""\
         # encoding: utf-8
         # module _ast
@@ -238,22 +334,12 @@ class SkeletonCachingTest(GeneratorTestCase):
         with open(os.path.join(cache_entry_dir, '_ast.py'), 'w') as f:
             f.write(template.format(origin='(pre-generated)'))
 
-        self.run_generator('_ast', None, True)
+        self.run_generator('_ast', None)
         with open(os.path.join(self.temp_skeletons_dir, '_ast.py')) as f:
-            self.assertEquals(template.format(origin='(built-in)'), f.read())
+            self.assertEqual(template.format(origin='(built-in)'), f.read())
 
     def test_single_pyexpat_skeletons_layout(self):
         self.run_generator('pyexpat')
-        self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
-        self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
-        self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
-        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
-        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
-
-    # TODO figure out why this is not true for some interpreters
-    @unittest.skipUnless('pyexpat' in sys.builtin_module_names, "pyexpat must be a built-in module")
-    def test_pyexpat_layout_in_builtins(self):
-        self.run_generator(builtins=True)
         self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
         self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
         self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
@@ -271,39 +357,254 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_non_string_dunder_module(self):
         self.check_generator_output('mod', 'mod.py')
 
-    def check_generator_output(self, mod_name, mod_path=None, mod_root=None,
-                               custom_required_gen=False, standalone_mode=False,
-                               success=True, **kwargs):
-        if custom_required_gen:
-            kwargs.setdefault('required_gen_version_file_path',
-                              os.path.join(self.test_data_dir, 'required_gen_version'))
-        if standalone_mode:
-            kwargs.setdefault('extra_env', {})[ENV_STANDALONE_MODE_FLAG] = 'True'
+    def test_results_in_single_module_mode(self):
+        result = self.run_generator('mod', 'mod.py')
+        self.assertIn({
+            'type': 'generation_result',
+            'module_name': 'mod',
+            'module_origin': 'mod.py',
+            'generation_status': 'GENERATED'
+        }, result.control_messages)
 
-        if not mod_root:
-            mod_root = self.test_data_dir
-        elif not os.path.isabs(mod_root):
-            mod_root = os.path.join(self.test_data_dir, mod_root)
+    def test_trailing_slash_in_sdk_skeletons_path_does_not_affect_cache_location(self):
+        self.run_generator('mod', 'mod.py', output_dir=self.temp_skeletons_dir + os.path.sep)
+        self.assertDirLayoutEquals(self.temp_python_stubs_root, """
+        cache/
+            e3b0c44298/
+                mod.py
+        sdk_skeletons/
+            mod.py
+        """)
 
-        if mod_path:
-            mod_path = os.path.join(mod_root, mod_path)
+    @python3_only
+    def test_keyword_only_arguments_in_signatures(self):
+        self.check_generator_output('mod', 'mod.py')
 
-        with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
-            result = self.run_generator(mod_name, mod_path=mod_path, extra_syspath_entry=mod_root, **kwargs)
-            self.assertEqual(success, result)
+    @python3_only
+    def test_keyword_only_arguments_in_return_type_constructor(self):
+        self.check_generator_output('mod', 'mod.py')
 
-    def assertDirLayoutEquals(self, dir_path, expected_layout):
-        def format_dir(dir_path, indent=''):
-            for child_name in sorted(os.listdir(dir_path)):
-                child_path = os.path.join(dir_path, child_name)
-                if os.path.isdir(child_path):
-                    yield indent + child_name + '/'
-                    for line in format_dir(child_path, indent + '    '):
-                        yield line
-                else:
-                    yield indent + child_name
 
-        formatted_dir_tree = '\n'.join(format_dir(dir_path))
-        expected = textwrap.dedent(expected_layout).strip()
-        actual = formatted_dir_tree.strip()
-        self.assertMultiLineEqual(expected, actual)
+class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
+    default_generator_extra_args = ['--name-pattern', 'mod?']
+    # This is a hack to keep the existing behavior where we keep discovering only binary files
+    # (which can't be distributed with tests in a platform-independent manner), but user their .py
+    # counterparts for actual importing and introspection
+    default_generator_extra_syspath = ['mocks', 'binaries']
+
+    def test_skeletons_for_builtins_are_stored_in_same_cache_directory(self):
+        self.run_generator(extra_args=['--builtins-only'], extra_syspath=[])
+        builtins_hash = generator3.core.module_hash('sys', None)
+        builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
+        self.assertTrue(os.path.isdir(builtins_cache_dir))
+        builtin_mod_skeletons = os.listdir(builtins_cache_dir)
+        self.assertIn('_ast.py', builtin_mod_skeletons)
+        self.assertIn('sys.py', builtin_mod_skeletons)
+
+    # TODO figure out why this is not true for some interpreters
+    @unittest.skipUnless('pyexpat' in sys.builtin_module_names, "pyexpat must be a built-in module")
+    def test_pyexpat_layout_in_builtins(self):
+        self.run_generator(extra_args=['--builtins-only'], extra_syspath=[])
+        self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
+        self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
+        self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
+        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
+        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
+
+    @test_data_dir('simple')
+    def test_progress_indication(self):
+        result = self.run_generator()
+        self.assertContainsInRelativeOrder([
+            {'type': 'progress', 'text': 'mod1', 'minor': True, 'fraction': 0.0},
+            {'type': 'progress', 'text': 'mod2', 'minor': True, 'fraction': 0.5},
+            {'type': 'progress', 'fraction': 1.0},
+        ], result.control_messages)
+
+    @test_data_dir('simple')
+    def test_intermediate_results_reporting(self):
+        result = self.run_generator()
+        self.assertContainsInRelativeOrder([
+            {'type': 'generation_result',
+             'module_name': 'mod1',
+             'module_origin': 'mod1.so',
+             'generation_status': 'GENERATED'},
+            {'type': 'generation_result',
+             'module_name': 'mod2',
+             'module_origin': 'mod2.so',
+             'generation_status': 'GENERATED'}
+        ], result.control_messages)
+
+    @test_data_dir('simple')
+    def test_general_results_and_layout(self):
+        self.check_generator_output()
+
+    @test_data_dir('simple')
+    def test_logging_configured_and_propagates_from_worker_subprocess(self):
+        result = self.run_generator()
+        log_messages = [m['message'] for m in result.control_messages if m['type'] == 'log']
+        subprocess_messages = [m for m in log_messages if m.startswith('Updating cache for mod')]
+        self.assertEqual(2, len(subprocess_messages))
+
+
+class StatePassingGenerationTest(FunctionalGeneratorTestCase):
+    default_generator_extra_args = ['--state-file-policy', 'readwrite', '--name-pattern', 'mod?']
+    default_generator_extra_syspath = ['mocks', 'binaries']
+
+    def test_existing_updated_due_to_required_gen_version(self):
+        state = {
+            'sdk_skeletons': {
+                # shouldn't be updated
+                'mod1': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED'
+                },
+                # should be updated because of "required_gen_version" file
+                'mod2': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED'
+                }
+            }
+        }
+        self.check_generator_output(input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.2')
+
+    def test_failed_updated_due_to_updated_generator_version(self):
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.2',
+                    'status': 'FAILED',
+                },
+                'mod2': {
+                    'gen_version': '0.1',
+                    'status': 'FAILED'
+                }
+            }
+        }
+        self.check_generator_output(input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.2')
+
+    def test_existing_updated_due_to_modified_binary(self):
+        mod1_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod1.so'))
+        mod2_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod2.so'))
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'bin_mtime': mod1_mtime,
+                    'status': 'GENERATED',
+                },
+                'mod2': {
+                    'gen_version': '0.1',
+                    # generated for a binary modified ten seconds before its current state
+                    'bin_mtime': mod2_mtime - 10,
+                    'status': 'GENERATED'
+                }
+            }
+        }
+        self.check_generator_output(input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.2')
+
+    def test_failed_updated_due_to_modified_binary(self):
+        mod1_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod1.so'))
+        mod2_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod2.so'))
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'bin_mtime': mod1_mtime,
+                    'status': 'FAILED',
+                },
+                'mod2': {
+                    'gen_version': '0.1',
+                    # generated for a binary modified ten seconds before its current state
+                    'bin_mtime': mod2_mtime - 10,
+                    'status': 'FAILED'
+                }
+            }
+        }
+        self.check_generator_output(input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.1')
+
+    def test_failed_skeleton_skipped(self):
+        mod_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod.so'))
+        state = {
+            'sdk_skeletons': {
+                'mod': {
+                    'gen_version': '0.1',
+                    'status': 'FAILED',
+                    'bin_mtime': mod_mtime
+                }
+            }
+        }
+        self.check_generator_output(extra_args=['--state-file-policy', 'readwrite', '--name-pattern', 'mod'],
+                                    gen_version='0.1',
+                                    custom_required_gen=True,
+                                    input=json.dumps(state))
+
+    def test_new_modules_are_added_to_state_json(self):
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED',
+                },
+            }
+        }
+        self.check_generator_output(input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.1')
+
+    def test_not_found_modules_are_removed_from_state_json(self):
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED',
+                },
+                'mod2': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED',
+                }
+            }
+        }
+        self.check_generator_output(input=json.dumps(state), gen_version='0.1', custom_required_gen=True)
+
+    def test_only_leaving_state_file_no_read(self):
+        self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod?'])
+
+    def test_state_indication_for_builtin_module(self):
+        result = self.run_generator(extra_args=['--state-file-policy', 'write', '--name-pattern', '_ast'])
+        self.assertIsNotNone(result.state_json)
+        self.assertIn('_ast', result.state_json['sdk_skeletons'])
+        self.assertEqual('GENERATED', result.state_json['sdk_skeletons']['_ast']['status'])
+
+    def test_modification_time_left_in_state_json_for_new_binaries(self):
+        result = self.run_generator(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod'],
+                                    extra_env={ENV_TEST_MODE_FLAG: None})
+        self.assertIsNotNone(result.state_json)
+        self.assertIn('bin_mtime', result.state_json['sdk_skeletons']['mod'])
+
+    def test_state_json_for_cached_skeletons_retains_original_gen_version(self):
+        # For mod1 we have a newer version in the cache.
+        # For non-existing mod2 we have satisfying version in the cache.
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED',
+                }
+            }
+        }
+        self.check_generator_output(gen_version='0.3',
+                                    custom_required_gen=True,
+                                    input=json.dumps(state))
+
+    def test_state_json_for_up_to_date_skeletons_retains_original_gen_version(self):
+        self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod'],
+                                    gen_version='0.2',
+                                    custom_required_gen=True)

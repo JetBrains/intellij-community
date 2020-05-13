@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("DEPRECATION") // declared for import com.intellij.codeInsight.completion.CompletionProgressIndicator
 
 package com.intellij.internal
 
-import com.google.common.collect.Lists
 import com.google.gson.Gson
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
@@ -11,11 +10,11 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.execution.ExecutionManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -42,6 +41,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -60,10 +60,6 @@ import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.collections.HashMap
-
-/**
- * @author traff
- */
 
 private data class CompletionTime(var cnt: Int, var time: Long)
 
@@ -91,7 +87,7 @@ private val saveResultToFile = "${System.getProperty("user.dir")}/result.json"
 private const val doProcessingWords = true
 private const val checkAfterDotOnly = true
 
-class CompletionQualityStatsAction : AnAction() {
+internal class CompletionQualityStatsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.getData(CommonDataKeys.EDITOR) as? EditorImpl
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
@@ -201,7 +197,7 @@ class CompletionQualityStatsAction : AnAction() {
     val consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
     val console = consoleBuilder.console
     val descriptor = RunContentDescriptor(console, null, console.component, "Completion Quality Statistics")
-    ExecutionManager.getInstance(project).contentManager.showRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor)
+    RunContentManager.getInstance(project).showRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor)
     console.print(text, ConsoleViewContentType.NORMAL_OUTPUT)
     File(saveResultToFile).writeText(text)
   }
@@ -214,7 +210,7 @@ class CompletionQualityStatsAction : AnAction() {
   // Find offsets to words and words on which we want to try completion
   private fun getCompletionAttempts(file: PsiFile, wordSet: HashMap<String, Int>): List<Pair<Int, String>> {
     val maxWordFrequency = 2
-    val res = Lists.newArrayList<Pair<Int, String>>()
+    val res = ArrayList<Pair<Int, String>>()
     val text = file.text
 
     for (range in StringUtil.getWordIndicesIn(text)) {
@@ -394,6 +390,7 @@ class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper
     fileTypeCombo = createFileTypesCombo()
 
     scopeChooserCombo = ScopeChooserCombo(project, false, true, "")
+    Disposer.register(disposable, scopeChooserCombo)
 
     if (editor != null) {
       PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let {

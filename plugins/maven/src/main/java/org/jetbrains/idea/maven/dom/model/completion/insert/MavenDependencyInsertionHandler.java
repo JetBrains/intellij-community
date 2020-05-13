@@ -97,10 +97,22 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
     DomFileElement<MavenDomProjectModel> domModel =
       DomManager.getDomManager(context.getProject()).getFileElement(contextFile, MavenDomProjectModel.class);
 
-    if (!MavenDependencyCompletionUtil.isInsideManagedDependency(domCoordinates) &&
+
+    if (!MavenDependencyCompletionUtil.isInsideManagedDependency(domCoordinates)) {
+      MavenDomDependency declarationOfDependency =
         MavenDependencyCompletionUtil.findManagedDependency(domModel.getRootElement(), context.getProject(), completionItem.getGroupId(),
-                                                            completionItem.getArtifactId()) != null) {
-      return; //allready present in parent file
+                                                            completionItem.getArtifactId());
+      if (declarationOfDependency != null) {
+        if (domCoordinates instanceof MavenDomDependency) {
+          if (declarationOfDependency.getType().getRawText() != null) {
+            ((MavenDomDependency)domCoordinates).getType().setStringValue(declarationOfDependency.getType().getRawText());
+          }
+          if (declarationOfDependency.getClassifier().getRawText() != null) {
+            ((MavenDomDependency)domCoordinates).getClassifier().setStringValue(declarationOfDependency.getClassifier().getRawText());
+          }
+        }
+        return;
+      }
     }
 
     if (domCoordinates instanceof MavenDomArtifactCoordinates) {

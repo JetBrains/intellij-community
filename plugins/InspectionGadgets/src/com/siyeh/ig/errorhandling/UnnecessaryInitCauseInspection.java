@@ -43,13 +43,6 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
     return new UnnecessaryInitCauseFix();
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.initcause.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

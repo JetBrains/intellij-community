@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
@@ -21,7 +22,7 @@ public class YamlBooleanType extends YamlEnumType {
     return StandardYamlBoolean.SHARED;
   }
 
-  public YamlBooleanType(@NotNull String name) {
+  public YamlBooleanType(@NonNls @NotNull String name) {
     super(name);
   }
 
@@ -30,7 +31,7 @@ public class YamlBooleanType extends YamlEnumType {
     if (scalarValue instanceof YAMLQuotedText) {
       //TODO: quickfix would be nice here
       holder.registerProblem(scalarValue,
-                             YAMLBundle.message("YamlBooleanType.validation.error.quoted.value", new Object[]{}),
+                             YAMLBundle.message("YamlBooleanType.validation.error.quoted.value"),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       return;
     }
@@ -61,7 +62,7 @@ public class YamlBooleanType extends YamlEnumType {
   public static class LiteralBuilder {
     private final Set<String> myResult = new LinkedHashSet<>();
 
-    public LiteralBuilder withAllCasesOf(@NotNull String... literals) {
+    public LiteralBuilder withAllCasesOf(@NonNls String @NotNull ... literals) {
       for (String next : literals) {
         if (next != null) {
           withLiteral(next, LiteralBuilder::lower, LiteralBuilder::CAPS, LiteralBuilder::First);

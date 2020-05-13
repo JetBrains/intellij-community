@@ -28,7 +28,7 @@ public interface ResolveTest extends BaseTest {
 
   @NotNull
   default <T extends PsiReference> T referenceUnderCaret(@NotNull Class<T> refType) {
-    PsiReference ref = getGroovyFile().findReferenceAt(getFixture().getCaretOffset());
+    PsiReference ref = getPsiFile().findReferenceAt(getFixture().getCaretOffset());
     return assertInstanceOf(ref, refType);
   }
 

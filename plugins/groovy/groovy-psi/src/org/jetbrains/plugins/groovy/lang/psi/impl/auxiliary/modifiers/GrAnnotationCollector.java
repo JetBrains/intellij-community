@@ -29,8 +29,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports.ge
 
 public class GrAnnotationCollector {
 
-  @NotNull
-  public static GrAnnotation[] getResolvedAnnotations(@NotNull GrModifierList modifierList) {
+  public static GrAnnotation @NotNull [] getResolvedAnnotations(@NotNull GrModifierList modifierList) {
     final GrAnnotation[] rawAnnotations = modifierList.getRawAnnotations();
 
     if (!mayHaveAnnotationCollector(rawAnnotations)) return rawAnnotations;
@@ -180,7 +179,7 @@ public class GrAnnotationCollector {
     }
   }
 
-  private static boolean mayHaveAnnotationCollector(@NotNull GrAnnotation[] rawAnnotations) {
+  private static boolean mayHaveAnnotationCollector(GrAnnotation @NotNull [] rawAnnotations) {
     for (GrAnnotation annotation : rawAnnotations) {
       if (mayHaveAnnotationCollector(annotation)) {
         return true;

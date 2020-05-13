@@ -8,7 +8,7 @@ from matplotlib.backend_bases import FigureManagerBase, ShowBase
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
-from datalore.display import display
+from datalore.display import debug, display, SHOW_DEBUG_INFO
 
 PY3 = sys.version_info[0] >= 3
 
@@ -19,8 +19,10 @@ rcParams = matplotlib.rcParams
 
 class Show(ShowBase):
     def __call__(self, **kwargs):
+        debug("show() called with args %s" % kwargs)
         managers = Gcf.get_all_fig_managers()
         if not managers:
+            debug("Error: Managers list in `Gcf.get_all_fig_managers()` is empty")
             return
 
         for manager in managers:
@@ -39,6 +41,8 @@ def draw_if_interactive():
         figManager = Gcf.get_active()
         if figManager is not None:
             figManager.canvas.show()
+        else:
+            debug("Error: Figure manager `Gcf.get_active()` is None")
 
 
 # from pyplot API
@@ -71,12 +75,20 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
 
         if len(set(buffer)) <= 1:
             # do not plot empty
+            debug("Error: Buffer FigureCanvasAgg.tostring_rgb() is empty")
             return
 
         render = self.get_renderer()
         width = int(render.width)
+        debug("Image width: %d" % width)
 
-        plot_index = index if os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False) else -1
+        is_interactive = os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False)
+        if is_interactive:
+            debug("Using interactive mode (Run with Python Console)")
+            debug("Plot index = %d" % index)
+        else:
+            debug("Using non-interactive mode (Run without Python Console)")
+        plot_index = index if is_interactive else -1
         display(DisplayDataObject(plot_index, width, buffer))
 
     def draw(self):
@@ -84,6 +96,8 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         is_interactive = os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False)
         if is_interactive and matplotlib.is_interactive():
             self.show()
+        else:
+            debug("Error: calling draw() in non-interactive mode won't show a plot. Try to 'Run with Python Console'")
 
 
 class FigureManagerInterAgg(FigureManagerBase):

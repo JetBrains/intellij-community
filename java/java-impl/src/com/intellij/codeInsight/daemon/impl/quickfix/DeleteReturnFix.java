@@ -3,15 +3,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.ig.psiutils.StatementExtractor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,21 +17,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-
+public final class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final SmartPsiElementPointer<PsiReturnStatement> myStatementPtr;
-  private final SmartPsiElementPointer<PsiExpression> myValuePtr;
   private final boolean myIsLastStatement;
   private final boolean myHasSideEffects;
 
-  public DeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement, @NotNull PsiExpression returnValue) {
+  public DeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement) {
     super(returnStatement);
     PsiCodeBlock codeBlock = Objects.requireNonNull(method.getBody());
     SmartPointerManager manager = SmartPointerManager.getInstance(returnStatement.getProject());
     myStatementPtr = manager.createSmartPsiElementPointer(returnStatement);
-    myValuePtr = manager.createSmartPsiElementPointer(returnValue);
     myIsLastStatement = ControlFlowUtils.blockCompletesWithStatement(codeBlock, returnStatement);
-    myHasSideEffects = SideEffectChecker.mayHaveSideEffects(returnValue);
+    myHasSideEffects = SideEffectChecker.mayHaveSideEffects(Objects.requireNonNull(returnStatement.getReturnValue()));
+  }
+
+  private DeleteReturnFix(@NotNull PsiReturnStatement returnStatement, boolean isLastStatement, boolean hasSideEffects) {
+    super(returnStatement);
+    SmartPointerManager manager = SmartPointerManager.getInstance(returnStatement.getProject());
+    myStatementPtr = manager.createSmartPsiElementPointer(returnStatement);
+    myIsLastStatement = isLastStatement;
+    myHasSideEffects = hasSideEffects;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -59,11 +62,11 @@ public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement
                      @NotNull PsiElement endElement) {
     PsiReturnStatement returnStatement = myStatementPtr.getElement();
     if (returnStatement == null) return;
-    PsiExpression returnValue = myValuePtr.getElement();
+    PsiExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null) return;
     CommentTracker ct = new CommentTracker();
     if (myHasSideEffects) {
-      returnValue = Objects.requireNonNull(RefactoringUtil.ensureCodeBlock(returnValue));
+      returnValue = Objects.requireNonNull(CodeBlockSurrounder.forExpression(returnValue)).surround().getExpression();
       returnStatement = (PsiReturnStatement)returnValue.getParent();
     }
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(returnValue);
@@ -72,5 +75,12 @@ public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement
     if (statements.length > 0) BlockUtils.addBefore(returnStatement, statements);
     PsiElement toDelete = myIsLastStatement ? returnStatement : returnValue;
     ct.deleteAndRestoreComments(toDelete);
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiReturnStatement returnStatement = myStatementPtr.getElement();
+    if (returnStatement == null) return null;
+    return new DeleteReturnFix(PsiTreeUtil.findSameElementInCopy(returnStatement, target), myIsLastStatement, myHasSideEffects);
   }
 }

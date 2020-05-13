@@ -32,7 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlAttributeValueManipulator extends AbstractElementManipulator<XmlAttributeValue> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator");
+  private static final Logger LOG = Logger.getInstance(XmlAttributeValueManipulator.class);
 
   @Override
   public XmlAttributeValue handleContentChange(@NotNull XmlAttributeValue element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {

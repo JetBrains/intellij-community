@@ -19,9 +19,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.NamedConfigurable;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class ProjectStructureElementConfigurable<T> extends NamedConfigurable<T> {
   protected ProjectStructureElementConfigurable() {
   }

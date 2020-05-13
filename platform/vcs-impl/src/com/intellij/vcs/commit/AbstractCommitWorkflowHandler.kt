@@ -17,7 +17,6 @@ import com.intellij.util.containers.forEachLoggingErrors
 import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
-import com.intellij.vcsUtil.VcsUtil.getFilePath
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
@@ -33,10 +32,10 @@ internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyLi
   )
 
 internal fun CommitWorkflowUi.getDisplayedPaths(): List<FilePath> =
-  getDisplayedChanges().map { getFilePath(it) } + getDisplayedUnversionedFiles().map { getFilePath(it) }
+  getDisplayedChanges().map { getFilePath(it) } + getDisplayedUnversionedFiles()
 
 internal fun CommitWorkflowUi.getIncludedPaths(): List<FilePath> =
-  getIncludedChanges().map { getFilePath(it) } + getIncludedUnversionedFiles().map { getFilePath(it) }
+  getIncludedChanges().map { getFilePath(it) } + getIncludedUnversionedFiles()
 
 @get:ApiStatus.Internal
 val CheckinProjectPanel.isNonModalCommit: Boolean
@@ -145,7 +144,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected abstract fun addUnversionedFiles(): Boolean
 
   protected fun addUnversionedFiles(changeList: LocalChangeList): Boolean =
-    workflow.addUnversionedFiles(changeList, getIncludedUnversionedFiles()) { changes -> ui.includeIntoCommit(changes) }
+    workflow.addUnversionedFiles(changeList, getIncludedUnversionedFiles().mapNotNull { it.virtualFile }) { changes ->
+      ui.includeIntoCommit(changes)
+    }
 
   private fun doExecuteDefault(executor: CommitExecutor?): Boolean = try {
     workflow.executeDefault(executor)

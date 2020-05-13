@@ -112,9 +112,8 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     myChildElements.add(childElement);
   }
 
-  @NotNull
   @Override
-  public TreeElement[] getChildren() {
+  public TreeElement @NotNull [] getChildren() {
     if (mySubRegions == null || mySubRegions.isEmpty()) {
       return myChildElements.toArray(StructureViewTreeElement.EMPTY_ARRAY);
     }

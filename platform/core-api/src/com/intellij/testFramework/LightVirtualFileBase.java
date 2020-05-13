@@ -199,13 +199,13 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
     assertWritable();
     super.setBinaryContent(content, newModificationStamp, newTimeStamp);
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     assertWritable();
     super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
   }

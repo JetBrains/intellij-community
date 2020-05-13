@@ -28,7 +28,7 @@ public class CompositeArrangementToken extends StdArrangementSettingsToken {
   private CompositeArrangementToken(@NotNull String id,
                                     @NotNull String uiName,
                                     @NotNull StdArrangementTokenType tokenType,
-                                    @NotNull ArrangementSettingsToken... tokens)
+                                    ArrangementSettingsToken @NotNull ... tokens)
   {
     super(id, uiName, tokenType);
     myParentTokenTypes = ContainerUtil.newHashSet(tokens);
@@ -37,7 +37,7 @@ public class CompositeArrangementToken extends StdArrangementSettingsToken {
   @NotNull
   public static CompositeArrangementToken create(@NonNls @NotNull String id,
                                                  @NotNull StdArrangementTokenType tokenType,
-                                                 @NotNull ArrangementSettingsToken... tokens)
+                                                 ArrangementSettingsToken @NotNull ... tokens)
   {
     return new CompositeArrangementToken(id, StringUtil.toLowerCase(id).replace("_", " "), tokenType, tokens);
   }

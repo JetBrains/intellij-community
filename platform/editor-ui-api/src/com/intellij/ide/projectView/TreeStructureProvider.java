@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -11,6 +11,8 @@ import java.util.Collection;
 
 /**
  * Allows a plugin to modify the structure of a project as displayed in the project view.
+ *
+ * @see ProjectViewNodeDecorator
  */
 public interface TreeStructureProvider {
   ProjectExtensionPointName<TreeStructureProvider> EP = new ProjectExtensionPointName<>("com.intellij.treeStructureProvider");
@@ -33,7 +35,7 @@ public interface TreeStructureProvider {
    *         are required.
    */
   @NotNull
-  Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings);
+  Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings);
 
   /**
    * Returns a user data object of the specified type for the specified selection in the
@@ -46,7 +48,7 @@ public interface TreeStructureProvider {
    * @see com.intellij.openapi.actionSystem.DataProvider
    */
   @Nullable
-  default Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
+  default Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
     return null;
   }
 }

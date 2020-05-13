@@ -4,6 +4,7 @@ package com.intellij.sh;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
@@ -23,17 +24,17 @@ public class ShAnnotator implements Annotator {
       mark(o, holder, GENERIC_COMMAND);
     }
     else if (o instanceof ShAssignmentCommand) {
-      PsiElement literal = ((ShAssignmentCommand) o).getLiteral();
+      PsiElement literal = ((ShAssignmentCommand)o).getLiteral();
       mark(literal, holder, VARIABLE_DECLARATION);
     }
     else if (o instanceof ShShellParameterExpansion) {
-      ASTNode[] children = o.getNode().getChildren(TokenSet.create(ShTypes.PARAMETER_EXPANSION_BODY));
+      ASTNode[] children = o.getNode().getChildren(TokenSet.create(ShTypes.PARAM_SEPARATOR));
       for (ASTNode node : children) {
         mark(node.getPsi(), holder, COMPOSED_VARIABLE);
       }
     }
     else if (o instanceof ShSubshellCommand) {
-      ShSubshellCommand subshellCommand = (ShSubshellCommand) o;
+      ShSubshellCommand subshellCommand = (ShSubshellCommand)o;
       mark(subshellCommand.getLeftParen(), holder, SUBSHELL_COMMAND);
       mark(subshellCommand.getRightParen(), holder, SUBSHELL_COMMAND);
     }
@@ -42,7 +43,7 @@ public class ShAnnotator implements Annotator {
     if (elementType == ShTypes.WORD) {
       PsiElement parent = o.getParent();
       if (parent instanceof ShSimpleCommandElement) {
-        holder.createInfoAnnotation(node, null).setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).enforcedTextAttributes(TextAttributes.ERASE_MARKER).create();
       }
       if (parent instanceof ShFunctionDefinition) {
         mark(o, holder, FUNCTION_DECLARATION);
@@ -51,6 +52,8 @@ public class ShAnnotator implements Annotator {
   }
 
   private static void mark(@Nullable PsiElement o, @NotNull AnnotationHolder holder, @NotNull TextAttributesKey key) {
-    if (o != null) holder.createInfoAnnotation(o, null).setTextAttributes(key);
+    if (o != null) {
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(o).textAttributes(key).create();
+    }
   }
 }

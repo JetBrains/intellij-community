@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,9 +27,7 @@ public class RemoveRunConfigurationTypeAction extends DumbAwareAction {
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(true);
-    ConfigurationType type = ContainerUtil.getOnlyItem(types);
-    presentation.setText(ExecutionBundle.message("run.dashboard.remove.run.configuration.type.action.name",
-                                                 type != null ? type.getDisplayName() : "Selected Types"));
+    presentation.setText(ExecutionBundle.messagePointer("run.dashboard.remove.run.configuration.type.action.name", types.size()));
   }
 
   @Override

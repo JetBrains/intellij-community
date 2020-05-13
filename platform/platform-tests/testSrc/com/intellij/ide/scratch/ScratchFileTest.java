@@ -9,21 +9,30 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class ScratchFileTest extends LightPlatformCodeInsightTestCase {
 
-  public void testXmlCompletion() {
+  private PsiFile createXmlScratch() {
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.language = XMLLanguage.INSTANCE;
-    PsiFile file = ScratchFileActions.doCreateNewScratch(getProject(), context);
-    assertNotNull(file);
+    return ScratchFileActions.doCreateNewScratch(getProject(), context);
+  }
+
+  public void testXmlCompletion() {
+    PsiFile file = createXmlScratch();
     Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
     document.setText("<");
     Editor editor = ((TextEditor)FileEditorManager.getInstance(getProject()).openFile(file.getVirtualFile(), true)[0]).getEditor();
     editor.getCaretModel().moveToOffset(1);
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
+  }
+
+  public void testIsFileOfTypeWorks() {
+    assertTrue(FileTypeManager.getInstance().isFileOfType(createXmlScratch().getVirtualFile(), StdFileTypes.XML));
   }
 
   @Override

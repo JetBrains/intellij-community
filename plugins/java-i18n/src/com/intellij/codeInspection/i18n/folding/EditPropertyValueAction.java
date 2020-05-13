@@ -4,6 +4,7 @@ package com.intellij.codeInspection.i18n.folding;
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -64,7 +65,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
   }
 
@@ -89,7 +90,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {}
+    public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {}
   }
 
   public static boolean isEnabled(@NotNull Editor editor) {
@@ -367,9 +368,8 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
               }
             }
 
-            @Nullable
             @Override
-            public DocumentReference[] getAffectedDocuments() {
+            public DocumentReference @Nullable [] getAffectedDocuments() {
               return null;
             }
 
@@ -405,7 +405,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     private MyShiftEnterAction() {
       super(new Handler());
       Presentation presentation = getTemplatePresentation();
-      presentation.setDescription("New line (" + KeymapUtil.getKeystrokeText(SHIFT_ENTER) + ")");
+      presentation.setDescription(JavaI18nBundle.message("action.description.new.line.0", KeymapUtil.getKeystrokeText(SHIFT_ENTER)));
       presentation.setIcon(AllIcons.Actions.SearchNewLine);
       presentation.setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
     }

@@ -16,8 +16,8 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,10 +35,10 @@ import javax.swing.*;
 
 public class CastThatLosesPrecisionInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreIntegerCharCasts = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreOverflowingByteCasts = false;
 
   @Pattern(VALID_ID_PATTERN)
@@ -46,13 +46,6 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
   @NotNull
   public String getID() {
     return "NumericCastThatLosesPrecision";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cast.that.loses.precision.display.name");
   }
 
   @Override
@@ -127,16 +120,11 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       LongRangeSet targetRange = LongRangeSet.fromType(castType);
       LongRangeSet lostRange = LongRangeSet.all();
       if (targetRange != null && LongRangeSet.fromType(operandType) != null) {
-        LongRangeSet valueRange = getValueRange(operand);
+        LongRangeSet valueRange = DfLongType.extractRange(CommonDataflow.getDfType(operand));
         lostRange = valueRange.subtract(targetRange);
         if (lostRange.isEmpty()) return;
       }
       registerError(castTypeElement, operandType, lostRange.max() < 0);
-    }
-
-    private LongRangeSet getValueRange(@NotNull PsiExpression operand) {
-      LongRangeSet fact = CommonDataflow.getExpressionFact(operand, DfaFactType.RANGE);
-      return fact == null ? LongRangeSet.all() : fact;
     }
 
     private boolean valueIsContainableInType(Number value, PsiType type) {

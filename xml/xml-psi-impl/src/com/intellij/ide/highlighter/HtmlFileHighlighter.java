@@ -32,6 +32,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
+import static com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS;
+import static com.intellij.ide.highlighter.XmlFileHighlighter.registerAdditionalHighlighters;
 import static com.intellij.psi.xml.XmlTokenType.*;
 
 public class HtmlFileHighlighter extends SyntaxHighlighterBase {
@@ -68,14 +70,8 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
 
     ourMap.putValue(XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
-    for (EmbeddedTokenHighlighter highlighter : XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS.getExtensionList()) {
-      MultiMap<IElementType, TextAttributesKey> attributes = highlighter.getEmbeddedTokenAttributes();
-      for (Map.Entry<IElementType, Collection<TextAttributesKey>> entry : attributes.entrySet()) {
-        if (!ourMap.containsKey(entry.getKey())) {
-          ourMap.putValues(entry.getKey(), entry.getValue());
-        }
-      }
-    }
+    registerAdditionalHighlighters(ourMap);
+    EMBEDDED_HIGHLIGHTERS.addExtensionPointListener(new XmlFileHighlighter.EmbeddedTokenHighlighterExtensionPointListener(ourMap), null);
   }
 
   @Override
@@ -85,8 +81,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     //noinspection SynchronizationOnGetClass,SynchronizeOnThis
     synchronized (getClass()) {
       return SyntaxHighlighterBase.pack(XmlHighlighterColors.HTML_CODE, ourMap.get(tokenType).toArray(TextAttributesKey.EMPTY_ARRAY));

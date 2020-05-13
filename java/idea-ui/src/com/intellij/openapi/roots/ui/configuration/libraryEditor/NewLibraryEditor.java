@@ -24,9 +24,6 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * @author nik
- */
 public class NewLibraryEditor extends LibraryEditorBase {
   private String myLibraryName;
   private final MultiMap<OrderRootType, LightFilePointer> myRoots;
@@ -83,9 +80,8 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return myLibraryName;
   }
 
-  @NotNull
   @Override
-  public String[] getUrls(@NotNull OrderRootType rootType) {
+  public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
     return pointersToUrls(myRoots.get(rootType));
   }
 
@@ -97,9 +93,8 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return ArrayUtilRt.toStringArray(urls);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
+  public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType) {
     List<VirtualFile> result = new ArrayList<>();
     for (LightFilePointer pointer : myRoots.get(rootType)) {
       final VirtualFile file = pointer.getFile();
@@ -120,9 +115,8 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public String[] getExcludedRootUrls() {
+  public String @NotNull [] getExcludedRootUrls() {
     return pointersToUrls(myExcludedRoots);
   }
 
@@ -254,7 +248,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   private static void collectJarFiles(@NotNull VirtualFile dir, @NotNull List<? super VirtualFile> container, final boolean recursively) {
-    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT, recursively ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
+    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<Void>(VirtualFileVisitor.SKIP_ROOT, recursively ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {

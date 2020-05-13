@@ -26,7 +26,7 @@ public class ShRunLineMarkerContributor extends RunLineMarkerContributor impleme
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(psiFile)) return null;
 
-    AnAction[] actions = {ActionManager.getInstance().getActionOrStub(ShRunFileAction.ID)};
+    AnAction[] actions = {ActionManager.getInstance().getAction(ShRunFileAction.ID)};
     return new Info(AllIcons.RunConfigurations.TestState.Run, actions,
         psiElement -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> "Run " + psiElement.getContainingFile().getName()), "\n"));
   }

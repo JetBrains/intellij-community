@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -16,9 +16,6 @@ import java.nio.charset.StandardCharsets;
 
 import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
 
-/**
- * @author max
- */
 public class ComplexUndoTest extends EditorUndoTestCase {
   private static final Charset WINDOWS_1251 = Charset.forName("windows-1251");
 

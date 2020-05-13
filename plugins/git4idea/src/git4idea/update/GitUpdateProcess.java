@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
@@ -27,9 +29,11 @@ import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.config.UpdateMethod;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
+import git4idea.pull.GitPullDialog;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
@@ -65,16 +69,28 @@ public class GitUpdateProcess {
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;
   private final UpdatedFiles myUpdatedFiles;
+  private final Map<GitRepository, GitBranchPair> myUpdateConfig;
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final GitMerger myMerger;
 
   @NotNull private final Map<GitRepository, String> mySkippedRoots = new LinkedHashMap<>();
   @Nullable private Map<GitRepository, HashRange> myUpdatedRanges;
 
+  @SuppressWarnings("unused") //used in a 3-party plugin
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
+                          boolean checkRebaseOverMergeProblem,
+                          boolean checkForTrackedBranchExistence) {
+    this(project, progressIndicator, repositories, updatedFiles, null, checkRebaseOverMergeProblem, checkForTrackedBranchExistence);
+  }
+
+  public GitUpdateProcess(@NotNull Project project,
+                          @Nullable ProgressIndicator progressIndicator,
+                          @NotNull Collection<GitRepository> repositories,
+                          @NotNull UpdatedFiles updatedFiles,
+                          @Nullable Map<GitRepository, GitBranchPair> updateConfig,
                           boolean checkRebaseOverMergeProblem,
                           boolean checkForTrackedBranchExistence) {
     myProject = project;
@@ -84,6 +100,7 @@ public class GitUpdateProcess {
     myChangeListManager = ChangeListManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myUpdatedFiles = updatedFiles;
+    myUpdateConfig = updateConfig;
 
     myRepositories = GitUtil.getRepositoryManager(project).sortByDependency(repositories);
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
@@ -120,13 +137,13 @@ public class GitUpdateProcess {
   public GitUpdateResult update(final UpdateMethod updateMethod) {
     LOG.info("update started|" + updateMethod);
     String oldText = myProgressIndicator.getText();
-    myProgressIndicator.setText("Updating...");
+    myProgressIndicator.setText(GitBundle.message("update.process.progress.title"));
 
     // check if update is possible
     if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
       return GitUpdateResult.NOT_READY;
     }
-    Map<GitRepository, GitBranchPair> trackedBranches = checkTrackedBranchesConfiguration();
+    Map<GitRepository, GitBranchPair> trackedBranches = myUpdateConfig != null ? myUpdateConfig : checkTrackedBranchesConfiguration();
     if (ContainerUtil.isEmpty(trackedBranches)) {
       return GitUpdateResult.NOT_READY;
     }
@@ -145,7 +162,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {
-    Map<GitRepository, GitBranchPair> trackedBranches = checkTrackedBranchesConfiguration();
+    Map<GitRepository, GitBranchPair> trackedBranches = myUpdateConfig != null ? myUpdateConfig : checkTrackedBranchesConfiguration();
     if (trackedBranches == null) {
       return GitUpdateResult.NOT_READY;
     }
@@ -211,7 +228,7 @@ public class GitUpdateProcess {
       final Ref<GitUpdateResult> compoundResult = Ref.create();
       final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
       new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
-                               GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, () -> {
+                               GitVcsSettings.getInstance(myProject).getSaveChangesPolicy(), myProgressIndicator, () -> {
                                  LOG.info("updateImpl: updating...");
                                  GitRepository currentlyUpdatedRoot = null;
                                  try {
@@ -307,7 +324,7 @@ public class GitUpdateProcess {
   }
 
   @NotNull
-  Map<GitRepository, String> getSkippedRoots() {
+  public Map<GitRepository, String> getSkippedRoots() {
     return mySkippedRoots;
   }
 
@@ -396,8 +413,29 @@ public class GitUpdateProcess {
     return trackedBranches;
   }
 
-  private static void notifyNoTrackedBranchError(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
-    notifyImportantError(repository.getProject(), "Can't Update", getNoTrackedBranchError(repository, currentBranch.getName()));
+  private void notifyNoTrackedBranchError(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
+    VcsNotifier.getInstance(repository.getProject())
+      .notifyError(
+        GitBundle.message("update.notification.update.error"),
+        getNoTrackedBranchError(repository, currentBranch.getName()),
+        NotificationAction.createSimple(
+          GitBundle.message("update.notification.choose.upstream.branch"),
+          () -> {
+            showUpdateDialog(repository);
+          })
+      );
+  }
+
+  private void showUpdateDialog(@NotNull GitRepository repository) {
+    GitPullDialog updateDialog = new GitPullDialog(repository.getProject());
+    if (updateDialog.showAndGet()) {
+      new GitUpdateExecutionProcess(repository.getProject(),
+                                    myRepositories,
+                                    updateDialog.getUpdateConfig(),
+                                    updateDialog.getUpdateMethod(),
+                                    updateDialog.shouldSetAsUpstream())
+        .execute();
+    }
   }
 
   private static void notifyDetachedHeadError(@NotNull GitRepository repository) {
@@ -419,19 +457,7 @@ public class GitUpdateProcess {
   @VisibleForTesting
   @NotNull
   static String getNoTrackedBranchError(@NotNull GitRepository repository, @NotNull String branchName) {
-    String recommendedCommand = recommendSetupTrackingCommand(repository, branchName);
-    return "No tracked branch configured for branch " + code(branchName) +
-    mention(repository) +
-    " or the branch doesn't exist.<br/>" +
-    "To make your branch track a remote branch call, for example,<br/>" +
-    "<code>" + recommendedCommand + "</code>";
-  }
-
-  @NotNull
-  private static String recommendSetupTrackingCommand(@NotNull GitRepository repository, @NotNull String branchName) {
-    return String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository) ?
-                         "git branch --set-upstream-to=origin/%1$s %1$s" :
-                         "git branch --set-upstream %1$s origin/%1$s", branchName);
+    return code(branchName) + mention(repository) + " has no tracked branch";
   }
 
   /**
@@ -446,8 +472,8 @@ public class GitUpdateProcess {
     }
     LOG.info("isMergeInProgress: roots with unfinished merge: " + mergingRoots);
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
-    params.setErrorNotificationTitle("Can't update");
-    params.setMergeDescription("You have unfinished merge. These conflicts must be resolved before update.");
+    params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
+    params.setMergeDescription(GitBundle.message("update.process.error.message.unfinished.merge"));
     return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, mergingRoots, params, false).merge();
   }
 
@@ -458,8 +484,8 @@ public class GitUpdateProcess {
   private boolean areUnmergedFiles() {
     LOG.info("areUnmergedFiles: checking if there are unmerged files...");
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
-    params.setErrorNotificationTitle("Update was not started");
-    params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
+    params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
+    params.setMergeDescription(GitBundle.message("update.process.error.message.unmerged.files"));
     return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, getRootsFromRepositories(myRepositories),
                                                    params, false).merge();
   }
@@ -478,9 +504,9 @@ public class GitUpdateProcess {
     LOG.info("checkRebaseInProgress: roots with unfinished rebase: " + rebasingRoots);
 
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
-    params.setErrorNotificationTitle("Can't update");
-    params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
-    params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
+    params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
+    params.setMergeDescription(GitBundle.message("update.process.error.description.unfinished.rebase"));
+    params.setErrorNotificationAdditionalDescription(GitBundle.message("update.process.error.additional.description.unfinished.rebase"));
     params.setReverse(true);
     return !new GitConflictResolver(myProject, rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {

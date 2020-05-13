@@ -50,7 +50,7 @@ import java.util.List;
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
 public class ApplyPatchAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
+  private static final Logger LOG = Logger.getInstance(ApplyPatchAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -68,7 +68,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not apply patch now")) return;
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(VcsBundle.message("patch.apply.cannot.apply.now"))) return;
     FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFile vFile = null;
@@ -108,11 +108,11 @@ public class ApplyPatchAction extends DumbAwareAction {
     VirtualFile vFile = VfsUtil.findFileByIoFile(file, true);
     String patchPath = file.getPath();
     if (vFile == null) {
-      VcsNotifier.getInstance(project).notifyWeakError("Can't find patch file " + patchPath);
+      VcsNotifier.getInstance(project).notifyWeakError(VcsBundle.message("patch.apply.can.t.find.patch.file.warning", patchPath));
       return false;
     }
     if (!isPatchFile(vFile)) {
-      VcsNotifier.getInstance(project).notifyWeakError("Selected file " + patchPath + " is not patch type file ");
+      VcsNotifier.getInstance(project).notifyWeakError(VcsBundle.message("patch.apply.not.patch.type.file.error", patchPath));
       return false;
     }
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
@@ -200,13 +200,14 @@ public class ApplyPatchAction extends DumbAwareAction {
         final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
         request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, appliedTextPatch, callback);
       }
-      request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, result12 -> result12.equals(MergeResult.CANCEL) ? "Abort..." : null);
+      request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, result12 -> result12.equals(MergeResult.CANCEL) ? VcsBundle
+        .message("patch.apply.abort.action") : null);
       request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, viewer -> {
-        String message = XmlStringUtil.wrapInHtml("<u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?");
-        String title = "Abort Patch";
-        String yesText = "_Abort and Rollback";
-        String noText = "_Skip";
-        String cancelText = "Continue Resolve";
+        String message = VcsBundle.message("patch.apply.abort.and.rollback.prompt");
+        String title = VcsBundle.message("patch.apply.abort.title");
+        String yesText = VcsBundle.message("patch.apply.abort.and.rollback.action");
+        String noText = VcsBundle.message("patch.apply.skip.action");
+        String cancelText = VcsBundle.message("patch.apply.continue.resolve.action");
         int result1 = 0;
 
         if (Messages.canShowMacSheetPanel()) {

@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -92,8 +92,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * Returns all documents that have unsaved changes.
    * @return the documents that have unsaved changes.
    */
-  @NotNull
-  public abstract Document[] getUnsavedDocuments();
+  public abstract Document @NotNull [] getUnsavedDocuments();
 
   /**
    * Checks if the document has unsaved changes.
@@ -155,7 +154,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    *
    * @param files the files to discard the changes for.
    */
-  public abstract void reloadFiles(@NotNull VirtualFile... files);
+  public abstract void reloadFiles(VirtualFile @NotNull ... files);
 
   /**
    * Stores the write access status (true if the document has the write access; false otherwise)
@@ -170,7 +169,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
     private WriteAccessStatus(boolean withWriteAccess) {
       myWithWriteAccess = withWriteAccess;
-      myReadOnlyMessage = withWriteAccess ? "" : EditorBundle.message("editing.read.only.file.hint");
+      myReadOnlyMessage = withWriteAccess ? "" : CoreBundle.message("editing.read.only.file.hint");
     }
 
     public WriteAccessStatus(@NotNull String readOnlyMessage) {

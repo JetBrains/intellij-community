@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isFake
 
 class GrAnnotatorImpl : Annotator {
 
@@ -33,16 +35,17 @@ class GrAnnotatorImpl : Annotator {
       val text = element.getText()
       if (text.startsWith("/*") && !text.endsWith("*/")) {
         val range = element.getTextRange()
-        holder.createErrorAnnotation(TextRange.create(range.endOffset - 1, range.endOffset), GroovyBundle.message("doc.end.expected"))
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("doc.end.expected")).range(
+          TextRange.create(range.endOffset - 1, range.endOffset)).create()
       }
     }
     else {
       val parent = element.parent
       if (parent is GrMethod && element == parent.nameIdentifierGroovy) {
         val illegalCharacters = illegalJvmNameSymbols.findAll(parent.name).mapTo(HashSet()) { it.value }
-        if (illegalCharacters.isNotEmpty()) {
+        if (illegalCharacters.isNotEmpty() && !parent.isFake()) {
           val chars = illegalCharacters.joinToString { "'$it'" }
-          holder.createWarningAnnotation(element, GroovyBundle.message("illegal.method.name", chars))
+          holder.newAnnotation(HighlightSeverity.WARNING, GroovyBundle.message("illegal.method.name", chars)).create()
         }
         if (parent.returnTypeElementGroovy == null) {
           GroovyAnnotator.checkMethodReturnType(parent, element, holder)

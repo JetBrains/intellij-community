@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -30,10 +32,10 @@ import java.util.List;
  * Removes <a href="http://unicode.org/faq/utf_bom.html">file's BOM</a> (if any).
  */
 public class RemoveBomAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#" + RemoveBomAction.class);
+  private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
 
   public RemoveBomAction() {
-    super("Remove BOM");
+    super(IdeBundle.messagePointer("remove.byte.order.mark"));
   }
 
   @Override
@@ -61,7 +63,8 @@ public class RemoveBomAction extends AnAction implements DumbAware {
 
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
-    e.getPresentation().setDescription("Remove byte order mark from "+fromWhere);
+    String finalFromWhere = fromWhere;
+    e.getPresentation().setDescription(IdeBundle.messagePointer("remove.byte.order.mark.from", finalFromWhere));
   }
 
   @Override
@@ -73,7 +76,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     List<VirtualFile> filesToProcess = getFilesWithBom(files);
     if (filesToProcess.isEmpty()) return;
     List<VirtualFile> filesUnableToProcess = new ArrayList<>();
-    new Task.Backgroundable(getEventProject(e), "Removing BOM", true, () -> false) {
+    new Task.Backgroundable(getEventProject(e), IdeBundle.message("removing.byte.order.mark"), true, () -> false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
@@ -94,11 +97,13 @@ public class RemoveBomAction extends AnAction implements DumbAware {
         }
 
         if (!filesUnableToProcess.isEmpty()) {
-          String title = "Was unable to remove BOM in " + filesUnableToProcess.size() +" " +
-                         StringUtil.pluralize("file", filesUnableToProcess.size());
-          String msg = (filesUnableToProcess.size() == 1 ? "This file has" : "These files have") +
-                       " mandatory BOM:<br/>    " + StringUtil.join(filesUnableToProcess, VirtualFile::getName, "<br/>    ");
-          Notifications.Bus.notify(new Notification("Failed to remove BOM", title, msg, NotificationType.ERROR));
+          String title = IdeBundle.message("notification.title.was.unable.to.remove.bom.in", filesUnableToProcess.size(),
+                                           StringUtil.pluralize("file", filesUnableToProcess.size()));
+          String msg = IdeBundle.message("notification.content.mandatory.bom.br", filesUnableToProcess.size(),
+                                         StringUtil.join(filesUnableToProcess, VirtualFile::getName, "<br/>    "));
+          Notifications.Bus.notify(new Notification(
+            NotificationGroup.createIdWithTitle("Failed to remove BOM", IdeBundle.message("notification.group.failed.to.remove.bom")),
+            title, msg, NotificationType.ERROR));
         }
       }
     }.queue();
@@ -108,7 +113,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     return CharsetToolkit.getMandatoryBom(file.getCharset()) != null;
   }
 
-  private static void doRemoveBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] bom) {
+  private static void doRemoveBOM(@NotNull VirtualFile virtualFile, byte @NotNull [] bom) {
     virtualFile.setBOM(null);
     NewVirtualFile file = (NewVirtualFile)virtualFile;
     try {
@@ -130,7 +135,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
    * @return collection of detected files with defined {@link VirtualFile#getBOM() BOM} if any; empty collection otherwise
    */
   @NotNull
-  private static List<VirtualFile> getFilesWithBom(@NotNull VirtualFile[] roots) {
+  private static List<VirtualFile> getFilesWithBom(VirtualFile @NotNull [] roots) {
     List<VirtualFile> result = new ArrayList<>();
     for (VirtualFile root : roots) {
       getFilesWithBom(root, result);

@@ -1,28 +1,76 @@
 package com.intellij.configurationScript.schemaGenerators
 
+import com.intellij.configurationScript.ItemTypeInfoProvider
+import com.intellij.configurationScript.LOG
 import com.intellij.configurationStore.Property
 import com.intellij.openapi.components.BaseState
 import com.intellij.serialization.stateProperties.CollectionStoredProperty
 import com.intellij.serialization.stateProperties.EnumStoredProperty
 import com.intellij.serialization.stateProperties.MapStoredProperty
+import com.intellij.util.ReflectionUtil
 import gnu.trove.THashMap
 import org.jetbrains.io.JsonObjectBuilder
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
-internal fun buildJsonSchema(state: BaseState, builder: JsonObjectBuilder, customFilter: ((name: String) -> Boolean)? = null) {
+internal class OptionClassJsonSchemaGenerator(val definitionNodeKey: String) {
+  val definitionPointerPrefix = "#/$definitionNodeKey/"
+  private val queue: MutableSet<Class<out BaseState>> = hashSetOf()
+
+  private val definitionBuilder = StringBuilder()
+  val definitions = JsonObjectBuilder(definitionBuilder, indentLevel = 1)
+
+  fun describe(): CharSequence {
+    if (queue.isEmpty()) {
+      return definitionBuilder
+    }
+
+    val list: MutableList<Class<out BaseState>> = arrayListOf()
+    while (true) {
+      if (queue.isEmpty()) {
+        return definitionBuilder
+      }
+
+      list.clear()
+      list.addAll(queue)
+      queue.clear()
+      list.sortedBy { it.name }
+
+      for (clazz in list) {
+        definitions.map(clazz.name.replace('.', '_')) {
+          "type" to "object"
+          map("properties") {
+            val instance = ReflectionUtil.newInstance(clazz)
+            buildJsonSchema(instance, this, this@OptionClassJsonSchemaGenerator)
+          }
+          "additionalProperties" to false
+        }
+      }
+    }
+  }
+
+  fun addClass(clazz: Class<out BaseState>): CharSequence {
+    queue.add(clazz)
+    return clazz.name.replace('.', '_')
+  }
+}
+
+internal fun buildJsonSchema(state: BaseState,
+                             builder: JsonObjectBuilder,
+                             subObjectSchemaGenerator: OptionClassJsonSchemaGenerator?,
+                             customFilter: ((name: String) -> Boolean)? = null) {
   val properties = state.__getProperties()
   val memberProperties = state::class.memberProperties
   var propertyToAnnotation: MutableMap<String, Property>? = null
   for (property in memberProperties) {
-    val annotation = property.findAnnotation<Property>()
-    if (annotation != null) {
-      if (propertyToAnnotation == null) {
-        propertyToAnnotation = THashMap()
-      }
-      propertyToAnnotation.put(property.name, annotation)
+    val annotation = property.findAnnotation<Property>() ?: continue
+    if (propertyToAnnotation == null) {
+      propertyToAnnotation = THashMap()
     }
+    propertyToAnnotation.put(property.name, annotation)
   }
+
+  val itemTypeInfoProvider = ItemTypeInfoProvider(state.javaClass)
 
   for (property in properties) {
     val name = property.name!!
@@ -52,8 +100,23 @@ internal fun buildJsonSchema(state: BaseState, builder: JsonObjectBuilder, custo
           }
         }
         is CollectionStoredProperty<*, *> -> {
-          map("items") {
-            "type" to "string"
+          val listType = itemTypeInfoProvider.getListItemType(name, logAsErrorIfPropertyNotFound = true) ?: return@map
+          when {
+            listType === java.lang.String::class.java -> {
+              map("items") {
+                "type" to "string"
+              }
+            }
+            subObjectSchemaGenerator == null -> {
+              LOG.error("$listType not supported for collection property $name because subObjectSchemaGenerator is not specified")
+            }
+            else -> {
+              map("items") {
+                @Suppress("UNCHECKED_CAST")
+                definitionReference(subObjectSchemaGenerator.definitionPointerPrefix,
+                                    subObjectSchemaGenerator.addClass(listType))
+              }
+            }
           }
         }
       }

@@ -26,9 +26,6 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class XValuePresentationUtil {
   public static void renderValue(@NotNull String value, @NotNull ColoredTextContainer text, @NotNull SimpleTextAttributes attributes, int maxLength,
                                  @Nullable String additionalCharsToEscape) {

@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportModelBase extends UserDataHolderBase implements FrameworkSupportModel {
   private final Project myProject;
   private final ModuleBuilder myModuleBuilder;

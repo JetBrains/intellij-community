@@ -9,8 +9,9 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactIdInsertionHandler
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -24,7 +25,7 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,
                     parameters: CompletionParameters,
-                    consumer: Consumer<MavenRepositoryArtifactInfo>): Promise<Void> {
+                    consumer: Consumer<RepositoryArtifactData>): Promise<Int> {
 
     val searchParameters = createSearchParameters(parameters)
     val groupId = trimDummy(coordinates.groupId.stringValue)
@@ -32,23 +33,20 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
     if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
       return MavenAbstractPluginExtensionCompletionContributor.findPluginByArtifactId(service, artifactId, searchParameters, consumer)
     }
-    if (groupId.isBlank()) {
-      return service.fulltextSearch(artifactId, searchParameters, consumer)
-    }
     return service.suggestPrefix(groupId, artifactId, searchParameters,
                                  withPredicate(consumer,
-                                               Predicate { searchParameters.isShowAll || groupId.isEmpty() || groupId == it.groupId }))
+                                               Predicate { it is MavenRepositoryArtifactInfo && (groupId.isEmpty() || groupId == it.groupId) }))
   }
 
   override fun fillResults(result: CompletionResultSet,
                            coordinates: MavenDomShortArtifactCoordinates,
-                           cld: ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>,
-                           promise: Promise<Void>) {
+                           cld: ConcurrentLinkedDeque<RepositoryArtifactData>,
+                           promise: Promise<Int>) {
     val set = HashSet<String>()
     while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled()
       val item = cld.poll()
-      if (item != null && set.add(item.artifactId)) {
+      if (item is MavenRepositoryArtifactInfo && set.add(item.artifactId)) {
         result
           .addElement(
             MavenDependencyCompletionUtil.lookupElement(item, item.artifactId).withInsertHandler(

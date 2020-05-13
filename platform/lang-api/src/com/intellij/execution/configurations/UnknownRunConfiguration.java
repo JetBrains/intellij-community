@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -99,7 +101,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    throw new RuntimeConfigurationException("Broken configuration due to unavailable plugin or invalid configuration data.");
+    throw new RuntimeConfigurationException(LangBundle.message("dialog.message.broken.configuration"));
   }
 
   @Override
@@ -127,7 +129,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
       myPanel = new JPanel();
       myPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0));
 
-      myPanel.add(new JLabel("This configuration cannot be edited", SwingConstants.CENTER));
+      myPanel.add(new JLabel(ExecutionBundle.message("this.configuration.cannot.be.edited"), SwingConstants.CENTER));
     }
 
     @Override

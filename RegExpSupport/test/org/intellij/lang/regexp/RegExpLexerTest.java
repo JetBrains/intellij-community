@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.Lexer;
@@ -731,6 +731,15 @@ public class RegExpLexerTest extends LexerTestCase {
                           "REDUNDANT_ESCAPE ('\\^')\n" +
                           "CLASS_END (']')\n" +
                           "ESC_CHARACTER ('\\^')", lexer);
+  }
+
+  public void testPoundSign() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\#(?x)\\#", "REDUNDANT_ESCAPE ('\\#')\n" +
+                         "SET_OPTIONS ('(?')\n" +
+                         "OPTIONS_ON ('x')\n" +
+                         "GROUP_END (')')\n" +
+                         "ESC_CHARACTER ('\\#')", lexer);
   }
 
   @Override

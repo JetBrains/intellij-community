@@ -37,9 +37,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author nik
- */
 public class MessageTreeNode extends XDebuggerTreeNode {
   private final boolean myEllipsis;
   private XDebuggerTreeNodeHyperlink myLink;
@@ -105,12 +102,12 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   }
 
   public static MessageTreeNode createLoadingMessage(XDebuggerTree tree, final XDebuggerTreeNode parent) {
-    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.COLLECTING_DATA_MESSAGE,
+    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.getCollectingDataMessage(),
                                XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES, null);
   }
 
   public static MessageTreeNode createEvaluatingMessage(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent) {
-    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE,
+    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.getEvaluatingExpressionMessage(),
                                XDebuggerUIConstants.EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES, null);
   }
 

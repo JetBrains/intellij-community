@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.psi.impl;
 
 import com.intellij.openapi.util.Ref;
@@ -29,7 +30,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
   public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
     int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
     if (result == -1) return -1;
-    return (result <= rangeInsideHost.getLength() ? result : rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
+    return Math.min(result, rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
   }
 
   @Override
@@ -162,11 +163,22 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
             }
             break;
           case 'u':
-            if (index + 4 <= chars.length()) {
+            if (index + 3 <= chars.length() && chars.charAt(index) == '{') {
+              int end = chars.indexOf('}', index + 1);
+              if (end < 0) return false;
+              try {
+                int v = Integer.parseInt(chars.substring(index + 1, end), 16);
+                c = chars.charAt(index + 1);
+                if (c == '+' || c == '-') return false;
+                outChars.appendCodePoint(v);
+                index = end + 1;
+              } catch (Exception e) {
+                return false;
+              }
+            }
+            else if (index + 4 <= chars.length()) {
               try {
                 int v = Integer.parseInt(chars.substring(index, index + 4), 16);
-                //line separators are invalid here
-                if (v == 0x000a || v == 0x000d) return false;
                 c = chars.charAt(index);
                 if (c == '+' || c == '-') return false;
                 outChars.append((char)v);

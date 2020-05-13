@@ -15,28 +15,20 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.CommonBundle
+import com.intellij.DynamicBundle
 import org.jetbrains.annotations.PropertyKey
-import java.lang.ref.Reference
-import java.lang.ref.SoftReference
-import java.util.*
-
-private var ourBundle: Reference<ResourceBundle>? = null
 
 private const val BUNDLE: String = "messages.IcsBundle"
 
-fun icsMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
-  return CommonBundle.message(getBundle(), key, *params)
+object IcsBundle : DynamicBundle(BUNDLE) {
+  @JvmStatic
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+
+  @JvmStatic
+  fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String,
+                  vararg params: Any): java.util.function.Supplier<String> = getLazyMessage(key, *params)
 }
 
-private fun getBundle(): ResourceBundle {
-  var bundle: ResourceBundle? = null
-  if (ourBundle != null) {
-    bundle = ourBundle!!.get()
-  }
-  if (bundle == null) {
-    bundle = ResourceBundle.getBundle(BUNDLE)
-    ourBundle = SoftReference(bundle)
-  }
-  return bundle!!
+fun icsMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
+  return IcsBundle.message(key, params)
 }

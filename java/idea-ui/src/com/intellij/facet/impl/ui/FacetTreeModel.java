@@ -29,11 +29,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FacetTreeModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetTreeModel");
+  private static final Logger LOG = Logger.getInstance(FacetTreeModel.class);
   private static final FacetInfo ROOT = new FacetInfo(null, "", null, null);
   private final List<FacetInfo> myFacetInfos = new ArrayList<>();
   private final BidirectionalMap<FacetInfo, FacetInfo> myParents = new BidirectionalMap<>();

@@ -14,9 +14,6 @@ import com.intellij.testFramework.VfsTestUtil;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   private VirtualFile myTestDir;
   private FrameworkDetectionManager myDetectionManager;
@@ -50,6 +47,13 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
     assertNoFrameworksDetected();
   }
 
+  public void testDynamicDetector() {
+    VirtualFile file = createFrameworkConfig("my-config.xml");
+    assertNoFrameworksDetected();
+    FrameworkDetector.EP_NAME.getPoint(null).registerExtension(new MockFacetDetector(), getTestRootDisposable());
+    assertFrameworkDetectedIn(file);
+  }
+
   public void testCreateFacet() {
     createFrameworkConfig("my-config.xml");
     setupFrameworks(detect());
@@ -62,7 +66,7 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   public void testCreateFacetAfterDetectionManually() {
     final VirtualFile file = createFrameworkConfig("my-config.xml");
     assertFrameworkDetectedIn(file);
-    createFacet("my-config.xml");
+    createMockFacet("my-config.xml");
     assertNoFrameworksDetected();
   }
 
@@ -124,7 +128,7 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   }
 
   public void testDetectSubFacet() {
-    final MockFacet facet = createFacet("my-config.xml");
+    final MockFacet facet = createMockFacet("my-config.xml");
     final VirtualFile file = createFrameworkConfig("sub-my-config.xml");
     final MockFacetConfiguration configuration = assertFrameworkDetectedIn(file);
     assertEquals("sub-my-config.xml", configuration.getData());
@@ -166,7 +170,7 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
     assertFrameworkDetectedIn(file);
   }
 
-  private MockFacet createFacet(final String fileName) {
+  private MockFacet createMockFacet(final String fileName) {
     final MockFacet facet = WriteAction.compute(() -> FacetManager.getInstance(myModule).addFacet(MockFacetType.getInstance(), "f", null));
     facet.getConfiguration().setData(fileName);
     return facet;

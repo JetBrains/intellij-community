@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiModifier
@@ -36,24 +39,28 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
+  private fun error(typeArgumentList: PsiElement, msg: String) {
+    holder.newAnnotation(HighlightSeverity.ERROR, msg).range(typeArgumentList).create()
+  }
+
   override fun visitModifierList(modifierList: GrModifierList) {
     val modifier = modifierList.getModifier(PsiModifier.DEFAULT) ?: return
-    holder.createErrorAnnotation(modifier, GroovyBundle.message("default.modifier.in.old.versions"))
+    error(modifier, GroovyBundle.message("default.modifier.in.old.versions"))
   }
 
   override fun visitDoWhileStatement(statement: GrDoWhileStatement) {
     super.visitDoWhileStatement(statement)
-    holder.createErrorAnnotation(statement.doKeyword, message("unsupported.do.while.statement"))
+    error(statement.doKeyword, message("unsupported.do.while.statement"))
   }
 
   override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
     super.visitVariableDeclaration(variableDeclaration)
     if (variableDeclaration.parent is GrTraditionalForClause) {
       if (variableDeclaration.isTuple) {
-        holder.createErrorAnnotation(variableDeclaration, message("unsupported.tuple.declaration.in.for"))
+        holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.tuple.declaration.in.for")).create()
       }
       else if (variableDeclaration.variables.size > 1) {
-        holder.createErrorAnnotation(variableDeclaration, message("unsupported.multiple.variables.in.for"))
+        holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.multiple.variables.in.for")).create()
       }
     }
   }
@@ -61,13 +68,13 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitExpressionList(expressionList: GrExpressionList) {
     super.visitExpressionList(expressionList)
     if (expressionList.expressions.size > 1) {
-      holder.createErrorAnnotation(expressionList, message("unsupported.expression.list.in.for.update"))
+      holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.expression.list.in.for.update")).create()
     }
   }
 
   override fun visitTryResourceList(resourceList: GrTryResourceList) {
     super.visitTryResourceList(resourceList)
-    holder.createErrorAnnotation(resourceList.firstChild, message("unsupported.resource.list"))
+    error(resourceList.firstChild, message("unsupported.resource.list"))
   }
 
   override fun visitBinaryExpression(expression: GrBinaryExpression) {
@@ -75,7 +82,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     val operator = expression.operationToken
     val tokenType = operator.node.elementType
     if (tokenType === T_ID || tokenType === T_NID) {
-      holder.createErrorAnnotation(operator, message("operator.is.not.supported.in", tokenType))
+      error(operator, message("operator.is.not.supported.in", tokenType))
     }
   }
 
@@ -83,7 +90,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     super.visitInExpression(expression)
     val negation = expression.negationToken
     if (negation != null) {
-      holder.createErrorAnnotation(negation, message("unsupported.negated.in"))
+      error(negation, message("unsupported.negated.in"))
     }
   }
 
@@ -91,7 +98,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     super.visitInstanceofExpression(expression)
     val negation = expression.negationToken
     if (negation != null) {
-      holder.createErrorAnnotation(negation, message("unsupported.negated.instanceof"))
+      error(negation, message("unsupported.negated.instanceof"))
     }
   }
 
@@ -99,7 +106,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     super.visitAssignmentExpression(expression)
     val operator = expression.operationToken
     if (operator.node.elementType === T_ELVIS_ASSIGN) {
-      holder.createErrorAnnotation(operator, message("unsupported.elvis.assignment"))
+      error(operator, message("unsupported.elvis.assignment"))
     }
   }
 
@@ -107,7 +114,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     super.visitIndexProperty(expression)
     val safeAccessToken = expression.safeAccessToken
     if (safeAccessToken != null) {
-      holder.createErrorAnnotation(safeAccessToken, message("unsupported.safe.index.access"))
+      error(safeAccessToken, message("unsupported.safe.index.access"))
     }
   }
 
@@ -116,24 +123,25 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     val dot = expression.dotToken ?: return
     val tokenType = dot.node.elementType
     if (tokenType === T_METHOD_REFERENCE) {
-      holder.createErrorAnnotation(dot, message("operator.is.not.supported.in", tokenType)).apply {
-        val descriptor = createDescriptor(dot)
-        val fix = ReplaceDotFix(tokenType, T_METHOD_CLOSURE)
-        registerFix(fix, descriptor)
-      }
+      val fix = ReplaceDotFix(tokenType, T_METHOD_CLOSURE)
+      val message = message("operator.is.not.supported.in", tokenType)
+      val descriptor = InspectionManager.getInstance(expression.project).createProblemDescriptor(dot, dot, message, ProblemHighlightType.ERROR, true)
+      holder.newAnnotation(HighlightSeverity.ERROR, message).range(dot)
+        .newLocalQuickFix(fix, descriptor).registerFix()
+        .create()
     }
   }
 
   override fun visitArrayInitializer(arrayInitializer: GrArrayInitializer) {
     super.visitArrayInitializer(arrayInitializer)
-    holder.createErrorAnnotation(arrayInitializer, message("unsupported.array.initializers"))
+    holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.array.initializers")).create()
   }
 
   override fun visitLambdaExpression(expression: GrLambdaExpression) {
     super.visitLambdaExpression(expression)
-    holder.createErrorAnnotation(expression.arrow, message("unsupported.lambda")).apply {
-      registerFix(ConvertLambdaToClosureAction(expression))
-    }
+    holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.lambda")).range(expression.arrow)
+    .withFix(ConvertLambdaToClosureAction(expression))
+      .create()
   }
 
   override fun visitTypeDefinitionBody(typeDefinitionBody: GrTypeDefinitionBody) {
@@ -159,20 +167,20 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
       if (PsiTreeUtil.isAncestor(statementOwner, argumentList, true)) return
     }
 
-    holder.createErrorAnnotation(typeDefinitionBody, message("ambiguous.code.block"))
+    holder.newAnnotation(HighlightSeverity.ERROR, message("ambiguous.code.block")).create()
   }
 
   override fun visitBlockStatement(blockStatement: GrBlockStatement) {
     super.visitBlockStatement(blockStatement)
     if (blockStatement.parent is GrStatementOwner) {
-      holder.createErrorAnnotation(blockStatement, message("ambiguous.code.block"))
+      holder.newAnnotation(HighlightSeverity.ERROR, message("ambiguous.code.block")).create()
     }
   }
 
   override fun visitClosure(closure: GrClosableBlock) {
     super.visitClosure(closure)
     if (!closure.hasParametersSection() && !followsError(closure) && isClosureAmbiguous(closure)) {
-      holder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"))
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("ambiguous.code.block")).create()
     }
   }
 
@@ -210,7 +218,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     var run: PsiElement? = parent.parent
     while (run != null) {
       if (run is GrParenthesizedExpression) return false
-      if (run is GrReturnStatement || run is GrAssertStatement || run is GrThrowStatement) return true
+      if (run is GrReturnStatement || run is GrAssertStatement || run is GrThrowStatement || run is GrCommandArgumentList) return true
       run = run.parent
     }
     return false
@@ -218,13 +226,13 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitTypeElement(typeElement: GrTypeElement) {
     typeElement.annotations.forEach {
-      holder.createErrorAnnotation(it, message("unsupported.type.annotations"))
+      error(it, message("unsupported.type.annotations"))
     }
   }
 
   override fun visitCodeReferenceElement(refElement: GrCodeReferenceElement) {
     refElement.annotations.forEach {
-      holder.createErrorAnnotation(it, message("unsupported.type.annotations"))
+      error(it, message("unsupported.type.annotations"))
     }
   }
 }

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 @ApiStatus.Internal
 public class ModulesOrderEnumerator extends OrderEnumeratorBase {
   private final Collection<? extends Module> myModules;

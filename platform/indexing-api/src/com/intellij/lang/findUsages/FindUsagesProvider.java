@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.findUsages;
 
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public interface FindUsagesProvider {
    *
    * @param psiElement the element for which usages are searched.
    * @return true if the search is allowed, false otherwise.
-   * @see com.intellij.find.FindManager#canFindUsages(com.intellij.psi.PsiElement)
+   * @see com.intellij.find.FindManager#canFindUsages(PsiElement)
    */
   boolean canFindUsagesFor(@NotNull PsiElement psiElement);
 
@@ -53,6 +54,7 @@ public interface FindUsagesProvider {
    * @param element the element for which the type is requested.
    * @return the type of the element.
    */
+  @Nls
   @NotNull
   String getType(@NotNull PsiElement element);
 
@@ -64,6 +66,7 @@ public interface FindUsagesProvider {
    * @param element the element for which the name is requested.
    * @return the user-visible name.
    */
+  @Nls
   @NotNull
   String getDescriptiveName(@NotNull PsiElement element);
 
@@ -74,6 +77,7 @@ public interface FindUsagesProvider {
    * @param useFullName if true, the returned text should use fully qualified names
    * @return the text representing the element.
    */
+  @Nls
   @NotNull
   String getNodeText(@NotNull PsiElement element, boolean useFullName);
 }

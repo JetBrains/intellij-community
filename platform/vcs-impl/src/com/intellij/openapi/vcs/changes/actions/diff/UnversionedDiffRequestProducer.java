@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
@@ -32,7 +18,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,22 +25,17 @@ import java.util.Objects;
 
 public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
   @Nullable private final Project myProject;
-  @NotNull private final VirtualFile myFile;
+  @NotNull private final FilePath myPath;
 
-  private UnversionedDiffRequestProducer(@Nullable Project project, @NotNull VirtualFile file) {
+  private UnversionedDiffRequestProducer(@Nullable Project project, @NotNull FilePath path) {
     myProject = project;
-    myFile = file;
-  }
-
-  @NotNull
-  public VirtualFile getFile() {
-    return myFile;
+    myPath = path;
   }
 
   @NotNull
   @Override
   public FilePath getFilePath() {
-    return VcsUtil.getFilePath(myFile);
+    return myPath;
   }
 
   @NotNull
@@ -73,21 +53,22 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
   @NotNull
   @Override
   public String getName() {
-    return myFile.getPresentableUrl();
+    return myPath.getPresentableUrl();
   }
 
   @NotNull
   @Override
   public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException, ProcessCanceledException {
-    if (!myFile.isValid()) throw new DiffRequestProducerException("Can't show diff - file not found");
-    return createRequest(myProject, myFile);
+    VirtualFile file = myPath.getVirtualFile();
+    if (file == null) throw new DiffRequestProducerException("Can't show diff - file not found");
+    return createRequest(myProject, file);
   }
 
 
   @NotNull
-  public static UnversionedDiffRequestProducer create(@Nullable Project project, @NotNull VirtualFile file) {
-    return new UnversionedDiffRequestProducer(project, file);
+  public static UnversionedDiffRequestProducer create(@Nullable Project project, @NotNull FilePath path) {
+    return new UnversionedDiffRequestProducer(project, path);
   }
 
   @NotNull
@@ -97,7 +78,7 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
     DiffContent content2 = contentFactory.create(project, file);
 
     SimpleDiffRequest request = new SimpleDiffRequest(DiffRequestFactory.getInstance().getTitle(file), content1, content2,
-                                                      null, ChangeDiffRequestProducer.YOUR_VERSION);
+                                                      null, ChangeDiffRequestProducer.getYourVersion());
 
     DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_UNVERSIONED, file);
     return request;
@@ -109,11 +90,11 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
     if (o == null || getClass() != o.getClass()) return false;
 
     UnversionedDiffRequestProducer producer = (UnversionedDiffRequestProducer)o;
-    return Objects.equals(myFile, producer.myFile);
+    return Objects.equals(myPath, producer.myPath);
   }
 
   @Override
   public int hashCode() {
-    return myFile.hashCode();
+    return myPath.hashCode();
   }
 }

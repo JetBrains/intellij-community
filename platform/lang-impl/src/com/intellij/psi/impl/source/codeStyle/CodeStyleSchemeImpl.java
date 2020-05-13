@@ -9,6 +9,7 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   private String myParentSchemeName;
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
+  private long myLastModificationCount;
 
   private final Object lock = new Object();
 
@@ -40,11 +42,11 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   private CodeStyleSettings init(@Nullable CodeStyleScheme parentScheme, @Nullable Element root) {
     final CodeStyleSettings settings;
     if (parentScheme == null) {
-      settings = new CodeStyleSettings();
+      settings = CodeStyleSettingsManager.getInstance().createSettings();
     }
     else {
       CodeStyleSettings parentSettings = parentScheme.getCodeStyleSettings();
-      settings = parentSettings.clone();
+      settings = CodeStyleSettingsManager.getInstance().cloneSettings(parentSettings);
       while (parentSettings.getParentSettings() != null) {
         parentSettings = parentSettings.getParentSettings();
       }
@@ -105,7 +107,14 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   @Override
   public SchemeState getSchemeState() {
     synchronized (lock) {
-      return myDataHolder == null ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
+      if (myDataHolder == null) {
+        final long currModificationCount = myCodeStyleSettings.getModificationTracker().getModificationCount();
+        if (myLastModificationCount != currModificationCount) {
+          myLastModificationCount = currModificationCount;
+          return SchemeState.POSSIBLY_CHANGED;
+        }
+      }
+      return SchemeState.UNCHANGED;
     }
   }
 

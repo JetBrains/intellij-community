@@ -26,9 +26,8 @@ public class MisspelledMethodNameInspectionMerger extends InspectionElementsMerg
     return "MisspelledMethodName";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[]{"MethodNamesDifferOnlyByCase", "MisspelledSetUp", "MisspelledTearDown", "MisspelledHashcode", "MisspelledToString", "MisspelledCompareTo"};
   }
 }

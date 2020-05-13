@@ -114,6 +114,11 @@ class ObjectSerializerTest {
   }
 
   @Test
+  fun `bean with long array`() {
+    test(TestLongArray())
+  }
+
+  @Test
   fun enum() {
     val bean = TestEnumBean()
     bean.color = TestEnum.RED
@@ -197,6 +202,12 @@ private class TestEnumBean {
 }
 
 private class TestByteArray @JvmOverloads constructor(@Suppress("unused") @JvmField var data: ByteArray? = null)
+
+
+private class TestLongArray {
+  @JvmField
+  val field: Array<Long> = arrayOf(1, 2, Long.MAX_VALUE, Long.MIN_VALUE)
+}
 
 private class TestArrayBean(
   @JvmField var list: Array<String>? = null,

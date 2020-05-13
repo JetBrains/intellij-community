@@ -5,7 +5,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.psi.PsiModifier;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +84,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_INHERITORS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_PARAMETER_IN_HIERARCHY = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_VARIABLES = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_ACCESSORS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_TESTS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_OVERLOADS = true;
 
@@ -98,6 +98,14 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
 
   public boolean isToRenameVariables() {
     return RENAME_VARIABLES;
+  }
+
+  public boolean isToRenameAccessors() {
+    return RENAME_ACCESSORS;
+  }
+
+  public void setRenameAccessors(boolean renameAccessors) {
+    RENAME_ACCESSORS = renameAccessors;
   }
 
   public void setRenameInheritors(final boolean RENAME_INHERITORS) {

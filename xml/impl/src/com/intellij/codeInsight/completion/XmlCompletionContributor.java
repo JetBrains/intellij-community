@@ -13,8 +13,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,13 +27,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
@@ -243,7 +242,7 @@ public class XmlCompletionContributor extends CompletionContributor {
   public String advertise(@NotNull final CompletionParameters parameters) {
     if (isXmlNameCompletion(parameters) && parameters.getCompletionType() == CompletionType.BASIC) {
       if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(TAG_NAME_COMPLETION_FEATURE, parameters.getPosition().getProject())) {
-        final String shortcut = CompletionUtil.getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
+        final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION);
         return XmlBundle.message("tag.name.completion.hint", shortcut);
       }
     }
@@ -274,62 +273,42 @@ public class XmlCompletionContributor extends CompletionContributor {
   }
 
   private static void addEntityRefCompletions(PsiElement context, CompletionResultSet resultSet) {
-    XmlFile containingFile = null;
-    XmlFile descriptorFile = null;
+    XmlFile containingFile = ObjectUtils.tryCast(context.getContainingFile(), XmlFile.class);
+    if (containingFile == null) {
+      return;
+    }
+    List<XmlFile> descriptorFiles = XmlExtension.getExtension(containingFile).getCharEntitiesDTDs(containingFile);
     final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
-
-    if (tag != null) {
-      containingFile = (XmlFile)tag.getContainingFile();
-      descriptorFile = findDescriptorFile(tag, containingFile);
+    if (tag != null && descriptorFiles.isEmpty()) {
+      descriptorFiles = ContainerUtil.packNullables(findDescriptorFile(tag, containingFile));
     }
 
-    if (HtmlUtil.isHtml5Context(tag)) {
-      descriptorFile = XmlUtil.findXmlFile(containingFile, Html5SchemaProvider.getCharsDtdLocation());
-    } else if (tag == null) {
-      final XmlDocument document = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
-
-      if (document != null) {
-        containingFile = (XmlFile)document.getContainingFile();
-
-        final FileType ft = containingFile.getFileType();
-        if (HtmlUtil.isHtml5Document(document)) {
-          descriptorFile = XmlUtil.findXmlFile(containingFile, Html5SchemaProvider.getCharsDtdLocation());
-        } else if(ft != StdFileTypes.XML) {
-          final String namespace = ft == StdFileTypes.XHTML || ft == StdFileTypes.JSPX ? XmlUtil.XHTML_URI : XmlUtil.HTML_URI;
-          final XmlNSDescriptor nsDescriptor = document.getDefaultNSDescriptor(namespace, true);
-
-          if (nsDescriptor != null) {
-            descriptorFile = nsDescriptor.getDescriptorFile();
-          }
-        }
-      }
-    }
-
-    if (descriptorFile != null && containingFile != null) {
-      final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
-
-      final PsiElementProcessor processor = new PsiElementProcessor() {
-        @Override
-        public boolean execute(@NotNull final PsiElement element) {
-          if (element instanceof XmlEntityDecl) {
-            final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
-            if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
-              final LookupElementBuilder _item = buildEntityLookupItem(xmlEntityDecl);
-              if (_item != null) {
-                resultSet.addElement(_item);
-                resultSet.stopHere();
-              }
+    final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
+    final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<PsiElement>() {
+      @Override
+      public boolean execute(@NotNull final PsiElement element) {
+        if (element instanceof XmlEntityDecl) {
+          final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+          if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
+            final LookupElementBuilder _item = buildEntityLookupItem(xmlEntityDecl);
+            if (_item != null) {
+              resultSet.addElement(_item);
+              resultSet.stopHere();
             }
           }
-          return true;
         }
-      };
-
-      XmlUtil.processXmlElements(descriptorFile, processor, true);
-      if (descriptorFile != containingFile && acceptSystemEntities) {
-        final XmlProlog element = containingFile.getDocument().getProlog();
-        if (element != null) XmlUtil.processXmlElements(element, processor, true);
+        return true;
       }
+    };
+
+    for (XmlFile descriptorFile: descriptorFiles) {
+      XmlUtil.processXmlElements(descriptorFile, processor, true);
+    }
+
+    final XmlDocument document = containingFile.getDocument();
+    if (acceptSystemEntities && document != null) {
+      final XmlProlog element = document.getProlog();
+      if (element != null) XmlUtil.processXmlElements(element, processor, true);
     }
   }
 

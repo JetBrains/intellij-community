@@ -167,6 +167,8 @@ public class StaticGenericInfoBuilder {
     final Type type = myCollectionChildrenTypes.get(tagName);
     if (type == null || !ReflectionUtil.getRawType(type).isAssignableFrom(method.getReturnType())) return false;
 
+    if (method.getParameterCount() == 0) return true;
+
     return ADDER_PARAMETER_TYPES.containsAll(Arrays.asList(method.getParameterTypes()));
   }
 

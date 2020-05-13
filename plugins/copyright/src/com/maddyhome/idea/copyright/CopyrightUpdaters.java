@@ -15,16 +15,19 @@
  */
 package com.maddyhome.idea.copyright;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
+import com.intellij.util.KeyedLazyInstance;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 
 /**
  * @author yole
  */
 public class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsProvider> {
-  public static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
+  public static final ExtensionPointName<KeyedLazyInstance<UpdateCopyrightsProvider>> EP_NAME = ExtensionPointName.create("com.intellij.copyright.updater");
+  public final static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
 
   private CopyrightUpdaters() {
-    super("com.intellij.copyright.updater");
+    super(EP_NAME);
   }
 }

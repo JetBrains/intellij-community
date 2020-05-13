@@ -213,7 +213,7 @@ enum class Modifier {
 class Shortcut(var modifiers: HashSet<Modifier> = HashSet(), var key: Key? = null) {
 
   fun getKeystroke(): String {
-    val mods = modifiers.toList().sortedBy { it.ordinal }.joinToString(" ") { it.name.toLowerCase() }
+    val mods = modifiers.toList().sorted().joinToString(" ") { it.name.toLowerCase() }
     if (key == null) return ""
     val cleanKeyName = (if (key!!.name.startsWith("d")) key!!.name.substring(1) else key!!.name).toLowerCase()
     return if (mods.isNotEmpty()) "$mods $cleanKeyName" else cleanKeyName

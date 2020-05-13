@@ -53,6 +53,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testParam2() { doTest(); }
   public void testParam3() { doTest(); }
   public void testParam4() { doTest(); }
+  public void testRecordParamJava14Preview() { doTest(); }
   public void testTypeParam() {
     myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "private"; 
     myInspection.METHOD_OPTIONS.REQUIRED_TAGS = "@param"; 
@@ -103,7 +104,9 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testBadReference() { doTest(); }
   public void testMissingReturnDescription() { doTest(); }
   public void testDoubleParenthesesInCode() { doTest(); }
-  public void testDuplicateParam() { doTest(); }
+  public void testDuplicateParam0() { doTest(); }
+  public void testDuplicateParam1() { doTest(); }
+  public void testDuplicateParam2() { doTest(); }
   public void testDuplicateReturn() { doTest(); }
   public void testDuplicateDeprecated() { myInspection.IGNORE_DEPRECATED = false; doTest(); }
   public void testDuplicateSerial() { doTest(); }
@@ -117,6 +120,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIgnoreDuplicateThrows() { myInspection.setIgnoreDuplicatedThrows(true); doTest(); }
   public void testIgnoreAccessors() { myInspection.setIgnoreSimpleAccessors(true); doTest(); }
   public void testAuthoredMethod() { doTest(); }
+  public void testThrowsInheritDoc() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());

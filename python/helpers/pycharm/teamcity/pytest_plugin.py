@@ -208,14 +208,13 @@ class EchoTeamCityMessages(object):
             return "%s:%s (%s)" % (str(location[0]), str(location[1]), str(location[2]))
         return str(location)
 
-    def pytest_collection_modifyitems(self, session, config, items):
-        self.teamcity.testCount(len(items))
+    def pytest_collection_finish(self, session):
+        self.teamcity.testCount(len(session.items))
 
     def pytest_runtest_logstart(self, nodeid, location):
         # test name fetched from location passed as metainfo to PyCharm
-        # it will be used to run specific test using "-k"
-        # See IDEA-176950
-        # We only need method/function name because only it could be used as -k
+        # it will be used to run specific test
+        # See IDEA-176950, PY-31836
         test_name = location[2]
         if test_name:
             test_name = str(test_name).split(".")[-1]
@@ -239,8 +238,9 @@ class EchoTeamCityMessages(object):
     def report_test_output(self, report, test_id):
         for (secname, data) in report.sections:
             # https://github.com/JetBrains/teamcity-messages/issues/112
-            # CollectReport doesn't have 'when' property
-            if hasattr(report, "when") and report.when not in secname:
+            # CollectReport didn't have 'when' property, but now it has.
+            # But we still need output on 'collect' state
+            if hasattr(report, "when") and report.when not in secname and report.when != 'collect':
                 continue
             if not data:
                 continue
@@ -375,14 +375,42 @@ class EchoTeamCityMessages(object):
 
     def _report_coverage(self):
         from coverage.misc import NotPython
-        from coverage.report import Reporter
         from coverage.results import Numbers
 
-        class _CoverageReporter(Reporter):
+        class _Reporter(object):
+            def __init__(self, coverage, config):
+                try:
+                    from coverage.report import Reporter
+                except ImportError:
+                    # Support for coverage >= 5.0.1.
+                    from coverage.report import get_analysis_to_report
+
+                    class Reporter(object):
+
+                        def __init__(self, coverage, config):
+                            self.coverage = coverage
+                            self.config = config
+                            self._file_reporters = []
+
+                        def find_file_reporters(self, morfs):
+                            return [fr for fr, _ in get_analysis_to_report(self.coverage, morfs)]
+
+                self._reporter = Reporter(coverage, config)
+
+            def find_file_reporters(self, morfs):
+                self.file_reporters = self._reporter.find_file_reporters(morfs)
+
+            def __getattr__(self, name):
+                return getattr(self._reporter, name)
+
+        class _CoverageReporter(_Reporter):
             def __init__(self, coverage, config, messages):
                 super(_CoverageReporter, self).__init__(coverage, config)
 
-                self.branches = coverage.data.has_arcs()
+                if hasattr(coverage, 'data'):
+                    self.branches = coverage.data.has_arcs()
+                else:
+                    self.branches = coverage.get_data().has_arcs()
                 self.messages = messages
 
             def report(self, morfs, outfile=None):

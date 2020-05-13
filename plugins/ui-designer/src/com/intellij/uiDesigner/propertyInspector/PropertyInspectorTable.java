@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -29,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.Properties;
@@ -39,7 +39,9 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.IndentedIcon;
+import com.intellij.util.ui.UIUtil;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,8 +66,8 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class PropertyInspectorTable extends Table implements DataProvider{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable");
+public final class PropertyInspectorTable extends JBTable implements DataProvider {
+  private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
 
   public static final DataKey<PropertyInspectorTable> DATA_KEY = DataKey.create(PropertyInspectorTable.class.getName());
 
@@ -171,7 +173,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         int row = rowAtPoint(e.getPoint());
         int column = columnAtPoint(e.getPoint());
         if (row >= 0 && column == 0) {
@@ -240,7 +242,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     if (mySelection.size() == 0) return null;
     String className = mySelection.get(0).getComponentClassName();
     for(int i=1; i<mySelection.size(); i++) {
-      if (!Comparing.equal(mySelection.get(i).getComponentClassName(), className)) {
+      if (!Objects.equals(mySelection.get(i).getComponentClassName(), className)) {
         return null;
       }
     }
@@ -486,7 +488,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
             continue;
           }
           for(int childIndex=0; childIndex<children.length; childIndex++) {
-            if (!Comparing.equal(children [childIndex].getName(), otherChildren [childIndex].getName())) {
+            if (!Objects.equals(children[childIndex].getName(), otherChildren[childIndex].getName())) {
               myProperties.remove(propIndex);
               break;
             }
@@ -1028,8 +1030,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
       };
 
-      myExpandIcon = StartupUiUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
-      myCollapseIcon = StartupUiUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
+      myExpandIcon = UIDesignerIcons.ExpandNode;
+      myCollapseIcon = UIDesignerIcons.CollapseNode;
       for (int i = 0; i < myIndentIcons.length; i++) {
         myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
       }

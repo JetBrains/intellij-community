@@ -19,8 +19,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +54,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
         final LocalQuickFix fix = new MyLocalQuickFix();
 
         holder.registerProblem(tag,
-                               XmlBundle.message("html.inspections.check.empty.script.message"),
+                               XmlAnalysisBundle.message("html.inspections.check.empty.script.message"),
                                tag.getContainingFile().getContext() != null ?
                                ProblemHighlightType.INFORMATION:
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -75,18 +75,6 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
            !HtmlUtil.isSingleHtmlTag(tag, false) &&
            tagName.indexOf(':') == -1 &&
            !XmlExtension.isCollapsible(tag));
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.HTML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.check.empty.tag");
   }
 
   @Override
@@ -122,7 +110,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlBundle.message("html.inspections.check.empty.script.tag.fix.message");
+      return XmlAnalysisBundle.message("html.inspections.check.empty.script.tag.fix.message");
     }
 
     @Override

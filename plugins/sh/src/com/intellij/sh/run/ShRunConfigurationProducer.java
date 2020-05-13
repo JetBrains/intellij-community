@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.psi.ShFile;
-import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRunConfiguration> {
@@ -28,7 +27,7 @@ public class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShR
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return false;
 
-    String defaultShell = EnvironmentUtil.getValue("SHELL");
+    String defaultShell = ShConfigurationType.getDefaultShell();
     if (defaultShell != null) {
       configuration.setInterpreterPath(defaultShell);
     }

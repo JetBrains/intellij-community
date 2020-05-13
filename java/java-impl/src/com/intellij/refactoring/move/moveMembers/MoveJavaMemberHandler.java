@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -22,7 +8,6 @@ import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
@@ -35,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -194,8 +178,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         }
         else {
           final Project project = element.getProject();
-          final PsiClass targetClass =
-            JavaPsiFacade.getInstance(project).findClass(options.getTargetClassName(), GlobalSearchScope.projectScope(project));
+          PsiClass targetClass = JavaPsiFacade.getInstance(project).findClass(options.getTargetClassName(), element.getResolveScope());
           if (targetClass != null) {
             final PsiReferenceParameterList parameterList = refExpr.getParameterList();
             if ((targetClass.isEnum() || PsiTreeUtil.isAncestor(targetClass, element, true)) && parameterList != null && parameterList.getTypeArguments().length == 0 && !(refExpr instanceof PsiMethodReferenceExpression)) {
@@ -292,7 +275,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
 
       if (!afterFields.isEmpty()) {
-        Collections.sort(afterFields, (o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
+        afterFields.sort((o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
         return afterFields.get(0);
       }
 
@@ -303,7 +286,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           beforeFields.add(fieldWithReference);
         }
       }
-      Collections.sort(beforeFields, PsiUtil.BY_POSITION);
+      beforeFields.sort(PsiUtil.BY_POSITION);
       if (!beforeFields.isEmpty()) {
         return beforeFields.get(0).getPrevSibling();
       }

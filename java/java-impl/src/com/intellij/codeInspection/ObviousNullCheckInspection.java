@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,11 +41,11 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         String explanation = TrackingRunner.getObviouslyNonNullExplanation(nullArg);
         if (explanation == null) return;
         if(nullCheckParameter.myNull) {
-          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.always.fail.message", explanation));
+          holder.registerProblem(nullArg, JavaBundle.message("inspection.redundant.null.check.always.fail.message", explanation));
         } else {
           PsiReferenceExpression comparedToNull = ExpressionUtils.getReferenceExpressionFromNullComparison(nullArg, false);
           LocalQuickFix fix = comparedToNull == null ? new RemoveNullCheckFix() : new RemoveExcessiveNullComparisonFix();
-          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.message", explanation), fix);
+          holder.registerProblem(nullArg, JavaBundle.message("inspection.redundant.null.check.message", explanation), fix);
         }
       }
     };
@@ -99,7 +100,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.null.check.fix.notnull.family.name");
+      return JavaBundle.message("inspection.redundant.null.check.fix.notnull.family.name");
     }
 
     @Override
@@ -117,7 +118,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.null.check.fix.family.name");
+      return JavaBundle.message("inspection.redundant.null.check.fix.family.name");
     }
 
     @Override

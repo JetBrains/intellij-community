@@ -16,8 +16,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     private const val iconsRepoArg = "icons.repo"
   }
 
-  val devRepoDir: File
-  val iconsRepoDir: File
+  var devRepoDir: File
+  var iconsRepoDir: File
   val iconsRepoName: String
   val devRepoName: String
   val skipDirsPattern: String?
@@ -26,12 +26,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val doSyncRemovedIconsInDev: Boolean
   private val failIfSyncDevIconsRequired: Boolean
   val notifySlack: Boolean
-  lateinit var iconsRepo: File
-  lateinit var devRepoRoot: File
   val byDev = Changes()
   val byCommit = mutableMapOf<String, Changes>()
   val consistent: MutableCollection<String> = mutableListOf()
-  var createdReviews: Collection<Review> = emptyList()
   var icons: Map<String, GitObject> = emptyMap()
   var devIcons: Map<String, GitObject> = emptyMap()
   var devCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
@@ -82,7 +79,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                                  ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf<String>()
 
     devRepoDir = findDirectoryIgnoringCase(System.getProperty(devRepoArg)) ?: {
-      log("WARNING: $devRepoArg not found")
+      warn("$devRepoArg not found")
       File(System.getProperty("user.dir"))
     }()
     val iconsRepoRelativePath = System.getProperty(iconsRepoPathArg) ?: ""
@@ -116,7 +113,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.mapNotNull {
         val split = it.split(':')
         if (split.size != 3) {
-          log("WARNING: malformed line in 'teamcity.build.changedFiles.file' : $it")
+          warn("malformed line in 'teamcity.build.changedFiles.file' : $it")
           return@mapNotNull null
         }
         val (file, _, commit) = split
@@ -124,13 +121,20 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       }?.toMutableSet() ?: mutableSetOf()
   }
 
+  val iconsRepo: File by lazy {
+    findGitRepoRoot(iconsRepoDir)
+  }
+  val devRepoRoot: File by lazy {
+    findGitRepoRoot(devRepoDir)
+  }
+
   private fun cloneIconsRepoToTempDir(): File {
-    log("WARNING: $iconsRepoArg not found")
+    val uri = "ssh://git@git.jetbrains.team/IntelliJIcons.git"
+    log("$iconsRepoArg not found. Have to perform full clone of $uri")
     val tmp = Files.createTempDirectory("icons-sync").toFile()
     Runtime.getRuntime().addShutdownHook(thread(start = false) {
       tmp.deleteRecursively()
     })
-    val uri = "ssh://git@github.com/JetBrains/IntelliJIcons.git"
     return callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
   }
 
@@ -144,14 +148,21 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     }
   }
 
+  var iconsFilter: (File) -> Boolean = { Icon(it).isValid }
+
   fun devChanges() = byDev.all()
   fun iconsChanges() = byDesigners.all()
 
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
-  fun devReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_DEV_PROJECT_ID }
-  fun verifyDevIcons(repos: Collection<File>) = devIconsVerifier?.accept(repos)
+  fun verifyDevIcons(repos: Collection<File>) = try {
+    devIconsVerifier?.accept(repos)
+  }
+  catch (e: Exception) {
+    doFail("Test failures detected")
+  }
+
   fun doFail(report: String) {
     log(report)
     errorHandler.accept(report)
@@ -167,4 +178,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
     }
   }
+
+  fun warn(message: String) = System.err.println(message)
 }

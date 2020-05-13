@@ -1,14 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -31,17 +27,32 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
    */
   @Deprecated
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
+
   private boolean myAlphabeticalModeChanged = false;
 
-  public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
-    super(project, actionManager, focusManager, parent);
-    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(UISettingsListener.TOPIC, (settings) -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        resetTabsCache();
-        relayout(true, false);
-      });
-    });
+  public JBEditorTabs(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
+    super(project, focusManager, parentDisposable);
+
     setSupportsCompression(true);
+  }
+
+  @Override
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+    resetTabsCache();
+    relayout(true, false);
+
+    super.uiSettingsChanged(uiSettings);
+  }
+
+  /**
+   * @deprecated Use {@link #JBEditorTabs(Project, IdeFocusManager, Disposable)}
+   */
+  @Deprecated
+  public JBEditorTabs(@Nullable Project project,
+                      @SuppressWarnings("unused") @NotNull ActionManager actionManager,
+                      @Nullable IdeFocusManager focusManager,
+                      @NotNull Disposable parent) {
+    this(project, focusManager, parent);
   }
 
   @Override
@@ -62,11 +73,6 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   @Override
   public boolean useSmallLabels() {
     return UISettings.getInstance().getUseSmallLabelsOnTabs();
-  }
-
-  @Override
-  public boolean useBoldLabels() {
-    return SystemInfo.isMac && Registry.is("ide.mac.boldEditorTabs");
   }
 
   @Override

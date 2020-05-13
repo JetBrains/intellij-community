@@ -116,6 +116,6 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
       // very important - set BEFORE read to ensure that user can set any value for isAllowRunningInParallel and it will be not overridden by us later
       instance.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
     }
-    processor(factory, readIntoObject(instance, node))
+    processor(factory, readIntoObject(instance, node.value))
   }
 }

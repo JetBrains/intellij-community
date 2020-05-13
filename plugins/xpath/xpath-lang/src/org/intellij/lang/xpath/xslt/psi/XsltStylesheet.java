@@ -19,18 +19,14 @@ import org.jetbrains.annotations.NotNull;
 
 public interface XsltStylesheet extends XsltElement {
 
-  @NotNull
-    XsltParameter[] getParameters();
+  XsltParameter @NotNull [] getParameters();
 
     /**
      * Return top-level xsl:variable elements. Does not include any parameters. 
      */
-    @NotNull
-    XsltVariable[] getVariables();
+    XsltVariable @NotNull [] getVariables();
 
-    @NotNull
-    XsltTemplate[] getTemplates();
+    XsltTemplate @NotNull [] getTemplates();
 
-    @NotNull
-    XsltFunction[] getFunctions();
+    XsltFunction @NotNull [] getFunctions();
 }

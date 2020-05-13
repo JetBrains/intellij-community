@@ -7,9 +7,6 @@ import org.jetbrains.jps.builders.BuildTarget;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class BuildingTargetProgressMessage extends BuildMessage {
   private final Collection<? extends BuildTarget<?>> myTargets;
   @NotNull private final Event myEventType;

@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
@@ -11,6 +10,8 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import java.util.List;
 public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public static ChangeListManager getInstance(@NotNull Project project) {
-    return project.getComponent(ChangeListManager.class);
+    return project.getService(ChangeListManager.class);
   }
 
   public abstract void scheduleUpdate();
@@ -30,7 +31,9 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated use {@link #scheduleUpdate()}
    */
   @Deprecated
-  public abstract void scheduleUpdate(boolean updateUnversionedFiles);
+  public void scheduleUpdate(boolean updateUnversionedFiles) {
+    scheduleUpdate();
+  }
 
 
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
@@ -135,13 +138,24 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
 
+  /**
+   * Prefer using {@link ChangeListListener#TOPIC}
+   */
   public abstract void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable);
 
+  /**
+   * Prefer using {@link ChangeListListener#TOPIC}
+   */
   public abstract void addChangeListListener(@NotNull ChangeListListener listener);
 
   public abstract void removeChangeListListener(@NotNull ChangeListListener listener);
 
 
+  /**
+   * @deprecated use {@link LocalCommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
   @NotNull
@@ -158,8 +172,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
   @Deprecated
-  @NotNull
-  public abstract IgnoredFileBean[] getFilesToIgnore();
+  public abstract IgnoredFileBean @NotNull [] getFilesToIgnore();
 
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
@@ -169,13 +182,13 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
   @Deprecated
-  public abstract void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
+  public abstract void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
   @Deprecated
-  public abstract void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
+  public abstract void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
@@ -200,8 +213,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract String isFreezed();
 
-  public abstract boolean isFreezedWithNotification(@Nullable String modalTitle);
-
+  public abstract boolean isFreezedWithNotification(@Nls @Nullable String modalTitle);
 
   @Deprecated // used in TeamCity
   public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);

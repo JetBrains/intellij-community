@@ -27,7 +27,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -51,13 +50,6 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     binaryPromotionOperators.add(JavaTokenType.AND);
     binaryPromotionOperators.add(JavaTokenType.XOR);
     binaryPromotionOperators.add(JavaTokenType.OR);
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.explicit.numeric.cast.display.name");
   }
 
   @NotNull

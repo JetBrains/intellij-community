@@ -21,7 +21,7 @@ public class JvmUtil {
   private JvmUtil() {}
 
   @NotNull
-  static Iterable<JvmClass> resolveClasses(@NotNull JvmReferenceType[] types) {
+  static Iterable<JvmClass> resolveClasses(JvmReferenceType @NotNull [] types) {
     return mapNotNull(types, JvmUtil::resolveClass);
   }
 

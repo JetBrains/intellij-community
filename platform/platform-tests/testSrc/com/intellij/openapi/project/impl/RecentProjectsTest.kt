@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.*
@@ -6,11 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.messages.SimpleMessageBusConnection
 import org.jdom.JDOMException
 import org.junit.ClassRule
 import org.junit.Rule
@@ -32,7 +32,7 @@ class RecentProjectsTest {
 
   @Rule
   @JvmField
-  val busConnection = RecentProjectManagerListenerRule()
+  internal val busConnection = RecentProjectManagerListenerRule()
 
   @Rule
   @JvmField
@@ -93,8 +93,8 @@ class RecentProjectsTest {
     }
   }
 
-  private fun getProjectOpenTimestamp(projectName: String): Long {
-    val additionalInfo = RecentProjectsManagerBase.instanceEx.state!!.additionalInfo
+  private fun getProjectOpenTimestamp(@Suppress("SameParameterValue") projectName: String): Long {
+    val additionalInfo = RecentProjectsManagerBase.instanceEx.state.additionalInfo
     for (s in additionalInfo.keys) {
       if (s.endsWith(projectName)) {
         return additionalInfo.get(s)!!.projectOpenTimestamp
@@ -120,7 +120,7 @@ class RecentProjectsTest {
   private fun checkRecents(vararg recents: String) {
     val recentProjects = listOf(*recents)
     val state = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase).state
-    val projects = state!!.additionalInfo.keys.asSequence()
+    val projects = state.additionalInfo.keys.asSequence()
       .map { s -> PathUtil.getFileName(s).substringAfterLast("_") }
       .filter { recentProjects.contains(it) }
       .toList()
@@ -128,7 +128,7 @@ class RecentProjectsTest {
   }
 
   private fun checkGroups(groups: List<String>) {
-    val recentGroups = RecentProjectsManager.getInstance().getRecentProjectsActions(false, true).asSequence()
+    val recentGroups = RecentProjectListActionProvider.getInstance().getActions(false, true).asSequence()
       .filter { a -> a is ProjectGroupActionGroup }
       .map { a -> (a as ProjectGroupActionGroup).group.name }
       .toList()
@@ -151,16 +151,16 @@ class RecentProjectsTest {
   }
 }
 
-class RecentProjectManagerListenerRule : ExternalResource() {
-  private val disposable = Disposer.newDisposable()
+internal class RecentProjectManagerListenerRule : ExternalResource() {
+  private var connection: SimpleMessageBusConnection? = null
 
   override fun before() {
-    val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
-    connection.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
+    connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+    connection!!.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
+    connection!!.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
   }
 
   override fun after() {
-    Disposer.dispose(disposable)
+    connection?.disconnect()
   }
 }

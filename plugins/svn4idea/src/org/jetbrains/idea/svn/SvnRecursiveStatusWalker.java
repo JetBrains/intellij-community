@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -13,14 +13,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ErrorCode;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
@@ -34,9 +30,10 @@ import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
 public class SvnRecursiveStatusWalker {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnRecursiveStatusWalker");
+  private static final Logger LOG = Logger.getInstance(SvnRecursiveStatusWalker.class);
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Project myProject;
@@ -46,7 +43,6 @@ public class SvnRecursiveStatusWalker {
   @NotNull private final StatusReceiver myReceiver;
   @NotNull private final LinkedList<MyItem> myQueue;
   @NotNull private final MyHandler myHandler;
-  @Nullable private MultiMap<FilePath, FilePath> myNonRecursiveScope;
 
   public SvnRecursiveStatusWalker(@NotNull SvnVcs vcs, @NotNull StatusReceiver receiver, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
@@ -57,10 +53,6 @@ public class SvnRecursiveStatusWalker {
     myProgress = progress;
     myQueue = new LinkedList<>();
     myHandler = new MyHandler();
-  }
-
-  public void setNonRecursiveScope(@Nullable MultiMap<FilePath, FilePath> nonRecursiveScope) {
-    myNonRecursiveScope = nonRecursiveScope;
   }
 
   public void go(@NotNull FilePath rootPath, @NotNull Depth depth) throws SvnBindException {
@@ -122,7 +114,7 @@ public class SvnRecursiveStatusWalker {
       final VirtualFile virtualFile = item.getPath().getVirtualFile();
       if (virtualFile != null && !isIgnoredByVcs(virtualFile) && !myChangeListManager.isIgnoredFile(virtualFile)) {
         // self is unversioned
-        myReceiver.processUnversioned(virtualFile);
+        myReceiver.processUnversioned(item.getPath());
 
         if (virtualFile.isDirectory()) {
           processRecursively(virtualFile, item.getDepth());
@@ -170,27 +162,27 @@ public class SvnRecursiveStatusWalker {
   private void processRecursively(@NotNull VirtualFile vFile, @NotNull Depth prevDepth) {
     if (Depth.EMPTY.equals(prevDepth)) return;
     if (isIgnoredIdeaLevel(vFile)) {
-      myReceiver.processIgnored(vFile);
+      myReceiver.processIgnored(getFilePath(vFile));
       return;
     }
 
     Depth newDepth = Depth.INFINITY.equals(prevDepth) ? Depth.INFINITY : Depth.EMPTY;
     VirtualFileVisitor.Option[] options = newDepth.equals(Depth.EMPTY) ? ar(SKIP_ROOT, ONE_LEVEL_DEEP) : new VirtualFileVisitor.Option[0];
 
-    visitChildrenRecursively(vFile, new VirtualFileVisitor(options) {
+    visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>(options) {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
         if (isIgnoredIdeaLevel(file)) {
-          myReceiver.processIgnored(file);
+          myReceiver.processIgnored(getFilePath(file));
           return SKIP_CHILDREN;
         }
         else if (file.isDirectory() && file.findChild(SvnUtil.SVN_ADMIN_DIR_NAME) != null) {
-          myQueue.add(createItem(VcsUtil.getFilePath(file), newDepth, true));
+          myQueue.add(createItem(getFilePath(file), newDepth, true));
           return SKIP_CHILDREN;
         }
         else {
-          myReceiver.processUnversioned(file);
+          myReceiver.processUnversioned(getFilePath(file));
           return CONTINUE;
         }
       }
@@ -199,23 +191,9 @@ public class SvnRecursiveStatusWalker {
 
   @NotNull
   private MyItem createItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot) {
-    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient(myNonRecursiveScope, createEventHandler());
+    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient();
 
     return new MyItem(path, depth, isInnerCopyRoot, statusClient);
-  }
-
-  @NotNull
-  public ProgressTracker createEventHandler() {
-    return new ProgressTracker() {
-      @Override
-      public void consume(ProgressEvent event) {
-      }
-
-      @Override
-      public void checkCancelled() throws ProcessCanceledException {
-        SvnRecursiveStatusWalker.this.checkCanceled();
-      }
-    };
   }
 
   private class MyHandler implements StatusConsumer {
@@ -255,10 +233,10 @@ public class SvnRecursiveStatusWalker {
 
       if (vf != null) {
         if (status.is(StatusType.STATUS_IGNORED)) {
-          myReceiver.processIgnored(vf);
+          myReceiver.processIgnored(path);
         }
         else if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_NONE)) {
-          myReceiver.processUnversioned(vf);
+          myReceiver.processUnversioned(path);
           processRecursively(vf, myCurrentItem.getDepth());
         }
         else if (!status.is(StatusType.OBSTRUCTED)) {
@@ -285,15 +263,15 @@ public class SvnRecursiveStatusWalker {
       if (vFile != null && status.is(StatusType.STATUS_UNVERSIONED)) {
         if (vFile.isDirectory()) {
           if (!FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
-            myQueue.add(createItem(VcsUtil.getFilePath(vFile), Depth.INFINITY, true));
+            myQueue.add(createItem(getFilePath(vFile), Depth.INFINITY, true));
           }
         }
         else {
-          myReceiver.processUnversioned(vFile);
+          myReceiver.processUnversioned(getFilePath(vFile));
         }
       }
       else {
-        myReceiver.process(VcsUtil.getFilePath(ioFile, status.getNodeKind().isDirectory()), status);
+        myReceiver.process(getFilePath(ioFile, status.getNodeKind().isDirectory()), status);
       }
     }
   }

@@ -49,12 +49,6 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection extends Ba
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("iterator.next.does.not.throw.nosuchelementexception.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("iterator.next.does.not.throw.nosuchelementexception.problem.descriptor");
   }

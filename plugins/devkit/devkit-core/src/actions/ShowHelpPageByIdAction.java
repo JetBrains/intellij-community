@@ -21,9 +21,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ShowHelpPageByIdAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

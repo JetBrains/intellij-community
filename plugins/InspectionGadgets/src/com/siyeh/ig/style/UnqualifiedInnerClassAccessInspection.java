@@ -15,7 +15,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,13 +37,6 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new UnqualifiedInnerClassAccessFix();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unqualified.inner.class.access.display.name");
   }
 
   @NotNull

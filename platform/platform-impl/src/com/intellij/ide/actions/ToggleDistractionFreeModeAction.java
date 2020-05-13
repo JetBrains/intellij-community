@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
@@ -23,8 +24,10 @@ import javax.swing.*;
 
 import static java.lang.String.valueOf;
 
-public class ToggleDistractionFreeModeAction extends DumbAwareAction {
+public class ToggleDistractionFreeModeAction extends DumbAwareAction implements LightEditCompatible {
   private static final String key = "editor.distraction.free.mode";
+  private static final String BEFORE = "BEFORE.DISTRACTION.MODE.";
+  private static final String AFTER = "AFTER.DISTRACTION.MODE.";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -50,14 +53,12 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     EditorSettingsExternalizable.OptionSet eo = EditorSettingsExternalizable.getInstance().getOptions();
     DaemonCodeAnalyzerSettings ds = DaemonCodeAnalyzerSettings.getInstance();
 
-    String before = "BEFORE.DISTRACTION.MODE.";
-    String after = "AFTER.DISTRACTION.MODE.";
     if (enter) {
-      applyAndSave(p, ui.getState(), eo, ds, before, after, false);
+      applyAndSave(p, ui.getState(), eo, ds, BEFORE, AFTER, false);
       TogglePresentationModeAction.storeToolWindows(project);
     }
     else {
-      applyAndSave(p, ui.getState(), eo, ds, after, before, true);
+      applyAndSave(p, ui.getState(), eo, ds, AFTER, BEFORE, true);
       TogglePresentationModeAction.restoreToolWindows(project, true, false);
     }
 
@@ -72,7 +73,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     }
   }
 
-  public static void applyAndSave(@NotNull PropertiesComponent p,
+  private static void applyAndSave(@NotNull PropertiesComponent p,
                                   @NotNull UISettingsState ui,
                                   @NotNull EditorSettingsExternalizable.OptionSet eo,
                                   @NotNull DaemonCodeAnalyzerSettings ds,
@@ -95,6 +96,11 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     p.setValue(before + "HIDE_TOOL_STRIPES",        valueOf(ui.getHideToolStripes()));         ui.setHideToolStripes(p.getBoolean(after + "HIDE_TOOL_STRIPES", !value));
     p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.getEditorTabPlacement()));      ui.setEditorTabPlacement(p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE));
     // @formatter:on
+  }
+
+  public static int getStandardTabPlacement() {
+    if (!isDistractionFreeModeEnabled()) return UISettings.getInstance().getEditorTabPlacement();
+    return PropertiesComponent.getInstance().getInt(BEFORE + "EDITOR_TAB_PLACEMENT", SwingConstants.TOP);
   }
 
   public static boolean isDistractionFreeModeEnabled() {

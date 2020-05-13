@@ -21,6 +21,5 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public interface PyDelStatement extends PyStatement {
-  @NotNull
-  PyExpression[] getTargets();
+  PyExpression @NotNull [] getTargets();
 }

@@ -25,16 +25,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +43,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlBundle.message("xml.inspections.replace.tag.empty.body.with.empty.end");
+    return XmlAnalysisBundle.message("xml.inspections.replace.tag.empty.body.with.empty.end");
   }
 
   @Nls
@@ -105,7 +102,11 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     assert document != null;
     document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(tag);
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    CodeStyleManager.getInstance(project).reformat(tag);
+    PsiElement restored = pointer.getElement();
+    if (restored != null) {
+      CodeStyleManager.getInstance(project).reformat(restored);
+    }
   }
 }

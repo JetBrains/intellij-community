@@ -1,11 +1,33 @@
 UFile (package = )
     UClass (name = A)
+        UMethod (name = A)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
+                    UIdentifier (Identifier (super))
+        UMethod (name = A)
+            UParameter (name = a)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                    UIdentifier (Identifier (super))
+                    USimpleNameReferenceExpression (identifier = a)
         UMethod (name = foo)
             UBlockExpression
+    UClass (name = C)
     UClass (name = B)
         UField (name = a)
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                 USimpleNameReferenceExpression (identifier = A)
+        UField (name = c)
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
+                USimpleNameReferenceExpression (identifier = C)
+        UMethod (name = B)
+            UParameter (name = a)
+            UBlockExpression
+        UMethod (name = B)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                    UIdentifier (Identifier (this))
+                    ULiteralExpression (value = 1)
         UMethod (name = bar)
             UBlockExpression
                 UReturnExpression
@@ -22,8 +44,9 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = b)
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                             USimpleNameReferenceExpression (identifier = B)
+                            ULiteralExpression (value = 1)
                 UQualifiedReferenceExpression
                     UQualifiedReferenceExpression
                         UQualifiedReferenceExpression

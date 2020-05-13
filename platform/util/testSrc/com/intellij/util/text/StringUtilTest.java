@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.LineColumn;
@@ -19,10 +19,14 @@ import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 
@@ -299,16 +303,16 @@ public class StringUtilTest {
     assertEquals("\"foo", StringUtil.unquoteString("\"foo"));
     assertEquals("foo\"", StringUtil.unquoteString("foo\""));
     assertEquals("", StringUtil.unquoteString(""));
-    assertEquals("\'", StringUtil.unquoteString("\'"));
-    assertEquals("", StringUtil.unquoteString("\'\'"));
-    assertEquals("\'", StringUtil.unquoteString("\'\'\'"));
-    assertEquals("foo", StringUtil.unquoteString("\'foo\'"));
-    assertEquals("\'foo", StringUtil.unquoteString("\'foo"));
-    assertEquals("foo\'", StringUtil.unquoteString("foo\'"));
+    assertEquals("'", StringUtil.unquoteString("'"));
+    assertEquals("", StringUtil.unquoteString("''"));
+    assertEquals("'", StringUtil.unquoteString("'''"));
+    assertEquals("foo", StringUtil.unquoteString("'foo'"));
+    assertEquals("'foo", StringUtil.unquoteString("'foo"));
+    assertEquals("foo'", StringUtil.unquoteString("foo'"));
 
-    assertEquals("\'\"", StringUtil.unquoteString("\'\""));
-    assertEquals("\"\'", StringUtil.unquoteString("\"\'"));
-    assertEquals("\"foo\'", StringUtil.unquoteString("\"foo\'"));
+    assertEquals("'\"", StringUtil.unquoteString("'\""));
+    assertEquals("\"'", StringUtil.unquoteString("\"'"));
+    assertEquals("\"foo'", StringUtil.unquoteString("\"foo'"));
   }
 
   @SuppressWarnings("SSBasedInspection")
@@ -536,35 +540,37 @@ public class StringUtilTest {
   public void testFormatFileSize() {
     assertEquals("0 B", StringUtil.formatFileSize(0));
     assertEquals("1 B", StringUtil.formatFileSize(1));
-    assertEquals("2.15 GB", StringUtil.formatFileSize(Integer.MAX_VALUE));
-    assertEquals("9.22 EB", StringUtil.formatFileSize(Long.MAX_VALUE));
+    char sep = new DecimalFormat("0.##").getDecimalFormatSymbols().getDecimalSeparator();
+    assertEquals("2.15 GB".replace('.', sep), StringUtil.formatFileSize(Integer.MAX_VALUE));
+    assertEquals("9.22 EB".replace('.', sep), StringUtil.formatFileSize(Long.MAX_VALUE));
 
-    assertEquals("60.1 kB", StringUtil.formatFileSize(60_100));
+    assertEquals("60.1 kB".replace('.', sep), StringUtil.formatFileSize(60_100));
 
-    assertEquals("1.23 kB", StringUtil.formatFileSize(1_234));
-    assertEquals("12.35 kB", StringUtil.formatFileSize(12_345));
-    assertEquals("123.46 kB", StringUtil.formatFileSize(123_456));
-    assertEquals("1.23 MB", StringUtil.formatFileSize(1234_567));
-    assertEquals("12.35 MB", StringUtil.formatFileSize(1_2345_678));
-    assertEquals("123.46 MB", StringUtil.formatFileSize(123_456_789));
-    assertEquals("1.23 GB", StringUtil.formatFileSize(1_234_567_890));
+    assertEquals("1.23 kB".replace('.', sep), StringUtil.formatFileSize(1_234));
+    assertEquals("12.35 kB".replace('.', sep), StringUtil.formatFileSize(12_345));
+    assertEquals("123.46 kB".replace('.', sep), StringUtil.formatFileSize(123_456));
+    assertEquals("1.23 MB".replace('.', sep), StringUtil.formatFileSize(1234_567));
+    assertEquals("12.35 MB".replace('.', sep), StringUtil.formatFileSize(1_2345_678));
+    assertEquals("123.46 MB".replace('.', sep), StringUtil.formatFileSize(123_456_789));
+    assertEquals("1.23 GB".replace('.', sep), StringUtil.formatFileSize(1_234_567_890));
 
-    assertEquals("999 B", StringUtil.formatFileSize(999));
-    assertEquals("1 kB", StringUtil.formatFileSize(1000));
-    assertEquals("999.99 kB", StringUtil.formatFileSize(999_994));
-    assertEquals("1 MB", StringUtil.formatFileSize(999_995));
-    assertEquals("999.99 MB", StringUtil.formatFileSize(999_994_999));
-    assertEquals("1 GB", StringUtil.formatFileSize(999_995_000));
-    assertEquals("999.99 GB", StringUtil.formatFileSize(999_994_999_999L));
-    assertEquals("1 TB", StringUtil.formatFileSize(999_995_000_000L));
+    assertEquals("999 B".replace('.', sep), StringUtil.formatFileSize(999));
+    assertEquals("1 kB".replace('.', sep), StringUtil.formatFileSize(1000));
+    assertEquals("999.99 kB".replace('.', sep), StringUtil.formatFileSize(999_994));
+    assertEquals("1 MB".replace('.', sep), StringUtil.formatFileSize(999_995));
+    assertEquals("999.99 MB".replace('.', sep), StringUtil.formatFileSize(999_994_999));
+    assertEquals("1 GB".replace('.', sep), StringUtil.formatFileSize(999_995_000));
+    assertEquals("999.99 GB".replace('.', sep), StringUtil.formatFileSize(999_994_999_999L));
+    assertEquals("1 TB".replace('.', sep), StringUtil.formatFileSize(999_995_000_000L));
   }
 
   @Test
   public void testFormatDuration() {
     assertEquals("0 ms", StringUtil.formatDuration(0));
     assertEquals("1 ms", StringUtil.formatDuration(1));
+    assertEquals("1 s", StringUtil.formatDuration(1000));
     assertEquals("24 d 20 h 31 m 23 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE));
-    assertEquals("29 ep 6533 ml 3 c 8 yr 9 mo 17 d 7 h 12 m 55 s 807 ms", StringUtil.formatDuration(Long.MAX_VALUE));
+    assertEquals("82 d 17 h 24 m 43 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE+5000000000L));
 
     assertEquals("1 m 0 s 100 ms", StringUtil.formatDuration(60100));
 
@@ -576,19 +582,42 @@ public class StringUtilTest {
     assertEquals("1 d 10 h 17 m 36 s 789 ms", StringUtil.formatDuration(123456789));
     assertEquals("14 d 6 h 56 m 7 s 890 ms", StringUtil.formatDuration(1234567890));
 
-    assertEquals("1 yr 1 mo 1 d 1 h 1 m 1 s 1 ms", StringUtil.formatDuration(33786061001L));
+    assertEquals("39 d 2 h 30 m 6 s 101 ms", StringUtil.formatDuration(3378606101L));
   }
 
   @Test
   public void testFormatDurationApproximate() {
+    assertEquals("0 ms", StringUtil.formatDurationApproximate(0));
+
+    assertEquals("59 s 999 ms", StringUtil.formatDurationApproximate(60000 - 1));
+    assertEquals("1 m", StringUtil.formatDurationApproximate(60000));
+    assertEquals("1 m 0 s", StringUtil.formatDurationApproximate(60000 + 1));
+
+    assertEquals("2 m", StringUtil.formatDurationApproximate(120000 - 1));
     assertEquals("2 m", StringUtil.formatDurationApproximate(120000));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 1));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 499));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 500));
+    assertEquals("2 m 1 s", StringUtil.formatDurationApproximate(120000 + 501));
+
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123000));
     assertEquals("2 m 4 s", StringUtil.formatDurationApproximate(123789));
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123456));
     assertEquals("1 h 1 m", StringUtil.formatDurationApproximate(3659009));
     assertEquals("2 h", StringUtil.formatDurationApproximate(7199000));
     assertEquals("1 d", StringUtil.formatDurationApproximate((23 * 60 * 60 + 59 * 60 + 59) * 1000L));
-    assertEquals("1 yr 1 mo", StringUtil.formatDurationApproximate(33786061001L));
+    assertEquals("391 d 1 h", StringUtil.formatDurationApproximate(33786061001L));
+  }
+
+  @Test
+  public void testFormatDurationPadded() {
+    assertEquals("0 ms", StringUtil.formatDurationPadded(0, " "));
+    assertEquals("1 s 000 ms", StringUtil.formatDurationPadded(1000, " "));
+    assertEquals("1 s 001 ms", StringUtil.formatDurationPadded(1001, " "));
+    assertEquals("2 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.MINUTES.toMillis(2), " "));
+    assertEquals("2 h 00 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.HOURS.toMillis(2), " "));
+    assertEquals("2 d 00 h 00 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.DAYS.toMillis(2), " "));
+    assertEquals("1434852 d 16 h 13 m 50 s 987 ms", StringUtil.formatDurationPadded(123971271230987L, " "));
   }
 
   @Test
@@ -813,14 +842,14 @@ public class StringUtilTest {
   @Test
   public void testFirstLastDontConvertCharSequenceToString() {
     CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
-    assertTrue(s instanceof ByteArrayCharSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+    assertTrue(s instanceof ByteArrayCharSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     CharSequence first = StringUtil.first(s, 1, false);
     assertTrue(String.valueOf(first.getClass()),
-               first instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+               first instanceof CharSequenceSubSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     assertEquals("t", first.toString());
     CharSequence last = StringUtil.last(s, 1, false);
     assertTrue(String.valueOf(last.getClass()),
-               last instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+               last instanceof CharSequenceSubSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     assertEquals("t", last.toString());
   }
 
@@ -869,5 +898,13 @@ public class StringUtilTest {
     assertEquals("a\\nb", StringUtil.escapeToRegexp("a\nb"));
     assertEquals("a\\&\\%\\$b", StringUtil.escapeToRegexp("a&%$b"));
     assertEquals("\uD83D\uDE80", StringUtil.escapeToRegexp("\uD83D\uDE80"));
+  }
+
+  @Test
+  public void testRemoveEllipsisSuffix() {
+    assertEquals("a", removeEllipsisSuffix("a..."));
+    assertEquals("a", removeEllipsisSuffix("a"));
+    assertEquals("a", removeEllipsisSuffix("a" + ELLIPSIS));
+    assertEquals("a...", removeEllipsisSuffix("a..." + ELLIPSIS));
   }
 }

@@ -39,6 +39,9 @@ public class ShFileLexerTest extends LexerTestCase {
   public void testParams()      { doFileTest("sh"); }
   public void testSelect()      { doFileTest("sh"); }
   public void testBinaryData()  { doFileTest("sh"); }
+
+  public void testParamExpansionSub()  { doFileTest("sh"); }
+
   /**
    * IDEA-219928
    */

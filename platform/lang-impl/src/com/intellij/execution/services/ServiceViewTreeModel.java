@@ -39,7 +39,15 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
 
   @Override
   public boolean isLeaf(Object object) {
-    return object != myRoot && myModel.getChildren(((ServiceViewItem)object)).isEmpty();
+    if (object == myRoot) return false;
+
+    if (object instanceof ServiceModel.ServiceNode) {
+      ServiceModel.ServiceNode node = (ServiceModel.ServiceNode)object;
+      if (!node.isChildrenInitialized() && !node.isLoaded()) {
+        return false;
+      }
+    }
+    return myModel.getChildren(((ServiceViewItem)object)).isEmpty();
   }
 
   @Override
@@ -62,12 +70,12 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
 
   Promise<TreePath> findPath(@NotNull Object service, @NotNull Class<?> contributorClass) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
-    getInvoker().runOrInvokeLater(() -> {
+    getInvoker().invoke(() -> {
       List<? extends ServiceViewItem> roots = myModel.getVisibleRoots();
       ServiceViewItem serviceNode = JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
         contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(myModel.getChildren(node)) : null)
         .withRoots(roots)
-        .traverse(TreeTraversal.PLAIN_BFS)
+        .traverse(ServiceModel.NOT_LOADED_LAST_BFS)
         .filter(node -> node.getValue().equals(service))
         .first();
       if (serviceNode != null) {

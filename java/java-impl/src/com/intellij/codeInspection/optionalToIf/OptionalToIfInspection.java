@@ -7,11 +7,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.streamToLoop.ChainVariable;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
@@ -27,7 +29,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
-    "get", "orElse", "ifPresent", "orElse", "orElseGet", "ifPresentOrElse", "ifPresent", "isPresent", "isEmpty", "stream", "orElseThrow");
+    "get", "orElse", "ifPresent", "orElseGet", "ifPresentOrElse", "isPresent", "isEmpty", "stream", "orElseThrow");
 
   @NotNull
   @Override
@@ -42,7 +44,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         if (operations == null || operations.size() < 1 || !(operations.get(0) instanceof SourceOperation)) return;
         OptionalToIfContext context = OptionalToIfContext.create(terminalCall);
         if (context == null) return;
-        holder.registerProblem(terminalCall, "Replace Optional with if statements", new ReplaceOptionalWithIfFix());
+        holder.registerProblem(terminalCall, JavaBundle.message("inspection.message.replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());
       }
     };
   }
@@ -67,7 +69,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Nullable
-  private static Operation convertToOperation(@NotNull String name, @NotNull PsiType type, @NotNull PsiExpression[] args) {
+  private static Operation convertToOperation(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
     Operation operation = IntermediateOperation.create(name, args);
     if (operation != null) return operation;
     operation = TerminalOperation.create(name, args);
@@ -107,7 +109,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         context.addBeforeStep(outVar.getDeclaration("null"));
         context.setElseBranch(null);
         List<OperationRecord> rest = records.subList(0, i);
-        String beforeCode = wrapCode(context, rest, outVar.getName() + " = " + inVar.getName() + ";");
+        String beforeCode = wrapCode(context, rest, outVar.getName() + "=" + inVar.getName() + ";");
         if (beforeCode == null) return null;
         return beforeCode + code;
       }
@@ -129,7 +131,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Nullable
-  static List<Instruction> createInstructions(@NotNull PsiStatement[] statements) {
+  static List<Instruction> createInstructions(PsiStatement @NotNull [] statements) {
     List<Instruction> instructions = new ArrayList<>(statements.length);
     for (PsiStatement statement : statements) {
       Instruction instruction = Instruction.create(statement);
@@ -139,11 +141,10 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     return instructions;
   }
 
-  @NotNull
-  private static PsiStatement[] addStatements(@NotNull PsiElementFactory factory,
-                                              @NotNull PsiStatement chainStatement,
-                                              @NotNull String code) {
-    PsiStatement[] statements = ControlFlowUtils.unwrapBlock(factory.createStatementFromText("{" + code + "}", chainStatement));
+  private static PsiStatement @NotNull [] addStatements(@NotNull PsiElementFactory factory,
+                                                        @NotNull PsiStatement chainStatement,
+                                                        @NotNull String code) {
+    PsiStatement[] statements = ControlFlowUtils.unwrapBlock(factory.createStatementFromText("{\n" + code + "\n}", chainStatement));
     PsiElement parent = chainStatement.getParent();
     return ContainerUtil.map(statements, s -> (PsiStatement)parent.addBefore(s, chainStatement), PsiStatement.EMPTY_ARRAY);
   }
@@ -168,7 +169,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Optional chain with if statements";
+      return JavaBundle.message("quickfix.family.replace.optional.chain.with.if.statements");
     }
 
     @Override
@@ -185,13 +186,19 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
       String code = generateCode(context, operations);
       if (code == null) return;
       code = context.addInitializer(code);
+      PsiStatement firstStatement = chainStatement;
       PsiStatement[] statements = addStatements(factory, chainStatement, code);
+      if (statements.length > 0) firstStatement = statements[0];
       List<Instruction> instructions = createInstructions(statements);
       if (instructions != null) {
         code = Simplifier.simplify(instructions);
         Arrays.stream(statements).forEach(PsiStatement::delete);
-        addStatements(factory, chainStatement, code);
+        statements = addStatements(factory, chainStatement, code);
+        firstStatement = statements.length > 0 ? statements[0] : chainStatement;
       }
+      CommentTracker tracker = new CommentTracker();
+      tracker.grabComments(chainStatement);
+      tracker.insertCommentsBefore(firstStatement);
       chainStatement.delete();
     }
   }

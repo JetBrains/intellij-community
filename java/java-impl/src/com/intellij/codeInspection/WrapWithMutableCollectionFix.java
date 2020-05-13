@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -30,14 +31,14 @@ public class WrapWithMutableCollectionFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return "Wrap '"+myVariableName+"' with '" + StringUtil.getShortName(myCollectionName) + "'";
+    return JavaBundle.message("quickfix.text.wrap.0.with.1", myVariableName, StringUtil.getShortName(myCollectionName));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Wrap with mutable collection";
+    return JavaBundle.message("quickfix.family.wrap.with.mutable.collection");
   }
 
   @Override

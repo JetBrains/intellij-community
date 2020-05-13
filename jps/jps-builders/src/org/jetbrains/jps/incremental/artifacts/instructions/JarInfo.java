@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JarInfo {
   private final List<Pair<String, Object>> myContent;
   private final DestinationInfo myDestination;

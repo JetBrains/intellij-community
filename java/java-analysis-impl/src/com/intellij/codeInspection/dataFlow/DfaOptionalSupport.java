@@ -15,10 +15,11 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -77,17 +78,14 @@ public class DfaOptionalSupport {
   }
 
   /**
-   * Creates a DfaValue which represents present or absent optional (non-null)
-   * @param factory a value factory to use
+   * Creates a DfType which represents present or absent optional (non-null)
    * @param present whether the value should be present
-   * @return a DfaValue representing an Optional
+   * @return a DfType representing an Optional
    */
   @NotNull
-  public static DfaValue getOptionalValue(DfaValueFactory factory, boolean present) {
-    DfaValue value = present ? factory.getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL) : factory.getConstFactory().getNull();
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
-      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.OPTIONAL_VALUE.withValue(value));
-    return factory.getFactFactory().createValue(facts);
+  public static DfType getOptionalValue(boolean present) {
+    DfType valueType = present ? DfTypes.NOT_NULL_OBJECT : DfTypes.NULL;
+    return SpecialField.OPTIONAL_VALUE.asDfType(valueType);
   }
 
   private static class ReplaceOptionalCallFix implements LocalQuickFix {
@@ -102,7 +100,7 @@ public class DfaOptionalSupport {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with '." + myTargetMethodName + "()'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "." + myTargetMethodName + "()");
     }
 
     @Override

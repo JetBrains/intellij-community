@@ -9,9 +9,6 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsMavenModuleExtensionImpl extends JpsElementBase<JpsMavenModuleExtensionImpl> implements JpsMavenModuleExtension {
   public static final JpsElementChildRole<JpsMavenModuleExtension> ROLE = JpsElementChildRoleBase.create("maven");
 

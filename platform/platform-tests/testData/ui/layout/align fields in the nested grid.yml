@@ -4,49 +4,53 @@ layoutConstraints:
     min: &id001 {horizontal: true, unit: 0, value: 0.0}
     preferred: *id001
   gridGapY:
-    min: &id002 {horizontal: false, value: 10.0}
+    min: &id002 {horizontal: false, value: 12.0}
     preferred: *id002
   hideMode: 2
   insets:
-  - {horizontal: false, unit: 0, value: 0.0}
-  - {horizontal: true, unit: 0, value: 0.0}
-  - {horizontal: false, unit: 0, value: 0.0}
-  - {horizontal: true, unit: 0, value: 0.0}
+  - &id003 {horizontal: false, unit: 0, value: 0.0}
+  - &id004 {horizontal: true, unit: 0, value: 0.0}
+  - *id003
+  - *id004
 rowConstraints:
   constraints:
-  - align: &id003 {horizontal: false, unit: -1, value: 0.0}
-  - align: *id003
-  - align: *id003
+  - align: &id005 {horizontal: false, unit: -1, value: 0.0}
+  - align: *id005
+  - align: *id005
     gapAfter:
-      max: &id004 {horizontal: true, value: 6.0}
-      min: *id004
-      preferred: *id004
-  - align: *id003
+      max: &id006 {horizontal: true, value: 6.0}
+      min: *id006
+      preferred: *id006
+  - align: *id005
   count: 4
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id005 {horizontal: true, value: 6.0}
-      min: *id005
-      preferred: *id005
+      max: &id007 {horizontal: true, value: 6.0}
+      min: *id007
+      preferred: *id007
     grow: 0.0
+  - gapAfter:
+      max: &id008 {horizontal: true, value: 6.0}
+      min: *id008
+      preferred: *id008
   - {}
-  count: 2
+  count: 3
 componentConstrains:
   In KeePass: {spanX: INF, wrap: true}
   Database [label]:
     horizontal:
       gapBefore:
-        min: &id006 {horizontal: true, value: 23.0}
-        preferred: *id006
+        min: &id009 {horizontal: true, value: 20.0}
+        preferred: *id009
   'JTextField #2':
     horizontal: {grow: 100.0}
   'JLabel #3': {spanX: INF, wrap: true}
   Master Password [label]:
     horizontal:
       gapBefore:
-        min: &id007 {horizontal: true, value: 23.0}
-        preferred: *id007
+        min: &id010 {horizontal: true, value: 20.0}
+        preferred: *id010
   'JBPasswordField #5':
     horizontal: {grow: 100.0}
     spanX: INF

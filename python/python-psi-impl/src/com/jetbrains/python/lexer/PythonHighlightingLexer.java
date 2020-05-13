@@ -18,6 +18,7 @@ package com.jetbrains.python.lexer;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ public class PythonHighlightingLexer extends PythonLexer {
   public PythonHighlightingLexer(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
     hasUnicodeImport = false;
+    hasPrintFunctionImport = false;
   }
 
   @NotNull
@@ -75,7 +77,7 @@ public class PythonHighlightingLexer extends PythonLexer {
         if (tokenText.equals(PyNames.AS)) return PyTokenTypes.AS_KEYWORD;
       }
 
-      if (myLanguageLevel.hasPrintStatement()) {
+      if (myLanguageLevel.hasPrintStatement() && !hasPrintFunctionImport) {
         if (tokenText.equals(PyNames.PRINT)) return PyTokenTypes.PRINT_KEYWORD;
       }
 
@@ -109,8 +111,9 @@ public class PythonHighlightingLexer extends PythonLexer {
   }
 
   private state myState = state.init;
-  private boolean hasUnicodeImport = false;
+  private boolean hasUnicodeImport;
   private int myImportOffset = -1;
+  private boolean hasPrintFunctionImport;
 
   @Override
   public void advance() {
@@ -153,6 +156,9 @@ public class PythonHighlightingLexer extends PythonLexer {
           if (PyNames.UNICODE_LITERALS.equals(super.getTokenText())) {
             hasUnicodeImport = true;
             myImportOffset = getTokenEnd();
+          } else if (FutureFeature.PRINT_FUNCTION.toString().equals(super.getTokenText())) {
+            hasPrintFunctionImport = true;
+            myImportOffset = getTokenEnd();
           }
         }
         else myState = state.init;
@@ -180,6 +186,7 @@ public class PythonHighlightingLexer extends PythonLexer {
     myState = state.init;
     myImportOffset = position;
     hasUnicodeImport = false;
+    hasPrintFunctionImport = false;
   }
 
 }

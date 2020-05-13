@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -62,9 +63,8 @@ public class StubTextInconsistencyException extends RuntimeException implements 
     return myStubsFromPsi;
   }
 
-  @NotNull
   @Override
-  public Attachment[] getAttachments() {
+  public Attachment @NotNull [] getAttachments() {
     return new Attachment[]{
       new Attachment(myFileName, myFileText), 
       new Attachment("stubsRestoredFromText.txt", myStubsFromText), 
@@ -107,7 +107,7 @@ public class StubTextInconsistencyException extends RuntimeException implements 
   @NotNull
   private static List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
     FileContentImpl fc = new FileContentImpl(viewProvider.getVirtualFile(), viewProvider.getContents(), 0);
-    fc.putUserData(IndexingDataKeys.PROJECT, viewProvider.getManager().getProject());
+    fc.setProject(viewProvider.getManager().getProject());
     PsiFileStubImpl copyTree = (PsiFileStubImpl) StubTreeBuilder.buildStubTree(fc);
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());
   }

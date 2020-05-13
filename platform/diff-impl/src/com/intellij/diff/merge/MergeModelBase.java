@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUtil;
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
@@ -180,7 +181,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
       LineRange lineRange = DiffUtil.getAffectedLineRange(e);
       int shift = DiffUtil.countLinesShift(e);
 
-      List<S> corruptedStates = ContainerUtil.newSmartList();
+      List<S> corruptedStates = new SmartList<>();
       for (int index = 0; index < getChangesCount(); index++) {
         S oldState = processDocumentChange(index, lineRange.start, lineRange.end, shift);
         if (oldState == null) continue;

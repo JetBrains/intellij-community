@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 
-/**
- * @author nik
- */
 public class ResumeAction extends XDebuggerActionBase implements DumbAware {
   @Override
   protected boolean isEnabled(AnActionEvent e) {

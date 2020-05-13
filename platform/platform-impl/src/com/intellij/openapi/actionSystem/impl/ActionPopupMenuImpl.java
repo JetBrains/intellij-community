@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -18,7 +19,6 @@ import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,8 +76,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   @Override
   public void setTargetComponent(@NotNull JComponent component) {
     myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
-    myIsToolWindowContextMenu = ComponentUtil
-                                  .getParentOfType((Class<? extends InternalDecorator>)InternalDecorator.class, (Component)component) != null;
+    myIsToolWindowContextMenu = ComponentUtil.getParentOfType(InternalDecorator.class, component) != null;
   }
 
   boolean isToolWindowContextMenu() {
@@ -97,10 +96,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
       addPopupMenuListener(new MyPopupMenuListener());
+
+      UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
     }
 
     @Override
-    public void show(final Component component, int x, int y) {
+    public void show(@NotNull Component component, int x, int y) {
       if (!component.isShowing()) {
         throw new IllegalArgumentException("component must be shown on the screen (" + component + ")");
       }
@@ -123,7 +124,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       }
       if (myApp != null) {
         if (myApp.isActive()) {
-          Component frame = UIUtil.findUltimateParent(component);
+          Component frame = ComponentUtil.findUltimateParent(component);
           if (frame instanceof IdeFrame) {
             myFrame = (IdeFrame)frame;
           }

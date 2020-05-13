@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
@@ -10,6 +10,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -50,9 +51,9 @@ import static com.intellij.openapi.util.Pair.pair;
 /**
  * @author pti
  */
-class UpdateInfoDialog extends AbstractUpdateDialog {
+final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
-  private final Collection<? extends PluginDownloader> myUpdatedPlugins;
+  private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final UpdateChain myPatches;
   private final boolean myWriteProtected;
@@ -65,7 +66,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                    @NotNull BuildInfo newBuild,
                    @Nullable UpdateChain patches,
                    boolean enableLink,
-                   @Nullable Collection<? extends PluginDownloader> updatedPlugins,
+                   @Nullable Collection<PluginDownloader> updatedPlugins,
                    @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
@@ -94,7 +95,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = patchFile;
     if (project != null) {
-      myWhatsNewAction = new AbstractAction("What's new") {
+      myWhatsNewAction = new AbstractAction(IdeBundle.message("button.what.s.new")) {
         @Override
         public void actionPerformed(ActionEvent e) {
           String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
@@ -106,6 +107,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       };
     }
     init();
+    //noinspection HardCodedStringLiteral
     setTitle("[TEST] " + getTitle());
   }
 
@@ -157,9 +159,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return component;
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return ContainerUtil.ar(new AbstractAction(IdeBundle.message("updates.ignore.update.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -170,9 +171,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     });
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getCancelAction());
 
@@ -229,7 +229,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       return;  // update cancelled
     }
 
-    new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
+    new Task.Backgroundable(null, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
@@ -248,7 +248,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
           String title = IdeBundle.message("updates.error.connection.title");
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl());
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER).notify(null);
+          UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER).notify(null);
 
           return;
         }
@@ -264,7 +264,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           else {
             String title = IdeBundle.message("update.notifications.title");
             String message = IdeBundle.message("update.ready.message");
-            UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
+            UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
               @Override
               protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
                 restartLaterAndRunCommand(command);
@@ -280,10 +280,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static void restartLaterAndRunCommand(String[] command) {
-    IdeUpdateUsageTriggerCollector.trigger( "dialog.update.started");
+    IdeUpdateUsageTriggerCollector.trigger("dialog.update.started");
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    application.invokeLater(() -> application.exit(true, true, true, command));
+    application.invokeLater(() -> application.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
   }
 
   private String downloadUrl() {

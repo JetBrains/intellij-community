@@ -23,6 +23,10 @@ public class GitTag extends GitReference {
     return REFS_TAGS_PREFIX + myName;
   }
 
+  /**
+   * @deprecated Use {@link GitBranchUtil#getAllTags(Project, VirtualFile)}
+   */
+  @Deprecated
   @NotNull
   public static List<GitTag> list(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     return ContainerUtil.map(GitBranchUtil.getAllTags(project, root), GitTag::new);

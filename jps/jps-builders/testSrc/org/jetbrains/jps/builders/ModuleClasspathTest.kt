@@ -27,9 +27,6 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.junit.Assert
 import java.io.File
 
-/**
- * @author nik
- */
 class ModuleClasspathTest : JpsBuildTestCase() {
   override fun setUp() {
     super.setUp()

@@ -13,8 +13,7 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public interface DecisionFunction {
-  @NotNull
-  FeatureMapper[] getFeaturesOrder();
+  FeatureMapper @NotNull [] getFeaturesOrder();
 
   @NotNull
   List<String> getRequiredFeatures();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class ExceptionUtil extends ExceptionUtilRt {
+public final class ExceptionUtil extends ExceptionUtilRt {
   private ExceptionUtil() { }
 
   @NotNull
@@ -27,7 +27,7 @@ public class ExceptionUtil extends ExceptionUtilRt {
     return ExceptionUtilRt.findCause(e, klass);
   }
 
-  public static boolean causedBy(Throwable e, Class klass) {
+  public static boolean causedBy(Throwable e, Class<?> klass) {
     return ExceptionUtilRt.causedBy(e, klass);
   }
 

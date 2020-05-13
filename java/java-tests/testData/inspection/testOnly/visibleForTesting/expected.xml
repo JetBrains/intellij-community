@@ -25,4 +25,10 @@
     <line>6</line>
     <description>Test-only method is called in production code</description>
   </problem>
+  <problem>
+    <file>A.java</file>
+    <line>39</line>
+    <description>@VisibleForTesting makes little sense on @TestOnly code</description>
+    <highlighted_element>bothAnnotationsAreAnError</highlighted_element>
+  </problem>
 </problems>

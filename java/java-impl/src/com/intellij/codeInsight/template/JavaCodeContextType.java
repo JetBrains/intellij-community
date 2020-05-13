@@ -18,14 +18,19 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +41,7 @@ import static com.intellij.patterns.StandardPatterns.instanceOf;
 public abstract class JavaCodeContextType extends TemplateContextType {
 
   protected JavaCodeContextType(@NotNull @NonNls String id,
-                                @NotNull String presentableName,
+                                @NotNull @Nls String presentableName,
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     super(id, presentableName, baseContextType);
   }
@@ -53,7 +58,13 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
     return false;
   }
-  
+
+  /**
+   * Checks whether the element belongs to this context. Could be called inside the dumb mode!
+   * 
+   * @param element element to check
+   * @return true if given element belongs to this context.
+   */
   protected abstract boolean isInContext(@NotNull PsiElement element);
 
   @NotNull
@@ -65,7 +76,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   @Override
   public Document createDocument(CharSequence text, Project project) {
     if (project == null) {
-      return super.createDocument(text, project);
+      return super.createDocument(text, null);
     }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
@@ -76,7 +87,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   
   public static class Generic extends JavaCodeContextType {
     public Generic() {
-      super("JAVA_CODE", "Java", EverywhereContextType.class);
+      super("JAVA_CODE", JavaLanguage.INSTANCE.getDisplayName(), EverywhereContextType.class);
     }
 
     @Override
@@ -85,9 +96,27 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
+  public static class ConsumerFunction extends JavaCodeContextType {
+    protected ConsumerFunction() {
+      super("JAVA_CONSUMER", JavaBundle.message("live.template.context.consumer.function"), Generic.class);
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      if (!(element instanceof PsiIdentifier)) return false;
+      PsiReferenceExpression parent = ObjectUtils.tryCast(element.getParent(), PsiReferenceExpression.class);
+      if (parent == null) return false;
+      if (DumbService.isDumb(parent.getProject())) return false;
+      PsiType type = ExpectedTypeUtils.findExpectedType(parent, false);
+      if (type == null) return false;
+      PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
+      return sam != null && sam.getParameterList().getParametersCount() == 1 && PsiType.VOID.equals(sam.getReturnType());
+    }
+  }
+
   public static class Statement extends JavaCodeContextType {
     public Statement() {
-      super("JAVA_STATEMENT", "Statement", Generic.class);
+      super("JAVA_STATEMENT", JavaBundle.message("live.template.context.statement"), Generic.class);
     }
 
     @Override
@@ -103,7 +132,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       PsiElement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiLambdaExpression.class);
       if (statement instanceof PsiLambdaExpression) {
         PsiElement body = ((PsiLambdaExpression)statement).getBody();
-        if (body != null && PsiTreeUtil.isAncestor(body, element, false)) {
+        if (PsiTreeUtil.isAncestor(body, element, false)) {
           statement = body;
         }
       }
@@ -113,7 +142,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   }
   public static class Expression extends JavaCodeContextType {
     public Expression() {
-      super("JAVA_EXPRESSION", "Expression", Generic.class);
+      super("JAVA_EXPRESSION", JavaBundle.message("live.template.context.expression"), Generic.class);
     }
 
     @Override
@@ -161,7 +190,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static class Declaration extends JavaCodeContextType {
     public Declaration() {
-      super("JAVA_DECLARATION", "Declaration", Generic.class);
+      super("JAVA_DECLARATION", JavaBundle.message("live.template.context.declaration"), Generic.class);
     }
 
     @Override

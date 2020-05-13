@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -8,7 +8,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * @author Dmitry Avdeev
  */
 public class LocalInspectionEP extends InspectionEP implements LocalInspectionTool.LocalDefaultNameProvider {
-
   public static final ExtensionPointName<LocalInspectionEP> LOCAL_INSPECTION = ExtensionPointName.create("com.intellij.localInspection");
 
   /**
@@ -34,6 +33,9 @@ public class LocalInspectionEP extends InspectionEP implements LocalInspectionTo
    */
   @Attribute("unfair")
   public boolean unfair;
+
+  @Attribute("dynamicGroup")
+  public boolean dynamicGroup;
 
   @Override
   public String getDefaultID() {

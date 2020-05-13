@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -28,8 +28,8 @@ public class TestFailedLineManager implements FileEditorManagerListener {
     return ServiceManager.getService(project, TestFailedLineManager.class);
   }
 
-  public TestFailedLineManager(Project project, TestStateStorage storage) {
-    myStorage = storage;
+  public TestFailedLineManager(@NotNull Project project) {
+    myStorage = TestStateStorage.getInstance(project);
     myMap =  FactoryMap.create(o -> new HashMap<>());
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
   }

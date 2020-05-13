@@ -11,7 +11,7 @@ class ExtractMethodBug {
        testMethod(list)
    }
 
-    private testMethod(list) {
+    private testMethod(Iterable<?> list) {
         for (i in list) {
             println i
         }

@@ -33,7 +33,7 @@ public class AnonymousToInnerAction extends BaseJavaRefactoringAction {
   }
 
   @Override
-  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  public boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
   }
 

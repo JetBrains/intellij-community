@@ -5,5 +5,5 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import org.jetbrains.annotations.NotNull;
 
 public interface ActionConfigurationCustomizer {
-  void customize(@NotNull ActionManager manager);
+  void customize(@NotNull ActionManager actionManager);
 }

@@ -1,40 +1,62 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('var[1+2-var]')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('var')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('1+2-var')
+          PsiElement(])(']')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('#var[1+2-var]')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(param_separator)('#')
+        PsiElement(word)('var')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('1+2-var')
+          PsiElement(])(']')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('#var[1+2-var]#[a-z]')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(param_separator)('#')
+        PsiElement(word)('var')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('1+2-var')
+          PsiElement(])(']')
+        PsiElement(param_separator)('#')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('a-z')
+          PsiElement(])(']')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('#A[1]')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(param_separator)('#')
+        PsiElement(word)('A')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            NUMBER
+              PsiElement(int)('1')
+          PsiElement(])(']')
+        PsiElement(})('}')

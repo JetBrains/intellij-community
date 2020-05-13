@@ -249,6 +249,7 @@ annotation ::= '@' annotation_reference after_annotation_reference
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationElementType'
   consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
 private annotation_reference ::= simple_reference { name = 'annotation reference' }
 private after_annotation_reference ::= mb_nl annotation_argument_list | empty_annotation_argument_list
@@ -262,6 +263,7 @@ annotation_member_value_pair ::= annotation_key '=' annotation_value | annotatio
   name = 'annotation attribute'
   pin('.*') = 2
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrNameValuePairElementType'
+  extraRoot = true
 }
 private annotation_key ::= IDENTIFIER | 'as' | 'def' | 'in'
 private annotation_value ::= annotation | annotation_array_value | expression
@@ -570,12 +572,14 @@ constructor_block ::= '{' mb_separators [constructor_call_expression block_level
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrConstructorBlockElementType'
   pin = 1
+  extraRoot = true
 }
 lazy_block ::= <<parseBlockLazy open_block 'OPEN_BLOCK'>> { elementType = '' }
 open_block ::= '{' mb_separators block_levels '}'
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType'
   pin = 1
+  extraRoot = true
 }
 // endregion
 
@@ -696,6 +700,9 @@ statement ::= if_statement
 private branch ::= <<extendedStatement>> | statement
 
 block_statement ::= !<<isParameterizedClosure>> lazy_block
+{
+  extraRoot = true
+}
 
 private expression_statement ::= expression_or_application_except_zero_params_closure
 
@@ -943,11 +950,15 @@ private optional_expression ::= non_empty_annotation_list? '[' expression? ']' {
 
 private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
-method_call_expression ::= expression call_tail
-private call_tail ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list <<closureArgumentSeparator lazy_closure+>>
+method_call_expression ::= expression (<<isParseNlBeforeClosure>> call_tail_with_nl_before_closure | call_tail)
+private call_tail ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+
+private call_tail_with_nl_before_closure ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+
 
 //region Lambda expression
 lambda_expression ::= !<<isClosureParameter>> lambda_expression_base | clear_variants_and_fail
+{
+  extraRoot = true
+}
 private lambda_expression_base ::= lambda_expression_head mb_nl lambda_body { pin = 1 }
 private lambda_expression_head ::= lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
 lambda_parameter_list ::= empty_parens | '(' <<comma_list (mb_nl parse_parameter)>> ')' { elementType = parameter_list }
@@ -976,6 +987,7 @@ lazy_block_lambda_body ::= <<parseBlockLazy block_lambda_body 'BLOCK_LAMBDA_BODY
 block_lambda_body ::= '{' mb_nl block_levels '}' {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType'
   consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
 // endregion
 
@@ -989,6 +1001,7 @@ closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
 private closure_header ::= closure_header_with_arrow | empty_parameter_list
 private closure_header_with_arrow ::= empty_parameter_list mb_nl closure_arrow | closure_parameter_list mb_nl closure_arrow
@@ -1036,7 +1049,7 @@ private property_expression_identifiers ::= parenthesized_expression | lazy_bloc
 }
 
 private priority1_4 ::= not_expression | cast_expression
-not_expression ::= ('~' | '!') mb_nl expression { elementType = unary_expression }
+not_expression ::= ('~' | '!') mb_nl <<disableNlBeforeClosure>> expression { elementType = unary_expression }
 cast_expression ::= &cast_expression_start '(' <<annotated type_element>> ')' cast_operand
 private cast_expression_start ::= '(' non_empty_annotation_list? (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
 private cast_operand ::= !empty_parens <<castOperandCheck>> priority1_4
@@ -1056,53 +1069,53 @@ postfix_unary_expression ::= expression ('++' | '--')
   elementType = unary_expression
 }
 
-power_expression ::= expression '**' mb_nl expression
+power_expression ::= expression '**' mb_nl <<disableNlBeforeClosure>> expression
 
-prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl expression
+prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl <<disableNlBeforeClosure>> expression
 {
   elementType = unary_expression
 }
 
-multiplicative_expression ::= expression mb_nl ('*' | '/' | '%') mb_nl expression
+multiplicative_expression ::= expression mb_nl ('*' | '/' | '%') mb_nl <<disableNlBeforeClosure>> expression
 
-additive_expression ::= expression ('+' | '-') mb_nl expression
+additive_expression ::= expression ('+' | '-') mb_nl <<disableNlBeforeClosure>> expression
 
 private shift_or_range ::= shift_expression | range_expression
-shift_expression ::= expression mb_nl shift_sign mb_nl expression
+shift_expression ::= expression mb_nl shift_sign mb_nl <<disableNlBeforeClosure>> expression
 private shift_sign ::= left_shift_sign | right_shift_unsigned_sign | right_shift_sign { consumeTokenMethod = 'consumeTokenFast' }
 left_shift_sign ::= '<' '<'
 right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
-range_expression ::= expression mb_nl ('..' | '..<') mb_nl expression
+range_expression ::= expression mb_nl ('..' | '..<') mb_nl <<disableNlBeforeClosure>> expression
 
 private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
-relational_expression ::= expression mb_nl relational_operator mb_nl expression
+relational_expression ::= expression mb_nl relational_operator mb_nl <<disableNlBeforeClosure>> expression
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
-in_expression ::= expression mb_nl mb_not ('in') mb_nl expression
+in_expression ::= expression mb_nl mb_not ('in') mb_nl <<disableNlBeforeClosure>> expression
 instanceof_expression ::= expression mb_nl instanceof_expression_tail
 private instanceof_expression_tail ::= mb_not ('instanceof') mb_nl (type_element | expect_type) { pin = 2 }
 as_expression ::= expression mb_nl ('as') mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
-equality_expression ::= expression mb_nl <<equalityOperator>> mb_nl expression
-compare_expression ::= expression mb_nl ('<=>') mb_nl expression
+equality_expression ::= expression mb_nl <<equalityOperator>> mb_nl <<disableNlBeforeClosure>> expression
+compare_expression ::= expression mb_nl ('<=>') mb_nl <<disableNlBeforeClosure>> expression
 {
   elementType = relational_expression
 }
-regex_find_expression ::= expression mb_nl ('=~') mb_nl expression
-regex_match_expression ::= expression mb_nl ('==~') mb_nl expression
+regex_find_expression ::= expression mb_nl ('=~') mb_nl <<disableNlBeforeClosure>> expression
+regex_match_expression ::= expression mb_nl ('==~') mb_nl <<disableNlBeforeClosure>> expression
 
-band_expression ::= expression mb_nl ('&') mb_nl expression
-xor_expression ::= expression mb_nl ('^') mb_nl expression
-bor_expression ::= expression mb_nl ('|') mb_nl expression
-land_expression ::= expression mb_nl ('&&') mb_nl expression
-lor_expression ::= expression mb_nl ('||') mb_nl expression
+band_expression ::= expression mb_nl ('&') mb_nl <<disableNlBeforeClosure>> expression
+xor_expression ::= expression mb_nl ('^') mb_nl <<disableNlBeforeClosure>> expression
+bor_expression ::= expression mb_nl ('|') mb_nl <<disableNlBeforeClosure>> expression
+land_expression ::= expression mb_nl ('&&') mb_nl <<disableNlBeforeClosure>> expression
+lor_expression ::= expression mb_nl ('||') mb_nl <<disableNlBeforeClosure>> expression
 
 private conditionals ::= ternary_expression | elvis_expression
 ternary_expression ::= expression mb_nl (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
-elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
+elvis_expression ::= expression mb_nl ('?:' mb_nl) <<disableNlBeforeClosure>> expression
 {
   rightAssociative = true
 }
@@ -1126,7 +1139,7 @@ tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expres
 
 // region Applications
 expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
-private expression_or_application_inner ::= expression application*
+private expression_or_application_inner ::= <<enableNlBeforeClosure expression>> application*
 private application ::= no_nl <<parseApplication application_ref application_expression application_call application_index>>
 {
   extends = expression
@@ -1204,6 +1217,9 @@ argument_label ::= IDENTIFIER | string_literal_tokens | primitive_type | modifie
 
 // region Type elements
 type_element ::= (primitive_type_element | class_type_element) array_type_elements
+{
+  extraRoot = true
+}
 
 primitive_type_element ::= primitive_type <<setTypeWasPrimitive>>
 external primitive_type ::= parsePrimitiveType
@@ -1235,6 +1251,9 @@ private any_type_element ::= <<anyTypeElement type_element>>
 
 // region Code references
 code_reference ::= code_reference_base
+{
+  extraRoot = true
+}
 private code_reference_base ::= short_code_reference code_reference_tail*
 qualified_code_reference ::= short_code_reference code_reference_tail code_reference_tail* { elementType = code_reference}
 short_code_reference ::= code_reference_part { elementType = code_reference }
@@ -1331,7 +1350,7 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 // endregion
 
 
-// region Generated parser utils
+// region Generated parser util
 private external keyword ::= parseKeyword
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants

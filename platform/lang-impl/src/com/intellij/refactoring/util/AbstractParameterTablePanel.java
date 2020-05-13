@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.project.Project;
@@ -10,6 +11,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +70,8 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.setCellSelectionEnabled(true);
 
-    myTable.setPreferredScrollableViewportSize(new Dimension(250, myTable.getRowHeight() * 5));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(250, -1));
+    myTable.setVisibleRowCount(5);
     myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
     @NonNls final InputMap inputMap = myTable.getInputMap();
@@ -137,13 +140,13 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
     private final Predicate<? super String> myNameValidator;
 
     public NameColumnInfo(Predicate<? super String> nameValidator) {
-      super("Name");
+      super(CommonBundle.message("title.name"));
       myNameValidator = nameValidator;
     }
 
     public NameColumnInfo(Language lang, Project project) {
-      super("Name");
-      myNameValidator = (paramName) -> LanguageNamesValidation.INSTANCE.forLanguage(lang).isIdentifier(paramName, project);
+      super(CommonBundle.message("title.name"));
+      myNameValidator = (paramName) -> LanguageNamesValidation.isIdentifier(lang, paramName, project);
     }
 
     @Nullable
@@ -199,7 +202,7 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
   }
 
   private class MyTableModel extends ListTableModel<AbstractVariableData> implements EditableModel {
-    MyTableModel(@NotNull ColumnInfo... columnInfos) {
+    MyTableModel(ColumnInfo @NotNull ... columnInfos) {
       super(columnInfos);
     }
 

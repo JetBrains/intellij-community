@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.api.data
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 
 class GHRepositoryPermission(id: String,
+                             val owner: GHRepositoryOwnerName,
                              nameWithOwner: String,
                              val viewerPermission: GHRepositoryPermissionLevel?,
                              val mergeCommitAllowed: Boolean,

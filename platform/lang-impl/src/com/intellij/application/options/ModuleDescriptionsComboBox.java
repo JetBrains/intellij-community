@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
@@ -35,8 +36,6 @@ import java.util.Comparator;
  * Use it instead of {@link ModulesComboBox} for configuration elements which may refer to unloaded modules.
  *
  * @see ModulesComboBox
- *
- * @author nik
  */
 public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription> {
   private final SortedComboBoxModel<ModuleDescription> myModel;

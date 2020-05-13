@@ -2,13 +2,16 @@
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -19,6 +22,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -63,23 +67,23 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     myTable = new JBTable(myModel);
     final StatusText emptyText = myTable.getEmptyText();
-    emptyText.setText("No coverage results.");
+    emptyText.setText(CoverageBundle.message("coverage.view.no.coverage.results"));
     final RunConfigurationBase configuration = suitesBundle.getRunConfiguration();
     if (configuration != null) {
-      emptyText.appendText(" Click ");
-      emptyText.appendText("Edit", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+      emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.0") + " ");
+      emptyText.appendText(CoverageBundle.message("coverage.view.edit.run.configuration.1"), SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
           final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findSettings(configuration);
           if (configurationSettings != null) {
-            RunDialog.editConfiguration(project, configurationSettings, "Edit Run Configuration");
+            RunDialog.editConfiguration(project, configurationSettings, ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
           }
           else {
-            Messages.showErrorDialog(project, "Configuration \'" + configuration.getName() + "\' was not found", CommonBundle.getErrorTitle());
+            Messages.showErrorDialog(project, CoverageBundle.message("coverage.view.configuration.was.not.found", configuration.getName()), CommonBundle.getErrorTitle());
           }
         }
       });
-      emptyText.appendText(" to fix configuration settings.");
+      emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.2"));
     }
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn nameColumn = columnModel.getColumn(0);
@@ -93,9 +97,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     final CoverageViewTreeStructure structure = new CoverageViewTreeStructure(project, suitesBundle, stateBean);
     myBuilder = new CoverageViewBuilder(project, new JBList(), myModel, structure, myTable);
     myBuilder.setParentTitle(titleLabel);
+    Disposer.register(this, myBuilder);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         drillDown(structure);
         return true;
       }
@@ -108,7 +113,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myTable.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        if (myBuilder == null) return;
         myBuilder.buildRoot();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
@@ -270,7 +274,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private class FlattenPackagesAction extends ToggleAction {
 
     private FlattenPackagesAction() {
-      super("Flatten Packages", "Flatten Packages", AllIcons.ObjectBrowser.FlattenPackages);
+      super(IdeBundle.messagePointer("action.flatten.packages"), IdeBundle.messagePointer("action.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
     }
 
     @Override
@@ -297,7 +301,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     private final CoverageViewTreeStructure myTreeStructure;
 
     GoUpAction(CoverageViewTreeStructure treeStructure) {
-      super("Go Up", "Go to Upper Level", AllIcons.Nodes.UpLevel);
+      super(CoverageBundle.message("coverage.view.action.go.up"), CoverageBundle.message("coverage.view.action.go.up.description"), AllIcons.Nodes.UpLevel);
       myTreeStructure = treeStructure;
       registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, myTable);
     }

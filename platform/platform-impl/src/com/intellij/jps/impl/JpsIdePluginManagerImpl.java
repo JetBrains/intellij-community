@@ -14,9 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * @author nik
- */
 public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
 
@@ -43,7 +40,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
         public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
           ContainerUtil.addIfNotNull(myExternalBuildPlugins, pluginDescriptor);
         }
-      });
+      }, true, null);
     }
   }
 

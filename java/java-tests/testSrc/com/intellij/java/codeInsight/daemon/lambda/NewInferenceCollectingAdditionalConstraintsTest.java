@@ -39,6 +39,10 @@ public class NewInferenceCollectingAdditionalConstraintsTest extends LightDaemon
     doTest();
   }
 
+  public void testConstraintsInsideNestedBlocks() {
+    doTest();
+  }
+
   public void testNestedLambdaExpressionsWithTopStandaloneMethod() {
     doTest();
   }

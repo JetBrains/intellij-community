@@ -5,7 +5,6 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -41,14 +40,12 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     myEditable = new MyEditable();
   }
 
-  @NotNull
-  protected PsiElement[] getSelectedElements() {
+  protected PsiElement @NotNull [] getSelectedElements() {
     DataContext dataContext = DataManager.getInstance().getDataContext(myKeyReceiver);
     return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private PsiElement[] getValidSelectedElements() {
+  private PsiElement @NotNull [] getValidSelectedElements() {
     PsiElement[] selectedElements = getSelectedElements();
     for (PsiElement element : selectedElements) {
       if (element == null || !element.isValid()) {
@@ -77,7 +74,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     return myEditable;
   }
 
-  private class MyEditable implements CutProvider, CopyProvider, PasteProvider {
+  class MyEditable implements CutProvider, CopyProvider, PasteProvider {
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
       PsiElement[] elements = getValidSelectedElements();
@@ -132,30 +129,30 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       }
     }
 
-    private boolean performDefaultPaste(final DataContext dataContext) {
+    boolean performDefaultPaste(@NotNull DataContext dataContext) {
       final boolean[] isCopied = new boolean[1];
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
       if (elements == null) return false;
 
-      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
-      try {
-        final Module module = LangDataKeys.MODULE.getData(dataContext);
-        PsiElement target = getPasteTarget(dataContext, module);
-        if (isCopied[0]) {
-          TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCopy(elements, module, target, true));
+      return DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> {
+        try {
+          final Module module = LangDataKeys.MODULE.getData(dataContext);
+          PsiElement target = getPasteTarget(dataContext, module);
+          if (isCopied[0]) {
+            pasteAfterCopy(elements, module, target, true);
+          }
+          else if (MoveHandler.canMove(elements, target)) {
+            pasteAfterCut(dataContext, elements, target);
+          }
+          else {
+            return false;
+          }
         }
-        else if (MoveHandler.canMove(elements, target)) {
-          TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCut(dataContext, elements, target));
+        finally {
+          updateView();
         }
-        else {
-          return false;
-        }
-      }
-      finally {
-        DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
-        updateView();
-      }
-      return true;
+        return true;
+      });
     }
 
     private PsiElement getPasteTarget(@NotNull DataContext dataContext, @Nullable Module module) {

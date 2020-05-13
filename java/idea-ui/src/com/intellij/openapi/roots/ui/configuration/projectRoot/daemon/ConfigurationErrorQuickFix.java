@@ -12,13 +12,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-/**
- * @author nik
- */
+import com.intellij.openapi.util.NlsContexts.Label;
+
 public abstract class ConfigurationErrorQuickFix {
   private final String myActionName;
 
-  protected ConfigurationErrorQuickFix(String actionName) {
+  protected ConfigurationErrorQuickFix(@Label String actionName) {
     myActionName = actionName;
   }
 

@@ -12,9 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class VcsExcludedFileProcessingTest extends HeavyPlatformTestCase {
   private ProjectLevelVcsManagerImpl myVcsManager;
   private MockAbstractVcs myVcs;

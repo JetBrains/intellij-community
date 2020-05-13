@@ -24,9 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
-* @author nik
-*/
 public class GroovyLibraryDescription extends CustomLibraryDescription {
   private static final String GROOVY_FRAMEWORK_NAME = "Groovy";
   private final String myEnvVariable;

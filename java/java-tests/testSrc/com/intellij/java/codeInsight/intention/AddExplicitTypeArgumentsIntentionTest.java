@@ -15,11 +15,19 @@
  */
 package com.intellij.java.codeInsight.intention;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtureTestCase {
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    super.tuneFixture(moduleBuilder);
+    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+  }
 
   public void testNoStaticQualifier() {
     doTest("class Test {\n" +
@@ -59,6 +67,30 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
            "}");
   }
 
+  public void testContextClass() {
+    doTest("import java.util.Comparator;" +
+           "abstract class UserSession {\n" +
+           "    private static final Comparator<UserSession> USER_SESSION_COMPARATOR = Comparator\n" +
+           "            .comp<caret>aring(new java.util.function.Function<UserSession, String>() {\n" +
+           "                               @Override\n" +
+           "                               public String apply(UserSession userSession) {\n" +
+           "                                  return userSession.toString();\n" +
+           "                               }});\n" +
+           "}",
+           "import java.util.Comparator;\n" +
+           "import java.util.function.Function;\n" +
+           "\n" +
+           "abstract class UserSession {\n" +
+           "    private static final Comparator<UserSession> USER_SESSION_COMPARATOR = Comparator\n" +
+           "            .<UserSession, String>comparing(new Function<UserSession, String>() {\n" +
+           "                @Override\n" +
+           "                public String apply(UserSession userSession) {\n" +
+           "                    return userSession.toString();\n" +
+           "                }\n" +
+           "            });\n" +
+           "}");
+  }
+
   public void testInferredCapturedWildcard() {
     doTest("class Test {\n" +
            "    static void m(java.util.List<? extends String> l) {\n" +
@@ -85,7 +117,7 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
                                         "        l = get<caret>List();\n" +
                                         "    }\n" +
                                         "}");
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNull(intentionAction);
   }
 
@@ -99,13 +131,13 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
                                         "    }\n" +
                                         "\n" +
                                         "}");
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNull(intentionAction);
   }
 
   private void doTest(String beforeText, String afterText) {
     myFixture.configureByText("a.java", beforeText);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    final IntentionAction intentionAction = myFixture.findSingleIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResult(afterText);

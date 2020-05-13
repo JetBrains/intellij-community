@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.Executor;
 
 /**
- * A common executor for non-urgent tasks, which are expected to be fast most of the time.
+ * A common executor for non-urgent tasks, which are expected to be fast (preferably not more than 10 seconds) most of the time.
  * Used to avoid spawning a lot of threads by different subsystems all reacting to the same event,
  * when all they have to do is several short PSI/index queries in reaction to a file or project model change,
  * or on project opening. If you're using {@link com.intellij.openapi.application.ReadAction#nonBlocking},
@@ -22,10 +22,9 @@ import java.util.concurrent.Executor;
  */
 public final class NonUrgentExecutor implements Executor {
   private static final NonUrgentExecutor ourInstance = new NonUrgentExecutor();
-  private final Executor myBackend;
+  private final Executor myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2, false);
 
   private NonUrgentExecutor() {
-    myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2, false);
   }
 
   @Override
@@ -33,8 +32,7 @@ public final class NonUrgentExecutor implements Executor {
     myBackend.execute(command);
   }
 
-  @NotNull
-  public static NonUrgentExecutor getInstance() {
+  public static @NotNull NonUrgentExecutor getInstance() {
     return ourInstance;
   }
 }

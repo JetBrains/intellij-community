@@ -71,7 +71,7 @@ public final class PyCustomType implements PyClassLikeType {
                       @Nullable Processor<PyElement> filter,
                       boolean instanceType,
                       boolean typesToMimicAsSuperTypes,
-                      @NotNull PyClassLikeType... typesToMimic) {
+                      PyClassLikeType @NotNull ... typesToMimic) {
     myQualifiedName = qualifiedName;
     myFilter = filter;
     myInstanceType = instanceType;

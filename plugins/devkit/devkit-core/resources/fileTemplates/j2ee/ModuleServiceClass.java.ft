@@ -10,6 +10,6 @@ public class ${NAME} {
     }
 
     public static ${NAME} getInstance(@NotNull Module module) {
-        return ModuleServiceManager.getService(module, ${NAME}.class);
+        return module.getService(${NAME}.class);
     }
 }

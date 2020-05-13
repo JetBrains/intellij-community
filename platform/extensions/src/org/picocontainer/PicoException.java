@@ -9,6 +9,8 @@
  *****************************************************************************/
 package org.picocontainer;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
@@ -22,93 +24,93 @@ import java.io.PrintWriter;
  * @version $Revision: 1812 $
  * @since 1.0
  */
-public abstract class PicoException extends RuntimeException {
-    /**
-     * The exception that caused this one.
-     */
-    private Throwable cause;
+public class PicoException extends RuntimeException {
+  /**
+   * The exception that caused this one.
+   */
+  private Throwable cause;
 
-    /**
-     * Construct a new exception with no cause and no detail message. Note modern JVMs may still track the exception
-     * that caused this one.
-     */
-    protected PicoException() {
-    }
+  /**
+   * Construct a new exception with no cause and no detail message. Note modern JVMs may still track the exception
+   * that caused this one.
+   */
+  public PicoException() {
+  }
 
-    /**
-     * Construct a new exception with no cause and the specified detail message.  Note modern JVMs may still track the
-     * exception that caused this one.
-     *
-     * @param message the message detailing the exception.
-     */
-    protected PicoException(final String message) {
-        super(message);
-    }
+  /**
+   * Construct a new exception with no cause and the specified detail message.  Note modern JVMs may still track the
+   * exception that caused this one.
+   *
+   * @param message the message detailing the exception.
+   */
+  public PicoException(@NotNull String message) {
+    super(message);
+  }
 
-    /**
-     * Construct a new exception with the specified cause and no detail message.
-     *
-     * @param cause the exception that caused this one.
-     */
-    protected PicoException(final Throwable cause) {
-        this.cause = cause;
-    }
+  /**
+   * Construct a new exception with the specified cause and no detail message.
+   *
+   * @param cause the exception that caused this one.
+   */
+  public PicoException(final Throwable cause) {
+    this.cause = cause;
+  }
 
-    /**
-     * Construct a new exception with the specified cause and the specified detail message.
-     *
-     * @param message the message detailing the exception.
-     * @param cause   the exception that caused this one.
-     */
-    protected PicoException(final String message, final Throwable cause) {
-        super(message);
-        this.cause = cause;
-    }
+  /**
+   * Construct a new exception with the specified cause and the specified detail message.
+   *
+   * @param message the message detailing the exception.
+   * @param cause   the exception that caused this one.
+   */
+  public PicoException(final String message, final Throwable cause) {
+    super(message);
+    this.cause = cause;
+  }
 
-    /**
-     * Retrieve the exception that caused this one.
-     *
-     * @return the exception that caused this one, or null if it was not set.
-     * @see Throwable#getCause() the method available since JDK 1.4 that is overridden by this method.
-     */
-    @Override
-    public Throwable getCause() {
-        return cause;
-    }
+  /**
+   * Retrieve the exception that caused this one.
+   *
+   * @return the exception that caused this one, or null if it was not set.
+   * @see Throwable#getCause() the method available since JDK 1.4 that is overridden by this method.
+   */
+  @Override
+  public Throwable getCause() {
+    return cause;
+  }
 
-    /**
-     * Overridden to provide 1.4 style stack traces on pre-1.4.
-     *
-     * @param s the {@link PrintStream} used to print the stack trace
-     */
-    @Override
-    public void printStackTrace() {
-        printStackTrace(System.err);
-    }
+  /**
+   * Overridden to provide 1.4 style stack traces on pre-1.4.
+   *
+   * @param s the {@link PrintStream} used to print the stack trace
+   */
+  @Override
+  public void printStackTrace() {
+    printStackTrace(System.err);
+  }
 
-    /**
-     * Overridden to provide 1.4 style stack traces on pre-1.4.
-     */
-    @Override
-    public void printStackTrace(PrintStream s) {
-        super.printStackTrace(s);
-        if(cause!=null) {
-            s.println("Caused by:\n");
-            cause.printStackTrace(s);
-        }
+  /**
+   * Overridden to provide 1.4 style stack traces on pre-1.4.
+   */
+  @Override
+  public void printStackTrace(PrintStream s) {
+    super.printStackTrace(s);
+    if (cause != null) {
+      s.println("Caused by:\n");
+      cause.printStackTrace(s);
     }
+  }
 
-    /**
-     * Overridden to provide 1.4 style stack traces on pre-1.4.
-     *
-     * @param s the {@link PrintWriter} used to print the stack trace
-     */
-    @Override
-    public void printStackTrace(PrintWriter s) {
-        super.printStackTrace(s);
-        if(cause!=null) {
-            s.println("Caused by:\n");
-            cause.printStackTrace(s);
-        }
+  /**
+   * Overridden to provide 1.4 style stack traces on pre-1.4.
+   *
+   * @param s the {@link PrintWriter} used to print the stack trace
+   */
+  @Override
+  public void printStackTrace(PrintWriter s) {
+    super.printStackTrace(s);
+    if (cause != null) {
+      s.println("Caused by:\n");
+      cause.printStackTrace(s);
     }
+  }
 }

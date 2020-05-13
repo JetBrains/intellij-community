@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,6 +12,7 @@ import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.ui.*;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,7 +42,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     addRow(createRowItem(null));
   }
 
-  public void setParameterInfos(List<? extends P> parameterInfos) {
+  public void setParameterInfos(@NotNull List<? extends P> parameterInfos) {
     List<TableItem> items = new ArrayList<>(parameterInfos.size());
     for (P parameterInfo : parameterInfos) {
       items.add(createRowItem(parameterInfo));
@@ -215,7 +202,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
 
     @Override
     public boolean isCellEditable(TableItem item) {
-      return !item.isEllipsisType() && item.parameter.getOldIndex() == -1;
+      return !item.isEllipsisType() && item.parameter.isNew();
     }
 
     @Override
@@ -242,7 +229,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
 
     @Override
     public boolean isCellEditable(TableItem item) {
-      return !item.isEllipsisType() && item.parameter.getOldIndex() == -1;
+      return !item.isEllipsisType() && item.parameter.isNew();
     }
 
     @Override

@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
@@ -30,7 +31,7 @@ import java.util.function.BiConsumer;
 * @author cdr
 */
 public class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider, IntentionActionDelegate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching");
+  private static final Logger LOG = Logger.getInstance(IntentionActionWithTextCaching.class);
   private final List<IntentionAction> myOptionIntentions = new ArrayList<>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<>();
   private final List<IntentionAction> myOptionInspectionFixes = new ArrayList<>();
@@ -142,7 +143,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   }
 
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
-  private class MyIntentionAction implements IntentionAction, IntentionActionDelegate, Comparable<MyIntentionAction>, ShortcutProvider {
+  private class MyIntentionAction implements IntentionAction, IntentionActionDelegate, Comparable<MyIntentionAction>, ShortcutProvider, PossiblyDumbAware {
     private final IntentionAction myAction;
     @NotNull
     private final BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
@@ -150,6 +151,11 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     MyIntentionAction(@NotNull IntentionAction action, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
       myAction = action;
       myMarkInvoked = markInvoked;
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return DumbService.isDumbAware(myAction);
     }
 
     @Nls
@@ -191,6 +197,11 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     @Override
     public IntentionAction getDelegate() {
       return myAction;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return myAction.getFileModifierForPreview(target);
     }
 
     @Nullable

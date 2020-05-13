@@ -1,9 +1,9 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ModuleProjectStructureElement extends ProjectStructureElement {
   private final Module myModule;
 
@@ -40,7 +37,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
     for (Module each : all) {
       if (each != myModule && myContext.getRealName(each).equals(myContext.getRealName(myModule))) {
-        problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.duplicate.name.message"), null,
+        problemsHolder.registerProblem(JavaUiBundle.message("project.roots.module.duplicate.name.message"), null,
                                        ProjectStructureProblemType.error("duplicate-module-name"), createPlace(),
                                        null);
         break;
@@ -59,12 +56,12 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
       if (!entry.isValid()){
         if (entry instanceof JdkOrderEntry && ((JdkOrderEntry)entry).getJdkName() == null) {
           if (!(entry instanceof InheritedJdkOrderEntry)) {
-            problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, ProjectStructureProblemType.error("module-sdk-not-defined"), createPlace(entry),
+            problemsHolder.registerProblem(JavaUiBundle.message("project.roots.module.jdk.problem.message"), null, ProjectStructureProblemType.error("module-sdk-not-defined"), createPlace(entry),
                                            null);
           }
         }
         else {
-          problemsHolder.registerProblem(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()), null,
+          problemsHolder.registerProblem(JavaUiBundle.message("project.roots.library.problem.message", entry.getPresentableName()), null,
                                          ProjectStructureProblemType.error("invalid-module-dependency"), createPlace(entry),
                                          null);
         }

@@ -33,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import java.util.*
 
 class GroovySliceUsage : SliceUsage {
   constructor(element: PsiElement, parent: SliceUsage) : super(element, parent)
@@ -45,7 +44,7 @@ class GroovySliceUsage : SliceUsage {
     return GroovySliceUsage(element, parent)
   }
 
-  private fun PsiElement.passToProcessor(processor: Processor<SliceUsage>) {
+  private fun PsiElement.passToProcessor(processor: Processor<in SliceUsage>) {
     processor.process(createUsage(this@GroovySliceUsage))
   }
 
@@ -54,11 +53,11 @@ class GroovySliceUsage : SliceUsage {
   companion object {
     private fun PsiElement.createUsage(parent: SliceUsage) = GroovySliceUsage(this, parent)
 
-    private fun PsiElement.passToProcessor(parent: SliceUsage, processor: Processor<SliceUsage>) {
+    private fun PsiElement.passToProcessor(parent: SliceUsage, processor: Processor<in SliceUsage>) {
       processor.process(createUsage(parent))
     }
 
-    fun processMethodReturnValues(method: GrMethod, parent: SliceUsage, processor: Processor<SliceUsage>) {
+    fun processMethodReturnValues(method: GrMethod, parent: SliceUsage, processor: Processor<in SliceUsage>) {
       method.block?.accept(
           object : GroovyRecursiveElementVisitor() {
             override fun visitReturnStatement(returnStatement: GrReturnStatement) {
@@ -69,7 +68,7 @@ class GroovySliceUsage : SliceUsage {
     }
   }
 
-  public override fun processUsagesFlownDownTo(element: PsiElement, processor: Processor<SliceUsage>) {
+  public override fun processUsagesFlownDownTo(element: PsiElement, processor: Processor<in SliceUsage>) {
     when (element) {
       is GrVariable -> element.initializerGroovy?.passToProcessor(processor)
       is GrReferenceExpression -> (element.resolve() as? PsiVariable)?.passToProcessor(processor)
@@ -93,7 +92,7 @@ class GroovySliceUsage : SliceUsage {
     }
   }
 
-  public override fun processUsagesFlownFromThe(element: PsiElement, processor: Processor<SliceUsage>) {
+  public override fun processUsagesFlownFromThe(element: PsiElement, processor: Processor<in SliceUsage>) {
     when (element) {
       is GrVariable -> {
         ReferencesSearch.search(element, params.scope.toSearchScope()).forEach {

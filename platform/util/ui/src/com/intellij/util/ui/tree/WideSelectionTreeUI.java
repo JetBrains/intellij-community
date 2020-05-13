@@ -1,17 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -31,9 +31,16 @@ import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 
 /**
-* @author Konstantin Bulenkov
-*/
+ * @author Konstantin Bulenkov
+ *
+ * @deprecated prefer {@link com.intellij.ui.tree.ui.DefaultTreeUI}
+ */
+@Deprecated
 public class WideSelectionTreeUI extends BasicTreeUI {
+  /**
+   * @deprecated use {@link RenderingUtil#FOCUSABLE_SIBLING} or {@link RenderingUtil#ALWAYS_PAINT_SELECTION_AS_FOCUSED}
+   */
+  @Deprecated
   public static final String TREE_TABLE_TREE_KEY = "TreeTableTree";
 
   @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
@@ -287,7 +294,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       rowGraphics.setClip(clipBounds);
 
       final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
-      Color background = tree.getBackground();
+      Color background = RenderingUtil.getBackground(tree);
 
       if ((row % 2) == 0 && Boolean.TRUE.equals(tree.getClientProperty(STRIPED_CLIENT_PROPERTY))) {
         background = UIUtil.getDecoratedRowColor();
@@ -309,7 +316,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       }
       else {
         if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
-          Color bg = getSelectionBackground(tree, true);
+          Color bg = RenderingUtil.getSelectionBackground(tree);
 
           if (myWideSelectionCondition.value(row)) {
             rowGraphics.setColor(bg);
@@ -361,11 +368,8 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       if (tr.getSelectionModel().isRowSelected(row) && myWideSelectionCondition.value(row)) {
           final Rectangle bounds = tr.getRowBounds(row);
-          Color color = getSelectionBackground(tr, false);
-          if (color != null) {
-            g.setColor(color);
-            g.fillRect(0, bounds.y, tr.getWidth(), bounds.height);
-          }
+        g.setColor(RenderingUtil.getSelectionBackground(tree));
+        g.fillRect(0, bounds.y, tr.getWidth(), bounds.height);
       }
     }
   }
@@ -412,19 +416,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     }
 
     super.paintExpandControl(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
-  }
-
-  @Nullable
-  private static Color getSelectionBackground(@NotNull JTree tree, boolean checkProperty) {
-    Object property = tree.getClientProperty(TREE_TABLE_TREE_KEY);
-    if (property instanceof JTable) {
-      return ((JTable)property).getSelectionBackground();
-    }
-    boolean selection = tree.hasFocus();
-    if (!selection && checkProperty) {
-      selection = Boolean.TRUE.equals(property);
-    }
-    return UIUtil.getTreeSelectionBackground(selection);
   }
 
   public void invalidateNodeSizes() {

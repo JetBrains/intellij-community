@@ -2,14 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.HintManager;
@@ -18,12 +16,10 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -31,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,15 +47,17 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private final T myElement;
   @NotNull
   private final R myRef;
+  private final List<PsiClass> myClassesToImport;
 
   protected ImportClassFixBase(@NotNull T elem, @NotNull R ref) {
     myElement = elem;
     myRef = ref;
+    myClassesToImport = calcClassesToImport();
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiFile file) {
-    if (!myElement.isValid()) {
+    if (!myElement.isValid() || !myRef.getElement().isValid()) {
       return false;
     }
 
@@ -95,6 +92,16 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @NotNull
   public List<PsiClass> getClassesToImport(boolean acceptWrongNumberOfTypeParams) {
+    if (!myElement.isValid() || ContainerUtil.exists(myClassesToImport, c -> !c.isValid())) {
+      return Collections.emptyList();
+    }
+    if (!acceptWrongNumberOfTypeParams && hasTypeParameters(myRef)) {
+      return ContainerUtil.findAll(myClassesToImport, PsiTypeParameterListOwner::hasTypeParameters);
+    }
+    return myClassesToImport;
+  }
+
+  private List<PsiClass> calcClassesToImport() {
     if (myRef instanceof PsiJavaReference) {
       JavaResolveResult result = ((PsiJavaReference)myRef).advancedResolve(true);
       PsiElement element = result.getElement();
@@ -115,7 +122,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       return Collections.emptyList();
     }
 
-    boolean referenceHasTypeParameters = hasTypeParameters(myRef);
     final Project project = myElement.getProject();
     PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(name, scope);
     if (classes.length == 0) return Collections.emptyList();
@@ -125,7 +131,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (JavaCompletionUtil.isInExcludedPackage(aClass, false)) continue;
-      if (!acceptWrongNumberOfTypeParams && referenceHasTypeParameters && !aClass.hasTypeParameters()) continue;
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(project).isQualifiedName(qName)) continue; //do not show classes from default or invalid package
@@ -140,21 +145,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     classList.removeIf(
       aClass -> (anyAccessibleFound || !BaseIntentionAction.canModify(aClass) || facade.arePackagesTheSame(aClass, myElement)) && !isAccessible(aClass, myElement));
-
-    if (acceptWrongNumberOfTypeParams && referenceHasTypeParameters) {
-      final List<PsiClass> candidates = new ArrayList<>();
-      for (Iterator<PsiClass> iterator = classList.iterator(); iterator.hasNext(); ) {
-        final PsiClass aClass = iterator.next();
-        if (!aClass.hasTypeParameters()) {
-          iterator.remove();
-          candidates.add(aClass);
-        }
-      }
-
-      if (classList.isEmpty()) {
-        classList.addAll(candidates);
-      }
-    }
 
     classList = filterByRequiredMemberName(classList);
 
@@ -298,12 +288,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @Override
   public boolean fixSilently(@NotNull Editor editor) {
-    return mayAutoImportNow(editor, myElement.getContainingFile()) &&
-           doFix(editor, false, false) == Result.CLASS_AUTO_IMPORTED;
+    PsiFile file = myElement.isValid() ? myElement.getContainingFile() : null;
+    if (file == null || !ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)) return false;
+    return doFix(editor, false, false, true) == Result.CLASS_AUTO_IMPORTED;
   }
 
   @NotNull
-  public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef) {
+  public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef, boolean mayAddUnambiguousImportsSilently) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<PsiClass> classesToImport = getClassesToImport();
     //do not show popups for already imported classes when library is missing (show them for explicit action)
@@ -337,7 +328,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     if (classes.length == 1 &&
         (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName())) &&
-        mayAutoImportNow(editor, psiFile) &&
+        mayAddUnambiguousImportsSilently &&
         !autoImportWillInsertUnexpectedCharacters(classes[0])) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
       return Result.CLASS_AUTO_IMPORTED;
@@ -352,24 +343,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       return Result.POPUP_SHOWN;
     }
     return Result.POPUP_NOT_SHOWN;
-  }
-
-  private static boolean mayAutoImportNow(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-    return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
-           (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
-           isInModelessContext(editor);
-  }
-
-  private static boolean isInModelessContext(@NotNull Editor editor) {
-    return Registry.is("ide.perProjectModality") ?
-           !LaterInvocator.isInModalContextForProject(editor.getProject()) :
-           !LaterInvocator.isInModalContext();
-  }
-
-  public static boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
-    return FileTypeUtils.isInServerPageFile(psiFile) ?
-           CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
-           CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   }
 
   protected int getStartOffset(@NotNull T element, @NotNull R ref) {
@@ -399,7 +372,10 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (isQualified(myRef)) {
       return false;
     }
-    Result result = doFix(editor, true, false);
+    PsiFile file = myElement.isValid() ? myElement.getContainingFile() : null;
+    if (file == null) return false;
+
+    Result result = doFix(editor, true, false, ShowAutoImportPass.mayAutoImportNow(file));
     return result == Result.POPUP_SHOWN || result == Result.CLASS_AUTO_IMPORTED;
   }
 
@@ -464,7 +440,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   @NotNull
-  protected AddImportAction createAddImportAction(@NotNull PsiClass[] classes, @NotNull Project project, @NotNull Editor editor) {
+  protected AddImportAction createAddImportAction(PsiClass @NotNull [] classes, @NotNull Project project, @NotNull Editor editor) {
     return new AddImportAction(project, myRef, editor, classes) {
       @Override
       protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {

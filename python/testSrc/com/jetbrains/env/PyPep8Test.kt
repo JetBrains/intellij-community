@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env
 
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.inspections.PyPep8Inspection
@@ -32,12 +33,31 @@ class PyPep8Test : PyEnvTestCase() {
     )
   }
 
+  @Test
+  fun suppressingWarningsWithNoqaComments() {
+    runPythonTest(
+      Pep8Task("""
+        def func(x, y):
+            func (x , y)  # noqa
+            func (x , y)  # noqa E211,E203
+            func<weak_warning descr="PEP 8: E211 whitespace before '('"> </weak_warning>(x<weak_warning descr="PEP 8: E203 whitespace before ','"> </weak_warning>, y)  # noqa: E300 # unrelated code
+            func<weak_warning descr="PEP 8: E211 whitespace before '('"> </weak_warning>(x , y)  # noqa: E203 # specific code
+            func (x , y)  # noqa: E2 # common prefix
+        
+        
+        
+        def<weak_warning descr="PEP 8: E271 multiple spaces after keyword">   </weak_warning>func2():  # noqa: E303 # blanks lines error
+            pass  # noqa # error on the comment itself  
+      """.trimIndent())
+    )
+  }
+
   private class Pep8Task(private val text: String) : PyExecutionFixtureTestTask(null) {
 
     override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
       myFixture.configureByText(PythonFileType.INSTANCE, text)
-      myFixture.enableInspections(PyPep8Inspection::class.java)
-      myFixture.checkHighlighting()
+      runInEdt { myFixture.enableInspections(PyPep8Inspection::class.java) }
+      runInEdt { myFixture.checkHighlighting() }
     }
   }
 }

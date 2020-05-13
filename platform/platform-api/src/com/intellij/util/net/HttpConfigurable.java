@@ -2,6 +2,7 @@
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,7 +56,7 @@ import static com.intellij.openapi.util.Pair.pair;
 
 @State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"))
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
+  private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
 
   public boolean PROXY_TYPE_IS_SOCKS;
@@ -271,7 +272,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       }
 
       AuthenticationDialog dialog = new AuthenticationDialog(PopupUtil.getActiveComponent(), prefix + host,
-                                                             "Please enter credentials for: " + prompt, "", "", remember);
+                                                             IdeBundle.message("dialog.message.please.enter.credentials.for", prompt), "", "", remember);
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
         AuthenticationPanel panel = dialog.getPanel();
@@ -299,8 +300,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
 
     // do not try to show any dialogs if application is exiting
-    if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
-        ApplicationManager.getApplication().isDisposed()) return null;
+    if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposed()) {
+      return null;
+    }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myTestGenericAuthRunnable.get();
@@ -322,8 +324,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       }
       AuthenticationDialog dialog = new AuthenticationDialog(
         PopupUtil.getActiveComponent(),
-        "Proxy authentication: " + host,
-        "Please enter credentials for: " + prompt,
+        IdeBundle.message("dialog.title.proxy.authentication", host),
+        IdeBundle.message("dialog.message.please.enter.credentials.for", prompt),
         getSecure("proxy.login"),
         "",
         KEEP_PROXY_PASSWORD
@@ -375,9 +377,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
         if (frame != null) {
           USE_PROXY_PAC = false;
-          Messages.showMessageDialog(frame.getComponent(), "Proxy: both 'use proxy' and 'autodetect proxy' settings were set." +
-                                                           "\nOnly one of these options should be selected.\nPlease re-configure.",
-                                     "Proxy Setup", Messages.getWarningIcon());
+          Messages.showMessageDialog(frame.getComponent(), IdeBundle.message("message.text.proxy.both.use.proxy.and.autodetect.proxy.set"),
+                                     IdeBundle.message("dialog.title.proxy.setup"), Messages.getWarningIcon());
           editConfigurable(frame.getComponent());
         }
       }, ModalityState.NON_MODAL);

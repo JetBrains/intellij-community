@@ -81,7 +81,9 @@ public class PsiSuperMethodUtil {
       for (HierarchicalMethodSignature hms : superClass.getVisibleSignatures()) {
         PsiMethod method = hms.getMethod();
         if (MethodSignatureUtil.findMethodBySignature(aClass, method.getSignature(superClassSubstitutor), false) != null) continue;
-        final PsiClass containingClass = correctClassByScope(method.getContainingClass(), resolveScope);
+        PsiClass methodClass = method.getContainingClass();
+        if (methodClass == null) continue;
+        final PsiClass containingClass = correctClassByScope(methodClass, resolveScope);
         if (containingClass == null) continue;
         method = containingClass.findMethodBySignature(method, false);
         if (method == null) continue;
@@ -90,11 +92,7 @@ public class PsiSuperMethodUtil {
         final PsiSubstitutor finalSubstitutor =
           obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
         final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
-        Set<PsiMethod> methods = overrideEquivalent.get(signature);
-        if (methods == null) {
-          methods = new LinkedHashSet<>();
-          overrideEquivalent.put(signature, methods);
-        }
+        Set<PsiMethod> methods = overrideEquivalent.computeIfAbsent(signature, __ -> new LinkedHashSet<>());
         methods.add(method);
       }
     }
@@ -102,8 +100,7 @@ public class PsiSuperMethodUtil {
   }
 
   @Nullable
-  public static PsiClass correctClassByScope(PsiClass psiClass, final GlobalSearchScope resolveScope) {
-    if (psiClass == null) return null;
+  public static PsiClass correctClassByScope(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope resolveScope) {
     String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
       return psiClass;

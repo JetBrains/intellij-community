@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
@@ -20,15 +20,13 @@ import java.util.Stack;
 
 public class CoreCommandProcessor extends CommandProcessorEx {
   private static class CommandDescriptor implements CommandToken {
-    @NotNull
-    public final Runnable myCommand;
+    public final @NotNull Runnable myCommand;
     public final Project myProject;
     public String myName;
     public Object myGroupId;
     public final Document myDocument;
-    @NotNull
-    public final UndoConfirmationPolicy myUndoConfirmationPolicy;
-    public final boolean myShouldRecordActionForActiveDocument;
+    final @NotNull UndoConfirmationPolicy myUndoConfirmationPolicy;
+    final boolean myShouldRecordActionForActiveDocument;
 
     CommandDescriptor(@NotNull Runnable command,
                       Project project,
@@ -58,6 +56,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   protected CommandDescriptor myCurrentCommand;
+  // Stack is used instead of ConcurrentLinkedDeque because null values are not supported by ConcurrentLinkedDeque
   private final Stack<CommandDescriptor> myInterruptedCommands = new Stack<>();
   private final List<CommandListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myUndoTransparentCount;
@@ -66,7 +65,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   public CoreCommandProcessor() {
     MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
-    messageBus.connect().subscribe(CommandListener.TOPIC, new CommandListener() {
+    messageBus.simpleConnect().subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
       public void commandStarted(@NotNull CommandEvent event) {
         for (CommandListener listener : myListeners) {
@@ -161,7 +160,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void executeCommand(Project project,
-                             @NotNull final Runnable command,
+                             final @NotNull Runnable command,
                              final String name,
                              final Object groupId,
                              @NotNull UndoConfirmationPolicy confirmationPolicy) {
@@ -170,7 +169,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void executeCommand(Project project,
-                             @NotNull final Runnable command,
+                             final @NotNull Runnable command,
                              final String name,
                              final Object groupId,
                              @NotNull UndoConfirmationPolicy confirmationPolicy,
@@ -196,7 +195,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                               boolean shouldRecordCommandForActiveDocument,
                               @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
+    application.assertIsWriteThread();
     if (project != null && project.isDisposed()) {
       CommandLog.LOG.error("Project "+project+" already disposed");
       return;
@@ -213,9 +212,10 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       return;
     }
     Throwable throwable = null;
+    CommandDescriptor descriptor = new CommandDescriptor(command, project, name, groupId, confirmationPolicy,
+                                                         shouldRecordCommandForActiveDocument, document);
     try {
-      myCurrentCommand = new CommandDescriptor(command, project, name, groupId, confirmationPolicy,
-                                               shouldRecordCommandForActiveDocument, document);
+      myCurrentCommand = descriptor;
       fireCommandStarted();
       command.run();
     }
@@ -223,17 +223,16 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       throwable = th;
     }
     finally {
-      finishCommand(myCurrentCommand, throwable);
+      finishCommand(descriptor, throwable);
     }
   }
 
   @Override
-  @Nullable
-  public CommandToken startCommand(@Nullable final Project project,
-                                   @Nls final String name,
-                                   @Nullable final Object groupId,
-                                   @NotNull final UndoConfirmationPolicy undoConfirmationPolicy) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public @Nullable CommandToken startCommand(final @Nullable Project project,
+                                             final @Nls String name,
+                                             final @Nullable Object groupId,
+                                             final @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
+    ApplicationManager.getApplication().assertIsWriteThread();
     if (project != null && project.isDisposed()) return null;
 
     if (CommandLog.LOG.isDebugEnabled()) {
@@ -246,23 +245,23 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
     Document document = groupId instanceof Document
                         ? (Document)groupId
-                        : (groupId instanceof Ref && ((Ref)groupId).get() instanceof Document
-                           ? (Document)((Ref)groupId).get()
-                           : null);
+                        : groupId instanceof Ref && ((Ref<?>)groupId).get() instanceof Document
+                           ? (Document)((Ref<?>)groupId).get()
+                           : null;
     myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy, true, document);
     fireCommandStarted();
     return myCurrentCommand;
   }
 
   @Override
-  public void finishCommand(@NotNull final CommandToken command, @Nullable Throwable throwable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
+    ApplicationManager.getApplication().assertIsWriteThread();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     fireCommandFinished();
   }
 
-  protected void fireCommandFinished() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private void fireCommandFinished() {
+    ApplicationManager.getApplication().assertIsWriteThread();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this, currentCommand.myCommand,
                                           currentCommand.myName,
@@ -283,7 +282,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void enterModal() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     CommandDescriptor currentCommand = myCurrentCommand;
     myInterruptedCommands.push(currentCommand);
     if (currentCommand != null) {
@@ -293,7 +292,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void leaveModal() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
 
     myCurrentCommand = myInterruptedCommands.pop();
@@ -304,7 +303,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandName(String name) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandLog.LOG.assertTrue(currentCommand != null);
     currentCommand.myName = name;
@@ -312,22 +311,20 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandLog.LOG.assertTrue(currentCommand != null);
     currentCommand.myGroupId = groupId;
   }
 
   @Override
-  @Nullable
-  public Runnable getCurrentCommand() {
+  public @Nullable Runnable getCurrentCommand() {
     CommandDescriptor currentCommand = myCurrentCommand;
     return currentCommand != null ? currentCommand.myCommand : null;
   }
 
   @Override
-  @Nullable
-  public String getCurrentCommandName() {
+  public @Nullable String getCurrentCommandName() {
     CommandDescriptor currentCommand = myCurrentCommand;
     if (currentCommand != null) return currentCommand.myName;
     if (!myInterruptedCommands.isEmpty()) {
@@ -338,8 +335,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  @Nullable
-  public Object getCurrentCommandGroupId() {
+  public @Nullable Object getCurrentCommandGroupId() {
     CommandDescriptor currentCommand = myCurrentCommand;
     if (currentCommand != null) return currentCommand.myGroupId;
     if (!myInterruptedCommands.isEmpty()) {
@@ -350,8 +346,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  @Nullable
-  public Project getCurrentCommandProject() {
+  public @Nullable Project getCurrentCommandProject() {
     CommandDescriptor currentCommand = myCurrentCommand;
     return currentCommand != null ? currentCommand.myProject : null;
   }
@@ -392,15 +387,15 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs) {
+  public void addAffectedDocuments(@Nullable Project project, Document @NotNull ... docs) {
   }
 
   @Override
-  public void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files) {
+  public void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files) {
   }
 
   private void fireCommandStarted() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this,
                                           currentCommand.myCommand,

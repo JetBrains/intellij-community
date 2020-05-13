@@ -16,7 +16,7 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +33,7 @@ public class VisibilitySorter implements Sorter{
     @Override
     @NotNull
     public String getText() {
-      return IdeBundle.message("action.structureview.sort.by.visibility");
+      return StructureViewBundle.message("action.structureview.sort.by.visibility");
     }
 
     @Override

@@ -1,37 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.components.*;
+import static org.jetbrains.idea.svn.IdeaSVNConfigFile.CONFIG_FILE_NAME;
+import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
+import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
+import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
+
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.auth.*;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
-import org.jetbrains.idea.svn.config.SvnServerFileKeys;
-import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.jetbrains.idea.svn.update.MergeRootInfo;
-import org.jetbrains.idea.svn.update.UpdateRootInfo;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeSet;
-
-import static org.jetbrains.idea.svn.IdeaSVNConfigFile.CONFIG_FILE_NAME;
-import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
-import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
-import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.auth.AcceptResult;
+import org.jetbrains.idea.svn.auth.AuthenticationData;
+import org.jetbrains.idea.svn.auth.AuthenticationProvider;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.auth.SvnInteractiveAuthenticationProvider;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
+import org.jetbrains.idea.svn.config.SvnServerFileKeys;
+import org.jetbrains.idea.svn.diff.DiffOptions;
+import org.jetbrains.idea.svn.update.MergeRootInfo;
+import org.jetbrains.idea.svn.update.UpdateRootInfo;
 
 @State(name = "SvnConfiguration", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState> {
@@ -294,7 +302,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     final String oldEffectivePath = isUseDefaultConfiguration() ? defaultPath : getConfigurationDirectory();
     final String newEffectivePath = newUseDefault ? defaultPath : newConfigurationDirectory;
 
-    boolean directoryChanged = !Comparing.equal(getConfigurationDirectory(), newConfigurationDirectory);
+    boolean directoryChanged = !Objects.equals(getConfigurationDirectory(), newConfigurationDirectory);
     if (directoryChanged) {
       myState.directory.path = newConfigurationDirectory;
     }
@@ -304,7 +312,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     }
 
     if (directoryChanged || usageChanged) {
-      if (! Comparing.equal(oldEffectivePath, newEffectivePath)) {
+      if (!Objects.equals(oldEffectivePath, newEffectivePath)) {
         clear();
       }
     }

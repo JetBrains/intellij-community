@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PySdkFlavorTest extends PyTestCase {
   public void testPython27VersionString() {
-    final PythonSdkFlavor flavor = UnixPythonSdkFlavor.INSTANCE;
+    final PythonSdkFlavor flavor = UnixPythonSdkFlavor.getInstance();
     final String versionOutput = "Python 2.7.6\n";
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
     assertEquals("Python 2.7.6", mockSdk.getVersionString());
@@ -40,7 +40,7 @@ public class PySdkFlavorTest extends PyTestCase {
   }
 
   public void testPython34VersionString() {
-    final PythonSdkFlavor flavor = UnixPythonSdkFlavor.INSTANCE;
+    final PythonSdkFlavor flavor = UnixPythonSdkFlavor.getInstance();
     final String versionOutput = "Python 3.4.0\n";
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
     assertEquals("Python 3.4.0", mockSdk.getVersionString());
@@ -48,7 +48,7 @@ public class PySdkFlavorTest extends PyTestCase {
   }
 
   public void testJythonVersionString() {
-    final PythonSdkFlavor flavor = JythonSdkFlavor.INSTANCE;
+    final PythonSdkFlavor flavor = JythonSdkFlavor.getInstance();
     final String versionOutput = "Jython 2.6.3\n";
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
     assertEquals("Jython 2.6.3", mockSdk.getVersionString());
@@ -56,7 +56,7 @@ public class PySdkFlavorTest extends PyTestCase {
   }
 
   public void testJythonWithWarningsVersionString() {
-    final PythonSdkFlavor flavor = JythonSdkFlavor.INSTANCE;
+    final PythonSdkFlavor flavor = JythonSdkFlavor.getInstance();
     final String versionOutput = "\"my\" variable $jythonHome masks earlier declaration in same scope at /usr/bin/jython line 15.\n" +
                                  "Jython 2.6.3\n";
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
@@ -65,7 +65,7 @@ public class PySdkFlavorTest extends PyTestCase {
   }
 
   public void testPyPy23VersionString() {
-    final PythonSdkFlavor flavor = PyPySdkFlavor.INSTANCE;
+    final PythonSdkFlavor flavor = PyPySdkFlavor.getInstance();
     final String versionOutput = "Python 2.7.6 (32f35069a16d819b58c1b6efb17c44e3e53397b2, Jun 10 2014, 00:42:27)\n" +
                                  "[PyPy 2.3.1 with GCC 4.8.2]\n";
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
@@ -75,7 +75,7 @@ public class PySdkFlavorTest extends PyTestCase {
   }
 
   public void testPyPy323VersionString() {
-    final PythonSdkFlavor flavor = PyPySdkFlavor.INSTANCE;
+    final PythonSdkFlavor flavor = PyPySdkFlavor.getInstance();
     final String versionOutput = "Python 3.4.5 (986752d005bb6c65ce418113e4c3cd115f61a9b4, Jun 23 2014, 00:23:34)\n" +
                                  "[PyPy 2.3.1 with GCC 4.8.2]\n";
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
@@ -87,10 +87,11 @@ public class PySdkFlavorTest extends PyTestCase {
   // TODO: Add tests for MayaPy and IronPython SDK flavors
 
   @NotNull
-  private static Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
+  private Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
     final String versionString = flavor.getVersionStringFromOutput(versionOutput);
     final ProjectJdkImpl sdk = new ProjectJdkImpl("Test", PythonSdkType.getInstance(), "/path/to/sdk", versionString);
     sdk.setSdkAdditionalData(new PythonSdkAdditionalData(flavor));
+    disposeOnTearDown(sdk);
     return sdk;
   }
 }

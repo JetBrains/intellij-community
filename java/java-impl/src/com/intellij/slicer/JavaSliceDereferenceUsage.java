@@ -15,6 +15,7 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.usages.TextChunk;
@@ -41,8 +42,7 @@ class JavaSliceDereferenceUsage extends JavaSliceUsage {
 
     return new UsagePresentation() {
       @Override
-      @NotNull
-      public TextChunk[] getText() {
+      public TextChunk @NotNull [] getText() {
         return presentation.getText();
       }
 
@@ -59,7 +59,7 @@ class JavaSliceDereferenceUsage extends JavaSliceUsage {
 
       @Override
       public String getTooltipText() {
-        return "Variable dereferenced";
+        return JavaRefactoringBundle.message("dataflow.to.here.variable.dereferenced.tooltip");
       }
     };
   }

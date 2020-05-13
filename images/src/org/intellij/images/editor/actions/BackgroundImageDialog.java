@@ -1,12 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.editor.actions;
+
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.FRAME_PROP;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.createTemporaryBackgroundTransform;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getBackgroundSpec;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getIdeBackgroundColor;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.repaintAllWindows;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -20,10 +34,15 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -35,16 +54,12 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.intellij.images.fileTypes.ImageFileTypeManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
@@ -53,8 +68,25 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
+import java.util.Objects;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JSlider;
+import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.JTextComponent;
+import org.intellij.images.fileTypes.ImageFileTypeManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BackgroundImageDialog extends DialogWrapper {
   private static final String EDITOR = "editor";
@@ -91,7 +123,7 @@ public class BackgroundImageDialog extends DialogWrapper {
   public BackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
     super(project, true);
     myProject = project;
-    setTitle("Background Image");
+    setTitle(IdeBundle.message("dialog.title.background.image"));
     myEditorPreview = createEditorPreview();
     myIdePreview = createFramePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
@@ -109,10 +141,9 @@ public class BackgroundImageDialog extends DialogWrapper {
     pack();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    return ArrayUtil.append(super.createActions(), new AbstractAction("Clear and Close") {
+  protected Action @NotNull [] createActions() {
+    return ArrayUtil.append(super.createActions(), new AbstractAction(IdeBundle.message("button.clear.and.close")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         doClearAction();
@@ -261,7 +292,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     myOpacitySlider.addChangeListener(opacitySync);
     myOpacitySlider.setValue(15);
     myOpacitySpinner.setValue(15);
-    boolean perProject = !Comparing.equal(getBackgroundSpec(myProject, getSystemProp(true)), getBackgroundSpec(null, getSystemProp(true)));
+    boolean perProject = !Objects.equals(getBackgroundSpec(myProject, getSystemProp(true)), getBackgroundSpec(null, getSystemProp(true)));
     myThisProjectOnlyCb.setSelected(perProject);
     myAdjusting = false;
   }
@@ -460,8 +491,8 @@ public class BackgroundImageDialog extends DialogWrapper {
   }
 
   private static void initFlipPanel(@NotNull JPanel p, @NotNull JBCheckBox flipHorCb, @NotNull JBCheckBox flipVerCb) {
-    flipHorCb.setToolTipText("Flip vertically");
-    flipVerCb.setToolTipText("Flip horizontally");
+    flipHorCb.setToolTipText(IdeBundle.message("tooltip.flip.vertically"));
+    flipVerCb.setToolTipText(IdeBundle.message("tooltip.flip.horizontally"));
     p.setLayout(new GridLayout(1, 2, 1, 1));
     Color color = getSelectionBackground();
     JBPanelWithEmptyText h = addClickablePanel(p, flipHorCb, color);

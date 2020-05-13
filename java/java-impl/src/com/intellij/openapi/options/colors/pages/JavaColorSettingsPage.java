@@ -19,6 +19,7 @@ import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -58,40 +59,40 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.line.comment"), JavaHighlightingColors.LINE_COMMENT),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.block.comment"), JavaHighlightingColors.JAVA_BLOCK_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.comment"), JavaHighlightingColors.DOC_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag"), JavaHighlightingColors.DOC_COMMENT_TAG),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag.value"), JavaHighlightingColors.DOC_COMMENT_TAG_VALUE),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.markup"), JavaHighlightingColors.DOC_COMMENT_MARKUP),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.javadoc.comment"), JavaHighlightingColors.DOC_COMMENT),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.javadoc.tag"), JavaHighlightingColors.DOC_COMMENT_TAG),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.javadoc.tag.value"), JavaHighlightingColors.DOC_COMMENT_TAG_VALUE),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.javadoc.markup"), JavaHighlightingColors.DOC_COMMENT_MARKUP),
 
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.class"), JavaHighlightingColors.CLASS_NAME_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.anonymous.class"), JavaHighlightingColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.type.parameter"), JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.class"), JavaHighlightingColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.interface"), JavaHighlightingColors.INTERFACE_NAME_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.enum"), JavaHighlightingColors.ENUM_NAME_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.class"), JavaHighlightingColors.CLASS_NAME_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.anonymous.class"), JavaHighlightingColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.type.parameter"), JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.abstract.class"), JavaHighlightingColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.interface"), JavaHighlightingColors.INTERFACE_NAME_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.enum"), JavaHighlightingColors.ENUM_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.local.variable"), JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.local.variable"), JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.parameter"), JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.implicit.anonymous.parameter"), JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.instance.field"), JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.instance.final.field"), JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.field"), JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.imported.field"), JavaHighlightingColors.STATIC_FIELD_IMPORTED_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.final.field"), JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.final.imported.field"), JavaHighlightingColors.STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.reassigned.local.variable"), JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.reassigned.parameter"), JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.implicit.anonymous.parameter"), JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.instance.field"), JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.instance.final.field"), JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.static.field"), JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.static.imported.field"), JavaHighlightingColors.STATIC_FIELD_IMPORTED_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.static.final.field"), JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.static.final.imported.field"), JavaHighlightingColors.STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parameter"), JavaHighlightingColors.PARAMETER_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.lambda.parameter"), JavaHighlightingColors.LAMBDA_PARAMETER_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.method.call"), JavaHighlightingColors.METHOD_CALL_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.method.imported.call"), JavaHighlightingColors.STATIC_METHOD_CALL_IMPORTED_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.method.declaration"), JavaHighlightingColors.METHOD_DECLARATION_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.constructor.call"), JavaHighlightingColors.CONSTRUCTOR_CALL_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.constructor.declaration"), JavaHighlightingColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.method"), JavaHighlightingColors.STATIC_METHOD_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.method"), JavaHighlightingColors.ABSTRACT_METHOD_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inherited.method"), JavaHighlightingColors.INHERITED_METHOD_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.lambda.parameter"), JavaHighlightingColors.LAMBDA_PARAMETER_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.method.call"), JavaHighlightingColors.METHOD_CALL_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.method.imported.call"), JavaHighlightingColors.STATIC_METHOD_CALL_IMPORTED_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.method.declaration"), JavaHighlightingColors.METHOD_DECLARATION_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.constructor.call"), JavaHighlightingColors.CONSTRUCTOR_CALL_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.constructor.declaration"), JavaHighlightingColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.static.method"), JavaHighlightingColors.STATIC_METHOD_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.abstract.method"), JavaHighlightingColors.ABSTRACT_METHOD_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.inherited.method"), JavaHighlightingColors.INHERITED_METHOD_ATTRIBUTES),
 
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.name"), JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.annotation.name"), JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
 
   @NonNls private static final Map<String, TextAttributesKey> ourTags = RainbowHighlighter.createRainbowHLM();
@@ -139,7 +140,7 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
   @Override
   @NotNull
   public String getDisplayName() {
-    return OptionsBundle.message("options.java.display.name");
+    return JavaBundle.message("options.java.display.name");
   }
 
   @Override
@@ -148,14 +149,12 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ourDescriptors;
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 

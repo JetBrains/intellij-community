@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +33,9 @@ import java.util.concurrent.TimeoutException;
  * The class is thread-safe: all operations are synchronized.
  */
 public abstract class SingleTaskController<Request, Result> implements Disposable {
-  private static final Logger LOG = Logger.getInstance(SingleTaskController.class);
+  protected static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
-  @NotNull private final String myName;
+  @NotNull @NonNls private final String myName;
   @NotNull private final Consumer<? super Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
 
@@ -43,7 +44,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
 
   private boolean myIsClosed = false;
 
-  public SingleTaskController(@NotNull String name,
+  public SingleTaskController(@NotNull @NonNls String name,
                               @NotNull Consumer<? super Result> handler,
                               @NotNull Disposable parent) {
     myName = name;
@@ -58,12 +59,16 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
    * If there is no active task, starts a new one. <br/>
    * Otherwise just remembers requests in the queue. Later they can be retrieved by {@link #popRequests()}.
    */
-  public final void request(@NotNull Request... requests) {
+  public final void request(Request @NotNull ... requests) {
+    request(Arrays.asList(requests));
+  }
+
+  public void request(@NotNull List<Request> requestList) {
     synchronized (LOCK) {
       if (myIsClosed) return;
-      myAwaitingRequests.addAll(Arrays.asList(requests));
-      debug("Added requests: " + Arrays.toString(requests));
-      if (myRunningTask != null && cancelRunningTasks(requests)) {
+      myAwaitingRequests.addAll(requestList);
+      debug("Added requests: " + requestList);
+      if (myRunningTask != null && cancelRunningTasks(requestList)) {
         cancelTask(myRunningTask);
       }
       if (myRunningTask == null) {
@@ -73,7 +78,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     }
   }
 
-  protected boolean cancelRunningTasks(@NotNull Request[] requests) {
+  protected boolean cancelRunningTasks(@NotNull List<Request> requests) {
     return false;
   }
 

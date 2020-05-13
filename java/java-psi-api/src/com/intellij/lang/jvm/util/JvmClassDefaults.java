@@ -16,8 +16,7 @@ public class JvmClassDefaults {
 
   private JvmClassDefaults() {}
 
-  @NotNull
-  public static JvmMethod[] findMethodsByName(@NotNull JvmClass clazz, @NotNull String methodName) {
+  public static JvmMethod @NotNull [] findMethodsByName(@NotNull JvmClass clazz, @NotNull String methodName) {
     List<JvmMethod> result = filter(clazz.getMethods(), it -> it.getName().equals(methodName));
     return result.toArray(JvmMethod.EMPTY_ARRAY);
   }

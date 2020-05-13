@@ -7,8 +7,10 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,34 +20,34 @@ import java.util.Map;
 
 public class ShColorPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = {
-      new AttributesDescriptor("Number", ShHighlighterColors.NUMBER),
-      new AttributesDescriptor("Keyword", ShHighlighterColors.KEYWORD),
-      new AttributesDescriptor("Variables//Variable Usage", ShHighlighterColors.VARIABLE),
-      new AttributesDescriptor("Variables//Variable Declaration", ShHighlighterColors.VARIABLE_DECLARATION),
-      new AttributesDescriptor("Variables//Composed Variable", ShHighlighterColors.COMPOSED_VARIABLE),
-      new AttributesDescriptor("String", ShHighlighterColors.STRING),
-      new AttributesDescriptor("Raw String", ShHighlighterColors.RAW_STRING),
-      new AttributesDescriptor("Line Comment", ShHighlighterColors.LINE_COMMENT),
-      new AttributesDescriptor("Shebang Comment", ShHighlighterColors.SHEBANG_COMMENT),
+      new AttributesDescriptor(ShBundle.message("sh.color.number"), ShHighlighterColors.NUMBER),
+      new AttributesDescriptor(ShBundle.message("sh.color.keyword"), ShHighlighterColors.KEYWORD),
+      new AttributesDescriptor(ShBundle.message("sh.color.variables.variable.usage"), ShHighlighterColors.VARIABLE),
+      new AttributesDescriptor(ShBundle.message("sh.color.variables.variable.declaration"), ShHighlighterColors.VARIABLE_DECLARATION),
+      new AttributesDescriptor(ShBundle.message("sh.color.variables.composed.variable"), ShHighlighterColors.COMPOSED_VARIABLE),
+      new AttributesDescriptor(ShBundle.message("sh.color.string"), ShHighlighterColors.STRING),
+      new AttributesDescriptor(ShBundle.message("sh.color.raw.string"), ShHighlighterColors.RAW_STRING),
+      new AttributesDescriptor(ShBundle.message("sh.color.line.comment"), ShHighlighterColors.LINE_COMMENT),
+      new AttributesDescriptor(ShBundle.message("sh.color.shebang.comment"), ShHighlighterColors.SHEBANG_COMMENT),
 
-      new AttributesDescriptor("Here Documents", ShHighlighterColors.HERE_DOC),
-      new AttributesDescriptor("Here Documents Start", ShHighlighterColors.HERE_DOC_START),
-      new AttributesDescriptor("Here Documents End", ShHighlighterColors.HERE_DOC_END),
+      new AttributesDescriptor(ShBundle.message("sh.color.here.documents"), ShHighlighterColors.HERE_DOC),
+      new AttributesDescriptor(ShBundle.message("sh.color.here.documents.start"), ShHighlighterColors.HERE_DOC_START),
+      new AttributesDescriptor(ShBundle.message("sh.color.here.documents.end"), ShHighlighterColors.HERE_DOC_END),
 
-      new AttributesDescriptor("Braces//Parentheses", ShHighlighterColors.PAREN),
-      new AttributesDescriptor("Braces//Curly Brackets", ShHighlighterColors.BRACE),
-      new AttributesDescriptor("Braces//Square Brackets", ShHighlighterColors.BRACKET),
+      new AttributesDescriptor(ShBundle.message("sh.color.braces.parentheses"), ShHighlighterColors.PAREN),
+      new AttributesDescriptor(ShBundle.message("sh.color.braces.curly.brackets"), ShHighlighterColors.BRACE),
+      new AttributesDescriptor(ShBundle.message("sh.color.braces.square.brackets"), ShHighlighterColors.BRACKET),
 
-      new AttributesDescriptor("Backquotes", ShHighlighterColors.BACKQUOTE),
-      new AttributesDescriptor("Redirection", ShHighlighterColors.REDIRECTION),
-      new AttributesDescriptor("Commands//Generic Command", ShHighlighterColors.GENERIC_COMMAND),
-      new AttributesDescriptor("Commands//Subshell Command", ShHighlighterColors.SUBSHELL_COMMAND),
-      new AttributesDescriptor("Conditional operators", ShHighlighterColors.CONDITIONAL_OPERATORS),
+      new AttributesDescriptor(ShBundle.message("sh.color.backquotes"), ShHighlighterColors.BACKQUOTE),
+      new AttributesDescriptor(ShBundle.message("sh.color.redirection"), ShHighlighterColors.REDIRECTION),
+      new AttributesDescriptor(ShBundle.message("sh.color.commands.generic.command"), ShHighlighterColors.GENERIC_COMMAND),
+      new AttributesDescriptor(ShBundle.message("sh.color.commands.subshell.command"), ShHighlighterColors.SUBSHELL_COMMAND),
+      new AttributesDescriptor(ShBundle.message("sh.color.conditional.operators"), ShHighlighterColors.CONDITIONAL_OPERATORS),
 
-      new AttributesDescriptor("Function Declaration", ShHighlighterColors.FUNCTION_DECLARATION)
+      new AttributesDescriptor(ShBundle.message("sh.color.function.declaration"), ShHighlighterColors.FUNCTION_DECLARATION)
   };
 
-  private static final HashMap<String, TextAttributesKey> TAG_DESCRIPTOR_MAP = new HashMap<>();
+  @NonNls private static final HashMap<String, TextAttributesKey> TAG_DESCRIPTOR_MAP = new HashMap<>();
   static {
     TAG_DESCRIPTOR_MAP.put("var", ShHighlighterColors.VARIABLE_DECLARATION);
     TAG_DESCRIPTOR_MAP.put("composed_var", ShHighlighterColors.COMPOSED_VARIABLE);
@@ -78,15 +80,13 @@ public class ShColorPage implements ColorSettingsPage {
     return TAG_DESCRIPTOR_MAP;
   }
 
-  @NotNull
   @Override
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ATTRS;
   }
 
-  @NotNull
   @Override
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 

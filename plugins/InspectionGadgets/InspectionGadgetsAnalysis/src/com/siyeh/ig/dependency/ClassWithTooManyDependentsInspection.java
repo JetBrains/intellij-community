@@ -38,16 +38,8 @@ public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
   @SuppressWarnings({"PublicField"})
   public int limit = 10;
 
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.with.too.many.dependents.display.name");
-  }
-
-  @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,

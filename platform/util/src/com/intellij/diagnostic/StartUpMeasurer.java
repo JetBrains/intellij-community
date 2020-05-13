@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.util.containers.ObjectLongHashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -13,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
-  final static AtomicReference<LoadingState> currentState = new AtomicReference<>(LoadingState.BOOTSTRAP);
+  static final AtomicReference<LoadingState> currentState = new AtomicReference<>(LoadingState.BOOTSTRAP);
 
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
@@ -21,9 +19,7 @@ public final class StartUpMeasurer {
   // not to put common part of name to end of).
   // It is not serves only display purposes - it is IDs. Visualizer and another tools to analyze data uses phase IDs,
   // so, any changes must be discussed across all involved and reflected in changelog (see `format-changelog.md`).
-  public static final class Phases {
-    public static final String APP_STARTER = "appStarter";
-
+  public static final class Activities {
     // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
     public static final String INIT_APP = "app initialization";
 
@@ -33,10 +29,12 @@ public final class StartUpMeasurer {
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
-    public static final String PROJECT_PRE_STARTUP = "project pre-startup";
     public static final String PROJECT_STARTUP = "project startup";
 
     public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
+    public static final String PROJECT_DUMB_POST_START_UP_ACTIVITIES = "project post-startup dumb-aware activities";
+    public static final String EDITOR_RESTORING = "editor restoring";
+    public static final String EDITOR_RESTORING_TILL_PAINT = "editor restoring till paint";
   }
 
   @SuppressWarnings("StaticNonFinalField")
@@ -54,6 +52,11 @@ public final class StartUpMeasurer {
 
   public static boolean isEnabled() {
     return isEnabled;
+  }
+
+  @TestOnly
+  public static void disable() {
+    isEnabled = false;
   }
 
   @ApiStatus.Internal
@@ -77,36 +80,30 @@ public final class StartUpMeasurer {
    *
    * Scope is not supported — reported as global.
    */
-  public static void addInstantEvent(@NotNull String name) {
+  public static void addInstantEvent(@NonNls @NotNull String name) {
     if (!isEnabled) {
       return;
     }
 
-    ActivityImpl activity = new ActivityImpl(name, null);
+    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), null, null);
     activity.setEnd(-1);
     addActivity(activity);
   }
 
-  @NotNull
-  public static Activity startActivity(@NotNull String name) {
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name) {
     return startActivity(name, ActivityCategory.APP_INIT);
   }
 
-  @NotNull
-  public static Activity startActivity(@NotNull String name, @NotNull ActivityCategory category) {
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category) {
     return startActivity(name, category, null);
   }
 
-  @NotNull
-  public static Activity startActivity(@NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
-    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */  pluginId);
-    activity.setCategory(category);
-    return activity;
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
+    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ pluginId, category);
   }
 
-  @NotNull
-  public static Activity startMainActivity(@NotNull String name) {
-    return new ActivityImpl(name, null);
+  public static @NotNull Activity startMainActivity(@NonNls @NotNull String name) {
+    return new ActivityImpl(name, getCurrentTime(), null, null);
   }
 
   /**
@@ -134,7 +131,7 @@ public final class StartUpMeasurer {
   /**
    * Default threshold is applied.
    */
-  public static long addCompletedActivity(long start, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+  public static long addCompletedActivity(long start, @NonNls @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
     long end = getCurrentTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
@@ -145,20 +142,19 @@ public final class StartUpMeasurer {
     return duration;
   }
 
-  public static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+  public static void addCompletedActivity(long start, long end, @NonNls @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
     if (!isEnabled) {
       return;
     }
 
-    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId);
-    item.setCategory(category);
+    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId, category);
     item.setEnd(end);
     addActivity(item);
   }
 
   public static void setCurrentState(@NotNull LoadingState state) {
     LoadingState old = currentState.getAndSet(state);
-    if (old.ordinal() > state.ordinal()) {
+    if (old.compareTo(state)>0) {
       LoadingState.getLogger().error("New state " + state + " cannot precede old " + old);
     }
     stateSet(state);
@@ -226,7 +222,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void addPluginCost(@NotNull String pluginId, @NotNull String phase, long time) {
+  public static void addPluginCost(@NonNls @NotNull String pluginId, @NonNls @NotNull String phase, long time) {
     if (!isMeasuringPluginStartupCosts()) {
       return;
     }
@@ -241,7 +237,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void doAddPluginCost(@NotNull String pluginId, @NotNull String phase, long time, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
+  public static void doAddPluginCost(@NonNls @NotNull String pluginId, @NonNls @NotNull String phase, long time, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
     ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
     if (costPerPhaseMap == null) {
       costPerPhaseMap = new ObjectLongHashMap<>();

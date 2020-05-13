@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -12,42 +12,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import static java.lang.String.CASE_INSENSITIVE_ORDER;
+import static java.util.Comparator.comparingInt;
 
 /**
  * @author Vladimir Kondratyev
  */
 public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
-
-  private static final Comparator<ActivateToolWindowAction> COMPARATOR = (a1, a2) -> {
-    int m1 = ActivateToolWindowAction.getMnemonicForToolWindow(a1.getToolWindowId());
-    int m2 = ActivateToolWindowAction.getMnemonicForToolWindow(a2.getToolWindowId());
-
-    if (m1 != -1 && m2 == -1) {
-      return -1;
-    }
-    else if (m1 == -1 && m2 != -1) {
-      return 1;
-    }
-    else if (m1 != -1) {
-      return m1 - m2;
-    }
-    else {
-    // Both actions have no mnemonic, therefore they are sorted alphabetically
-      return a1.getToolWindowId().compareToIgnoreCase(a2.getToolWindowId());
-    }
-  };
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     Project project = getEventProject(e);
     if (project == null) return EMPTY_ARRAY;
     List<ActivateToolWindowAction> result = getToolWindowActions(project, false);
@@ -66,7 +47,20 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
         result.add((ActivateToolWindowAction)action);
       }
     }
-    Collections.sort(result, COMPARATOR);
+    result.sort(getActionComparator());
     return result;
+  }
+
+  @NotNull
+  private static Comparator<ActivateToolWindowAction> getActionComparator() {
+    return comparingMnemonic().thenComparing(it -> it.getToolWindowId(), CASE_INSENSITIVE_ORDER);
+  }
+
+  @NotNull
+  private static Comparator<ActivateToolWindowAction> comparingMnemonic() {
+    return comparingInt(it -> {
+      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(it.getToolWindowId());
+      return mnemonic != -1 ? mnemonic : Integer.MAX_VALUE;
+    });
   }
 }

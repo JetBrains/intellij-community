@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings.language
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
@@ -16,7 +17,7 @@ class ParameterInlayProviderSettingsModel(
   override val mainCheckBoxLabel: String
     get() = provider.mainCheckboxText
   override val name: String
-    get() = "Parameter hints"
+    get() = CodeInsightBundle.message("settings.inlay.parameter.hints.panel.name")
 
   override val previewText: String?
     get() = null
@@ -35,7 +36,7 @@ class ParameterInlayProviderSettingsModel(
                                id = option.id,
                                loadFromSettings = { state.state },
                                onUserChanged = { state.state = it },
-                               extendedDescription = option.extendedDescription
+                               extendedDescription = option.extendedDescriptionSupplier?.get()
     )
   }
 
@@ -49,6 +50,7 @@ class ParameterInlayProviderSettingsModel(
     for (state in optionStates) {
       state.apply()
     }
+    ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
   }
 
   override fun isModified(): Boolean {

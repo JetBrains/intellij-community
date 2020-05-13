@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadWriteUtil {
-  public static ReadWriteAccessDetector.Access getReadWriteAccess(@NotNull PsiElement[] primaryElements, @NotNull PsiElement element) {
+  public static ReadWriteAccessDetector.Access getReadWriteAccess(PsiElement @NotNull [] primaryElements, @NotNull PsiElement element) {
     for (ReadWriteAccessDetector detector : ReadWriteAccessDetector.EP_NAME.getExtensionList()) {
       if (isReadWriteAccessibleElements(primaryElements, detector)) {
         return detector.getExpressionAccess(element);
@@ -14,7 +14,7 @@ public class ReadWriteUtil {
     return null;
   }
 
-  private static boolean isReadWriteAccessibleElements(@NotNull PsiElement[] primaryElements, @NotNull ReadWriteAccessDetector detector) {
+  private static boolean isReadWriteAccessibleElements(PsiElement @NotNull [] primaryElements, @NotNull ReadWriteAccessDetector detector) {
     for (PsiElement element : primaryElements) {
       if (!detector.isReadWriteAccessible(element)) return false;
     }

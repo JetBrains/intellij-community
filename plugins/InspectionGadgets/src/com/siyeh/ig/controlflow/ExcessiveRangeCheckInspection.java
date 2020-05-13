@@ -4,8 +4,8 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -89,7 +89,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     }
     if (expression instanceof PsiBinaryExpression) {
       PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
-      DfaRelationValue.RelationType rel = DfaRelationValue.RelationType.fromElementType(binOp.getOperationTokenType());
+      RelationType rel = RelationType.fromElementType(binOp.getOperationTokenType());
       if (rel == null) return null;
       PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
       PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
@@ -146,8 +146,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     LongRangeSet getFullRange() {
       LongRangeSet result;
       if (myField != null) {
-        DfaValueFactory factory = new DfaValueFactory(null, false);
-        result = LongRangeSet.fromDfaValue(myField.getDefaultValue(factory, false));
+        result = DfLongType.extractRange(myField.getDefaultValue(false));
       }
       else {
         result = LongRangeSet.fromType(myExpression.getType());

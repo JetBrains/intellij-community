@@ -5,11 +5,11 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ThreeState;
@@ -25,8 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.StackFrameProxyImpl");
+public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
+  private static final Logger LOG = Logger.getInstance(StackFrameProxyImpl.class);
   private static final int FRAMES_BATCH_MAX = 10;
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final int myFrameFromBottomIndex; // 1-based
@@ -135,7 +135,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         throw new EvaluateException(e.getMessage(), e);
       }
       catch (ObjectCollectedException ignored) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.collected"));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.thread.collected"));
       }
       catch (IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -210,6 +210,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   }
 
   @Nullable
+  @Override
   public ObjectReference thisObject() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
@@ -306,6 +307,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     }
     throw new EvaluateException(error.getMessage(), error);
   }
+  
+  @Override
+  public Value getVariableValue(@NotNull LocalVariableProxy localVariable) throws EvaluateException {
+    if (localVariable instanceof LocalVariableProxyImpl) {
+      return getValue((LocalVariableProxyImpl)localVariable);
+    }
+    throw new EvaluateException("Variable doesn't belong to this frame: " + localVariable);
+  }
 
   public Value getValue(LocalVariableProxyImpl localVariable) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -331,7 +340,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       }
       catch (InternalException e) {
         if (e.errorCode() == JvmtiError.INVALID_SLOT || e.errorCode() == JvmtiError.ABSENT_INFORMATION) {
-          throw new EvaluateException(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
+          throw new EvaluateException(JavaDebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
         }
         else throw e;
       }

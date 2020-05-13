@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.BatchModeDescriptorsUtil;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -142,8 +143,7 @@ public class InspectionTree extends Tree {
     myModel.clearTree();
   }
 
-  @Nullable
-  public String[] getSelectedGroupPath() {
+  public String @Nullable [] getSelectedGroupPath() {
     TreePath commonPath = TreePathUtil.findCommonAncestor(getSelectionPaths());
     if (commonPath == null) return null;
     for (Object n : commonPath.getPath()) {
@@ -242,8 +242,7 @@ public class InspectionTree extends Tree {
     return currentCommonNode;
   }
 
-  @NotNull
-  public RefEntity[] getSelectedElements() {
+  public RefEntity @NotNull [] getSelectedElements() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       InspectionToolWrapper toolWrapper = getSelectedToolWrapper(true);
@@ -284,13 +283,11 @@ public class InspectionTree extends Tree {
     }
   }
 
-  @NotNull
-  public CommonProblemDescriptor[] getAllValidSelectedDescriptors() {
+  public CommonProblemDescriptor @NotNull [] getAllValidSelectedDescriptors() {
     return BatchModeDescriptorsUtil.flattenDescriptors(getSelectedDescriptorPacks(false, null, true, null));
   }
 
-  @NotNull
-  public CommonProblemDescriptor[] getSelectedDescriptors() {
+  public CommonProblemDescriptor @NotNull [] getSelectedDescriptors() {
     return BatchModeDescriptorsUtil.flattenDescriptors(getSelectedDescriptorPacks(false, null, false, null));
   }
 
@@ -332,9 +329,8 @@ public class InspectionTree extends Tree {
     return descriptors;
   }
 
-  @Nullable
   @Override
-  public TreePath[] getSelectionPaths() {
+  public TreePath @Nullable [] getSelectionPaths() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return super.getSelectionPaths();
   }
@@ -497,7 +493,7 @@ public class InspectionTree extends Tree {
       return node.getChildren().stream().allMatch(this::shouldDelete);
     }
     else if (node instanceof InspectionNode) {
-      InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(((InspectionNode)node).getToolWrapper());
+      InspectionToolResultExporter presentation = myView.getGlobalInspectionContext().getPresentation(((InspectionNode)node).getToolWrapper());
       SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
       if (problemElements.isEmpty()) {
         return true;
@@ -512,8 +508,7 @@ public class InspectionTree extends Tree {
     return myView.getGlobalInspectionContext();
   }
 
-  @NotNull
-  private static String[] getGroupPath(@NotNull InspectionGroupNode node) {
+  private static String @NotNull [] getGroupPath(@NotNull InspectionGroupNode node) {
     List<String> path = new ArrayList<>(2);
     while (true) {
       InspectionTreeNode parent = node.getParent();

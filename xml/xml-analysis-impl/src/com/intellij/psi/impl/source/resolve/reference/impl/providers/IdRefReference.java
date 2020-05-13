@@ -123,7 +123,7 @@ public class IdRefReference extends BasicAttributeValueReference {
         }
 
         @Override
-        public void visitComment(final PsiComment comment) {
+        public void visitComment(@NotNull final PsiComment comment) {
           if (isDeclarationComment(comment)) result.add(comment);
 
           super.visitComment(comment);
@@ -187,8 +187,7 @@ public class IdRefReference extends BasicAttributeValueReference {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final List<String> result = new LinkedList<>();
 
     process(new PsiElementProcessor<PsiElement>() {

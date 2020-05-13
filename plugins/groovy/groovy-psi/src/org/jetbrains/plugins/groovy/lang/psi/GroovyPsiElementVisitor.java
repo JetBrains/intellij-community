@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class GroovyPsiElementVisitor extends PsiElementVisitor {
   protected GroovyElementVisitor myGroovyElementVisitor;
@@ -12,7 +13,7 @@ public class GroovyPsiElementVisitor extends PsiElementVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     if (element instanceof GroovyPsiElement) {
       ((GroovyPsiElement) element).accept(myGroovyElementVisitor);
     }

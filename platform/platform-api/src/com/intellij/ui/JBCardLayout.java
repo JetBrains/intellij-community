@@ -183,6 +183,7 @@ public class JBCardLayout extends CardLayout {
     super.show(parent, name);
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void main(String[] args) throws IOException {
     final JBCardLayout cardLayout = new JBCardLayout();
 

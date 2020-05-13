@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name="javax.swing">
+    <annotation name="org.jetbrains.annotations.Nls" />
+  </item>
   <item name="javax.swing.ActionMap javax.swing.Action get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -68,6 +71,9 @@
   </item>
   <item name="javax.swing.JEditorPane JEditorPane(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='javax.swing.JEditorPane void setContentType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='javax.swing.JFrame void setDefaultCloseOperation(int) 0'>
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -394,11 +400,11 @@
   <item name="javax.swing.JTree java.awt.Rectangle getPathBounds(javax.swing.tree.TreePath)">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
-  <item name="javax.swing.JTree javax.swing.tree.TreePath getSelectionPath()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
   <item name="javax.swing.JTree javax.swing.tree.TreePath getPathForLocation(int, int)">
     <annotation name="org.jetbrains.annotations.Nullable" />
+  </item>
+  <item name="javax.swing.JTree javax.swing.tree.TreePath getSelectionPath()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JTree javax.swing.tree.TreePath[] getSelectionPaths()">
     <annotation name="org.jetbrains.annotations.Nullable" />
@@ -454,6 +460,9 @@
   <item name="javax.swing.LookAndFeel void installColorsAndFont(javax.swing.JComponent, java.lang.String, java.lang.String, java.lang.String) 3">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='javax.swing.LookAndFeel void installProperty(javax.swing.JComponent, java.lang.String, java.lang.Object) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.RowSorter.SortKey SortKey(int, javax.swing.SortOrder) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -479,19 +488,10 @@
   <item name="javax.swing.TransferHandler java.awt.datatransfer.Transferable createTransferable(javax.swing.JComponent)">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
+  <item name='javax.swing.UIDefaults'>
+    <annotation name="org.jetbrains.annotations.NonNls"/>
+  </item>
   <item name="javax.swing.UIManager">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager boolean getBoolean(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager java.awt.Color getColor(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager java.awt.Font getFont(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager java.lang.Object get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name='javax.swing.UIManager java.lang.String getCrossPlatformLookAndFeelClassName()'>
@@ -499,12 +499,6 @@
   </item>
   <item name='javax.swing.UIManager java.lang.String getSystemLookAndFeelClassName()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name="javax.swing.UIManager javax.swing.Icon getIcon(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager javax.swing.border.Border getBorder(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
 </root>
 

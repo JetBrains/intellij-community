@@ -27,12 +27,6 @@ public class ShPipelineCommandImpl extends ShCommandImpl implements ShPipelineCo
 
   @Override
   @Nullable
-  public ShPipeline getPipeline() {
-    return findChildByClass(ShPipeline.class);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getBang() {
     return findChildByType(BANG);
   }

@@ -1,86 +1,54 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote.ext;
 
-import org.jdom.Attribute;
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Irina.Chernushina on 7/29/2016.
  */
 public class UnknownCredentialsHolder {
-  private String myInterpreterPath;
-  @NotNull
-  private final Map<String, String> myAttributes = new HashMap<>();
+  private @NotNull String myInterpreterPath;
 
-  public UnknownCredentialsHolder(String interpreterPath) {
-    myInterpreterPath = interpreterPath;
-  }
+  private @Nullable Element myElement;
 
   public UnknownCredentialsHolder() {
     myInterpreterPath = "";
   }
 
-  public String getInterpreterPath() {
+  public @NotNull String getInterpreterPath() {
     return myInterpreterPath;
   }
 
-  public void setInterpreterPath(String interpreterPath) {
+  public void setInterpreterPath(@NotNull String interpreterPath) {
     myInterpreterPath = interpreterPath;
   }
 
-  @NotNull
-  public Map<String, String> getAttributes() {
-    return myAttributes;
-  }
-
   public void save(@NotNull Element element) {
-    for (Map.Entry<String, String> entry : myAttributes.entrySet()) {
-      element.setAttribute(entry.getKey(), entry.getValue());
+    if (myElement != null) {
+      JDOMUtil.copyMissingContent(myElement, element);
     }
   }
 
   public void load(@NotNull Element element) {
-    myAttributes.clear();
-    for (Attribute attribute : element.getAttributes()) {
-      myAttributes.put(attribute.getName(), attribute.getValue());
-    }
+    myElement = element.clone();
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     UnknownCredentialsHolder holder = (UnknownCredentialsHolder)o;
-
-    if (myInterpreterPath != null ? !myInterpreterPath.equals(holder.myInterpreterPath) : holder.myInterpreterPath != null) return false;
-    if (!myAttributes.equals(holder.myAttributes)) return false;
-
-    return true;
+    return Objects.equals(myInterpreterPath, holder.myInterpreterPath) &&
+           Objects.equals(myElement, holder.myElement);
   }
 
   @Override
   public int hashCode() {
-    int result = myInterpreterPath != null ? myInterpreterPath.hashCode() : 0;
-    result = 31 * result + myAttributes.hashCode();
-    return result;
+    return Objects.hash(myInterpreterPath, myElement);
   }
 }

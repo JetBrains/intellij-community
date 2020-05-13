@@ -37,17 +37,8 @@ import java.util.Set;
 
 public class ClassOnlyUsedInOneModuleInspection extends BaseGlobalInspection {
 
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.only.used.in.one.module.display.name");
-  }
-
-  @Nullable
-  @Override
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope scope,
     @NotNull InspectionManager manager,

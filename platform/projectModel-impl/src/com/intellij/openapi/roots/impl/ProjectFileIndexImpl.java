@@ -65,16 +65,14 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
       for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext(); ) {
         VirtualFile root = iterator.next();
         DirectoryInfo info = getInfoForFileOrDirectory(root);
-        if (!info.isInProject(root) // is excluded or ignored
-            || !module.equals(info.getModule())) { // maybe 2 modules have the same content root?
+        if (!module.equals(info.getModule())) { // maybe 2 modules have the same content root?
           iterator.remove();
           continue;
         }
 
         VirtualFile parent = root.getParent();
         if (parent != null) {
-          DirectoryInfo parentInfo = getInfoForFileOrDirectory(parent);
-          if (isFileInContent(parent, parentInfo)) {
+          if (isInContent(parent)) {
             iterator.remove();
           }
         }
@@ -225,6 +223,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return info.isInModuleSource(fileOrDir) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
   }
 
+  @Nullable
+  @Override
   public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return myDirectoryIndex.getSourceRootFolder(getInfoForFileOrDirectory(fileOrDir));
   }

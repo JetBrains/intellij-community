@@ -43,8 +43,8 @@ public class EclipseCodeStyleImportStep extends ProjectImportWizardStep {
     ButtonGroup group = new ButtonGroup();
     group.add(myUseDefaultCodeStyleRB);
     group.add(myImportCodeStyleRB);
-    myTitlePanel.setBorder(IdeBorderFactory.createTitledBorder("Choose project code style"));
-    myCodeStylesList.setEmptyText("Code styles not found");
+    myTitlePanel.setBorder(IdeBorderFactory.createTitledBorder(EclipseBundle.message("border.text.choose.project.code.style")));
+    myCodeStylesList.setEmptyText(EclipseBundle.message("list.empty.text.code.styles.not.found"));
     myUseDefaultCodeStyleRB.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

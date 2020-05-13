@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
@@ -106,7 +108,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
       try {
         final String moduleFilePath = module.computeModuleFilePath();
         if (new File(moduleFilePath).exists()) {
-          errors.put(IdeBundle.message("warning.message.the.module.file.0.already.exist.and.will.be.overwritten", moduleFilePath), module);
+          errors.put(JavaUiBundle.message("warning.message.the.module.file.0.already.exist.and.will.be.overwritten", moduleFilePath), module);
         }
       }
       catch (InvalidDataException e) {
@@ -115,9 +117,12 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     }
     if (!errors.isEmpty()) {
       final int answer = Messages.showYesNoCancelDialog(getComponent(),
-                                                        IdeBundle.message("warning.text.0.do.you.want.to.overwrite.these.files",
+                                                        JavaUiBundle.message("warning.text.0.do.you.want.to.overwrite.these.files",
                                                                           StringUtil.join(errors.keySet(), "\n"), errors.size()),
-                                                        IdeBundle.message("title.file.already.exists"), "Overwrite", "Reuse", "Cancel", Messages.getQuestionIcon());
+                                                        IdeBundle.message("title.file.already.exists"),
+                                                        CommonBundle.message("button.overwrite"),
+                                                        CommonBundle.message("button.reuse"),
+                                                        CommonBundle.message("button.without.mnemonics.cancel"), Messages.getQuestionIcon());
       if (answer == Messages.CANCEL) {
         return false;
       }

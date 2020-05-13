@@ -4,7 +4,7 @@ package com.intellij.psi.impl
 import com.intellij.codeInsight.JavaModuleSystemEx
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.JavaErrorMessages
+import com.intellij.codeInsight.daemon.JavaErrorBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.annotations.NonNls
 
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
@@ -52,7 +53,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
               val test = index.isInTestSourceContent(useVFile)
               val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
               if (dirs.isEmpty()) {
-                return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("package.not.found", target.qualifiedName))
+                return if (quick) ERR else ErrorWithFixes(
+                  JavaErrorBundle.message("package.not.found", target.qualifiedName))
               }
               val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick)
               return when {
@@ -98,7 +100,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
         if (!isRoot) {
           return if (quick) ERR else ErrorWithFixes(
-            JavaErrorMessages.message("module.access.not.in.graph", packageName, targetName),
+            JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
             listOf(AddModulesOptionFix(module, targetName)))
         }
       }
@@ -114,8 +116,10 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           else -> emptyList()
         }
         return when (useModule) {
-          null -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.unnamed", packageName, targetName), fixes)
-          else -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.named", packageName, targetName, useName), fixes)
+          null -> ErrorWithFixes(
+            JavaErrorBundle.message("module.access.from.unnamed", packageName, targetName), fixes)
+          else -> ErrorWithFixes(
+            JavaErrorBundle.message("module.access.from.named", packageName, targetName, useName), fixes)
         }
       }
 
@@ -123,14 +127,16 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         return when {
           quick -> ERR
           PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
-            JavaErrorMessages.message("module.access.does.not.read", packageName, targetName, useName),
+            JavaErrorBundle.message("module.access.does.not.read", packageName, targetName, useName),
             listOf(AddRequiresDirectiveFix(useModule, targetName)))
-          else -> ErrorWithFixes(JavaErrorMessages.message("module.access.bad.name", packageName, targetName))
+          else -> ErrorWithFixes(
+            JavaErrorBundle.message("module.access.bad.name", packageName, targetName))
         }
       }
     }
     else if (useModule != null) {
-      return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("module.access.to.unnamed", packageName, useModule.name))
+      return if (quick) ERR else ErrorWithFixes(
+        JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
     }
 
     return null
@@ -189,7 +195,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
-    override fun getFamilyName() = "dfd4a2c1-da18-4651-9aa8-d7d31cae10be" // random string; never visible
+    @NonNls override fun getFamilyName() = "Fix compiler option" // not visible
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = !module.isDisposed
 
@@ -205,20 +211,23 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     protected abstract fun update(options: MutableList<String>)
 
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null
+
     override fun startInWriteAction() = true
   }
 
   private class AddExportsOptionFix(module: Module, targetName: String, packageName: String, private val useName: String) : CompilerOptionFix(module) {
     private val qualifier = "${targetName}/${packageName}"
 
-    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-exports=${qualifier}=${useName}")
+    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-exports ${qualifier}=${useName}")
 
     override fun update(options: MutableList<String>) {
       var idx = -1; var candidate = -1; var offset = 0
+      val prefix = "--add-exports"
       for ((i, option) in options.withIndex()) {
-        if (option.startsWith("--add-exports")) {
-          if (option.length == 13) { candidate = i + 1 ; offset = 0 }
-          else if (option[13] == '=') { candidate = i; offset = 14 }
+        if (option.startsWith(prefix)) {
+          if (option.length == prefix.length) { candidate = i + 1 ; offset = 0 }
+          else if (option[prefix.length] == '=') { candidate = i; offset = prefix.length + 1 }
         }
         if (i == candidate && option.startsWith(qualifier, offset)) {
           val qualifierEnd = qualifier.length + offset
@@ -227,31 +236,28 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           }
         }
       }
-      when {
-        idx == -1 -> options += "--add-exports=${qualifier}=${useName}"
-        candidate == options.size -> options[idx - 1] = "--add-exports=${qualifier}=${useName}"
-        else -> {
-          val value = options[idx]
-          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + useName else "${value},${useName}"
-        }
+      when (idx) {
+        -1 -> options += listOf(prefix, "${qualifier}=${useName}")
+        else -> options[idx] = "${options[idx].trimEnd(',')},${useName}"
       }
     }
   }
 
   private class AddModulesOptionFix(module: Module, private val moduleName: String) : CompilerOptionFix(module) {
-    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-modules=${moduleName}")
+    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-modules ${moduleName}")
 
     override fun update(options: MutableList<String>) {
       var idx = -1
+      val prefix = "--add-modules"
       for ((i, option) in options.withIndex()) {
-        if (option.startsWith("--add-modules")) {
-          if (option.length == 13) idx = i + 1
-          else if (option[13] == '=') idx = i
+        if (option.startsWith(prefix)) {
+          if (option.length == prefix.length) idx = i + 1
+          else if (option[prefix.length] == '=') idx = i
         }
       }
       when (idx) {
-        -1 -> options += "--add-modules=${moduleName}"
-        options.size -> options[idx - 1] = "--add-modules=${moduleName}"
+        -1 -> options += listOf(prefix, moduleName)
+        options.size -> options += moduleName
         else -> {
           val value = options[idx]
           options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + moduleName else "${value},${moduleName}"

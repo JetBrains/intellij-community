@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -44,7 +45,7 @@ public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspe
                      EquivalenceChecker.getCanonicalPsiEquivalence()
                                        .expressionsAreEquivalent(reference, ((PsiResourceExpression)element).getExpression()));
         if(!isReferenceToResourceVariable) return;
-        holder.registerProblem(last, InspectionsBundle.message("inspection.redundant.explicit.close"),
+        holder.registerProblem(last, JavaBundle.message("inspection.redundant.explicit.close"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteRedundantCloseFix());
 
       }

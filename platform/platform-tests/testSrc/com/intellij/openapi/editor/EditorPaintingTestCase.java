@@ -21,10 +21,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -37,23 +40,23 @@ import java.io.IOException;
 public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   protected static final String TEST_DATA_PATH = "platform/platform-tests/testData/editor/painting";
 
+  private float oldUserScaleFactor = 1.0f;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    oldUserScaleFactor = JBUIScale.scale(1.0f);
+    JBUIScale.setUserScaleFactorForTest(1.0f);
     FontLayoutService.setInstance(new MockFontLayoutService(BitmapFont.CHAR_WIDTH, BitmapFont.CHAR_HEIGHT, BitmapFont.CHAR_DESCENT));
   }
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      FontLayoutService.setInstance(null);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    new RunAll()
+      .append(() -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor))
+      .append(() -> FontLayoutService.setInstance(null))
+      .append(() -> super.tearDown())
+      .run();
   }
 
   protected void checkResult() throws IOException {
@@ -62,6 +65,15 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   protected void checkResultWithGutter() throws IOException {
     checkResult(getFileName(), true);
+  }
+
+  protected void checkPartialRepaint(int visualLine) throws IOException {
+    BufferedImage originalImage = paintEditor(false, null, null);
+    BufferedImage updatedImage = createImageForPainting(originalImage.getWidth(), originalImage.getHeight());
+    originalImage.copyData(updatedImage.getRaster());
+    paintEditor(false, updatedImage,
+                new Rectangle(0, getEditor().visualLineToY(visualLine), updatedImage.getWidth(), getEditor().getLineHeight()));
+    assertImagesEqual(originalImage, updatedImage, null);
   }
 
   @NotNull
@@ -158,6 +170,24 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   private void checkResult(@TestDataFile String expectedResultFileName, boolean withGutter) throws IOException {
+    BufferedImage image = paintEditor(withGutter, null, null);
+
+    File fileWithExpectedResult = getTestDataFile(getTestDataPath(), expectedResultFileName);
+    if (OVERWRITE_TESTDATA) {
+      ImageIO.write(image, "png", fileWithExpectedResult);
+      System.err.println("File " + fileWithExpectedResult.getPath() + " created.");
+    }
+    if (fileWithExpectedResult.exists()) {
+      BufferedImage expectedResult = ImageIO.read(fileWithExpectedResult);
+      assertImagesEqual(expectedResult, image, fileWithExpectedResult);
+    }
+    else {
+      ImageIO.write(image, "png", fileWithExpectedResult);
+      fail("Missing test data created: " + fileWithExpectedResult.getPath());
+    }
+  }
+
+  private BufferedImage paintEditor(boolean withGutter, @Nullable BufferedImage target, @Nullable Rectangle clip) throws IOException {
     getEditor().getSettings().setAdditionalLinesCount(0);
     getEditor().getSettings().setAdditionalColumnsCount(1);
 
@@ -171,12 +201,21 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     editorComponent.setSize(editorSize.width, imageSize.height);
     gutterComponent.setSize(gutterSize.width, imageSize.height);
 
-    //noinspection UndesirableClassUsage
-    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image;
+    if (target == null) {
+      image = createImageForPainting(imageSize.width, imageSize.height);
+    }
+    else {
+      assertEquals("Unexpected image size", imageSize, new Dimension(target.getWidth(), target.getHeight()));
+      image = target;
+    }
     BitmapFont plainFont = BitmapFont.loadFromFile(getFontFile(false));
     BitmapFont boldFont = BitmapFont.loadFromFile(getFontFile(true));
-    MyGraphics graphics = new MyGraphics(image.createGraphics(), plainFont, boldFont);
+    Graphics2D graphics = new MyGraphics(image.createGraphics(), plainFont, boldFont);
     try {
+      if (clip != null) {
+        graphics.clip(clip);
+      }
       gutterComponent.paint(graphics);
       graphics.translate(gutterComponent.getWidth(), 0);
 
@@ -186,39 +225,48 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
       graphics.dispose();
     }
 
-    File fileWithExpectedResult = getTestDataFile(getTestDataPath(), expectedResultFileName);
-    if (OVERWRITE_TESTDATA) {
-      ImageIO.write(image, "png", fileWithExpectedResult);
-      System.err.println("File " + fileWithExpectedResult.getPath() + " created.");
+    return image;
+  }
+
+  private void assertImagesEqual(BufferedImage expectedImage, BufferedImage actualImage, @Nullable File expectedImageFile)
+    throws IOException {
+    if (expectedImage.getWidth() != actualImage.getWidth()) {
+      fail("Unexpected image width", expectedImageFile, expectedImage, actualImage);
     }
-    if (fileWithExpectedResult.exists()) {
-      BufferedImage expectedResult = ImageIO.read(fileWithExpectedResult);
-      if (expectedResult.getWidth() != image.getWidth()) {
-        fail("Unexpected image width", fileWithExpectedResult, image);
-      }
-      if (expectedResult.getHeight() != image.getHeight()) {
-        fail("Unexpected image height", fileWithExpectedResult, image);
-      }
-      for (int i = 0; i < expectedResult.getWidth(); i++) {
-        for (int j = 0; j < expectedResult.getHeight(); j++) {
-          if (expectedResult.getRGB(i, j) != image.getRGB(i, j)) {
-            fail("Unexpected image contents", fileWithExpectedResult, image);
-          }
+    if (expectedImage.getHeight() != actualImage.getHeight()) {
+      fail("Unexpected image height", expectedImageFile, expectedImage, actualImage);
+    }
+    for (int i = 0; i < expectedImage.getWidth(); i++) {
+      for (int j = 0; j < expectedImage.getHeight(); j++) {
+        if (expectedImage.getRGB(i, j) != actualImage.getRGB(i, j)) {
+          fail("Unexpected image contents", expectedImageFile, expectedImage, actualImage);
         }
       }
     }
-    else {
-      ImageIO.write(image, "png", fileWithExpectedResult);
-      fail("Missing test data created: " + fileWithExpectedResult.getPath());
-    }
   }
 
-  private void fail(@NotNull String message, @NotNull File expectedResultsFile, BufferedImage actualImage) throws IOException {
-    File savedImage = FileUtil.createTempFile(getName(), ".png", false);
-    addTmpFileToKeep(savedImage);
-    ImageIO.write(actualImage, "png", savedImage);
+  private static BufferedImage createImageForPainting(int width, int height) {
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+  }
+
+  private void fail(@NotNull String message,
+                    @Nullable File expectedResultsFile,
+                    @NotNull BufferedImage expectedImage,
+                    @NotNull BufferedImage actualImage) throws IOException {
+    File savedImage = saveTmpImage(actualImage, "actual");
+    if (expectedResultsFile == null) {
+      expectedResultsFile = saveTmpImage(expectedImage, "expected");
+    }
     throw new FileComparisonFailure(message, expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath(),
                                     expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
+  }
+
+  private File saveTmpImage(BufferedImage image, String nameSuffix) throws IOException {
+    File savedImage = FileUtil.createTempFile(getName() + "-" + nameSuffix, ".png", false);
+    addTmpFileToKeep(savedImage);
+    ImageIO.write(image, "png", savedImage);
+    return savedImage;
   }
 
   public static class MyGraphics extends Graphics2DDelegate {

@@ -39,8 +39,7 @@ class Win32FsCache {
     return map;
   }
 
-  @NotNull
-  String[] list(@NotNull VirtualFile file) {
+  String @NotNull [] list(@NotNull VirtualFile file) {
     String path = file.getPath();
     FileInfo[] fileInfo = myKernel.listChildren(path);
     if (fileInfo == null || fileInfo.length == 0) {

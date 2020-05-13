@@ -58,7 +58,7 @@ import java.util.Map;
  * @author peter
  */
 public class ChunkExtractor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.ChunkExtractor");
+  private static final Logger LOG = Logger.getInstance(ChunkExtractor.class);
   static final int MAX_LINE_LENGTH_TO_SHOW = 200;
   static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 1;
   static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 1;
@@ -94,8 +94,7 @@ public class ChunkExtractor {
     }
   });
 
-  @NotNull
-  static TextChunk[] extractChunks(@NotNull PsiFile file, @NotNull UsageInfo2UsageAdapter usageAdapter) {
+  static TextChunk @NotNull [] extractChunks(@NotNull PsiFile file, @NotNull UsageInfo2UsageAdapter usageAdapter) {
     return getExtractor(file).extractChunks(usageAdapter, file);
   }
 
@@ -128,8 +127,7 @@ public class ChunkExtractor {
     return minStart == Integer.MAX_VALUE ? -1 : minStart;
   }
 
-  @NotNull 
-  private TextChunk[] extractChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter, @NotNull PsiFile file) {
+  private TextChunk @NotNull [] extractChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter, @NotNull PsiFile file) {
     int absoluteStartOffset = usageInfo2UsageAdapter.getNavigationOffset();
     if (absoluteStartOffset == -1) return TextChunk.EMPTY_ARRAY;
 
@@ -177,13 +175,12 @@ public class ChunkExtractor {
     return createTextChunks(usageInfo2UsageAdapter, chars, fragmentToShowStart, fragmentToShowEnd, true, result);
   }
 
-  @NotNull
-  public TextChunk[] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
-                                      @NotNull CharSequence chars,
-                                      int start,
-                                      int end,
-                                      boolean selectUsageWithBold,
-                                      @NotNull List<? super TextChunk> result) {
+  public TextChunk @NotNull [] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
+                                                @NotNull CharSequence chars,
+                                                int start,
+                                                int end,
+                                                boolean selectUsageWithBold,
+                                                @NotNull List<? super TextChunk> result) {
     final Lexer lexer = myHighlighter.getHighlightingLexer();
     final SyntaxHighlighterOverEditorHighlighter highlighter = myHighlighter;
 
@@ -229,7 +226,7 @@ public class ChunkExtractor {
                                         @NotNull final CharSequence chars,
                                         int hiStart,
                                         final int hiEnd,
-                                        @NotNull final TextAttributesKey[] tokenHighlights,
+                                        final TextAttributesKey @NotNull [] tokenHighlights,
                                         final boolean selectUsageWithBold,
                                         @NotNull final List<? super TextChunk> result) {
     final TextAttributes originalAttrs = convertAttributes(tokenHighlights);
@@ -313,7 +310,7 @@ public class ChunkExtractor {
   }
 
   @NotNull
-  private TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
+  private TextAttributes convertAttributes(TextAttributesKey @NotNull [] keys) {
     TextAttributes attrs = myColorsScheme.getAttributes(HighlighterColors.TEXT);
 
     for (TextAttributesKey key : keys) {

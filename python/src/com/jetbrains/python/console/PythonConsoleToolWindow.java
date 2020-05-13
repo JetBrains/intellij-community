@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.base.Function;
@@ -11,22 +11,18 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class PythonConsoleToolWindow {
   public static final Key<RunContentDescriptor> CONTENT_DESCRIPTOR = Key.create("CONTENT_DESCRIPTOR");
 
@@ -42,7 +38,7 @@ public class PythonConsoleToolWindow {
   }
 
   public static PythonConsoleToolWindow getInstance(@NotNull Project project) {
-    return project.getComponent(PythonConsoleToolWindow.class);
+    return project.getService(PythonConsoleToolWindow.class);
   }
 
   public List<RunContentDescriptor> getConsoleContentDescriptors() {
@@ -71,14 +67,11 @@ public class PythonConsoleToolWindow {
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void stateChanged() {
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
         ToolWindow window = getToolWindow(myProject);
-        if (window != null) {
-          boolean visible = window.isVisible();
-          if (visible && toolWindow.getContentManager().getContentCount() == 0) {
-            PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
-            runner.run(true);
-          }
+        if (window.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
+          PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
+          runner.run(true);
         }
       }
     });
@@ -105,7 +98,13 @@ public class PythonConsoleToolWindow {
   }
 
   public static ToolWindow getToolWindow(Project project) {
-    return ToolWindowManager.getInstance(project).getToolWindow(PythonConsoleToolWindowFactory.ID);
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    ToolWindow consoleToolWindow = toolWindowManager.getToolWindow(PythonConsoleToolWindowFactory.ID);
+    if (consoleToolWindow == null) {
+      consoleToolWindow = toolWindowManager.registerToolWindow(PythonConsoleToolWindowFactory.ID, true, ToolWindowAnchor.BOTTOM);
+      consoleToolWindow.setIcon(PythonIcons.Python.PythonConsoleToolWindow);
+    }
+    return consoleToolWindow;
   }
 
   public void setContent(RunContentDescriptor contentDescriptor) {
@@ -133,31 +132,10 @@ public class PythonConsoleToolWindow {
     content.setComponent(panel);
     content.setDisposer(contentDescriptor);
     content.setPreferredFocusableComponent(contentDescriptor.getComponent());
+    content.setPreferredFocusedComponent(contentDescriptor.getPreferredFocusComputable());
 
     content.putUserData(CONTENT_DESCRIPTOR, contentDescriptor);
   }
-
-  private static FocusListener createFocusListener(final ToolWindow toolWindow) {
-    return new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        JComponent component = getComponentToFocus(toolWindow);
-        if (component != null) {
-          component.requestFocusInWindow();
-        }
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-
-      }
-    };
-  }
-
-  private static JComponent getComponentToFocus(ToolWindow window) {
-    return window.getContentManager().getComponent();
-  }
-
 
   public void activate(@NotNull Runnable runnable) {
     getToolWindow(myProject).activate(runnable);

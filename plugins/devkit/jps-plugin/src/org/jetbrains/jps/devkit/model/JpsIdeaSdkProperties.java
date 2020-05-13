@@ -17,9 +17,6 @@ package org.jetbrains.jps.devkit.model;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class JpsIdeaSdkProperties {
   private final String mySandboxHome;
   private final String myJdkName;

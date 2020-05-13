@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -42,7 +43,7 @@ public class SuspiciousListRemoveInLoopInspection extends AbstractBaseJavaLocalI
         if (!arg.isReferenceTo(loop.getCounter())) return;
         if (ControlFlowUtils.isExecutedOnceInLoop(parentStatement, (PsiLoopStatement)parent)) return;
         holder.registerProblem(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
-                               InspectionsBundle.message("inspection.suspicious.list.remove.display.name"));
+                               JavaBundle.message("inspection.suspicious.list.remove.display.name"));
       }
     };
   }

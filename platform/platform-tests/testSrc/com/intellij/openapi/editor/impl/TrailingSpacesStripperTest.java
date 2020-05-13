@@ -2,8 +2,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -119,21 +117,6 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
 
     stripTrailingSpaces();
     checkResultByText("xxx\nZZ<caret>");
-  }
-
-  public void testModifyLineAndExitApplication_ShouldStripEvenWhenCaretIsAtTheChangedLine() {
-    configureFromFileText("x.txt", "xxx        <caret>\n");
-    type(' ');
-
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    application.setDisposeInProgress(true);
-    try {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      checkResultByText("xxx<caret>\n");
-    }
-    finally {
-      application.setDisposeInProgress(false);
-    }
   }
 
   public void testModifyLine_Save_MoveCaret_SaveAgain_ShouldStrip() {

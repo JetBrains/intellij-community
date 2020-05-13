@@ -1,7 +1,7 @@
 #!/bin/sh
 
-function say<selection>Hell<caret>o</selection>() {
-  echo "Hello"
+function sayHello() {
+  echo "say<selection>Hell<caret>o</selection>"
 }
 
 sayHello

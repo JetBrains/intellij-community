@@ -13,7 +13,10 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightJavaCodeInsi
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/optionalGet";
   }
 
+  public void testAbstractEnum() { doTest(); }
+  public void testFinalInheritance() { doTest(); }
   public void testOptionalGet() { doTest(); }
+  public void testOptionalGetInlineLambda() { doTest(); }
 
   @NotNull
   @Override

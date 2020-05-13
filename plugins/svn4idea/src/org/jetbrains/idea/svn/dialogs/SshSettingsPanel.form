@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <margin top="2" left="-2" bottom="2" right="3"/>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.password.choice.title"/>
+          <text resource-bundle="messages/SvnBundle" key="ssh.settings.password.choice.title"/>
         </properties>
       </component>
       <component id="25089" class="com.intellij.ui.components.JBRadioButton" binding="myPrivateKeyChoice">
@@ -23,7 +23,7 @@
         </constraints>
         <properties>
           <margin top="2" left="-2" bottom="2" right="3"/>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.private.key.choice.title"/>
+          <text resource-bundle="messages/SvnBundle" key="ssh.settings.private.key.choice.title"/>
         </properties>
       </component>
       <component id="c9d7d" class="com.intellij.ui.components.JBRadioButton" binding="mySubversionConfigChoice">
@@ -33,7 +33,7 @@
         <properties>
           <margin top="2" left="-2" bottom="2" right="3"/>
           <selected value="true"/>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.subversion.config.choice.title"/>
+          <text resource-bundle="messages/SvnBundle" key="ssh.settings.subversion.config.choice.title"/>
         </properties>
       </component>
       <grid id="73115" binding="myCommonOptions" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -50,7 +50,7 @@
             </constraints>
             <properties>
               <labelFor value="36189"/>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.executable.label"/>
+              <text resource-bundle="messages/SvnBundle" key="ssh.settings.executable.label"/>
             </properties>
           </component>
           <component id="8fdc6" class="com.intellij.ui.components.JBLabel">
@@ -59,7 +59,7 @@
             </constraints>
             <properties>
               <labelFor value="c2b30"/>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.user.name.label"/>
+              <text resource-bundle="messages/SvnBundle" key="ssh.settings.user.name.label"/>
             </properties>
           </component>
           <component id="c2b30" class="com.intellij.ui.components.JBTextField" binding="myUserNameField">
@@ -75,7 +75,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.port.label"/>
+              <text resource-bundle="messages/SvnBundle" key="ssh.settings.port.label"/>
             </properties>
           </component>
           <component id="33519" class="com.intellij.ui.PortField" binding="myPortField">
@@ -110,10 +110,10 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.private.key.path.label"/>
+              <text resource-bundle="messages/SvnBundle" key="ssh.settings.private.key.path.label"/>
             </properties>
           </component>
-          <component id="9dc30" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myPrivateKeyPathField">
+          <component id="9dc30" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myPrivateKeyPathField" custom-create="true">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -134,7 +134,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.tunnel.label"/>
+              <text resource-bundle="messages/SvnBundle" key="ssh.settings.tunnel.label"/>
             </properties>
           </component>
           <component id="48bdc" class="com.intellij.ui.components.JBTextField" binding="mySshTunnelField">
@@ -150,7 +150,7 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="ssh.settings.update.tunnel.title"/>
+              <text resource-bundle="messages/SvnBundle" key="ssh.settings.update.tunnel.title"/>
             </properties>
           </component>
           <component id="f1352" class="com.intellij.ui.components.JBLabel" binding="mySvnSshVariableLabel">

@@ -6,12 +6,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.util.CloudConfigurationBase;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -24,18 +27,38 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author nik
- */
 @State(name = "RemoteServers", storages = @Storage("remote-servers.xml"))
 public class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
-  public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
+  private SkipDefaultValuesSerializationFilters myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
   private final List<RemoteServer<?>> myServers = new ArrayList<>();
   private final List<RemoteServerState> myUnknownServers = new ArrayList<>();
   private final MessageBus myMessageBus;
 
   public RemoteServersManagerImpl(MessageBus messageBus) {
     myMessageBus = messageBus;
+    ServerType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<ServerType>() {
+      @Override
+      public void extensionAdded(@NotNull ServerType addedType, @NotNull PluginDescriptor pluginDescriptor) {
+        List<RemoteServerState> nowKnownStates = ContainerUtil.filter(myUnknownServers, next -> addedType.getId().equals(next.myTypeId));
+        nowKnownStates.forEach(nextState -> {
+          myUnknownServers.remove(nextState);
+          addServer(createConfiguration(addedType, nextState));
+        });
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull ServerType removedType, @NotNull PluginDescriptor pluginDescriptor) {
+        @SuppressWarnings("unchecked") List<RemoteServer<?>> removedServers = getServers(removedType);
+        removedServers.forEach(nextServer -> {
+          RemoteServerState nextState = createServerState(nextServer);
+          removeServer(nextServer);
+          myUnknownServers.add(nextState);
+        });
+        if (!removedServers.isEmpty()) {
+          myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
+        }
+      }
+    }, null);
   }
 
   @Override
@@ -96,11 +119,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   public RemoteServersManagerState getState() {
     RemoteServersManagerState state = new RemoteServersManagerState();
     for (RemoteServer<?> server : myServers) {
-      RemoteServerState serverState = new RemoteServerState();
-      serverState.myName = server.getName();
-      serverState.myTypeId = server.getType().getId();
-      serverState.myConfiguration = XmlSerializer.serialize(server.getConfiguration().getSerializer().getState(), SERIALIZATION_FILTERS);
-      state.myServers.add(serverState);
+      state.myServers.add(createServerState(server));
     }
     state.myServers.addAll(myUnknownServers);
     return state;
@@ -137,6 +156,15 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   }
 
   @NotNull
+  private RemoteServerState createServerState(@NotNull RemoteServer<?> server) {
+    RemoteServerState serverState = new RemoteServerState();
+    serverState.myName = server.getName();
+    serverState.myTypeId = server.getType().getId();
+    serverState.myConfiguration = XmlSerializer.serialize(server.getConfiguration().getSerializer().getState(), myDefaultValuesFilter);
+    return serverState;
+  }
+
+  @NotNull
   private static <C extends ServerConfiguration> RemoteServerImpl<C> createConfiguration(ServerType<C> type, RemoteServerState server) {
     C configuration = type.createDefaultConfiguration();
     PersistentStateComponent<?> serializer = configuration.getSerializer();
@@ -146,11 +174,6 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
 
   @Nullable
   private static ServerType<?> findServerType(@NotNull String typeId) {
-    for (ServerType serverType : ServerType.EP_NAME.getExtensions()) {
-      if (serverType.getId().equals(typeId)) {
-        return serverType;
-      }
-    }
-    return null;
+    return ServerType.EP_NAME.findFirstSafe(next -> typeId.equals(next.getId()));
   }
 }

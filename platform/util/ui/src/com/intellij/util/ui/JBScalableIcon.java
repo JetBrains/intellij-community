@@ -64,7 +64,7 @@ public abstract class JBScalableIcon extends UserScaleContextSupport implements 
    *
    * @param preScaled whether the icon is pre-scaled
    * @return the icon in the provided pre-scaled state
-   * @see JBUI#scale(JBScalableIcon)
+   * @see JBUIScale#scaleIcon(JBScalableIcon) (JBScalableIcon)
    */
   @NotNull
   public JBScalableIcon withIconPreScaled(boolean preScaled) {

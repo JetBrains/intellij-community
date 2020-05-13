@@ -26,7 +26,7 @@ import javax.swing.border.TitledBorder
 private val pathActionName: String
   get() = ActionsBundle.message(if (isMac) "action.CopySettingsPath.mac.text" else "action.CopySettingsPath.text")
 
-class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.message("action.CopySettingsPath.description"), null), DumbAware {
+internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.message("action.CopySettingsPath.description"), null), DumbAware {
   init {
     isEnabledInModalContext = true
   }

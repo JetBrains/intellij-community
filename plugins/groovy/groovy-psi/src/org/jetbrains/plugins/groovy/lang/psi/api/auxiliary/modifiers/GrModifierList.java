@@ -34,8 +34,7 @@ public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
 
   int getModifierFlags();
 
-  @NotNull
-  PsiElement[] getModifiers();
+  PsiElement @NotNull [] getModifiers();
 
   @Nullable
   PsiElement getModifier(@GrModifierConstant @NotNull @NonNls String name);
@@ -43,8 +42,7 @@ public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
   boolean hasExplicitVisibilityModifiers();
 
   @Override
-  @NotNull
-  GrAnnotation[] getAnnotations();
+  GrAnnotation @NotNull [] getAnnotations();
 
   @Override
   boolean hasModifierProperty(@GrModifierConstant @NotNull @NonNls String name);
@@ -55,6 +53,5 @@ public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
   @Override
   void setModifierProperty(@GrModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException;
 
-  @NotNull
-  GrAnnotation[] getRawAnnotations();
+  GrAnnotation @NotNull [] getRawAnnotations();
 }

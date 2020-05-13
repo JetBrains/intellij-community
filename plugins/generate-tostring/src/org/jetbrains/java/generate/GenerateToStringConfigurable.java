@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.generate;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -39,7 +40,7 @@ public class GenerateToStringConfigurable implements Configurable {
 
   @Override
   public String getDisplayName() {
-      return "Settings";
+    return JavaBundle.message("configurable.GenerateToStringConfigurable.display.name");
   }
 
   @Override

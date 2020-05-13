@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -47,10 +47,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher");
+  private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionSearcher.class);
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override
@@ -74,7 +72,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       processOffsets(descriptors, project, (file, occurrences) -> {
         fileCount.incrementAndGet();
         exprCount.addAndGet(occurrences.size());
-        return processFile(consumer, descriptors, file, occurrences);
+        return processFile(descriptors, file, occurrences, consumer);
       });
     }
     finally {
@@ -110,7 +108,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       processSubInterfaces(aClass, visited);
       for (PsiClass samClass : visited) {
         if (LambdaUtil.isFunctionalClass(samClass)) {
-          PsiMethod saMethod = assertNotNull(LambdaUtil.getFunctionalInterfaceMethod(samClass));
+          PsiMethod saMethod = Objects.requireNonNull(LambdaUtil.getFunctionalInterfaceMethod(samClass));
           PsiType samType = saMethod.getReturnType();
           if (samType == null) continue;
 
@@ -189,10 +187,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       () -> new HashSet<>(ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile))));
   }
 
-  private static boolean processFile(@NotNull Processor<? super PsiFunctionalExpression> consumer,
-                                     @NotNull List<? extends SamDescriptor> descriptors,
+  private static boolean processFile(@NotNull List<? extends SamDescriptor> descriptors,
                                      @NotNull VirtualFile vFile,
-                                     @NotNull Set<? extends FunExprOccurrence> occurrences) {
+                                     @NotNull Set<? extends FunExprOccurrence> occurrences,
+                                     @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     return descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       PsiFile file = descriptors.get(0).samClass.getManager().findFile(vFile);
       if (!(file instanceof PsiJavaFile)) {
@@ -312,7 +310,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       if (name == null) return Collections.emptyList();
 
       List<FunctionalExpressionKey> result = new ArrayList<>();
-      for (String lambdaType : new String[]{assertNotNull(name), ""}) {
+      for (String lambdaType : new String[]{Objects.requireNonNull(name), ""}) {
         for (int lambdaParamCount : new int[]{FunctionalExpressionKey.UNKNOWN_PARAM_COUNT, samParamCount}) {
           result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.UNKNOWN, lambdaType));
           if (isVoid) {
@@ -347,10 +345,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
             return true;
           });
 
-        PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.getInstance(project);
+        PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
         Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
         for (String word : likelyNames) {
-          helper.processFilesWithText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
+          helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
         }
       });
       return files;

@@ -19,7 +19,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author ven
+ * A compound statement whose body can be executed several times
  */
 public interface PsiLoopStatement extends PsiStatement {
   /**

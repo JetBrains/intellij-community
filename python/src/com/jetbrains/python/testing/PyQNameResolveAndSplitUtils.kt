@@ -21,9 +21,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extensions.getQName
-import com.jetbrains.extenstions.QNameResolveContext
-import com.jetbrains.extenstions.getRelativeNameTo
-import com.jetbrains.extenstions.resolveToElement
+import com.jetbrains.extensions.QNameResolveContext
+import com.jetbrains.extensions.getRelativeNameTo
+import com.jetbrains.extensions.resolveToElement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import java.util.*
@@ -33,7 +33,7 @@ import java.util.*
  * @author Ilya.Kazakevich
  */
 
-internal data class QualifiedNameParts(val fileName: QualifiedName, val elementName: QualifiedName, val file: PyFile) {
+data class QualifiedNameParts(val fileName: QualifiedName, val elementName: QualifiedName, val file: PyFile) {
   override fun toString() = elementName.toString()
 
   /**

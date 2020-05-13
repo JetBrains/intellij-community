@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -26,18 +12,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
 
-/**
- * @author Mike
- */
 public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, HintedReferenceHost {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeImpl");
+  private static final Logger LOG = Logger.getInstance(XmlAttributeImpl.class);
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private final int myHC = ourHC++;
@@ -209,15 +191,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
    * @deprecated use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
    */
   @Deprecated
-  @NotNull
   @Override
-  public final PsiReference[] getReferences() {
+  public final PsiReference @NotNull [] getReferences() {
     return getReferences(PsiReferenceService.Hints.NO_HINTS);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences(@NotNull PsiReferenceService.Hints hints) {
+  public PsiReference @NotNull [] getReferences(@NotNull PsiReferenceService.Hints hints) {
     return getImpl().getDefaultReferences(hints);
   }
 
@@ -225,14 +205,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
     return getImpl().getDescriptor();
-  }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  @NotNull
-  public String getRealLocalName() {
-    XmlAttribute attribute = this;
-    return getRealName(attribute);
   }
 
   @NotNull

@@ -1,0 +1,24 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider" dynamic="true"/>
+    <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
+                    area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
+                    serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
+    <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
+                    serviceImplementation="com.intellij.openapi.components.impl.ProjectPathMacroManager"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ModifiableModelCommitterServiceImpl"/>
+    <projectService serviceInterface="com.intellij.ide.util.PropertiesComponent"
+                    serviceImplementation="com.intellij.ide.util.ProjectPropertiesComponentImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
+                        serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
+  </extensions>
+</idea-plugin>

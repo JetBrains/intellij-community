@@ -23,7 +23,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements PsiJShellHolderMethod {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJShellHolderMethodImpl");
+  private static final Logger LOG = Logger.getInstance(PsiJShellHolderMethodImpl.class);
 
   private final String myName;
   private PsiParameterList myParameterList;
@@ -34,9 +34,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     myName = "_$$jshell_holder_method$$" + index;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getStatements() {
+  public PsiElement @NotNull [] getStatements() {
     List<PsiElement> result = null;
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiStatement || child instanceof PsiExpression) {
@@ -132,21 +131,18 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findSuperMethods() {
+  public PsiMethod @NotNull [] findSuperMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+  public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+  public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -162,9 +158,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findDeepestSuperMethods() {
+  public PsiMethod @NotNull [] findDeepestSuperMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -207,9 +202,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 

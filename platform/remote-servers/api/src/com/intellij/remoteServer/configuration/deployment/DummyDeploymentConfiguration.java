@@ -7,9 +7,6 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class DummyDeploymentConfiguration extends DeploymentConfiguration implements PersistentStateComponent<DummyDeploymentConfiguration> {
   @Override
   public PersistentStateComponent<?> getSerializer() {

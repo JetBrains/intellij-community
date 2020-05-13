@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -37,10 +38,9 @@ import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
-import icons.ExternalSystemIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,9 +87,8 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     myTaskActivator = getInstance(myProject).getTaskActivator();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
 
@@ -163,8 +162,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       setMoveUpActionUpdater(e -> isMoveActionEnabled(-1)).
       setMoveDownAction(button -> moveAction(+1)).
       setMoveDownActionUpdater(e -> isMoveActionEnabled(+1)).
-      setToolbarPosition(ActionToolbarPosition.RIGHT).
-      setToolbarBorder(JBUI.Borders.empty());
+      setToolbarPosition(ActionToolbarPosition.RIGHT);
     tasksPanel.add(decorator.createPanel());
     return contentPane;
   }
@@ -230,7 +228,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
 
   @NotNull
   private List<TaskActivationEntry> findSelectedTasks() {
-    List<TaskActivationEntry> tasks = ContainerUtil.newSmartList();
+    List<TaskActivationEntry> tasks = new SmartList<>();
     for (DefaultMutableTreeNode node : myTree.getSelectedNodes(DefaultMutableTreeNode.class, null)) {
       tasks.addAll(findTasksUnder(ContainerUtil.ar((MyNode)node.getUserObject())));
     }
@@ -238,8 +236,8 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   }
 
   @NotNull
-  private List<TaskActivationEntry> findTasksUnder(@NotNull SimpleNode[] nodes) {
-    List<TaskActivationEntry> tasks = ContainerUtil.newSmartList();
+  private List<TaskActivationEntry> findTasksUnder(SimpleNode @NotNull [] nodes) {
+    List<TaskActivationEntry> tasks = new SmartList<>();
     for (SimpleNode node : nodes) {
       if (node instanceof TaskNode) {
         final TaskNode taskNode = (TaskNode)node;
@@ -378,12 +376,12 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
 
   private class ChooseProjectStep extends BaseListPopupStep<ProjectPopupItem> {
     protected ChooseProjectStep(List<? extends ProjectPopupItem> values) {
-      super("Choose project", values);
+      super(ExternalSystemBundle.message("popup.title.choose.project"), values);
     }
 
     @Override
     public PopupStep onChosen(final ProjectPopupItem projectPopupItem, final boolean finalChoice) {
-      return new BaseListPopupStep<Phase>("Choose activation phase", Phase.values()) {
+      return new BaseListPopupStep<Phase>(ExternalSystemBundle.message("popup.title.choose.activation.phase"), Phase.values()) {
         @Override
         public PopupStep onChosen(final Phase selectedPhase, boolean finalChoice) {
           final Map<String, TaskActivationState> activationMap =
@@ -393,7 +391,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
 
           final List<String> tasksToSuggest = new ArrayList<>(projectPopupItem.myTasks);
           tasksToSuggest.removeAll(tasks);
-          return new BaseListPopupStep<String>("Choose task", tasksToSuggest) {
+          return new BaseListPopupStep<String>(ExternalSystemBundle.message("popup.title.choose.task"), tasksToSuggest) {
             @Override
             public PopupStep onChosen(final String taskName, boolean finalChoice) {
               return doFinalStep(() -> {
@@ -475,7 +473,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     @Override
     protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
-      presentation.setIcon(ExternalSystemIcons.TaskGroup);
+      presentation.setIcon(AllIcons.Nodes.ConfigFolder);
     }
 
     @Override
@@ -505,7 +503,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     @Override
     protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
-      presentation.setIcon(ExternalSystemIcons.TaskGroup);
+      presentation.setIcon(AllIcons.Nodes.ConfigFolder);
     }
 
     @Override

@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -32,11 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getLOperands;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getROperands;
 
-/**
- * @author mike
- */
 public class SplitIfAction extends BaseElementAtCaretIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.SplitIfAction");
+  private static final Logger LOG = Logger.getInstance(SplitIfAction.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
@@ -50,7 +33,7 @@ public class SplitIfAction extends BaseElementAtCaretIntentionAction {
     if (!PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false)) return false;
     if (ifStatement.getThenBranch() == null) return false;
 
-    setText(CodeInsightBundle.message("intention.split.if.text"));
+    setText(JavaBundle.message("intention.split.if.text"));
 
     return true;
   }
@@ -58,7 +41,7 @@ public class SplitIfAction extends BaseElementAtCaretIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.split.if.family");
+    return JavaBundle.message("intention.split.if.family");
   }
 
   @Override

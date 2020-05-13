@@ -5,10 +5,10 @@ import java.util.stream.*;
 class Main {
   void flatMapAlwaysNull(List<String> input) {
     List<String> side = new ArrayList<>();
-    long count = input.stream().<String>flatMap(e -> {
+    long count = <warning descr="Result of 'input.stream().<String>flatMap(e -> { if(!e.isEmpty()) side.add(e); return null; })....' is always '0'">input.stream().<String>flatMap(e -> {
       if(!e.isEmpty()) side.add(e);
       return null;
-    }).count();
+    }).count()</warning>;
     if (side.isEmpty()) {} // not known
     if (<warning descr="Condition 'count > 0' is always 'false'">count > 0</warning>) {}
   }

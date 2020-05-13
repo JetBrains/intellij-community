@@ -30,11 +30,11 @@ public abstract class PlaybackContext  {
   private final boolean myUseDirectActionCall;
   private final PlaybackCommand myCurrentCmd;
   private File myBaseDir;
-  private final Set<Class> myCallClasses;
+  private final Set<Class<?>> myCallClasses;
   private final PlaybackRunner myRunner;
   private final boolean myUseTypingTargets;
 
-  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class> callClasses) {
+  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class<?>> callClasses) {
     myRunner = runner;
     myCallback = callback;
     myCurrentLine = currentLine;
@@ -55,6 +55,9 @@ public abstract class PlaybackContext  {
   }
 
   public Robot getRobot() {
+    if (myRobot == null) {
+      throw new RuntimeException("Robot is not available in the headless mode");
+    }
     return myRobot;
   }
 
@@ -82,32 +85,8 @@ public abstract class PlaybackContext  {
     myBaseDir = dir;
   }
 
-  public Set<Class> getCallClasses() {
+  public Set<Class<?>> getCallClasses() {
     return myCallClasses;
-  }
-
-  public void flushAwtAndRunInEdt(final Runnable runnable) {
-    if (EventQueue.isDispatchThread()) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        getRobot().waitForIdle();
-        SwingUtilities.invokeLater(runnable);
-      });
-    } else {
-      getRobot().waitForIdle();
-      SwingUtilities.invokeLater(runnable);
-    }
-  }
-
-  public void delayAndRunInEdt(final Runnable runnable, final long delay) {
-    runPooledThread(() -> {
-      try {
-        Thread.sleep(delay);
-      }
-      catch (InterruptedException e) {
-
-      }
-      SwingUtilities.invokeLater(runnable);
-    });
   }
   
   public void runPooledThread(Runnable runnable) {

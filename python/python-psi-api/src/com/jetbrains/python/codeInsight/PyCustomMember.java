@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 /**
  * Note: if you use {@link #myTypeName} to override real field, be sure to use
@@ -100,6 +101,29 @@ public class PyCustomMember extends UserDataHolderBase {
   public PyCustomMember resolvesToClass(@NotNull final String classQName) {
     myPsiPath = new PyPsiPath.ToClassQName(classQName);
     return this;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PyCustomMember member = (PyCustomMember)o;
+    return myResolveToInstance == member.myResolveToInstance &&
+           myFunction == member.myFunction &&
+           myAlwaysResolveToCustomElement == member.myAlwaysResolveToCustomElement &&
+           Objects.equals(myName, member.myName) &&
+           Objects.equals(myTypeCallback, member.myTypeCallback) &&
+           Objects.equals(myTypeName, member.myTypeName) &&
+           Objects.equals(myTarget, member.myTarget) &&
+           Objects.equals(myPsiPath, member.myPsiPath) &&
+           Objects.equals(myCustomTypeInfo, member.myCustomTypeInfo);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects
+      .hash(myName, myResolveToInstance, myTypeCallback, myTypeName, myTarget, myPsiPath, myFunction, myAlwaysResolveToCustomElement,
+            myCustomTypeInfo);
   }
 
   /**
@@ -272,6 +296,32 @@ public class PyCustomMember extends UserDataHolderBase {
 
     private PyCustomMember getThis() {
       return PyCustomMember.this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyInstanceElement element = (MyInstanceElement)o;
+      return Objects.equals(getThis(), element.getThis()) &&
+             Objects.equals(myClass, element.myClass) &&
+             Objects.equals(myContext, element.myContext) &&
+             Objects.equals(getNode(), element.getNode());
+    }
+
+    @Override
+    public String toString() {
+      return "MyInstanceElement{" +
+             "myClass=" + myClass +
+             "member=" + getThis() +
+             "node=" + getNode() +
+             ", myContext=" + myContext +
+             '}';
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myClass, myContext, getNode(), getThis());
     }
 
     @Override

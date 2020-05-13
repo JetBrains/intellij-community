@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
@@ -35,7 +23,6 @@ import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Assume;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -44,12 +31,25 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
-public class UnivocityTest extends AbstractApplyAndRevertTestCase {
+public class UnivocityTest extends BaseUnivocityTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
-    MadTestingUtil.enableAllInspections(myProject, myProject);
+    MadTestingUtil.enableAllInspections(myProject);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      Disposer.dispose(((ProjectEx)myProject).getEarlyDisposable());
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testCompilabilityAfterIntentions() {
@@ -94,6 +94,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
   }
 
   public void testRandomActivity() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     Generator<PsiJavaFile> javaFiles = psiJavaFiles();
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env ->
@@ -119,18 +120,6 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
 
           env1.executeCommands(IntDistribution.uniform(1, 7), Generator.frequency(actionWeights));
         }))));
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    File file = new File(PathManager.getHomePath(), "univocity-parsers");
-    if (!file.exists()) {
-      fail("Cannot find univocity project:\n" +
-           "  execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git\n" +
-           "  open the just cloned univocity-parsers project in IntelliJ IDEA, let it download all the libraries, close the IDE\n" +
-           "  execute this in univocity-parsers directory: git reset HEAD --hard");
-    }
-    return file.getAbsolutePath();
   }
 
   private static class AddImportExternally extends ActionOnFile {

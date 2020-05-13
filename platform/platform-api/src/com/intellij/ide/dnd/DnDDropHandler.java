@@ -20,4 +20,16 @@ package com.intellij.ide.dnd;
  */
 public interface DnDDropHandler {
   void drop(DnDEvent event);
+
+  interface WithResult extends DnDDropHandler {
+    @Override
+    default void drop(DnDEvent event) {
+      tryDrop(event);
+    }
+
+    /**
+     * @return {@code true} if drop succeeded
+     */
+    boolean tryDrop(DnDEvent event);
+  }
 }

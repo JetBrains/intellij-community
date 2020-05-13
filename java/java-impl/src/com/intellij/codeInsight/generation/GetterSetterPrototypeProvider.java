@@ -7,24 +7,30 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtilBase;
+import org.jetbrains.annotations.Contract;
 
 public abstract class GetterSetterPrototypeProvider {
   public static final ExtensionPointName<GetterSetterPrototypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.getterSetterProvider");
+  @Contract(pure = true)
   public abstract boolean canGeneratePrototypeFor(PsiField field);
   public abstract PsiMethod[] generateGetters(PsiField field);
   public abstract PsiMethod[] generateSetters(PsiField field);
+  @Contract(pure = true)
   public PsiMethod[] findGetters(PsiClass psiClass, String propertyName) {
     return null;
   }
 
+  @Contract(pure = true)
   public String suggestGetterName(String propertyName) {
     return null;
   }
 
+  @Contract(pure = true)
   public boolean isSimpleGetter(PsiMethod method, String oldPropertyName) {
     return false;
   }
 
+  @Contract(pure = true)
   public abstract boolean isReadOnly(PsiField field);
 
   public static PsiMethod[] generateGetterSetters(PsiField field, boolean generateGetter) {

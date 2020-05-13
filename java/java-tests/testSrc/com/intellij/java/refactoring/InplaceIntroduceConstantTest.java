@@ -70,6 +70,10 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     doTest(null);
   }
 
+  public void testConflictingConstantNameStaticallyImported() {
+    doTest(null);
+  }
+
   public void testNoConflictingConstantName() {
     doTest(null);
   }

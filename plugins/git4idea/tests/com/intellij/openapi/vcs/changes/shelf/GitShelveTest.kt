@@ -3,11 +3,8 @@ package com.intellij.openapi.vcs.changes.shelf
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import git4idea.stash.GitShelveChangesSaver
-import git4idea.test.ChangesBuilder
-import git4idea.test.GitSingleRepoTest
-import git4idea.test.assertNoChanges
+import git4idea.test.*
 import java.util.*
 
 class GitStandardShelveTest : GitShelveTest() {
@@ -33,6 +30,7 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     super.setUp()
     shelveChangesManager = ShelveChangesManager.getInstance(project)
     saver = GitShelveChangesSaver(project, git, EmptyProgressIndicator(), "test")
+    git("config core.autocrlf false")
   }
 
   protected fun setBatchShelveOptimization(value: Boolean) {
@@ -55,7 +53,7 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     changeListManager.assertNoChanges()
-    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(file.read()))
+    assertEquals("Current file content is incorrect", initialContent, file.read())
 
     val list = `assert single shelvelist`()
     assertChanges(list) {
@@ -83,8 +81,8 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     changeListManager.assertNoChanges()
-    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(afile.read()))
-    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(bfile.read()))
+    assertEquals("Current file content is incorrect", initialContent, afile.read())
+    assertEquals("Current file content is incorrect", initialContent, bfile.read())
 
     val list = `assert single shelvelist`()
     assertChanges(list) {
@@ -112,6 +110,43 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     assertChanges(list) {
       added("a.txt", initialContent)
     }
+  }
+
+  fun `test shelf and load files added in multiple roots`() {
+    val file = file("a.txt")
+    val initialContent = "initial\n"
+    file.create(initialContent).add()
+
+    projectRoot.createDir("secondRoot")
+    val secondRoot = createRepository(project,"$projectPath/secondRoot", false)
+    val file2 = secondRoot.file("b.txt")
+    file2.create(initialContent).add()
+
+    refresh()
+    updateChangeListManager()
+
+    saver.saveLocalChanges(listOf(repo.root, secondRoot.root))
+    refresh()
+    updateChangeListManager()
+
+    changeListManager.assertNoChanges()
+    assertFalse("There should be no file a.txt on the disk", file.file.exists())
+    assertFalse("There should be no file b.txt on the disk", file2.file.exists())
+
+    val list = `assert single shelvelist`()
+    assertChanges(list) {
+      added("a.txt", initialContent)
+      added("b.txt", initialContent)
+    }
+
+    saver.load()
+    refresh()
+    updateChangeListManager()
+
+    assertTrue("There should be the file a.txt on the disk", file.file.exists())
+    assertTrue("There should be the file b.txt on the disk", file2.file.exists())
+    repo.assertStatus(file.file, 'A')
+    secondRoot.assertStatus(file2.file, 'A')
   }
 
   private fun `assert single shelvelist`(): ShelvedChangeList {

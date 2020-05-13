@@ -15,7 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing.configurers
 
-import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -38,8 +39,13 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
     val leaveAsIsMap = LinkedHashMap<VirtualFile, Charset>()
     val projectManagerImpl = (EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl)
 
-    fillSourceEncoding(mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
-    fillResourceEncoding(mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
+    ReadAction.compute<Unit, Throwable> {
+      fillSourceEncoding(mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
+    }
+
+    ReadAction.compute<Unit, Throwable> {
+      fillResourceEncoding(project, mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
+    }
 
     if (newMap.isEmpty()) {
       return
@@ -47,16 +53,17 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
 
     newMap.putAll(leaveAsIsMap)
 
-    TransactionGuard.getInstance().submitTransactionAndWait {
+    ApplicationManager.getApplication().invokeAndWait {
       projectManagerImpl.setMapping(newMap)
     }
   }
 
-  private fun fillResourceEncoding(mavenProject: MavenProject,
+  private fun fillResourceEncoding(project: Project,
+                                   mavenProject: MavenProject,
                                    newMap: LinkedHashMap<VirtualFile, Charset>,
                                    leaveAsIsMap: LinkedHashMap<VirtualFile, Charset>,
                                    projectManagerImpl: EncodingProjectManagerImpl) {
-    mavenProject.resourceEncoding?.let(this::getCharset)?.let { charset ->
+    mavenProject.getResourceEncoding(project)?.let(this::getCharset)?.let { charset ->
       mavenProject.resources.forEach { resource ->
         val dirVfile = LocalFileSystem.getInstance().findFileByIoFile(File(resource.directory)) ?: return
         newMap[dirVfile] = charset
@@ -64,7 +71,7 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
           if (FileUtil.isAncestor(resource.directory, it.key.path, false)) {
             newMap[it.key] = charset
           }
-          else  {
+          else {
             leaveAsIsMap[it.key] = it.value
           }
         }

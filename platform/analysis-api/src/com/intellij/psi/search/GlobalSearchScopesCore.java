@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -11,12 +12,10 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +44,7 @@ public class GlobalSearchScopesCore {
   }
 
   @NotNull
-  public static GlobalSearchScope directoriesScope(@NotNull Project project, boolean withSubdirectories, @NotNull VirtualFile... directories) {
+  public static GlobalSearchScope directoriesScope(@NotNull Project project, boolean withSubdirectories, VirtualFile @NotNull ... directories) {
     Set<VirtualFile> dirSet = ContainerUtil.newHashSet(directories);
     if (dirSet.isEmpty()) {
       return GlobalSearchScope.EMPTY_SCOPE;
@@ -58,7 +57,7 @@ public class GlobalSearchScopesCore {
                                 withSubdirectories ? dirSet : Collections.emptySet());
   }
 
-  public static GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {
+  public static @NotNull GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {
     return new FilterScopeAdapter(project, set);
   }
 
@@ -122,9 +121,7 @@ public class GlobalSearchScopesCore {
       FilterScopeAdapter adapter = (FilterScopeAdapter)o;
 
       if (!mySet.equals(adapter.mySet)) return false;
-      if (!myManager.equals(adapter.myManager)) return false;
-
-      return true;
+      return myManager.equals(adapter.myManager);
     }
 
     @Override
@@ -133,6 +130,11 @@ public class GlobalSearchScopesCore {
       result = 31 * result + mySet.hashCode();
       result = 31 * result + myManager.hashCode();
       return result;
+    }
+
+    @Override
+    public String toString() {
+      return "FilterScope adapted from "+mySet;
     }
   }
 
@@ -146,7 +148,7 @@ public class GlobalSearchScopesCore {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myFileIndex.isInSourceContent(file) && !TestSourcesFilter.isTestSources(file, ObjectUtils.assertNotNull(getProject()));
+      return myFileIndex.isInSourceContent(file) && !TestSourcesFilter.isTestSources(file, Objects.requireNonNull(getProject()));
     }
 
     @Override
@@ -167,13 +169,13 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
-      return ModuleManager.getInstance(ObjectUtils.assertNotNull(getProject())).getUnloadedModuleDescriptions();
+      return ModuleManager.getInstance(Objects.requireNonNull(getProject())).getUnloadedModuleDescriptions();
     }
 
     @NotNull
     @Override
     public String getDisplayName() {
-      return PsiBundle.message("psi.search.scope.production.files");
+      return AnalysisBundle.message("psi.search.scope.production.files");
     }
   }
 
@@ -184,7 +186,7 @@ public class GlobalSearchScopesCore {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return TestSourcesFilter.isTestSources(file, ObjectUtils.assertNotNull(getProject()));
+      return TestSourcesFilter.isTestSources(file, Objects.requireNonNull(getProject()));
     }
 
     @Override
@@ -205,7 +207,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return PsiBundle.message("psi.search.scope.test.files");
+      return AnalysisBundle.message("psi.search.scope.test.files");
     }
   }
 
@@ -305,17 +307,17 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return "Directory '" + myDirectory.getName() + "'";
+      return AnalysisBundle.message("display.name.directory.0", myDirectory.getName());
     }
   }
 
   static class DirectoriesScope extends GlobalSearchScope {
-    private final Set<VirtualFile> myDirectories;
-    private final Set<VirtualFile> myDirectoriesWithSubdirectories;
+    private final Set<? extends VirtualFile> myDirectories;
+    private final Set<? extends VirtualFile> myDirectoriesWithSubdirectories;
 
     private DirectoriesScope(@NotNull Project project,
-                             @NotNull Set<VirtualFile> directories,
-                             @NotNull Set<VirtualFile> directoriesWithSubdirectories) {
+                             @NotNull Set<? extends VirtualFile> directories,
+                             @NotNull Set<? extends VirtualFile> directoriesWithSubdirectories) {
       super(project);
       myDirectories = directories;
       myDirectoriesWithSubdirectories = directoriesWithSubdirectories;
@@ -379,29 +381,33 @@ public class GlobalSearchScopesCore {
         if (in(other.myDirectory)) {
           return this;
         }
-        Set<VirtualFile> directories = myDirectories;
-        Set<VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
+        Set<? extends VirtualFile> directories = myDirectories;
+        Set<? extends VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
         if (other.myWithSubdirectories) {
-          directoriesWithSubdirectories = new HashSet<>(directoriesWithSubdirectories);
-          directoriesWithSubdirectories.add(other.myDirectory);
+          Set<VirtualFile> copy = new HashSet<>(directoriesWithSubdirectories);
+          copy.add(other.myDirectory);
+          directoriesWithSubdirectories = copy;
         }
         else {
-          directories = new HashSet<>(directories);
-          directories.add(other.myDirectory);
+          Set<VirtualFile> copy = new HashSet<>(directories);
+          copy.add(other.myDirectory);
+          directories = copy;
         }
         return new DirectoriesScope(getProject(), directories, directoriesWithSubdirectories);
       }
       if (scope instanceof DirectoriesScope) {
         DirectoriesScope other = (DirectoriesScope)scope;
-        Set<VirtualFile> directories = myDirectories;
-        Set<VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
+        Set<? extends VirtualFile> directories = myDirectories;
+        Set<? extends VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
         if (!other.myDirectories.isEmpty()) {
-          directories = new HashSet<>(directories);
-          directories.addAll(other.myDirectories);
+          Set<VirtualFile> copy = new HashSet<>(directories);
+          copy.addAll(other.myDirectories);
+          directories = copy;
         }
         if (!other.myDirectoriesWithSubdirectories.isEmpty()) {
-          directoriesWithSubdirectories = new HashSet<>(directoriesWithSubdirectories);
-          directoriesWithSubdirectories.addAll(other.myDirectoriesWithSubdirectories);
+          Set<VirtualFile> copy = new HashSet<>(directoriesWithSubdirectories);
+          copy.addAll(other.myDirectoriesWithSubdirectories);
+          directoriesWithSubdirectories = copy;
         }
         return new DirectoriesScope(getProject(), directories, directoriesWithSubdirectories);
       }
@@ -419,12 +425,12 @@ public class GlobalSearchScopesCore {
     @Override
     public String getDisplayName() {
       if (myDirectories.size() + myDirectoriesWithSubdirectories.size() == 1) {
-        Set<VirtualFile> dirs = myDirectories.size() == 1 ? myDirectories : myDirectoriesWithSubdirectories;
+        Set<? extends VirtualFile> dirs = myDirectories.size() == 1 ? myDirectories : myDirectoriesWithSubdirectories;
         VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(dirs));
-        return "Directory '" + root.getName() + "'";
+        return AnalysisBundle.message("display.name.directory.0", root.getName());
       }
       Iterable<VirtualFile> allDirs = ContainerUtil.concat(myDirectories, myDirectoriesWithSubdirectories);
-      return "Directories " + StringUtil.join(allDirs, file -> "'" + file.getName() + "'", ", ");
+      return AnalysisBundle.message("display.name.directories.0", StringUtil.join(allDirs, file -> "'" + file.getName() + "'", ", "));
     }
 
   }

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspectionTest extends LightJavaInspectionTestCase {
 
+  @SuppressWarnings("MismatchedReadAndWriteOfArray")
   public void testLambda() {
     doTest("class Test {" +
            " {" +

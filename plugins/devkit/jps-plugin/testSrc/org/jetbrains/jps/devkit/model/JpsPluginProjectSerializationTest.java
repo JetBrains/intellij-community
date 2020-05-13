@@ -25,9 +25,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModule;
 import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
 
-/**
- * @author nik
- */
 public class JpsPluginProjectSerializationTest extends JpsSerializationTestCase {
   public void testLoadProject() {
     loadProject("plugins/devkit/jps-plugin/testData/pluginProject/pluginProject.ipr");

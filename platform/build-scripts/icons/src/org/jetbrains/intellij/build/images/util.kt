@@ -14,7 +14,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.imageio.ImageIO
 
-internal val File.children: List<File> get() = if (isDirectory) listFiles().toList() else emptyList()
+internal val File.children: List<File> get() = if (isDirectory) listFiles()?.toList() ?: emptyList() else emptyList()
 
 internal fun isImage(file: Path, iconsOnly: Boolean): Boolean {
   if (!isImage(file)) return false
@@ -34,6 +34,7 @@ internal fun isIcon(file: Path): Boolean {
 }
 
 internal fun isImage(file: Path) = ImageExtension.fromName(file.fileName.toString()) != null
+internal fun isImage(file: File) = ImageExtension.fromName(file.name) != null
 
 internal fun imageSize(file: Path): Dimension? {
   val image = loadImage(file)

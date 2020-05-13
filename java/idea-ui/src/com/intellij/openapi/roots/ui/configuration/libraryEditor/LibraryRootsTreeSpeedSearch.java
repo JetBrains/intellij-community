@@ -24,9 +24,6 @@ import javax.swing.tree.TreePath;
 import java.io.File;
 import java.util.StringTokenizer;
 
-/**
-* @author nik
-*/
 class LibraryRootsTreeSpeedSearch extends TreeSpeedSearch {
   LibraryRootsTreeSpeedSearch(final Tree tree) {
     super(tree);

@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.runners.ProgramRunner;
@@ -15,11 +14,9 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenRunConfigurationMenu extends DefaultActionGroup implements DumbAware {
+import java.util.List;
 
+public final class MavenRunConfigurationMenu extends DefaultActionGroup implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     for (AnAction action : getChildActionsOrStubs()) {
@@ -28,17 +25,20 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
       }
     }
 
-    final Project project = e.getProject();
+    Project project = e.getProject();
+    RunnerAndConfigurationSettings settings = e.getData(MavenDataKeys.RUN_CONFIGURATION);
 
-    final RunnerAndConfigurationSettings settings = e.getData(MavenDataKeys.RUN_CONFIGURATION);
+    if (settings == null || project == null) {
+      return;
+    }
 
-    if (settings == null || project == null) return;
-
-    Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
-    for (int i = executors.length; --i >= 0; ) {
-      Executor executor = executors[i];
-      if(!executor.isApplicable(project)) continue;
-      final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
+    List<Executor> executors = Executor.EXECUTOR_EXTENSION_NAME.getExtensionList();
+    for (int i = executors.size(); --i >= 0; ) {
+      Executor executor = executors.get(i);
+      if (!executor.isApplicable(project)) {
+        continue;
+      }
+      ProgramRunner<?> runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
       AnAction action = new ExecuteMavenRunConfigurationAction(executor, runner != null, settings);
       addAction(action, Constraints.FIRST);
     }
@@ -46,14 +46,12 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
     super.update(e);
   }
 
-  private static class ExecuteMavenRunConfigurationAction extends AnAction {
+  private static final class ExecuteMavenRunConfigurationAction extends AnAction {
     private final Executor myExecutor;
     private final boolean myEnabled;
     private final RunnerAndConfigurationSettings mySettings;
 
-    ExecuteMavenRunConfigurationAction(Executor executor,
-                                              boolean enabled,
-                                              RunnerAndConfigurationSettings settings) {
+    ExecuteMavenRunConfigurationAction(Executor executor, boolean enabled, RunnerAndConfigurationSettings settings) {
       super(executor.getActionName(), null, executor.getIcon());
       myExecutor = executor;
       myEnabled = enabled;

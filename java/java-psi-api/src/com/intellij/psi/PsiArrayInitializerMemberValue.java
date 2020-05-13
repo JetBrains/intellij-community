@@ -29,6 +29,5 @@ public interface PsiArrayInitializerMemberValue extends PsiAnnotationMemberValue
    *
    * @return the initializer array elements.
    */
-  @NotNull
-  PsiAnnotationMemberValue[] getInitializers();
+  PsiAnnotationMemberValue @NotNull [] getInitializers();
 }

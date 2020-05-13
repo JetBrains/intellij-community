@@ -31,7 +31,7 @@ import java.util.Collection;
  */
 public class LocalFileReaderBasedOnVFS implements ILocalFileReader {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.javacvsImpl.io.LocalFileReaderBasedOnVFS");
+  private static final Logger LOG = Logger.getInstance(LocalFileReaderBasedOnVFS.class);
 
   private final ILocalFileReader myLocalFileReader;
   private final ProjectContentInfoProvider myProjectContentInfoProvider;

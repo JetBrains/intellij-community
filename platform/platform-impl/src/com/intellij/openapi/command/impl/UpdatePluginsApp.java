@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.idea.StartupUtil;
+import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -21,8 +21,8 @@ import java.util.stream.Stream;
  * {@code idea.force.plugin.updates = "true"} system property to apply the updates.
  *
  * @author Konstantin Bulenkov
- * @see StartupUtil#FORCE_PLUGIN_UPDATES
- * @see StartupUtil#installPluginUpdates()
+ * @see Main#FORCE_PLUGIN_UPDATES
+ * @see Main#installPluginUpdates()
  */
 public class UpdatePluginsApp implements ApplicationStarter {
   @Override
@@ -36,8 +36,8 @@ public class UpdatePluginsApp implements ApplicationStarter {
   }
 
   @Override
-  public void main(@NotNull String[] args) {
-    if (Boolean.getBoolean(StartupUtil.FORCE_PLUGIN_UPDATES)) {
+  public void main(String @NotNull [] args) {
+    if (Boolean.getBoolean(Main.FORCE_PLUGIN_UPDATES)) {
       log("Updates applied.");
       System.exit(0);
     }
@@ -51,7 +51,7 @@ public class UpdatePluginsApp implements ApplicationStarter {
 
     Set<String> filter = Stream.of(args).skip(1).collect(Collectors.toSet());
     if (!filter.isEmpty()) {
-      availableUpdates = ContainerUtil.filter(availableUpdates, downloader -> filter.contains(downloader.getPluginId()));
+      availableUpdates = ContainerUtil.filter(availableUpdates, downloader -> filter.contains(downloader.getId().getIdString()));
     }
 
     log("Plugins to update:");

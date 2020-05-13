@@ -116,6 +116,10 @@ class Locked(HTTPException):
     code: int
     description: Text
 
+class FailedDependency(HTTPException):
+    code: int
+    description: Text
+
 class PreconditionRequired(HTTPException):
     code: int
     description: Text

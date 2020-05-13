@@ -31,7 +31,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     if (whereOrWhatLine == "* Where:") {
       location = reader.readLine() ?: return false
       filter = GradleConsoleFilter(null)
-      filter.applyFilter(location, 0) ?: return false
+      filter.applyFilter(location, location.length) ?: return false
       if (!reader.readLine().isNullOrBlank()) return false
       whereOrWhatLine = reader.readLine()
     }
@@ -89,6 +89,9 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
 
     // JDK compatibility issues should be handled by org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker
     if (reason.startsWith("Could not create service of type ") && reason.contains(" using BuildScopeServices.")) return false
+
+    // Build cancellation errors should be handled by org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker
+    if (reason.contains("Build cancelled.")) return false
 
     if (location != null && filter != null) {
       val errorText = description.toString()

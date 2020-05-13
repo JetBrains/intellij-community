@@ -26,9 +26,6 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class LayoutNodesDraggingObject extends PackagingElementDraggingObject {
   private final ArtifactEditorEx myArtifactsEditor;
   private final List<? extends PackagingElementNode<?>> myNodes;

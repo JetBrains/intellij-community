@@ -1,72 +1,42 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
-/**
- *  @author dsl
- */
-class OrderEntryFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEntryFactory");
-  @NonNls public static final String ORDER_ENTRY_ELEMENT_NAME = JpsModuleRootModelSerializer.ORDER_ENTRY_TAG;
-  @NonNls public static final String ORDER_ENTRY_TYPE_ATTR = JpsModuleRootModelSerializer.TYPE_ATTRIBUTE;
-
-  @NotNull
-  static OrderEntry createOrderEntryByElement(@NotNull Element element,
-                                              @NotNull RootModelImpl rootModel,
-                                              @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
-    LOG.assertTrue(ORDER_ENTRY_ELEMENT_NAME.equals(element.getName()));
-    final String type = element.getAttributeValue(ORDER_ENTRY_TYPE_ATTR);
+final class OrderEntryFactory {
+  static @NotNull OrderEntry createOrderEntryByElement(@NotNull Element element,
+                                                       @NotNull RootModelImpl rootModel,
+                                                       @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+    String type = element.getAttributeValue(JpsModuleRootModelSerializer.TYPE_ATTRIBUTE);
     if (type == null) {
       throw new InvalidDataException();
     }
-    if (ModuleSourceOrderEntryImpl.ENTRY_TYPE.equals(type)) {
-      return new ModuleSourceOrderEntryImpl(element, rootModel);
+
+    switch (type) {
+      case ModuleSourceOrderEntryImpl.ENTRY_TYPE:
+        return new ModuleSourceOrderEntryImpl(element, rootModel);
+      case ModuleJdkOrderEntryImpl.ENTRY_TYPE:
+        return new ModuleJdkOrderEntryImpl(element, rootModel, projectRootManager);
+      case InheritedJdkOrderEntryImpl.ENTRY_TYPE:
+        return new InheritedJdkOrderEntryImpl(element, rootModel, projectRootManager);
+      case LibraryOrderEntryImpl.ENTRY_TYPE:
+        return new LibraryOrderEntryImpl(element, rootModel, projectRootManager);
+      case ModuleLibraryOrderEntryImpl.ENTRY_TYPE:
+        return new ModuleLibraryOrderEntryImpl(element, rootModel, projectRootManager);
+      case ModuleOrderEntryImpl.ENTRY_TYPE:
+        return new ModuleOrderEntryImpl(element, rootModel);
+      default:
+        throw new InvalidDataException("Unknown order entry type:" + type);
     }
-    if (ModuleJdkOrderEntryImpl.ENTRY_TYPE.equals(type)) {
-      return new ModuleJdkOrderEntryImpl(element, rootModel, projectRootManager);
-    }
-    if (InheritedJdkOrderEntryImpl.ENTRY_TYPE.equals(type)) {
-      return new InheritedJdkOrderEntryImpl(element, rootModel, projectRootManager);
-    }
-    if (LibraryOrderEntryImpl.ENTRY_TYPE.equals(type)) {
-      return new LibraryOrderEntryImpl(element, rootModel, projectRootManager);
-    }
-    if (ModuleLibraryOrderEntryImpl.ENTRY_TYPE.equals(type)) {
-      return new ModuleLibraryOrderEntryImpl(element, rootModel, projectRootManager);
-    }
-    if (ModuleOrderEntryImpl.ENTRY_TYPE.equals(type)) {
-      return new ModuleOrderEntryImpl(element, rootModel);
-    }
-    throw new InvalidDataException("Unknown order entry type:" + type);
   }
 
-  @NotNull
-  static Element createOrderEntryElement(@NotNull String type) {
-    final Element element = new Element(ORDER_ENTRY_ELEMENT_NAME);
-    element.setAttribute(ORDER_ENTRY_TYPE_ATTR, type);
+  static @NotNull Element createOrderEntryElement(@NotNull String type) {
+    Element element = new Element(JpsModuleRootModelSerializer.ORDER_ENTRY_TAG);
+    element.setAttribute(JpsModuleRootModelSerializer.TYPE_ATTRIBUTE, type);
     return element;
   }
-
 }

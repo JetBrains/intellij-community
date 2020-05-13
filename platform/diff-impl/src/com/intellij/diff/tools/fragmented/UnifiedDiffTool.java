@@ -19,6 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer;
+import com.intellij.openapi.diff.DiffBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnifiedDiffTool implements FrameDiffTool {
@@ -40,6 +41,6 @@ public class UnifiedDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Unified viewer";
+    return DiffBundle.message("unified.viewer");
   }
 }

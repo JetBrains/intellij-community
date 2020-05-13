@@ -7,6 +7,7 @@ import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -16,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfiguration> {
   public static final FacetTypeId<InvalidFacet> TYPE_ID = new FacetTypeId<>("invalid");
 
@@ -27,7 +25,7 @@ public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfig
   }
 
   public InvalidFacetType() {
-    super(TYPE_ID, "invalid", "Invalid");
+    super(TYPE_ID, "invalid", LangBundle.message("facet.type.invalid.node.text"));
   }
 
   @Override
@@ -54,7 +52,7 @@ public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfig
   }
 
   @Override
-  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, @NotNull FacetEditor[] editors) {
+  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, FacetEditor @NotNull [] editors) {
     return new MultipleInvalidFacetEditor(editors);
   }
 

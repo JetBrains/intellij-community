@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -37,7 +38,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
 
         for (LambdaAndExplicitMethodPair info : LambdaAndExplicitMethodPair.INFOS) {
           if(info.isLambdaCall(call, lambda)) {
-            holder.registerProblem(lambda, InspectionsBundle.message("inspection.excessive.lambda.message"),
+            holder.registerProblem(lambda, JavaBundle.message("inspection.excessive.lambda.message"),
                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                    new TextRange(0, expr.getStartOffsetInParent()),
                                    new RemoveExcessiveLambdaFix(info, info.getExplicitMethodName(call)));
@@ -60,14 +61,14 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.excessive.lambda.fix.name", myName);
+      return JavaBundle.message("inspection.excessive.lambda.fix.name", myName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.excessive.lambda.fix.family.name");
+      return JavaBundle.message("inspection.excessive.lambda.fix.family.name");
     }
 
     @Override

@@ -93,7 +93,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
   }
 
   @Override
-  public Class getColumnClass() {
+  public Class<?> getColumnClass() {
     return columnIdx == COLUMN_DOWNLOADS ? Integer.class : String.class;
   }
 
@@ -137,12 +137,12 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
 
       if (column == COLUMN_DATE) {
         long date = myPluginNode.getDate();
-        myLabel.setText(date != 0 && date != Long.MAX_VALUE ? DateFormatUtil.formatDate(date) : "n/a");
+        myLabel.setText(date != 0 && date != Long.MAX_VALUE ? DateFormatUtil.formatDate(date) : IdeBundle.message("label.category.n.a"));
         myLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       }
       else if (column == COLUMN_DOWNLOADS) {
         String downloads = myPluginNode.getDownloads();
-        myLabel.setText(!StringUtil.isEmpty(downloads) ? downloads : "n/a");
+        myLabel.setText(!StringUtil.isEmpty(downloads) ? downloads : IdeBundle.message("label.category.n.a"));
         myLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       }
       else if (column == COLUMN_CATEGORY) {
@@ -150,7 +150,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
         if (StringUtil.isEmpty(category)) {
           category = myPluginNode.getRepositoryName();
         }
-        myLabel.setText(!StringUtil.isEmpty(category) ? category : "n/a");
+        myLabel.setText(!StringUtil.isEmpty(category) ? category : IdeBundle.message("label.category.n.a"));
       }
       if (myPluginNode.getStatus() == PluginNode.Status.INSTALLED) {
         PluginId pluginId = myPluginNode.getPluginId();

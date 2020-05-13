@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MoveJavaFileHandler extends MoveFileHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaFileHandler");
+  private static final Logger LOG = Logger.getInstance(MoveJavaFileHandler.class);
 
   @Override
   public boolean canProcessElement(PsiFile element) {

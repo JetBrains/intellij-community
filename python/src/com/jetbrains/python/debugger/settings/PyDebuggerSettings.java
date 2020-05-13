@@ -28,6 +28,7 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
   private boolean myWatchReturnValues = false;
   private boolean mySimplifiedView = true;
   private volatile PyDebugValue.ValuesPolicy myValuesPolicy = PyDebugValue.ValuesPolicy.ASYNC;
+  private boolean myAlwaysDoSmartStepIntoEnabled = true;
 
   public PyDebuggerSettings() {
     super("python");
@@ -76,6 +77,14 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
 
   public void setSteppingFiltersEnabled(boolean steppingFiltersEnabled) {
     mySteppingFiltersEnabled = steppingFiltersEnabled;
+  }
+
+  public void setAlwaysDoSmartStepIntoEnabled(boolean alwaysDoSmartStepIntoEnabled) {
+    myAlwaysDoSmartStepIntoEnabled = alwaysDoSmartStepIntoEnabled;
+  }
+
+  public boolean isAlwaysDoSmartStepInto() {
+    return myAlwaysDoSmartStepIntoEnabled;
   }
 
   @NotNull

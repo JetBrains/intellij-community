@@ -17,7 +17,7 @@ package com.intellij.vcs.log.data;
 
 public class VcsLogRefreshNotEnoughDataException extends RuntimeException {
 
-  private final static String NOT_ENOUGH_FIRST_BLOCK = "Not enough first block";
+  private final static String NOT_ENOUGH_FIRST_BLOCK = "Not enough first block"; // NON-NLS
 
   public VcsLogRefreshNotEnoughDataException() {
     super(NOT_ENOUGH_FIRST_BLOCK);

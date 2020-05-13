@@ -40,7 +40,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return ReadAction.compute(() -> {
       if (myModule.isDisposed()) return Collections.emptySet();
       Set<VirtualFile> result = new LinkedHashSet<>();
-      VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
+      List<VirtualFile[]> allRoots = Arrays.asList(
+        ModuleRootManager.getInstance(myModule).getContentRoots(),
+        ModuleRootManager.getInstance(myModule).getSourceRoots()
+      );
       for (VirtualFile[] roots : allRoots) {
         for (VirtualFile root : roots) {
           DirectoryInfo info = getInfoForFileOrDirectory(root);
@@ -142,15 +145,13 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       myOwnerModule = ownerModule;
     }
 
-    @NotNull
     @Override
-    public VirtualFile[] getFiles(@NotNull OrderRootType type) {
+    public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
       throw new IncorrectOperationException();
     }
 
-    @NotNull
     @Override
-    public String[] getUrls(@NotNull OrderRootType rootType) {
+    public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
       throw new IncorrectOperationException();
     }
 

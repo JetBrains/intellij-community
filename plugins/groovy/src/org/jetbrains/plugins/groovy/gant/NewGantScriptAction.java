@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +14,8 @@ import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+
+import java.util.Objects;
 
 /**
  * @author ilyas
@@ -41,19 +42,13 @@ public class NewGantScriptAction extends NewGroovyActionBase {
   }
 
   @Override
-  protected String getCommandName() {
-    return "Create Gant Script";
-  }
-
-  @Override
   protected boolean isAvailable(DataContext dataContext) {
     return super.isAvailable(dataContext) &&
-           GantUtils.isSDKConfiguredToRun(ObjectUtils.assertNotNull(LangDataKeys.MODULE.getData(dataContext)));
+           GantUtils.isSDKConfiguredToRun(Objects.requireNonNull(LangDataKeys.MODULE.getData(dataContext)));
   }
 
   @Override
-  @NotNull
-  protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] doCreate(String newName, PsiDirectory directory) throws Exception {
     PsiFile file = createGantScriptFromTemplate(directory, newName, GroovyTemplates.GANT_SCRIPT);
     PsiElement lastChild = file.getLastChild();
     PsiElement child = null;

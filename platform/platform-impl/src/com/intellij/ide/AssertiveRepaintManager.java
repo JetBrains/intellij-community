@@ -118,7 +118,7 @@ public class AssertiveRepaintManager extends RepaintManager {
   }
 
   private void checkThreadViolations(@Nullable Component c) {
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!SwingUtilities.isEventDispatchThread() && (c == null || c.isShowing())) {
       final Exception exception = new Exception();
       StackTraceElement[] stackTrace = exception.getStackTrace();
 

@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public abstract class ReadonlyStatusHandler {
-  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull VirtualFile... files) {
+  public static boolean ensureFilesWritable(@NotNull Project project, VirtualFile @NotNull ... files) {
     return !getInstance(project).ensureFilesWritable(Arrays.asList(files)).hasReadonlyFiles();
   }
 
@@ -35,8 +35,7 @@ public abstract class ReadonlyStatusHandler {
   }
 
   public abstract static class OperationStatus {
-    @NotNull
-    public abstract VirtualFile[] getReadonlyFiles();
+    public abstract VirtualFile @NotNull [] getReadonlyFiles();
 
     public abstract boolean hasReadonlyFiles();
 
@@ -49,7 +48,7 @@ public abstract class ReadonlyStatusHandler {
    */
   @Deprecated
   @NotNull
-  public OperationStatus ensureFilesWritable(@NotNull VirtualFile... files) {
+  public OperationStatus ensureFilesWritable(VirtualFile @NotNull ... files) {
     return ensureFilesWritable(Arrays.asList(files));
   }
 

@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.GitLocalBranch;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase.getAffectedFilePaths;
+import static com.intellij.vcsUtil.VcsFileUtilKt.isUnder;
 
 /**
  * <p>
@@ -81,6 +83,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
   private final Project myProject;
   private final VirtualFile myRoot;
+  private final FilePath myRootPath;
   private final GitRepository myRepository;
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
@@ -98,6 +101,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     myProject = repository.getProject();
     myRepository = repository;
     myRoot = repository.getRoot();
+    myRootPath = VcsUtil.getFilePath(myRoot);
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myGit = Git.getInstance();
@@ -194,10 +198,20 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
     Set<FilePath> untrackedFiles = myGit.untrackedFilePaths(myProject, myRoot, suspiciousFiles);
 
+    untrackedFiles.removeIf(it -> {
+      VirtualFile root = myVcsManager.getVcsRootFor(it);
+      if (!myRoot.equals(root)) {
+        LOG.warn(String.format("Ignoring untracked file under another root: %s; root: %s; mapped root: %s", it, myRoot, root));
+        return true;
+      }
+      return false;
+    });
+
+
     synchronized (LOCK) {
       if (suspiciousFiles != null) {
         // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
-        myDefinitelyUntrackedFiles.removeAll(suspiciousFiles);
+        myDefinitelyUntrackedFiles.removeIf((definitelyUntrackedFile) -> isUnder(myRootPath, suspiciousFiles, definitelyUntrackedFile));
         myDefinitelyUntrackedFiles.addAll(untrackedFiles);
       }
       else {
@@ -218,7 +232,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
         break;
       }
       String path = event.getPath();
-      if (totalRefreshNeeded(path)) {
+      if (totalRefreshNeeded(myRepository, path)) {
         allChanged = true;
       }
       else {
@@ -247,35 +261,35 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     }
   }
 
-  private boolean totalRefreshNeeded(@NotNull String path) {
-    return indexChanged(path) || externallyCommitted(path) || headMoved(path) ||
-           headChanged(path) || currentBranchChanged(path) || gitignoreChanged(path);
+  public static boolean totalRefreshNeeded(@NotNull GitRepository repository, @NotNull String path) {
+    return indexChanged(repository, path) || externallyCommitted(repository, path) || headMoved(repository, path) ||
+           headChanged(repository, path) || currentBranchChanged(repository, path) || gitignoreChanged(repository, path);
   }
 
-  private boolean headChanged(@NotNull String path) {
-    return myRepositoryFiles.isHeadFile(path);
+  private static boolean headChanged(@NotNull GitRepository repository, @NotNull String path) {
+    return repository.getRepositoryFiles().isHeadFile(path);
   }
 
-  private boolean currentBranchChanged(@NotNull String path) {
-    GitLocalBranch currentBranch = myRepository.getCurrentBranch();
-    return currentBranch != null && myRepositoryFiles.isBranchFile(path, currentBranch.getFullName());
+  private static boolean currentBranchChanged(@NotNull GitRepository repository, @NotNull String path) {
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
+    return currentBranch != null && repository.getRepositoryFiles().isBranchFile(path, currentBranch.getFullName());
   }
 
-  private boolean headMoved(@NotNull String path) {
-    return myRepositoryFiles.isOrigHeadFile(path);
+  private static boolean headMoved(@NotNull GitRepository repository, @NotNull String path) {
+    return repository.getRepositoryFiles().isOrigHeadFile(path);
   }
 
-  private boolean indexChanged(@NotNull String path) {
-    return myRepositoryFiles.isIndexFile(path);
+  public static boolean indexChanged(@NotNull GitRepository repository, @NotNull String path) {
+    return repository.getRepositoryFiles().isIndexFile(path);
   }
 
-  private boolean externallyCommitted(@NotNull String path) {
-    return myRepositoryFiles.isCommitMessageFile(path);
+  private static boolean externallyCommitted(@NotNull GitRepository repository, @NotNull String path) {
+    return repository.getRepositoryFiles().isCommitMessageFile(path);
   }
 
-  private boolean gitignoreChanged(@NotNull String path) {
+  private static boolean gitignoreChanged(@NotNull GitRepository repository, @NotNull String path) {
     // TODO watch file stored in core.excludesfile
-    return path.endsWith(GitRepositoryFiles.GITIGNORE) || myRepositoryFiles.isExclude(path);
+    return path.endsWith(GitRepositoryFiles.GITIGNORE) || repository.getRepositoryFiles().isExclude(path);
   }
 
   private void rescanIgnoredFiles(@NotNull Runnable doAfterRescan) { //TODO move to ignore manager

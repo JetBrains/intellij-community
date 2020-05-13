@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.committed;
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Comparator;
@@ -22,7 +23,7 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
     myAsynchLoad = asynchLoad;
   }
 
-  public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, final ChangeListColumn[] columns, boolean asynchLoad) {
+  public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, ChangeListColumn @NotNull [] columns, boolean asynchLoad) {
     super(buildColumnInfos(columns), changeLists, 0);
     myAsynchLoad = asynchLoad;
   }
@@ -36,10 +37,10 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
     return mySortKey;
   }
 
-  private static ColumnInfo[] buildColumnInfos(final ChangeListColumn[] columns) {
+  private static ColumnInfo @NotNull [] buildColumnInfos(ChangeListColumn @NotNull [] columns) {
     ColumnInfo[] result = new ColumnInfo[columns.length];
-    for(int i=0; i<columns.length; i++) {
-      result [i] = new ColumnInfoAdapter(columns [i]);
+    for (int i = 0; i < columns.length; i++) {
+      result[i] = new ColumnInfoAdapter(columns[i]);
     }
     return result;
   }

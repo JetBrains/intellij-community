@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 */
 class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
   static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.TypeArgumentCompletionProvider");
+  private static final Logger LOG = Logger.getInstance(TypeArgumentCompletionProvider.class);
   private final boolean mySmart;
   @Nullable private final JavaCompletionSession mySession;
 
@@ -100,7 +101,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
   }
 
   private static boolean hasParameters(PsiTypeParameterListOwner paramOwner, PsiElement context) {
-    return paramOwner instanceof PsiClass && ConstructorInsertHandler.hasConstructorParameters((PsiClass)paramOwner, context);
+    return paramOwner instanceof PsiClass && ConstructorInsertHandler.hasConstructorParameters((PsiClass)paramOwner, context) != ThreeState.NO;
   }
 
   private static void addInheritors(CompletionParameters parameters,

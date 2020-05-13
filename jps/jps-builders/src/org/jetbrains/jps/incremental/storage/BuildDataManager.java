@@ -2,7 +2,6 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.NotNull;
@@ -31,19 +30,14 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class BuildDataManager implements StorageOwner {
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
+  private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
+  public static final int CONCURRENCY_LEVEL = BuildRunner.PARALLEL_BUILD_ENABLED? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";
   private static final String MAPPINGS_STORAGE = "mappings";
-  private static final int CONCURRENCY_LEVEL = BuildRunner.PARALLEL_BUILD_ENABLED? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
   private static final String SRC_TO_OUTPUT_FILE_NAME = "data";
-
-  private final ConcurrentMap<BuildTarget<?>, AtomicNotNullLazyValue<SourceToOutputMappingImpl>> mySourceToOutputs =
-    new ConcurrentHashMap<>(16, 0.75f, CONCURRENCY_LEVEL);
-  private final ConcurrentMap<BuildTarget<?>, AtomicNotNullLazyValue<BuildTargetStorages>> myTargetStorages =
-    new ConcurrentHashMap<>(16, 0.75f, CONCURRENCY_LEVEL);
-
+  private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, CONCURRENCY_LEVEL);
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;
   private final BuildDataPaths myDataPaths;
@@ -53,76 +47,41 @@ public class BuildDataManager implements StorageOwner {
   private final PathRelativizerService myRelativizer;
   private final StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
     @Override
-    protected Iterable<? extends StorageOwner> getChildStorages() {
-      return new Iterable<StorageOwner>() {
-        @Override
-        public Iterator<StorageOwner> iterator() {
-          final Iterator<AtomicNotNullLazyValue<BuildTargetStorages>> iterator = myTargetStorages.values().iterator();
-          return new Iterator<StorageOwner>() {
-            @Override
-            public boolean hasNext() {
-              return iterator.hasNext();
-            }
-
-            @Override
-            public StorageOwner next() {
-              return iterator.next().getValue();
-            }
-
-            @Override
-            public void remove() {
-              iterator.remove();
-            }
-          };
-        }
-      };
+    public void clean() throws IOException {
+      try {
+        close();
+      }
+      finally {
+        FileUtil.delete(myDataPaths.getTargetsDataRoot());
+      }
     }
-  };
 
-  private interface LazyValueFactory<K, V> {
-    AtomicNotNullLazyValue<V> create(K key);
-  }
-
-  private final LazyValueFactory<BuildTarget<?>,SourceToOutputMappingImpl> SOURCE_OUTPUT_MAPPING_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, SourceToOutputMappingImpl>() {
     @Override
-    public AtomicNotNullLazyValue<SourceToOutputMappingImpl> create(final BuildTarget<?> key) {
-      return new AtomicNotNullLazyValue<SourceToOutputMappingImpl>() {
-        @NotNull
-        @Override
-        protected SourceToOutputMappingImpl compute() {
-          try {
-            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
-          }
-          catch (IOException e) {
-            throw new BuildDataCorruptedException(e);
-          }
-        }
-      };
+    protected Iterable<BuildTargetStorages> getChildStorages() {
+      return () -> myTargetStorages.values().iterator();
     }
   };
 
-  private final LazyValueFactory<BuildTarget<?>,BuildTargetStorages> TARGET_STORAGES_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, BuildTargetStorages>() {
+  private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<SourceToOutputMappingImpl>() {
+    @NotNull
     @Override
-    public AtomicNotNullLazyValue<BuildTargetStorages> create(final BuildTarget<?> target) {
-      return new AtomicNotNullLazyValue<BuildTargetStorages>() {
-        @NotNull
-        @Override
-        protected BuildTargetStorages compute() {
-          return new BuildTargetStorages(target, myDataPaths);
-        }
-      };
+    public SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
+      return createStorage(targetDataDir, myRelativizer);
+    }
+
+    @NotNull
+    @Override
+    public SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
+      return new SourceToOutputMappingImpl(new File(new File(targetDataDir, SRC_TO_OUTPUT_STORAGE), SRC_TO_OUTPUT_FILE_NAME), relativizer);
     }
   };
 
-  public BuildDataManager(BuildDataPaths dataPaths,
-                          BuildTargetsState targetsState,
-                          PathRelativizerService relativizer,
-                          boolean useMemoryTempCaches) throws IOException {
+  public BuildDataManager(BuildDataPaths dataPaths, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
     myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
-    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer, useMemoryTempCaches);
+    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer);
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
     myRelativizer = relativizer;
   }
@@ -136,9 +95,8 @@ public class BuildDataManager implements StorageOwner {
   }
 
   public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
-    final SourceToOutputMappingImpl sourceToOutputMapping = fetchValue(mySourceToOutputs, target, SOURCE_OUTPUT_MAPPING_VALUE_FACTORY);
-    final int buildTargetId = myTargetsState.getBuildTargetId(target);
-    return new SourceToOutputMappingWrapper(sourceToOutputMapping, buildTargetId);
+    final SourceToOutputMappingImpl map = getStorage(target, SRC_TO_OUT_MAPPING_PROVIDER);
+    return new SourceToOutputMappingWrapper(map, myTargetsState.getBuildTargetId(target));
   }
 
   public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
@@ -147,8 +105,8 @@ public class BuildDataManager implements StorageOwner {
 
   @NotNull
   public <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
-    final BuildTargetStorages storages = fetchValue(myTargetStorages, target, TARGET_STORAGES_VALUE_FACTORY);
-    return storages.getOrCreateStorage(provider, myRelativizer);
+    final BuildTargetStorages targetStorages = myTargetStorages.computeIfAbsent(target, t -> new BuildTargetStorages(t, myDataPaths));
+    return targetStorages.getOrCreateStorage(provider, myRelativizer);
   }
 
   public OneToManyPathsMapping getSourceToFormMap() {
@@ -161,9 +119,9 @@ public class BuildDataManager implements StorageOwner {
 
   public void cleanTargetStorages(BuildTarget<?> target) throws IOException {
     try {
-      AtomicNotNullLazyValue<BuildTargetStorages> storages = myTargetStorages.remove(target);
+      BuildTargetStorages storages = myTargetStorages.remove(target);
       if (storages != null) {
-        storages.getValue().close();
+        storages.close();
       }
     }
     finally {
@@ -188,27 +146,21 @@ public class BuildDataManager implements StorageOwner {
     }
     finally {
       try {
-        closeSourceToOutputStorages();
+        wipeStorage(getSourceToFormsRoot(), mySrcToFormMap);
       }
       finally {
         try {
-          wipeStorage(getSourceToFormsRoot(), mySrcToFormMap);
+          wipeStorage(getOutputToSourceRegistryRoot(), myOutputToTargetRegistry);
         }
         finally {
-          try {
-            wipeStorage(getOutputToSourceRegistryRoot(), myOutputToTargetRegistry);
+          final Mappings mappings = myMappings;
+          if (mappings != null) {
+            synchronized (mappings) {
+              mappings.clean();
+            }
           }
-          finally {
-            final Mappings mappings = myMappings;
-            if (mappings != null) {
-              synchronized (mappings) {
-                mappings.clean();
-              }
-            }
-            else {
-              FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot()));
-            }
-
+          else {
+            FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot()));
           }
         }
       }
@@ -220,9 +172,6 @@ public class BuildDataManager implements StorageOwner {
   @Override
   public void flush(boolean memoryCachesOnly) {
     myTargetStoragesOwner.flush(memoryCachesOnly);
-    for (AtomicNotNullLazyValue<SourceToOutputMappingImpl> mapping : mySourceToOutputs.values()) {
-      mapping.getValue().flush(memoryCachesOnly);
-    }
     myOutputToTargetRegistry.flush(memoryCachesOnly);
     mySrcToFormMap.flush(memoryCachesOnly);
     final Mappings mappings = myMappings;
@@ -246,25 +195,20 @@ public class BuildDataManager implements StorageOwner {
     }
     finally {
       try {
-        closeSourceToOutputStorages();
+        myOutputToTargetRegistry.close();
       }
       finally {
         try {
-          myOutputToTargetRegistry.close();
+          closeStorage(mySrcToFormMap);
         }
         finally {
-          try {
-            closeStorage(mySrcToFormMap);
-          }
-          finally {
-            final Mappings mappings = myMappings;
-            if (mappings != null) {
-              try {
-                mappings.close();
-              }
-              catch (BuildDataCorruptedException e) {
-                throw e.getCause();
-              }
+          final Mappings mappings = myMappings;
+          if (mappings != null) {
+            try {
+              mappings.close();
+            }
+            catch (BuildDataCorruptedException e) {
+              throw e.getCause();
             }
           }
         }
@@ -273,57 +217,25 @@ public class BuildDataManager implements StorageOwner {
   }
 
   public void closeSourceToOutputStorages(Collection<? extends BuildTargetChunk> chunks) throws IOException {
+    IOException ex = null;
     for (BuildTargetChunk chunk : chunks) {
       for (BuildTarget<?> target : chunk.getTargets()) {
-        final AtomicNotNullLazyValue<SourceToOutputMappingImpl> mapping = mySourceToOutputs.remove(target);
-        if (mapping != null) {
-          mapping.getValue().close();
-        }
-      }
-    }
-  }
-
-  private void closeSourceToOutputStorages() throws IOException {
-    IOException ex = null;
-    try {
-      for (AtomicNotNullLazyValue<SourceToOutputMappingImpl> lazy : mySourceToOutputs.values()) {
         try {
-          final SourceToOutputMappingImpl mapping = lazy.getValue();
-          try {
-            mapping.close();
-          }
-          catch (IOException e) {
-            if (ex == null) {
-              ex = e;
-            }
+          final BuildTargetStorages targetStorages = myTargetStorages.get(target);
+          if (targetStorages != null) {
+            targetStorages.close(SRC_TO_OUT_MAPPING_PROVIDER);
           }
         }
-        catch (Throwable ignored) {
+        catch (IOException e) {
+          LOG.info(e);
+          if (ex == null) {
+            ex = e;
+          }
         }
       }
-    }
-    finally {
-      mySourceToOutputs.clear();
     }
     if (ex != null) {
       throw ex;
-    }
-  }
-
-  private static <K, V> V fetchValue(ConcurrentMap<K, AtomicNotNullLazyValue<V>> container, K key, final LazyValueFactory<? super K, V> valueFactory) throws IOException {
-    AtomicNotNullLazyValue<V> lazy = container.get(key);
-    if (lazy == null) {
-      final AtomicNotNullLazyValue<V> newValue = valueFactory.create(key);
-      lazy = container.putIfAbsent(key, newValue);
-      if (lazy == null) {
-        lazy = newValue; // just initialized
-      }
-    }
-    try {
-      return lazy.getValue();
-    }
-    catch (BuildDataCorruptedException e) {
-      throw e.getCause();
     }
   }
 

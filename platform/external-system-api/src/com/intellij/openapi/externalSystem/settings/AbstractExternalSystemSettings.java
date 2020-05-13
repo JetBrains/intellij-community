@@ -2,7 +2,11 @@
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -27,6 +31,7 @@ public abstract class AbstractExternalSystemSettings<
   L extends ExternalSystemSettingsListener<PS>>
   implements Disposable {
 
+  @NotNull private final AtomicNullableLazyValue<ExternalSystemManager<?, ?, ?, ?, ?>> myManager;
   @NotNull private final Topic<L> myChangesTopic;
   @NotNull private final Project myProject;
 
@@ -38,6 +43,7 @@ public abstract class AbstractExternalSystemSettings<
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
     myProject = project;
+    myManager = AtomicNullableLazyValue.createValue(this::deduceManager);
   }
 
   @Override
@@ -48,6 +54,13 @@ public abstract class AbstractExternalSystemSettings<
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  private @Nullable ExternalSystemManager<?, ?, ?, ?, ?> deduceManager() {
+    return ExternalSystemApiUtil.getAllManagers().stream()
+      .filter(it -> equals(it.getSettingsProvider().fun(myProject)))
+      .findFirst()
+      .orElse(null);
   }
 
   public boolean showSelectiveImportDialogOnInitialImport() {
@@ -88,8 +101,7 @@ public abstract class AbstractExternalSystemSettings<
    * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    */
   protected void doSubscribe(@NotNull L listener, @NotNull Disposable parentDisposable) {
-    Project project = getProject();
-    MessageBus messageBus = project.getMessageBus();
+    MessageBus messageBus = myProject.getMessageBus();
     MessageBusConnection connection = messageBus.connect(parentDisposable);
     connection.subscribe(getChangesTopic(), listener);
   }
@@ -130,7 +142,7 @@ public abstract class AbstractExternalSystemSettings<
       ));
     }
     myLinkedProjectsSettings.put(settings.getExternalProjectPath(), settings);
-    getPublisher().onProjectsLinked(Collections.singleton(settings));
+    onProjectsLinked(Collections.singleton(settings));
   }
 
   /**
@@ -147,15 +159,25 @@ public abstract class AbstractExternalSystemSettings<
       return false;
     }
 
-    getPublisher().onProjectsUnlinked(Collections.singleton(linkedProjectPath));
+    onProjectsUnlinked(Collections.singleton(linkedProjectPath));
     return true;
   }
 
   public void setLinkedProjectsSettings(@NotNull Collection<? extends PS> settings) {
-    setLinkedProjectsSettings(settings, null);
+    setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter<PS>() {
+      @Override
+      public void onProjectsLinked(@NotNull Collection<PS> settings) {
+        AbstractExternalSystemSettings.this.onProjectsLinked(settings);
+      }
+
+      @Override
+      public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
+        AbstractExternalSystemSettings.this.onProjectsUnlinked(linkedProjectPaths);
+      }
+    });
   }
 
-  private void setLinkedProjectsSettings(@NotNull Collection<? extends PS> settings, @Nullable ExternalSystemSettingsListener listener) {
+  private void setLinkedProjectsSettings(@NotNull Collection<? extends PS> settings, @NotNull ExternalSystemSettingsListener<PS> listener) {
     // do not add invalid 'null' settings
     settings = ContainerUtil.filter(settings, ps -> ps.getExternalProjectPath() != null);
 
@@ -172,26 +194,14 @@ public abstract class AbstractExternalSystemSettings<
         added.add(current);
       }
       else {
-        if (current.isUseAutoImport() != old.isUseAutoImport()) {
-          if (listener != null) {
-            listener.onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
-          }
-          getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
-        }
         checkSettings(old, current);
       }
     }
     if (!added.isEmpty()) {
-      if (listener != null) {
-        listener.onProjectsLinked(added);
-      }
-      getPublisher().onProjectsLinked(added);
+      listener.onProjectsLinked(added);
     }
     if (!removed.isEmpty()) {
-      if (listener != null) {
-        listener.onProjectsUnlinked(removed.keySet());
-      }
-      getPublisher().onProjectsUnlinked(removed.keySet());
+      listener.onProjectsUnlinked(removed.keySet());
     }
   }
 
@@ -211,7 +221,7 @@ public abstract class AbstractExternalSystemSettings<
 
   @NotNull
   public L getPublisher() {
-    return getProject().getMessageBus().syncPublisher(myChangesTopic);
+    return myProject.getMessageBus().syncPublisher(myChangesTopic);
   }
 
   protected void fillState(@NotNull State<PS> state) {
@@ -221,8 +231,41 @@ public abstract class AbstractExternalSystemSettings<
   protected void loadState(@NotNull State<PS> state) {
     Set<PS> settings = state.getLinkedExternalProjectsSettings();
     if (settings != null) {
-      setLinkedProjectsSettings(settings);
+      setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter<PS>() {
+        @Override
+        public void onProjectsLinked(@NotNull Collection<PS> settings) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            AbstractExternalSystemSettings.this.onProjectsLinked(settings);
+            AbstractExternalSystemSettings.this.onProjectsLoaded(settings);
+          }, myProject.getDisposed());
+        }
+
+        @Override
+        public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            AbstractExternalSystemSettings.this.onProjectsUnlinked(linkedProjectPaths);
+          }, myProject.getDisposed());
+        }
+      });
     }
+  }
+
+  private void onProjectsLoaded(@NotNull Collection<PS> settings) {
+    getPublisher().onProjectsLoaded(settings);
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
+    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsLoaded(myProject, manager, settings);
+  }
+
+  private void onProjectsLinked(@NotNull Collection<PS> settings) {
+    getPublisher().onProjectsLinked(settings);
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
+    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsLinked(myProject, manager, settings);
+  }
+
+  private void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
+    getPublisher().onProjectsUnlinked(linkedProjectPaths);
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
+    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsUnlinked(myProject, manager, linkedProjectPaths);
   }
 
   public interface State<S> {

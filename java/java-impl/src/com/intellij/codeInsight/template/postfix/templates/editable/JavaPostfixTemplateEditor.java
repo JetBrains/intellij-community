@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Document;
@@ -45,7 +46,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     myLanguageLevelCombo.setRenderer(SimpleListCellRenderer.create("", LanguageLevel::getPresentableText));
 
     myPanel = FormBuilder.createFormBuilder()
-                         .addLabeledComponent("Minimum language level:", myLanguageLevelCombo)
+                         .addLabeledComponent(JavaBundle.message("postfix.template.language.level.title"), myLanguageLevelCombo)
                          .addComponentFillVertically(myEditTemplateAndConditionsPanel, UIUtil.DEFAULT_VGAP)
                          .getPanel();
   }
@@ -112,7 +113,8 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     private final Project myProject;
 
     protected ChooseClassAction(@Nullable Project project) {
-      super((project != null && !project.isDefault() ? "choose class in " + project.getName() + "..." : "enter class name..."));
+      super((project != null && !project.isDefault() ? JavaBundle.message("action.text.choose.class.in.0", project.getName())
+                                                     : JavaBundle.message("action.text.enter.class.name")));
       myProject = project;
     }
 
@@ -127,7 +129,8 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     private String getFqn() {
       String title = "Choose Class";
       if (myProject == null || myProject.isDefault()) {
-        return Messages.showInputDialog(myPanel, "Enter fully qualified class name", "Choose Class", null);
+        return Messages.showInputDialog(myPanel, JavaBundle.message("label.enter.fully.qualified.class.name"),
+                                        JavaBundle.message("dialog.title.choose.class"), null);
       }
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(title);
       chooser.showDialog();

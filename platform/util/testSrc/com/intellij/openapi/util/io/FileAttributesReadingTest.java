@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -95,8 +96,8 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void directory() throws IOException {
-    File file = tempDir.newFolder("dir");
+  public void directory() {
+    File file = tempDir.newDirectory("dir");
 
     FileAttributes attributes = getAttributes(file);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
@@ -114,7 +115,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void readOnlyDirectory() throws IOException {
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
 
     if (SystemInfo.isWindows) {
       Files.getFileAttributeView(dir.toPath(), DosFileAttributeView.class).setReadOnly(true);
@@ -160,7 +161,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void special() {
-    assumeTrue("unix expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix);
+    assumeUnix();
     File file = new File("/dev/null");
 
     FileAttributes attributes = getAttributes(file);
@@ -223,7 +224,7 @@ public abstract class FileAttributesReadingTest {
   public void linkToDirectory() throws IOException {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
     if (SystemInfo.isUnix) assertTrue(dir.setWritable(false, false));
     assertTrue(dir.setLastModified(dir.lastModified() - 5000));
     File link = new File(tempDir.getRoot(), "link");
@@ -261,7 +262,7 @@ public abstract class FileAttributesReadingTest {
   public void selfLink() throws IOException {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
     File link = new File(dir, "link");
     Files.createSymbolicLink(link.toPath(), dir.toPath());
 
@@ -290,7 +291,7 @@ public abstract class FileAttributesReadingTest {
   public void junction() throws IOException {
     assumeTrue("vista-or-newer expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isWinVistaOrNewer);
 
-    File target = tempDir.newFolder("dir");
+    File target = tempDir.newDirectory("dir");
     File junction = IoTestUtil.createJunction(target.getPath(), tempDir.getRoot() + "/junction.dir");
 
     try {
@@ -318,7 +319,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void innerJunctionResolve() throws IOException {
+  public void innerJunctionResolve() {
     assumeTrue("vista-or-newer expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isWinVistaOrNewer);
 
     File file = tempDir.newFile("dir/file.txt");
@@ -332,7 +333,7 @@ public abstract class FileAttributesReadingTest {
   @Test
   public void hiddenDir() throws IOException {
     IoTestUtil.assumeWindows();
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
     FileAttributes attributes = getAttributes(dir);
     assertFalse(attributes.isHidden());
     Files.getFileAttributeView(dir.toPath(), DosFileAttributeView.class).setHidden(true);
@@ -424,7 +425,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void subst() throws IOException {
+  public void subst() {
     IoTestUtil.assumeWindows();
 
     tempDir.newFile("file.txt");  // just to populate a directory
@@ -508,7 +509,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void notOwned() {
-    assumeTrue("unix expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix);
+    assumeUnix();
     File userHome = new File(SystemProperties.getUserHome());
 
     FileAttributes homeAttributes = getAttributes(userHome);
@@ -521,8 +522,8 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void permissionsCloning() throws IOException {
-    assumeTrue("unix expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix);
+  public void permissionsCloning() {
+    assumeUnix();
 
     File donor = tempDir.newFile("donor");
     File recipient = tempDir.newFile("recipient");

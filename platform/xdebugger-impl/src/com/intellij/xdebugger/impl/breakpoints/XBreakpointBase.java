@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -43,10 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author nik
- */
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
   @NonNls private static final String BR_NBSP = "<br>" + CommonXmlStrings.NBSP;
   private final XBreakpointType<Self, P> myType;
@@ -199,7 +197,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogExpression(@Nullable final String expression) {
-    if (!Comparing.equal(getLogExpression(), expression)) {
+    if (!Objects.equals(getLogExpression(), expression)) {
       myLogExpression = XExpressionImpl.fromText(expression);
       fireBreakpointChanged();
     }
@@ -231,7 +229,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setCondition(@Nullable final String condition) {
-    if (!Comparing.equal(condition, getCondition())) {
+    if (!Objects.equals(condition, getCondition())) {
       myCondition = XExpressionImpl.fromText(condition);
       fireBreakpointChanged();
     }
@@ -522,7 +520,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @Override
     public String getAccessibleName() {
       // [tav] todo: add "hit" state
-      return "icon: " + getType().getTitle() + (getCondition() != null ? " conditional" : "") + (!isEnabled() ? " disabled" : "");
+      return XDebuggerBundle.message("accessible.name.icon.0.1.2", getType().getTitle(),
+                                     getCondition() != null ? " " + XDebuggerBundle.message("accessible.name.icon.conditional") : "",
+                                     !isEnabled() ? " " + XDebuggerBundle.message("accessible.name.icon.disabled") : "");
     }
 
     @Override

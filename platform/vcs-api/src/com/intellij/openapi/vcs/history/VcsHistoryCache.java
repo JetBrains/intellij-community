@@ -96,6 +96,11 @@ public class VcsHistoryCache {
     }
   }
 
+  public void clearAll() {
+    clearHistory();
+    clearAnnotations();
+  }
+
   public void clearHistory() {
     synchronized (myLock) {
       final Iterator<Map.Entry<HistoryCacheBaseKey,CachedHistory>> iterator = myHistoryCache.entrySet().iterator();

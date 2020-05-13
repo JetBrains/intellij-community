@@ -1,6 +1,16 @@
 <html>
 <body>
-Shows references to <b><font color="#000080">static</font></b> methods and fields
-via class instance rather than a class itself.
+Shows references to static methods and fields
+via a class instance rather than a class itself.<br>
+<br>
+Example:<br>
+<code>String s = String.valueOf(0); // correct: static method qualified with class name</code><br>
+<code>String s1 = s.valueOf(0); // wrong: static method qualified with class instance</code><br>
+<br>
+While allowed by Java Language Specification,
+referring to static members via instance variables makes the code confusing
+as the reader may think that the result of the method depends on the instance.<br>
+<br>
+Quick fix: replaces the instance variable with the class name.
 </body>
 </html>

@@ -602,16 +602,9 @@ private fun printComment(out: Writer, comment: Comment) {
 }
 
 private fun isAllWhitespace(obj: Content): Boolean {
-  val str: String
-  if (obj is Text) {
-    str = obj.text
-  }
-  else {
-    return false
-  }
-
-  for (i in 0 until str.length) {
-    if (!Verifier.isXMLWhitespace(str[i])) {
+  val str = (obj as? Text ?: return false).text
+  for (element in str) {
+    if (!Verifier.isXMLWhitespace(element)) {
       return false
     }
   }

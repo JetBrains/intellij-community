@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.hierarchy.call;
 
-import com.google.common.collect.Lists;
-import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerBase;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,6 +19,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -42,7 +28,7 @@ import java.util.List;
  */
 public class PyStaticCallHierarchyUtil {
   public static Collection<PsiElement> getCallees(@NotNull PyElement element) {
-    final List<PsiElement> callees = Lists.newArrayList();
+    final List<PsiElement> callees = new ArrayList<>();
 
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
@@ -68,7 +54,7 @@ public class PyStaticCallHierarchyUtil {
         super.visitPyCallExpression(node);
 
         StreamEx
-          .of(node.multiResolveCalleeFunction(PyResolveContext.defaultContext()))
+          .of(node.multiResolveCalleeFunction(PyResolveContext.implicitContext()))
           .select(PyFunction.class)
           .forEach(callees::add);
       }
@@ -81,7 +67,7 @@ public class PyStaticCallHierarchyUtil {
 
   @NotNull
   public static Collection<PsiElement> getCallers(@NotNull PyElement pyElement) {
-    final List<PsiElement> callers = Lists.newArrayList();
+    final List<PsiElement> callers = new ArrayList<>();
     final Collection<UsageInfo> usages = findUsages(pyElement);
 
     for (UsageInfo usage : usages) {
@@ -118,9 +104,9 @@ public class PyStaticCallHierarchyUtil {
   }
 
   private static Collection<UsageInfo> findUsages(@NotNull final PsiElement element) {
-    final FindUsagesHandler handler = createFindUsageHandler(element);
+    final FindUsagesHandlerBase handler = createFindUsageHandler(element);
     if (handler == null) {
-      return Lists.newArrayList();
+      return new ArrayList<>();
     }
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
@@ -135,14 +121,14 @@ public class PyStaticCallHierarchyUtil {
    * @see com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(PsiElement, boolean)
    */
   @Nullable
-  private static FindUsagesHandler createFindUsageHandler(@NotNull final PsiElement element) {
+  private static FindUsagesHandlerBase createFindUsageHandler(@NotNull final PsiElement element) {
     if (element instanceof PyFunction) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
       final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
       if (superMethods.size() > 0) {
         final PsiElement next = superMethods.iterator().next();
         if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
-          List<PsiElement> allMethods = Lists.newArrayList();
+          List<PsiElement> allMethods = new ArrayList<>();
           allMethods.add(element);
           allMethods.addAll(superMethods);
 

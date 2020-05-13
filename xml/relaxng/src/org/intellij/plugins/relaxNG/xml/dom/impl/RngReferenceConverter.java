@@ -37,8 +37,7 @@ import java.util.Set;
 
 public class RngReferenceConverter implements CustomReferenceConverter {
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
     final GenericAttributeValue<String> e = (GenericAttributeValue<String>)genericDomValue;
 
     if (genericDomValue.getParent() instanceof RngDefine) {
@@ -62,8 +61,7 @@ public class RngReferenceConverter implements CustomReferenceConverter {
                 }
 
                 @Override
-                @NotNull
-                public Object[] getVariants() {
+                public Object @NotNull [] getVariants() {
                   final RngInclude include = e.getParentOfType(RngInclude.class, true);
                   final RngGrammar scope = e.getParentOfType(RngGrammar.class, true);
                   if (scope != null && include != null && DomUtil.isAncestor(scope, include, true)) {

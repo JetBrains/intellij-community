@@ -15,15 +15,27 @@
  */
 package com.jetbrains.python.codeInsight.imports;
 
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -37,7 +49,40 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPrio
 
   @Override
   public boolean showHint(@NotNull Editor editor) {
-    return myDelegate.showHint(editor);
+    List<? extends ImportCandidateHolder> imports = myDelegate.getCandidates();
+    if (!PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP ||
+        HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true) ||
+        imports.isEmpty()) {
+      return false;
+    }
+    final PsiElement element = myDelegate.getStartElement();
+    PyPsiUtils.assertValid(element);
+    if (element == null || !element.isValid()) {
+      return false;
+    }
+    final PyElement pyElement = as(element, PyElement.class);
+    String initialName = myDelegate.getNameToImport();
+    if (pyElement == null || !initialName.equals(pyElement.getName())) {
+      return false;
+    }
+    final PsiReference reference = myDelegate.findOriginalReference(element);
+    if (reference == null || AutoImportQuickFix.isResolved(reference)) {
+      return false;
+    }
+    if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).isQualified()) {
+      return false; // we cannot be qualified
+    }
+
+    final String message = ShowAutoImportPass.getMessage(
+      imports.size() > 1,
+      ImportCandidateHolder.getQualifiedName(initialName, imports.get(0).getPath(), imports.get(0).getImportElement())
+    );
+    final ImportFromExistingAction action = myDelegate.createAction(element);
+    HintManager.getInstance().showQuestionHint(
+      editor, message,
+      element.getTextOffset(),
+      element.getTextRange().getEndOffset(), action);
+    return true;
   }
 
   @NotNull

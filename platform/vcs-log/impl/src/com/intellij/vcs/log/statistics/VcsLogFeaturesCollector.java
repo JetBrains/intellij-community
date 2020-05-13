@@ -11,10 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -26,13 +27,14 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 
+@NonNls
 public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     if (projectLog != null) {
-      VcsLogUiImpl ui = projectLog.getMainLogUi();
+      MainVcsLogUi ui = projectLog.getMainLogUi();
       if (ui != null) {
         MainVcsLogUiProperties properties = ui.getProperties();
         VcsLogUiProperties defaultProperties = createDefaultPropertiesInstance();
@@ -58,7 +60,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_REGEX), "textFilter.regex");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_MATCH_CASE), "textFilter.matchCase");
 
-        for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(project)) {
+        for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
           if (factory.showMenuItem()) {
             addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(VcsLogHighlighterProperty.get(factory.getId())),
                              "highlighter", new FeatureUsageData().addData("id", getFactoryIdSafe(factory)));
@@ -79,7 +81,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
                            "column", new FeatureUsageData().addData("name", columnName));
         }
 
-        List<String> tabs = projectLog.getTabsManager().getTabs();
+        Collection<String> tabs = projectLog.getTabsManager().getTabs();
         metricEvents.add(MetricEventFactoryKt.newCounterMetric("additionalTabs", tabs.size()));
 
         return metricEvents;
@@ -106,7 +108,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
   @NotNull
   private static VcsLogUiProperties createDefaultPropertiesInstance() {
-    return new VcsLogUiPropertiesImpl(new VcsLogApplicationSettings()) {
+    return new VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State>(new VcsLogApplicationSettings()) {
       @NotNull private final State myState = new State();
 
       @NotNull
@@ -127,7 +129,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
       }
 
       @Override
-      public void loadState(@NotNull Object state) {
+      public void loadState(@NotNull State state) {
         throw new UnsupportedOperationException();
       }
     };

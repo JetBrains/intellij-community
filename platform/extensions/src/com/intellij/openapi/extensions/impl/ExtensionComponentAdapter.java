@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -11,10 +11,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
-  @NotNull
-  private final PluginDescriptor myPluginDescriptor;
-  @NotNull
-  Object myImplementationClassOrName; // Class or String
+  private final @NotNull PluginDescriptor myPluginDescriptor;
+  @NotNull Object myImplementationClassOrName; // Class or String
 
   private final String myOrderId;
   private final LoadingOrder myOrder;
@@ -32,8 +30,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
 
   abstract boolean isInstanceCreated();
 
-  @NotNull
-  public <T> T createInstance(@NotNull ComponentManager componentManager) {
+  public @NotNull <T> T createInstance(@NotNull ComponentManager componentManager) {
     Class<T> aClass;
     try {
       aClass = getImplementationClass();
@@ -49,8 +46,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
     return instance;
   }
 
-  @NotNull
-  protected <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
+  protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
     return componentManager.instantiateClass(aClass, myPluginDescriptor.getPluginId());
   }
 
@@ -64,27 +60,26 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
     return myOrderId;
   }
 
-  @NotNull
-  public final PluginDescriptor getPluginDescriptor() {
+  public final @NotNull PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }
 
-  @NotNull
-  public final <T> Class<T> getImplementationClass() throws ClassNotFoundException {
+  public final @NotNull <T> Class<T> getImplementationClass() throws ClassNotFoundException {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
       if (classLoader == null) {
         classLoader = getClass().getClassLoader();
       }
-      myImplementationClassOrName = implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
+      implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
+      myImplementationClassOrName = implementationClassOrName;
     }
     //noinspection unchecked
     return (Class<T>)implementationClassOrName;
   }
 
-  @NotNull
-  public final String getAssignableToClassName() {
+  // used externally - cannot be package-local
+  public final @NotNull String getAssignableToClassName() {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       return (String)implementationClassOrName;

@@ -16,8 +16,8 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 
@@ -28,7 +28,7 @@ public class FieldHidesLocalUsageInfo extends UnresolvableCollisionUsageInfo {
 
   @Override
   public String getDescription() {
-    String descr = RefactoringBundle.message("local.will.be.hidden.renamed",
+    String descr = JavaRefactoringBundle.message("local.will.be.hidden.renamed",
                                              RefactoringUIUtil.getDescription(getElement(), true));
     return CommonRefactoringUtil.capitalize(descr);
   }

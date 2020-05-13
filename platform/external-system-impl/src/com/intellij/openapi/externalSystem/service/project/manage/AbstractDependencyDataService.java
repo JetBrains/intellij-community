@@ -11,12 +11,12 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +98,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
       }
 
       final ModifiableModuleModel modifiableModuleModel = modelsProvider.getModifiableModuleModel();
-      List<I> orphanEntries = ContainerUtil.newSmartList();
+      List<I> orphanEntries = new SmartList<>();
       for (Module module : modelsProvider.getModules(projectData)) {
         for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
           // do not remove recently created library w/o name
@@ -179,7 +179,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
           return PathUtil.toPresentableUrl(url);
         }
         else {
-          return ProjectBundle.message("library.empty.library.item");
+          return ProjectModelBundle.message("library.empty.library.item");
         }
       }
     }

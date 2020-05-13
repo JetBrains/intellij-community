@@ -16,9 +16,15 @@ abstract class ProductProperties {
 
   /**
    * @deprecated specify product code in 'number' attribute in 'build' tag in *ApplicationInfo.xml file instead (see its schema for details);
-   * if you need to get the product code in the build scripts, use {@link ApplicationInfoProperties#productCode} instead
+   * if you need to get the product code in the build scripts, use {@link ApplicationInfoProperties#productCode} instead;
+   * if you need to override product code value from *ApplicationInfo.xml - {@link org.jetbrains.intellij.build.ProductProperties#customProductCode} can be used.
    */
   String productCode
+
+  /**
+   * This value overrides specified product code in 'number' attribute in 'build' tag in *ApplicationInfo.xml file
+   */
+  String customProductCode
 
   /**
    * Value of 'idea.platform.prefix' property. It's also used as prefix for 'ApplicationInfo.xml' product descriptor.
@@ -149,8 +155,6 @@ abstract class ProductProperties {
    */
   abstract MacDistributionCustomizer createMacCustomizer(String projectHome)
 
-  boolean setPluginAndIDEVersionInPluginXml = true
-
   /**
    * If {@code true} a zip archive containing sources of all modules included into the product will be produced.
    */
@@ -181,6 +185,8 @@ abstract class ProductProperties {
    * todo[nik] get rid of this
    */
   List<String> additionalModulesRequiredForScrambling = []
+
+  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.VANILLA
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK

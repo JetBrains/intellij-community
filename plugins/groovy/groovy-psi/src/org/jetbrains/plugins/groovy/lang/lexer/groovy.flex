@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.lexer.FlexLexer;
@@ -44,6 +44,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 %xstate DIVISION_EXPECTED
 
+%xstate IN_TRIPLE_STRING
 %xstate IN_SINGLE_GSTRING
 %xstate IN_TRIPLE_GSTRING
 %xstate IN_SLASHY_STRING
@@ -126,9 +127,6 @@ mSTRING_ESC = \\ [^] | \\ ({WHITE_SPACE})+ (\n|\r)
 
 mSINGLE_QUOTED_CONTENT = {mSTRING_ESC} | [^'\\\r\n]
 mSINGLE_QUOTED_LITERAL = \' {mSINGLE_QUOTED_CONTENT}* \'?
-
-mTRIPLE_SINGLE_QUOTED_CONTENT = {mSINGLE_QUOTED_CONTENT} | {mSTRING_NL} | \'(\')?[^']
-mTRIPLE_SINGLE_QUOTED_LITERAL = \'\'\' {mTRIPLE_SINGLE_QUOTED_CONTENT}* (\'{0,3} | \\?)
 
 mDOUBLE_QUOTED_CONTENT = {mSTRING_ESC} | [^\"\\$\n\r]
 mDOUBLE_QUOTED_LITERAL = \" {mDOUBLE_QUOTED_CONTENT}* \"
@@ -228,6 +226,13 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////  Groovy Strings ///////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+<IN_TRIPLE_STRING> {
+  \'\'\'                { yyendstate(IN_TRIPLE_STRING); return storeToken(STRING_TSQ); }
+  \\[^]                 {}
+  [^]                   {}
+  <<EOF>>               { yyendstate(IN_TRIPLE_STRING); return storeToken(STRING_TSQ); }
+}
 
 <IN_SINGLE_GSTRING> {
   \" {
@@ -415,8 +420,8 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 ///////////////////////// Strings & regular expressions ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+\'\'\'                                    { yybeginstate(IN_TRIPLE_STRING); }
 {mSINGLE_QUOTED_LITERAL}                  { return storeToken(STRING_SQ); }
-{mTRIPLE_SINGLE_QUOTED_LITERAL}           { return storeToken(STRING_TSQ); }
 {mDOUBLE_QUOTED_LITERAL}                  { return storeToken(STRING_DQ); }
 {mTRIPLE_DOUBLE_QUOTED_LITERAL}           { return storeToken(STRING_TDQ); }
 \"\"\"                                    {

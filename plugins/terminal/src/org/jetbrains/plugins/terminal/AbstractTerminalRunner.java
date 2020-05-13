@@ -1,10 +1,11 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
@@ -27,7 +28,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ui.UIUtil;
@@ -47,9 +47,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-/**
- * @author traff
- */
 public abstract class AbstractTerminalRunner<T extends Process> {
   private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class);
   @NotNull
@@ -177,7 +174,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor myDescriptor, final Component toFocus) {
     // Show in run toolwindow
-    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
+    RunContentManager.getInstance(myProject).showRunContent(defaultExecutor, myDescriptor);
 
     // Request focus
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
@@ -264,10 +261,8 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
     writeString(terminalWidget.getTerminal(), message.toString());
     terminalWidget.getTerminal().writeCharacters("See your idea.log (Help | " + ShowLogAction.getActionName() + ") for the details.");
-    AppUIUtil.invokeOnEdt(() -> {
-      if (!Disposer.isDisposed(terminalWidget)) {
-        terminalWidget.getTerminalPanel().setCursorVisible(false);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      terminalWidget.getTerminalPanel().setCursorVisible(false);
     }, myProject.getDisposed());
   }
 

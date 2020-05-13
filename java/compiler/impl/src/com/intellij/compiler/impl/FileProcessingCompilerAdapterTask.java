@@ -22,7 +22,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class FileProcessingCompilerAdapterTask implements CompileTask {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.FileProcessingCompilerAdapterTask");
+  private static final Logger LOG = Logger.getInstance(FileProcessingCompilerAdapterTask.class);
 
   private final FileProcessingCompiler myCompiler;
 
@@ -83,7 +83,7 @@ public class FileProcessingCompilerAdapterTask implements CompileTask {
         return true;
       }
 
-      CompilerUtil.runInContext(context, CompilerBundle.message("progress.updating.caches"), () -> {
+      CompilerUtil.runInContext(context, JavaCompilerBundle.message("progress.updating.caches"), () -> {
         final List<VirtualFile> vFiles = new ArrayList<>(processed.length);
         final List<Pair<FileProcessingCompiler.ProcessingItem, ValidityState>> toUpdate = new ArrayList<>(processed.length);
         ApplicationManager.getApplication().runReadAction(() -> {

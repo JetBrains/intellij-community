@@ -2,30 +2,30 @@
 package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.idea.maven.model.MavenCoordinate
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem.Type.PROJECT
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItemWithClass
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import java.io.IOException
+import org.jetbrains.idea.reposearch.DependencySearchProvider
+import org.jetbrains.idea.reposearch.RepositoryArtifactData
+import java.util.function.Consumer
 
-class ProjectModulesCompletionProvider(private val myProject: Project) : DependencyCompletionProvider {
+class ProjectModulesCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
-  @Throws(IOException::class)
-  override fun findGroupCandidates(template: MavenCoordinate, searchParameters: SearchParameters) = modulesAsMavenId()
-  override fun findArtifactCandidates(template: MavenCoordinate, searchParameters: SearchParameters) = modulesAsMavenId()
-  override fun findAllVersions(template: MavenCoordinate, searchParameters: SearchParameters) = modulesAsMavenId()
-
-  private fun modulesAsMavenId(): List<MavenDependencyCompletionItem> {
+  override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) {
     return MavenProjectsManager.getInstance(myProject).projects.asSequence()
-      .map { it.mavenId }
-      .map { MavenDependencyCompletionItem(it.groupId, it.artifactId, it.version, PROJECT) }
-      .toList()
+      .map { MavenDependencyCompletionItem(it.mavenId.key) }
+      .filter { it.groupId != null && it.artifactId != null }
+      .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, listOf(it).toTypedArray()) }
+      .forEach(consumer::accept)
   }
 
-  @Throws(IOException::class)
-  override fun findClassesByString(str: String, searchParameters: SearchParameters): List<MavenDependencyCompletionItemWithClass> {
-    return emptyList()
+  override fun suggestPrefix(groupId: String?, artifactId: String?, consumer: Consumer<RepositoryArtifactData>) {
+    return MavenProjectsManager.getInstance(myProject).projects.asSequence()
+      .map { MavenDependencyCompletionItem(it.mavenId.key) }
+      .filter { it.groupId != null && it.artifactId != null }
+      .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, listOf(it).toTypedArray()) }
+      .forEach(consumer::accept)
   }
+
+  override fun isLocal() = true
 }

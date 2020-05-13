@@ -21,6 +21,5 @@ import org.jetbrains.annotations.NotNull;
  * Basic element that holds a whole pattern that consists of one or more branches.
  */
 public interface RegExpPattern extends RegExpElement {
-    @NotNull
-    RegExpBranch[] getBranches();
+    RegExpBranch @NotNull [] getBranches();
 }

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.ide.ui.laf.intellij.MacIntelliJProgressBarUI;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -56,11 +56,13 @@ public abstract class ProgressStripeIcon implements Icon {
 
   private static class GradientIcon extends ProgressStripeIcon {
     private static final Color DARK = new ProgressStripeColor(namedColor("ProgressBar.indeterminateStartColor",
-                                                                         new JBColor(new Color(0x4d9ff8), new Color(0x6a6a6a))),
-                                                              MacIntelliJProgressBarUI.GRAPHITE_START_COLOR);
+                                                                         new JBColor(new Color(0x4d9ff8),
+                                                                                     new Color(0x6a6a6a))), Gray.xD4);
+    @SuppressWarnings("UseJBColor")
     private static final Color LIGHT = new ProgressStripeColor(namedColor("ProgressBar.indeterminateEndColor",
-                                                                          new JBColor(new Color(0x90c2f8), new Color(0x838383))),
-                                                               MacIntelliJProgressBarUI.GRAPHITE_END_COLOR);
+                                                                          new JBColor(new Color(0x90c2f8),
+                                                                                      new Color(0x838383))),
+                                                               new Color(0x989a9e));
     private static final int GRADIENT = 128;
     private static final int GRADIENT_HEIGHT = 2;
 

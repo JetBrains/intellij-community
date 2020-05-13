@@ -26,4 +26,7 @@ import javax.swing.*;
 public interface DeferredIcon extends Icon {
   @NotNull
   Icon evaluate();
+
+  @NotNull
+  Icon getBaseIcon();
 }

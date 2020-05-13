@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -41,12 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix");
+  private static final Logger LOG = Logger.getInstance(VariableTypeFix.class);
 
   private final PsiType myReturnType;
   protected final String myName;
 
-  public VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
+  protected VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     super(variable);
     myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
     myName = variable.getName();
@@ -56,8 +42,10 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   @Override
   public String getText() {
     PsiType type = getReturnType();
+    PsiElement startElement = getStartElement();
+    String typeName = startElement == null ? "?" : UsageViewUtil.getType(startElement);
     return QuickFixBundle.message("fix.variable.type.text",
-                                  UsageViewUtil.getType(getStartElement()),
+                                  typeName,
                                   myName,
                                   type == null || !type.isValid() ? "???" : type.getPresentableText());
   }
@@ -126,7 +114,9 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
         int i = 0;
         for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
           final boolean changeType = i == parameterIndex;
-          infos.add(new ParameterInfoImpl(i++, parameter.getName(), changeType ? getReturnType() : parameter.getType()));
+          infos.add(ParameterInfoImpl.create(i++)
+                      .withName(parameter.getName())
+                      .withType(changeType ? getReturnType() : parameter.getType()));
         }
 
         if (!ApplicationManager.getApplication().isUnitTestMode()) {

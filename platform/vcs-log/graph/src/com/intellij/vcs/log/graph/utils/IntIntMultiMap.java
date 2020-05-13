@@ -29,19 +29,19 @@ public class IntIntMultiMap {
 
   public void putValue(int key, int value) {
     int[] values = myKeyToArrayMap.get(key);
+    int[] newValues;
     if (values == null) {
-      int[] newValues = {value};
-      myKeyToArrayMap.put(key, newValues);
+      newValues = new int[]{value};
     }
     else {
-      int[] newValues = new int[values.length + 1];
+      newValues = new int[values.length + 1];
       for (int i = 0; i < values.length; i++) {
         if (values[i] == value) return;
         newValues[i] = values[i];
       }
       newValues[newValues.length - 1] = value;
-      myKeyToArrayMap.put(key, newValues);
     }
+    myKeyToArrayMap.put(key, newValues);
   }
 
   public void remove(int key, int value) {
@@ -90,8 +90,7 @@ public class IntIntMultiMap {
     };
   }
 
-  @NotNull
-  public int[] getAsArray(int key) {
+  public int @NotNull [] getAsArray(int key) {
     int[] result = myKeyToArrayMap.get(key);
     if (result == null) {
       return EMPTY;
@@ -109,8 +108,7 @@ public class IntIntMultiMap {
     return myKeyToArrayMap.containsKey(key);
   }
 
-  @NotNull
-  public int[] keys() {
+  public int @NotNull [] keys() {
     return myKeyToArrayMap.keys();
   }
 

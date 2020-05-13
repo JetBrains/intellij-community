@@ -61,9 +61,8 @@ public class PivotalTrackerTask extends Task {
     return myStory.getDescription();
   }
 
-  @NotNull
   @Override
-  public Comment[] getComments() {
+  public Comment @NotNull [] getComments() {
     return Comment.EMPTY_ARRAY;
   }
 

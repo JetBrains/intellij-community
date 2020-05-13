@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -45,11 +46,12 @@ public class EditorEmbeddedComponentManager {
   }
 
   @Nullable
-  public Disposable addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
+  public Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
-    return inlays.add(component, properties.resizePolicy, properties.relatesToPrecedingText, properties.showAbove,
+    return inlays.add(component, properties.resizePolicy, properties.rendererFactory,
+                      properties.relatesToPrecedingText, properties.showAbove,
                       properties.priority, properties.offset);
   }
 
@@ -64,6 +66,7 @@ public class EditorEmbeddedComponentManager {
     private static final int BOTTOM = RIGHT * 2;
 
     private static final ResizePolicy ourAny = new ResizePolicy(RIGHT | BOTTOM);
+    private static final ResizePolicy ourNone = new ResizePolicy(0);
 
     private final int myFlags;
 
@@ -79,6 +82,11 @@ public class EditorEmbeddedComponentManager {
       return ourAny;
     }
 
+    @NotNull
+    public static ResizePolicy none() {
+      return ourNone;
+    }
+
     public boolean isResizableFromRight() {
       return (myFlags & RIGHT) != 0;
     }
@@ -90,17 +98,24 @@ public class EditorEmbeddedComponentManager {
 
   public static class Properties {
     final ResizePolicy resizePolicy;
+    final RendererFactory rendererFactory;
     final boolean relatesToPrecedingText;
     final boolean showAbove;
     final int priority;
     final int offset;
 
-    public Properties(@NotNull ResizePolicy resizePolicy, boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
       this.resizePolicy = resizePolicy;
+      this.rendererFactory = rendererFactory;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.showAbove = showAbove;
       this.priority = priority;
       this.offset = offset;
+    }
+
+    public interface RendererFactory {
+      @Nullable GutterIconRenderer createRenderer(@NotNull Inlay<?> inlay);
     }
   }
 
@@ -109,14 +124,24 @@ public class EditorEmbeddedComponentManager {
 
     final ResizePolicy resizePolicy;
 
+    private final Properties.RendererFactory myRendererFactory;
     private int myCustomWidth = UNDEFINED;
     private int myCustomHeight = UNDEFINED;
 
-    MyRenderer(@NotNull JComponent component, @NotNull ResizePolicy resizePolicy) {
+    MyRenderer(@NotNull JComponent component,
+               @NotNull ResizePolicy resizePolicy,
+               @Nullable Properties.RendererFactory rendererFactory) {
       super(new BorderLayout());
       this.resizePolicy = resizePolicy;
+      myRendererFactory = rendererFactory;
       add(component, BorderLayout.CENTER);
       setOpaque(false);
+    }
+
+    @Nullable
+    @Override
+    public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
+      return myRendererFactory == null ? null : myRendererFactory.createRenderer(inlay);
     }
 
     void setCustomWidth(int customWidth) {
@@ -141,12 +166,12 @@ public class EditorEmbeddedComponentManager {
 
     @Override
     public int calcHeightInPixels(@NotNull Inlay inlay) {
-      return getHeight();
+      return Math.max(getHeight(), 0);
     }
 
     @Override
     public int calcWidthInPixels(@NotNull Inlay inlay) {
-      return getWidth();
+      return Math.max(getWidth(), 0);
     }
 
     @Override
@@ -186,15 +211,16 @@ public class EditorEmbeddedComponentManager {
 
 
     @Nullable
-    Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
-      MyRenderer renderer = new MyRenderer(component, policy);
+    Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, @Nullable Properties.RendererFactory rendererFactory,
+                          boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+      MyRenderer renderer = new MyRenderer(component, policy, rendererFactory);
       Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, priority, renderer);
       if (inlay == null) return null;
 
       renderer.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
-          inlay.updateSize();
+          inlay.update();
           updateAllInlaysBelow(component.getBounds());
         }
       });
@@ -202,14 +228,14 @@ public class EditorEmbeddedComponentManager {
         @Override
         public void componentResized(ComponentEvent e) {
           updateSize(inlay);
-          inlay.updateSize();
+          inlay.update();
           updateAllInlaysBelow(component.getBounds());
         }
       });
       renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 
       update(inlay);
-      inlay.updateSize();
+      inlay.update();
 
       myEditor.getContentComponent().add(renderer);
       myInlays.add(inlay);
@@ -221,7 +247,7 @@ public class EditorEmbeddedComponentManager {
     }
 
     private void updateAllInlaysBelow(@NotNull Rectangle bounds) {
-      for (Inlay<? extends MyRenderer> i : getVisibleInlaysBelow(bounds.y)) {
+      for (Inlay<? extends MyRenderer> i : getInlaysBelow(bounds.y)) {
         update(i);
       }
     }
@@ -238,6 +264,16 @@ public class EditorEmbeddedComponentManager {
       }, this);
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
         @Override
+        public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0) {
+            Rectangle bounds = inlay.getBounds();
+            if (bounds != null) {
+              updateAllInlaysBelow(bounds);
+            }
+          }
+        }
+
+        @Override
         public void onRemoved(@NotNull Inlay inlay) {
           Disposer.dispose(inlay);
         }
@@ -246,7 +282,7 @@ public class EditorEmbeddedComponentManager {
         @Override
         public void componentResized(ComponentEvent e) {
           int maxY = myEditor.getScrollPane().getViewport().getViewRect().y;
-          for (Inlay<? extends MyRenderer> inlay : getVisibleInlaysBelow(maxY)) {
+          for (Inlay<? extends MyRenderer> inlay : getInlaysBelow(maxY)) {
             updateSize(inlay);
           }
         }
@@ -260,12 +296,10 @@ public class EditorEmbeddedComponentManager {
     }
 
     @NotNull
-    private Collection<Inlay<? extends MyRenderer>> getVisibleInlaysBelow(int y) {
+    private Collection<Inlay<? extends MyRenderer>> getInlaysBelow(int y) {
       return ContainerUtil.filter(myInlays, inlay -> {
         Rectangle bounds = inlay.getRenderer().getBounds();
-        return bounds != null &&
-               bounds.y + bounds.height >= y &&
-               (bounds.width == 0 || bounds.height == 0 || bounds.intersects(myEditor.getScrollPane().getViewport().getViewRect()));
+        return bounds != null && bounds.y + bounds.height >= y;
       });
     }
 
@@ -297,7 +331,7 @@ public class EditorEmbeddedComponentManager {
       int visibleWidth = scrollPane.getViewport().getWidth() - scrollPane.getVerticalScrollBar().getWidth();
       int minWidth = renderer.isWidthSet() ? componentWidth : visibleWidth;
       int width =  Math.min(componentWidth, minWidth);
-      Dimension newSize = new Dimension(width, componentHeight);
+      Dimension newSize = new Dimension(Math.max(width, 0), Math.max(componentHeight, 0));
       if (!renderer.getSize().equals(newSize)) renderer.setSize(newSize);
     }
 
@@ -373,8 +407,8 @@ public class EditorEmbeddedComponentManager {
         int yDelta = info.direction.yMultiplier * (currentPoint.y - renderer.getY() - renderer.getHeight());
         Dimension size = renderer.getSize();
 
-        int newWidth = Math.max(info.inlay.getRenderer().getMinimumSize().width, size.width + xDelta);
-        int newHeight = Math.max(info.inlay.getRenderer().getMinimumSize().height, size.height + yDelta);
+        int newWidth = Math.max(Math.max(info.inlay.getRenderer().getMinimumSize().width, size.width + xDelta), 0);
+        int newHeight = Math.max(Math.max(info.inlay.getRenderer().getMinimumSize().height, size.height + yDelta), 0);
         renderer.setCustomWidth(newWidth);
         renderer.setCustomHeight(newHeight);
 

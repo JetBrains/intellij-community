@@ -1,12 +1,13 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
 <idea-plugin implementation-detail="true">
   <name>Gradle-Maven</name>
   <id>org.jetbrains.plugins.gradle.maven</id>
+  <category>Build Tools</category>
   <vendor>JetBrains</vendor>
 
   <depends>org.intellij.groovy</depends>
   <depends>org.jetbrains.idea.maven</depends>
   <depends>org.jetbrains.plugins.gradle</depends>
+  <depends>org.jetbrains.idea.reposearch</depends>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <repositoryProvider implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenRepositoryProvider"/>

@@ -70,12 +70,13 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
       val ds = Disposer.newDisposable()
       Disposer.register(it, ds)
 
-      ApplicationManager.getApplication().messageBus.connect(ds).subscribe(ProjectManager.TOPIC, projectManagerListener)
-      ApplicationManager.getApplication().messageBus.connect(ds).subscribe(UISettingsListener.TOPIC,
-                                                                           UISettingsListener { checkTabPlacement() })
+      val busConnection = ApplicationManager.getApplication().messageBus.connect(ds)
+      busConnection.subscribe(ProjectManager.TOPIC, projectManagerListener)
+      busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { checkTabPlacement() })
 
       disposable = ds
       checkTabPlacement()
+      checkOpenedProjects()
     }
   }
 

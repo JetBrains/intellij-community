@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -61,7 +60,7 @@ public class GitInit extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           GitCommandResult result = Git.getInstance().init(project, root);
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString());
+            VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString(), true);
             return;
           }
 
@@ -76,7 +75,7 @@ public class GitInit extends DumbAwareAction {
   }
 
   public static void refreshAndConfigureVcsMappings(@NotNull Project project, @NotNull VirtualFile root, @NotNull String path) {
-    VfsUtil.markDirtyAndRefresh(false, true, false, root);
+    GitUtil.refreshVfsInRoot(root);
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, GitVcs.NAME));
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(root);

@@ -953,9 +953,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *
    * @return an enumeration of the keys in this table
    */
-  @NotNull
   @Override
-  public int[] keys() {
+  public int @NotNull [] keys() {
     Object[] entries = new EntrySetView<>(this).toArray();
     int[] result = new int[entries.length];
     for (int i = 0; i < entries.length; i++) {
@@ -2483,9 +2482,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     private static final String oomeMsg = "Required array size too large";
 
-    @NotNull
     @Override
-    public final Object[] toArray() {
+    public final Object @NotNull [] toArray() {
       long sz = map.mappingCount();
       if (sz > MAX_ARRAY_SIZE) {
         throw new OutOfMemoryError(oomeMsg);
@@ -2511,10 +2509,9 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       return (i == n) ? r : Arrays.copyOf(r, i);
     }
 
-    @NotNull
     @Override
     @SuppressWarnings("unchecked")
-    public final <T> T[] toArray(@NotNull T[] a) {
+    public final <T> T @NotNull [] toArray(T @NotNull [] a) {
       long sz = map.mappingCount();
       if (sz > MAX_ARRAY_SIZE) {
         throw new OutOfMemoryError(oomeMsg);

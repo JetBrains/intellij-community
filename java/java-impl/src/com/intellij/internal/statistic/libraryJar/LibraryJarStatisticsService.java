@@ -29,8 +29,7 @@ public class LibraryJarStatisticsService implements DumbAware {
     return ourInstance;
   }
 
-  @NotNull
-  public LibraryJarDescriptor[] getTechnologyDescriptors() {
+  public LibraryJarDescriptor @NotNull [] getTechnologyDescriptors() {
     if (ourDescriptors == null) {
       if (!StatisticsUploadAssistant.isSendAllowed()) return LibraryJarDescriptor.EMPTY;
       final URL url = createVersionsUrl();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -113,7 +113,7 @@ public class DocPreviewUtil {
     // Apply links info to the header template.
     List<TextRange> modifiedRanges = new ArrayList<>();
     List<String> sortedReplacements = new ArrayList<>(links.keySet());
-    Collections.sort(sortedReplacements, REPLACEMENTS_COMPARATOR);
+    sortedReplacements.sort(REPLACEMENTS_COMPARATOR);
     StringBuilder buffer = new StringBuilder(header);
     replace(buffer, "\n", "<br/>", modifiedRanges);
     for (String replaceFrom : sortedReplacements) {
@@ -159,8 +159,12 @@ public class DocPreviewUtil {
   private static void replace(@NotNull StringBuilder text,
                               @NotNull String replaceFrom,
                               @NotNull String replaceTo,
-                              @NotNull List<TextRange> readOnlyChanges)
-  {
+                              @NotNull List<TextRange> readOnlyChanges) {
+
+    if (replaceFrom.isEmpty()) {
+      return;
+    }
+
     for (int i = text.indexOf(replaceFrom); i >= 0; i = text.indexOf(replaceFrom, i + 1)) {
       int end = i + replaceFrom.length();
       if (intersects(readOnlyChanges, i, end)) {

@@ -6,12 +6,9 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +57,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       myVcsManager = vcsManager;
     }
 
-    @NotNull
-    public VirtualFile[] execute() {
+    public VirtualFile @NotNull [] execute() {
       try {
         ourInProgress.set(Boolean.TRUE);
         return myVcsManager.getRootsUnderVcs(SvnVcs.getInstance(myProject));
@@ -262,8 +258,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getNotFilteredRoots() {
+  public VirtualFile @NotNull [] getNotFilteredRoots() {
     return myRootsHelper.execute();
   }
 
@@ -293,16 +288,18 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
   @Override
   public void loadState(@NotNull final SvnMappingSavedPart state) {
-    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).addInitializationRequest(
-      VcsInitObject.AFTER_COMMON, (DumbAwareRunnable)() -> getApplication().executeOnPooledThread(() -> {
+    ProjectLevelVcsManager.getInstance(myProject).runAfterInitialization(
+      () -> getApplication().executeOnPooledThread(() -> {
         SvnMapping mapping = new SvnMapping();
         SvnMapping realMapping = new SvnMapping();
         try {
           fillMapping(mapping, state.getMappingRoots());
           fillMapping(realMapping, state.getMoreRealMappingRoots());
-        } catch (ProcessCanceledException e) {
+        }
+        catch (ProcessCanceledException e) {
           throw e;
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
           LOG.info(t);
           return;
         }

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageOptionsProvider;
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -11,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -22,11 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(
-    name = "CoverageViewManager",
-    storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
-)
-public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
+@State(name = "CoverageViewManager", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
+public final class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
   public static final String TOOLWINDOW_ID = "Coverage";
   private final Project myProject;
@@ -34,15 +35,20 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   private StateBean myStateBean = new StateBean();
   private final Map<String, CoverageView> myViews = new HashMap<>();
   private boolean myReady;
-  
-  public CoverageViewManager(Project project) {
+
+  public CoverageViewManager(@NotNull Project project) {
     myProject = project;
 
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true, true);
+    RegisterToolWindowTask registerToolWindowTask = RegisterToolWindowTask.closableSecondary(
+      TOOLWINDOW_ID,
+      CoverageBundle.messagePointer("coverage.view.title"),
+      AllIcons.Toolwindows.ToolWindowCoverage,
+      ToolWindowAnchor.RIGHT
+    );
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(registerToolWindowTask);
     toolWindow.setHelpId(CoverageView.HELP_ID);
-    toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCoverage);
     myContentManager = toolWindow.getContentManager();
-    new ContentManagerWatcher(toolWindow, myContentManager);
+    ContentManagerWatcher.watchContentManager(toolWindow, myContentManager);
   }
 
   @Override
@@ -85,16 +91,15 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   }
 
   void closeView(String displayName) {
-    final CoverageView oldView = myViews.remove(displayName);
+    CoverageView oldView = myViews.remove(displayName);
     if (oldView != null) {
       oldView.saveSize();
-      final Content content = myContentManager.getContent(oldView);
-      final Runnable runnable = () -> {
+      Content content = myContentManager.getContent(oldView);
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (content != null) {
           myContentManager.removeContent(content, false);
         }
-      };
-      ApplicationManager.getApplication().invokeLater(runnable);
+      });
     }
     setReady(false);
   }
@@ -108,11 +113,11 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   }
 
   public static String getDisplayName(CoverageSuitesBundle suitesBundle) {
-    final RunConfigurationBase configuration = suitesBundle.getRunConfiguration();
+    RunConfigurationBase<?> configuration = suitesBundle.getRunConfiguration();
     return configuration != null ? configuration.getName() : suitesBundle.getPresentableName();
   }
 
-  public static class StateBean {
+  public static final class StateBean {
     public boolean myFlattenPackages = false;
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;

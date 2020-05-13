@@ -4,8 +4,14 @@ Reports on declarations whose modifiers are not in the canonical
 preferred order (as stated in the Java Language Specification).
 <!-- tooltip end -->
 <p>
-Use the checkbox below to specify that annotations should always be sorted before keyword modifiers.
+Use the first checkbox below to report when annotations are misplaced:
+annotations with ElementType.TYPE_USE <em>not</em> directly before the type after the modifier keywords,
+other annotations <em>not</em> before the modifier keywords.
+When the checkbox is unchecked any annotation can be positioned before or after the modifier keywords.
+Modifier lists with annotations in between modifier keywords will always be reported.
 <p>
+Use the second checkbox below to warn when an ElementType.TYPE_USE annotation is not positioned directly before
+a type, even when the annotation has other targets specified.
 
 </body>
 </html>

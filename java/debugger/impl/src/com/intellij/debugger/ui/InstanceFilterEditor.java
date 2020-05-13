@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
@@ -17,8 +17,8 @@ public class InstanceFilterEditor extends PatternFilterEditor {
   @Override
   protected void addClassFilter() {
     String idString = Messages.showInputDialog(myProject,
-                                               DebuggerBundle.message("add.instance.filter.dialog.prompt"),
-                                               DebuggerBundle.message("add.instance.filter.dialog.title"),
+                                               JavaDebuggerBundle.message("add.instance.filter.dialog.prompt"),
+                                               JavaDebuggerBundle.message("add.instance.filter.dialog.title"),
                                                Messages.getQuestionIcon(),
                                                null,
                                                new InputValidatorEx() {
@@ -29,7 +29,8 @@ public class InstanceFilterEditor extends PatternFilterEditor {
                                                      Long.parseLong(inputString);
                                                      return null;
                                                    } catch (NumberFormatException e) {
-                                                     return DebuggerBundle.message("add.instance.filter.dialog.error.numeric.value.expected");
+                                                     return JavaDebuggerBundle
+                                                       .message("add.instance.filter.dialog.error.numeric.value.expected");
                                                    }
                                                  }
 

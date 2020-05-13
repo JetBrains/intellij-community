@@ -42,16 +42,3 @@ class B4(A4):
     b: str
 
 B4(<arg4>)
-
-
-@dataclass
-class A5:
-    x: Any = 15.0
-    y: int = 0
-
-@dataclass
-class B5(A5):
-    z: int = 10
-    x: int = 15
-
-B5(<arg5>)

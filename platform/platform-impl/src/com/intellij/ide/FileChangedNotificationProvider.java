@@ -41,7 +41,7 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
         }
 
         for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          if (project.isDisposedOrDisposeInProgress()) {
+          if (project.isDisposed()) {
             continue;
           }
 

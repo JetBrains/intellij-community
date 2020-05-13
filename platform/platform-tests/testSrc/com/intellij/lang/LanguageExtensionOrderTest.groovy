@@ -35,7 +35,7 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
     <extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
     </extensionPoint>    
-    ''')), ApplicationManager.getApplication())
+    ''')))
     Disposer.register(testRootDisposable) {
       myArea.unregisterExtensionPoint("langExt")
     }
@@ -51,7 +51,7 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
     def extensions = myLanguageExtension.allForLanguage(MyTestLanguage.INSTANCE)
     assert extensions.size() == classes.length
     def extensionClasses = extensions.collect { it.class }
-    assert extensionClasses == classes
+    assert extensionClasses == Arrays.asList(classes)
   }
 
   void 'test language before base-language'() {

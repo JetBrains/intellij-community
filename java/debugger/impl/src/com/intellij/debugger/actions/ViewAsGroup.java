@@ -24,12 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ViewAsGroup extends ActionGroup implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.ViewAsGroup");
+  private static final Logger LOG = Logger.getInstance(ViewAsGroup.class);
 
   private volatile AnAction[] myChildren = AnAction.EMPTY_ARRAY;
 
   public ViewAsGroup() {
-    super(null, true);
+    super(Presentation.NULL_STRING, true);
   }
 
   private static class RendererAction extends ToggleAction {
@@ -84,8 +84,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
     return myChildren;
   }
 

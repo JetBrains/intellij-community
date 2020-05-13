@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.completion;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.PlatformPatterns;
@@ -25,11 +24,9 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class PySuperClassAttributesCompletionContributor extends CompletionContributor {
   public PySuperClassAttributesCompletionContributor() {
     extend(CompletionType.BASIC,
@@ -55,8 +52,8 @@ public class PySuperClassAttributesCompletionContributor extends CompletionContr
   }
 
   public static List<PyTargetExpression> getSuperClassAttributes(@NotNull PyClass cls) {
-    List<PyTargetExpression> attrs = Lists.newArrayList();
-    List<String> seenNames = Lists.newArrayList();
+    List<PyTargetExpression> attrs = new ArrayList<>();
+    List<String> seenNames = new ArrayList<>();
     for (PyTargetExpression expr : cls.getClassAttributes()) {
       seenNames.add(expr.getName());
     }

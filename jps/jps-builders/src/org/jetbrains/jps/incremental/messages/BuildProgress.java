@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -41,6 +42,8 @@ public class BuildProgress {
   private final Map<BuildTarget, Double> myCurrentProgress = new HashMap<>();
   /** sum of expected build time for all finished targets */
   private long myExpectedTimeForFinishedTargets;
+  /** sum of all target build times for the current session*/
+  private long myAbsoluteBuildTime;
 
   private final TObjectIntHashMap<BuildTargetType<?>> myTotalTargets = new TObjectIntHashMap<>();
   private final TObjectLongHashMap<BuildTargetType<?>> myTotalBuildTimeForFullyRebuiltTargets = new TObjectLongHashMap<>();
@@ -55,7 +58,7 @@ public class BuildProgress {
     for (BuildTargetChunk chunk : allChunks) {
       boolean affected = isAffected.test(chunk);
       for (BuildTarget<?> target : chunk.getTargets()) {
-        if (!targetIndex.isDummy(target)) {
+        if (!myTargetIndex.isDummy(target)) {
           if (affected) {
             increment(totalAffectedTargets, target.getTargetType());
             targetTypes.add(target.getTargetType());
@@ -90,8 +93,7 @@ public class BuildProgress {
    * If there is no information about average build time for any {@link BuildTargetType} returns {@link BuilderRegistry#getExpectedBuildTimeForTarget the default expected value}.
    * Otherwise estimate build time using real average time for other targets and ratio between the default expected times.
    */
-  private static long computeExpectedTimeBasedOnOtherTargets(BuildTargetType<?> type, Set<? extends BuildTargetType<?>> allTypes,
-                                                             TObjectLongHashMap<BuildTargetType<?>> expectedBuildTimeForTarget) {
+  private static long computeExpectedTimeBasedOnOtherTargets(BuildTargetType<?> type, Set<? extends BuildTargetType<?>> allTypes, TObjectLongHashMap<BuildTargetType<?>> expectedBuildTimeForTarget) {
     BuilderRegistry registry = BuilderRegistry.getInstance();
     int baseTargetsCount = 0;
     long expectedTimeSum = 0;
@@ -122,6 +124,7 @@ public class BuildProgress {
 
   public synchronized void onTargetChunkFinished(BuildTargetChunk chunk, CompileContext context) {
     boolean successful = !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled();
+    int nonDummyTargetsCount = ContainerUtil.count(chunk.getTargets(), it -> !myTargetIndex.isDummy(it));
     for (BuildTarget<?> target : chunk.getTargets()) {
       myCurrentProgress.remove(target);
       if (!myTargetIndex.isDummy(target)) {
@@ -129,9 +132,11 @@ public class BuildProgress {
         increment(myNumberOfFinishedTargets, targetType);
         myExpectedTimeForFinishedTargets += myExpectedBuildTimeForTarget.get(targetType);
 
+        long elapsedTime = System.currentTimeMillis() - context.getCompilationStartStamp(target);
+        myAbsoluteBuildTime += elapsedTime;
+        
         if (successful && FSOperations.isMarkedDirty(context, target)) {
-          long elapsedTime = System.currentTimeMillis() - context.getCompilationStartStamp(target);
-          long buildTime = elapsedTime / chunk.getTargets().size();
+          long buildTime = elapsedTime / nonDummyTargetsCount;
           if (!myTotalBuildTimeForFullyRebuiltTargets.adjustValue(targetType, buildTime)) {
             myTotalBuildTimeForFullyRebuiltTargets.put(targetType, buildTime);
           }
@@ -143,7 +148,9 @@ public class BuildProgress {
   }
 
   public void updateExpectedAverageTime() {
-    LOG.debug("update expected build time for " + myTotalBuildTimeForFullyRebuiltTargets.size() + " target types");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("update expected build time for " + myTotalBuildTimeForFullyRebuiltTargets.size() + " target types");
+    }
     myTotalBuildTimeForFullyRebuiltTargets.forEachEntry((type, totalTime) -> {
       BuildTargetsState targetsState = myDataManager.getTargetsState();
       long oldAverageTime = targetsState.getAverageBuildTime(type);
@@ -162,6 +169,10 @@ public class BuildProgress {
       targetsState.setAverageBuildTime(type, newAverageTime);
       return true;
     });
+  }
+
+  public synchronized long getAbsoluteBuildTime() {
+    return myAbsoluteBuildTime;
   }
 
   private static <T> void increment(TObjectIntHashMap<T> map, T key) {

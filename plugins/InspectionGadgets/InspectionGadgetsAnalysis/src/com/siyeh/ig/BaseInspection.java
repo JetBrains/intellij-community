@@ -15,15 +15,13 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -61,11 +59,6 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     return m_shortName;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public abstract String getDisplayName();
-
   @Override
   @Nls
   @NotNull
@@ -74,7 +67,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   @NotNull
-  protected abstract String buildErrorString(Object... infos);
+  protected abstract @InspectionMessage String buildErrorString(Object... infos);
 
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return false;
@@ -105,8 +98,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * @param infos additional information which was supplied by {@link BaseInspectionVisitor} during error registration.
    * @return an array of fixes (empty array if no fix is available).
    */
-  @NotNull
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 
@@ -241,11 +233,5 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
       out.append(',');
       out.append(strings[i].get(index));
     }
-  }
-
-  public static boolean isInspectionEnabled(@NonNls String shortName, PsiElement context) {
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(context.getProject());
-    final InspectionProfileImpl profile = profileManager.getCurrentProfile();
-    return profile.isToolEnabled(HighlightDisplayKey.find(shortName), context);
   }
 }

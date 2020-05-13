@@ -53,8 +53,7 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
   }
 
   @Override
-  @NotNull
-  public abstract PsiReference[] createReferences(GenericDomValue genericDomValue, PsiElement element, ConvertContext context);
+  public abstract PsiReference @NotNull [] createReferences(GenericDomValue genericDomValue, PsiElement element, ConvertContext context);
 
   public static GlobalSearchScope getScope(Project project, @Nullable Module module, @Nullable PsiFile psiFile) {
     if (module == null || psiFile == null) {

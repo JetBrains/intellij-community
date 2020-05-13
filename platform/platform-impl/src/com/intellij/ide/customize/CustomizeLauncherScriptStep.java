@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.ui.Messages;
@@ -41,7 +42,7 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
     gbc.nextLine();
     gbc.insets.top = UIUtil.PANEL_REGULAR_INSETS.top;
     gbc.insets.left = UIUtil.PANEL_REGULAR_INSETS.left;
-    controls.add(new JLabel("Please specify the path where the script should be created:"), gbc);
+    controls.add(new JLabel(IdeBundle.message("label.please.specify.the.path.where.the.script.should.be.created")), gbc);
 
     controls.add(myScriptPathTextField, gbc.nextLine());
 
@@ -53,11 +54,14 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
   @Override
   public boolean beforeOkAction() {
     if (myCreateScriptCheckBox.isSelected()) {
+      CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.LauncherScriptCreated);
+
       try {
         CreateLauncherScriptAction.createLauncherScript(myScriptPathTextField.getText());
       }
       catch (Exception e) {
-        Messages.showErrorDialog(ExceptionUtil.getNonEmptyMessage(e, "Internal error"), "Launcher Script Creation Failed");
+        Messages.showErrorDialog(ExceptionUtil.getNonEmptyMessage(e, "Internal error"),
+                                 IdeBundle.message("dialog.title.launcher.script.creation.failed"));
         return false;
       }
     }
@@ -67,16 +71,16 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
 
   @Override
   protected String getTitle() {
-    return "Launcher Script";
+    return IdeBundle.message("step.title.launcher.script");
   }
 
   @Override
   protected String getHTMLHeader() {
-    return "<html><body><h2>Create Launcher Script</h2></body></html>";
+    return IdeBundle.message("label.create.launcher.script");
   }
 
   @Override
   protected String getHTMLFooter() {
-    return "Launcher script can be created later via Tools | Create Command-Line Launcher...";
+    return IdeBundle.message("label.launcher.script.can.be.created.later.via.tools.create.command.line.launcher");
   }
 }

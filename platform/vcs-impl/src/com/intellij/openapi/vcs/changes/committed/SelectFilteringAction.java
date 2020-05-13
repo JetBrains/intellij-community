@@ -24,13 +24,12 @@ public class SelectFilteringAction extends LabeledComboBoxAction implements Dumb
 
   @NotNull private final Project myProject;
   @NotNull private final CommittedChangesTreeBrowser myBrowser;
-  @NotNull private ChangeListFilteringStrategy myPreviousSelection;
+  @NotNull private ChangeListFilteringStrategy myPreviousSelection = NoneChangeListFilteringStrategy.INSTANCE;
 
   public SelectFilteringAction(@NotNull Project project, @NotNull CommittedChangesTreeBrowser browser) {
     super(VcsBundle.message("committed.changes.filter.title"));
     myProject = project;
     myBrowser = browser;
-    myPreviousSelection = ChangeListFilteringStrategy.NONE;
   }
 
   @Override
@@ -55,7 +54,7 @@ public class SelectFilteringAction extends LabeledComboBoxAction implements Dumb
   private List<ChangeListFilteringStrategy> collectStrategies() {
     List<ChangeListFilteringStrategy> result = new ArrayList<>();
 
-    result.add(ChangeListFilteringStrategy.NONE);
+    result.add(NoneChangeListFilteringStrategy.INSTANCE);
     result.add(new StructureFilteringStrategy(myProject));
 
     boolean addNameFilter = false;
@@ -90,10 +89,10 @@ public class SelectFilteringAction extends LabeledComboBoxAction implements Dumb
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!ChangeListFilteringStrategy.NONE.equals(myPreviousSelection)) {
+      if (!NoneChangeListFilteringStrategy.INSTANCE.equals(myPreviousSelection)) {
         myBrowser.removeFilteringStrategy(myPreviousSelection.getKey());
       }
-      if (!ChangeListFilteringStrategy.NONE.equals(myStrategy)) {
+      if (!NoneChangeListFilteringStrategy.INSTANCE.equals(myStrategy)) {
         myBrowser.setFilteringStrategy(myStrategy);
       }
       myPreviousSelection = myStrategy;

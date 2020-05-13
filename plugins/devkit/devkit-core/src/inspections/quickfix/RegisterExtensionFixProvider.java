@@ -33,9 +33,8 @@ import java.util.Set;
 
 public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvider {
 
-  @NotNull
   @Override
-  public IntentionAction[] getQuickFixes(@NotNull PsiElement element) {
+  public IntentionAction @NotNull [] getQuickFixes(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return IntentionAction.EMPTY_ARRAY;
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) return IntentionAction.EMPTY_ARRAY;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ComponentModuleRegistrationChecker")
 
 package org.jetbrains.idea.devkit.inspections
@@ -6,6 +6,7 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
@@ -13,7 +14,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.AtomicClearableLazyValue
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.*
@@ -35,19 +36,14 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-class ComponentModuleRegistrationChecker(private val moduleToModuleSet: AtomicClearableLazyValue<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
+class ComponentModuleRegistrationChecker(private val moduleToModuleSet: ClearableLazyValue<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
                                          private val ignoredClasses: MutableList<String>,
                                          private val annotationHolder: DomElementAnnotationHolder) {
-
   fun checkProperModule(extensionPoint: ExtensionPoint) {
     val effectiveEpClass = extensionPoint.effectiveClass
     if (shouldCheckExtensionPointClassAttribute(effectiveEpClass) &&
         checkProperXmlFileForClass(extensionPoint, effectiveEpClass)) {
       return
-    }
-
-    for (withElement in extensionPoint.withElements) {
-      if (checkProperXmlFileForClass(extensionPoint, withElement.implements.value)) return
     }
 
     val shortName = extensionPoint.effectiveQualifiedName.substringAfterLast('.')
@@ -151,7 +147,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: AtomicCl
       }
     }
     val fix = if (modulePluginXmlFile != null) MoveRegistrationQuickFix(pluginXmlModule, modulePluginXmlFile.name) else null
-    annotationHolder.createProblem(element, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+    annotationHolder.createProblem(element, ProblemHighlightType.WARNING,
                                    "Element should be registered in '${definingModule.name}' module where its class '${psiClass.qualifiedName}' is defined", null,
                                    fix)
     return true

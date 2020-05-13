@@ -2,17 +2,20 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.jps.cache.client.JpsServerClient;
+import com.intellij.jps.cache.model.JpsLoaderContext;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
-class JpsCacheLoader implements JpsOutputLoader {
+class JpsCacheLoader implements JpsOutputLoader<File> {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCacheLoader");
   private static final String TIMESTAMPS_FOLDER_NAME = "timestamps";
   private static final String FS_STATE_FILE = "fs_state.dat";
@@ -27,16 +30,49 @@ class JpsCacheLoader implements JpsOutputLoader {
     myProject = project;
   }
 
+  @Nullable
   @Override
-  public LoaderStatus load(@NotNull String commitId, @NotNull SegmentedProgressIndicatorManager indicatorManager) {
-    LOG.debug("Loading JPS caches for commit: " + commitId);
+  public File load(@NotNull JpsLoaderContext context) {
+    LOG.info("Loading JPS caches for commit: " + context.getCommitId());
     myTmpCacheFolder = null;
 
+    long start = System.currentTimeMillis();
+    File zipFile = myClient.downloadCacheById(context.getDownloadIndicatorManager(), context.getCommitId(),
+                                              myBuildManager.getBuildSystemDirectory().toFile());
+    LOG.info("Download of jps caches took: " + (System.currentTimeMillis() - start));
+    return zipFile;
+  }
+
+  @Override
+  public LoaderStatus extract(@Nullable Object loadResults, @NotNull SegmentedProgressIndicatorManager extractIndicatorManager) {
+    if (!(loadResults instanceof File)) return LoaderStatus.FAILED;
+
+    File zipFile = (File) loadResults;
     File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
-    Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(myProject, indicatorManager, commitId, targetDir);
-    myTmpCacheFolder = downloadResultPair.second;
-    if (!downloadResultPair.first) return LoaderStatus.FAILED;
-    return LoaderStatus.COMPLETE;
+    File tmpFolder = new File(targetDir, "tmp");
+    try {
+      // Start extracting after download
+      SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = extractIndicatorManager.createSubTaskIndicator();
+      extractIndicatorManager.getProgressIndicator().checkCanceled();
+      extractIndicatorManager.setText(this, "Extracting downloaded results...");
+      subTaskIndicator.setText2("Extracting project caches");
+      long start = System.currentTimeMillis();
+
+      ZipUtil.extract(zipFile, tmpFolder, null);
+      FileUtil.delete(zipFile);
+      LOG.info("Unzip compilation caches took: " + (System.currentTimeMillis() - start));
+      subTaskIndicator.finished();
+      extractIndicatorManager.finished(this);
+
+      myTmpCacheFolder = tmpFolder;
+      return LoaderStatus.COMPLETE;
+    }
+    catch (ProcessCanceledException | IOException e) {
+      if (e instanceof IOException) LOG.warn("Failed unzip downloaded compilation caches", e);
+      FileUtil.delete(zipFile);
+      FileUtil.delete(tmpFolder);
+    }
+    return LoaderStatus.FAILED;
   }
 
   @Override
@@ -48,16 +84,20 @@ class JpsCacheLoader implements JpsOutputLoader {
   }
 
   @Override
-  public void apply() {
+  public void apply(@NotNull SegmentedProgressIndicatorManager indicatorManager) {
     if (myTmpCacheFolder == null) {
       LOG.warn("Nothing to apply, download results are empty");
       return;
     }
-    File currentDirForBuildCache = myBuildManager.getProjectSystemDirectory(myProject);
-    if (currentDirForBuildCache != null) {
-      File newTimestampFolder = new File(myTmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
-      if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
 
+    File newTimestampFolder = new File(myTmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
+    if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
+
+    File currentDirForBuildCache = myBuildManager.getProjectSystemDirectory(myProject);
+    indicatorManager.setText(this, "Applying changes...");
+    if (currentDirForBuildCache != null) {
+      SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = indicatorManager.createSubTaskIndicator();
+      subTaskIndicator.setText2("Applying downloaded caches");
       // Copy timestamp old folder to new cache dir
       File timestamps = new File(currentDirForBuildCache, TIMESTAMPS_FOLDER_NAME);
       if (timestamps.exists()) {
@@ -83,7 +123,9 @@ class JpsCacheLoader implements JpsOutputLoader {
       // Remove old cache dir
       FileUtil.delete(currentDirForBuildCache);
       myTmpCacheFolder.renameTo(currentDirForBuildCache);
+      subTaskIndicator.finished();
       LOG.debug("JPS cache downloads finished");
     }
+    indicatorManager.finished(this);
   }
 }

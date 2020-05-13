@@ -45,7 +45,7 @@ public class CompositeArrangementSettingsToken {
    * @param children  children to wrap
    */
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
-                                           @NotNull ArrangementSettingsToken... children)
+                                           ArrangementSettingsToken @NotNull ... children)
   {
     this(token, deduceRole(token),
          ContainerUtil.map2List(Arrays.asList(children), WRAPPER));

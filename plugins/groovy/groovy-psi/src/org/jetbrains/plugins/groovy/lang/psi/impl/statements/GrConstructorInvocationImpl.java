@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -18,12 +18,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrConstructorInvocationReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstructorInvocation {
 
-  private final GroovyCallReference myConstructorReference = new GrConstructorInvocationReference(this);
+  private final GroovyConstructorReference myConstructorReference = new GrConstructorInvocationReference(this);
 
   public GrConstructorInvocationImpl(@NotNull ASTNode node) {
     super(node);
@@ -41,7 +41,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
 
   @NotNull
   @Override
-  public GroovyCallReference getConstructorReference() {
+  public GroovyConstructorReference getConstructorReference() {
     return myConstructorReference;
   }
 
@@ -71,8 +71,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
   @Override
-  @NotNull
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return myConstructorReference.multiResolve(incompleteCode);
   }
 
@@ -94,9 +93,8 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return null;
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
     return multiResolve(true);
   }
 

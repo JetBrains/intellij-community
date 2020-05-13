@@ -11,9 +11,8 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
 
 
 public class IterableUsedAsVarargInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new IterableUsedAsVarargInspection[]{new IterableUsedAsVarargInspection()};
   }
   

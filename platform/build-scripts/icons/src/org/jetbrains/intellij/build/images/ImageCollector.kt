@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
@@ -18,6 +18,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.regex.Pattern
 import java.util.stream.Stream
@@ -56,6 +57,16 @@ internal class ImagePaths(val id: String,
   val scheduledForRemoval by lazy {
     flags.deprecation?.comment?.contains("to be removed") == true
   }
+  val scheduledForRemovalRelease by lazy {
+    val comment = flags.deprecation?.comment ?: return@lazy "2020.1"
+    val result = Regex("to be removed in (?:IDEA )?([0-9.]+)").find(comment) ?: return@lazy "2020.1"
+    val release = result.groupValues[1]
+
+    if (release == "2020")
+      "2020.1"
+    else
+      release
+  }
 }
 
 class ImageFlags(val skipped: Boolean,
@@ -68,10 +79,12 @@ internal class ImageSyncFlags(val skipSync: Boolean, val forceSync: Boolean)
 
 data class DeprecationData(val comment: String?, val replacement: String?, val replacementContextClazz: String?, val replacementReference: String?)
 
-internal class ImageCollector(private val projectHome: Path, private val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false, private val className: String? = null) {
+internal class ImageCollector(private val projectHome: Path,
+                              private val iconsOnly: Boolean = true,
+                              val ignoreSkipTag: Boolean = false) {
   // files processed in parallel, so, concurrent data structures must be used
-  private val icons = ContainerUtil.newConcurrentMap<String, ImagePaths>()
-  private val phantomIcons = ContainerUtil.newConcurrentMap<String, ImagePaths>()
+  private val icons = ConcurrentHashMap<String, ImagePaths>()
+  private val phantomIcons = ConcurrentHashMap<String, ImagePaths>()
   private val usedIconsRobots: MutableSet<Path> = ContainerUtil.newConcurrentSet()
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): List<ImagePaths> {
@@ -100,7 +113,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   }
 
   fun printUsedIconRobots() {
-    if (!usedIconsRobots.isEmpty()) {
+    if (usedIconsRobots.isNotEmpty()) {
       println(usedIconsRobots.joinToString(separator = "\n") { "Found icon-robots: $it" })
     }
   }
@@ -249,7 +262,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     fun getImageSyncFlags(file: Path) = ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
 
     fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> {
-      return ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(false, false, it.data)) }
+      return ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(skipped = false, used = false, deprecation = it.data)) }
     }
 
     fun isSkipped(file: Path): Boolean {
@@ -281,7 +294,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
               val replacement = replacementString?.substringAfter('@')?.trim()
               val replacementContextClass = StringUtil.nullize(replacementString?.substringBefore('@', "")?.trim())
 
-              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass, replacementReference = null)
+              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass,
+                                                   replacementReference = computeReplacementReference(comment))
               answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
 
               if (!pattern.contains('*') && !pattern.startsWith('/')) {
@@ -297,12 +311,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     }
 
     private fun computeReplacementReference(comment: String?): String? {
-      if (className == null) {
-        return null
-      }
-
-      val result = StringUtil.nullize(comment?.substringAfter(" - use $className.", "")?.substringBefore(' ')?.trim()) ?: return null
-      return "$className.$result"
+      // allow only same class fields (IDEA-218345)
+      return StringUtil.nullize(comment?.substringAfter("use {@link #", "")?.substringBefore('}')?.trim())
     }
 
     private fun parse(robots: Path, vararg handlers: RobotFileHandler) {
@@ -353,7 +363,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
           matcher.matcher(basicPath).matches()
         }
         catch (e: Exception) {
-          throw RuntimeException("cannot reset matcher ${matcher} with a new input $basicPath: $e")
+          throw RuntimeException("cannot reset matcher $matcher with a new input $basicPath: $e")
         }
       }
     }
@@ -412,11 +422,7 @@ private class DirectorySpliterator private constructor(iterator: Iterator<Path>,
   }
 
   override fun tryAdvance(action: Consumer<in Path>): Boolean {
-    val iterator = iterator
-    if (iterator == null) {
-      return false
-    }
-
+    val iterator = iterator ?: return false
     val path = synchronized(iterator) {
       if (!iterator.hasNext()) {
         this.iterator = null

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx");
+  private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerEx.class);
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
     return (DaemonCodeAnalyzerEx)project.getComponent(DaemonCodeAnalyzer.class);
   }
@@ -32,10 +32,19 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                           final int startOffset,
                                           final int endOffset,
                                           @NotNull final Processor<? super HighlightInfo> processor) {
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    return processHighlights(model, project, minSeverity, startOffset, endOffset, processor);
+  }
+
+  public static boolean processHighlights(@NotNull MarkupModelEx model,
+                                          @NotNull Project project,
+                                          @Nullable("null means all") final HighlightSeverity minSeverity,
+                                          final int startOffset,
+                                          final int endOffset,
+                                          @NotNull final Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
-    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
       Object tt = marker.getErrorStripeTooltip();
@@ -88,7 +97,8 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   public abstract void cleanFileLevelHighlights(@NotNull Project project, int group, PsiFile psiFile);
 
   public abstract void addFileLevelHighlight(@NotNull final Project project,
-                                    final int group,
-                                    @NotNull final HighlightInfo info,
-                                    @NotNull final PsiFile psiFile);
+                                             final int group,
+                                             @NotNull final HighlightInfo info,
+                                             @NotNull final PsiFile psiFile);
+
 }

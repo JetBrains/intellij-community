@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationListener;
@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry.ALL_FLAGS_MASK;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
@@ -64,7 +63,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @author peter
  */
 public class VfsData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VfsData");
+  private static final Logger LOG = Logger.getInstance(VfsData.class);
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
@@ -95,7 +94,7 @@ public class VfsData {
     synchronized (myDeadMarker) {
       if (!myDyingIds.isEmpty()) {
         for (int id : myDyingIds.toArray()) {
-          Segment segment = assertNotNull(getSegment(id, false));
+          Segment segment = Objects.requireNonNull(getSegment(id, false));
           segment.myObjectArray.set(getOffset(id), myDeadMarker);
           myChangedParents.remove(id);
         }
@@ -105,7 +104,7 @@ public class VfsData {
   }
 
   @Nullable
-  VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent) {
+  VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
     PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
     VirtualFileSystemEntry dir = persistentFS.getCachedDir(id);
     if (dir != null) return dir;
@@ -126,9 +125,16 @@ public class VfsData {
       throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
     }
 
-    return o instanceof DirectoryData
-           ? persistentFS.getOrCacheDir(id, new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()))
-           : new VirtualFileImpl(id, segment, parent);
+    if (o instanceof DirectoryData) {
+      if (putToMemoryCache) {
+        return persistentFS.getOrCacheDir(id, new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()));
+      } else {
+        VirtualFileSystemEntry entry = persistentFS.getCachedDir(id);
+        if (entry != null) return entry;
+        return new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem());
+      }
+    }
+    return new VirtualFileImpl(id, segment, parent);
   }
 
   private static InvalidVirtualFileAccessException reportDeadFileAccess(VirtualFileSystemEntry file) {
@@ -153,7 +159,7 @@ public class VfsData {
     return segment != null && segment.myObjectArray.get(getOffset(id)) != null;
   }
 
-  public static class FileAlreadyCreatedException extends Exception {
+  public static class FileAlreadyCreatedException extends RuntimeException {
     private FileAlreadyCreatedException(String message) {
       super(message);
     }
@@ -166,13 +172,7 @@ public class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
-      FSRecords.invalidateCaches();
-      int parent = FSRecords.getParent(id);
-      String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
-      if (parent > 0) {
-        msg += "; parent.name=" + FSRecords.getName(parent);
-        msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
-      }
+      String msg = FSRecords.diagnosticsForAlreadyCreatedFile(id, nameId, existingData);
       throw new FileAlreadyCreatedException(msg);
     }
     segment.myObjectArray.set(offset, data);
@@ -184,7 +184,7 @@ public class VfsData {
   }
 
   int getNameId(int id) {
-    return assertNotNull(getSegment(id, false)).getNameId(id);
+    return Objects.requireNonNull(getSegment(id, false)).getNameId(id);
   }
 
   boolean isFileValid(int id) {
@@ -295,19 +295,17 @@ public class VfsData {
      * assigned under lock(this) only; never modified in-place
      * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
-    @NotNull
-    volatile int[] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
+    volatile int @NotNull [] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
 
     // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
     private volatile Set<CharSequence> myAdoptedNames;
 
-    @NotNull
-    VirtualFileSystemEntry[] getFileChildren(@NotNull VirtualDirectoryImpl parent) {
+    VirtualFileSystemEntry @NotNull [] getFileChildren(@NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
       int[] ids = myChildrenIds;
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
       for (int i = 0; i < ids.length; i++) {
         int childId = ids[i];
-        VirtualFileSystemEntry child = parent.mySegment.vfsData.getFileById(childId, parent);
+        VirtualFileSystemEntry child = parent.mySegment.vfsData.getFileById(childId, parent, putToMemoryCache);
         if (child == null) {
           throw new AssertionError("No file for id " + childId + ", parentId = " + parent.myId);
         }

@@ -45,9 +45,8 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     return myEventHandler;
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     if (myController == null) return EMPTY_ARRAY;
     final List<PsiMethod> availableHandlers = new ArrayList<>();
     for (PsiMethod psiMethod : myController.getAllMethods()) {

@@ -21,9 +21,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.packaging.elements.ComplexPackagingElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ToggleShowElementContentAction extends ToggleAction implements DumbAware {
   private final ComplexPackagingElementType<?> myType;
   private final ArtifactEditorImpl myEditor;

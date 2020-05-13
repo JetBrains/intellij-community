@@ -22,6 +22,18 @@ public class AnnotateOverriddenMethodsIntentionTest extends IPPTestCase {
   public void testMethod() {
     doTest();
   }
+  
+  public void testMethodTypeUse() {
+    doTest();
+  }
+  
+  public void testMethodTypeUseQualified() {
+    doTest();
+  }
+
+  public void testParameterTypeUse() {
+    doTest(IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", "@SomeAnnotation"));
+  }
 
   public void testParameter() {
     doTest(IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", "@SomeAnnotation"));

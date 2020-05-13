@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell;
 
-import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -13,6 +13,7 @@ import com.intellij.execution.jshell.protocol.*;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -56,7 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Eugene Zhuravlev
  */
 public class JShellHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.JShellHandler");
+  private static final Logger LOG = Logger.getInstance(JShellHandler.class);
   private static final int DEBUG_PORT = -1;
   public static final Key<JShellHandler> MARKER_KEY = Key.create("JShell console key");
   private static final Charset ourCharset = StandardCharsets.UTF_8;
@@ -70,7 +71,8 @@ public class JShellHandler {
   private final OSProcessHandler myProcess;
   private final MessageReader<Response> myMessageReader;
   private final MessageWriter<Request> myMessageWriter;
-  private final ExecutorService myTaskQueue = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("JShell Command Queue");
+  private final ExecutorService myTaskQueue = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    ExecutionBundle.message("jshell.command.queue"));
   private final AtomicReference<Collection<String>> myEvalClasspathRef = new AtomicReference<>(null);
 
   private JShellHandler(@NotNull Project project,
@@ -188,7 +190,7 @@ public class JShellHandler {
 
     processHandler.startNotify();
 
-    ExecutionManager.getInstance(project).getContentManager().showRunContent(EXECUTOR, descriptor);
+    RunContentManager.getInstance(project).showRunContent(EXECUTOR, descriptor);
     return jshellHandler;
   }
 
@@ -289,11 +291,11 @@ public class JShellHandler {
 
   public void stop() {
     myProcess.destroyProcess(); // use force
-    ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(EXECUTOR, myRunContent);
+    RunContentManager.getInstance(myProject).removeRunContent(EXECUTOR, myRunContent);
   }
 
   public void toFront() {
-    ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(EXECUTOR, myRunContent);
+    RunContentManager.getInstance(myProject).toFrontRunContent(EXECUTOR, myRunContent);
   }
 
   @Nullable

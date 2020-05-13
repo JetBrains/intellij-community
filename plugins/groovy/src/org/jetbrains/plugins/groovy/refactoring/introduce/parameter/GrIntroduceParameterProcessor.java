@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -24,11 +25,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.*;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -57,7 +57,7 @@ import java.util.Collection;
  * @author Maxim.Medvedev
  */
 public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterProcessor");
+  private static final Logger LOG = Logger.getInstance(GrIntroduceParameterProcessor.class);
 
   private final GrIntroduceParameterSettings mySettings;
   private final IntroduceParameterData.ExpressionWrapper myParameterInitializer;
@@ -87,17 +87,16 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return new PsiElement[]{mySettings.getToSearchFor()};
       }
 
       @Override
       public String getProcessedElementsHeader() {
-        return RefactoringBundle.message("introduce.parameter.elements.header");
+        return JavaRefactoringBundle.message("introduce.parameter.elements.header");
       }
     };
   }
@@ -123,7 +122,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(toReplaceIn.getContainingClass(), usageInfo.getElement(), false)) {
               conflicts.putValue(mySettings.getExpression(),
-                                 RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
+                                 JavaRefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
                                                            CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
             }
@@ -139,9 +138,8 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     return showConflicts(conflicts, usagesIn);
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     final PsiMethod toSearchFor = ((PsiMethod)mySettings.getToSearchFor());
@@ -207,7 +205,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
 
     //PsiType initializerType = mySettings.getSelectedType();
@@ -250,7 +248,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     if (stringPartInfo != null) {
       final GrExpression
         expr = mySettings.getStringPartInfo().replaceLiteralWithConcatenation(mySettings.getName());
-      final Editor editor = PsiUtilBase.findEditor(expr);
+      final Editor editor = PsiEditorUtil.findEditor(expr);
       if (editor != null) {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());
@@ -306,7 +304,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   @NotNull
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
+    return JavaRefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 
   @NotNull

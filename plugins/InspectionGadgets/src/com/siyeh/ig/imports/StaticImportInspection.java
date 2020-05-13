@@ -52,9 +52,8 @@ public class StaticImportInspection extends BaseInspection {
   public boolean ignoreInTestCode = false; // keep for compatibility
   @SuppressWarnings("PublicField") public OrderedSet<String> allowedClasses = new OrderedSet<>();
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> result = new SmartList<>();
     final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)infos[0];
     final SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(this, importStaticStatement);
@@ -93,12 +92,6 @@ public class StaticImportInspection extends BaseInspection {
     panel.add(checkBox2, constraints);
 
     return panel;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("static.import.display.name");
   }
 
   @Override
@@ -194,7 +187,7 @@ public class StaticImportInspection extends BaseInspection {
       private final boolean onDemand;
       private final List<PsiJavaCodeReferenceElement> references = new ArrayList<>();
 
-      StaticImportReferenceCollector(@NotNull JavaResolveResult[] importTargets, boolean onDemand) {
+      StaticImportReferenceCollector(JavaResolveResult @NotNull [] importTargets, boolean onDemand) {
         this.importTargets = importTargets;
         this.onDemand = onDemand;
       }

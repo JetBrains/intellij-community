@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
+import java.awt.GraphicsEnvironment
 
 /**
  * @author Konstantin Bulenkov
@@ -13,12 +14,17 @@ import com.intellij.ui.layout.*
 class ConfigureCustomSizeAction: DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val centerPanel = panel {
-      row("Width:") { intTextField(CustomSizeModel::width, 20, 1..1000).focused() }
-      row("Height:") { intTextField(CustomSizeModel::height, 20, 1..1000) }
+      row("Width:") { intTextField(CustomSizeModel::width, 20, 1..maxWidth()).focused() }
+      row("Height:") { intTextField(CustomSizeModel::height, 20, 1..maxHeight()) }
     }
 
     dialog("Default Size", centerPanel, project = e.project).show()
   }
+
+  private fun maxWidth(): Int = maxWindowBounds().width
+  private fun maxHeight(): Int = maxWindowBounds().height
+
+  private fun maxWindowBounds() = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
 
   object CustomSizeModel {
     var width by propComponentProperty(defaultValue = 640)

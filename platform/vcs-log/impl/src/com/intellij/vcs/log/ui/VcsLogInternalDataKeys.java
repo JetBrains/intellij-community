@@ -25,7 +25,9 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 public class VcsLogInternalDataKeys {
   public static final DataKey<VcsLogManager> LOG_MANAGER = DataKey.create("Vcs.Log.Manager");
   public static final DataKey<VcsLogUiProperties> LOG_UI_PROPERTIES = DataKey.create("Vcs.Log.Ui.Properties");
+  public static final DataKey<MainVcsLogUi> MAIN_UI = DataKey.create("Vcs.Log.Main.Ui");
   public static final DataKey<FileHistoryUi> FILE_HISTORY_UI = DataKey.create("Vcs.FileHistory.Ui");
+  public static final DataKey<VcsLogUiEx> LOG_UI_EX = DataKey.create("Vcs.Log.UiEx");
   public static final DataKey<VcsLogDiffHandler> LOG_DIFF_HANDLER = DataKey.create("Vcs.Log.Diff.Handler");
   public static final DataKey<VcsLogData> LOG_DATA = DataKey.create("Vcs.Log.Data");
 }

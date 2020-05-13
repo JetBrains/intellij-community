@@ -17,15 +17,10 @@ package org.jetbrains.jps.javac.ast;
 
 public class ExternalRefCollectorCompilerToolExtension extends AbstractRefCollectorCompilerToolExtension {
   public static final String ENABLED_PARAM = "external.java.process.ref.collector.enabled";
-  public static final String DIVIDE_IMPORTS_PARAM = "external.java.process.divide.imports";
 
   @Override
   protected boolean isEnabled() {
     return "true".equals(System.getProperty(ENABLED_PARAM));
   }
 
-  @Override
-  protected boolean divideImportsRefs() {
-    return "true".equals(System.getProperty(DIVIDE_IMPORTS_PARAM));
-  }
 }

@@ -44,8 +44,9 @@ public abstract class CompilerManager {
   /**
    * Registers a custom compiler.
    *
-   * @param compiler the compiler to register.
+   * @deprecated use {@link CompileTask} extension instead
    */
+  @Deprecated
   public abstract void addCompiler(@NotNull Compiler compiler);
 
   /**
@@ -66,8 +67,9 @@ public abstract class CompilerManager {
   /**
    * Unregisters a custom compiler.
    *
-   * @param compiler the compiler to unregister.
+   * @deprecated use {@link CompileTask} extension instead
    */
+  @Deprecated
   public abstract void removeCompiler(@NotNull Compiler compiler);
 
   /**
@@ -76,31 +78,35 @@ public abstract class CompilerManager {
    * @param compilerClass the class for which the compilers should be returned.
    * @return all registered compilers of the specified class.
    */
-  @NotNull
-  public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass);
+  public abstract <T  extends Compiler> T @NotNull [] getCompilers(@NotNull Class<T> compilerClass);
 
   /**
    * Registers the type as a compilable type so that Compile action will be enabled on files of this type.
    *
    * @param type the type for which the Compile action is enabled.
+   * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
    */
+  @Deprecated
   public abstract void addCompilableFileType(@NotNull FileType type);
 
   /**
    * Unregisters the type as a compilable type so that Compile action will be disabled on files of this type.
    *
    * @param type the type for which the Compile action is disabled.
+   * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
    */
+  @Deprecated
   public abstract void removeCompilableFileType(@NotNull FileType type);
 
   /**
    * Checks if files of the specified type can be compiled by one of registered compilers.
    * If the compiler can process files of certain type, it should register this file type within
    * the CompilerManager as a compilable file type.
+   * Preferably register compilable file types with the CompilableFileTypesProvider extension point
    *
    * @param type the type to check.
    * @return true if the file type is compilable, false otherwise.
-   * @see com.intellij.openapi.compiler.CompilerManager#addCompilableFileType(FileType)
+   * @see com.intellij.openapi.compiler.CompilableFileTypesProvider#getCompilableFileTypes()
    */
   public abstract boolean isCompilableFileType(@NotNull FileType type);
 
@@ -129,8 +135,7 @@ public abstract class CompilerManager {
    * @deprecated Use {@link #getAfterTaskList}
    */
   @Deprecated
-  @NotNull
-  public CompileTask[] getAfterTasks() {
+  public CompileTask @NotNull [] getAfterTasks() {
     return getAfterTaskList().toArray(new CompileTask[0]);
   }
 
@@ -149,7 +154,7 @@ public abstract class CompilerManager {
    *                          Compiler excludes are not honored.
    * @param callback          a notification callback, or null if no notifications needed.
    */
-  public abstract void compile(@NotNull VirtualFile[] files, @Nullable CompileStatusNotification callback);
+  public abstract void compile(VirtualFile @NotNull [] files, @Nullable CompileStatusNotification callback);
 
   /**
    * Compile all sources (including test sources) from the module. Compiler excludes are not honored.
@@ -192,7 +197,7 @@ public abstract class CompilerManager {
    * @param modules  modules to compile
    * @param callback a notification callback, or null if no notifications needed.
    */
-  public abstract void make(@NotNull Project project, @NotNull Module[] modules, @Nullable CompileStatusNotification callback);
+  public abstract void make(@NotNull Project project, Module @NotNull [] modules, @Nullable CompileStatusNotification callback);
 
   /**
    * Compile all modified files and all files that depend on them from the scope given.
@@ -262,15 +267,15 @@ public abstract class CompilerManager {
    * Convenience methods for creating frequently-used compile scopes
    */
   @NotNull
-  public abstract CompileScope createFilesCompileScope(@NotNull VirtualFile[] files);
+  public abstract CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
   @NotNull
   public abstract CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules);
   @NotNull
-  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, boolean includeDependentModules);
+  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules);
   @NotNull
-  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, boolean includeDependentModules, boolean includeRuntimeDependencies);
+  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies);
   @NotNull
-  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, @NotNull Module[] modules, boolean includeDependentModules);
+  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
   @NotNull
   public abstract CompileScope createProjectCompileScope(@NotNull Project project);
 

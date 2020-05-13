@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
@@ -19,6 +19,7 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,7 +31,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
-public class IdeMessagePanel extends JPanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
+public final class IdeMessagePanel extends NonOpaquePanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
 
   private final IdeErrorsIcon myIcon;
@@ -62,8 +63,6 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     messagePool.addListener(this);
 
     updateIconAndNotify();
-
-    setOpaque(true);
   }
 
   @Override
@@ -79,6 +78,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
   @Override
   public void dispose() {
+    UIUtil.dispose(myIcon);
     myMessagePool.removeListener(this);
   }
 
@@ -141,8 +141,10 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   private void updateIcon(MessagePool.State state) {
-    myIcon.setState(state);
-    UIUtil.invokeLaterIfNeeded(() -> setVisible(state != MessagePool.State.NoErrors));
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myIcon.setState(state);
+      setVisible(state != MessagePool.State.NoErrors);
+    });
   }
 
   @Override

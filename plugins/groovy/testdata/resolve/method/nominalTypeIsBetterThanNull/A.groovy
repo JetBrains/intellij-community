@@ -2,4 +2,4 @@ String foo() {
   return null
 }
 
-f<ref>oo()
+f<caret>oo()

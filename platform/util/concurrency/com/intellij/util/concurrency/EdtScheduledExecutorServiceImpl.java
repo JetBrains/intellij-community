@@ -5,9 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * An {@link ExecutorService} implementation which
@@ -29,6 +27,13 @@ class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements EdtSc
       }
     };
     return delayedExecute(task);
+  }
+
+  @Override
+  void futureDone(@NotNull Future<?> task) {
+    if (EdtExecutorServiceImpl.shouldManifestExceptionsImmediately()) {
+      EdtExecutorServiceImpl.manifestExceptionsIn(task);
+    }
   }
 
   // stubs

@@ -41,7 +41,7 @@ public class CompressionUtil {
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
 
-  public static int writeCompressed(@NotNull DataOutput out, @NotNull byte[] bytes, int start, int length) throws IOException {
+  public static int writeCompressed(@NotNull DataOutput out, byte @NotNull [] bytes, int start, int length) throws IOException {
     if (length > COMPRESSION_THRESHOLD) {
       LZ4Compressor compressor = compressor();
       
@@ -69,7 +69,7 @@ public class CompressionUtil {
 
   public static final boolean DUMP_COMPRESSION_STATS = SystemProperties.getBooleanProperty("idea.dump.compression.stats", false);
 
-  public static int writeCompressedWithoutOriginalBufferLength(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
+  public static int writeCompressedWithoutOriginalBufferLength(@NotNull DataOutput out, byte @NotNull [] bytes, int length) throws IOException {
     long started = DUMP_COMPRESSION_STATS ? System.nanoTime() : 0;
 
     LZ4Compressor compressor = compressor();
@@ -96,8 +96,7 @@ public class CompressionUtil {
     return LZ4Factory.fastestJavaInstance().fastCompressor();
   }
 
-  @NotNull
-  public static byte[] readCompressedWithoutOriginalBufferLength(@NotNull DataInput in, int originalBufferLength) throws IOException {
+  public static byte @NotNull [] readCompressedWithoutOriginalBufferLength(@NotNull DataInput in, int originalBufferLength) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
 
     byte[] bytes = spareBufferLocal.getBuffer(size);
@@ -122,8 +121,7 @@ public class CompressionUtil {
     return LZ4Factory.fastestJavaInstance().fastDecompressor();
   }
 
-  @NotNull
-  public static byte[] readCompressed(@NotNull DataInput in) throws IOException {
+  public static byte @NotNull [] readCompressed(@NotNull DataInput in) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
     if (size < 0) {
       size = -size;

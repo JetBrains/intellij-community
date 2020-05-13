@@ -54,13 +54,6 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assignment.replaceable.with.operator.assignment.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiExpression lhs = (PsiExpression)infos[0];
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[1];

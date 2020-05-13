@@ -16,10 +16,7 @@
 package com.intellij.dupLocator.index;
 
 import com.intellij.codeInspection.*;
-import com.intellij.dupLocator.DuplicatesProfile;
-import com.intellij.dupLocator.DuplocateVisitor;
-import com.intellij.dupLocator.DuplocatorState;
-import com.intellij.dupLocator.LightDuplicateProfile;
+import com.intellij.dupLocator.*;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.LighterAST;
@@ -43,25 +40,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntLongHashMap;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Iterator;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class DuplicatesInspectionBase extends LocalInspectionTool {
   public boolean myFilterOutGeneratedCode;
   private static final int MIN_FRAGMENT_SIZE = 3; // todo 3 statements constant
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile psiFile, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull final PsiFile psiFile, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (!(virtualFile instanceof VirtualFileWithId) || /*!isOnTheFly || */!DuplicatesIndex.ourEnabled) return ProblemDescriptor.EMPTY_ARRAY;
     final DuplicatesProfile profile = DuplicatesIndex.findDuplicatesProfile(psiFile.getFileType());
@@ -84,8 +72,8 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
     final SmartList<ProblemDescriptor> descriptors = new SmartList<>();
     final VirtualFile baseDir = project.getBaseDir();
-    for (Map.Entry<Integer, TextRange> entry : processor.reportedRanges.entrySet()) {
-      final Integer offset = entry.getKey();
+    for (Int2ObjectMap.Entry<TextRange> entry : processor.reportedRanges.int2ObjectEntrySet()) {
+      int offset = entry.getIntKey();
       if (!usingLightProfile && processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
       final VirtualFile file = processor.reportedFiles.get(offset);
       String path = null;
@@ -99,7 +87,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
       if (path == null) {
         path = file.getPath();
       }
-      String message = "Found duplicated code in " + path;
+      String message = DupLocatorBundle.message("inspection.message.found.duplicated.code.in", path);
 
       PsiElement targetElement = processor.reportedPsi.get(offset);
       TextRange rangeInElement = entry.getValue();
@@ -182,7 +170,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     return null;
   }
 
-  private class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
+  private final class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
     private final TreeBackedLighterAST myAst;
 
     private LightDuplicatedCodeProcessor(@NotNull TreeBackedLighterAST ast, VirtualFile file, Project project) {
@@ -216,7 +204,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     }
   }
 
-  class OldDuplicatedCodeProcessor extends DuplicatedCodeProcessor<PsiFragment> {
+  final class OldDuplicatedCodeProcessor extends DuplicatedCodeProcessor<PsiFragment> {
     private OldDuplicatedCodeProcessor(VirtualFile file, Project project) {
       super(file, project, myFilterOutGeneratedCode);
     }
@@ -259,13 +247,13 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     }
   }
 
-  abstract static class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<TIntArrayList> {
-    final TreeMap<Integer, TextRange> reportedRanges = new TreeMap<>();
-    final TIntObjectHashMap<VirtualFile> reportedFiles = new TIntObjectHashMap<>();
-    final TIntObjectHashMap<PsiElement> reportedPsi = new TIntObjectHashMap<>();
-    final TIntIntHashMap reportedOffsetInOtherFiles = new TIntIntHashMap();
-    final TIntIntHashMap fragmentSize = new TIntIntHashMap();
-    final TIntLongHashMap fragmentHash = new TIntLongHashMap();
+  abstract static class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<IntArrayList> {
+    final Int2ObjectRBTreeMap<TextRange> reportedRanges = new Int2ObjectRBTreeMap<>();
+    final Int2ObjectOpenHashMap<VirtualFile> reportedFiles = new Int2ObjectOpenHashMap<>();
+    final Int2ObjectOpenHashMap<PsiElement> reportedPsi = new Int2ObjectOpenHashMap<>();
+    final Int2IntOpenHashMap reportedOffsetInOtherFiles = new Int2IntOpenHashMap();
+    final Int2IntOpenHashMap fragmentSize = new Int2IntOpenHashMap();
+    final Int2LongOpenHashMap fragmentHash = new Int2LongOpenHashMap();
     final VirtualFile virtualFile;
     final Project project;
     final FileIndex myFileIndex;
@@ -292,12 +280,12 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     }
 
     @Override
-    public boolean process(@NotNull VirtualFile file, TIntArrayList list) {
+    public boolean process(@NotNull VirtualFile file, IntArrayList list) {
       for(int i = 0, len = list.size(); i < len; i+=2) {
         ProgressManager.checkCanceled();
 
-        if (list.getQuick(i + 1) != myHash2) continue;
-        int offset = list.getQuick(i);
+        if (list.getInt(i + 1) != myHash2) continue;
+        int offset = list.getInt(i);
 
         if (myFileIndex.isInSourceContent(virtualFile)) {
           if (!myFileIndex.isInSourceContent(file)) return true;
@@ -316,13 +304,13 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
         PsiElement target = getPsi(myNode);
         TextRange rangeInElement = getRangeInElement(myNode);
 
-        Integer fragmentStartOffsetInteger = startOffset;
-        SortedMap<Integer,TextRange> map = reportedRanges.subMap(fragmentStartOffsetInteger, endOffset);
+        int fragmentStartOffsetInteger = startOffset;
+        Int2ObjectSortedMap<TextRange> map = reportedRanges.subMap(fragmentStartOffsetInteger, endOffset);
         int newFragmentSize = !map.isEmpty() ? 0:1;
 
-        Iterator<Integer> iterator = map.keySet().iterator();
+        IntBidirectionalIterator iterator = map.keySet().iterator();
         while(iterator.hasNext()) {
-          Integer next = iterator.next();
+          int next = iterator.nextInt();
           iterator.remove();
           reportedFiles.remove(next);
           reportedOffsetInOtherFiles.remove(next);

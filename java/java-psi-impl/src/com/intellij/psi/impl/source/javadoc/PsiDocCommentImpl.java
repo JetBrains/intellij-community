@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDocComment, JavaTokenType, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl");
+  private static final Logger LOG = Logger.getInstance(PsiDocCommentImpl.class);
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
   private static final ArrayFactory<PsiDocTag> ARRAY_FACTORY = count -> count == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[count];
@@ -43,8 +43,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getDescriptionElements() {
+  public PsiElement @NotNull [] getDescriptionElements() {
     List<PsiElement> array = new ArrayList<>();
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
@@ -57,8 +56,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   }
 
   @Override
-  @NotNull
-  public PsiDocTag[] getTags() {
+  public PsiDocTag @NotNull [] getTags() {
     return getChildrenAsPsiElements(TAG_BIT_SET, ARRAY_FACTORY);
   }
 
@@ -82,8 +80,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   }
 
   @Override
-  @NotNull
-  public PsiDocTag[] findTagsByName(String name) {
+  public PsiDocTag @NotNull [] findTagsByName(String name) {
     List<PsiDocTag> array = new ArrayList<>();
     name = "@" + name;
     for (PsiDocTag tag : getTags()) {
@@ -94,6 +91,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return array.toArray(PsiDocTag.EMPTY_ARRAY);
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return getElementType();

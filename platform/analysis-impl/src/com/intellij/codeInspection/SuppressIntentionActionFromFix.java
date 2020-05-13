@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -48,8 +50,7 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
     return new SuppressIntentionActionFromFix(fix);
   }
 
-  @NotNull
-  public static SuppressIntentionAction[] convertBatchToSuppressIntentionActions(@NotNull SuppressQuickFix[] actions) {
+  public static SuppressIntentionAction @NotNull [] convertBatchToSuppressIntentionActions(SuppressQuickFix @NotNull [] actions) {
     return ContainerUtil.map2Array(actions, SuppressIntentionAction.class,
                                    SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction);
   }
@@ -83,9 +84,12 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
   }
 
   @NotNull
+  @IntentionName
   @Override
   public String getText() {
-    return myFix.getName() + (isShouldBeAppliedToInjectionHost() == ThreeState.NO ? " in injection" : "");
+    return isShouldBeAppliedToInjectionHost() == ThreeState.NO
+           ? AnalysisBundle.message("intention.name.in.injection", myFix.getName())
+           : myFix.getName();
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.agent.util.log;
 
 import com.intellij.remoteServer.agent.util.CloudAgentLogger;
@@ -58,7 +58,7 @@ public abstract class LogPipe extends LogPipeBase {
 
       @Override
       public void run() {
-         //inti log listener
+        //init log listener
         onStartListening(getLogListener());
         try {
           while (true) {
@@ -75,7 +75,7 @@ public abstract class LogPipe extends LogPipeBase {
             }
 
             if (myLines2Skip == 0) {
-              getLogListener().lineLogged(line);
+              getLogListener().lineLogged(line + "\n");
               myTotalLines++;
             }
             else {

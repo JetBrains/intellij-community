@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.shelf;
 
@@ -25,26 +11,28 @@ import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ShelvedChange {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChange");
+  private static final Logger LOG = Logger.getInstance(ShelvedChange.class);
 
   private final String myPatchPath;
   private final String myBeforePath;
@@ -60,7 +48,7 @@ public class ShelvedChange {
     myPatchPath = patchPath;
     myBeforePath = beforePath;
     // optimisation: memory
-    myAfterPath = Comparing.equal(beforePath, afterPath) ? beforePath : afterPath;
+    myAfterPath = Objects.equals(beforePath, afterPath) ? beforePath : afterPath;
     myFileStatus = fileStatus;
     myChange = createChange(project);
   }

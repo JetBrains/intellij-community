@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.*;
@@ -9,10 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.PopupHandler;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -27,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
 
@@ -62,7 +58,8 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   @Override
   public void addNotify() {
     super.addNotify();
-    final JList list = UIUtil.findComponentOfType(this, JList.class);
+
+    JList list = UIUtil.findComponentOfType(this, JList.class);
     if (list != null) {
       list.updateUI();
     }
@@ -73,47 +70,52 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     final JBList list = super.createList(recentProjectActions, size);
 
     list.setBackground(FlatWelcomeFrame.getProjectsBackground());
-    list.addKeyListener(new KeyAdapter() {
+    list.getActionMap().put(ListActions.Right.ID, new AbstractAction() {
       @Override
-      public void keyPressed(KeyEvent e) {
+      public void actionPerformed(ActionEvent e) {
         Object selected = list.getSelectedValue();
-        final ProjectGroup group;
+        ProjectGroup group = null;
         if (selected instanceof ProjectGroupActionGroup) {
           group = ((ProjectGroupActionGroup)selected).getGroup();
-        } else {
-          group = null;
         }
 
-        int keyCode = e.getKeyCode();
-        if (keyCode == KeyEvent.VK_RIGHT) {
-          if (group != null) {
-            if (!group.isExpanded()) {
-              group.setExpanded(true);
-              ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
-              int index = list.getSelectedIndex();
-              RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
-              list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
-            }
-          } else {
-            FlatWelcomeFrame frame = ComponentUtil.getParentOfType((Class<? extends FlatWelcomeFrame>)FlatWelcomeFrame.class, list);
-            if (frame != null) {
-              FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
-              if (policy != null) {
-                Component next = policy.getComponentAfter(frame, list);
-                if (next != null) {
-                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
-                }
+        if (group != null) {
+          if (!group.isExpanded()) {
+            group.setExpanded(true);
+            ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
+            int index = list.getSelectedIndex();
+            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+            list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
+          }
+        } else {
+          FlatWelcomeFrame frame = ComponentUtil.getParentOfType((Class<? extends FlatWelcomeFrame>)FlatWelcomeFrame.class, list);
+          if (frame != null) {
+            FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
+            if (policy != null) {
+              Component next = policy.getComponentAfter(frame, list);
+              if (next != null) {
+                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
               }
             }
           }
-        } else if (keyCode == KeyEvent.VK_LEFT ) {
-          if (group != null && group.isExpanded()) {
-            group.setExpanded(false);
-            int index = list.getSelectedIndex();
-            ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
-            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
-            list.setSelectedIndex(index);
-          }
+        }
+      }
+    });
+    list.getActionMap().put(ListActions.Left.ID, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Object selected = list.getSelectedValue();
+        ProjectGroup group = null;
+        if (selected instanceof ProjectGroupActionGroup) {
+          group = ((ProjectGroupActionGroup)selected).getGroup();
+        }
+
+        if (group != null && group.isExpanded()) {
+          group.setExpanded(false);
+          int index = list.getSelectedIndex();
+          ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
+          RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+          list.setSelectedIndex(index);
         }
       }
     });
@@ -135,20 +137,19 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
   @Override
   protected boolean isUseGroups() {
-    return FlatWelcomeFrame.isUseProjectGroups();
+    return true;
   }
 
   @Override
-  protected ListCellRenderer createRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
-    return new RecentProjectItemRenderer(myPathShortener) {
+  protected ListCellRenderer<AnAction> createRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
+    return new RecentProjectItemRenderer() {
        private GridBagConstraints nameCell;
        private GridBagConstraints pathCell;
-       private GridBagConstraints closeButtonCell;
 
       private void initConstraints () {
         nameCell = new GridBagConstraints();
         pathCell = new GridBagConstraints();
-        closeButtonCell = new GridBagConstraints();
+        GridBagConstraints closeButtonCell = new GridBagConstraints();
 
         nameCell.gridx = 0;
         nameCell.gridy = 0;
@@ -182,7 +183,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
       @Override
       protected Color getListForeground(boolean isSelected, boolean hasFocus) {
-        return UIUtil.getListForeground(isSelected && hasFocus);
+        return UIUtil.getListForeground(isSelected && hasFocus, true);
       }
 
       @Override
@@ -200,13 +201,13 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       };
 
       @Override
-      public Component getListCellRendererComponent(JList list, final Object value, int index, final boolean isSelected, boolean cellHasFocus) {
-        final Color fore = getListForeground(isSelected, list.hasFocus());
-        final Color back = getListBackground(isSelected, list.hasFocus());
+      public Component getListCellRendererComponent(JList<? extends AnAction> list, AnAction value, int index, boolean selected, boolean focused) {
+        final Color fore = getListForeground(selected, list.hasFocus());
+        final Color back = getListBackground(selected, list.hasFocus());
         final JLabel name = new JLabel();
         final JLabel path = new JLabel();
         name.setForeground(fore);
-        path.setForeground(isSelected ? fore : UIUtil.getInactiveTextColor());
+        path.setForeground(selected ? fore : UIUtil.getInactiveTextColor());
 
         setBackground(back);
 
@@ -246,7 +247,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               int i = isInsideGroup ? 80 : 60;
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUIScale.scale(i)));
               if (!realPath.equals(path.getText())) {
-                projectsWithLongPathes.add((ReopenProjectAction)value);
+                projectsWithLongPaths.add((ReopenProjectAction)value);
               }
               if (!isPathValid((((ReopenProjectAction)value).getProjectPath()))) {
                 path.setForeground(ColorUtil.mix(path.getForeground(), JBColor.red, .5));
@@ -294,13 +295,9 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     };
   }
 
-
-
   @Nullable
   @Override
   protected JPanel createTitle() {
     return null;
   }
-
-
 }

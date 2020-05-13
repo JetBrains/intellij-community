@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.Disposable;
@@ -13,23 +13,21 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ExternalSystemShortcutsManager implements Disposable {
-
   private static final String ACTION_ID_PREFIX = "ExternalSystem_";
   @NotNull
   private final Project myProject;
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
   public ExternalSystemShortcutsManager(@NotNull Project project) {
     myProject = project;
@@ -77,12 +75,10 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   public boolean hasShortcuts(@NotNull String actionId) {
-    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    return activeKeymap.getShortcuts(actionId).length > 0;
+    return KeymapUtil.getPrimaryShortcut(actionId) != null;
   }
 
-  @NotNull
-  private Shortcut[] getShortcuts(@Nullable String projectPath, @Nullable String taskName) {
+  private Shortcut @NotNull [] getShortcuts(@Nullable String projectPath, @Nullable String taskName) {
     String actionId = getActionId(projectPath, taskName);
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     return activeKeymap.getShortcuts(actionId);
@@ -94,8 +90,8 @@ public class ExternalSystemShortcutsManager implements Disposable {
     }
   }
 
-  public void addListener(Listener listener) {
-    myListeners.add(listener);
+  public void addListener(Listener listener, Disposable parent) {
+    myListeners.add(listener, parent);
   }
 
   @FunctionalInterface

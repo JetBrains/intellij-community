@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import {CompleteTraceEvent, InputData, InputDataV11AndLess, Item} from "./data"
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import {CompleteTraceEvent, InputData, InputDataV11AndLess, InputDataV20, ItemV0, ItemV20} from "./data"
 import {markerNames} from "./StateStorageManager"
-import * as semver from "semver"
-import {SemVer} from "semver"
+import compareVersions from "compare-versions"
 import {serviceSourceNames} from "@/charts/ActivityChartDescriptor"
 
 const markerNameToRangeTitle = new Map<string, string>([["app initialized callback", "app initialized"], ["module loading", "project initialized"]])
@@ -12,36 +11,44 @@ export interface ItemStats {
   readonly reportedServiceCount: number
 }
 
-const statSupportMinVersion = semver.coerce("3")!!
-const instantEventSupportMinVersion = semver.coerce("11")!!
-const isNewServiceFormat = semver.coerce("12")!!
+const statSupportMinVersion = "3"
+const instantEventSupportMinVersion = "11"
 
 export const SERVICE_WAITING = "serviceWaiting"
 const serviceEventCategorySet = new Set(serviceSourceNames.concat(SERVICE_WAITING))
 
 export class DataManager {
-  private readonly version: SemVer | null
+  private readonly version: string | null
 
   constructor(readonly data: InputData) {
-    this.version = semver.coerce(data.version)
+    this.version = data.version
+
+    const version = this.version
+    if (version != null && compareVersions.compare(version, "20", ">=")) {
+      convertItemV20ToV0(data.prepareAppInitActivities as any)
+
+      convertItemV20ToV0(data.appExtensions as any)
+      convertItemV20ToV0(data.projectExtensions as any)
+      convertItemV20ToV0(data.moduleExtensions as any)
+
+      convertItemV20ToV0(data.appOptionsTopHitProviders as any)
+      convertItemV20ToV0(data.projectOptionsTopHitProviders as any)
+
+      convertItemV20ToV0(data.projectPostStartupActivities as any)
+    }
   }
 
-  private _markerItems: Array<Item | null> | null = null
+  private _markerItems: Array<ItemV0 | null> | null = null
   private _serviceEvents: Array<CompleteTraceEvent> | null = null
 
   get isStatSupported(): boolean {
     const version = this.version
-    return version != null && semver.gte(version, statSupportMinVersion)
+    return version != null && compareVersions.compare(version, statSupportMinVersion, ">=")
   }
 
   get isInstantEventProvided(): boolean {
     const version = this.version
-    return version != null && semver.gte(version, instantEventSupportMinVersion)
-  }
-
-  private get isNewServiceFormat(): boolean {
-    const version = this.version
-    return version != null && semver.gte(version, isNewServiceFormat)
+    return version != null && compareVersions.compare(version, instantEventSupportMinVersion, ">=")
   }
 
   get itemStats(): ItemStats {
@@ -85,24 +92,47 @@ export class DataManager {
       return this._serviceEvents
     }
 
-    if (this.isNewServiceFormat) {
+    const version = this.version
+    const isNewCompactFormat = version != null && compareVersions.compare(version, "20", ">=")
+    if (isNewCompactFormat) {
+      const list: Array<CompleteTraceEvent> = []
+      const data = this.data as InputDataV20
+
+      convertV20ToTraceEvent(data.appComponents, "appComponents", list)
+      convertV20ToTraceEvent(data.projectComponents, "projectComponents", list)
+      convertV20ToTraceEvent(data.moduleComponents, "moduleComponents", list)
+
+      convertV20ToTraceEvent(data.appServices, "appServices", list)
+      convertV20ToTraceEvent(data.projectServices, "projectServices", list)
+      convertV20ToTraceEvent(data.moduleServices, "moduleServices", list)
+
+      convertV20ToTraceEvent(data.serviceWaiting, "serviceWaiting", list)
+
+      this._serviceEvents = list
+      return list
+    }
+    else if (version != null && compareVersions.compare(version, "12", ">=")) {
       this._serviceEvents = this.data.traceEvents.filter(value => value.cat != null && serviceEventCategorySet.has(value.cat)) as Array<CompleteTraceEvent>
       return this._serviceEvents
     }
+    else {
+      const list: Array<CompleteTraceEvent> = []
+      const data = this.data as InputDataV11AndLess
 
-    const list: Array<CompleteTraceEvent> = []
-    const data = this.data as InputDataV11AndLess
-    convertToTraceEvent(data.appComponents, "appComponents", list)
-    convertToTraceEvent(data.projectComponents, "projectComponents", list)
-    convertToTraceEvent(data.moduleComponents, "moduleComponents", list)
-    convertToTraceEvent(data.appServices, "appServices", list)
-    convertToTraceEvent(data.projectServices, "projectServices", list)
-    convertToTraceEvent(data.moduleServices, "moduleServices", list)
-    this._serviceEvents = list
-    return list
+      convertV11ToTraceEvent(data.appComponents, "appComponents", list)
+      convertV11ToTraceEvent(data.projectComponents, "projectComponents", list)
+      convertV11ToTraceEvent(data.moduleComponents, "moduleComponents", list)
+
+      convertV11ToTraceEvent(data.appServices, "appServices", list)
+      convertV11ToTraceEvent(data.projectServices, "projectServices", list)
+      convertV11ToTraceEvent(data.moduleServices, "moduleServices", list)
+
+      this._serviceEvents = list
+      return list
+    }
   }
 
-  get markerItems(): Array<Item | null> {
+  get markerItems(): Array<ItemV0 | null> {
     if (this._markerItems != null) {
       return this._markerItems
     }
@@ -115,7 +145,7 @@ export class DataManager {
     const result = new Array(markerNames.length)
     // JS array is sparse and setting length doesn't pre-fill array
     result.fill(null)
-    itemLoop:  for (const item of items) {
+    itemLoop: for (const item of items) {
       for (let i = 0; i < markerNames.length; i++) {
         if (result[i] == null && item.name === markerNames[i]) {
           result[i] = item
@@ -130,7 +160,7 @@ export class DataManager {
 
     for (let i = 0; i < markerNames.length; i++) {
       if (result[i] == null) {
-        console.error(`Cannot find item for phase "${markerNames[i]}"`)
+        console.warn(`Cannot find item for phase "${markerNames[i]}"`)
       }
     }
 
@@ -138,11 +168,11 @@ export class DataManager {
     return result
   }
 
-  computeGuides(items: Array<Item>): Array<GuideLineDescriptor> {
-    const rangeItems: Array<Item | null> = new Array(markerNames.length)
+  computeGuides(items: Array<ItemV0>): Array<GuideLineDescriptor> {
+    const rangeItems: Array<ItemV0 | null> = new Array(markerNames.length)
     rangeItems.fill(null)
 
-    let outOfReady: Item | null = null
+    let outOfReady: ItemV0 | null = null
     for (const item of items) {
       for (let i = 0; i < this.markerItems.length; i++) {
         if (rangeItems[i] == null) {
@@ -197,11 +227,11 @@ function getItemStartInMs(item: any): number {
 }
 
 export interface GuideLineDescriptor {
-  readonly item: Item
+  readonly item: ItemV0
   readonly label: string
 }
 
-function convertToTraceEvent(odlList: Array<Item> | null | undefined, category: string, list: Array<CompleteTraceEvent>) {
+function convertV11ToTraceEvent(odlList: Array<ItemV0> | null | undefined, category: string, list: Array<CompleteTraceEvent>) {
   if (odlList == null) {
     return
   }
@@ -218,5 +248,50 @@ function convertToTraceEvent(odlList: Array<Item> | null | undefined, category: 
       tid: item.thread,
       cat: category,
     })
+  }
+}
+
+function convertV20ToTraceEvent(odlList: Array<ItemV20> | null | undefined, category: string, list: Array<CompleteTraceEvent>) {
+  if (odlList == null) {
+    return
+  }
+
+  for (const item of odlList) {
+    list.push({
+      ...item,
+      name: item.n,
+      ph: "X",
+      ts: item.s,
+      dur: item.d,
+      args: {
+        ownDur: item.od === undefined ? item.d : item.od,
+      },
+      tid: item.t,
+      cat: category,
+    })
+  }
+}
+
+function convertItemV20ToV0(odlList: Array<ItemV0 & ItemV20> | null | undefined): void {
+  if (odlList == null) {
+    return
+  }
+
+  for (const item of odlList) {
+    // @ts-ignore
+    // noinspection JSConstantReassignment
+    item.name = item.n
+    // @ts-ignore
+    // noinspection JSConstantReassignment
+    item.start = item.s
+    // @ts-ignore
+    // noinspection JSConstantReassignment
+    item.end = item.s + item.d
+    // @ts-ignore
+    // noinspection JSConstantReassignment
+    item.duration = item.od === undefined ? item.d : item.od
+    // @ts-ignore
+    // noinspection JSConstantReassignment
+    item.thread = item.t
   }
 }

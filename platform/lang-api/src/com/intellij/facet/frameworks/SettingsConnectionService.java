@@ -21,8 +21,7 @@ public abstract class SettingsConnectionService {
 
   private Map<String, String> myAttributesMap;
 
-  @NotNull
-  protected String[] getAttributeNames() {
+  protected String @NotNull [] getAttributeNames() {
     return new String[]{SERVICE_URL_ATTR_NAME};
   }
 
@@ -34,13 +33,6 @@ public abstract class SettingsConnectionService {
   protected SettingsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
     mySettingsUrl = settingsUrl;
     myDefaultServiceUrl = defaultServiceUrl;
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  @Nullable
-  public String getSettingsUrl() {
-    return mySettingsUrl;
   }
 
   @Nullable

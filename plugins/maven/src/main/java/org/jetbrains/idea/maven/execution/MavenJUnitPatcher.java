@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.JUnitPatcher;
@@ -36,10 +36,7 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenJUnitPatcher extends JUnitPatcher {
+public final class MavenJUnitPatcher extends JUnitPatcher {
   public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)}");
   public static final Pattern ARG_LINE_PATTERN = Pattern.compile("@\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
@@ -67,12 +64,12 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-failsafe-plugin", "failsafe");
   }
 
-  protected void configureFromPlugin(@NotNull Module module,
-                                     JavaParameters javaParameters,
-                                     MavenProject mavenProject,
-                                     UnaryOperator<String> runtimeProperties,
-                                     String pluginArtifact,
-                                     String pluginName) {
+  private static void configureFromPlugin(@NotNull Module module,
+                                          JavaParameters javaParameters,
+                                          MavenProject mavenProject,
+                                          UnaryOperator<String> runtimeProperties,
+                                          String pluginArtifact,
+                                          String pluginName) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", pluginArtifact);
     if (plugin != null) {
       Element config = mavenProject.getPluginGoalConfiguration(plugin, null);
@@ -94,14 +91,18 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     String jaCoCoConfigProperty = getJaCoCoArgLineProperty(mavenProject);
     ParametersList vmParameters = javaParameters.getVMParametersList();
     return name -> {
-      if (name.equals(jaCoCoConfigProperty)) {
-        return "";
-      }
       String vmPropertyValue = vmParameters.getPropertyValue(name);
       if (vmPropertyValue != null) {
         return vmPropertyValue;
       }
-      return staticProperties.getProperty(name);
+      String staticPropertyValue = staticProperties.getProperty(name);
+      if (staticPropertyValue != null) {
+        return MavenPropertyResolver.resolve(staticPropertyValue, domModel);
+      }
+      if (name.equals(jaCoCoConfigProperty)) {
+        return "";
+      }
+      return null;
     };
   }
 
@@ -110,6 +111,13 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     Element jaCoCoConfig = mavenProject.getPluginConfiguration("org.jacoco", "jacoco-maven-plugin");
     if (jaCoCoConfig != null) {
       Element propertyName = jaCoCoConfig.getChild("propertyName");
+      if (propertyName != null) {
+        jaCoCoConfigProperty = propertyName.getTextTrim();
+      }
+    }
+    Element jaCoCoGoalConfig = mavenProject.getPluginGoalConfiguration("org.jacoco", "jacoco-maven-plugin", "prepare-agent");
+    if (jaCoCoGoalConfig != null) {
+      Element propertyName = jaCoCoGoalConfig.getChild("propertyName");
       if (propertyName != null) {
         jaCoCoConfigProperty = propertyName.getTextTrim();
       }
@@ -220,7 +228,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     StringBuffer sb = new StringBuffer();
     while (matcher.find()) {
       String replacement = runtimeProperties.apply(matcher.group(1));
-      matcher.appendReplacement(sb, replacement == null ? matcher.group() : replacement);
+      matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement == null ? matcher.group() : replacement));
     }
     matcher.appendTail(sb);
     return sb.toString();

@@ -48,8 +48,7 @@ public class AuthenticationPanel extends JPanel {
     return StringUtil.notNullize(myLoginTextField.getText());
   }
 
-  @NotNull
-  public char[] getPassword() {
+  public char @NotNull [] getPassword() {
     return ObjectUtils.notNull(myPasswordTextField.getPassword(), ArrayUtilRt.EMPTY_CHAR_ARRAY);
   }
 

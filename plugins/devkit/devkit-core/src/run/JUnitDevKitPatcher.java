@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
@@ -24,12 +10,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,11 +47,9 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
 
     ParametersList vm = javaParameters.getVMParametersList();
 
-    if (PsiUtil.isIdeaProject(project) &&
-        !vm.hasProperty(SYSTEM_CL_PROPERTY) &&
-        !JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
+    if (PsiUtil.isIdeaProject(project) && !vm.hasProperty(SYSTEM_CL_PROPERTY)) {
       String qualifiedName = UrlClassLoader.class.getName();
-      if (findLoader(project, module, qualifiedName) != null) {
+      if (loaderValid(project, module, qualifiedName, jdk)) {
         vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
       }
     }
@@ -120,16 +108,38 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
   }
 
-  private static PsiClass findLoader(Project project, Module module, String qualifiedName) {
-    DumbService dumbService = DumbService.getInstance(project);
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    dumbService.setAlternativeResolveEnabled(true);
-    try {
-      return ReadAction.compute(() -> facade.findClass(qualifiedName, module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(project)));
+  private static final Key<Boolean> LOADER_VALID_8 = Key.create("LOADER_VALID_8");
+  private static final Key<Boolean> LOADER_VALID_9 = Key.create("LOADER_VALID_9");
+
+  private static boolean loaderValid(Project project, Module module, String qualifiedName, Sdk jdk) {
+    boolean jdk9 = JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9);
+    if (jdk9 && !Registry.is("idea.use.loader.for.jdk9")) {
+      return false;
     }
-    finally {
-      dumbService.setAlternativeResolveEnabled(false);
+    UserDataHolder holder = module != null ? module : project;
+    Key<Boolean> cacheKey = jdk9 ? LOADER_VALID_9 : LOADER_VALID_8;
+    Boolean res = holder.getUserData(cacheKey);
+    if (res == null) {
+      res = ReadAction.compute(() -> {
+        //noinspection RedundantCast
+        return DumbService.getInstance(project).computeWithAlternativeResolveEnabled((ThrowableComputable<Boolean, RuntimeException>)() -> {
+          PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, module != null ? GlobalSearchScope
+            .moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(project));
+          if (aClass != null) {
+            if (jdk9) {
+              PsiClass builder = aClass.findInnerClassByName(UrlClassLoader.Builder.class.getSimpleName(), false);
+              return builder != null && !ArrayUtil.isEmpty(builder.findMethodsByName("urlsFromAppClassLoader"));
+            }
+            else {
+              return true;
+            }
+          }
+          return false;
+        });
+      });
+      holder.putUserData(cacheKey, res);
     }
+    return res;
   }
 
   @Nullable

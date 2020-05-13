@@ -83,7 +83,7 @@ class Pluralizer {
       if (wc != lc && wc != uc) break;
       chars[i] = wc;
     }
-    if (i < chars.length) {
+    if (i > 0 && i < chars.length) {
       char wc = word.charAt(i - 1);
       char uc = Character.toUpperCase(wc);
       char lc = Character.toLowerCase(wc);

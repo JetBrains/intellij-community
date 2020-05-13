@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -29,10 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class JavaAutoImportOptions implements AutoImportOptionsProvider {
-  private static final String INSERT_IMPORTS_ALWAYS = ApplicationBundle.message("combobox.insert.imports.all");
-  private static final String INSERT_IMPORTS_ASK = ApplicationBundle.message("combobox.insert.imports.ask");
-  private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
-
   private JComboBox<String> mySmartPasteCombo;
   private JCheckBox myCbShowImportPopup;
   private JPanel myWholePanel;
@@ -43,12 +25,12 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private final ExcludeTable myExcludePackagesTable;
   private final Project myProject;
 
-  public JavaAutoImportOptions(Project project) {
+  public JavaAutoImportOptions(@NotNull Project project) {
     myProject = project;
 
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
+    mySmartPasteCombo.addItem(getInsertImportsAlways());
+    mySmartPasteCombo.addItem(getInsertImportsAsk());
+    mySmartPasteCombo.addItem(getInsertImportsNone());
 
     myExcludePackagesTable = new ExcludeTable(project);
     myExcludeFromImportAndCompletionPanel.add(myExcludePackagesTable.getComponent(), BorderLayout.CENTER);
@@ -65,15 +47,15 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
     switch (codeInsightSettings.ADD_IMPORTS_ON_PASTE) {
       case CodeInsightSettings.YES:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ALWAYS);
+        mySmartPasteCombo.setSelectedItem(getInsertImportsAlways());
         break;
 
       case CodeInsightSettings.NO:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_NONE);
+        mySmartPasteCombo.setSelectedItem(getInsertImportsNone());
         break;
 
       case CodeInsightSettings.ASK:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ASK);
+        mySmartPasteCombo.setSelectedItem(getInsertImportsAsk());
         break;
     }
 
@@ -127,10 +109,10 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
   private int getSmartPasteValue() {
     Object selectedItem = mySmartPasteCombo.getSelectedItem();
-    if (INSERT_IMPORTS_ALWAYS.equals(selectedItem)) {
+    if (getInsertImportsAlways().equals(selectedItem)) {
       return CodeInsightSettings.YES;
     }
-    else if (INSERT_IMPORTS_NONE.equals(selectedItem)) {
+    else if (getInsertImportsNone().equals(selectedItem)) {
       return CodeInsightSettings.NO;
     }
     else {
@@ -140,5 +122,17 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
   private static boolean isModified(JToggleButton checkBox, boolean value) {
     return checkBox.isSelected() != value;
+  }
+
+  private static String getInsertImportsAlways() {
+    return ApplicationBundle.message("combobox.insert.imports.all");
+  }
+
+  private static String getInsertImportsAsk() {
+    return ApplicationBundle.message("combobox.insert.imports.ask");
+  }
+
+  private static String getInsertImportsNone() {
+    return ApplicationBundle.message("combobox.insert.imports.none");
   }
 }

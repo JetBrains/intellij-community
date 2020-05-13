@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiElement;
@@ -59,9 +61,9 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
 
     if (!GrAnnotationImpl.isAnnotationApplicableTo(annotation, PsiAnnotation.TargetType.LOCAL_VARIABLE)) {
       GrCodeReferenceElement ref = annotation.getClassReference();
-      String target = JavaErrorMessages.message("annotation.target.LOCAL_VARIABLE");
-      String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), target);
-      holder.createErrorAnnotation(ref, description);
+      String target = JavaAnalysisBundle.message("annotation.target.LOCAL_VARIABLE");
+      String description = JavaErrorBundle.message("annotation.not.applicable", ref.getText(), target);
+      holder.newAnnotation(HighlightSeverity.ERROR, description).range(ref).create();
     }
 
     return true;
@@ -71,12 +73,14 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
     final PsiAnnotationOwner owner = annotation.getOwner();
     final GrMember container = PsiTreeUtil.getParentOfType(((PsiElement)owner), GrMember.class);
     if (container != null) {
+      String message;
       if (container.getContainingClass() instanceof GroovyScriptClass) {
-        holder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script.body"));
+        message = GroovyBundle.message("annotation.field.can.only.be.used.within.a.script.body");
       }
       else {
-        holder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script"));
+        message = GroovyBundle.message("annotation.field.can.only.be.used.within.a.script");
       }
+      holder.newAnnotation(HighlightSeverity.ERROR, message).range(annotation).create();
     }
   }
 

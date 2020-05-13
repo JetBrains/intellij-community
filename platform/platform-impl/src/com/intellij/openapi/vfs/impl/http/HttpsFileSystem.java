@@ -18,9 +18,6 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author nik
- */
 public class HttpsFileSystem extends HttpFileSystemBase {
   @NonNls public static final String HTTPS_PROTOCOL = "https";
 

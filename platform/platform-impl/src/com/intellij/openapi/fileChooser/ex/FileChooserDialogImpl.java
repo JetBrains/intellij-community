@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.SaveAndSyncHandler;
@@ -105,8 +106,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] choose(@Nullable final Project project, @NotNull final VirtualFile... toSelect) {
+  public VirtualFile @NotNull [] choose(@Nullable final Project project, final VirtualFile @NotNull ... toSelect) {
     init();
     if (myProject == null && project != null) {
       myProject = project;
@@ -127,9 +127,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
 
-  @NotNull
   @Override
-  public VirtualFile[] choose(@Nullable final VirtualFile toSelect, @Nullable final Project project) {
+  public VirtualFile @NotNull [] choose(@Nullable final VirtualFile toSelect, @Nullable final Project project) {
     if (toSelect == null) {
       return choose(project);
     }
@@ -176,8 +175,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     PropertiesComponent.getInstance().setValues(RECENT_FILES_KEY, ArrayUtilRt.toStringArray(files));
   }
 
-  @NotNull
-  private String[] getRecentFiles() {
+  private String @NotNull [] getRecentFiles() {
     final String[] recent = PropertiesComponent.getInstance().getValues(RECENT_FILES_KEY);
     if (recent != null) {
       if (recent.length > 0 && myPathTextField.getField().getText().replace('\\', '/').equals(recent[0])) {
@@ -193,7 +191,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   private JComponent createHistoryButton() {
     JLabel label = new JLabel(AllIcons.Actions.Download);
-    label.setToolTipText("Recent files");
+    label.setToolTipText(IdeBundle.message("tooltip.recent.files"));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -378,7 +376,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       final String text = myPathTextField.getTextFieldText();
       final LookupFile file = myPathTextField.getFile();
       if (text == null || file == null || !file.exists()) {
-        setErrorText("Specified path cannot be found", myPathTextField.getField());
+        setErrorText(IdeBundle.message("dialog.message.specified.path.cannot.be.found"), myPathTextField.getField());
         return;
       }
     }

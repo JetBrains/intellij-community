@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
@@ -19,7 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteralContainer;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.LiteralUtilKt;
 
@@ -45,8 +43,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
 
   @Override
   public PsiType getType() {
-    IElementType elemType = getLiteralType(this);
-    return TypesUtil.getPsiType(this, elemType);
+    return LiteralUtilKt.getLiteralType(this);
   }
 
   @Override
@@ -66,10 +63,6 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     if (TokenSets.NUMBERS.contains(elemType)) {
       try {
         if (elemType == GroovyTokenTypes.mNUM_INT) {
-          char lastChar = text.charAt(text.length() - 1);
-          if (lastChar == 'i' || lastChar == 'I') {
-            text = text.substring(0, text.length() - 1);
-          }
           return LiteralUtilKt.parseInteger(text);
         }
         else if (elemType == GroovyTokenTypes.mNUM_LONG) {
@@ -159,8 +152,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 

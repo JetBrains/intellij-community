@@ -85,7 +85,7 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
     return Collections.emptyList();
   }
 
-  private static Collection<TextRange> selectBetweenBracesLines(@NotNull PsiElement[] children,
+  private static Collection<TextRange> selectBetweenBracesLines(PsiElement @NotNull [] children,
                                                                 @NotNull CharSequence editorText) {
     int start = CodeBlockOrInitializerSelectioner.findOpeningBrace(children);
     // in non-Java PsiClasses, there can be no opening brace

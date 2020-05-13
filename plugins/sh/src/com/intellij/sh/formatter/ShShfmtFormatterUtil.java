@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
@@ -76,7 +77,7 @@ public class ShShfmtFormatterUtil {
     DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
 
-    Task.Backgroundable task = new Task.Backgroundable(project, "Download Shfmt Formatter") {
+    Task.Backgroundable task = new Task.Backgroundable(project, ShBundle.message("sh.label.download.shfmt.formatter")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

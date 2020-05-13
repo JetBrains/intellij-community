@@ -41,6 +41,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -122,7 +123,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       final VirtualFile file1 = ((FileContent)contents.get(0)).getFile();
       final VirtualFile file2 = ((FileContent)contents.get(1)).getFile();
 
-      ComparisonData comparisonData = ReadAction.compute(() -> {
+      ComparisonData comparisonData = ReadAction.nonBlocking(() -> {
         if (!file1.isValid() || !file2.isValid()) {
           return ComparisonData.ERROR;
         }
@@ -136,20 +137,22 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
             contentsEquals = false;
           }
           else if (FileUtilRt.isTooLarge(length1) || FileUtilRt.isTooLarge(length2)) {
-            return new ComparisonData(ThreeState.UNSURE, "Files are too large to compare");
+            return new ComparisonData(ThreeState.UNSURE, () -> DiffBundle.message("error.files.too.large.to.compare.text"));
           }
           else {
             contentsEquals = DiffUtil.compareStreams(() -> DiffUtil.getFileInputStream(file1), () -> DiffUtil.getFileInputStream(file2));
           }
 
           return new ComparisonData(ThreeState.fromBoolean(contentsEquals),
-                                    contentsEquals ? DiffBundle.message("diff.contents.are.identical.message.text") : null);
+                                    () -> contentsEquals ? DiffBundle.message("diff.contents.are.identical.message.text") : null);
         }
         catch (IOException e) {
           LOG.warn(e);
           return ComparisonData.ERROR;
         }
-      });
+      })
+        .wrapProgress(indicator)
+        .executeSynchronously();
 
       return applyNotification(comparisonData);
     }
@@ -169,8 +172,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
       myComparisonData = comparisonData;
 
-      if (myComparisonData.notification != null) {
-        myPanel.addNotification(DiffNotifications.createNotification(myComparisonData.notification));
+      if (myComparisonData.notification.get() != null) {
+        myPanel.addNotification(DiffNotifications.createNotification(myComparisonData.notification.get()));
       }
       myStatusPanel.update();
     };
@@ -210,10 +213,10 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     protected String getMessage() {
       if (myComparisonData.isContentsEqual == ThreeState.UNSURE) return null;
       if (myComparisonData.isContentsEqual == ThreeState.YES) {
-        return "Files contents are identical";
+        return DiffBundle.message("binary.diff.contents.are.identical.message.text");
       }
       else {
-        return "Files contents are different";
+        return DiffBundle.message("binary.diff.contents.are.different.message.text");
       }
     }
   }
@@ -227,7 +230,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
     MyAcceptSideAction(@NotNull Side baseSide) {
       myBaseSide = baseSide;
-      getTemplatePresentation().setText("Copy Content to " + baseSide.select("Right", "Left"));
+      getTemplatePresentation().setText(DiffBundle.message("copy.content.to.side", baseSide.other().getIndex()));
       getTemplatePresentation().setIcon(baseSide.select(AllIcons.Vcs.Arrow_right, AllIcons.Vcs.Arrow_left));
       setShortcutSet(ActionManager.getInstance().getAction(baseSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
     }
@@ -252,7 +255,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       }
       catch (IOException err) {
         LOG.warn(err);
-        Messages.showErrorDialog(getProject(), err.getMessage(), "Can't Copy File");
+        Messages.showErrorDialog(getProject(), err.getMessage(), DiffBundle.message("can.t.copy.file"));
       }
     }
 
@@ -273,13 +276,13 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
   }
 
   private static class ComparisonData {
-    public static final ComparisonData UNKNOWN = new ComparisonData(ThreeState.UNSURE, null);
-    public static final ComparisonData ERROR = new ComparisonData(ThreeState.UNSURE, DiffBundle.message("diff.cant.calculate.diff"));
+    public static final ComparisonData UNKNOWN = new ComparisonData(ThreeState.UNSURE, () -> null);
+    public static final ComparisonData ERROR = new ComparisonData(ThreeState.UNSURE, () -> DiffBundle.message("diff.cant.calculate.diff"));
 
     @NotNull public final ThreeState isContentsEqual;
-    @Nullable public final String notification;
+    @NotNull public final NullableComputable<String> notification;
 
-    private ComparisonData(@NotNull ThreeState isContentsEqual, @Nullable String notification) {
+    private ComparisonData(@NotNull ThreeState isContentsEqual, @NotNull NullableComputable<String> notification) {
       this.isContentsEqual = isContentsEqual;
       this.notification = notification;
     }

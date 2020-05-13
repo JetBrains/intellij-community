@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 
@@ -26,11 +27,11 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         myOptionAccessor = optionAccessor;
     }
 
-    public void addCheckbox(String label, @NonNls String property) {
+    public void addCheckbox(@NlsContexts.Checkbox String label, @NonNls String property) {
         addCheckboxEx(label, property);
     }
 
-    public JCheckBox addCheckboxEx(String label, @NonNls String property) {
+    public JCheckBox addCheckboxEx(@NlsContexts.Checkbox String label, @NonNls String property) {
         final boolean selected = myOptionAccessor.getOption(property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
         checkBox.addItemListener(e -> myOptionAccessor.setOption(property, e.getStateChange() == ItemEvent.SELECTED));
@@ -38,7 +39,7 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         return checkBox;
     }
 
-    public JCheckBox addDependentCheckBox(String label, @NonNls String property, JCheckBox controller) {
+    public JCheckBox addDependentCheckBox(@NlsContexts.Checkbox String label, @NonNls String property, JCheckBox controller) {
         final JCheckBox checkBox = addCheckboxEx(label, property);
         checkBox.setBorder(new EmptyBorder(new JBInsets(0, 30, 0, 0)));
         controller.addItemListener(

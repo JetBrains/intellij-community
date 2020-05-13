@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
+import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*
 import com.intellij.codeInspection.dataFlow.inference.ContractInferenceInterpreter.withConstraint
@@ -33,18 +35,23 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
 
     val result = call.resolveMethodGenerics()
     val targetMethod = result.element as PsiMethod? ?: return emptyList()
+    if (targetMethod == method) return emptyList()
 
     val parameters = targetMethod.parameterList.parameters
     val arguments = call.argumentList.expressions
+    val qualifier = call.methodExpression.qualifierExpression
     val varArgCall = MethodCallInstruction.isVarArgCall(targetMethod, result.substitutor, arguments, parameters)
 
     val methodContracts = StandardMethodContract.toNonIntersectingStandardContracts(JavaMethodContractUtil.getMethodContracts(targetMethod))
                           ?: return emptyList()
-    var fromDelegate = methodContracts.mapNotNull { dc ->
-      convertDelegatedMethodContract(method, parameters, arguments, varArgCall, dc)
+    val fromDelegate = methodContracts.mapNotNull { dc ->
+      convertDelegatedMethodContract(method, parameters, qualifier, arguments, varArgCall, dc)
+    }.toMutableList()
+    while (fromDelegate.isNotEmpty() && fromDelegate[fromDelegate.size - 1].returnValue == ContractReturnValue.returnAny()) {
+      fromDelegate.removeAt(fromDelegate.size - 1)
     }
     if (NullableNotNullManager.isNotNull(targetMethod)) {
-      fromDelegate = fromDelegate.map(this::returnNotNull) + listOf(
+      fromDelegate += listOf(
         StandardMethodContract(emptyConstraints(method), ContractReturnValue.returnNotNull()))
     }
     return StandardMethodContract.toNonIntersectingStandardContracts(fromDelegate) ?: emptyList()
@@ -52,6 +59,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
 
   private fun convertDelegatedMethodContract(callerMethod: PsiMethod,
                                              targetParameters: Array<PsiParameter>,
+                                             qualifier: PsiExpression?,
                                              callArguments: Array<PsiExpression>,
                                              varArgCall: Boolean,
                                              targetContract: StandardMethodContract): StandardMethodContract? {
@@ -78,8 +86,37 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
       }
     }
     var returnValue = targetContract.returnValue
-    if (negated && returnValue is ContractReturnValue.BooleanReturnValue) returnValue = returnValue.negate()
+    returnValue = when (returnValue) {
+      is ContractReturnValue.BooleanReturnValue -> {
+        if (negated) returnValue.negate() else returnValue
+      }
+      is ContractReturnValue.ParameterReturnValue -> {
+        mapReturnValue(callerMethod, callArguments[returnValue.parameterNumber])
+      }
+      ContractReturnValue.returnThis() -> {
+        mapReturnValue(callerMethod, qualifier)
+      }
+      else -> returnValue
+    }
     return answer?.let { StandardMethodContract(it, returnValue) }
+  }
+
+  private fun mapReturnValue(callerMethod: PsiMethod, argument: PsiExpression?): ContractReturnValue? {
+    val stripped = PsiUtil.skipParenthesizedExprDown(argument)
+    val paramIndex = resolveParameter(callerMethod, stripped)
+    return when {
+      paramIndex >= 0 -> ContractReturnValue.returnParameter(paramIndex)
+      stripped is PsiLiteralExpression -> when (stripped.value) {
+        null -> ContractReturnValue.returnNull()
+        true -> ContractReturnValue.returnTrue()
+        false -> ContractReturnValue.returnFalse()
+        else -> ContractReturnValue.returnNotNull()
+      }
+      stripped is PsiThisExpression && stripped.qualifier == null -> ContractReturnValue.returnThis()
+      stripped is PsiNewExpression -> ContractReturnValue.returnNew()
+      NullabilityUtil.getExpressionNullability(stripped) == Nullability.NOT_NULL -> ContractReturnValue.returnNotNull()
+      else -> ContractReturnValue.returnAny()
+    }
   }
 
   private fun emptyConstraints(method: PsiMethod) = StandardMethodContract.createConstraintArray(
@@ -96,7 +133,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
     else -> null
   }
 
-  private fun resolveParameter(method: PsiMethod, expr: PsiExpression): Int {
+  private fun resolveParameter(method: PsiMethod, expr: PsiExpression?): Int {
     val target = if (expr is PsiReferenceExpression && !expr.isQualified) expr.resolve() else null
     return if (target is PsiParameter && target.parent === method.parameterList) method.parameterList.getParameterIndex(target) else -1
   }

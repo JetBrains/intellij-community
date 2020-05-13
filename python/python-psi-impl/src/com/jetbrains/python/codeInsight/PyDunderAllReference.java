@@ -33,8 +33,7 @@ public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLi
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final PyStringLiteralExpression element = getElement();
     final String name = element.getStringValue();
     final PyFile file = (PyFile)element.getContainingFile();
@@ -52,9 +51,8 @@ public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLi
     return resolveResults.toArray(RatedResolveResult.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final List<LookupElement> result = new ArrayList<>();
 
     final PyFile containingFile = (PyFile)getElement().getContainingFile().getOriginalFile();

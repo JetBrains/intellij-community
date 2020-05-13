@@ -158,7 +158,7 @@ public class IdeaGateway {
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
     return isVersioned(f) && !f.isDirectory() &&
-           (areContentChangesVersioned(f.getName()) || ScratchFileService.isInScratchRoot(f));
+           (areContentChangesVersioned(f.getName()) || ScratchFileService.findRootType(f) != null);
   }
 
   public boolean areContentChangesVersioned(@NotNull String fileName) {
@@ -447,7 +447,7 @@ public class IdeaGateway {
     return d.getText().getBytes(charset);
   }
 
-  public String stringFromBytes(@NotNull byte[] bytes, @NotNull String path) {
+  public String stringFromBytes(byte @NotNull [] bytes, @NotNull String path) {
     VirtualFile file = findVirtualFile(path);
     Charset charset = file != null ? file.getCharset() : EncodingRegistry.getInstance().getDefaultCharset();
     return CharsetToolkit.bytesToString(bytes, charset);

@@ -90,11 +90,11 @@ public abstract class Decoder extends ChannelInboundHandlerAdapter {
         }
         else {
           compositeByteBuf = context.alloc().compositeBuffer(DEFAULT_MAX_COMPOSITE_BUFFER_COMPONENTS);
-          compositeByteBuf.addComponent(cumulation);
+          compositeByteBuf.addComponent(true, cumulation);
           cumulation = compositeByteBuf;
         }
 
-        compositeByteBuf.addComponent(input);
+        compositeByteBuf.addComponent(true, input);
         input.retain();
         input.touch();
         return null;

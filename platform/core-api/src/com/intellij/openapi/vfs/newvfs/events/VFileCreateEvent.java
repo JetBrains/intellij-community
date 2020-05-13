@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -9,9 +9,6 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public class VFileCreateEvent extends VFileEvent {
   private final @NotNull VirtualFile myParent;
   private final boolean myDirectory;
@@ -28,8 +25,7 @@ public class VFileCreateEvent extends VFileEvent {
                           @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
                           boolean isFromRefresh,
-                          @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
-                          ChildInfo[] children) {
+                          ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children) {
     super(requestor, isFromRefresh);
     myParent = parent;
     myDirectory = isDirectory;
@@ -85,8 +81,7 @@ public class VFileCreateEvent extends VFileEvent {
     return createdFile;
   }
 
-  @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
-  public ChildInfo[] getChildren() {
+  public ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] getChildren() {
     return myChildren;
   }
 

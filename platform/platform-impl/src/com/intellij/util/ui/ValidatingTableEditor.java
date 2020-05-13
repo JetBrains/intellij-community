@@ -177,7 +177,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myFixLink = new HoverHyperlinkLabel(null);
   }
 
-  protected ValidatingTableEditor(@Nullable AnActionButton ... extraButtons) {
+  protected ValidatingTableEditor(AnActionButton @Nullable ... extraButtons) {
     ToolbarDecorator decorator =
       ToolbarDecorator.createDecorator(myTable).disableRemoveAction().disableUpAction().disableDownAction();
     decorator.setAddAction(new AnActionButtonRunnable() {

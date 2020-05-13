@@ -22,17 +22,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings({"IteratorHasNextCallsIteratorNext", "override"})
 public class IteratorHasNextCallsIteratorNextInspectionTest extends LightJavaInspectionTestCase {
 
   public void testHasNextCallsNext() {
     doTest("import java.util.*;" +
            "class MyIterator<T> implements Iterator<T> {" +
            "    private Iterator<T> iterator;" +
-           "    public MyIterator(Iterator<T> iterator) {" +
+           "    MyIterator(Iterator<T> iterator) {" +
            "        this.iterator = iterator;" +
            "    }" +
-           "    public boolean /*'Iterator.hasNext()' contains call to 'next()'*/hasNext/**/() {" +
-           "        return next() != null;" +
+           "    public boolean hasNext() {" +
+           "        return /*'Iterator.hasNext()' contains call to 'next()'*/next/**/() != null;" +
            "    }" +
            "    public T next() {" +
            "        return iterator.next();" +
@@ -47,11 +48,14 @@ public class IteratorHasNextCallsIteratorNextInspectionTest extends LightJavaIns
     doTest("import java.util.*;" +
            "abstract class MyIterator<T> implements ListIterator<T> {" +
            "    private ListIterator<T> iterator;" +
-           "    public MyIterator(ListIterator<T> iterator) {" +
+           "    MyIterator(ListIterator<T> iterator) {" +
            "        this.iterator = iterator;" +
            "    }" +
-           "    public boolean /*'Iterator.hasNext()' contains call to 'next()'*/hasNext/**/() {" +
-           "        return previous() != null;" +
+           "    public boolean hasNext() {" +
+           "        return /*'Iterator.hasNext()' contains call to 'previous()'*/previous/**/() != null;" +
+           "    }" +
+           "    public boolean hasPrevious() {" +
+           "        return this./*'Iterator.hasPrevious()' contains call to 'previous()'*/previous/**/() != null;" +
            "    }" +
            "    public T next() {" +
            "        return iterator.next();" +

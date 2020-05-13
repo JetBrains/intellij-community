@@ -7,12 +7,13 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.UpdateSession
 import com.intellij.util.containers.MultiMap
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import java.util.function.Supplier
 
 /**
  * Ranges are null if update didn't start yet, in which case there are no new commits to display,
@@ -38,17 +39,17 @@ class GitUpdateSession(private val project: Project,
 
     if (skippedRoots.size == 1) {
       val repo = skippedRoots.keys.first()
-      return "${getShortRepositoryName(repo)} was skipped (${skippedRoots[repo]})"
+      return GitBundle.message("git.update.repo.was.skipped", getShortRepositoryName(repo), skippedRoots[repo])
     }
 
-    val prefix = "Skipped ${skippedRoots.size} repositories: <br/>"
+    val prefix = GitBundle.message("git.update.skipped.repositories", skippedRoots.size) + " <br/>" // NON-NLS
     val grouped = groupByReasons(skippedRoots)
     if (grouped.keySet().size == 1) {
       val reason = grouped.keySet().first()
       return prefix + getShortNames(grouped.get(reason)) + " (" + reason + ")"
     }
 
-    return prefix + grouped.keySet().joinToString("<br/>") { reason -> getShortNames(grouped.get(reason)) + " (" + reason + ")" }
+    return prefix + grouped.keySet().joinToString("<br/>") { reason -> getShortNames(grouped.get(reason)) + " (" + reason + ")" } // NON-NLS
   }
 
   private fun groupByReasons(skippedRoots: Map<GitRepository, String>): MultiMap<String, GitRepository> {
@@ -61,7 +62,8 @@ class GitUpdateSession(private val project: Project,
     if (notificationData != null) {
       val notification = prepareNotification(notificationData.updatedFilesCount, notificationData.receivedCommitsCount,
                                              notificationData.filteredCommitsCount)
-      notification.addAction(NotificationAction.createSimple("View Commits", notificationData.viewCommitAction))
+      notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
+                                                             notificationData.viewCommitAction))
       VcsNotifier.getInstance(project).notify(notification)
     }
   }
@@ -72,20 +74,20 @@ class GitUpdateSession(private val project: Project,
     val type: NotificationType
     val mainMessage = getTitleForUpdateNotification(updatedFilesNumber, updatedCommitsNumber)
     if (isCanceled) {
-      title = "Project Partially Updated"
+      title = GitBundle.message("git.update.project.partially.updated.title")
       content = mainMessage
       type = NotificationType.WARNING
     }
     else {
       title = mainMessage
-      content = getBodyForUpdateNotification(updatedFilesNumber, updatedCommitsNumber, filteredCommitsNumber)
+      content = getBodyForUpdateNotification(filteredCommitsNumber)
       type = NotificationType.INFORMATION
     }
 
-    val additionalContent = getAdditionalNotificationContent()
+    val additionalContent = additionalNotificationContent
     if (additionalContent != null) {
       if (content.isNotEmpty()) {
-        content += "<br/>"
+        content += "<br/>" // NON-NLS
       }
       content += additionalContent
     }
@@ -94,16 +96,13 @@ class GitUpdateSession(private val project: Project,
   }
 }
 
-fun getTitleForUpdateNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int): String {
-  val files = pluralize("file", updatedFilesNumber)
-  val commits = pluralize("commit", updatedCommitsNumber)
-  return "$updatedFilesNumber $files updated in $updatedCommitsNumber $commits"
-}
+fun getTitleForUpdateNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int): String =
+  GitBundle.message("git.update.files.updated.in.commits", updatedFilesNumber, updatedCommitsNumber)
 
-fun getBodyForUpdateNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int, filteredCommitsNumber: Int?): String {
+fun getBodyForUpdateNotification(filteredCommitsNumber: Int?): String {
   return when (filteredCommitsNumber) {
     null -> ""
-    0 -> "No commits matching filters"
-    else -> "$filteredCommitsNumber ${pluralize("commit", filteredCommitsNumber)} matching filters"
+    0 -> GitBundle.message("git.update.no.commits.matching.filters")
+    else -> GitBundle.message("git.update.commits.matching.filters", filteredCommitsNumber)
   }
 }

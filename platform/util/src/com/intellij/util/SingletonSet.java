@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SingletonIterator;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -50,15 +51,13 @@ public class SingletonSet<E> implements Set<E> {
     return new SingletonIterator<>(theElement);
   }
 
-  @NotNull
   @Override
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     return new Object[]{theElement};
   }
 
-  @NotNull
   @Override
-  public <T> T[] toArray(@NotNull T[] a) {
+  public <T> T @NotNull [] toArray(T @NotNull [] a) {
     if (a.length == 0) {
       a = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
     }
@@ -117,8 +116,7 @@ public class SingletonSet<E> implements Set<E> {
 
   @NotNull
   protected TObjectHashingStrategy<E> getStrategy() {
-    //noinspection unchecked
-    return TObjectHashingStrategy.CANONICAL;
+    return ContainerUtil.canonicalStrategy();
   }
 
   @NotNull

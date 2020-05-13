@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.io.FileUtil
@@ -399,6 +400,8 @@ class CompilationPartsUtil {
       String prefix = metadata.prefix
       String serverUrl = metadata.serverUrl
 
+      Set<Pair<FetchAndUnpackContext, Integer>> failed = ContainerUtil.newConcurrentSet()
+
       if (!toDownload.isEmpty()) {
         initLog4J(messages)
 
@@ -437,7 +440,7 @@ class CompilationPartsUtil {
             def get = new HttpGet("${urlWithPrefix}${ctx.name}/${ctx.jar.name}")
             httpClient.execute(get).withCloseable { response ->
               if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                messages.warning("Failed to fetch '${ctx.name}/${ctx.jar.name}', status code: ${response.getStatusLine().getStatusCode()}")
+                failed.add(Pair.create(ctx, response.getStatusLine().getStatusCode()))
               }
               else {
                 new BufferedInputStream(response.getEntity().getContent()).withCloseable { bis ->
@@ -464,6 +467,13 @@ class CompilationPartsUtil {
       messages.reportStatisticValue('compile-parts:downloaded:bytes', downloadedBytes.toString())
       messages.reportStatisticValue('compile-parts:downloaded:count', toDownload.size().toString())
 
+      if (!failed.isEmpty()) {
+        failed.each { pair ->
+          messages.warning("Failed to fetch '${pair.first.name}/${pair.first.jar.name}', status code: ${pair.second}".toString())
+        }
+        messages.error("Failed to fetch ${failed.size()} file${failed.size() != 1 ? 's' : ''}, see details above")
+      }
+
       executor.reportErrors(messages)
     }
 
@@ -477,7 +487,6 @@ class CompilationPartsUtil {
           def computed = computeHash(ctx.jar)
           def expected = ctx.hash
           if (expected != computed) {
-            messages.warning("Downloaded file '$ctx.jar' hash mismatch, expected '$expected', got $computed")
             failed.add(Trinity.create(ctx.jar, expected, computed))
           }
           return

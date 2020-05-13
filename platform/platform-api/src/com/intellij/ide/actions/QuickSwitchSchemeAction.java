@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -7,25 +7,27 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
+  private final static Condition<? super AnAction> DEFAULT_PRESELECT_ACTION =
+    a -> a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
+
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
 
-  protected static final Icon ourNotCurrentAction = new IconLoader.LazyIcon() {
-    @NotNull
-    @Override
-    protected Icon compute() {
-      return EmptyIcon.create(AllIcons.Actions.Forward.getIconWidth(), AllIcons.Actions.Forward.getIconHeight());
-    }
-  };
+  protected static final Icon ourNotCurrentAction = IconLoader.createLazy(() -> {
+    return EmptyIcon.create(AllIcons.Actions.Forward.getIconWidth(), AllIcons.Actions.Forward.getIconHeight());
+  });
 
   protected String myActionPlace = ActionPlaces.UNKNOWN;
 
@@ -55,10 +57,14 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
 
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       getPopupTitle(e), group, e.getDataContext(), aid, true, null, -1,
-      (a) -> a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward,
-      myActionPlace);
+      preselectAction(), myActionPlace);
 
     showPopup(e, popup);
+  }
+
+  @Nullable
+  protected Condition<? super AnAction> preselectAction() {
+    return DEFAULT_PRESELECT_ACTION;
   }
 
   protected void showPopup(AnActionEvent e, ListPopup popup) {
@@ -75,6 +81,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
     return JBPopupFactory.ActionSelectionAid.NUMBERING;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected String getPopupTitle(@NotNull AnActionEvent e) {
     return e.getPresentation().getText();
   }

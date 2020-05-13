@@ -13,14 +13,18 @@ class TerminalUsageTriggerCollector {
   companion object {
     @JvmStatic
     fun triggerSshShellStarted(project: Project) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "ssh.exec", FeatureUsageData().addOS())
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "ssh.exec")
+    }
+
+    @JvmStatic
+    fun triggerCommandExecuted(project: Project) {
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.command.executed")
     }
 
     @JvmStatic
     fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>) {
       val osVersion = OsVersionUsageCollector.parse(SystemInfo.OS_VERSION)
       FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "local.exec", FeatureUsageData()
-        .addOS()
         .addData("os-version", if (osVersion == null) "unknown" else osVersion.toCompactString())
         .addData("shell", getShellNameForStat(shellCommand.firstOrNull()))
       )

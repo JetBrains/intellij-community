@@ -60,7 +60,7 @@ public class LoggedErrorProcessor {
     DefaultLogger.disableStderrDumping(parentDisposable);
   }
 
-  public static class TestLoggerAssertionError extends AssertionError {
+  static class TestLoggerAssertionError extends AssertionError {
     private TestLoggerAssertionError(String message, Throwable cause) {
       super(message, cause);
     }

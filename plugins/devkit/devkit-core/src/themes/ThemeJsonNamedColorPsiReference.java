@@ -39,9 +39,8 @@ class ThemeJsonNamedColorPsiReference extends JsonSchemaBaseReference<JsonLitera
     return ContainerUtil.find(namedColors, property -> property.getName().equals(myName));
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     return EMPTY_ARRAY;
   }
 

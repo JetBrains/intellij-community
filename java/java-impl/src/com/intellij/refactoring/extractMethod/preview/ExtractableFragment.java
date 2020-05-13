@@ -22,7 +22,7 @@ class ExtractableFragment {
     myEnd = start != end ? smartPointerManager.createSmartPsiElementPointer(end) : myStart;
   }
 
-  ExtractableFragment(@NotNull PsiElement[] elements) {
+  ExtractableFragment(PsiElement @NotNull [] elements) {
     if (elements.length == 0) {
       myStart = null;
       myEnd = null;

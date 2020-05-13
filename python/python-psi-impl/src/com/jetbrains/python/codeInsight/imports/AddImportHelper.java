@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.sure;
+
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -8,11 +11,19 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,22 +36,29 @@ import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-
-import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.PyUtil.sure;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Does the actual job of adding an import statement into a file.
@@ -57,12 +75,16 @@ public class AddImportHelper {
   };
 
   @NotNull
-  private static Comparator<PyImportStatementBase> getImportNamesComparator(PsiFile settingsAnchor) {
+  private static Comparator<PyImportStatementBase> getImportStatementComparator(@NotNull PsiFile settingsAnchor) {
     return (import1, import2) -> {
-      final Comparator<String> stringComparator =
-        PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor) ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+      final Comparator<String> stringComparator = getImportTextComparator(settingsAnchor);
       return ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2), Comparator.nullsFirst(stringComparator));
     };
+  }
+
+  @NotNull
+  public static Comparator<String> getImportTextComparator(@NotNull PsiFile settingsAnchor) {
+    return PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor) ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
   }
 
   @NotNull
@@ -101,10 +123,10 @@ public class AddImportHelper {
   @NotNull
   public static Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull PsiFile settingsAnchor) {
     if (PythonCodeStyleService.getInstance().isOptimizeImportsSortedByTypeFirst(settingsAnchor)) {
-      return IMPORT_TYPE_COMPARATOR.thenComparing(getImportNamesComparator(settingsAnchor));
+      return IMPORT_TYPE_COMPARATOR.thenComparing(getImportStatementComparator(settingsAnchor));
     }
     else {
-      return getImportNamesComparator(settingsAnchor).thenComparing(IMPORT_TYPE_COMPARATOR);
+      return getImportStatementComparator(settingsAnchor).thenComparing(IMPORT_TYPE_COMPARATOR);
     }
   }
 
@@ -391,7 +413,7 @@ public class AddImportHelper {
     final List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
     for (PyImportElement existingImport : existingImports) {
       final String existingName = Objects.toString(existingImport.getImportedQName(), "");
-      if (name.equals(existingName) && Comparing.equal(asName, existingImport.getAsName())) {
+      if (name.equals(existingName) && Objects.equals(asName, existingImport.getAsName())) {
         return false;
       }
     }
@@ -545,18 +567,7 @@ public class AddImportHelper {
         }
 
         if (updateExisting) {
-          for (PyImportElement el : existingImport.getImportElements()) {
-            final String existingName = Objects.toString(el.getImportedQName(), "");
-            if (name.equals(existingName) && Comparing.equal(asName, el.getAsName())) {
-              return false;
-            }
-          }
-          final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
-          final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name, asName);
-          existingImport.add(importElement);
-          // May need to add parentheses, trailing comma, etc.
-          CodeStyleManager.getInstance(file.getProject()).reformat(existingImport);
-          return true;
+          return addNameToFromImportStatement(existingImport, name, asName);
         }
       }
     }
@@ -576,6 +587,41 @@ public class AddImportHelper {
     }
 
     addFromImportStatement(file, from, name, asName, priority, anchor);
+    return true;
+  }
+
+  /**
+   * Adds a new imported name to an existing "from" import statement.
+   *
+   * @param fromImport import statement to update
+   * @param name       new name to import from the same source
+   * @param asName     optional alias for a name in its "as" part
+   * @return whether the new name was actually added
+   */
+  public static boolean addNameToFromImportStatement(@NotNull PyFromImportStatement fromImport,
+                                                     @NotNull String name,
+                                                     @Nullable String asName) {
+    final PsiFile file = fromImport.getContainingFile();
+    final Comparator<String> nameComparator = getImportTextComparator(file);
+    final PythonCodeStyleService pyCodeStyle = PythonCodeStyleService.getInstance();
+    final boolean shouldSort = pyCodeStyle.isOptimizeImportsSortImports(file) && pyCodeStyle.isOptimizeImportsSortNamesInFromImports(file);
+
+    PyImportElement followingNameElement = null;
+    for (PyImportElement existingNameElement : fromImport.getImportElements()) {
+      final String existingName = Objects.toString(existingNameElement.getImportedQName(), "");
+      if (name.equals(existingName) && Objects.equals(asName, existingNameElement.getAsName())) {
+        return false;
+      }
+      if (shouldSort && followingNameElement == null && nameComparator.compare(existingName, name) > 0) {
+        followingNameElement = existingNameElement;
+      }
+    }
+    final PyElementGenerator generator = PyElementGenerator.getInstance(fromImport.getProject());
+    final PyImportElement newNameElement = generator.createImportElement(LanguageLevel.forElement(fromImport), name, asName);
+    // addBefore(newNameElement, null) is the same as inserting at the end
+    fromImport.addBefore(newNameElement, followingNameElement);
+    // May need to add parentheses, trailing comma, etc.
+    CodeStyleManager.getInstance(fromImport.getProject()).reformat(fromImport);
     return true;
   }
 

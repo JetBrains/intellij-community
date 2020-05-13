@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -31,8 +30,8 @@ import java.util.List;
  */
 public class RefreshAllExternalProjectsAction extends AnAction implements AnAction.TransparentUpdate, DumbAware {
   public RefreshAllExternalProjectsAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.all.projects.text", "External"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.refresh.all.projects.description", "external"));
+    getTemplatePresentation().setText(ExternalSystemBundle.messagePointer("action.refresh.all.projects.text", "External"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.messagePointer("action.refresh.all.projects.description", "external"));
   }
 
   @Override
@@ -50,8 +49,8 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
     }
 
     final String name = StringUtil.join(systemIds, projectSystemId -> projectSystemId.getReadableName(), ",");
-    e.getPresentation().setText(ExternalSystemBundle.message("action.refresh.all.projects.text", name));
-    e.getPresentation().setDescription(ExternalSystemBundle.message("action.refresh.all.projects.description", name));
+    e.getPresentation().setText(ExternalSystemBundle.messagePointer("action.refresh.all.projects.text", name));
+    e.getPresentation().setDescription(ExternalSystemBundle.messagePointer("action.refresh.all.projects.description", name));
 
     ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
     e.getPresentation().setEnabled(!processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project));
@@ -74,7 +73,6 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
     // We save all documents because there is a possible case that there is an external system config file changed inside the ide.
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    ExternalProjectsManagerImpl.disableProjectWatcherAutoUpdate(project);
     for (ProjectSystemId externalSystemId : systemIds) {
       ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
       ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, externalSystemId).forceWhenUptodate(true));

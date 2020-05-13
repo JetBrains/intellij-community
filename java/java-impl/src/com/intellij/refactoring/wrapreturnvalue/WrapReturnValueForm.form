@@ -13,7 +13,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Create new class"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="wrap.return.value.create.new.class"/>
         </properties>
       </component>
       <component id="ca685" class="javax.swing.JRadioButton" binding="useExistingClassButton">
@@ -21,7 +21,7 @@
           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Use existing class"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="wrap.return.value.use.existing.class"/>
         </properties>
       </component>
       <grid id="1eeb1" binding="myNewClassPanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -38,7 +38,7 @@
             </constraints>
             <properties>
               <labelFor value="6b071"/>
-              <text value="&amp;Name"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="wrap.return.value.new.class.name"/>
             </properties>
           </component>
           <component id="6b071" class="javax.swing.JTextField" binding="classNameField">
@@ -54,7 +54,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Package name"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="wrap.return.value.new.class.package.name"/>
             </properties>
           </component>
           <component id="e72f1" class="com.intellij.refactoring.ui.PackageNameReferenceEditorCombo" binding="packageTextField" custom-create="true">
@@ -94,7 +94,7 @@
             </constraints>
             <properties>
               <labelFor value="4d2b9"/>
-              <text value="Name"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="wrap.return.value.existing.class.name"/>
             </properties>
           </component>
           <component id="17eb8" class="com.intellij.ui.ReferenceEditorComboWithBrowseButton" binding="existingClassField" custom-create="true">
@@ -115,7 +115,7 @@
             </constraints>
             <properties>
               <labelFor value="4d2b9"/>
-              <text value="Wrapper &amp;field"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="wrap.return.value.wrapper.field"/>
             </properties>
           </component>
         </children>
@@ -133,7 +133,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/intellij/refactoring/RefactorJBundle" key="method.to.wrap.returns.from.label"/>
+          <text resource-bundle="messages/RefactorJBundle" key="method.to.wrap.returns.from.label"/>
         </properties>
       </component>
       <component id="809b1" class="javax.swing.JRadioButton" binding="myCreateInnerClassButton" default-binding="true">
@@ -141,7 +141,7 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Create &amp;inner class"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="wrap.return.value.create.inner.class"/>
         </properties>
       </component>
       <grid id="69b5" binding="myCreateInnerPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -158,7 +158,7 @@
             </constraints>
             <properties>
               <labelFor value="3bee"/>
-              <text value="Na&amp;me"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="wrap.return.value.inner.class.name"/>
             </properties>
           </component>
           <component id="3bee" class="javax.swing.JTextField" binding="myInnerClassNameTextField" default-binding="true">

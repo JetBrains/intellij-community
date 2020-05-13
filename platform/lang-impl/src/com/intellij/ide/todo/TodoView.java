@@ -2,6 +2,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,9 +20,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -35,6 +33,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -51,7 +50,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;
-  private ChangeListTodosPanel myChangeListTodosPanel;
+  @Nullable
+  private TodoPanel myChangeListTodosPanel;
   private CurrentFileTodosPanel myCurrentFileTodosPanel;
   private ScopeBasedTodosPanel myScopeBasedTodosPanel;
   private final List<TodoPanel> myPanels = new ArrayList<>();
@@ -59,9 +59,9 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   private State state = new State();
 
+  private final TodoViewChangesSupport myChangesSupport;
+  private final TodoViewChangesSupport.Listener myChangesListener;
   private Content myChangeListTodosContent;
-
-  private final MyVcsListener myVcsListener = new MyVcsListener();
 
   public TodoView(@NotNull Project project) {
     myProject = project;
@@ -74,7 +74,11 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyPropertyChangeListener());
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
+
+    myChangesSupport = project.getService(TodoViewChangesSupport.class);
+    myChangesListener = myChangesSupport.installListener(project, connection,
+                                                         () -> { return myContentManager; },
+                                                         () -> { return myChangeListTodosContent; });
   }
 
   static class State {
@@ -143,7 +147,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   public void initToolWindow(@NotNull ToolWindow toolWindow) {
     // Create panels
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    Content allTodosContent = contentFactory.createContent(null, IdeUICustomization.getInstance().getProjectDisplayName(), false);
+    Content allTodosContent = contentFactory.createContent(null, IdeUICustomization.getInstance().projectMessage("tab.title.project"), false);
     toolWindow.setHelpId("find.todoList");
     myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
       @Override
@@ -153,13 +157,13 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         return builder;
       }
     };
-    allTodosContent.setComponent(myAllTodos);
+    allTodosContent.setComponent(wrapWithDumbModeSpoiler(myAllTodos));
     allTodosContent.setPreferredFocusableComponent(myAllTodos.getTree());
     Disposer.register(this, myAllTodos);
     if (toolWindow instanceof ToolWindowEx) {
       DefaultActionGroup group = new DefaultActionGroup() {
         {
-          getTemplatePresentation().setText(IdeBundle.message("group.view.options"));
+          getTemplatePresentation().setText(IdeBundle.messagePointer("group.view.options"));
           setPopup(true);
           add(myAllTodos.createAutoScrollToSourceAction());
           addSeparator();
@@ -179,27 +183,22 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
       }
     };
     Disposer.register(this, myCurrentFileTodosPanel);
-    currentFileTodosContent.setComponent(myCurrentFileTodosPanel);
+    currentFileTodosContent.setComponent(wrapWithDumbModeSpoiler(myCurrentFileTodosPanel));
     currentFileTodosContent.setPreferredFocusableComponent(myCurrentFileTodosPanel.getTree());
 
-    String tabName = getTabNameForChangeList(ChangeListManager.getInstance(myProject).getDefaultChangeList().getName());
+    String tabName = myChangesSupport.getTabName(myProject);
     myChangeListTodosContent = contentFactory.createContent(null, tabName, false);
-    myChangeListTodosPanel = new ChangeListTodosPanel(myProject, state.current, myChangeListTodosContent) {
-      @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
-        ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, project);
-        builder.init();
-        return builder;
-      }
-    };
-    Disposer.register(this, myChangeListTodosPanel);
-    myChangeListTodosContent.setComponent(myChangeListTodosPanel);
-    myChangeListTodosContent.setPreferredFocusableComponent(myCurrentFileTodosPanel.getTree());
+    myChangeListTodosPanel = myChangesSupport.createPanel(myProject, state.current, myChangeListTodosContent);
+    if (myChangeListTodosPanel != null) {
+      Disposer.register(this, myChangeListTodosPanel);
+      myChangeListTodosContent.setComponent(wrapWithDumbModeSpoiler(myChangeListTodosPanel));
+      myChangeListTodosContent.setPreferredFocusableComponent(myCurrentFileTodosPanel.getTree());
+    }
 
-    Content scopeBasedTodoContent = contentFactory.createContent(null, "Scope Based", false);
+    Content scopeBasedTodoContent = contentFactory.createContent(null, LangBundle.message("tab.title.scope.based"), false);
     myScopeBasedTodosPanel = new ScopeBasedTodosPanel(myProject, state.current, scopeBasedTodoContent);
     Disposer.register(this, myScopeBasedTodosPanel);
-    scopeBasedTodoContent.setComponent(myScopeBasedTodosPanel);
+    scopeBasedTodoContent.setComponent(wrapWithDumbModeSpoiler(myScopeBasedTodosPanel));
 
     myContentManager = toolWindow.getContentManager();
 
@@ -207,8 +206,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myContentManager.addContent(currentFileTodosContent);
     myContentManager.addContent(scopeBasedTodoContent);
 
-    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
-      myVcsListener.myIsVisible = true;
+    if (myChangesSupport.isContentVisible(myProject)) {
+      myChangesListener.setVisible(true);
       myContentManager.addContent(myChangeListTodosContent);
     }
     for (Content content : myNotAddedContent) {
@@ -223,7 +222,9 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myContentManager.setSelectedContent(content == null ? allTodosContent : content);
 
     myPanels.add(myAllTodos);
-    myPanels.add(myChangeListTodosPanel);
+    if (myChangeListTodosPanel != null) {
+      myPanels.add(myChangeListTodosPanel);
+    }
     myPanels.add(myCurrentFileTodosPanel);
     myPanels.add(myScopeBasedTodosPanel);
   }
@@ -231,7 +232,9 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   @TestOnly
   public void disposePanels() {
     Disposer.dispose(myAllTodos);
-    Disposer.dispose(myChangeListTodosPanel);
+    if (myChangeListTodosPanel != null) {
+      Disposer.dispose(myChangeListTodosPanel);
+    }
     Disposer.dispose(myCurrentFileTodosPanel);
     Disposer.dispose(myScopeBasedTodosPanel);
   }
@@ -248,53 +251,20 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     return new AllTodosTreeBuilder(tree, project);
   }
 
-  private final class MyVcsListener implements VcsListener {
-    private boolean myIsVisible;
-
-    @Override
-    public void directoryMappingChanged() {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myContentManager == null || myProject.isDisposed()) {
-          // was not initialized yet
-          return;
-        }
-
-        boolean hasActiveVcss = ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss();
-        if (myIsVisible && !hasActiveVcss) {
-          myContentManager.removeContent(myChangeListTodosContent, false);
-          myIsVisible = false;
-        }
-        else if (!myIsVisible && hasActiveVcss) {
-          myContentManager.addContent(myChangeListTodosContent);
-          myIsVisible = true;
-        }
-      }, ModalityState.NON_MODAL);
-    }
-  }
-
   private final class MyPropertyChangeListener implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent e) {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(e.getPropertyName()) || TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
-        _updateFilters();
+        updateFilters();
       }
-    }
-
-    private void _updateFilters() {
-      try {
-        if (!DumbService.isDumb(myProject)) {
-          updateFilters();
-          return;
-        }
-      }
-      catch (ProcessCanceledException ignore) { }
-      DumbService.getInstance(myProject).smartInvokeLater(this::_updateFilters);
     }
 
     private void updateFilters() {
-      for (TodoPanel panel : myPanels) {
-        panel.updateTodoFilter();
-      }
+      try {
+        for (TodoPanel panel : myPanels) {
+          panel.updateTodoFilter();
+        }
+      } catch (ProcessCanceledException ignore) { }
     }
   }
 
@@ -335,15 +305,10 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, final String title, final TodoPanelSettings settings) {
     Content content = ContentFactory.SERVICE.getInstance().createContent(null, title, true);
-    final ChangeListTodosPanel panel = new ChangeListTodosPanel(myProject, settings, content) {
-      @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
-        TodoTreeBuilder todoTreeBuilder = factory.createTreeBuilder(tree, project);
-        todoTreeBuilder.init();
-        return todoTreeBuilder;
-      }
-    };
-    content.setComponent(panel);
+    final TodoPanel panel = myChangesSupport.createPanel(myProject, settings, content, factory);
+    if (panel == null) return;
+
+    content.setComponent(wrapWithDumbModeSpoiler(panel));
     Disposer.register(this, panel);
 
     if (myContentManager == null) {
@@ -360,5 +325,13 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         myPanels.remove(panel);
       }
     });
+  }
+
+  @NotNull
+  private JComponent wrapWithDumbModeSpoiler(@NotNull TodoPanel panel) {
+    return DumbService.getInstance(myProject).wrapWithSpoiler(panel, () -> ApplicationManager.getApplication().invokeLater(() -> {
+      panel.rebuildCache();
+      panel.updateTree();
+    }, myProject.getDisposed()), panel);
   }
 }

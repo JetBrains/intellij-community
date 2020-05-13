@@ -180,7 +180,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(resolved)) {
           PsiVariable variable = (PsiVariable) resolved;
           final LocalSearchScope useScope = (LocalSearchScope)variable.getUseScope();
           if (!useScope.containsRange(newExpressionContainingFile, newExpressionTextRange)) {

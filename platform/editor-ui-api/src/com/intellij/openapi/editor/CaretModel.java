@@ -41,11 +41,13 @@ public interface CaretModel {
    * @param blockSelection This parameter is currently ignored.
    * @param scrollToCaret  if true, the document should be scrolled so that the caret is visible after the move.
    */
-  void moveCaretRelatively(int columnShift,
-                           int lineShift,
-                           boolean withSelection,
-                           boolean blockSelection,
-                           boolean scrollToCaret);
+  default void moveCaretRelatively(int columnShift,
+                                   int lineShift,
+                                   boolean withSelection,
+                                   boolean blockSelection,
+                                   boolean scrollToCaret) {
+    getCurrentCaret().moveCaretRelatively(columnShift, lineShift, withSelection, scrollToCaret);
+  }
 
   /**
    * Moves the caret to the specified logical position.
@@ -53,21 +55,27 @@ public interface CaretModel {
    *
    * @param pos the position to move to.
    */
-  void moveToLogicalPosition(@NotNull LogicalPosition pos);
+  default void moveToLogicalPosition(@NotNull LogicalPosition pos) {
+    getCurrentCaret().moveToLogicalPosition(pos);
+  }
 
   /**
    * Moves the caret to the specified visual position.
    *
    * @param pos the position to move to.
    */
-  void moveToVisualPosition(@NotNull VisualPosition pos);
+  default void moveToVisualPosition(@NotNull VisualPosition pos) {
+    getCurrentCaret().moveToVisualPosition(pos);
+  }
 
   /**
    * Short hand for calling {@link #moveToOffset(int, boolean)} with {@code 'false'} as a second argument.
    *
    * @param offset      the offset to move to
    */
-  void moveToOffset(int offset);
+  default void moveToOffset(int offset) {
+    moveToOffset(offset, false);
+  }
 
   /**
    * Moves the caret to the specified offset in the document.
@@ -79,7 +87,9 @@ public interface CaretModel {
    *                                We may want to clearly indicate where to put the caret then. Given parameter allows to do that.
    *                                <b>Note:</b> it's ignored if there is no soft wrap at the given offset
    */
-  void moveToOffset(int offset, boolean locateBeforeSoftWrap);
+  default void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
+    getCurrentCaret().moveToOffset(offset, locateBeforeSoftWrap);
+  }
 
   /**
    * Caret position may be updated on document change (e.g. consider that user updates from VCS that causes addition of text
@@ -90,7 +100,9 @@ public interface CaretModel {
    *
    * @return    {@code true} if caret position is up-to-date for now; {@code false} otherwise
    */
-  boolean isUpToDate();
+  default boolean isUpToDate() {
+    return getCurrentCaret().isUpToDate();
+  }
 
   /**
    * Returns the logical position of the caret.
@@ -98,7 +110,9 @@ public interface CaretModel {
    * @return the caret position.
    */
   @NotNull
-  LogicalPosition getLogicalPosition();
+  default LogicalPosition getLogicalPosition() {
+    return getCurrentCaret().getLogicalPosition();
+  }
 
   /**
    * Returns the visual position of the caret.
@@ -106,14 +120,18 @@ public interface CaretModel {
    * @return the caret position.
    */
   @NotNull
-  VisualPosition getVisualPosition();
+  default VisualPosition getVisualPosition() {
+    return getCurrentCaret().getVisualPosition();
+  }
 
   /**
    * Returns the offset of the caret in the document.
    *
    * @return the caret offset.
    */
-  int getOffset();
+  default int getOffset() {
+    return getCurrentCaret().getOffset();
+  }
 
   /**
    * Adds a listener for receiving notifications about caret movement and caret addition/removal
@@ -143,12 +161,16 @@ public interface CaretModel {
   /**
    * @return    document offset for the start of the logical line where caret is located
    */
-  int getVisualLineStart();
+  default int getVisualLineStart() {
+    return getCurrentCaret().getVisualLineStart();
+  }
 
   /**
    * @return    document offset that points to the first symbol shown at the next visual line after the one with caret on it
    */
-  int getVisualLineEnd();
+  default int getVisualLineEnd() {
+    return getCurrentCaret().getVisualLineEnd();
+  }
 
   /**
    * Returns visual representation of caret (e.g. background color).
@@ -200,7 +222,9 @@ public interface CaretModel {
    * Same as {@link #addCaret(VisualPosition, boolean)} with {@code true} as a {@code makePrimary} boolean parameter value.
    */
   @Nullable
-  Caret addCaret(@NotNull VisualPosition pos);
+  default Caret addCaret(@NotNull VisualPosition pos) {
+    return addCaret(pos, true);
+  }
 
   /**
    * Adds a new caret at the given position, and returns corresponding {@link Caret} instance. Locations outside of possible values
@@ -211,6 +235,16 @@ public interface CaretModel {
    */
   @Nullable
   Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary);
+
+  /**
+   * Adds a new caret at the given position, and returns corresponding {@link Caret} instance. Locations outside of possible values
+   * for the given document are trimmed automatically.
+   * Newly added caret will become a primary caret if and only if {@code makePrimary} value is {@code true}.
+   * Does nothing if multiple carets are not supported, a caret already exists at specified location or selection of existing caret
+   * includes the specified location, {@code null} is returned in this case.
+   */
+  @Nullable
+  Caret addCaret(@NotNull LogicalPosition pos, boolean makePrimary);
 
   /**
    * Removes a given caret if it's recognized by the model and is not the only existing caret in the document, returning {@code true}.
@@ -278,12 +312,16 @@ public interface CaretModel {
    * <p>
    * Carets are iterated in position order (top-to-bottom) if {@code reverseOrder} is {@code false}, and in reverse order
    * if it's {@code true}.
+   * <p>
+   * It's possible to call this method not from EDT (for read-only operations). Caret merging is not performed in this case, and no
+   * notifications to {@link CaretActionListener}-s are sent.
    */
   void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder);
 
   /**
    * Adds a listener which will be notified before and after all-caret operations are performed by {@link #runForEachCaret(CaretAction)} and
-   * {@link #runForEachCaret(CaretAction, boolean)}.
+   * {@link #runForEachCaret(CaretAction, boolean)}. Listeners will be notified only if those methods are invoked from EDT (non-EDT
+   * invocations are not allowed to change caret state anyway).
    */
   void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable);
 

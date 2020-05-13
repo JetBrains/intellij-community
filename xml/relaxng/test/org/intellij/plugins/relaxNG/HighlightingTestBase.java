@@ -210,9 +210,8 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   private static class DefaultInspectionProvider implements InspectionToolProvider {
-    @NotNull
     @Override
-    public Class<? extends LocalInspectionTool>[] getInspectionClasses() {
+    public Class<? extends LocalInspectionTool> @NotNull [] getInspectionClasses() {
       //noinspection unchecked
       return new Class[]{RngDomInspection.class, RequiredAttributesInspection.class};
     }

@@ -44,8 +44,8 @@ public class GetVersionAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(GetVersionAction.class);
 
   public GetVersionAction() {
-    super(VcsBundle.message("action.name.get.file.content.from.repository"),
-          VcsBundle.message("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
+    super(VcsBundle.messagePointer("action.name.get.file.content.from.repository"),
+          VcsBundle.messagePointer("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
   }
 
   @Override

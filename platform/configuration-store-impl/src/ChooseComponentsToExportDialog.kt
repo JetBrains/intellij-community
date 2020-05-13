@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.ElementsChooser
 import com.intellij.ide.util.MultiStateElementsChooser
 import com.intellij.ide.util.PropertiesComponent
@@ -11,12 +10,12 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import java.awt.Component
@@ -38,7 +37,9 @@ private val markedElementNames: Set<String>
     return if (value.isNullOrEmpty()) {
       emptySet()
     }
-    else THashSet(StringUtil.split(value.trim { it <= ' ' }, "|"))
+    else {
+      ObjectOpenHashSet(value.trim { it <= ' ' }.split("|"))
+    }
   }
 
 private fun addToExistingListElement(item: ExportableItem,
@@ -67,12 +68,15 @@ private fun addToExistingListElement(item: ExportableItem,
   return file != null
 }
 
-fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, description: String): Promise<String> {
+fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, description: String): Promise<VirtualFile> {
   val chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
   chooserDescriptor.description = description
   chooserDescriptor.isHideIgnored = false
   chooserDescriptor.title = title
-  chooserDescriptor.withFileFilter { ConfigImportHelper.isSettingsFile(it) }
+  chooserDescriptor.withFileFilter {
+    ConfigImportHelper.isSettingsFile(it) ||
+    it.fileSystem.getNioPath(it)?.let { p -> ConfigImportHelper.isConfigDirectory(p) } == true
+  }
 
   var initialDir: VirtualFile?
   if (oldPath != null) {
@@ -85,16 +89,11 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
   else {
     initialDir = null
   }
-  val result = AsyncPromise<String>()
+  val result = AsyncPromise<VirtualFile>()
   FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, object : FileChooser.FileChooserConsumer {
     override fun consume(files: List<VirtualFile>) {
       val file = files[0]
-      if (file.isDirectory) {
-        result.setResult("${file.path}/$DEFAULT_FILE_NAME")
-      }
-      else {
-        result.setResult(file.path)
-      }
+      result.setResult(file)
     }
 
     override fun cancelled() {
@@ -104,13 +103,16 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
   return result
 }
 
-internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<ExportableItem>>, private val isShowFilePath: Boolean, title: String, private val description: String) : DialogWrapper(false) {
+internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<ExportableItem>>,
+                                              private val isShowFilePath: Boolean,
+                                              title: @NlsContexts.DialogTitle String,
+                                              private val description: String) : DialogWrapper(false) {
   private val chooser: ElementsChooser<ComponentElementProperties>
-  private val pathPanel = FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, { browse() }, null)
+  private val pathPanel = FieldPanel(ConfigurationStoreBundle.message("editbox.export.settings.to"), null, { browse() }, null)
 
   internal val exportableComponents: Set<ExportableItem>
     get() {
-      val components = THashSet<ExportableItem>()
+      val components = ObjectOpenHashSet<ExportableItem>()
       for (elementProperties in chooser.markedElements) {
         components.addAll(elementProperties.items)
       }
@@ -149,9 +151,12 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
   }
 
   private fun browse() {
-    chooseSettingsFile(pathPanel.text, window, IdeBundle.message("title.export.file.location"),
-                       IdeBundle.message("prompt.choose.export.settings.file.path"))
-      .onSuccess { path -> pathPanel.text = FileUtil.toSystemDependentName(path) }
+    chooseSettingsFile(pathPanel.text, window, ConfigurationStoreBundle.message("title.export.file.location"),
+                       ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path"))
+      .onSuccess { file ->
+        val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
+        pathPanel.text = FileUtil.toSystemDependentName(path)
+      }
   }
 
   private fun updateControls() {
@@ -214,7 +219,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
 }
 
 private class ComponentElementProperties : MultiStateElementsChooser.ElementProperties {
-  val items = THashSet<ExportableItem>()
+  val items = ObjectOpenHashSet<ExportableItem>()
 
   val fileName: String
     get() = items.first().file.fileName.toString()

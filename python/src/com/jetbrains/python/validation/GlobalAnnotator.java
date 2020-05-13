@@ -16,6 +16,7 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -51,7 +52,7 @@ public class GlobalAnnotator extends PyAnnotator {
       for (PyTargetExpression expr : node.getGlobals()) {
         final String expr_name = expr.getReferencedName();
         if (paramNames.contains(expr_name)) {
-          holder.createErrorAnnotation(expr.getTextRange(), PyBundle.message("ANN.$0.both.global.and.param", expr_name));
+          holder.newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.$0.both.global.and.param", expr_name)).range(expr).create();
         }
       }
     }

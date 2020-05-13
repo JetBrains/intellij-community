@@ -31,7 +31,7 @@ import java.util.List;
   storages = @Storage("mavenServices.xml")
 )
 public class MavenRepositoryServicesManager implements PersistentStateComponent<MavenRepositoryServicesManager> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.repository.services.MavenRepositoryServicesManager");
+  private static final Logger LOG = Logger.getInstance(MavenRepositoryServicesManager.class);
   private final List<String> myUrls = new ArrayList<>();
 
   public static final List<String> DEFAULT_SERVICES = ContainerUtil
@@ -47,8 +47,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
     return ServiceManager.getService(project, MavenRepositoryServicesManager.class);
   }
 
-  @NotNull
-  public static MavenRepositoryService[] getServices() {
+  public static MavenRepositoryService @NotNull [] getServices() {
     return new MavenRepositoryService[]{new NexusRepositoryService(), new ArtifactoryRepositoryService(), new BintrayRepositoryService()};
   }
 

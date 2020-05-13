@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -22,10 +22,7 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
-/**
- *  @author dsl
- */
-public class PathMacroTable extends JBTable {
+public final class PathMacroTable extends JBTable {
   private static final Logger LOG = Logger.getInstance(PathMacroTable.class);
   private final PathMacros myPathMacros = PathMacros.getInstance();
   private final MyTableModel myTableModel = new MyTableModel();
@@ -41,7 +38,7 @@ public class PathMacroTable extends JBTable {
     this(null);
   }
 
-  public PathMacroTable(final Collection<String> undefinedMacroNames) {
+  public PathMacroTable(Collection<String> undefinedMacroNames) {
     myUndefinedMacroNames = undefinedMacroNames;
     setModel(myTableModel);
     TableColumn column = getColumnModel().getColumn(NAME_COLUMN);
@@ -72,7 +69,7 @@ public class PathMacroTable extends JBTable {
     if (macroEditor.showAndGet()) {
       final String name = macroEditor.getName();
       myMacros.add(Couple.of(name, macroEditor.getValue()));
-      Collections.sort(myMacros, MACRO_COMPARATOR);
+      myMacros.sort(MACRO_COMPARATOR);
       final int index = indexOfMacroWithName(name);
       LOG.assertTrue(index >= 0);
       myTableModel.fireTableDataChanged();
@@ -108,9 +105,8 @@ public class PathMacroTable extends JBTable {
     myPathMacros.removeAllMacros();
     for (Couple<String> pair : myMacros) {
       final String value = pair.getSecond();
-      if (value != null && value.trim().length() > 0) {
-        String path = value.replace(File.separatorChar, '/');
-        path = StringUtil.trimEnd(path, "/");
+      if (!StringUtil.isEmptyOrSpaces(value)) {
+        String path = StringUtil.trimEnd(value.replace(File.separatorChar, '/'), "/");
         myPathMacros.setMacro(pair.getFirst(), path);
       }
     }
@@ -160,7 +156,7 @@ public class PathMacroTable extends JBTable {
         macros.add(Couple.of(undefinedMacroName, ""));
       }
     }
-    Collections.sort(macros, MACRO_COMPARATOR);
+    macros.sort(MACRO_COMPARATOR);
   }
 
   public void editMacro() {
@@ -175,7 +171,7 @@ public class PathMacroTable extends JBTable {
     if (macroEditor.showAndGet()) {
       myMacros.remove(selectedRow);
       myMacros.add(Couple.of(macroEditor.getName(), macroEditor.getValue()));
-      Collections.sort(myMacros, MACRO_COMPARATOR);
+      myMacros.sort(MACRO_COMPARATOR);
       myTableModel.fireTableDataChanged();
     }
   }
@@ -186,7 +182,7 @@ public class PathMacroTable extends JBTable {
     return !macros.equals(myMacros);
   }
 
-  private class MyTableModel extends AbstractTableModel{
+  private final class MyTableModel extends AbstractTableModel{
     @Override
     public int getColumnCount() {
       return 2;
@@ -198,7 +194,7 @@ public class PathMacroTable extends JBTable {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       return String.class;
     }
 
@@ -214,10 +210,6 @@ public class PathMacroTable extends JBTable {
     }
 
     @Override
-    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-    }
-
-    @Override
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN: return ApplicationBundle.message("column.name");
@@ -225,14 +217,9 @@ public class PathMacroTable extends JBTable {
       }
       return null;
     }
-
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return false;
-    }
   }
 
-  private class AddValidator implements PathMacroEditor.Validator {
+  private final class AddValidator implements PathMacroEditor.Validator {
     private final String myTitle;
 
     AddValidator(String title) {

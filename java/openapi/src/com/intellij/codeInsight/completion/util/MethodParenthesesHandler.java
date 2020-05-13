@@ -17,8 +17,12 @@ package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -34,26 +38,31 @@ public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupEle
 
   @Override
   protected boolean placeCaretInsideParentheses(final InsertionContext context, final LookupElement item) {
-    return hasParams(item, context.getElements(), myOverloadsMatter, myMethod);
+    return myOverloadsMatter
+           ? overloadsHaveParameters(context.getElements(), myMethod) != ThreeState.NO
+           : !myMethod.getParameterList().isEmpty();
   }
 
-  public static boolean hasParams(LookupElement item, LookupElement[] allItems, final boolean overloadsMatter, final PsiMethod method) {
-    boolean hasParams = !method.getParameterList().isEmpty();
-    if (overloadsMatter){
-      hasParams |= hasOverloads(allItems, method);
-    }
-    return hasParams;
+  public static ThreeState overloadsHaveParameters(LookupElement[] allItems, PsiMethod method) {
+    List<PsiMethod> overloads = JBIterable.of(allItems)
+      .map(LookupElement::getPsiElement)
+      .filter(PsiMethod.class)
+      .filter(element -> element.getName().equals(method.getName()))
+      .toList();
+    return overloads.isEmpty() ? ThreeState.fromBoolean(!method.getParameterList().isEmpty()) : hasParameters(overloads);
   }
 
-  private static boolean hasOverloads(LookupElement[] allItems, final PsiMethod method) {
-    String name = method.getName();
-    for (LookupElement another : allItems) {
-      final PsiElement element = another.getPsiElement();
-      if (method != element && element instanceof PsiMethod && ((PsiMethod)element).getName().equals(name)) {
-        return true;
+  @NotNull
+  public static ThreeState hasParameters(List<PsiMethod> methods) {
+    boolean hasEmpty = methods.isEmpty();
+    boolean hasNonEmpty = false;
+    for (PsiMethod method : methods) {
+      if (!method.getParameterList().isEmpty()) {
+        hasNonEmpty = true;
+      } else {
+        hasEmpty = true;
       }
     }
-    return false;
+    return hasNonEmpty && hasEmpty ? ThreeState.UNSURE : hasNonEmpty ? ThreeState.YES : ThreeState.NO;
   }
-
 }

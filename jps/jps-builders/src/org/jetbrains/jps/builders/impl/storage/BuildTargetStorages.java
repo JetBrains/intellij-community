@@ -15,30 +15,26 @@
  */
 package org.jetbrains.jps.builders.impl.storage;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author nik
- */
 public class BuildTargetStorages extends CompositeStorageOwner {
+  private static final Logger LOG = Logger.getInstance(BuildTargetStorages.class);
   private final BuildTarget<?> myTarget;
   private final BuildDataPaths myPaths;
-  private final ConcurrentMap<StorageProvider<?>, AtomicNotNullLazyValue<? extends StorageOwner>> myStorages 
-    = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final ConcurrentMap<StorageProvider<? extends StorageOwner>, StorageOwner> myStorages = new ConcurrentHashMap<>(16, 0.75f, BuildDataManager.CONCURRENCY_LEVEL);
 
   public BuildTargetStorages(BuildTarget<?> target, BuildDataPaths paths) {
     myTarget = target;
@@ -47,56 +43,31 @@ public class BuildTargetStorages extends CompositeStorageOwner {
 
   @NotNull 
   public <S extends StorageOwner> S getOrCreateStorage(@NotNull final StorageProvider<S> provider, PathRelativizerService relativizer) throws IOException {
-    NotNullLazyValue<? extends StorageOwner> lazyValue = myStorages.get(provider);
-    if (lazyValue == null) {
-      AtomicNotNullLazyValue<S> newValue = new AtomicNotNullLazyValue<S>() {
-        @NotNull
-        @Override
-        protected S compute() {
-          try {
-            return provider.createStorage(myPaths.getTargetDataRoot(myTarget), relativizer);
-          }
-          catch (IOException e) {
-            throw new BuildDataCorruptedException(e);
-          }
-        }
-      };
-      lazyValue = myStorages.putIfAbsent(provider, newValue);
-      if (lazyValue == null) {
-        lazyValue = newValue; // just initialized
-      }
-    }
     try {
-      return (S)lazyValue.getValue();
+      return (S)myStorages.computeIfAbsent(provider, _provider -> {
+        try {
+          return _provider.createStorage(myPaths.getTargetDataRoot(myTarget), relativizer);
+        }
+        catch (IOException e) {
+          throw new BuildDataCorruptedException(e);
+        }
+      });
     }
     catch (BuildDataCorruptedException e) {
+      LOG.info(e);
       throw e.getCause();
     }
   } 
-  
+
+  public void close(@NotNull final StorageProvider<? extends StorageOwner> provider) throws IOException {
+    final StorageOwner storage = myStorages.remove(provider);
+    if (storage != null) {
+      storage.close();
+    }
+  }
+
   @Override
-  protected Iterable<? extends StorageOwner> getChildStorages() {
-    return new Iterable<StorageOwner>() {
-      @Override
-      public Iterator<StorageOwner> iterator() {
-        final Iterator<AtomicNotNullLazyValue<? extends StorageOwner>> iterator = myStorages.values().iterator();
-        return new Iterator<StorageOwner>() {
-          @Override
-          public boolean hasNext() {
-            return iterator.hasNext();
-          }
-
-          @Override
-          public StorageOwner next() {
-            return iterator.next().getValue();
-          }
-
-          @Override
-          public void remove() {
-            iterator.remove();
-          }
-        };
-      }
-    };
+  protected Iterable<StorageOwner> getChildStorages() {
+    return () -> myStorages.values().iterator();
   }
 }

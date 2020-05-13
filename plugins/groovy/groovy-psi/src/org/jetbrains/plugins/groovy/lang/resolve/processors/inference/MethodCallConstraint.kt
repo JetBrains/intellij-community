@@ -14,7 +14,7 @@ class MethodCallConstraint(
   private val context: PsiElement
 ) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     val candidate = result.candidate ?: return true
     val method = candidate.method
     val contextSubstitutor = result.contextSubstitutor

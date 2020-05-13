@@ -19,7 +19,7 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DoubleClickListener;
@@ -36,14 +36,13 @@ public class GetJPDADialog extends DialogWrapper {
 
   public GetJPDADialog() {
     super(false);
-    setTitle(DebuggerBundle.message("get.jpda.dialog.title"));
+    setTitle(JavaDebuggerBundle.message("get.jpda.dialog.title"));
     setResizable(false);
     init();
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
 
@@ -54,19 +53,19 @@ public class GetJPDADialog extends DialogWrapper {
     JPanel _panel2 = new JPanel(new BorderLayout());
     _panel2.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     //"Debug libraries are missig from JDK home.\nIn order for debugger to start, the libraries should be installed.\nPlease visit http://java.sun.com/products/jpda"
-    JLabel label1 = new JLabel(DebuggerBundle.message("label.get.jpda.dialog.prompt"));
+    JLabel label1 = new JLabel(JavaDebuggerBundle.message("label.get.jpda.dialog.prompt"));
     //label1.setForeground(Color.black);
     JLabel label2 = new JLabel(JPDA_URL);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         BrowserUtil.browse(JPDA_URL);
         return true;
       }
     }.installOn(label2);
     label2.setForeground(JBColor.BLUE.darker());
     label2.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    _panel2.add(new JLabel(DebuggerBundle.message("label.get.jpda.dialog.error.description")), BorderLayout.NORTH);
+    _panel2.add(new JLabel(JavaDebuggerBundle.message("label.get.jpda.dialog.error.description")), BorderLayout.NORTH);
     _panel2.add(label1, BorderLayout.WEST);
     _panel2.add(label2, BorderLayout.EAST);
     _panel1.add(_panel2, BorderLayout.NORTH);

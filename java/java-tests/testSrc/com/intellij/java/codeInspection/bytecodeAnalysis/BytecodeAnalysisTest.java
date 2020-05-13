@@ -30,7 +30,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -178,7 +177,6 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(getModule());
     PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(PACKAGE_NAME + '.' + className, scope);
     assertNotNull(psiClass);
-    MessageDigest digest = BytecodeAnalysisConverter.getMessageDigest();
 
     try (InputStream stream = getVirtualFile(psiClass).getInputStream()) {
       ClassReader reader = new ClassReader(stream);
@@ -191,7 +189,7 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
             assertEquals("Must be single method: " + name, 1, psiMethods.length);
             PsiMethod psiMethod = psiMethods[0];
             boolean noKey = psiMethod.hasAnnotation(EXPECT_NO_PSI_KEY);
-            checkCompoundId(method, psiMethod, noKey, digest);
+            checkCompoundId(method, psiMethod, noKey);
           }
           return null;
         }
@@ -199,7 +197,7 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  private static void checkCompoundId(Member method, PsiMethod psiMethod, boolean noKey, MessageDigest digest) {
+  private static void checkCompoundId(Member method, PsiMethod psiMethod, boolean noKey) {
     EKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, Direction.Out);
     if (noKey) {
       assertNull(psiKey);
@@ -208,7 +206,7 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
       assertNotNull(psiKey);
       EKey asmKey = new EKey(method, Direction.Out, true);
       assertEquals(asmKey, psiKey);
-      assertEquals(asmKey.hashed(digest), psiKey.hashed(digest));
+      assertEquals(asmKey.hashed(), psiKey.hashed());
     }
   }
 

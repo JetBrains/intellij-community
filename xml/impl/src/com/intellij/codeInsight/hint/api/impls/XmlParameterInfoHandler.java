@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.lang.parameterInfo.*;
@@ -29,6 +28,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Function;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,11 +92,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
 
   @Override
   public void updateParameterInfo(@NotNull final XmlTag parameterOwner, @NotNull final UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() == null || parameterOwner.equals(context.getParameterOwner())) {
-      context.setParameterOwner(parameterOwner);
-    } else {
-      context.removeHint();
-    }
+    context.setParameterOwner(parameterOwner);
   }
 
   @Nullable
@@ -158,7 +154,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     int highlightEndOffset = -1;
 
     if (attributes.length == 0) {
-      buffer.append(CodeInsightBundle.message("xml.tag.info.no.attributes"));
+      buffer.append(XmlBundle.message("xml.tag.info.no.attributes"));
     }
     else {
       StringBuilder text1 = new StringBuilder(" ");

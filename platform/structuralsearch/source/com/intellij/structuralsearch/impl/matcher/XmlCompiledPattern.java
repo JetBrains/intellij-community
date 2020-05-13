@@ -14,9 +14,8 @@ public class XmlCompiledPattern extends CompiledPattern {
     setStrategy(XmlMatchingStrategy.getInstance());
   }
 
-  @NotNull
   @Override
-  public String[] getTypedVarPrefixes() {
+  public String @NotNull [] getTypedVarPrefixes() {
     return new String[] {XML_TYPED_VAR_PREFIX};
   }
 

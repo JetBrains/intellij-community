@@ -71,6 +71,8 @@ public interface RegExpGroup extends RegExpAtom, PsiNamedElement {
 
     /** (?<!pattern) */
     NEGATIVE_LOOKBEHIND,
+    /** (?|pattern) */
+    PCRE_BRANCH_RESET,
 
     /** (?i:pattern) */
     OPTIONS

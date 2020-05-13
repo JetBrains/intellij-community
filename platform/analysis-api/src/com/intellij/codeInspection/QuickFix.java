@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +19,7 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
   /**
    * @return the name of the quick fix.
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   default String getName() {
     return getFamilyName();
@@ -29,7 +30,7 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
    * if the name of the quickfix is "Create template &lt;filename&gt", the return value of getFamilyName() should be "Create template".
    * If the name of the quickfix does not depend on a specific element, simply return {@link #getName()}.
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionFamilyName
   @NotNull
   String getFamilyName();
 

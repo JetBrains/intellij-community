@@ -51,7 +51,7 @@ public class MarkdownFoldingBuilder extends CustomFoldingBuilder implements Dumb
                                           boolean quick) {
     root.accept(new MarkdownElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         element.acceptChildren(this);
       }

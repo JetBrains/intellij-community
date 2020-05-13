@@ -29,7 +29,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class DomCustomAnnotationChecker<T extends Annotation> {
-  public static final ExtensionPointName<DomCustomAnnotationChecker> EP_NAME = ExtensionPointName.create("com.intellij.dom.customAnnotationChecker");
+  static final ExtensionPointName<DomCustomAnnotationChecker> EP_NAME = ExtensionPointName.create("com.intellij.dom.customAnnotationChecker");
   
   @NotNull
   public abstract Class<T> getAnnotationClass();

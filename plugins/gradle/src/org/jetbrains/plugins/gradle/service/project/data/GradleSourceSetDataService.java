@@ -1,39 +1,30 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataService;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings;
+import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
 /**
  * @author Vladislav.Soroka
@@ -54,7 +45,7 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
                                                           @NotNull final Project project,
                                                           @NotNull final IdeModifiableModelsProvider modelsProvider) {
     return () -> {
-      List<Module> orphanIdeModules = ContainerUtil.newSmartList();
+      List<Module> orphanIdeModules = new SmartList<>();
 
       for (Module module : modelsProvider.getModules()) {
         if (module.isDisposed()) continue;
@@ -71,6 +62,45 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
 
       return orphanIdeModules;
     };
+  }
+
+  @Override
+  protected @NotNull Module createModule(@NotNull DataNode<GradleSourceSetData> sourceSetModuleNode,
+                                         @NotNull IdeModifiableModelsProvider modelsProvider) {
+    //noinspection unchecked
+    DataNode<ModuleData> parentModuleNode = (DataNode<ModuleData>)sourceSetModuleNode.getParent();
+    assert parentModuleNode != null;
+    Module parentModule = parentModuleNode.getUserData(MODULE_KEY);
+    assert parentModule != null;
+
+    String projectPath = sourceSetModuleNode.getData().getLinkedExternalProjectPath();
+    ExternalProjectSettings settings = getSettings(parentModule.getProject(), SYSTEM_ID).getLinkedProjectSettings(projectPath);
+    if (settings != null && settings.isUseQualifiedModuleNames()) {
+      String sourceSetModuleInternalName = sourceSetModuleNode.getData().getInternalName();
+      if (!sourceSetModuleInternalName.startsWith(parentModule.getName())) {
+        String sourceSetName = sourceSetModuleNode.getData().getModuleName();
+        String adjustedInternalName = findDeduplicatedModuleName(parentModule.getName() + "." + sourceSetName, modelsProvider);
+        sourceSetModuleNode.getData().setInternalName(adjustedInternalName);
+      }
+    }
+    return super.createModule(sourceSetModuleNode, modelsProvider);
+  }
+
+  @NotNull
+  private static String findDeduplicatedModuleName(@NotNull String moduleName,
+                                                   @NotNull IdeModifiableModelsProvider modelsProvider) {
+    Module ideModule = modelsProvider.findIdeModule(moduleName);
+    if (ideModule == null) {
+      return moduleName;
+    }
+    int i = 0;
+    while (true) {
+      String nextModuleNameCandidate = moduleName + "~" + ++i;
+      ideModule = modelsProvider.findIdeModule(nextModuleNameCandidate);
+      if (ideModule == null) {
+        return nextModuleNameCandidate;
+      }
+    }
   }
 
   @Override

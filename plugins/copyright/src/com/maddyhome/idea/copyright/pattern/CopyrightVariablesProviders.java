@@ -18,7 +18,7 @@ package com.maddyhome.idea.copyright.pattern;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
 
 public class CopyrightVariablesProviders extends FileTypeExtension<CopyrightVariablesProvider> {
-  public static CopyrightVariablesProviders INSTANCE = new CopyrightVariablesProviders();
+  public final static CopyrightVariablesProviders INSTANCE = new CopyrightVariablesProviders();
 
   private CopyrightVariablesProviders() {
     super("com.intellij.copyright.variablesProvider");

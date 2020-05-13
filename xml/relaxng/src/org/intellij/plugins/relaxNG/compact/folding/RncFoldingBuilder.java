@@ -37,8 +37,7 @@ import java.util.ArrayList;
 
 public class RncFoldingBuilder implements FoldingBuilder {
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
 
     final ArrayList<FoldingDescriptor> regions = new ArrayList<>();
     process(node, document, regions);

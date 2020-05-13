@@ -2,12 +2,15 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
@@ -45,7 +48,6 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
     val settings = ExternalSystemApiUtil.getSettings(project, SYSTEM_ID) as GradleSettings
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath)!!
     assertEquals(projectSettings.externalProjectPath, externalProjectPath)
-    assertEquals(projectSettings.isUseAutoImport, false)
     assertEquals(projectSettings.isUseQualifiedModuleNames, true)
     assertEquals(settings.storeProjectFilesExternally, true)
   }
@@ -62,6 +64,11 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
     invokeAndWaitIfNeeded { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() }
   }
 
+  override fun cleanupProjectTestResources(project: Project) {
+    super.cleanupProjectTestResources(project)
+    removeGradleJvmSdk(project)
+  }
+
   companion object {
     /**
      * It's sufficient to run the test against one gradle version
@@ -69,5 +76,19 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
     fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
+
+    fun removeGradleJvmSdk(project: Project) {
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          val projectJdkTable = ProjectJdkTable.getInstance()
+          val settings = GradleSettings.getInstance(project)
+          for (projectSettings in settings.linkedProjectsSettings) {
+            val gradleJvm = projectSettings.gradleJvm
+            val sdk = ExternalSystemJdkUtil.getJdk(project, gradleJvm)
+            if (sdk != null) projectJdkTable.removeJdk(sdk)
+          }
+        }
+      }
+    }
   }
 }

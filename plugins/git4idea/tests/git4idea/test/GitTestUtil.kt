@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.util.io.write
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
@@ -27,6 +28,7 @@ import git4idea.repo.GitRepository
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import java.io.File
+import java.nio.file.Paths
 
 const val USER_NAME = "John Doe"
 const val USER_EMAIL = "John.Doe@example.com"
@@ -64,11 +66,16 @@ fun initRepo(project: Project, repoRoot: String, makeInitialCommit: Boolean) {
   cd(repoRoot)
   git(project, "init")
   setupDefaultUsername(project)
+  setupLocalIgnore(repoRoot)
   if (makeInitialCommit) {
     touch("initial.txt")
     git(project, "add initial.txt")
     git(project, "commit -m initial")
   }
+}
+
+fun setupLocalIgnore(repoRoot: String) {
+  Paths.get(repoRoot, ".git", "info", "exclude").write(".shelf")
 }
 
 fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean) {

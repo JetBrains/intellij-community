@@ -50,12 +50,6 @@ public class ClassInitializerInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("class.initializer.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("class.initializer.problem.descriptor");
   }
@@ -67,9 +61,8 @@ public class ClassInitializerInspection extends BaseInspection {
   }
 
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
     final PsiClass aClass = classInitializer.getContainingClass();
     assert aClass != null;

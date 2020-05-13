@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -24,9 +25,10 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
@@ -83,8 +85,7 @@ public class HgUpdateCommand {
       result =
         executor.executeInCurrentThread(repo, "update", arguments);
       if (!clean && hasUncommittedChangesConflict(result)) {
-        final String message = "<html>Your uncommitted changes couldn't be merged into the requested changeset.<br>" +
-                               "Would you like to perform force update and discard them?";
+        final String message = XmlStringUtil.wrapInHtml(HgBundle.message("hg4idea.update.unable.to.merge"));
         if (showDiscardChangesConfirmation(project, message) == Messages.OK) {
           arguments.add("-C");
           result = executor.executeInCurrentThread(repo, "update", arguments);
@@ -99,8 +100,8 @@ public class HgUpdateCommand {
   public static int showDiscardChangesConfirmation(@NotNull final Project project, @NotNull final String confirmationMessage) {
     final AtomicInteger exitCode = new AtomicInteger();
     UIUtil.invokeAndWaitIfNeeded(
-      (Runnable)() -> exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, "Uncommitted Changes Problem",
-                                                             "&Discard Changes", "&Cancel", Messages.getWarningIcon())));
+      (Runnable)() -> exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, HgBundle.message("hg4idea.update.uncommitted.problem"),
+                                                               HgBundle.message("changes.discard"), CommonBundle.message("button.cancel.c"), Messages.getWarningIcon())));
     return exitCode.get();
   }
 
@@ -125,7 +126,7 @@ public class HgUpdateCommand {
                                   @NotNull final String targetRevision,
                                   final boolean clean,
                                   @Nullable final Runnable callInAwtLater) {
-    new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", targetRevision)) {
+    new Task.Backgroundable(project, HgBundle.message("action.hg4idea.updateTo.description", targetRevision)) {
       @Override
       public void onSuccess() {
         if (callInAwtLater != null) {
@@ -152,12 +153,12 @@ public class HgUpdateCommand {
     boolean success = !HgErrorUtil.isCommandExecutionFailed(result);
     boolean hasUnresolvedConflicts = HgConflictResolver.hasConflicts(project, repository);
     if (!success) {
-      new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
+      new HgCommandResultNotifier(project).notifyError(result, "", HgBundle.message("hg4idea.update.failed"));
     }
     else if (hasUnresolvedConflicts) {
       new VcsNotifier(project)
-        .notifyImportantWarning("Unresolved conflicts.",
-                                HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
+        .notifyImportantWarning(HgBundle.message("hg4idea.update.unresolved.conflicts"),
+                                HgBundle.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
     }
     getRepositoryManager(project).updateRepository(repository);
     HgUtil.markDirectoryDirty(project, repository);

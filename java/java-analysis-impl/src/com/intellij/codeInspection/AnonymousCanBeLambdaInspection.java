@@ -1,15 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -43,14 +42,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Anonymous type can be replaced with lambda";
+    return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
   @Override
@@ -67,7 +59,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Report when interface is not annotated with @FunctionalInterface", this, "reportNotAnnotatedInterfaces");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
   }
 
   @NotNull
@@ -90,7 +82,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
               type = ProblemHighlightType.INFORMATION;
             }
           }
-          holder.registerProblem(parent, "Anonymous #ref #loc can be replaced with lambda",
+          holder.registerProblem(parent, JavaAnalysisBundle.message("anonymous.ref.loc.can.be.replaced.with.lambda"),
                                  type, rangeInElement, new ReplaceWithLambdaFix());
         }
       }
@@ -198,6 +190,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                                boolean acceptParameterizedFunctionTypes,
                                                boolean reportNotAnnotatedInterfaces,
                                                @NotNull Set<String> ignoredRuntimeAnnotations) {
+    if (aClass.getBaseClassType().getAnnotations().length > 0) return false;
     PsiElement parent = aClass.getParent();
     final PsiElement lambdaContext = parent != null ? PsiUtil.skipParenthesizedExprUp(parent.getParent()) : null;
     if (lambdaContext == null || !LambdaUtil.isValidLambdaContext(lambdaContext) && !(lambdaContext instanceof PsiReferenceExpression)) return false;
@@ -388,7 +381,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with lambda";
+      return JavaAnalysisBundle.message("replace.with.lambda");
     }
 
     @Override
@@ -408,7 +401,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       for (PsiVariable parameter : parameters) {
         String parameterName = parameter.getName();
         String uniqueVariableName = UniqueNameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(parameterName, parameter.getParent(), false), usedLocalNames);
-        if (!Comparing.equal(parameterName, uniqueVariableName)) {
+        if (!Objects.equals(parameterName, uniqueVariableName)) {
           names.put(parameter, uniqueVariableName);
         }
       }
@@ -468,7 +461,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                                             PsiCallExpression callExpression) {
     if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = psiMethod.getContainingClass();
-      if (containingClass != null && 
+      if (containingClass != null &&
           CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
         return !(callExpression instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)callExpression).getMethodExpression().isQualified());
       }

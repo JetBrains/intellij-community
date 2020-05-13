@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
@@ -42,8 +44,8 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return MultiMap.empty();
     }
     try {
-      List<String> bareClasses = ContainerUtil.newSmartList();
-      List<Couple<String>> allTogether = ContainerUtil.newSmartList();
+      List<String> bareClasses = new SmartList<>();
+      List<Couple<String>> allTogether = new SmartList<>();
 
       classesAndMethods.forEach(couple -> {
         if (couple.second == null) bareClasses.add(couple.first);
@@ -214,7 +216,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     private String className;
 
     @Nullable
-    private List<String> files = ContainerUtil.newSmartList();
+    private List<String> files = new SmartList<>();
 
     @Nullable
     private String message;
@@ -267,7 +269,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       if (ApplicationManager.getApplication().isReadAccessAllowed()) {
         List<String> result = ProgressManager.getInstance().run(
           new Task.WithResult<List<String>, IOException>(project,
-                                                         "Searching for Affected File Paths...",
+                                                         ExecutionBundle.message("searching.for.affected.file.paths"),
                                                          true) {
             @Override
             protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {

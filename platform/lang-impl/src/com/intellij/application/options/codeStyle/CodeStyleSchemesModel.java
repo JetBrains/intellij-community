@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -199,7 +185,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   public void fireSchemeListChanged() {
     myDispatcher.getMulticaster().schemeListChanged();
   }
-  
+
   public void fireAfterCurrentSettingsChanged() {
     myDispatcher.getMulticaster().afterCurrentSettingsChanged();
   }
@@ -213,7 +199,8 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public CodeStyleScheme exportProjectScheme(@NotNull String name) {
     CodeStyleScheme newScheme = createNewScheme(name, myProjectScheme);
-    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(getCloneSettings(myProjectScheme).clone());
+    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(
+      CodeStyleSettingsManager.getInstance().cloneSettings(getCloneSettings(myProjectScheme)));
     addScheme(newScheme, false);
 
     return newScheme;
@@ -277,7 +264,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public List<CodeStyleScheme> getAllSortedSchemes() {
     List<CodeStyleScheme> schemes = new ArrayList<>(getSchemes());
-    Collections.sort(schemes, (s1, s2) -> {
+    schemes.sort((s1, s2) -> {
       if (isProjectScheme(s1)) return -1;
       if (isProjectScheme(s2)) return 1;
       if (s1.isDefault()) return -1;
@@ -388,6 +375,10 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   public static class ModelSettings extends CodeStyleSettings {
     private volatile boolean myLocked;
 
+    public ModelSettings() {
+      super(true, true);
+    }
+
     public static ModelSettings createFrom(@NotNull CodeStyleSettings settings) {
       ModelSettings modelSettings = new ModelSettings();
       modelSettings.copyFrom(settings);
@@ -422,8 +413,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
       myModifiers = modifiers;
     }
 
-    @NotNull
-    public CodeStyleSettingsModifier[] getModifiers() {
+    public CodeStyleSettingsModifier @NotNull [] getModifiers() {
       return myModifiers != null && !myModifiers.isEmpty()
              ? myModifiers.toArray(new CodeStyleSettingsModifier[0])
              : EMPTY_MODIFIER_ARRAY;

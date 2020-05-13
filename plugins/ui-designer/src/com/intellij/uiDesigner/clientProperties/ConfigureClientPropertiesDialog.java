@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.clientProperties;
 
@@ -188,15 +188,15 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   private void fillClassTree() {
-    List<Class> configuredClasses = myManager.getConfiguredClasses(myProject);
-    Collections.sort(configuredClasses, Comparator.comparingInt(ConfigureClientPropertiesDialog::getInheritanceLevel));
+    List<Class<?>> configuredClasses = myManager.getConfiguredClasses(myProject);
+    configuredClasses.sort(Comparator.comparingInt(ConfigureClientPropertiesDialog::getInheritanceLevel));
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    Map<Class, DefaultMutableTreeNode> classToNodeMap = new HashMap<>();
-    for (Class cls : configuredClasses) {
+    Map<Class<?>, DefaultMutableTreeNode> classToNodeMap = new HashMap<>();
+    for (Class<?> cls : configuredClasses) {
       DefaultMutableTreeNode parentNode = root;
-      Class superClass = cls.getSuperclass();
+      Class<?> superClass = cls.getSuperclass();
       while (superClass != null) {
         if (classToNodeMap.containsKey(superClass)) {
           parentNode = classToNodeMap.get(superClass);

@@ -29,9 +29,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
   private @Nullable final Project myProject;
   private final boolean myShowCustomLibraryTables;
@@ -132,8 +129,7 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     return isApplicationLibraryTable(libraryTable) || isProjectLibraryTable(libraryTable);
   }
 
-  @NotNull
-  protected Library[] getLibraries(@NotNull LibraryTable table) {
+  protected Library @NotNull [] getLibraries(@NotNull LibraryTable table) {
     return table.getLibraries();
   }
 }

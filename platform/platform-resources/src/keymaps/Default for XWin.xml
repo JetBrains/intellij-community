@@ -1,13 +1,13 @@
 <keymap version="1" name="Default for XWin" disable-mnemonics="false" parent="$default">
+  <action id="RunToCursor">
+    <keyboard-shortcut first-keystroke="shift alt 9"/>
+  </action>
   <action id="ForceRunToCursor">
     <keyboard-shortcut first-keystroke="control alt 9"/>
   </action>
   <action id="QuickEvaluateExpression">
     <keyboard-shortcut first-keystroke="control alt 8"/>
     <mouse-shortcut keystroke="control shift alt button1"/>
-  </action>
-  <action id="ActivateVersionControlToolWindow">
-    <keyboard-shortcut first-keystroke="alt 9"/>
   </action>
   <action id="ShowUsages">
     <keyboard-shortcut first-keystroke="control alt 7"/>

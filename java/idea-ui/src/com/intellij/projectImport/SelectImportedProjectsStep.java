@@ -15,7 +15,7 @@
  */
 package com.intellij.projectImport;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.*;
@@ -77,7 +77,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK, null, null, null));
 
-    openModuleSettingsCheckBox = new JCheckBox(IdeBundle.message("project.import.show.settings.after"));
+    openModuleSettingsCheckBox = new JCheckBox(JavaUiBundle.message("project.import.show.settings.after"));
     panel.add(openModuleSettingsCheckBox, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_HORIZONTAL,
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null));
@@ -111,7 +111,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     }
 
     fileChooser.setBorder(IdeBorderFactory.createTitledBorder(
-      IdeBundle.message("project.import.select.title", getContext().getName()), false));
+      JavaUiBundle.message("project.import.select.title", getContext().getName()), false));
     openModuleSettingsCheckBox.setSelected(getBuilder().isOpenProjectSettingsAfter());
   }
 

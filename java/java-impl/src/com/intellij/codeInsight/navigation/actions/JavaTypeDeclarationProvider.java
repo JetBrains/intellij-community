@@ -31,9 +31,8 @@ public class JavaTypeDeclarationProvider implements TypeDeclarationPlaceAwarePro
     return getSymbolTypeDeclarations(symbol, null, -1);
   }
 
-  @Nullable
   @Override
-  public PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement targetElement, Editor editor, int offset) {
+  public PsiElement @Nullable [] getSymbolTypeDeclarations(@NotNull PsiElement targetElement, Editor editor, int offset) {
     PsiType type;
     if (targetElement instanceof PsiVariable){
       type = ((PsiVariable)targetElement).getType();

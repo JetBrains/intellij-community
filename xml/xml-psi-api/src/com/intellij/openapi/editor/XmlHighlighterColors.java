@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 /**
@@ -57,4 +61,12 @@ public class XmlHighlighterColors {
 
   public static final TextAttributesKey HTML_CODE =
     TextAttributesKey.createTextAttributesKey("HTML_CODE", HighlighterColors.TEXT);
+
+  public static final TextAttributesKey XML_INJECTED_LANGUAGE_FRAGMENT =
+    EditorColors.createInjectedLanguageFragmentKey(XMLLanguage.INSTANCE);
+  public static final TextAttributesKey HTML_INJECTED_LANGUAGE_FRAGMENT =
+    EditorColors.createInjectedLanguageFragmentKey(HTMLLanguage.INSTANCE);
+
+  public static final TextAttributesKey MATCHED_TAG_NAME =
+    TextAttributesKey.createTextAttributesKey("MATCHED_TAG_NAME", CodeInsightColors.MATCHED_BRACE_ATTRIBUTES);
 }

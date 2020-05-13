@@ -1,5 +1,6 @@
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AnchorableComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,19 +28,19 @@ public class JBRadioButton extends JRadioButton implements AnchorableComponent {
     super(icon, selected);
   }
 
-  public JBRadioButton(String text) {
+  public JBRadioButton(@NlsContexts.RadioButton String text) {
     super(text);
   }
 
-  public JBRadioButton(String text, boolean selected) {
+  public JBRadioButton(@NlsContexts.RadioButton String text, boolean selected) {
     super(text, selected);
   }
 
-  public JBRadioButton(String text, Icon icon) {
+  public JBRadioButton(@NlsContexts.RadioButton String text, Icon icon) {
     super(text, icon);
   }
 
-  public JBRadioButton(String text, Icon icon, boolean selected) {
+  public JBRadioButton(@NlsContexts.RadioButton String text, Icon icon, boolean selected) {
     super(text, icon, selected);
   }
 

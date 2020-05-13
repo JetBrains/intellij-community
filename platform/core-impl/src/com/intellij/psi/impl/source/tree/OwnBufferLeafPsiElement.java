@@ -33,15 +33,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
+  private static final Logger LOG = Logger.getInstance(LeafPsiElement.class);
 
   public OwnBufferLeafPsiElement(@NotNull IElementType type, @NotNull CharSequence text) {
     super(type, text);
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -113,8 +112,7 @@ public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 

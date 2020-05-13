@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -17,9 +17,6 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class MockLocalFileSystem extends LocalFileSystem {
   private final MockVirtualFileSystem myDelegate = new MockVirtualFileSystem();
 
@@ -32,12 +29,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
   public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
     return findFileByIoFile(file);
   }
-
-  @Override
-  public void refreshIoFiles(@NotNull Iterable<? extends File> files) { }
-
-  @Override
-  public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files) { }
 
   @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }
@@ -110,8 +101,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @NotNull
   @Override
-  protected String extractRootPath(@NotNull String path) {
-    return path;
+  protected String extractRootPath(@NotNull String normalizedPath) {
+    return normalizedPath;
   }
 
   @Override
@@ -135,9 +126,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(@NotNull VirtualFile file) {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) {
     return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
@@ -167,9 +157,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return false;
   }
 
-  @NotNull
   @Override
-  public String[] list(@NotNull VirtualFile file) {
+  public String @NotNull [] list(@NotNull VirtualFile file) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 

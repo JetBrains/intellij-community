@@ -25,8 +25,8 @@
   </actions>
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/StatisticsEventLog.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
     <group id="WelcomeScreen.QuickStart.Platform">
@@ -35,12 +35,15 @@
 
     <group id="AnalyzePlatformMenu">
       <separator/>
-      <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction"/>
+      <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
+        <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+      </action>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <group id="InspectCodeGroup" text="Inspect Code Actions">
+    <group id="InspectCodeGroup">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
       <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
@@ -64,6 +67,55 @@
       <reference ref="InspectCode"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+    </group>
+
+    <action id="DumpProjectPortableRootsAction"
+            class="com.intellij.util.indexing.diagnostic.dump.paths.DumpProjectPortableRootsAction" internal="true">
+      <add-to-group group-id="Internal" />
+    </action>
+
+    <group id="ProblemsView.ToolWindow.SecondaryActions">
+      <action id="ProblemsView.AutoscrollToSource"
+              icon="AllIcons.General.AutoscrollToSource"
+              class="com.intellij.analysis.problemsView.toolWindow.AutoscrollToSource"/>
+      <action id="ProblemsView.ShowPreview"
+              icon="AllIcons.Actions.PreviewDetails"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowPreview"/>
+      <separator/>
+      <action id="ProblemsView.ShowErrors"
+              icon="AllIcons.General.Error"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowErrors"/>
+      <action id="ProblemsView.ShowWarnings"
+              icon="AllIcons.General.Warning"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowWarnings"/>
+      <action id="ProblemsView.ShowInformation"
+              icon="AllIcons.General.Information"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowInformation"/>
+      <separator/>
+      <action id="ProblemsView.SortFoldersFirst"
+              icon="AllIcons.ObjectBrowser.SortByType"
+              class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
+      <action id="ProblemsView.SortBySeverity"
+              icon="AllIcons.Nodes.SortBySeverity"
+              class="com.intellij.analysis.problemsView.toolWindow.SortBySeverity"/>
+      <action id="ProblemsView.SortByName"
+              icon="AllIcons.ObjectBrowser.Sorted"
+              class="com.intellij.analysis.problemsView.toolWindow.SortByName"/>
+    </group>
+
+    <group id="ProblemsView.ToolWindow.Toolbar">
+      <group id="ProblemsView.Filter" icon="AllIcons.Actions.Show" popup="true">
+        <reference ref="ProblemsView.ShowErrors"/>
+        <reference ref="ProblemsView.ShowWarnings"/>
+        <reference ref="ProblemsView.ShowInformation"/>
+      </group>
+      <reference ref="ProblemsView.AutoscrollToSource"/>
+      <reference ref="ProblemsView.ShowPreview"/>
+      <group id="ProblemsView.Comparator" icon="AllIcons.General.GearPlain" popup="true">
+        <reference ref="ProblemsView.SortFoldersFirst"/>
+        <reference ref="ProblemsView.SortBySeverity"/>
+        <reference ref="ProblemsView.SortByName"/>
+      </group>
     </group>
   </actions>
 

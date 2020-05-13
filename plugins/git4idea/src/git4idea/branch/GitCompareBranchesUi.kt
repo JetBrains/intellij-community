@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.ui.StatusText
-import com.intellij.vcs.log.VcsLogFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRootFilter
@@ -20,6 +19,7 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
@@ -32,6 +32,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoot
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.util.*
 
@@ -52,17 +53,20 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
   }
 
   private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, currentRef: String) {
-    val logUi = logManager.createLogUi(logUiFactory, true)
+    val logUi = logManager.createLogUi(logUiFactory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
-    ContentUtilEx.addTabbedContent(contentManager, panel, "Compare", "$branchName and $currentRef", true, panel.getUi())
-    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
+    ContentUtilEx.addTabbedContent(contentManager, panel, "Compare",
+                                   GitBundle.messagePointer("git.compare.branches.tab.name"),
+                                   GitBundle.messagePointer("git.compare.branches.tab.suffix", branchName, currentRef),
+                                   true, panel.getUi())
+    ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)?.activate(null)
   }
 
   private class MyLogUiFactory(val logManager: VcsLogManager,
                                val rangeFilter: VcsLogRangeFilter,
-                               val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
-    override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
+                               val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
+    override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val logId = "git-compare-branches-" + UUID.randomUUID()
       val properties = MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesLogProperties>())
 
@@ -102,8 +106,8 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
 
     override fun createBranchComponent(): FilterActionComponent {
       return FilterActionComponent {
-        LinkLabel.create("Swap Branches") {
-          setFilter(rangeFilter.asReversed())
+        LinkLabel.create(GitBundle.message("git.compare.branches.swap.link")) {
+          myBranchFilterModel.setRangeFilter(rangeFilter.asReversed())
         }
       }
     }
@@ -115,22 +119,22 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
       }
       else {
         val (start, end) = rangeFilter.getRange()
-        text.text = "$start contains all commits from $end"
-        text.appendSecondaryText("Swap Branches", getLinkAttributes()) {
-          setFilter(rangeFilter.asReversed())
+        text.text = GitBundle.message("git.compare.branches.empty.status", start, end)
+        text.appendSecondaryText(GitBundle.message("git.compare.branches.swap.link"), getLinkAttributes()) {
+          myBranchFilterModel.setRangeFilter(rangeFilter.asReversed())
         }
       }
     }
 
-    override fun setFilter(filter: VcsLogFilter?) {
-      when (filter) {
-        null -> {
-          if (myStructureFilterModel.structureFilter != null) myStructureFilterModel.setFilter(null)
-          myDateFilterModel.setFilter(null)
-          myTextFilterModel.setFilter(null)
-          myUserFilterModel.setFilter(null)
-        }
-        is VcsLogRangeFilter -> myBranchFilterModel.setRangeFilter(filter)
+    override fun setFilters(collection: VcsLogFilterCollection) {
+      if (collection.isEmpty) {
+        if (myStructureFilterModel.structureFilter != null) myStructureFilterModel.setFilter(null)
+        myDateFilterModel.setFilter(null)
+        myTextFilterModel.setFilter(null)
+        myUserFilterModel.setFilter(null)
+      }
+      else {
+        collection.get(VcsLogFilterCollection.RANGE_FILTER)?.let(myBranchFilterModel::setRangeFilter)
       }
     }
   }
@@ -169,4 +173,5 @@ private fun VcsLogRangeFilter.asReversed(): VcsLogRangeFilter {
 }
 
 private fun getExplanationText(dontExist: String, existIn: String): String =
-  "<html>Commits that exist in <code><b>$existIn</b></code> but don't exist in <code><b>$dontExist</b></code></html>"
+  "<html>${GitBundle.message("git.compare.branches.explanation.message",
+                             "<code><b>$existIn</b></code>", "<code><b>$dontExist</b></code>")}</html>"

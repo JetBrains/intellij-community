@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pytestLegacy;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.jetbrains.python.testing.PyTestLegacyInteropKt.isNewTestsModeEnabled;
@@ -181,7 +181,7 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
   }
 
   public static List<PyStatement> getPyTestCasesFromFile(PsiFileSystemItem file, @NotNull final TypeEvalContext context) {
-    List<PyStatement> result = Lists.newArrayList();
+    List<PyStatement> result = new ArrayList<>();
     if (file instanceof PyFile) {
       result = getResult((PyFile)file, context);
     }
@@ -196,15 +196,15 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
   }
 
   private static List<PyStatement> getResult(PyFile file, @NotNull final TypeEvalContext context) {
-    List<PyStatement> result = Lists.newArrayList();
+    List<PyStatement> result = new ArrayList<>();
     for (PyClass cls : file.getTopLevelClasses()) {
-      if (com.jetbrains.python.testing.pytest.PyTestUtil.isPyTestClass(cls, context)) {
+      if (PythonUnitTestDetectorsKt.isTestClass(cls, context)) {
         result.add(cls);
       }
     }
-    for (PyFunction cls : file.getTopLevelFunctions()) {
-      if (com.jetbrains.python.testing.pytest.PyTestUtil.isPyTestFunction(cls)) {
-        result.add(cls);
+    for (PyFunction function : file.getTopLevelFunctions()) {
+      if (PythonUnitTestDetectorsKt.isTestFunction(function)) {
+        result.add(function);
       }
     }
     return result;

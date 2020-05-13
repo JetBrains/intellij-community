@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 
-/**
- * @author nik
- */
 class JreComboboxEditor extends BasicComboBoxEditor {
   public static final TextComponentAccessor<ComboBox<JrePathEditor.JreComboBoxItem>> TEXT_COMPONENT_ACCESSOR = new JreComboBoxTextComponentAccessor();
   private final SortedComboBoxModel<JrePathEditor.JreComboBoxItem> myComboBoxModel;

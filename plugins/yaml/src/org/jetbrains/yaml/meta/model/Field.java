@@ -7,10 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
 import javax.swing.*;
@@ -42,7 +39,7 @@ public class Field {
 
   private final Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
 
-  public Field(@NotNull String name, @NotNull YamlMetaType mainType) {
+  public Field(@NonNls @NotNull String name, @NotNull YamlMetaType mainType) {
     myName = name;
     myMainType = mainType;
   }
@@ -141,7 +138,7 @@ public class Field {
   }
 
   /**
-   * Returns the default relation between the field and its value. For mots normal fields it can be computed based on type and multiplicity
+   * Returns the default relation between the field and its value. For most normal fields it can be computed based on type and multiplicity
    * but for polymorphic fields the main relation should be assigned explicitly.
    */
   @NotNull

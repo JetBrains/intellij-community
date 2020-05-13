@@ -18,9 +18,6 @@ package com.intellij.framework.library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface FrameworkSupportWithLibrary {
 
   @Nullable

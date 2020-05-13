@@ -31,9 +31,6 @@ JNIEnv* env = NULL;
 volatile bool terminating = false;
 volatile int hookExitCode = 0;
 
-//tools.jar doesn't exist in jdk 9 and later. So check it for jdk 1.8 only.
-bool toolsArchiveExists = true;
-
 HANDLE hFileMapping;
 HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
@@ -85,9 +82,11 @@ bool Is64BitJRE(const char* path)
 {
   std::string cfgPath(path);
   std::string cfgJava9Path(path);
+  std::string accessbridgeVersion(path);
   cfgPath += "\\lib\\amd64\\jvm.cfg";
   cfgJava9Path += "\\lib\\jvm.cfg";
-  return FileExists(cfgPath) || FileExists(cfgJava9Path);
+  accessbridgeVersion += "\\bin\\windowsaccessbridge-32.dll";
+  return FileExists(cfgPath) || (FileExists(cfgJava9Path) && !FileExists(accessbridgeVersion));
 }
 
 bool FindValidJVM(const char* path)
@@ -233,32 +232,18 @@ bool FindJVMInRegistry()
   if (FindJVMInRegistryWithVersion("1.8", true))
     return true;
   if (FindJVMInRegistryWithVersion("9", true))
-    toolsArchiveExists = false;
     return true;
   if (FindJVMInRegistryWithVersion("10", true))
-    toolsArchiveExists = false;
-    return true;
-
-  //obsolete java versions
-  if (FindJVMInRegistryWithVersion("1.7", true))
-    return true;
-  if (FindJVMInRegistryWithVersion("1.6", true))
     return true;
 #endif
 
   if (FindJVMInRegistryWithVersion("1.8", false))
     return true;
   if (FindJVMInRegistryWithVersion("9", false))
-    toolsArchiveExists = false;
     return true;
   if (FindJVMInRegistryWithVersion("10", false))
-    toolsArchiveExists = false;
     return true;
-
-  //obsolete java versions
-  if (FindJVMInRegistryWithVersion("1.7", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("1.6", false))
+  if (FindJVMInRegistryWithVersion("11", false))
     return true;
   return false;
 }
@@ -298,16 +283,9 @@ bool LocateJVM()
 
   if (FindJVMInSettings()) return true;
 
-  std::vector<std::string> jrePaths;
-  if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jbr"));
-  if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jre64"));
-  jrePaths.push_back(GetAdjacentDir("jre32"));
-  jrePaths.push_back(GetAdjacentDir("jre"));
-  for(std::vector<std::string>::iterator it = jrePaths.begin(); it != jrePaths.end(); ++it) {
-    if (FindValidJVM((*it).c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
-    {
-      return true;
-    }
+  if (FindValidJVM(GetAdjacentDir(need64BitJRE ? "jbr" : "jbr-x86").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
+  {
+    return true;
   }
 
   if (FindJVMInEnvVar("JAVA_HOME", result))
@@ -438,7 +416,7 @@ std::string BuildClassPath()
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
   std::string result = CollectLibJars(classpathLibs);
 
-  if (toolsArchiveExists)
+  if (LoadStdString(IDS_JDK_ONLY) == std::string("true"))
   {
     std::string toolsJar = FindToolsJar();
     if (toolsJar.size() > 0)
@@ -781,7 +759,8 @@ std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
 
     std::wstring arg(argv[i]);
     std::string command(arg.begin(), arg.end());
-    if (command.find_last_of(":") != std::string::npos)
+    // IDEA-230983
+    if (command.find_last_of(":") != std::string::npos && command.rfind("jetbrains://", 0) != 0)
     {
       std::string line = command.substr(command.find_last_of(":") + 1);
       if (isNumber(line))
@@ -793,16 +772,11 @@ std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
         std::string fileName = command.substr(0, command.find_last_of(":"));
         LPWSTR* fileNameArg = CommandLineToArgvW(std::wstring(fileName.begin(), fileName.end()).c_str(), &numArgs);
         result.push_back(fileNameArg[0]);
-      }
-      else
-      {
-        result.push_back(argv[i]);
+        continue;
       }
     }
-    else
-    {
-      result.push_back(argv[i]);
-    }
+    
+    result.push_back(argv[i]);
   }
   return result;
 }
@@ -1005,8 +979,7 @@ int CheckSingleInstance()
     int exitCode;
     if (view)
     {
-      std::wstring result(view);
-      exitCode = std::stoi(result);
+      exitCode = (int)wcstol(view, NULL, 10);
       UnmapViewOfFile(view);
     }
     else
@@ -1175,6 +1148,20 @@ std::wstring GetCurrentDirectoryAsString()
   return std::wstring(buffer.data(), sizeWithoutTerminatingZero);
 }
 
+static void SetPathVariable(const wchar_t *varName, REFKNOWNFOLDERID rfId)
+{
+  wchar_t env_var_buffer[1];
+  if (GetEnvironmentVariableW(varName, env_var_buffer, 1) == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+  {
+    wchar_t *path = NULL;
+    if (SHGetKnownFolderPath(rfId, KF_FLAG_DONT_VERIFY, NULL, &path) == S_OK)
+    {
+      SetEnvironmentVariableW(varName, path);
+      CoTaskMemFree(path);
+    }
+  }
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
                        LPTSTR    lpCmdLine,
@@ -1196,6 +1183,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     CloseHandle(parentProcHandle);
     return 0;
   }
+
+  // ensures path variables are defined
+  SetPathVariable(L"APPDATA", FOLDERID_RoamingAppData);
+  SetPathVariable(L"LOCALAPPDATA", FOLDERID_LocalAppData);
 
   //it's OK to return 0 here, because the control is transferred to the first instance
   int exitCode = CheckSingleInstance();

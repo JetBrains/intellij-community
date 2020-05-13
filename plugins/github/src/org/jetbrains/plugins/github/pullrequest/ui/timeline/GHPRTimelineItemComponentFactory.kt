@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
@@ -24,24 +22,20 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.*
 import javax.swing.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GHPRTimelineItemComponentFactory(private val project: Project,
-                                       private val reviewService: GHPRReviewServiceAdapter,
+class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
-                                       private val reviewsThreadsProvider: GHPRReviewsThreadsProvider,
+                                       private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
                                        private val currentUser: GHUser) {
@@ -59,27 +53,27 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     }
     catch (e: Exception) {
-      return Item(AllIcons.General.Warning, HtmlEditorPane("Cannot display item - ${e.message}"))
+      return Item(AllIcons.General.Warning, HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
   }
 
   private fun createComponent(model: GHIssueComment) =
     Item(userAvatar(model.author),
-         actionTitle(model.author, "commented", model.createdAt),
+         actionTitle(model.author, GithubBundle.message("pull.request.timeline.commented"), model.createdAt),
          HtmlEditorPane(model.bodyHtml))
 
   private fun createComponent(review: GHPullRequestReview): Item {
-    val threads = reviewsThreadsProvider.findReviewThreads(review.id) ?: throw IllegalStateException("Can't find threads")
+    val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
 
     val reviewPanel = VerticalBox().apply {
+      add(Box.createRigidArea(JBDimension(0, 4)))
       if (review.bodyHTML.isNotEmpty()) {
         add(HtmlEditorPane(review.bodyHTML).apply {
-          border = JBUI.Borders.empty(4, 0)
+          border = JBUI.Borders.emptyBottom(12)
         })
       }
-      add(Box.createRigidArea(JBDimension(0, 6)))
-      add(GHPRReviewThreadsPanel(threads, ::createReviewThread).apply {
-        border = JBUI.Borders.empty(2, 0)
+      add(GHPRReviewThreadsPanel(reviewThreadsModel) {
+        GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
       })
     }
 
@@ -92,27 +86,13 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val actionText = when (review.state) {
-      APPROVED -> "approved these changes"
-      CHANGES_REQUESTED -> "rejected these changes"
-      COMMENTED, DISMISSED, PENDING -> "reviewed"
+      APPROVED -> GithubBundle.message("pull.request.timeline.approved.changes")
+      CHANGES_REQUESTED -> GithubBundle.message("pull.request.timeline.rejected.changes")
+      PENDING -> GithubBundle.message("pull.request.timeline.started.review")
+      COMMENTED, DISMISSED -> GithubBundle.message("pull.request.timeline.reviewed")
     }
 
     return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)
-  }
-
-  private fun createReviewThread(thread: GHPRReviewThreadModel): JComponent {
-    val panel = JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
-      .addToTop(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      .andTransparent()
-
-    if (reviewService.canComment()) {
-      panel.addToBottom(GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
-        reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
-          thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
-        }
-      })
-    }
-    return panel
   }
 
   private fun userAvatar(user: GHActor?): JLabel {
@@ -143,7 +123,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
     init {
       isOpaque = false
-      border = JBUI.Borders.empty(10, 0, 10, 0)
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill()).apply {

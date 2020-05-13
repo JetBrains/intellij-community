@@ -20,9 +20,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class PsiMethodCallPattern extends PsiExpressionPattern<PsiMethodCallExpression, PsiMethodCallPattern> {
   PsiMethodCallPattern() {
     super(PsiMethodCallExpression.class);

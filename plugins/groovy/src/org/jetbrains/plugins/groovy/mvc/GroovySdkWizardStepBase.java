@@ -37,9 +37,6 @@ import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription;
 import javax.swing.*;
 import java.util.ArrayList;
 
-/**
- * @author nik
- */
 public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
   private final String myBasePath;
   private LibraryOptionsPanel myPanel;

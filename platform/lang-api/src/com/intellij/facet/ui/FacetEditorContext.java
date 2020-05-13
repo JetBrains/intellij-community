@@ -29,13 +29,12 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
+@ApiStatus.NonExtendable
 public interface FacetEditorContext extends UserDataHolder {
 
   @NotNull

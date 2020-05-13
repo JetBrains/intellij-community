@@ -29,7 +29,6 @@ import java.io.InputStream;
  */
 public class StubInputStream extends DataInputStream {
   private final AbstractStringEnumerator myNameStorage;
-  private final byte[] myStringIOBuffer = IOUtil.allocReadWriteUTFBuffer();
 
   public StubInputStream(@NotNull InputStream in, @NotNull AbstractStringEnumerator nameStorage) {
     super(in);
@@ -38,7 +37,7 @@ public class StubInputStream extends DataInputStream {
 
   @NotNull 
   public String readUTFFast() throws IOException {
-    return IOUtil.readUTFFast(myStringIOBuffer, this);
+    return IOUtil.readUTF(this);
   }
 
   @Nullable 

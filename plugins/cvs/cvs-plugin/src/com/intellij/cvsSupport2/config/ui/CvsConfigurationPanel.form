@@ -25,14 +25,14 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.update.options.updating.group"/>
+            <border type="etched" title-resource-bundle="messages/CvsBundle" title-key="border.title.update.options.updating.group"/>
             <children>
               <component id="6f65e" class="javax.swing.JLabel">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.when.project.or.module.file.is.merged.with.conflicts.group"/>
+                  <text resource-bundle="messages/CvsBundle" key="label.when.project.or.module.file.is.merged.with.conflicts.group"/>
                 </properties>
               </component>
               <component id="1a661" class="javax.swing.JRadioButton" binding="myShowDialogOnMergedWithConflict">
@@ -41,7 +41,7 @@
                 </constraints>
                 <properties>
                   <margin top="5" left="1" bottom="5" right="1"/>
-                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.show.dialog.when.project.file.corrupted"/>
+                  <text resource-bundle="messages/CvsBundle" key="radio.show.dialog.when.project.file.corrupted"/>
                 </properties>
               </component>
               <component id="26cb9" class="javax.swing.JRadioButton" binding="mySkipOnMergedWithConflict">
@@ -50,7 +50,7 @@
                 </constraints>
                 <properties>
                   <margin top="1" left="1" bottom="5" right="1"/>
-                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.skip.merging.for.all.project.or.module.files.merged.with.conflicts"/>
+                  <text resource-bundle="messages/CvsBundle" key="radio.skip.merging.for.all.project.or.module.files.merged.with.conflicts"/>
                 </properties>
               </component>
               <component id="57343" class="javax.swing.JRadioButton" binding="myGetLatestVersionOnMergedWithConflict">
@@ -59,7 +59,7 @@
                 </constraints>
                 <properties>
                   <margin top="1" left="1" bottom="10" right="1"/>
-                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.get.latest.repository.versions.silently"/>
+                  <text resource-bundle="messages/CvsBundle" key="radio.get.latest.repository.versions.silently"/>
                 </properties>
               </component>
             </children>
@@ -73,14 +73,14 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.update.options.other.settings"/>
+            <border type="etched" title-resource-bundle="messages/CvsBundle" title-key="border.title.update.options.other.settings"/>
             <children>
               <component id="94646" class="javax.swing.JCheckBox" binding="myMakeNewFilesReadOnly">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbox.use.read.only.flag.for.not.edited.files"/>
+                  <text resource-bundle="messages/CvsBundle" key="checkbox.use.read.only.flag.for.not.edited.files"/>
                 </properties>
               </component>
               <component id="d52c8" class="javax.swing.JCheckBox" binding="myShowOutput">
@@ -89,7 +89,7 @@
                 </constraints>
                 <properties>
                   <margin top="1" left="1" bottom="10" right="1"/>
-                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbox.show.cvs.server.output"/>
+                  <text resource-bundle="messages/CvsBundle" key="checkbox.show.cvs.server.output"/>
                 </properties>
               </component>
               <grid id="e2f6f" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -111,7 +111,7 @@
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.default.keyword.substitution.for.text.files"/>
+                      <text resource-bundle="messages/CvsBundle" key="label.default.keyword.substitution.for.text.files"/>
                     </properties>
                   </component>
                 </children>
@@ -123,7 +123,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="button.text.global.settings"/>
+              <text resource-bundle="messages/CvsBundle" key="button.text.global.settings"/>
             </properties>
           </component>
         </children>

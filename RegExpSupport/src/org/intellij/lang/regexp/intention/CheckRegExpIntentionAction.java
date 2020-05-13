@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction;
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformUtils;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,7 +71,7 @@ final class CheckRegExpIntentionAction extends QuickEditAction implements Iconab
   @NotNull
   @Override
   public String getText() {
-    return "Check RegExp";
+    return RegExpBundle.message("intention.name.check.regexp");
   }
 
   @NotNull

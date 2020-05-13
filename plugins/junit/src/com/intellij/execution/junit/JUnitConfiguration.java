@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -45,7 +46,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
-  public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
@@ -152,7 +152,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return TestObject.fromString(myData.TEST_OBJECT, this, env);
+    TestObject testObject = TestObject.fromString(myData.TEST_OBJECT, this, env);
+    DumbService dumbService = DumbService.getInstance(getProject());
+    if (dumbService.isDumb() && !DumbService.isDumbAware(testObject)) {
+      throw new ExecutionException("Running tests is disabled during index update");
+    }
+    return testObject;
   }
 
   @Override
@@ -378,8 +383,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   @Override
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     if (TEST_PACKAGE.equals(myData.TEST_OBJECT) &&
         getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT) {
       return Module.EMPTY_ARRAY;
@@ -627,20 +631,20 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     public boolean equals(final Object object) {
       if (!(object instanceof Data)) return false;
       final Data second = (Data)object;
-      return Comparing.equal(TEST_OBJECT, second.TEST_OBJECT) &&
-             Comparing.equal(getMainClassName(), second.getMainClassName()) &&
-             Comparing.equal(getPackageName(), second.getPackageName()) &&
-             Comparing.equal(getMethodNameWithSignature(), second.getMethodNameWithSignature()) &&
-             Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
-             Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
-             Comparing.equal(PARAMETERS, second.PARAMETERS) &&
+      return Objects.equals(TEST_OBJECT, second.TEST_OBJECT) &&
+             Objects.equals(getMainClassName(), second.getMainClassName()) &&
+             Objects.equals(getPackageName(), second.getPackageName()) &&
+             Objects.equals(getMethodNameWithSignature(), second.getMethodNameWithSignature()) &&
+             Objects.equals(getWorkingDirectory(), second.getWorkingDirectory()) &&
+             Objects.equals(VM_PARAMETERS, second.VM_PARAMETERS) &&
+             Objects.equals(PARAMETERS, second.PARAMETERS) &&
              Comparing.equal(myPattern, second.myPattern) &&
-             Comparing.equal(FORK_MODE, second.FORK_MODE) &&
-             Comparing.equal(DIR_NAME, second.DIR_NAME) &&
-             Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
+             Objects.equals(FORK_MODE, second.FORK_MODE) &&
+             Objects.equals(DIR_NAME, second.DIR_NAME) &&
+             Objects.equals(CATEGORY_NAME, second.CATEGORY_NAME) &&
              Arrays.equals(UNIQUE_ID, second.UNIQUE_ID) &&
-             Comparing.equal(TAGS, second.TAGS) &&
-             Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
+             Objects.equals(TAGS, second.TAGS) &&
+             Objects.equals(REPEAT_MODE, second.REPEAT_MODE) &&
              REPEAT_COUNT == second.REPEAT_COUNT;
     }
 
@@ -744,18 +748,18 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT) || TEST_DIRECTORY.equals(TEST_OBJECT)) {
         if (TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT) {
-          return ExecutionBundle.message("default.junit.config.name.whole.project");
+          return JUnitBundle.message("default.junit.config.name.whole.project");
         }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
         final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
         if (packageName.length() == 0) {
           if (moduleName.length() > 0) {
-            return ExecutionBundle.message("default.junit.config.name.all.in.module", moduleName);
+            return JUnitBundle.message("default.junit.config.name.all.in.module", moduleName);
           }
-          return DEFAULT_PACKAGE_NAME;
+          return getDefaultPackageName();
         }
         if (moduleName.length() > 0) {
-          return ExecutionBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
+          return JUnitBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
         }
         return packageName;
       }
@@ -861,4 +865,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
   }
 
+  public static String getDefaultPackageName() {
+    return JUnitBundle.message("default.package.presentable.name");
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
@@ -26,9 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Consumer;
-import com.intellij.util.FilteringProcessor;
+import com.intellij.util.*;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +77,7 @@ public class EditorHyperlinkSupport {
             return;
           }
 
-          Runnable runnable = getLinkNavigationRunnable(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+          Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition());
           if (runnable != null) {
             runnable.run();
           }
@@ -91,7 +89,7 @@ public class EditorHyperlinkSupport {
       @Override
       public void mouseMoved(@NotNull EditorMouseEvent e) {
         if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
-        final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getMouseEvent().getPoint());
+        final HyperlinkInfo info = getHyperlinkInfoByEvent(e);
         myEditor.setCustomCursor(EditorHyperlinkSupport.class, info == null ? null : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
     }
@@ -141,8 +139,10 @@ public class EditorHyperlinkSupport {
       return null;
     }
 
-    final RangeHighlighter range = findLinkRangeAt(myEditor.logicalPositionToOffset(logical));
+    final int positionOffset = myEditor.logicalPositionToOffset(logical);
+    final RangeHighlighter range = findLinkRangeAt(positionOffset);
     if (range != null) {
+      if (range.getEndOffset() == positionOffset) return null;
       final HyperlinkInfo hyperlinkInfo = getHyperlinkInfo(range);
       if (hyperlinkInfo != null) {
         return () -> {
@@ -176,8 +176,7 @@ public class EditorHyperlinkSupport {
     return null;
   }
 
-  @Nullable
-  private HyperlinkInfo getHyperlinkAt(final int offset) {
+  public @Nullable HyperlinkInfo getHyperlinkAt(final int offset) {
     RangeHighlighter range = findLinkRangeAt(offset);
     return range == null ? null : getHyperlinkInfo(range);
   }
@@ -273,6 +272,11 @@ public class EditorHyperlinkSupport {
     return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
   }
 
+    @Nullable
+  public HyperlinkInfo getHyperlinkInfoByEvent(@NotNull EditorMouseEvent event) {
+    return event.isOverText() ? getHyperlinkAt(event.getOffset()) : null;
+  }
+
   @Deprecated
   public void highlightHyperlinks(@NotNull Filter customFilter, final Filter predefinedMessageFilter, final int line1, final int endLine) {
     highlightHyperlinks((line, entireLength) -> {
@@ -286,22 +290,35 @@ public class EditorHyperlinkSupport {
   }
 
   void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
-    Document document = myEditor.getDocument();
+    int length = myEditor.getDocument().getTextLength();
+    List<InlayProvider> inlays = new SmartList<>();
     for (Filter.ResultItem resultItem : result.getResultItems()) {
       int start = resultItem.getHighlightStartOffset() + offsetDelta;
       int end = resultItem.getHighlightEndOffset() + offsetDelta;
-      if (start < 0 || end < start || end > document.getTextLength()) {
+      if (start < 0 || end < start || end > length) {
         continue;
       }
 
       TextAttributes attributes = resultItem.getHighlightAttributes();
-      if (resultItem.getHyperlinkInfo() != null) {
+      if (resultItem instanceof InlayProvider) {
+        inlays.add((InlayProvider)resultItem);
+      }
+      else if (resultItem.getHyperlinkInfo() != null) {
         createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
                         resultItem.getHighlighterLayer());
       }
       else if (attributes != null) {
         addHighlighter(start, end, attributes, resultItem.getHighlighterLayer());
       }
+    }
+    // add inlays in a batch if needed
+    if (!inlays.isEmpty()) {
+      myEditor.getInlayModel().execute(inlays.size() > 100, () -> {
+        for (InlayProvider item : inlays) {
+          myEditor.getInlayModel().addInlineElement(((Filter.ResultItem)item).getHighlightEndOffset() + offsetDelta,
+                                                    item.createInlayRenderer(myEditor));
+        }
+      });
     }
   }
 

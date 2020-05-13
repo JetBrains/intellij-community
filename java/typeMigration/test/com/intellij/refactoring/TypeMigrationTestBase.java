@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -149,9 +147,9 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();
 
-    WriteCommandAction.runWriteCommandAction(null, () -> pr.performRefactoring(usages));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> pr.performRefactoring(usages));
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting());
 
     myFixture.getTempDirFixture().createFile(className + ".items", report);
   }

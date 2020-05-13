@@ -2,10 +2,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.nullable.AnnotateOverriddenMethodParameterFix;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -38,7 +38,7 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("remove.annotation");
+    return JavaAnalysisBundle.message("remove.annotation");
   }
 
   @Override
@@ -91,10 +91,11 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
                                          @NotNull List<PsiModifierListOwner> externalOwners) {
     if (annotation == null) return;
 
-    if (annotation.isPhysical()) {
-      physical.add(annotation);
-    } else {
+    if (AnnotationUtil.isExternalAnnotation(annotation)) {
       ContainerUtil.addIfNotNull(externalOwners, listOwner);
+    }
+    else {
+      physical.add(annotation);
     }
   }
 }

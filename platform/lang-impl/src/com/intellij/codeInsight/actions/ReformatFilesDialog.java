@@ -43,11 +43,11 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
 
   private final LastRunReformatCodeOptionsProvider myLastRunSettings;
 
-  public ReformatFilesDialog(@NotNull Project project, @NotNull VirtualFile[] files) {
+  public ReformatFilesDialog(@NotNull Project project, VirtualFile @NotNull [] files) {
     super(project, true);
     myLastRunSettings = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
 
-    boolean canTargetVcsChanges = FormatChangedTextUtil.hasChanges(files, project);
+    boolean canTargetVcsChanges = VcsFacade.getInstance().hasChanges(files, project);
     myOnlyChangedText.setEnabled(canTargetVcsChanges);
     myOnlyChangedText.setSelected(canTargetVcsChanges && myLastRunSettings.getLastTextRangeType() == VCS_CHANGED_TEXT);
     myOptimizeImports.setSelected(myLastRunSettings.getLastOptimizeImports());
@@ -59,7 +59,7 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
     init();
   }
   
-  private static boolean containsAtLeastOneFileToRearrange(@NotNull VirtualFile[] files) {
+  private static boolean containsAtLeastOneFileToRearrange(VirtualFile @NotNull [] files) {
     for (VirtualFile file : files) {
       FileType fileType = file.getFileType();
       if (fileType instanceof LanguageFileType) {

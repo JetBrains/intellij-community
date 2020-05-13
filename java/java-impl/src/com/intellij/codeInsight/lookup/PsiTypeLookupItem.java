@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
@@ -10,9 +10,9 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -35,7 +36,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     }
   };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.PsiTypeLookupItem");
+  private static final Logger LOG = Logger.getInstance(PsiTypeLookupItem.class);
   public static final ClassConditionKey<PsiTypeLookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(PsiTypeLookupItem.class);
   private final boolean myDiamond;
   private final int myBracketsCount;
@@ -268,7 +269,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
       assert object instanceof PsiType;
 
       if (!(object instanceof PsiPrimitiveType)) {
-        presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+        presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
       }
 
       presentation.setItemText(((PsiType)object).getCanonicalText());
@@ -302,7 +303,23 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
 
     int startOffset = context.getStartOffset();
     int tail = context.getTailOffset();
-    int newTail = JavaCompletionUtil.insertClassReference(aClass, file, startOffset, tail);
+
+    PsiJavaCodeReferenceElement ref =
+      PsiTreeUtil.findElementOfClassAtOffset(file, tail - 1, PsiJavaCodeReferenceElement.class, false);
+    boolean goneDeeper = false;
+    while (ref != null) {
+      PsiElement qualifier = ref.getQualifier();
+      PsiClass outer = aClass.getContainingClass();
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement) || !Objects.equals(aClass.getName(), ref.getReferenceName()) || outer == null) break;
+
+      goneDeeper = true;
+      ref = (PsiJavaCodeReferenceElement)qualifier;
+      aClass = outer;
+    }
+
+    int newTail = JavaCompletionUtil.insertClassReference(aClass, file,
+                                                          goneDeeper ? ref.getTextRange().getStartOffset() : startOffset,
+                                                          goneDeeper ? ref.getTextRange().getEndOffset() : tail);
     if (newTail > context.getDocument().getTextLength() || newTail < 0) {
       LOG.error("Invalid offset after insertion\n" +
                 "offset=" + newTail + "\n" +
@@ -315,8 +332,8 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
       return;
     }
 
-    context.setTailOffset(newTail);
-    JavaCompletionUtil.shortenReference(file, context.getStartOffset());
-    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+    if (!goneDeeper) {
+      context.setTailOffset(newTail);
+    }
   }
 }

@@ -1,14 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Nls;
@@ -20,13 +18,6 @@ import java.util.stream.Stream;
  * @author Bas Leijdekkers
  */
 public class SingleCharAlternationInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Single character alternation";
-  }
 
   @NotNull
   @Override
@@ -52,7 +43,8 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         return;
       }
       final String text = buildReplacementText(pattern);
-      myHolder.registerProblem(pattern, "Single character alternation in RegExp", new SingleCharAlternationFix(text));
+      myHolder.registerProblem(pattern, RegExpBundle.message("inspection.warning.single.character.alternation.in.regexp"),
+                               new SingleCharAlternationFix(text));
     }
 
     private static boolean isSingleChar(RegExpBranch branch) {
@@ -72,14 +64,14 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       @NotNull
       @Override
       public String getName() {
-        return "Replace with '" + myText + '\'';
+        return CommonQuickFixBundle.message("fix.replace.with.x", myText);
       }
 
       @Nls
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Replace alternation with character class";
+        return RegExpBundle.message("inspection.quick.fix.replace.alternation.with.character.class");
       }
 
       @Override

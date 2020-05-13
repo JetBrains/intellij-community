@@ -2,7 +2,6 @@
 package com.intellij.ui.layout
 
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 
 interface SpacingConfiguration {
   /**
@@ -17,14 +16,17 @@ interface SpacingConfiguration {
   /**
    * Vertical space between two components (in terms of layout grid - rows).
    */
-  val verticalGap: Int
+  val verticalGap: Int get() = componentVerticalGap * 2
+  val componentVerticalGap: Int
 
   /**
    * Horizontal gap after label column.
    */
   val labelColumnHorizontalGap: Int
 
+  val largeHorizontalGap: Int
   val largeVerticalGap: Int
+  val radioGroupTitleVerticalGap: Int
 
   val shortTextWidth: Int
   val maxShortTextWidth: Int
@@ -47,21 +49,25 @@ interface SpacingConfiguration {
 // https://jetbrains.github.io/ui/controls/input_field/#spacing
 fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   return object : SpacingConfiguration {
-    override val horizontalGap = JBUI.scale(8)
-    override val verticalGap = JBUI.scale(5 * 2)
+    override val horizontalGap = JBUI.scale(6)
+    override val componentVerticalGap = JBUI.scale(6)
     override val labelColumnHorizontalGap = JBUI.scale(6)
-    override val largeVerticalGap = JBUI.scale(UIUtil.LARGE_VGAP)
+    override val largeHorizontalGap = JBUI.scale(16)
+    override val largeVerticalGap = JBUI.scale(20)
+    override val radioGroupTitleVerticalGap = JBUI.scale(6 + 2)
 
     override val shortTextWidth = JBUI.scale(250)
     override val maxShortTextWidth = JBUI.scale(350)
 
     override val unitSize = JBUI.scale(4)
 
-    override val dialogTopBottom = JBUI.scale(8)
+    override val dialogTopBottom = JBUI.scale(10)
     override val dialogLeftRight = JBUI.scale(12)
 
     override val commentVerticalTopGap = JBUI.scale(6)
-    override val indentLevel: Int get() = horizontalGap * 3
+
+    override val indentLevel: Int
+      get() = JBUI.scale(20)
   }
 }
 

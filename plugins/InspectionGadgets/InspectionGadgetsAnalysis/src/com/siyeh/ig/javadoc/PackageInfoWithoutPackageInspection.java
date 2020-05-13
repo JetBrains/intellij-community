@@ -9,7 +9,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,12 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class PackageInfoWithoutPackageInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("package.info.java.without.package.display.name");
-  }
 
   @NotNull
   @Override
@@ -71,6 +64,11 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PackageInfoWithoutPackageVisitor();
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiPackage.PACKAGE_INFO_FILE.equals(file.getName());
   }
 
   private static class PackageInfoWithoutPackageVisitor extends BaseInspectionVisitor {

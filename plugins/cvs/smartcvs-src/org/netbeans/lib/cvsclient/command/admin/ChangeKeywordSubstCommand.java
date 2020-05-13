@@ -88,8 +88,6 @@ public class ChangeKeywordSubstCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		@NonNls final StringBuilder arguments = new StringBuilder();
-		arguments.append("-k" + keywordSubstitution + " ");
-		return arguments.toString();
+		return "-k" + keywordSubstitution + " ";
 	}
 }

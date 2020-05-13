@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -33,7 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class LookupManagerImpl extends LookupManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupManagerImpl");
+  private static final Logger LOG = Logger.getInstance(LookupManagerImpl.class);
   private final Project myProject;
   private LookupImpl myActiveLookup = null;
   private Editor myActiveLookupEditor = null;
@@ -41,10 +41,11 @@ public class LookupManagerImpl extends LookupManager {
 
   public static final Key<Boolean> SUPPRESS_AUTOPOPUP_JAVADOC = Key.create("LookupManagerImpl.suppressAutopopupJavadoc");
 
-  public LookupManagerImpl(Project project, MessageBus bus) {
+  public LookupManagerImpl(@NotNull Project project) {
     myProject = project;
 
-    bus.connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
       public void hintShown(final Project project, @NotNull final LightweightHint hint, final int flags) {
         if (project == myProject) {
@@ -71,7 +72,7 @@ public class LookupManagerImpl extends LookupManager {
       }
     });
 
-    bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
         hideActiveLookup();
@@ -96,7 +97,7 @@ public class LookupManagerImpl extends LookupManager {
 
   @Override
   public LookupEx showLookup(@NotNull final Editor editor,
-                           @NotNull LookupElement[] items,
+                           LookupElement @NotNull [] items,
                            @NotNull final String prefix,
                            @NotNull final LookupArranger arranger) {
     for (LookupElement item : items) {
@@ -110,7 +111,7 @@ public class LookupManagerImpl extends LookupManager {
   @NotNull
   @Override
   public LookupImpl createLookup(@NotNull final Editor editor,
-                                 @NotNull LookupElement[] items,
+                                 LookupElement @NotNull [] items,
                                  @NotNull final String prefix,
                                  @NotNull final LookupArranger arranger) {
     hideActiveLookup();

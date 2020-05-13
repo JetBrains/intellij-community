@@ -32,7 +32,7 @@ public class CreateHtmlFileAction extends CreateFileFromTemplateAction implement
   @NonNls private static final String DEFAULT_HTML_TEMPLATE_PROPERTY = "DefaultHtmlFileTemplate";
 
   public CreateHtmlFileAction() {
-    super(XmlBundle.message("new.html.file.action"), XmlBundle.message("new.html.file.action.description"), StdFileTypes.HTML.getIcon());
+    super(XmlBundle.messagePointer("new.html.file.action"), XmlBundle.messagePointer("new.html.file.action.description"), StdFileTypes.HTML.getIcon());
   }
 
   @Override

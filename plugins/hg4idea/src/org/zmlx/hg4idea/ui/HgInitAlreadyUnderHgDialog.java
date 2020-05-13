@@ -18,7 +18,8 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TitlePanel;
-import org.zmlx.hg4idea.HgVcsMessages;
+import com.intellij.xml.util.XmlStringUtil;
+import org.zmlx.hg4idea.HgBundle;
 
 import javax.swing.*;
 
@@ -44,7 +45,7 @@ public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
     super(project, false);
     mySelectedRoot = selectedRoot;
     myParentRoot = parentRoot;
-    setTitle(HgVcsMessages.message("hg4idea.init.already.under.hg.dialog.title"));
+    setTitle(HgBundle.message("hg4idea.init.already.under.hg.dialog.title"));
     init();
   }
 
@@ -75,8 +76,8 @@ public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myTitlePanel = new TitlePanel(HgVcsMessages.message("hg4idea.init.already.under.hg.title"),
-                                  HgVcsMessages.message("hg4idea.init.already.under.hg.description", mySelectedRoot, myParentRoot));
+    myTitlePanel = new TitlePanel(HgBundle.message("hg4idea.init.already.under.hg.title"),
+                                  XmlStringUtil.wrapInHtml(HgBundle.message("hg4idea.init.already.under.hg.description", mySelectedRoot, myParentRoot)));
   }
   
 }

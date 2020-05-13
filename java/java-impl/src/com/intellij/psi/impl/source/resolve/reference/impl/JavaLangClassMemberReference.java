@@ -96,9 +96,8 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return getReflectiveClass(myContext);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final String type = getMemberType(myElement);
     if (type != null) {
       final ReflectiveClass ownerClass = getOwnerClass();
@@ -185,7 +184,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
 
   @Nullable
-  public static PsiMethod matchMethod(@NotNull PsiMethod[] methods, @NotNull List<? extends ReflectiveType> argumentTypes) {
+  public static PsiMethod matchMethod(PsiMethod @NotNull [] methods, @NotNull List<? extends ReflectiveType> argumentTypes) {
     int mismatchCount = Integer.MAX_VALUE;
     PsiMethod bestGuess = null;
     for (PsiMethod method : methods) {

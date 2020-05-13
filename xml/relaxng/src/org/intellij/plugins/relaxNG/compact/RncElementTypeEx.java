@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 
-/**
- * @author nik
- */
 class RncElementTypeEx<C extends RncElement> extends RncElementType implements NotNullFunction<ASTNode, C> {
   private final Constructor<? extends C> myConstructor;
 

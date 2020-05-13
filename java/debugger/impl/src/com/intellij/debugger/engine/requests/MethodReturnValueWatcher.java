@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.requests;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 public class MethodReturnValueWatcher implements OverheadProducer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.requests.MethodReturnValueWatcher");
+  private static final Logger LOG = Logger.getInstance(MethodReturnValueWatcher.class);
   private @Nullable Method myLastExecutedMethod;
   private @Nullable Value myLastMethodReturnValue;
 
@@ -228,6 +228,6 @@ public class MethodReturnValueWatcher implements OverheadProducer {
   @Override
   public void customizeRenderer(SimpleColoredComponent renderer) {
     renderer.setIcon(AllIcons.Debugger.WatchLastReturnValue);
-    renderer.append(DebuggerBundle.message("action.watches.method.return.value.enable"));
+    renderer.append(JavaDebuggerBundle.message("action.watches.method.return.value.enable"));
   }
 }

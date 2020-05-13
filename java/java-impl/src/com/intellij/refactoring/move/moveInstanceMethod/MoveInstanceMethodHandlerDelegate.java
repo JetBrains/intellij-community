@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -67,8 +68,8 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
 
   @Nullable
   @Override
-  public String getActionName(@NotNull PsiElement[] elements) {
-    return "Move Instance Method...";
+  public String getActionName(PsiElement @NotNull [] elements) {
+    return JavaRefactoringBundle.message("move.instance.method.delegate.title");
   }
 
   @Override

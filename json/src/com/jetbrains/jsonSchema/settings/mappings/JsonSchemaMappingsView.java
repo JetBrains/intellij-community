@@ -110,7 +110,7 @@ public class JsonSchemaMappingsView implements Disposable {
       final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
       List<JsonSchemaInfo> schemas = service.getAllUserVisibleSchemas();
       JBPopupFactory.getInstance().createListPopup(new JsonSchemaInfoPopupStep(schemas,
-                                                                               myProject, null, service, "Remote Schema URLs") {
+                                                                               myProject, null, service, JsonBundle.message("schema.configuration.mapping.remote")) {
         @Override
         protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
           if (selectedValue != null) {
@@ -148,7 +148,7 @@ public class JsonSchemaMappingsView implements Disposable {
     label.setLabelFor(schemaSelector);
     label.setBorder(JBUI.Borders.empty(0, 10));
     schemaSelector.setBorder(JBUI.Borders.emptyRight(10));
-    JBLabel versionLabel = new JBLabel("Schema version:");
+    JBLabel versionLabel = new JBLabel(JsonBundle.message("json.schema.version.selector.title"));
     mySchemaVersionComboBox = new ComboBox<>(new DefaultComboBoxModel<>(JsonSchemaVersion.values()));
     versionLabel.setLabelFor(mySchemaVersionComboBox);
     versionLabel.setBorder(JBUI.Borders.empty(0, 10));
@@ -162,7 +162,8 @@ public class JsonSchemaMappingsView implements Disposable {
     JPanel panel = decorator.createPanel();
     panel.setBorder(BorderFactory.createCompoundBorder(JBUI.Borders.empty(0, 8), panel.getBorder()));
     builder.addComponentFillVertically(panel, 5);
-    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent("Path to file or directory relative to project root, or file name pattern like *.config.json", false);
+    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent(
+      JsonBundle.message("path.to.file.or.directory.relative.to.project.root.or.file.name"), false);
     commentComponent.setBorder(JBUI.Borders.empty(0, 8, 5, 0));
     builder.addComponent(commentComponent);
 

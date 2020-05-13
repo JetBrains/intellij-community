@@ -6,7 +6,9 @@
   </idea-plugin>
   <idea-plugin url="file://cycle0.xml">
     <id>cycle0</id>
-    <depends>cycle1</depends>
+    <depends>
+      cycle1
+    </depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://cycle1.xml">
@@ -61,7 +63,7 @@
   </idea-plugin>
   <idea-plugin url="file://incompatible1.xml">
     <id>incompatible1</id>
-    <idea-version since-build="2001.0"/>
+    <idea-version since-build="9999.0"/>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://incompatible2.xml">
@@ -96,7 +98,7 @@
     <module value="com.intellij.modules.plugin0"/>
     <depends>plugin3</depends>
     <depends>com.intellij.modules.core</depends>
-    <depends optional="true" config-file="zzz">cycle0</depends>
+    <depends optional="true">cycle0</depends>
   </idea-plugin>
   <idea-plugin url="file://plugin1.xml">
     <id>plugin1</id>
@@ -114,16 +116,47 @@
   </idea-plugin>
   <idea-plugin url="file://optional_cycle0.xml">
     <id>optional_cycle0</id>
-    <depends optional="true" config-file="?">optional_cycle1</depends>
+    <depends optional="true">optional_cycle1</depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://optional_cycle1.xml">
     <id>optional_cycle1</id>
-    <depends optional="true" config-file="?">optional_cycle2</depends>
+    <depends optional="true">optional_cycle2</depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://optional_cycle2.xml">
     <id>optional_cycle2</id>
-    <depends optional="true" config-file="?">optional_cycle0</depends>
+    <depends optional="true">optional_cycle0</depends>
     <depends>com.intellij.modules.core</depends>
-  </idea-plugin></root>
+  </idea-plugin>
+  <idea-plugin url="file://optional_config_cycle0.xml">
+    <id>optional_config_cycle0</id>
+    <depends optional="true" config-file="optional_config_cycle0_dep.xml">com.intellij.modules.core</depends>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
+  <config-file-idea-plugin url="file://optional_config_cycle0_dep.xml">
+    <depends optional="true" config-file="optional_config_cycle1_dep.xml">optional_config_cycle2</depends>
+  </config-file-idea-plugin>
+  <config-file-idea-plugin url="file://optional_config_cycle1_dep.xml">
+  </config-file-idea-plugin>
+  <idea-plugin url="file://optional_config_cycle1.xml">
+    <id>optional_config_cycle1</id>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
+  <idea-plugin url="file://optional_config_cycle2.xml">
+    <id>optional_config_cycle2</id>
+    <depends>com.intellij.modules.core</depends>
+    <depends>optional_config_cycle0</depends>
+    <depends>optional_config_cycle1</depends>
+  </idea-plugin>
+  <idea-plugin url="file://incompatible_with_disabled_module.xml">
+    <id>incompatible_with_disabled_module</id>
+    <depends>com.intellij.modules.core</depends>
+    <incompatible-with>com.intellij.modules.disabled</incompatible-with>
+  </idea-plugin>
+  <idea-plugin url="file://incompatible_with_enabled_module.xml">
+    <id>incompatible_with_enabled_module</id>
+    <depends>com.intellij.modules.core</depends>
+    <incompatible-with>com.intellij.modules.plugin0</incompatible-with>
+  </idea-plugin>
+</root>

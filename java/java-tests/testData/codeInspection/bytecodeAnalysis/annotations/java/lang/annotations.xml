@@ -162,7 +162,8 @@
     </item>
     <item name='java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder reverse()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;-&gt;this&quot;"/>
+            <val name="value" val="&quot;-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -172,6 +173,11 @@
     <item name='java.lang.AbstractStringBuilder java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.AbstractStringBuilder void trimToSize()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='java.lang.ArithmeticException ArithmeticException()'>
@@ -648,6 +654,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.lang.Character int toChars(int, char[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param2&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.Character int toChars(int, char[], int) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -676,6 +687,11 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.Character void toSurrogates(int, char[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param2&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.Character void toSurrogates(int, char[], int) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2291,6 +2307,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.lang.Integer void getChars(int, int, char[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param3&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.Integer void getChars(int, int, char[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2480,6 +2501,11 @@
     <item name='java.lang.Long short shortValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.Long void getChars(long, int, char[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param3&quot;"/>
         </annotation>
     </item>
     <item name='java.lang.Long void getChars(long, int, char[]) 2'>
@@ -2951,6 +2977,11 @@
     <item name='java.lang.String int compareTo(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.String int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.String int indexOf(char[], int, int, char[], int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -3165,6 +3196,11 @@
     <item name='java.lang.String void checkBounds(byte[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.String void getChars(char[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.String.CaseInsensitiveComparator CaseInsensitiveComparator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -3266,19 +3302,22 @@
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(char[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3287,31 +3326,36 @@
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(char[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(double)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(float)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(java.lang.CharSequence)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3320,13 +3364,15 @@
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(java.lang.CharSequence, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3335,7 +3381,8 @@
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3344,7 +3391,8 @@
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(java.lang.StringBuffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3353,13 +3401,15 @@
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer appendCodePoint(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3443,12 +3493,18 @@
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer reverse()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;-&gt;this&quot;"/>
+            <val name="value" val="&quot;-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.StringBuffer void trimToSize()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.StringBuffer void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3514,19 +3570,22 @@
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(char[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3535,31 +3594,36 @@
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(char[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(double)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(float)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(java.lang.CharSequence)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3568,13 +3632,15 @@
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(java.lang.CharSequence, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3583,7 +3649,8 @@
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3592,7 +3659,8 @@
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(java.lang.StringBuffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3601,7 +3669,8 @@
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(java.lang.StringBuilder)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3610,13 +3679,15 @@
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder appendCodePoint(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3700,7 +3771,8 @@
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder reverse()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;-&gt;this&quot;"/>
+            <val name="value" val="&quot;-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3731,6 +3803,11 @@
     </item>
     <item name='java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param3&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.System void checkKey(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3888,6 +3965,11 @@
     <item name='java.lang.ThreadLocal.ThreadLocalMap void set(java.lang.ThreadLocal, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.ThreadLocal.ThreadLocalMap void setThreshold(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.Throwable Throwable()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -3924,6 +4006,9 @@
         </annotation>
     </item>
     <item name='java.lang.Throwable java.lang.Throwable fillInStackTrace()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Throwable java.lang.Throwable getCause()'>

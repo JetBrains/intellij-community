@@ -51,8 +51,7 @@ public class MemoryPasswordSafe implements PasswordStorage {
     return Registry.intValue("passwordSafe.memorySafe.ttl");
   }
 
-  @NotNull
-  protected byte[] key() {
+  protected byte @NotNull [] key() {
     if (key.get() == null) {
       byte[] rnd = new byte[EncryptionUtil.SECRET_KEY_SIZE_BYTES * 16];
       new SecureRandom().nextBytes(rnd);
@@ -61,7 +60,7 @@ public class MemoryPasswordSafe implements PasswordStorage {
     return key.get();
   }
 
-  protected byte[] getEncryptedPassword(@NotNull byte[] key) {
+  protected byte[] getEncryptedPassword(byte @NotNull [] key) {
     return database.get().get(new ByteArrayWrapper(key));
   }
 

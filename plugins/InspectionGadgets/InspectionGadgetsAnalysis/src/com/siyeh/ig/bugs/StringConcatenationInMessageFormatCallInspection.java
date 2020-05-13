@@ -25,19 +25,11 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class StringConcatenationInMessageFormatCallInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.concatenation.in.message.format.call.display.name");
-  }
 
   @NotNull
   @Override
@@ -69,7 +61,7 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace concatenation with argument";
+      return InspectionGadgetsBundle.message("string.concatenation.in.format.call.fix.family.name");
     }
 
     @Override

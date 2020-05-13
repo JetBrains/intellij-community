@@ -36,13 +36,6 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
   private static final List<String> UTF_8_ARG = Collections.singletonList("java.nio.charset.StandardCharsets.UTF_8");
   private static final List<String> FALSE_AND_UTF_8_ARG = Arrays.asList("false", "java.nio.charset.StandardCharsets.UTF_8");
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("implicit.default.charset.usage.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

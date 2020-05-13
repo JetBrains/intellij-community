@@ -25,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -49,7 +50,7 @@ public class PyCythonExtensionWarning {
       return;
     }
     Notification notification =
-      new Notification(CYTHON_WARNING_GROUP_ID, "Python Debugger Extension Available", WARNING_MESSAGE,
+      new Notification(CYTHON_WARNING_GROUP_ID, PyBundle.message("compile.cython.extensions.notification"), WARNING_MESSAGE,
                        NotificationType.INFORMATION);
     notification.addAction(createInstallAction(notification, project));
     notification.addAction(createDocsAction());
@@ -57,7 +58,7 @@ public class PyCythonExtensionWarning {
   }
 
   private static AnAction createInstallAction(@NotNull Notification notification, @NotNull Project project) {
-    return new DumbAwareAction("Install") {
+    return new DumbAwareAction(PyBundle.message("compile.cython.extensions.install")) {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -68,7 +69,7 @@ public class PyCythonExtensionWarning {
   }
 
   private static AnAction createDocsAction() {
-    return new DumbAwareAction("How does it work") {
+    return new DumbAwareAction(PyBundle.message("compile.cython.extensions.help")) {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -140,7 +141,7 @@ public class PyCythonExtensionWarning {
         process = commandLine.createProcess();
       }
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Compile Cython Extensions") {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("compile.cython.extensions.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final CapturingProcessHandler handler =

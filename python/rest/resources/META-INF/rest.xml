@@ -1,6 +1,8 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="restructured.text.html.preview.provider" interface="com.jetbrains.rest.editor.RestPreviewProvider" />
+    <extensionPoint qualifiedName="restructured.text.html.preview.provider"
+                    interface="com.jetbrains.rest.editor.RestPreviewProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -32,8 +34,7 @@
 
     <fileEditorProvider implementation="com.jetbrains.rest.editor.RestSplitEditorProvider"/>
     <applicationConfigurable groupId="language" instance="com.jetbrains.rest.editor.RestConfigurable"
-                             id="restructured.text.topic"
-                             displayName="ReStructured Text"/>
+                             id="restructured.text.topic" bundle="messages.RestBundle" key="configurable.RestConfigurable.display.name"/>
     <applicationService serviceImplementation="com.jetbrains.rest.editor.RestSettings"/>
   </extensions>
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -7,6 +7,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -22,7 +24,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -44,11 +45,9 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   private static final String ELEMENT_JDK = "jdk";
 
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<>();
-  private final MessageBus myMessageBus;
 
   // constructor is public because it is accessed from Upsource
   public ProjectJdkTableImpl() {
-    myMessageBus = ApplicationManager.getApplication().getMessageBus();
     // support external changes to jdk libraries (Endorsed Standards Override)
     final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -108,11 +107,67 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
         }
       }
     });
+    SdkType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<SdkType>() {
+      @Override
+      public void extensionAdded(@NotNull SdkType extension, @NotNull PluginDescriptor pluginDescriptor) {
+        loadSdkType(extension);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull SdkType extension, @NotNull PluginDescriptor pluginDescriptor) {
+        forgetSdkType(extension);
+      }
+    }, null);
+  }
+
+  private void loadSdkType(@NotNull SdkType newSdkType) {
+    for (Sdk sdk : mySdks) {
+      SdkTypeId sdkType = sdk.getSdkType();
+      if (sdkType instanceof UnknownSdkType && sdkType.getName().equals(newSdkType.getName()) && sdk instanceof ProjectJdkImpl) {
+        WriteAction.run(() -> {
+          Element additionalData = saveSdkAdditionalData(sdk);
+          ((ProjectJdkImpl)sdk).changeType(newSdkType, additionalData);
+        });
+      }
+    }
+  }
+
+  private void forgetSdkType(@NotNull SdkType extension) {
+    Set<Sdk> toRemove = new HashSet<>();
+    for (Sdk sdk : mySdks) {
+      SdkTypeId sdkType = sdk.getSdkType();
+      if (sdkType == extension) {
+        if (sdk instanceof ProjectJdkImpl) {
+          Element additionalDataElement = saveSdkAdditionalData(sdk);
+          ((ProjectJdkImpl)sdk).changeType(UnknownSdkType.getInstance(sdkType.getName()), additionalDataElement);
+        }
+        else {
+          //sdk was dynamically added by a plugin so we can only remove it
+          toRemove.add(sdk);
+        }
+      }
+    }
+    for (Sdk sdk : toRemove) {
+      removeJdk(sdk);
+    }
+  }
+
+  @Nullable
+  private static Element saveSdkAdditionalData(Sdk sdk) {
+    SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
+    Element additionalDataElement;
+    if (additionalData != null) {
+      additionalDataElement = new Element(ProjectJdkImpl.ELEMENT_ADDITIONAL);
+      sdk.getSdkType().saveAdditionalData(additionalData, additionalDataElement);
+    }
+    else {
+      additionalDataElement = null;
+    }
+    return additionalDataElement;
   }
 
   @Override
-  @NotNull
-  public File[] getExportFiles() {
+  public File @NotNull [] getExportFiles() {
     return new File[]{PathManager.getOptionsFile("jdk.table")};
   }
 
@@ -150,25 +205,19 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     final String jdkPath = System.getProperty(jdkPrefix + name);
     if (jdkPath == null) return null;
 
-    final SdkType[] sdkTypes = SdkType.getAllTypes();
-    for (SdkType sdkType : sdkTypes) {
-      if (Comparing.strEqual(type, sdkType.getName())) {
-        if (sdkType.isValidSdkHome(jdkPath)) {
-          ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, sdkType);
-          projectJdkImpl.setHomePath(jdkPath);
-          sdkType.setupSdkPaths(projectJdkImpl);
-          myCachedProjectJdks.put(uniqueName, projectJdkImpl);
-          return projectJdkImpl;
-        }
-        break;
-      }
+    final SdkType sdkType = SdkType.findByName(type);
+    if (sdkType != null && sdkType.isValidSdkHome(jdkPath)) {
+      ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, sdkType);
+      projectJdkImpl.setHomePath(jdkPath);
+      sdkType.setupSdkPaths(projectJdkImpl);
+      myCachedProjectJdks.put(uniqueName, projectJdkImpl);
+      return projectJdkImpl;
     }
     return null;
   }
 
-  @NotNull
   @Override
-  public Sdk[] getAllJdks() {
+  public Sdk @NotNull [] getAllJdks() {
     return mySdks.toArray(new Sdk[0]);
   }
 
@@ -187,22 +236,26 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
   @TestOnly
   public void addTestJdk(@NotNull Sdk jdk, @NotNull Disposable parentDisposable) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    mySdks.add(jdk);
-    Disposer.register(parentDisposable, () -> WriteAction.runAndWait(()-> mySdks.remove(jdk)));
+    WriteAction.runAndWait(()-> mySdks.add(jdk));
+    Disposer.register(parentDisposable, () -> removeTestJdk(jdk));
+  }
+
+  @TestOnly
+  public void removeTestJdk(@NotNull Sdk jdk) {
+    WriteAction.runAndWait(()-> mySdks.remove(jdk));
   }
 
   @Override
   public void addJdk(@NotNull Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     mySdks.add(jdk);
-    myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkAdded(jdk);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkAdded(jdk);
   }
 
   @Override
   public void removeJdk(@NotNull Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(jdk);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(jdk);
     mySdks.remove(jdk);
     if (jdk instanceof Disposable) {
       Disposer.dispose((Disposable)jdk);
@@ -218,7 +271,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
     if (!previousName.equals(newName)) {
       // fire changes because after renaming JDK its name may match the associated jdk name of modules/project
-      myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkNameChanged(originalJdk, previousName);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkNameChanged(originalJdk, previousName);
     }
   }
 

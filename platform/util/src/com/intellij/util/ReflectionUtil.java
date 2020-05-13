@@ -4,9 +4,9 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +15,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
-public class ReflectionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
+public final class ReflectionUtil {
+  private static final Logger LOG = Logger.getInstance(ReflectionUtil.class);
 
   private ReflectionUtil() { }
 
@@ -91,8 +91,7 @@ public class ReflectionUtil {
     return null;
   }
 
-  @NotNull
-  public static Type[] getActualTypeArguments(@NotNull ParameterizedType parameterizedType) {
+  public static Type @NotNull [] getActualTypeArguments(@NotNull ParameterizedType parameterizedType) {
     return parameterizedType.getActualTypeArguments();
   }
 
@@ -123,7 +122,7 @@ public class ReflectionUtil {
   @NotNull
   public static List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<>();
-    for (Class<?> c : classTraverser(clazz)) {
+    for (Class<?> c : JBIterableClassTraverser.classTraverser(clazz)) {
       ContainerUtil.addAll(result, c.getDeclaredFields());
     }
     return result;
@@ -140,16 +139,45 @@ public class ReflectionUtil {
   @NotNull
   public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
     Field result = findFieldInHierarchy(clazz, field -> fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType())));
-    if (result != null) return result;
+    if (result != null) {
+      return result;
+    }
     throw new NoSuchFieldException("Class: " + clazz + " fieldName: " + fieldName + " fieldType: " + fieldType);
   }
 
+  public static @Nullable Field findFieldInHierarchy(@NotNull Class<?> rootClass,
+                                                     @NotNull java.util.function.Predicate<? super Field> checker) {
+    for (Class<?> aClass = rootClass; aClass != null; aClass = aClass.getSuperclass()) {
+      for (Field field : aClass.getDeclaredFields()) {
+        if (checker.test(field)) {
+          field.setAccessible(true);
+          return field;
+        }
+      }
+    }
+
+    // ok, let's check interfaces
+    return processInterfaces(rootClass.getInterfaces(), new HashSet<>(), checker);
+  }
+
   @Nullable
-  private static Field findFieldInHierarchy(@NotNull Class<?> clazz, @NotNull Condition<? super Field> checker) {
-    for (Class<?> c : classTraverser(clazz)) {
-      Field field = ContainerUtil.find(c.getDeclaredFields(), checker);
+  private static Field processInterfaces(Class<?> @NotNull [] interfaces,
+                                         @NotNull Set<Class<?>> visited,
+                                         @NotNull java.util.function.Predicate<? super Field> checker) {
+    for (Class<?> anInterface : interfaces) {
+      if (!visited.add(anInterface)) {
+        continue;
+      }
+
+      for (Field field : anInterface.getDeclaredFields()) {
+        if (checker.test(field)) {
+          field.setAccessible(true);
+          return field;
+        }
+      }
+
+      Field field = processInterfaces(anInterface.getInterfaces(), visited, checker);
       if (field != null) {
-        field.setAccessible(true);
         return field;
       }
     }
@@ -211,9 +239,9 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, @NotNull Class<?>... parameters) {
+  public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, Class<?> @NotNull ... parameters) {
     for (final Method method : methods) {
-      if (name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) {
+      if (parameters.length == method.getParameterCount() && name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) {
         return makeAccessible(method);
       }
     }
@@ -226,7 +254,7 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Method getMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, @NotNull Class<?>... parameters) {
+  public static Method getMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, Class<?> @NotNull ... parameters) {
     try {
       return makeAccessible(aClass.getMethod(name, parameters));
     }
@@ -236,7 +264,7 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Method getDeclaredMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, @NotNull Class<?>... parameters) {
+  public static Method getDeclaredMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, Class<?> @NotNull ... parameters) {
     try {
       return makeAccessible(aClass.getDeclaredMethod(name, parameters));
     }
@@ -279,7 +307,7 @@ public class ReflectionUtil {
   }
 
   @NotNull
-  private static List<Method> filterRealMethods(@NotNull Method[] methods) {
+  private static List<Method> filterRealMethods(Method @NotNull [] methods) {
     List<Method> result = new ArrayList<>();
     for (Method method : methods) {
       if (!method.isSynthetic()) {
@@ -290,18 +318,17 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Class<?> getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String methodName, @NotNull Class<?>... parameters) {
+  public static Class<?> getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String methodName, Class<?> @NotNull ... parameters) {
     Method method = getMethod(instanceClass, methodName, parameters);
     return method == null ? null : method.getDeclaringClass();
   }
 
   public static <T> T getField(@NotNull Class<?> objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
-      final Field field = findAssignableField(objectClass, fieldType, fieldName);
-      //noinspection unchecked
-      return (T)field.get(object);
+      Field field = findAssignableField(objectClass, fieldType, fieldName);
+      return getFieldValue(field, object);
     }
-    catch (NoSuchFieldException | IllegalAccessException e) {
+    catch (NoSuchFieldException e) {
       LOG.debug(e);
       return null;
     }
@@ -310,16 +337,30 @@ public class ReflectionUtil {
   public static <T> T getStaticFieldValue(@NotNull Class<?> objectClass, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
       final Field field = findAssignableField(objectClass, fieldType, fieldName);
-      if (!Modifier.isStatic(field.getModifiers())) {
+      if (isInstanceField(field)) {
         throw new IllegalArgumentException("Field " + objectClass + "." + fieldName + " is not static");
       }
-      //noinspection unchecked
-      return (T)field.get(null);
+      return getFieldValue(field, null);
     }
-    catch (NoSuchFieldException | IllegalAccessException e) {
+    catch (NoSuchFieldException e) {
       LOG.debug(e);
       return null;
     }
+  }
+
+  public static <T> @Nullable T getFieldValue(@NotNull Field field, @Nullable Object object) {
+    try {
+      //noinspection unchecked
+      return (T)field.get(object);
+    }
+    catch (IllegalAccessException e) {
+      LOG.debug(e);
+      return null;
+    }
+  }
+
+  public static boolean isInstanceField(@NotNull Field field) {
+    return !Modifier.isStatic(field.getModifiers());
   }
 
   // returns true if value was set
@@ -433,6 +474,11 @@ public class ReflectionUtil {
           catch (Throwable ignored) {
           }
 
+          if (constructor.getParameterCount() == 0) {
+            //noinspection unchecked
+            return (T) constructor.newInstance();
+          }
+
           Class<?>[] parameterTypes = constructor.getParameterTypes();
           for (Class<?> type : parameterTypes) {
             if (type.getName().equals("kotlin.jvm.internal.DefaultConstructorMarker")) {
@@ -473,7 +519,7 @@ public class ReflectionUtil {
   }
 
   @NotNull
-  public static <T> T createInstance(@NotNull Constructor<T> constructor, @NotNull Object... args) {
+  public static <T> T createInstance(@NotNull Constructor<T> constructor, Object @NotNull ... args) {
     try {
       return constructor.newInstance(args);
     }
@@ -499,11 +545,11 @@ public class ReflectionUtil {
     return callerClass;
   }
 
-  public static void copyFields(@NotNull Field[] fields, @NotNull Object from, @NotNull Object to) {
+  public static void copyFields(Field @NotNull [] fields, @NotNull Object from, @NotNull Object to) {
     copyFields(fields, from, to, null);
   }
 
-  public static boolean copyFields(@NotNull Field[] fields, @NotNull Object from, @NotNull Object to, @Nullable DifferenceFilter<?> diffFilter) {
+  public static boolean copyFields(Field @NotNull [] fields, @NotNull Object from, @NotNull Object to, @Nullable DifferenceFilter<?> diffFilter) {
     Set<Field> sourceFields = ContainerUtil.newHashSet(from.getClass().getFields());
     boolean valuesChanged = false;
     for (Field field : fields) {
@@ -617,7 +663,7 @@ public class ReflectionUtil {
   }
 
 
-  private static class MySecurityManager extends SecurityManager {
+  private static final class MySecurityManager extends SecurityManager {
     private static final MySecurityManager INSTANCE = new MySecurityManager();
     Class<?>[] getStack() {
       return getClassContext();
@@ -648,12 +694,4 @@ public class ReflectionUtil {
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
-
-  @NotNull
-  public static JBTreeTraverser<Class<?>> classTraverser(@Nullable Class<?> root) {
-    return CLASS_TRAVERSER.unique().withRoot(root);
-  }
-
-  private static final JBTreeTraverser<Class<?>> CLASS_TRAVERSER = JBTreeTraverser.from(
-    (Function<? super Class<?>, ? extends Iterable<? extends Class<?>>>)aClass -> JBIterable.<Class<?>>of(aClass.getSuperclass()).append(aClass.getInterfaces()));
 }

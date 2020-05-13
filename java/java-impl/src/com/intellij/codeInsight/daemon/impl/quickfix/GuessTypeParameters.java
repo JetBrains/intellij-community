@@ -28,7 +28,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
   */
 public class GuessTypeParameters {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters");
+  private static final Logger LOG = Logger.getInstance(GuessTypeParameters.class);
 
   private final Project myProject;
   private final PsiManager myManager;
@@ -49,7 +49,7 @@ public class GuessTypeParameters {
 
   @NotNull
   public PsiTypeElement setupTypeElement(@NotNull PsiTypeElement typeElement,
-                                         @NotNull ExpectedTypeInfo[] infos,
+                                         ExpectedTypeInfo @NotNull [] infos,
                                          @Nullable PsiElement context,
                                          @NotNull PsiClass targetClass) {
     LOG.assertTrue(typeElement.isValid());
@@ -185,8 +185,7 @@ public class GuessTypeParameters {
     return substituted ? SUBSTITUTED_IN_PARAMETERS : SUBSTITUTED_NONE;
   }
 
-  @Nullable
-  private static PsiTypeElement[] typeArguments(@NotNull PsiTypeElement typeElement) {
+  private static PsiTypeElement @Nullable [] typeArguments(@NotNull PsiTypeElement typeElement) {
     // Foo<String, Bar>[][][] -> Foo<String, Bar>
     // Foo<String, Bar> -> Foo<String, Bar>
     final PsiJavaCodeReferenceElement unwrappedRef = typeElement.getInnermostComponentReferenceElement();
@@ -199,8 +198,7 @@ public class GuessTypeParameters {
     return typeArgumentList.getTypeParameterElements();
   }
 
-  @Nullable
-  private static PsiType[] typeArguments(@NotNull PsiType type) {
+  private static PsiType @Nullable [] typeArguments(@NotNull PsiType type) {
     PsiClassType unwrappedType = getComponentType(type);
     return unwrappedType == null ? null : unwrappedType.getParameters();
   }
@@ -215,13 +213,13 @@ public class GuessTypeParameters {
     }
 
     @Override
-    public PsiType visitType(PsiType type) {
+    public PsiType visitType(@NotNull PsiType type) {
       if (type.equals(PsiType.NULL)) return PsiType.getJavaLangObject(myManager, myResolveScope);
       return type;
     }
 
     @Override
-    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+    public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
       return capturedWildcardType.getUpperBound().accept(this);
     }
   }

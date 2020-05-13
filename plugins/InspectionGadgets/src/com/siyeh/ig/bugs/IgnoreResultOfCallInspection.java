@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.*;
 
 public class IgnoreResultOfCallInspection extends BaseInspection {
-
   private static final CallMatcher STREAM_COLLECT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_COLLECTION =
@@ -63,7 +62,16 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "parseInt", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
-      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException");
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException")
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
+                                       "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"), 
+              "java.lang.NoSuchMethodException")
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
+                                       "getField", "getDeclaredField"), "java.lang.NoSuchFieldException");
+  private static final CallMatcher MOCKITO_EXCLUDED_QUALIFIER_CALLS =
+    CallMatcher.anyOf(
+      CallMatcher.instanceCall("org.mockito.stubbing.Stubber", "when"),
+      CallMatcher.staticCall("org.mockito.Mockito", "verify"));
   private static final Set<String> IGNORE_ANNOTATIONS = ContainerUtil
     .immutableSet("org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
   protected final MethodMatcher myMethodMatcher;
@@ -126,12 +134,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   @NotNull
   public String getID() {
     return "ResultOfMethodCallIgnored";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("result.of.method.call.ignored.display.name");
   }
 
   @Override
@@ -202,6 +204,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;
       if (PropertyUtil.isSimpleGetter(method)) {
         return !isIgnored(method, null);
+      }
+      if (method instanceof PsiCompiledElement) {
+        PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
+        if (sourceMethod != null && PropertyUtil.isSimpleGetter(sourceMethod)) {
+          return !isIgnored(method, null);
+        }
       }
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
         return !isIgnored(method, null);
@@ -281,6 +289,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
+      if (call instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
+        if (MOCKITO_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
+      }
       if (!SideEffectChecker.mayHaveExceptionalSideEffect(method)) return true;
       if (!(call instanceof PsiCallExpression) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(call);

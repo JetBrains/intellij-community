@@ -16,10 +16,10 @@
 package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -45,7 +45,8 @@ import java.awt.*;
  * @author Max Medvedev
  */
 public abstract class ImportLayoutPanel extends JPanel {
-  private final JBCheckBox myCbLayoutStaticImportsSeparately = new JBCheckBox("Layout static imports separately");
+  private final JBCheckBox myCbLayoutStaticImportsSeparately =
+    new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
   private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
@@ -64,7 +65,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public ImportLayoutPanel() {
     super(new BorderLayout());
-    setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false, JBUI.emptyInsets()));
+    setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("title.import.layout"), false, JBUI.emptyInsets()));
 
     myCbLayoutStaticImportsSeparately.addItemListener(e -> {
       if (areStaticImportsEnabled()) {
@@ -98,7 +99,7 @@ public abstract class ImportLayoutPanel extends JPanel {
     add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
 
     JPanel importLayoutPanel = ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
-      .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
+      .addExtraAction(new DumbAwareActionButton(JavaBundle.messagePointer("button.add.package"), IconUtil.getAddPackageIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           addPackageToImportLayouts();
@@ -109,7 +110,7 @@ public abstract class ImportLayoutPanel extends JPanel {
           return CommonShortcuts.getNewForDialogs();
         }
       })
-      .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
+      .addExtraAction(new DumbAwareActionButton(JavaBundle.messagePointer("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           addBlankLine();
@@ -123,7 +124,7 @@ public abstract class ImportLayoutPanel extends JPanel {
         PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
         return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
       })
-      .setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"), "Remove", "Up", "Down")
+      .setButtonComparator(JavaBundle.message("button.add.package"), JavaBundle.message("button.add.blank"), "Remove", "Up", "Down")
       .setPreferredSize(new Dimension(-1, 100)).createPanel();
 
 
@@ -213,8 +214,8 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public static JBTable createTableForPackageEntries(final PackageEntryTable packageTable, final ImportLayoutPanel panel) {
     final String[] names = {
-      ApplicationBundle.message("listbox.import.package"),
-      ApplicationBundle.message("listbox.import.with.subpackages"),
+      JavaBundle.message("listbox.import.package"),
+      JavaBundle.message("listbox.import.with.subpackages"),
     };
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
@@ -248,7 +249,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
       @Override
       public String getColumnName(int column) {
-        if (panel.areStaticImportsEnabled() && column == 0) return "Static";
+        if (panel.areStaticImportsEnabled() && column == 0) return JavaBundle.message("listbox.import.static");
         column -= panel.areStaticImportsEnabled() ? 1 : 0;
         return names[column];
       }

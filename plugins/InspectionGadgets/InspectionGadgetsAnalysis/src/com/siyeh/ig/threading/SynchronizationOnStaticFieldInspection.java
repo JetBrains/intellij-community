@@ -19,18 +19,9 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizationOnStaticFieldInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "synchronization.on.static.field.display.name");
-  }
 
   @NotNull
   @Override

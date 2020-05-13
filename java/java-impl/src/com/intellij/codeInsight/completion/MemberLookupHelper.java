@@ -85,7 +85,7 @@ public class MemberLookupHelper {
                           : myMember instanceof PsiMethod
                             ? getMethodParameterString((PsiMethod)myMember, substitutor)
                             : "";
-    presentation.clearTail();
+
     presentation.appendTailText(params, false);
     if (myShouldImport && StringUtil.isNotEmpty(className)) {
       presentation.appendTailText(" in " + className + location, true);

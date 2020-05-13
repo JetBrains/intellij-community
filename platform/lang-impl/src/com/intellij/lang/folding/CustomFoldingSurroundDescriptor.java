@@ -34,10 +34,11 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.psi.util.PsiTreeUtil.skipParentsOfType;
@@ -48,21 +49,11 @@ import static com.intellij.psi.util.PsiTreeUtil.skipParentsOfType;
 public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   public final static CustomFoldingSurroundDescriptor INSTANCE = new CustomFoldingSurroundDescriptor();
-  public final static CustomFoldingRegionSurrounder[] SURROUNDERS;
 
   private final static String DEFAULT_DESC_TEXT = "Description";
 
-  static {
-    List<CustomFoldingRegionSurrounder> surrounderList = new ArrayList<>();
-    for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {
-      surrounderList.add(new CustomFoldingRegionSurrounder(provider));
-    }
-    SURROUNDERS = surrounderList.toArray(new CustomFoldingRegionSurrounder[0]);
-  }
-
-  @NotNull
   @Override
-  public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     if (startOffset >= endOffset) return PsiElement.EMPTY_ARRAY;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
     if (commenter == null || commenter.getLineCommentPrefix() == null && 
@@ -88,8 +79,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  @NotNull
-  private static PsiElement[] adjustRange(@NotNull PsiElement start, @NotNull PsiElement end) {
+  private static PsiElement @NotNull [] adjustRange(@NotNull PsiElement start, @NotNull PsiElement end) {
     PsiElement newStart = lowerStartElementIfNeeded(start, end);
     PsiElement newEnd = lowerEndElementIfNeeded(start, end);
     if (newStart == null || newEnd == null) {
@@ -236,10 +226,17 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     return lineFeedFound;
   }
 
-  @NotNull
   @Override
-  public Surrounder[] getSurrounders() {
-    return SURROUNDERS;
+  public Surrounder @NotNull [] getSurrounders() {
+    //noinspection TestOnlyProblems
+    return getAllSurrounders().toArray(new CustomFoldingRegionSurrounder[0]);
+  }
+
+  @TestOnly
+  @NotNull
+  public static List<CustomFoldingRegionSurrounder> getAllSurrounders() {
+    return ContainerUtil.map(
+      CustomFoldingProvider.getAllProviders(), provider -> new CustomFoldingRegionSurrounder(provider));
   }
 
   @Override
@@ -261,34 +258,42 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     }
 
     @Override
-    public boolean isApplicable(@NotNull PsiElement[] elements) {
+    public boolean isApplicable(@NotNull PsiElement @NotNull [] elements) {
       if (elements.length == 0) return false;
       if (elements[0].getContainingFile() instanceof PsiCodeFragment) {
         return false;
       }
       for (FoldingBuilder each : LanguageFolding.INSTANCE.allForLanguage(elements[0].getLanguage())) {
-        if (each instanceof CustomFoldingBuilder) return true;
+        if (myProvider.isSupportedBy(each)) return true;
       }
       return false;
     }
 
     @Override
-    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
+    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
       throws IncorrectOperationException {
       if (elements.length == 0) return null;
       PsiElement firstElement = elements[0];
       PsiElement lastElement = elements[elements.length - 1];
       PsiFile psiFile = firstElement.getContainingFile();
+      String linePrefix;
+      String lineSuffix;
       Language language = psiFile.getLanguage();
-      Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
-      if (commenter == null) return null;
-      String linePrefix = commenter.getLineCommentPrefix();
-      String lineSuffix = "";
-      if (linePrefix == null) {
-        linePrefix = commenter.getBlockCommentPrefix();
-        lineSuffix = StringUtil.notNullize(commenter.getBlockCommentSuffix());
+      if (myProvider.wrapStartEndMarkerTextInLanguageSpecificComment()) {
+        Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
+        if (commenter == null) return null;
+        linePrefix = commenter.getLineCommentPrefix();
+        lineSuffix = "";
+        if (linePrefix == null) {
+          linePrefix = commenter.getBlockCommentPrefix();
+          lineSuffix = StringUtil.notNullize(commenter.getBlockCommentSuffix());
+        }
+        if (linePrefix == null) return null;
       }
-      if (linePrefix == null) return null;
+      else {
+        linePrefix = "";
+        lineSuffix = "";
+      }
       int prefixLength = linePrefix.length();
 
       int startOffset = firstElement.getTextRange().getStartOffset();

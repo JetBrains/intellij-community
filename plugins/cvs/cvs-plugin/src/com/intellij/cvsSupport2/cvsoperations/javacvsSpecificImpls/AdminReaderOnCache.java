@@ -40,7 +40,7 @@ import java.util.Date;
  */
 public class AdminReaderOnCache implements IAdminReader {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderOnCache");
+  private static final Logger LOG = Logger.getInstance(AdminReaderOnCache.class);
 
   private final IAdminReader ourStandardAdminReader = new AdminReader(CvsApplicationLevelConfiguration.getCharset());
   private final CvsEntriesManager myCvsEntriesManager = CvsEntriesManager.getInstance();

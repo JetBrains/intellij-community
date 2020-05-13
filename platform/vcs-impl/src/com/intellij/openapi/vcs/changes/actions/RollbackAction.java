@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,9 @@ import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
+import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static com.intellij.util.containers.UtilKt.notNullize;
+import static com.intellij.util.ui.UIUtil.removeMnemonic;
 
 public class RollbackAction extends AnAction implements DumbAware, UpdateInBackground {
   @Override
@@ -53,7 +54,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
     String operationName = RollbackUtil.getRollbackOperationName(project);
     e.getPresentation().setText(operationName + "...");
     if (isEnabled) {
-      e.getPresentation().setDescription(UIUtil.removeMnemonic(operationName) + " selected changes");
+      e.getPresentation().setDescription(VcsBundle.message("action.message.use.selected.changes.description", removeMnemonic(operationName)));
     }
   }
 
@@ -79,7 +80,8 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
     }
     final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace())
                          ? null
-                         : "Can not " + UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project)) + " now";
+                         : VcsBundle.message("error.cant.perform.operation.now",
+                                             removeEllipsisSuffix(removeMnemonic(RollbackUtil.getRollbackOperationName(project))));
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
 
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
@@ -152,7 +154,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final LinkedHashSet<VirtualFile> modifiedWithoutEditing) {
-    final String operationName = StringUtil.decapitalize(UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project)));
+    final String operationName = StringUtil.decapitalize(removeMnemonic(RollbackUtil.getRollbackOperationName(project)));
     String message = (modifiedWithoutEditing.size() == 1)
                      ? VcsBundle.message("rollback.modified.without.editing.confirm.single",
                                          operationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
@@ -172,8 +174,8 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
           final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
           if (rollbackEnvironment != null) {
             if (indicator != null) {
-              indicator.setText(vcs.getDisplayName() +
-                                ": performing " + StringUtil.toLowerCase(UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName())) + "...");
+              indicator.setText(VcsBundle.message("progress.text.performing", vcs.getDisplayName(),
+                                                  StringUtil.toLowerCase(removeMnemonic(rollbackEnvironment.getRollbackOperationName()))));
               indicator.setIndeterminate(false);
             }
             rollbackEnvironment

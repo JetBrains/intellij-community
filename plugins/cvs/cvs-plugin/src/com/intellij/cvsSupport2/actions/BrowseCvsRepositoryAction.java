@@ -28,7 +28,6 @@ import java.util.Collections;
  * author: lesya
  */
 public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAware {
-  private static final String TITLE = CvsBundle.message("operation.name.browse.repository");
   private CvsRootConfiguration mySelectedConfiguration;
 
   public BrowseCvsRepositoryAction() {
@@ -44,7 +43,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
 
   @Override
   protected String getTitle(VcsContext context) {
-    return TITLE;
+    return getTitleText();
   }
 
   @Override
@@ -73,7 +72,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       LOG.assertTrue(mySelectedConfiguration != null);
       final BrowserPanel browserPanel = new BrowserPanel(mySelectedConfiguration, project,
                                                          e -> VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.ERROR));
-      tabbedWindow.addTab(TITLE, browserPanel,
+      tabbedWindow.addTab(getTitleText(), browserPanel,
                           true, true, true, true, browserPanel.getActionGroup(), "cvs.browse");
     }
   }
@@ -81,7 +80,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
   private class MyCvsHandler extends CvsHandler {
 
     MyCvsHandler() {
-      super(TITLE, FileSetToBeUpdated.EMPTY);
+      super(getTitleText(), FileSetToBeUpdated.EMPTY);
     }
 
     @Override
@@ -109,5 +108,9 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.ERROR);
       return false;
     }
+  }
+
+  private static String getTitleText() {
+    return CvsBundle.message("operation.name.browse.repository");
   }
 }

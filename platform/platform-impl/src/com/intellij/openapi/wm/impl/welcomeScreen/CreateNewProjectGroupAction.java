@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,7 +28,8 @@ public class CreateNewProjectGroupAction extends RecentProjectsWelcomeScreenActi
         return true;
       }
     };
-    final String newGroup = Messages.showInputDialog((Project)null, "Project group name", "Create New Project Group", null, null, validator);
+    final String newGroup = Messages.showInputDialog((Project)null, IdeBundle.message("dialog.message.project.group.name"),
+                                                     IdeBundle.message("dialog.title.create.new.project.group"), null, null, validator);
     if (newGroup != null) {
       RecentProjectsManager.getInstance().addGroup(new ProjectGroup(newGroup));
       rebuildRecentProjectsList(e);

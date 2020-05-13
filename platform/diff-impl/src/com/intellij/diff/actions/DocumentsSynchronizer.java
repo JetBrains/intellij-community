@@ -3,6 +3,7 @@ package com.intellij.diff.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -67,7 +68,8 @@ abstract class DocumentsSynchronizer {
                                @NotNull final CharSequence newText) {
     try {
       myDuringModification = true;
-      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText)), "Synchronize document and its fragment", document);
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText)),
+                                                    DiffBundle.message("synchronize.document.and.its.fragment"), document);
     }
     finally {
       myDuringModification = false;

@@ -15,10 +15,10 @@
  */
 package com.intellij.refactoring.typeCook.deductive.builder;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
@@ -33,7 +33,7 @@ import java.util.Set;
  * @author db
  */
 public class Result {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.Result");
+  private static final Logger LOG = Logger.getInstance(Result.class);
 
   private final Set<PsiElement> myVictims;
   private final Map<PsiElement, PsiType> myTypes;
@@ -156,12 +156,12 @@ public class Result {
   }
 
   private String getRatio(final int x, final int y) {
-    final String ratio = RefactoringBundle.message("type.cook.ratio.generified", x, y);
+    final String ratio = JavaRefactoringBundle.message("type.cook.ratio.generified", x, y);
     return ratio + (y != 0 ? " (" + (x * 100 / y) + "%)" : "");
   }
 
   public String getReport() {
-    return RefactoringBundle.message("type.cook.report", getRatio(myCookedNumber, myVictims.size()),
+    return JavaRefactoringBundle.message("type.cook.report", getRatio(myCookedNumber, myVictims.size()),
                                      getRatio(myCastsRemoved, myCastsNumber));
   }
 }

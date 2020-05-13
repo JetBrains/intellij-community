@@ -31,8 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -41,6 +40,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
@@ -74,11 +74,10 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
   @NotNull
   @Override
-  protected final UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected final UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return new PsiElement[] {myFunction};
       }
 
@@ -89,10 +88,9 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     };
   }
 
-  @NotNull
   @Override
-  protected final UsageInfo[] findUsages() {
-    return PyCodeFragmentUtil.findUsages(myFunction, false).toArray(UsageInfo.EMPTY_ARRAY);
+  protected final UsageInfo @NotNull [] findUsages() {
+    return PyPsiIndexUtil.findUsages(myFunction, false).toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -102,7 +100,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   @Override
-  protected final void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected final void performRefactoring(UsageInfo @NotNull [] usages) {
     final List<String> newParameters = collectNewParameterNames();
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
@@ -127,7 +125,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     updateImports(newFunction, usages);
   }
 
-  private boolean importsRequired(@NotNull UsageInfo[] usages, final PyFile targetFile) {
+  private boolean importsRequired(UsageInfo @NotNull [] usages, final PyFile targetFile) {
     return ContainerUtil.exists(usages, info -> {
       final PsiElement element = info.getElement();
       if (element == null) {
@@ -142,21 +140,21 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
 
-  private void updateImports(@NotNull PyFunction newFunction, @NotNull UsageInfo[] usages) {
+  private void updateImports(@NotNull PyFunction newFunction, UsageInfo @NotNull [] usages) {
     final Set<PsiFile> usageFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       usageFiles.add(usage.getFile());
     }
     for (PsiFile file : usageFiles) {
       if (file != newFunction.getContainingFile()) {
-        PyClassRefactoringUtil.insertImport(file, newFunction, null, true);
+        PyPsiRefactoringUtil.insertImport(file, newFunction, null, true);
       }
     }
     // References inside the body of function 
     if (newFunction.getContainingFile() != mySourceFile) {
       for (PsiElement read : myExternalReads) {
         if (read instanceof PsiNamedElement && read.isValid()) {
-          PyClassRefactoringUtil.insertImport(newFunction, (PsiNamedElement)read, null, true);
+          PyPsiRefactoringUtil.insertImport(newFunction, (PsiNamedElement)read, null, true);
         }
       }
       PyClassRefactoringUtil.optimizeImports(mySourceFile);
@@ -169,7 +167,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   @NotNull
   protected abstract List<String> collectNewParameterNames();
 
-  protected abstract void updateUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages);
+  protected abstract void updateUsages(@NotNull Collection<String> newParamNames, UsageInfo @NotNull [] usages);
   
   @NotNull
   protected abstract PyFunction createNewFunction(@NotNull Collection<String> newParamNames);

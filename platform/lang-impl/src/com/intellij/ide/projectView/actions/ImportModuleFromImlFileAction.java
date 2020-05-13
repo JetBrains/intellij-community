@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -22,11 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ImportModuleFromImlFileAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction");
+  private static final Logger LOG = Logger.getInstance(ImportModuleFromImlFileAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -44,7 +42,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
     }
     catch (Exception ex) {
       LOG.info(ex);
-      Messages.showErrorDialog(project, "Cannot import module: " + ex.getMessage(), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(project, LangBundle.message("dialog.message.cannot.import.module", ex.getMessage()), CommonBundle.getErrorTitle());
     }
   }
 
@@ -56,10 +54,10 @@ public class ImportModuleFromImlFileAction extends AnAction {
     presentation.setEnabledAndVisible(visible);
     String text;
     if (modules.size() > 1) {
-      text = "Import " + modules.size() + " Modules";
+      text = LangBundle.message("action.import.modules.text", modules.size());
     }
     else if (modules.size() == 1) {
-      text = "Import '" + modules.get(0).getNameWithoutExtension() + "' Module";
+      text = LangBundle.message("action.import.module.text", modules.get(0).getNameWithoutExtension());
     }
     else {
       text = getTemplatePresentation().getText();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 /**
@@ -13,21 +13,27 @@ public interface NodeOptions {
    *
    * @return the value of the "Flatten Packages" option.
    */
-  boolean isFlattenPackages();
+  default boolean isFlattenPackages() {
+    return false;
+  }
 
   /**
    * Gets the value of the "Abbreviate Qualified Package Names" option.
    *
    * @return the value of the "Abbreviate Qualified Package Names" option.
    */
-  boolean isAbbreviatePackageNames();
+  default boolean isAbbreviatePackageNames() {
+    return false;
+  }
 
   /**
    * Gets the value of the "Compact Empty Middle Packages" option.
    *
    * @return the value of the "Compact Empty Middle Packages" option.
    */
-  boolean isHideEmptyMiddlePackages();
+  default boolean isHideEmptyMiddlePackages() {
+    return false;
+  }
 
   /**
    * @return {@code true} if directories in a tree should be merged if possible
@@ -41,7 +47,9 @@ public interface NodeOptions {
    *
    * @return true if the library contents are shown, false otherwise.
    */
-  boolean isShowLibraryContents();
+  default boolean isShowLibraryContents() {
+    return false;
+  }
 
   class Immutable implements NodeOptions {
     public static final NodeOptions DEFAULT = new Immutable(null);

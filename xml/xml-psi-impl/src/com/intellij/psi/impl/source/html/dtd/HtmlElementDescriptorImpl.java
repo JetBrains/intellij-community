@@ -69,10 +69,9 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
 
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag) {
-    String name = element.getName();
-    if (!myCaseSensitive) name = StringUtil.toLowerCase(name);
+    String name = toLowerCaseIfNeeded(element.getName());
 
-    XmlElementDescriptor xmlElementDescriptor = getElementDescriptor(name, element);
+    XmlElementDescriptor xmlElementDescriptor = getElementDescriptor(name, contextTag);
     if (xmlElementDescriptor == null && "html".equals(getName())) {
       XmlTag head = null;
       XmlTag body = null;
@@ -111,7 +110,8 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     final XmlElementDescriptor[] elementDescriptors = myDelegate.getElementsDescriptors(element);
 
     for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
-      hashMap.put(elementDescriptor.getName(), new HtmlElementDescriptorImpl(elementDescriptor, myRelaxed, myCaseSensitive));
+      hashMap.put(toLowerCaseIfNeeded(elementDescriptor.getName(element)),
+                  new HtmlElementDescriptorImpl(elementDescriptor, myRelaxed, myCaseSensitive));
     }
     return hashMap;
   }
@@ -130,7 +130,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    String caseSensitiveAttributeName =  !myCaseSensitive ? StringUtil.toLowerCase(attributeName) : attributeName;
+    String caseSensitiveAttributeName =  toLowerCaseIfNeeded(attributeName);
     XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(caseSensitiveAttributeName, context);
     if (descriptor == null) descriptor = RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);
     
@@ -159,7 +159,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
 
     for (final XmlAttributeDescriptor attributeDescriptor : elementAttributeDescriptors) {
       hashMap.put(
-        attributeDescriptor.getName(),
+        toLowerCaseIfNeeded(attributeDescriptor.getName(context)),
         new HtmlAttributeDescriptorImpl(attributeDescriptor, myCaseSensitive)
       );
     }
@@ -196,9 +196,8 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     myDelegate.init(element);
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies() {
+  public Object @NotNull [] getDependencies() {
     return myDelegate.getDependencies();
   }
 
@@ -228,4 +227,9 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   public boolean isCaseSensitive() {
     return myCaseSensitive;
   }
+
+  private String toLowerCaseIfNeeded(String name) {
+    return isCaseSensitive() ? name : StringUtil.toLowerCase(name);
+  }
+
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.actions;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -11,15 +12,21 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
-public class NewFolderAction extends FileChooserAction {
+public class NewFolderAction extends FileChooserAction implements LightEditCompatible {
   public NewFolderAction() {
   }
 
   public NewFolderAction(final String text, final String description, final Icon icon) {
+    this(() -> text, () -> description, icon);
+  }
+
+  public NewFolderAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
     super(text, description, icon);
   }
 

@@ -23,9 +23,6 @@ import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class SourceItemsTreeRoot extends SourceItemNodeBase {
   public SourceItemsTreeRoot(ArtifactEditorContext context, ArtifactEditorImpl artifactsEditor) {
     super(context, null, new RootNodePresentation(), artifactsEditor);
@@ -36,9 +33,8 @@ public class SourceItemsTreeRoot extends SourceItemNodeBase {
     return null;
   }
 
-  @NotNull
   @Override
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[]{"root"};
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +47,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
     PyDataView.getInstance(project).show(debugValue);
   }
 
-  @Nullable
-  private static TreePath[] getSelectedPaths(DataContext dataContext) {
+  private static TreePath @Nullable [] getSelectedPaths(DataContext dataContext) {
     XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
     return tree == null ? null : tree.getSelectionPaths();
   }
@@ -68,11 +68,11 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
 
         String nodeType = debugValue.getType();
         if ("ndarray".equals(nodeType)) {
-          e.getPresentation().setText("View as Array");
+          e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
           e.getPresentation().setVisible(true);
         }
         else if (("DataFrame".equals(nodeType))) {
-          e.getPresentation().setText("View as DataFrame");
+          e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.dataframe"));
           e.getPresentation().setVisible(true);
         }
         else {

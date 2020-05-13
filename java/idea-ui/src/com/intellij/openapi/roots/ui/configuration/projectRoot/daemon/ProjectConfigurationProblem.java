@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
-* @author nik
-*/
 public class ProjectConfigurationProblem extends ConfigurationError {
   private final ProjectStructureProblemDescription myDescription;
   private final Project myProject;

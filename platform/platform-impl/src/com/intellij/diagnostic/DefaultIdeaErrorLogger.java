@@ -3,7 +3,9 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
@@ -38,7 +40,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
     try {
       final Application app = ApplicationManager.getApplication();
-      if (app.isDisposed() || app.isDisposeInProgress()) {
+      if (app.isDisposed()) {
         return false;
       }
 
@@ -47,7 +49,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
       Throwable t = event.getThrowable();
-      PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+      PluginId pluginId = PluginUtil.getInstance().findPluginId(t);
 
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
@@ -79,7 +81,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     try {
       Throwable throwable = event.getThrowable();
       MemoryKind kind = getOOMErrorKind(throwable);
-      if (kind != null) {
+      if (kind != null && System.getProperty("testscript.filename") == null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
       }
@@ -121,10 +123,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
       ourMappingFailedNotificationPosted = true;
       String exceptionMessage = event.getThrowable().getMessage();
-      String text = exceptionMessage +
-        "<br>Possible cause: unable to allocate continuous memory chunk of necessary size.<br>" +
-        "Reducing JVM maximum heap size (-Xmx) may help.";
-      Notifications.Bus.notify(new Notification("Memory", "Memory Mapping Failed", text, NotificationType.WARNING), null);
+      String text = DiagnosticBundle.message("notification.content.0.br.possible.cause.unable.to.allocate.memory", exceptionMessage);
+      Notifications.Bus.notify(new Notification(NotificationGroup.createIdWithTitle("Memory", DiagnosticBundle.message("notification.group.memory")),
+                                                DiagnosticBundle.message("notification.title.memory.mapping.failed"), text, NotificationType.WARNING), null);
     }
   }
 }

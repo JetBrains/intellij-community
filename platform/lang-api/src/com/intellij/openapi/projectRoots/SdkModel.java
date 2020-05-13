@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,82 +21,62 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EventListener;
 
 /**
- * Represents the current state of the JDK list in the JDK and Global Libraries
+ * Represents the current state of the SDK list in the <em>SDKs</em>
  * configuration dialog.
  */
 public interface SdkModel {
 
   /**
    * Returns the list of SDKs in the table.
-   * @return the SDK list.
    */
-  @NotNull
-  Sdk[] getSdks();
+  Sdk @NotNull [] getSdks();
 
   /**
-   * Returns the SDK with the specified name, or null if one is not found.
-   *
-   * @param sdkName the name of the SDK to find.
-   * @return the SDK instance or null.
+   * Returns the SDK with the specified name, or {@code null} if none found.
    */
   @Nullable
   Sdk findSdk(String sdkName);
 
   /**
    * Adds the specified SDK (already created and initialized) to the model.
-   *
-   * @param sdk the SDK to add
    */
   void addSdk(@NotNull Sdk sdk);
 
   /**
-   * Allows to receive notifications when the JDK list has been changed by the
-   * user configuring the JDKs.
+   * Allows receiving notifications when the SDK list has been modified.
    */
-
   interface Listener extends EventListener {
+
     /**
-     * Called when a JDK has been added.
-     *
-     * @param sdk the added JDK.
+     * Called when a SDK has been added.
      */
     default void sdkAdded(@NotNull Sdk sdk) {}
 
     /**
-     * Called before a JDK is removed.
+     * Called before a SDK is removed.
      *
      * @param sdk the removed JDK.
      */
     default void beforeSdkRemove(@NotNull Sdk sdk) {}
 
     /**
-     * Called when a JDK has been changed or renamed.
-     *
-     * @param sdk          the changed or renamed JDK.
-     * @param previousName the old name of the changed or renamed JDK.
+     * Called when a SDK has been changed or renamed.
      */
     default void sdkChanged(@NotNull Sdk sdk, String previousName) {}
 
     /**
-     * Called when the home directory of a JDK has been changed.
-     * @param sdk        the changed JDK.
-     * @param newSdkHome the new home directory.
+     * Called when the home directory of a SDK has been changed.
      */
     default void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {}
-
   }
 
   /**
    * Adds a listener for receiving notifications about changes in the list.
-   *
-   * @param listener the listener instance.
    */
   void addListener(@NotNull Listener listener);
 
   /**
    * Removes a listener for receiving notifications about changes in the list.
-   *
-   * @param listener the listener instance.
    */
   void removeListener(@NotNull Listener listener);
 

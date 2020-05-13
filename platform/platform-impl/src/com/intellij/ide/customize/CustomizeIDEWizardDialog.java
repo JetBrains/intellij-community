@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.SplashManager;
 import com.intellij.idea.StartupUtil;
@@ -26,9 +27,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private static final String BUTTONS = "BUTTONS";
   private static final String NO_BUTTONS = "NO_BUTTONS";
 
-  private final JButton mySkipButton = new JButton("Skip Remaining and Set Defaults");
-  private final JButton myBackButton = new JButton("Back");
-  private final JButton myNextButton = new JButton("Next");
+  private final JButton mySkipButton = new JButton(IdeBundle.message("button.skip.remaining.and.set.defaults"));
+  private final JButton myBackButton = new JButton(IdeBundle.message("button.back"));
+  private final JButton myNextButton = new JButton(IdeBundle.message("button.next"));
 
   private final JBCardLayout myCardLayout = new JBCardLayout();
   private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<>();
@@ -48,7 +49,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider, @Nullable StartupUtil.AppStarter appStarter,
                                   boolean beforeSplash, boolean afterSplash) {
     super(null, true, true);
-    setTitle("Customize " + ApplicationNamesInfo.getInstance().getFullProductName());
+    setTitle(IdeBundle.message("dialog.title.customize.0", ApplicationNamesInfo.getInstance().getFullProductName()));
     getPeer().setAppIcons();
 
     if (beforeSplash) stepsProvider.initSteps(this, mySteps);
@@ -85,11 +86,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     if (mySteps.isEmpty()) {
       throw new IllegalStateException("no steps provided");  // use showIfNeeded() instead
     }
+    CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.WizardDisplayed);
     SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
   }
 
   public final boolean showIfNeeded() {
-    final boolean willBeShown = !mySteps.isEmpty() && !isDisposed();
+    boolean willBeShown = !mySteps.isEmpty() && !isDisposed();
     if (willBeShown) {
       show();
     }
@@ -156,6 +158,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   @Override
   public void actionPerformed(@NotNull ActionEvent e) {
     if (e.getSource() == mySkipButton) {
+      CustomizeIDEWizardInteractions.INSTANCE.setSkippedOnPage(myIndex);
       doOKAction();
       return;
     }
@@ -217,12 +220,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
     myBackButton.setVisible(myIndex > 0);
     if (myIndex > 0) {
-      myBackButton.setText("Back to " + mySteps.get(myIndex - 1).getTitle());
+      myBackButton.setText(IdeBundle.message("button.back.to.0", mySteps.get(myIndex - 1).getTitle()));
     }
 
     myNextButton.setText(myIndex < mySteps.size() - 1
-                         ? "Next: " + mySteps.get(myIndex + 1).getTitle()
-                         : "Start using " + ApplicationNamesInfo.getInstance().getFullProductName());
+                         ? IdeBundle.message("button.next.0", mySteps.get(myIndex + 1).getTitle())
+                         : IdeBundle.message("button.start.using.0", ApplicationNamesInfo.getInstance().getFullProductName()));
     myHeaderLabel.setText(ensureHTML(myCurrentStep.getHTMLHeader()));
     myFooterLabel.setText(ensureHTML(myCurrentStep.getHTMLFooter()));
     if (mySteps.size() > 1) {

@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.JpsNamedElement;
 
-/**
- * @author nik
- */
 public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedCompositeElementBase<Self>> extends JpsCompositeElementBase<Self>
   implements JpsNamedElement {
   private String myName;

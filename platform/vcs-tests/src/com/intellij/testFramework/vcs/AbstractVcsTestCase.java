@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -11,7 +11,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,7 +34,6 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -168,15 +170,6 @@ public abstract class AbstractVcsTestCase {
     return line.trim();
   }
 
-  protected VcsDirtyScope getDirtyScopeForFile(VirtualFile file) {
-    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    dirtyScopeManager.retrieveScopes();  // ensure that everything besides the file is clean
-    dirtyScopeManager.fileDirty(file);
-    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes().getScopes();
-    Assert.assertEquals(1, scopes.size());
-    return scopes.get(0);
-  }
-
   protected void renameFileInCommand(final VirtualFile file, final String newName) {
     VcsTestUtil.renameFileInCommand(myProject, file, newName);
   }
@@ -234,7 +227,7 @@ public abstract class AbstractVcsTestCase {
   }
 
   public static void sortChanges(final List<? extends Change> changes) {
-    Collections.sort(changes, (o1, o2) -> {
+    changes.sort((o1, o2) -> {
       final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
       final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
       return p1.compareTo(p2);

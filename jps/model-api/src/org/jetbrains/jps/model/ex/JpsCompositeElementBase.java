@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementContainer;
 
-/**
- * @author nik
- */
 public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBase<Self>> extends JpsElementBase<Self> implements JpsCompositeElement {
   protected final JpsElementContainerEx myContainer;
 

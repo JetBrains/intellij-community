@@ -51,7 +51,7 @@ public class HgRebaseCommand {
   }
 
   @Nullable
-  private HgCommandResult performRebase(@NotNull String... args) {
+  private HgCommandResult performRebase(String @NotNull ... args) {
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Rebase")) {
       final List<String> list = ContainerUtil.newArrayList(args);
       list.add("--config");

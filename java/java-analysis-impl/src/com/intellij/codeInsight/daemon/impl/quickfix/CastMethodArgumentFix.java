@@ -18,24 +18,28 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CastMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
+  private final String myText;
+
   private CastMethodArgumentFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
+    myText = myArgList.getExpressionCount() == 1
+             ? QuickFixBundle.message("cast.single.parameter.text", JavaHighlightUtil.formatType(myToType))
+             : QuickFixBundle.message("cast.parameter.text", myIndex + 1, JavaHighlightUtil.formatType(myToType));
   }
 
   @Override
   @NotNull
   public String getText() {
-    if (myArgList.getExpressionCount() == 1) {
-      return QuickFixBundle.message("cast.single.parameter.text", JavaHighlightUtil.formatType(myToType));
-    }
-
-    return QuickFixBundle.message("cast.parameter.text", myIndex + 1, JavaHighlightUtil.formatType(myToType));
+    return myText;
   }
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {
@@ -71,8 +75,15 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
         return true;
       }
 
-      return parameterType instanceof PsiEllipsisType && areTypesConvertible(exprType, ((PsiEllipsisType)parameterType).getComponentType(), context);
+      return parameterType instanceof PsiEllipsisType &&
+             areTypesConvertible(exprType, ((PsiEllipsisType)parameterType).getComponentType(), context);
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new CastMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+                                     myArgumentFixerActionFactory);
   }
 
   public static final ArgumentFixerActionFactory REGISTRAR = new MyFixerActionFactory();

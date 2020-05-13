@@ -56,6 +56,7 @@ public class PluginDescriptorChooser {
       .put("intellij.platform.ide", "PlatformExtensions.xml")
       .put("intellij.platform.ide.impl", "PlatformExtensions.xml")
       .put("intellij.platform.lang", "LangExtensions.xml")
+      .put("intellij.platform.execution.impl", "LangExtensions.xml")
       .put("intellij.platform.lang.impl", "LangExtensions.xml")
       .put("intellij.platform.vcs", "VcsExtensions.xml")
       .put("intellij.platform.vcs.impl", "VcsExtensions.xml")

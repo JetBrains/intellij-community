@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
 */
 public class RemovePropertyLocalFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.RemovePropertyLocalFix");
+  private static final Logger LOG = Logger.getInstance(RemovePropertyLocalFix.class);
   public static final RemovePropertyLocalFix INSTANCE = new RemovePropertyLocalFix();
 
   @Override

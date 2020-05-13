@@ -4,8 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -34,7 +33,7 @@ public class MethodReturnFixFactory extends ArgumentFixerActionFactory {
   public boolean areTypesConvertible(@NotNull final PsiType exprType,
                                      @NotNull final PsiType parameterType,
                                      @NotNull final PsiElement context) {
-    return !PsiType.VOID.equals(exprType) && exprType.equalsToText(exprType.getCanonicalText());
+    return true;
   }
 
   @Override
@@ -47,7 +46,9 @@ public class MethodReturnFixFactory extends ArgumentFixerActionFactory {
     PsiReferenceExpression ref = call.getMethodExpression();
     // Do not suggest to change return type if the same method is used several times in this argument list
     // In this case it's unlikely that compilation error will be fixed, and can be confusing
-    if (ReferencesSearch.search(method, new LocalSearchScope(list)).anyMatch(r -> r != ref)) return null;
+    boolean noOtherRefs = PsiTreeUtil.processElements(
+        list, e -> e == ref || !(e instanceof PsiReferenceExpression) || !((PsiReferenceExpression)e).isReferenceTo(method));
+    if (!noOtherRefs) return null;
     return QuickFixFactory.getInstance().createMethodReturnFix(method, toType, true);
   }
 }

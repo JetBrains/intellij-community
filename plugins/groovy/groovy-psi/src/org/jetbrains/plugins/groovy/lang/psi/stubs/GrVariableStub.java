@@ -27,7 +27,7 @@ public class GrVariableStub extends GrVariableStubBase<GrVariable> {
   public GrVariableStub(StubElement parent,
                         IStubElementType elementType,
                         @Nullable StringRef ref,
-                        @NotNull String[] annotations,
+                        String @NotNull [] annotations,
                         @Nullable String text) {
     super(parent, elementType, ref, annotations, text);
   }

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,13 +50,13 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     init();
   }
 
-  public JBList(@NotNull E... listData) {
+  public JBList(E @NotNull ... listData) {
     super(createDefaultListModel(listData));
     init();
   }
 
   @NotNull
-  public static <T> DefaultListModel<T> createDefaultListModel(@NotNull T... items) {
+  public static <T> DefaultListModel<T> createDefaultListModel(T @NotNull ... items) {
     return createDefaultListModel(Arrays.asList(items));
   }
 
@@ -176,13 +177,15 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
   @Override
   public Dimension getPreferredSize() {
-    if (getModel().getSize() == 0 && !StringUtil.isEmpty(getEmptyText().getText())) {
-      Dimension s = getEmptyText().getPreferredSize();
-      JBInsets.addTo(s, getInsets());
-      return s;
-    } else {
-      return super.getPreferredSize();
-    }
+    Dimension s = getEmptyText().getPreferredSize();
+    JBInsets.addTo(s, getInsets());
+    Dimension size = super.getPreferredSize();
+    return new Dimension(Math.max(s.width, size.width),
+                         Math.max(s.height, size.height));
+  }
+
+  protected final Dimension super_getPreferredSize() {
+    return super.getPreferredSize();
   }
 
   private void init() {
@@ -262,7 +265,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     return myEmptyText;
   }
 
-  public void setEmptyText(@NotNull String text) {
+  public void setEmptyText(@NotNull @NlsContexts.StatusText String text) {
     myEmptyText.setText(text);
   }
 
@@ -292,7 +295,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     super.setCellRenderer(new ExpandedItemListCellRendererWrapper<>(cellRenderer, myExpandableItemsHandler));
   }
 
-  public <T> void installCellRenderer(@NotNull final NotNullFunction<? super T, ? extends JComponent> fun) {
+  public void installCellRenderer(@NotNull final NotNullFunction<? super E, ? extends JComponent> fun) {
     setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }
 

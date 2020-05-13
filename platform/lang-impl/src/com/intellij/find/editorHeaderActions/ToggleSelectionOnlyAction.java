@@ -1,22 +1,30 @@
 package com.intellij.find.editorHeaderActions;
 
+import com.intellij.find.FindBundle;
 import com.intellij.find.SearchSession;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToggleSelectionOnlyAction extends ToggleAction implements ContextAwareShortcutProvider, DumbAware {
+public class ToggleSelectionOnlyAction extends ToggleAction implements ContextAwareShortcutProvider, DumbAware, LightEditCompatible {
   public ToggleSelectionOnlyAction() {
-    super("Search in Selection Only", null, AllIcons.Actions.InSelection);
+    super(FindBundle.message("find.selection.only"), null, AllIcons.Actions.InSelection);
   }
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     SearchSession search = e.getData(SearchSession.KEY);
     return search != null && !search.getFindModel().isGlobal();
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabled(e.getData(SearchSession.KEY) != null);
   }
 
   @Override

@@ -5,7 +5,7 @@
  */
 package com.intellij.ide.impl;
 
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -16,7 +16,6 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -59,7 +58,7 @@ public final class NewProjectUtil {
   }
 
   public static void createNewProject(@NotNull AbstractProjectWizard wizard) {
-    String title = ProjectBundle.message("project.new.wizard.progress.title");
+    String title = JavaUiBundle.message("project.new.wizard.progress.title");
     Runnable warmUp = () -> ProjectManager.getInstance().getDefaultProject();  // warm-up components
     boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null);
     if (proceed && wizard.showAndGet()) {
@@ -76,7 +75,8 @@ public final class NewProjectUtil {
       return doCreate(wizard, projectToClose);
     }
     catch (IOException e) {
-      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
+      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(),
+                                                                JavaUiBundle.message("dialog.title.project.initialization.failed")));
       return null;
     }
   }
@@ -135,17 +135,7 @@ public final class NewProjectUtil {
       }
 
       String compileOutput = wizard.getNewCompileOutput();
-      CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        CompilerProjectExtension extension = CompilerProjectExtension.getInstance(newProject);
-        if (extension != null) {
-          String canonicalPath = compileOutput;
-          try {
-            canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
-          }
-          catch (IOException ignored) { }
-          extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
-        }
-      }), null, null);
+      setCompilerOutputPath(newProject, compileOutput);
 
       if (projectBuilder != null) {
         // validate can require project on disk
@@ -173,17 +163,14 @@ public final class NewProjectUtil {
               if (toolWindow != null) {
                 toolWindow.activate(null);
               }
-            }, ModalityState.NON_MODAL, newProject.getDisposedOrDisposeInProgress());
-          }, ModalityState.NON_MODAL, newProject.getDisposedOrDisposeInProgress());
+            }, ModalityState.NON_MODAL, newProject.getDisposed());
+          }, ModalityState.NON_MODAL, newProject.getDisposed());
         });
       }
 
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
-
-        OpenProjectTask options = new OpenProjectTask();
-        options.setProject(newProject);
-        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, options);
+        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, new OpenProjectTask(newProject));
       }
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -198,6 +185,20 @@ public final class NewProjectUtil {
     }
   }
 
+  public static void setCompilerOutputPath(@NotNull Project project, @NotNull String path) {
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
+      if (extension != null) {
+        String canonicalPath = path;
+        try {
+          canonicalPath = FileUtil.resolveShortWindowsName(path);
+        }
+        catch (IOException ignored) { }
+        extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+      }
+    }), null, null);
+  }
+
   public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {
     ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
     rootManager.setProjectSdk(jdk);
@@ -209,17 +210,6 @@ public final class NewProjectUtil {
       LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
       if (extension.isDefault() || maxLevel.compareTo(ext.getLanguageLevel()) < 0) {
         ext.setLanguageLevel(maxLevel);
-      }
-    }
-  }
-
-  public static void closePreviousProject(Project projectToClose) {
-    Project[] openProjects = ProjectUtil.getOpenProjects();
-    if (openProjects.length > 0) {
-      int exitCode = ProjectUtil.confirmOpenNewProject(true);
-      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        Project project = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
-        ProjectManagerEx.getInstanceEx().closeAndDispose(project);
       }
     }
   }

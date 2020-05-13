@@ -22,9 +22,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement
 
-/**
- * @author nik
- */
 class ConvertProjectLibraryToRepositoryLibraryAction(private val librariesConfigurable: BaseLibrariesConfigurable,
                                                      context: StructureConfigurableContext)
   : ConvertToRepositoryLibraryActionBase(context) {

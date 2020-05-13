@@ -8,7 +8,6 @@ import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +19,14 @@ import java.util.Iterator;
 import java.util.List;
 
 public class DiffIterableUtil {
-  private static boolean SHOULD_VERIFY_ITERABLE = Registry.is("diff.verify.iterable");
+  @TestOnly
+  private static boolean SHOULD_VERIFY_ITERABLE = false;
 
   /*
    * Compare two integer arrays
    */
   @NotNull
-  public static FairDiffIterable diff(@NotNull int[] data1, @NotNull int[] data2, @NotNull ProgressIndicator indicator)
+  public static FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull ProgressIndicator indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 
@@ -44,7 +44,7 @@ public class DiffIterableUtil {
    * Compare two arrays, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull T[] data1, @NotNull T[] data2, @NotNull ProgressIndicator indicator)
+  public static <T> FairDiffIterable diff(T @NotNull [] data1, T @NotNull [] data2, @NotNull ProgressIndicator indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 

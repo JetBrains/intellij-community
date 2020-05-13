@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -75,9 +74,10 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
     Runnable task = () -> findKeys(consumer, pattern, progressIndicator);
     Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
+    if (application.isUnitTestMode()) {
       application.runReadAction(task);
     } else {
+      if (application.isDispatchThread()) throw new IllegalStateException("This method must not be called from EDT");
       ProgressIndicatorUtils.yieldToPendingWriteActions();
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, progressIndicator);
     }
@@ -128,15 +128,9 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
           continue;
         }
 
-        List<Integer> positions =
-          FileBasedIndex.getInstance().getValues(YAMLKeysIndex.KEY, name, GlobalSearchScope.fileScope(myProject, file));
-        if (positions.size() > 1) {
-          // should be seldom case
-          positions = new ArrayList<>(positions);
-          Collections.sort(positions);
-        }
-        for (int pos : positions) {
-          Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, pos);
+        Integer position = FileBasedIndex.getInstance().getFileData(YAMLKeysIndex.KEY, file, myProject).get(name);
+        if (position != null) {
+          Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, position);
           if (!consumer.process(new YAMLKeyNavigationItem(navigatable, name, file))) {
             return;
           }
@@ -175,8 +169,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
       .stream()
       .sorted()
       .map(idx -> priority.get(idx))
-      .map(found -> found.stream().sorted())
-      .flatMap(s -> s)
+      .flatMap(found -> found.stream().sorted())
       .collect(Collectors.toList());
   }
 

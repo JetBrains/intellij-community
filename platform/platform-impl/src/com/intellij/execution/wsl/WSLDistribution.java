@@ -94,7 +94,7 @@ public class WSLDistribution {
    * {@code ruby -v} => {@code bash -c "ruby -v"}
    */
   @NotNull
-  public GeneralCommandLine createWslCommandLine(@NotNull String... args) {
+  public GeneralCommandLine createWslCommandLine(String @NotNull ... args) {
     return patchCommandLine(new GeneralCommandLine(args), null, null, false);
   }
 
@@ -107,7 +107,7 @@ public class WSLDistribution {
    */
   public ProcessOutput executeOnWsl(int timeout,
                                     @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
-                                    @NotNull String... args) throws ExecutionException {
+                                    String @NotNull ... args) throws ExecutionException {
     GeneralCommandLine commandLine = createWslCommandLine(args);
     CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
     if (processHandlerConsumer != null) {
@@ -116,11 +116,11 @@ public class WSLDistribution {
     return WSLUtil.addInputCloseListener(processHandler).runProcess(timeout);
   }
 
-  public ProcessOutput executeOnWsl(int timeout, @NotNull String... args) throws ExecutionException {
+  public ProcessOutput executeOnWsl(int timeout, String @NotNull ... args) throws ExecutionException {
     return executeOnWsl(timeout, null, args);
   }
 
-  public ProcessOutput executeOnWsl(@Nullable Consumer<? super ProcessHandler> processHandlerConsumer, @NotNull String... args)
+  public ProcessOutput executeOnWsl(@Nullable Consumer<? super ProcessHandler> processHandlerConsumer, String @NotNull ... args)
     throws ExecutionException {
     return executeOnWsl(-1, processHandlerConsumer, args);
   }
@@ -341,7 +341,7 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWindowsPath(@NotNull String wslPath) {
-    return WSLUtil.getWindowsPath(wslPath, myDescriptor.getMntRoot());
+    return WSLUtil.getWindowsPath(wslPath, getMntRoot());
   }
 
   /**
@@ -350,9 +350,17 @@ public class WSLDistribution {
   @Nullable
   public String getWslPath(@NotNull String windowsPath) {
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      return myDescriptor.getMntRoot() + convertWindowsPath(windowsPath);
+      return getMntRoot() + convertWindowsPath(windowsPath);
     }
     return null;
+  }
+
+  /**
+   * @see WslDistributionDescriptor#getMntRoot()
+   */
+  @NotNull
+  public final String getMntRoot(){
+    return myDescriptor.getMntRoot();
   }
 
   /**
@@ -386,11 +394,11 @@ public class WSLDistribution {
            '}';
   }
 
-  private static void prependCommandLineString(@NotNull StringBuilder commandLineString, @NotNull String... commands) {
+  private static void prependCommandLineString(@NotNull StringBuilder commandLineString, String @NotNull ... commands) {
     commandLineString.insert(0, createAdditionalCommand(commands) + " ");
   }
 
-  private static String createAdditionalCommand(@NotNull String... commands) {
+  private static String createAdditionalCommand(String @NotNull ... commands) {
     return new GeneralCommandLine(commands).getCommandLineString();
   }
 

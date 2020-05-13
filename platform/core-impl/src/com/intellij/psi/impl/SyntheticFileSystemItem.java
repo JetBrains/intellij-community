@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -21,12 +21,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SyntheticFileSystemItem extends PsiElementBase implements PsiFileSystemItem {
-  private static final Logger LOG = Logger.getInstance("#" + SyntheticFileSystemItem.class.getPackage().getName());
+  private static final Logger LOG = Logger.getInstance(SyntheticFileSystemItem.class);
 
   protected final Project myProject;
   protected final PsiManager myManager;
 
-  public SyntheticFileSystemItem(Project project) {
+  public SyntheticFileSystemItem(@NotNull Project project) {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
   }
@@ -86,8 +86,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     final PsiElementProcessor.CollectElements<PsiFileSystemItem> collector = new PsiElementProcessor.CollectElements<>();
     processChildren(collector);
     return collector.toArray(new PsiFileSystemItem[0]);
@@ -157,8 +156,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return ArrayUtilRt.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 

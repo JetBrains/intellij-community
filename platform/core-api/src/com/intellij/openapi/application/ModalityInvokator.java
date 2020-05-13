@@ -21,7 +21,7 @@ public interface ModalityInvokator {
   ActionCallback invokeLater(@NotNull Runnable runnable);
 
   @NotNull
-  ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition expired);
+  ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired);
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
@@ -35,5 +35,5 @@ public interface ModalityInvokator {
   ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
 
   @NotNull
-  ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
+  ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
 }

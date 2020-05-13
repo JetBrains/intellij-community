@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.util.ContentsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,6 @@ import java.util.List;
  * @see ContentsUtil
  */
 public interface ContentManager extends Disposable, BusyObject {
-
   boolean canCloseContents();
 
   @NotNull
@@ -40,6 +41,7 @@ public interface ContentManager extends Disposable, BusyObject {
   void setSelectedContent(@NotNull Content content);
 
   @NotNull
+  @ApiStatus.Internal
   ActionCallback setSelectedContentCB(@NotNull Content content);
 
   void setSelectedContent(@NotNull Content content, boolean requestFocus);
@@ -72,17 +74,14 @@ public interface ContentManager extends Disposable, BusyObject {
   @Nullable
   Content getSelectedContent();
 
-  @NotNull
-  Content[] getSelectedContents();
+  Content @NotNull [] getSelectedContents();
 
   void removeAllContents(boolean dispose);
 
   int getContentCount();
 
-  @NotNull
-  Content[] getContents();
+  Content @NotNull [] getContents();
 
-  //TODO[anton,vova] is this method needed?
   Content findContent(String displayName);
 
   @Nullable
@@ -92,6 +91,7 @@ public interface ContentManager extends Disposable, BusyObject {
 
   int getIndexOfContent(@NotNull Content content);
 
+  @ActionText
   @NotNull
   String getCloseActionName();
 
@@ -108,12 +108,15 @@ public interface ContentManager extends Disposable, BusyObject {
   /**
    * Returns the localized name of the "Close All but This" action.
    */
+  @ActionText
   @NotNull
   String getCloseAllButThisActionName();
 
+  @ActionText
   @NotNull
   String getPreviousContentActionName();
 
+  @ActionText
   @NotNull
   String getNextContentActionName();
 

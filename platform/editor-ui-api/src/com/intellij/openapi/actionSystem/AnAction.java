@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,15 +9,19 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
+import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
  * Represents an entity that has a state, a presentation and can be performed.
@@ -65,7 +70,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
-
+  private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -80,7 +85,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param icon Default icon to appear in toolbars and menus (Note some platform don't have icons in menu).
    */
   public AnAction(Icon icon){
-    this(null, null, icon);
+    this(Presentation.NULL_STRING, Presentation.NULL_STRING, icon);
   }
 
   /**
@@ -90,8 +95,21 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item.
    */
-  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text){
+  public AnAction(@Nullable @ActionText String text) {
     this(text, null, null);
+  }
+
+  /**
+   * Creates a new action with the specified text. Description and icon are
+   * set to {@code null}.
+   *
+   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
+   * menu item when the presentation is a menu item.
+   *
+   *  Use it if you need to localize action text.
+   */
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText) {
+    this(dynamicText, Presentation.NULL_STRING, null);
   }
 
   /**
@@ -105,12 +123,41 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
-                  @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public AnAction(@Nullable @ActionText String text,
+                  @Nullable @ActionDescription String description,
+                  @Nullable Icon icon) {
+    this(() -> text, () -> description, icon);
+  }
+
+  /**
+   * Constructs a new action with the specified dynamicText, dynamicDescription and icon.
+   *
+   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
+   *  menu item when the presentation is a menu item. Use it if you need to localize action text.
+   *
+   * @param icon Action's icon
+   */
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @NotNull Icon icon) {
+    this(dynamicText, Presentation.NULL_STRING, icon);
+  }
+
+  /**
+   * Constructs a new action with the specified dynamicText, dynamicDescription and icon.
+   *
+   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
+   *  menu item when the presentation is a menu item. Use it if you need to localize action text.
+   *
+   * @param dynamicDescription Describes current action, this dynamicDescription will appear on
+   *  the status bar when presentation has focus. Use it if you need to localize description.
+   *
+   * @param icon Action's icon
+   */
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText,
+                  @NotNull Supplier<@ActionDescription String> dynamicDescription,
                   @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
-    presentation.setText(text);
-    presentation.setDescription(description);
+    presentation.setText(dynamicText);
+    presentation.setDescription(dynamicDescription);
     presentation.setIcon(icon);
   }
 
@@ -147,9 +194,10 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   public final void registerCustomShortcutSet(@Nullable JComponent component, @Nullable Disposable parentDisposable) {
     if (component == null) return;
-    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+    List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList == null) {
-      UIUtil.putClientProperty(component, ACTIONS_KEY, actionList = new SmartList<>());
+      List<AnAction> value = actionList = new SmartList<>();
+      ComponentUtil.putClientProperty(component, ACTIONS_KEY, value);
     }
     if (!actionList.contains(this)) {
       actionList.add(this);
@@ -160,8 +208,8 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
   }
 
-  public final void unregisterCustomShortcutSet(@Nullable JComponent component) {
-    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+  public final void unregisterCustomShortcutSet(@NotNull JComponent component) {
+    List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList != null) {
       actionList.remove(this);
     }
@@ -275,13 +323,14 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myShortcutSet != shortcutSet &&
-        !"ProxyShortcutSet".equals(shortcutSet.getClass().getSimpleName()) && // avoid CyclicDependencyException
-        ApplicationManager.getApplication() != null &&
-        ActionManager.getInstance() != null &&
-        ActionManager.getInstance().getId(this) != null) {
-      LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
-               "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
-               "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+        myShortcutSet != CustomShortcutSet.EMPTY &&
+        LoadingState.PROJECT_OPENED.isOccurred()) {
+      ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+      if (actionManager != null && actionManager.getId(this) != null) {
+        LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
+                 "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
+                 "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+      }
     }
     myShortcutSet = shortcutSet;
   }
@@ -319,13 +368,26 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
-   * @return whether this action should be wrapped into a single transaction. PSI/VFS-related actions
-   * that can show progresses or modal dialogs should return true. The default value is false, to prevent
-   * transaction-related assertions from actions in harmless dialogs like "Enter password" shown inside invokeLater.
-   * @see com.intellij.openapi.application.TransactionGuard
+   * @deprecated unused
    */
+  @Deprecated
   public boolean startInTransaction() {
     return false;
+  }
+
+  public void addTextOverride(@NotNull String place, @NotNull String text) {
+    addTextOverride(place, () -> text);
+  }
+
+  public void addTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
+    myActionTextOverrides = myActionTextOverrides.plus(place, text);
+  }
+
+  public void applyTextOverride(AnActionEvent e) {
+    Supplier<String> override = myActionTextOverrides.get(e.getPlace());
+    if (override != null) {
+      e.getPresentation().setText(override);
+    }
   }
 
   public interface TransparentUpdate {
@@ -349,7 +411,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @return action presentable text without private user data
    */
   @Nullable
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   public String getTemplateText() {
     return getTemplatePresentation().getText();
   }

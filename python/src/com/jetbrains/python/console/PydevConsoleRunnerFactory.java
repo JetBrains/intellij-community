@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -21,12 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author traff
- */
 public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
   protected static class ConsoleParameters {
@@ -37,7 +35,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     @NotNull PyConsoleType myConsoleType;
     @NotNull PyConsoleOptions.PyConsoleSettings mySettingsProvider;
     @NotNull Consumer<String> myRerunAction;
-    @NotNull String[] mySetupFragment;
+    String @NotNull [] mySetupFragment;
 
     public ConsoleParameters(@NotNull Project project,
                              @Nullable Sdk sdk,
@@ -46,7 +44,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                              @NotNull PyConsoleType consoleType,
                              @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                              @NotNull Consumer<String> rerunAction,
-                             @NotNull String[] setupFragment) {
+                             String @NotNull [] setupFragment) {
       myProject = project;
       mySdk = sdk;
       myWorkingDir = workingDir;
@@ -173,7 +171,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                                    @NotNull PyConsoleType consoleType,
                                                    @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                                    @NotNull Consumer<? super String> rerunAction,
-                                                   @NotNull String... setupFragment) {
+                                                   String @NotNull ... setupFragment) {
     return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, rerunAction, setupFragment);
   }
 
@@ -207,8 +205,12 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     Sdk sdk = config.getSdk() != null ? config.getSdk() : consoleParameters.mySdk;
     String workingDir = config.getWorkingDirectory() != null ? config.getWorkingDirectory() : consoleParameters.myWorkingDir;
 
+    Map<String, String> consoleEnvs = new HashMap<>();
+    consoleEnvs.putAll(consoleParameters.myEnvs);
+    consoleEnvs.putAll(config.getEnvs());
+
     return new PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.myConsoleType, config.getName(), workingDir,
-                                              consoleParameters.myEnvs, consoleParameters.mySettingsProvider, rerunAction, config,
+                                              consoleEnvs, consoleParameters.mySettingsProvider, rerunAction, config,
                                               consoleParameters.mySetupFragment);
   }
 }

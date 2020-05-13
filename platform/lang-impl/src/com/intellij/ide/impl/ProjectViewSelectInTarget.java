@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.CompositeSelectInTarget;
@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
@@ -53,11 +52,14 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
                                       @Nullable final String subviewId,
                                       final VirtualFile virtualFile,
                                       final boolean requestFocus) {
-    final ProjectView projectView = ProjectView.getInstance(project);
-    if (projectView == null) return ActionCallback.REJECTED;
+    ProjectView projectView = ProjectView.getInstance(project);
+    if (projectView == null) {
+      return ActionCallback.REJECTED;
+    }
 
+    String id = ObjectUtils.chooseNotNull(viewId, projectView.getDefaultViewId());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      AbstractProjectViewPane pane = projectView.getProjectViewPaneById(ObjectUtils.chooseNotNull(viewId, ProjectViewImpl.getDefaultViewId()));
+      AbstractProjectViewPane pane = projectView.getProjectViewPaneById(id);
       pane.select(toSelect, virtualFile, requestFocus);
       return ActionCallback.DONE;
     }
@@ -66,14 +68,23 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
                                         ? createPointer((PsiElement)toSelect)::getElement
                                         : () -> toSelect;
 
-    ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    final ToolWindow projectViewToolWindow = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
-    if (projectViewToolWindow == null) return ActionCallback.REJECTED;
+    ToolWindow projectViewToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    if (projectViewToolWindow == null) {
+      return ActionCallback.REJECTED;
+    }
 
     ActionCallback result = new ActionCallback();
-    final Runnable runnable = () -> {
-      Runnable r = () -> projectView.selectCB(toSelectSupplier.get(), virtualFile, requestFocus).notify(result);
-      projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewImpl.getDefaultViewId()), subviewId).doWhenProcessed(r);
+    Runnable runnable = () -> {
+      projectView.changeViewCB(id, subviewId).doWhenProcessed(() -> {
+        Object element = toSelectSupplier.get();
+        AbstractProjectViewPane pane = requestFocus ? null : projectView.getProjectViewPaneById(id);
+        if (pane != null && pane.isVisibleAndSelected(element)) {
+          result.setDone();
+        }
+        else {
+          projectView.selectCB(element, virtualFile, requestFocus).notify(result);
+        }
+      });
     };
 
     if (requestFocus) {
@@ -122,7 +133,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     PsiElement toSelect = null;
     for (TreeStructureProvider provider : getProvidersDumbAware()) {
       if (provider instanceof SelectableTreeStructureProvider) {
-        toSelect = ((SelectableTreeStructureProvider) provider).getTopLevelElement(element);
+        toSelect = ((SelectableTreeStructureProvider)provider).getTopLevelElement(element);
       }
       if (toSelect != null) {
         if (!toSelect.isValid()) {

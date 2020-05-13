@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings.language
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hint.EditorFragmentComponent
 import com.intellij.codeInsight.hints.ChangeListener
@@ -21,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
@@ -90,6 +90,14 @@ class SingleLanguageInlayHintsSettingsPanel(
     updateWithNewProvider()
   }
 
+  internal fun getModels(): Array<InlayProviderSettingsModel> {
+    return myModels
+  }
+
+  internal fun setCurrentModel(model: InlayProviderSettingsModel) {
+    myProviderList.setSelectedValue(model, true)
+  }
+
   private fun selectLastViewedProvider(): InlayProviderSettingsModel {
     return myModels[findIndexToSelect()]
   }
@@ -133,13 +141,13 @@ class SingleLanguageInlayHintsSettingsPanel(
   private fun fillRightPanel(): JPanel {
     return withInset(panel {
       row {
+        myWarningContainer(growY)
+      }
+      row {
         withInset(myCurrentProviderCasesPane)()
       }
       row {
         withInset(myCurrentProviderCustomSettingsPane)()
-      }
-      row {
-        myWarningContainer(growY)
       }
     })
   }
@@ -229,9 +237,8 @@ class SingleLanguageInlayHintsSettingsPanel(
   private fun updateWarningPanel() {
     myWarningContainer.removeAll()
     if (!config.hintsEnabled(myLanguage)) {
-      val comment = ComponentPanelBuilder.createCommentComponent("Inlay hints for ${myLanguage.displayName} are disabled.", true)
-      myWarningContainer.add(comment)
-      myWarningContainer.add(LinkLabel.create("Configure settings.") {
+      myWarningContainer.add(JLabel(CodeInsightBundle.message("settings.inlay.hints.warning.hints.for.language.disabled", myLanguage.displayName)))
+      myWarningContainer.add(LinkLabel.create(CodeInsightBundle.message("settings.inlay.hints.warning.configure.settings", myLanguage.displayName)) {
         val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(this))
         if (settings != null) {
           val mainConfigurable = settings.find(InlayHintsConfigurable::class.java)
@@ -251,7 +258,10 @@ class SingleLanguageInlayHintsSettingsPanel(
       cases = model.cases,
       mainCheckBoxName = model.mainCheckBoxLabel,
       loadMainCheckBoxValue = { model.isEnabled },
-      onUserChangedMainCheckBox = { model.isEnabled = it },
+      onUserChangedMainCheckBox = {
+        model.isEnabled = it
+        model.onChangeListener?.settingsChanged()
+      },
       listener = model.onChangeListener!!, // must be installed at this point
       disabledExternally = { !(config.hintsEnabled(myLanguage) && config.hintsEnabledGlobally()) }
     )
@@ -289,6 +299,7 @@ class SingleLanguageInlayHintsSettingsPanel(
     }
     myCasesPanel?.updateFromSettings()
     updateWarningPanel()
+    updateHints()
   }
 
   override fun performCopy(dataContext: DataContext) {

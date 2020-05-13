@@ -10,6 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.reStructuredText" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

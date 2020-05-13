@@ -96,6 +96,7 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
 
     public State(@NotNull State state) {
       REPOSITORIES = new TreeSet<>(state.REPOSITORIES);
+      DIFF_RENAME_LIMIT_ONE = state.DIFF_RENAME_LIMIT_ONE;
     }
   }
 

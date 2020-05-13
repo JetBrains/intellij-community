@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -25,17 +12,16 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author mike
- */
 public class SurroundWithTryCatchFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");
+  private static final Logger LOG = Logger.getInstance(SurroundWithTryCatchFix.class);
 
   private PsiElement myElement;
 
@@ -44,7 +30,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
         element instanceof PsiResourceVariable ||
         (element instanceof PsiExpression &&
          !(element instanceof PsiMethodReferenceExpression) &&
-         ControlFlowUtils.canExtractStatement(ExpressionUtils.getTopLevelExpression((PsiExpression)element)))) {
+         CodeBlockSurrounder.canSurround(ExpressionUtils.getTopLevelExpression((PsiExpression)element)))) {
       myElement = element;
     }
   }
@@ -63,13 +49,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myElement != null && myElement.isValid()) {
-      PsiElement parentStatement = RefactoringUtil.getParentStatement(myElement, false);
-      return !(parentStatement instanceof PsiDeclarationStatement &&
-               ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass);
-    }
-
-    return false;
+    return myElement != null && myElement.isValid();
   }
 
   @Override
@@ -79,10 +59,13 @@ public class SurroundWithTryCatchFix implements IntentionAction {
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
     if (myElement instanceof PsiExpression) {
-      myElement = RefactoringUtil.ensureCodeBlock(ExpressionUtils.getTopLevelExpression((PsiExpression)myElement));
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(ExpressionUtils.getTopLevelExpression((PsiExpression)myElement));
+      if (surrounder == null) return;
+      myElement = surrounder.surround().getAnchor();
+    } else {
+      myElement = RefactoringUtil.getParentStatement(myElement, false);
+      if (myElement == null) return;
     }
-    myElement = RefactoringUtil.getParentStatement(myElement, false);
-    if (myElement == null) return;
 
     TextRange range = null;
 
@@ -106,5 +89,10 @@ public class SurroundWithTryCatchFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new SurroundWithTryCatchFix(PsiTreeUtil.findSameElementInCopy(myElement, target));
   }
 }

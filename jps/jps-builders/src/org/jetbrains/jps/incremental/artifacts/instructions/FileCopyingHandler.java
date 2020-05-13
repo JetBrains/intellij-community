@@ -27,7 +27,6 @@ import java.io.PrintWriter;
 
 /**
  * @see ArtifactRootCopyingHandlerProvider
- * @author nik
  */
 public abstract class FileCopyingHandler {
   public static final FileCopyingHandler DEFAULT = new FilterCopyHandler(FileUtilRt.ALL_FILES);

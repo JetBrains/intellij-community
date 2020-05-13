@@ -40,13 +40,6 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.temporary.on.conversion.from.string.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -21,9 +21,6 @@ import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static java.awt.AlphaComposite.SrcAtop;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-/**
- * @author Sergey.Malenkov
- */
 public class AnimatedIcon implements Icon {
   /**
    * This key is used to allow animated icons in lists, tables and trees.
@@ -35,6 +32,8 @@ public class AnimatedIcon implements Icon {
    */
   @ApiStatus.Internal
   public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
+  @ApiStatus.Internal
+  public static final Key<Runnable> REFRESH_DELEGATE = Key.create("REFRESH_DELEGATE");
 
   public interface Frame {
     @NotNull
@@ -91,28 +90,6 @@ public class AnimatedIcon implements Icon {
       AllIcons.Ide.Macro.Recording_2,
       AllIcons.Ide.Macro.Recording_3,
       AllIcons.Ide.Macro.Recording_4);
-  }
-
-  /**
-   * @deprecated icons are not applicable for our user interface and will be removed
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static class Grey extends AnimatedIcon {
-    public Grey() {
-      super(DELAY, ICONS.toArray(new Icon[0]));
-    }
-
-    public static final int DELAY = 130;
-    public static final List<Icon> ICONS = immutableList(
-      AllIcons.Process.State.GreyProgr_1,
-      AllIcons.Process.State.GreyProgr_2,
-      AllIcons.Process.State.GreyProgr_3,
-      AllIcons.Process.State.GreyProgr_4,
-      AllIcons.Process.State.GreyProgr_5,
-      AllIcons.Process.State.GreyProgr_6,
-      AllIcons.Process.State.GreyProgr_7,
-      AllIcons.Process.State.GreyProgr_8);
   }
 
   @ApiStatus.Internal
@@ -205,18 +182,18 @@ public class AnimatedIcon implements Icon {
   private long time;
   private int index;
 
-  public AnimatedIcon(int delay, @NotNull Icon... icons) {
+  public AnimatedIcon(int delay, Icon @NotNull ... icons) {
     this(getFrames(delay, icons));
   }
 
-  public AnimatedIcon(@NotNull Frame... frames) {
+  public AnimatedIcon(Frame @NotNull ... frames) {
     this.frames = frames;
     assert frames.length > 0 : "empty array";
     for (Frame frame : frames) assert frame != null : "null animation frame";
     time = System.currentTimeMillis();
   }
 
-  private static Frame[] getFrames(int delay, @NotNull Icon... icons) {
+  private static Frame[] getFrames(int delay, Icon @NotNull ... icons) {
     int length = icons.length;
     assert length > 0 : "empty array";
     Frame[] frames = new Frame[length];
@@ -300,7 +277,13 @@ public class AnimatedIcon implements Icon {
   }
 
   protected void doRefresh(@NotNull Component component) {
-    component.repaint();
+    Runnable delegate = UIUtil.getClientProperty(component, REFRESH_DELEGATE);
+    if (delegate != null) {
+      delegate.run();
+    }
+    else {
+      component.repaint();
+    }
   }
 
   @Nullable

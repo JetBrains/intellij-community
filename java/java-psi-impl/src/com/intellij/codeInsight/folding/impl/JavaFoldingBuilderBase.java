@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -48,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
+  private static final Logger LOG = Logger.getInstance(JavaFoldingBuilderBase.class);
 
   private static String getCodeBlockPlaceholder(PsiElement codeBlock) {
     return codeBlock instanceof PsiCodeBlock && ((PsiCodeBlock)codeBlock).isEmpty() ? "{}" : "{...}";
@@ -503,6 +489,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       else if (child instanceof PsiComment) {
         addCommentToFold(list, (PsiComment)child, document, processedComments);
       }
+      else if (child instanceof PsiRecordHeader) {
+        addToFold(list, child, document, false, "(...)", child.getTextRange(), false);
+      }
     }
   }
 
@@ -542,8 +531,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (body == null || document == null || nameIdentifier == null) {
       return false;
     }
-    if (document.getLineNumber(nameIdentifier.getTextRange().getStartOffset()) !=
-        document.getLineNumber(method.getParameterList().getTextRange().getEndOffset())) {
+    TextRange parameterListTextRange = method.getParameterList().getTextRange();
+    if (parameterListTextRange == null || document.getLineNumber(nameIdentifier.getTextRange().getStartOffset()) !=
+        document.getLineNumber(parameterListTextRange.getEndOffset())) {
       return false;
     }
 
@@ -564,7 +554,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return false;
     }
 
-    int leftStart = method.getParameterList().getTextRange().getEndOffset();
+    int leftStart = parameterListTextRange.getEndOffset();
     int bodyStart = body.getTextRange().getStartOffset();
     if (bodyStart > leftStart && !StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(leftStart + 1, bodyStart))) {
       return false;
@@ -703,7 +693,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
-      public void visitComment(PsiComment comment) {
+      public void visitComment(@NotNull PsiComment comment) {
         addCommentToFold(list, comment, document, processedComments);
         super.visitComment(comment);
       }

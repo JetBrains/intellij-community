@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
@@ -32,11 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnumeratorSettings {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEnumeratorBase");
+  private static final Logger LOG = Logger.getInstance(OrderEnumeratorBase.class);
   private boolean myProductionOnly;
   private boolean myCompileOnly;
   private boolean myRuntimeOnly;
@@ -310,6 +308,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
                                 boolean firstLevel,
                                 @NotNull List<? extends OrderEnumerationHandler> customHandlers,
                                 @NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
+    ProgressManager.checkCanceled();
     if (processed != null && !processed.add(rootModel.getModule())) return;
 
     for (OrderEntry entry : rootModel.getOrderEntries()) {

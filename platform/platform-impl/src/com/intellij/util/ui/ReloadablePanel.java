@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -159,10 +160,10 @@ public abstract class ReloadablePanel<T> {
   }
 
   private final class ReloadAction extends AnAction {
-
-    private ReloadAction() {
-      super("Reload list", null, AllIcons.Actions.Refresh);
-    }
+  ReloadAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.reload.list"),
+          IdeBundle.messagePointer("action.AnAction.description.reload.list"), AllIcons.Actions.Refresh);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

@@ -16,7 +16,6 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,12 +33,5 @@ public abstract class BaseSharedLocalInspection<T extends GlobalInspectionTool> 
   @Override
   public final String getShortName() {
     return mySettingsDelegate.getShortName();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public final String getDisplayName() {
-    return mySettingsDelegate.getDisplayName();
   }
 }

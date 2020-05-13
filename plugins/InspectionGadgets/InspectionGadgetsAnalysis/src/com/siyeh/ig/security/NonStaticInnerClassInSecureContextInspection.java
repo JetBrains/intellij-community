@@ -27,13 +27,6 @@ public class NonStaticInnerClassInSecureContextInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.static.inner.class.in.secure.context.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.static.inner.class.in.secure.context.problem.descriptor");

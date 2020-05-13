@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.*;
@@ -71,8 +72,12 @@ public class PatchCreationTest extends PatchTestCase {
 
   @Test
   public void testValidation() throws Exception {
+    FileUtil.delete(new File(myNewerDir, "bin/focuskiller.dll"));
+    FileUtil.copy(new File(myOlderDir, "bin/focuskiller.dll"), new File(myNewerDir, "newDir/focuskiller.dll"));
     Patch patch = createPatch();
+
     FileUtil.writeToFile(new File(myOlderDir, "bin/idea.bat"), "changed");
+    FileUtil.writeToFile(new File(myOlderDir, "bin/focuskiller.dll"), "changed");
     FileUtil.createDirectory(new File(myOlderDir, "extraDir"));
     FileUtil.writeToFile(new File(myOlderDir, "extraDir/extraFile.txt"), "");
     FileUtil.createDirectory(new File(myOlderDir, "newDir"));
@@ -82,6 +87,11 @@ public class PatchCreationTest extends PatchTestCase {
     FileUtil.delete(new File(myOlderDir, "lib/bootstrap.jar"));
 
     assertThat(sortResults(patch.validate(myOlderDir, TEST_UI))).containsExactly(
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "bin/focuskiller.dll",
+                           ValidationResult.Action.DELETE,
+                           ValidationResult.MODIFIED_MESSAGE,
+                           ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/idea.bat",
                            ValidationResult.Action.DELETE,
@@ -99,6 +109,11 @@ public class PatchCreationTest extends PatchTestCase {
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "Readme.txt",
+                           ValidationResult.Action.UPDATE,
+                           ValidationResult.MODIFIED_MESSAGE,
+                           ValidationResult.Option.IGNORE),
+      new ValidationResult(ValidationResult.Kind.ERROR,
+                           "bin/focuskiller.dll",
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE),
@@ -279,6 +294,8 @@ public class PatchCreationTest extends PatchTestCase {
 
   @Test
   public void testNoSymlinkNoise() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
     Files.write(new File(myOlderDir, "bin/_target").toPath(), "test".getBytes(StandardCharsets.UTF_8));
     Utils.createLink("_target", new File(myOlderDir, "bin/_link"));
     resetNewerDir();
@@ -289,6 +306,8 @@ public class PatchCreationTest extends PatchTestCase {
 
   @Test
   public void testSymlinkDereferenceAndMove() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
     byte[] data = new byte[8192];
     new Random().nextBytes(data);
     long checksum = Digester.digestStream(new ByteArrayInputStream(data));

@@ -2,33 +2,37 @@
 package org.jetbrains.intellij.build.images.mappings
 
 import org.jetbrains.intellij.build.images.IconsClassGenerator
-import org.jetbrains.intellij.build.images.ImageCollector
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.sync.*
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
 import kotlin.streams.toList
 
 fun main() = generateMappings()
 
+/**
+ * Generate icon mappings for https://github.com/JetBrains/IntelliJIcons-web-site
+ */
 private fun generateMappings() {
   val exclusions = System.getProperty("mappings.json.exclude.paths")
                      ?.split(",")
                      ?.map(String::trim)
                    ?: emptyList()
   val context = Context()
-  val mappings = (loadIdeaGeneratedIcons(context) + loadNonGeneratedIcons(context, "idea")).groupBy {
+  val mappings = (loadIdeaGeneratedIcons(context) {
+    exclusions.none { excluded ->
+      path.startsWith(excluded)
+    }
+  } + loadNonGeneratedIcons(context, "idea")).groupBy {
     "${it.product}#${it.set}"
   }.toSortedMap().values.flatMap {
     if (it.size > 1) {
       System.err.println("Duplicates were generated $it\nRenaming")
-      it.subList(1, it.size).mapIndexed { i, duplicate ->
+      it.subList(1, it.size).sorted().mapIndexed { i, duplicate ->
         Mapping(duplicate.product, "${duplicate.set}${i + 1}", duplicate.path)
       } + it.first()
     }
@@ -61,11 +65,12 @@ private fun generateMappings() {
     val jsonFile = path.toRelativeString(repo)
     stageFiles(listOf(jsonFile), repo)
     commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update",
-                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com")
+                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com",
+                  force = true)
   }
 }
 
-private class Mapping(val product: String, val set: String, val path: String) {
+private class Mapping(val product: String, val set: String, val path: String) : Comparable<Mapping> {
   override fun toString(): String {
     val productName = when (product) {
       "kotlin", "mps" -> product
@@ -80,30 +85,30 @@ private class Mapping(val product: String, val set: String, val path: String) {
       |}
     """.trimMargin()
   }
+
+  override fun compareTo(other: Mapping): Int = path.compareTo(other.path)
 }
 
-private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
+private fun loadIdeaGeneratedIcons(context: Context, filter: Mapping.() -> Boolean): Collection<Mapping> {
   val home = context.devRepoDir
   val homePath = home.absolutePath
-  val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
+  val project = jpsProject(homePath)
   val generator = IconsClassGenerator(home, project.modules)
   return protectStdErr {
-    project.modules.parallelStream().map { module ->
-      val iconsClassInfo = generator.getIconsClassInfo(module) ?: return@map null
-      val imageCollector = ImageCollector(home.toPath(), iconsOnly = true, className = iconsClassInfo.className)
-      val images = imageCollector.collect(module, includePhantom = true)
-      if (images.isNotEmpty()) {
-        val icons = images.asSequence()
+    project.modules.parallelStream()
+      .flatMap { generator.getIconsClassInfo(it).stream() }
+      .filter { it.images.isNotEmpty() }
+      .flatMap { info ->
+        val icons = info.images.asSequence()
           .filter { it.file != null && Icon(it.file!!.toFile()).isValid }
-          .map { it.sourceRoot.file }.toSet()
-        return@map when {
-          icons.isEmpty() -> null
-          icons.size > 1 -> error("${iconsClassInfo.className}: ${icons.joinToString()}")
-          else -> Mapping("idea", iconsClassInfo.className, "idea/${icons.first().toRelativeString(home)}")
+          .map { it.sourceRoot.file }.distinct()
+          .map { Mapping("idea", info.className, "idea/${it.toRelativeString(home)}") }
+          .filter(filter).toList()
+        if (icons.size > 1) {
+          error("Expected single source root for ${info.className} mapping but found: ${icons.joinToString()}")
         }
-      }
-      else null
-    }.filter(Objects::nonNull).map { it!! }.toList()
+        icons.stream()
+      }.toList()
   }
 }
 

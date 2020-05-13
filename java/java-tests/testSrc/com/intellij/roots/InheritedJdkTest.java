@@ -16,6 +16,7 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.InheritedJdkOrderEntry;
@@ -43,7 +44,7 @@ public class InheritedJdkTest extends JavaModuleTestCase {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       final ProjectRootManagerEx rootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
-      rootManagerEx.setProjectSdkName(jdk.getName());
+      rootManagerEx.setProjectSdk(jdk);
       ModuleRootModificationUtil.setSdkInherited(myModule);
     });
 
@@ -79,7 +80,7 @@ public class InheritedJdkTest extends JavaModuleTestCase {
     assertTrue(rootManager.isSdkInherited());
     assertEquals("mockJdk inherited", mockJdk, rootManager.getSdk());
 
-    ApplicationManager.getApplication().runWriteAction(() -> projectRootManager.setProjectSdkName("jdk1"));
+    ApplicationManager.getApplication().runWriteAction(() -> projectRootManager.setProjectSdkName("jdk1", JavaSdk.getInstance().getName()));
 
     assertTrue(rootManager.isSdkInherited());
     Assert.assertEquals("Correct non-existing JDK inherited", "jdk1",

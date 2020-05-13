@@ -40,7 +40,7 @@ import java.util.List;
  * author: lesya
  */
 public class PServerLoginProviderImpl extends PServerLoginProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.pserver.PServerLoginProviderImpl");
+  private static final Logger LOG = Logger.getInstance(PServerLoginProviderImpl.class);
 
   @Override
   @Nullable

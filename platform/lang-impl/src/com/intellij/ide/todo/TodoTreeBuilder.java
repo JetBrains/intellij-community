@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.todo;
 
@@ -29,7 +15,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -61,9 +46,9 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public abstract class TodoTreeBuilder implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoTreeBuilder");
-  public static final Comparator<NodeDescriptor> NODE_DESCRIPTOR_COMPARATOR =
-      Comparator.<NodeDescriptor>comparingInt(NodeDescriptor::getWeight).thenComparingInt(NodeDescriptor::getIndex);  
+  private static final Logger LOG = Logger.getInstance(TodoTreeBuilder.class);
+  public static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR =
+      Comparator.<NodeDescriptor<?>>comparingInt(NodeDescriptor::getWeight).thenComparingInt(NodeDescriptor::getIndex);
   protected final Project myProject;
 
   /**
@@ -72,7 +57,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   protected final FileTree myFileTree;
   /**
-   * This set contains "dirty" files. File is "dirty" if it's currently not unknown
+   * This set contains "dirty" files. File is "dirty" if it's currently unknown
    * whether the file contains T.O.D.O item or not. To determine this it's necessary
    * to perform some (perhaps, CPU expensive) operation. These "dirty" files are
    * validated in {@code validateCache()} method.
@@ -108,7 +93,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
-    psiManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener());
+    psiManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
     myFileStatusListener = new MyFileStatusListener();
 
@@ -136,7 +121,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
     catch (IndexNotReadyException ignore) {}
 
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
+    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, this);
   }
 
   public boolean isDisposed() {
@@ -146,7 +131,6 @@ public abstract class TodoTreeBuilder implements Disposable {
   @Override
   public final void dispose() {
     myDisposed = true;
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
   }
 
   final boolean isUpdatable() {
@@ -160,7 +144,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     if (myUpdatable != updatable) {
       myUpdatable = updatable;
       if (updatable) {
-        DumbService.getInstance(myProject).runWhenSmart(this::updateTree);
+        updateTree();
       }
     }
   }
@@ -304,7 +288,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    *         It means that file is in "dirty" file set or in "current" file set.
    */
   private boolean canContainTodoItems(PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     return myFileTree.contains(vFile) || myDirtyFileSet.contains(vFile);
   }
@@ -316,7 +300,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    * have happened.
    */
   private void markFileAsDirty(@NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile != null && !(vFile instanceof LightVirtualFile)) { // If PSI file isn't valid then its VirtualFile can be null
       myDirtyFileSet.add(vFile);
@@ -324,7 +308,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   void rebuildCache(){
-    Set<VirtualFile> files = new HashSet<>(); 
+    Set<VirtualFile> files = new HashSet<>();
     collectFiles(virtualFile -> {
       files.add(virtualFile);
       return true;
@@ -343,7 +327,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
@@ -437,13 +421,13 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public final Promise<?> updateTree() {
     if (myUpdatable) {
-      return myModel.getInvoker().runOrInvokeLater(() -> DumbService.getInstance(myProject).runWhenSmart(() -> {
+      return myModel.getInvoker().invoke(() -> ApplicationManager.getApplication().invokeLater(() -> {
         if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
           validateCache();
           getTodoTreeStructure().validateCache();
         }
         myModel.invalidate();
-      }));
+      }, myProject.getDisposed()));
     }
     return Promises.resolvedPromise();
   }
@@ -505,7 +489,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     getTodoTreeStructure().setFlattenPackages(state);
     rebuildTreeOnSettingChange();
   }
-  
+
   void setShowModules(boolean state) {
     getTodoTreeStructure().setShownModules(state);
     rebuildTreeOnSettingChange();
@@ -753,10 +737,12 @@ public abstract class TodoTreeBuilder implements Disposable {
     public void propertyChanged(@NotNull PsiTreeChangeEvent e) {
       String propertyName = e.getPropertyName();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) { // rebuild all tree when source roots were changed
-        myModel.getInvoker().runOrInvokeLater(
-          () -> DumbService.getInstance(myProject).runWhenSmart(() -> rebuildCache())
+        myModel.getInvoker().invoke(
+          () -> ApplicationManager.getApplication().invokeLater(() -> {
+            rebuildCache();
+            updateTree();
+          })
         );
-        updateTree();
       }
       else if (PsiTreeChangeEvent.PROP_WRITABLE.equals(propertyName) || PsiTreeChangeEvent.PROP_FILE_NAME.equals(propertyName)) {
         PsiFile psiFile = (PsiFile)e.getElement();

@@ -88,7 +88,7 @@ public class DeleteLineAction extends TextComponentEditorAction {
   private static TextRange getRangeToDelete(Editor editor, Caret caret) {
     int selectionStart = caret.getSelectionStart();
     int selectionEnd = caret.getSelectionEnd();
-    int startOffset = EditorUtil.getNotFoldedLineStartOffset(editor, selectionStart);
+    int startOffset = EditorUtil.getNotFoldedLineStartOffset(editor, selectionStart, true);
     // There is a possible case that selection ends at the line start, i.e. something like below ([...] denotes selected text,
     // '|' is a line start):
     //   |line 1
@@ -99,7 +99,8 @@ public class DeleteLineAction extends TextComponentEditorAction {
     //   |[line 2
     //   |line] 3
     // Line 3 must be removed here.
-    int endOffset = EditorUtil.getNotFoldedLineEndOffset(editor, selectionEnd > 0 && selectionEnd != selectionStart ? selectionEnd - 1 : selectionEnd);
+    if (selectionEnd > 0 && selectionEnd != selectionStart) selectionEnd--;
+    int endOffset = EditorUtil.getNotFoldedLineEndOffset(editor, selectionEnd, true);
     if (endOffset < editor.getDocument().getTextLength()) {
       endOffset++;
     }

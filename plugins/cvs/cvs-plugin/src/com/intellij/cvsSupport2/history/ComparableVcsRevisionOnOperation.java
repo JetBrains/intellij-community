@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.util.Date;
 
 public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation");
+  private static final Logger LOG = Logger.getInstance(ComparableVcsRevisionOnOperation.class);
 
   private final GetFileContentOperation myOperation;
   private final Project myProject;
@@ -50,15 +50,13 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
   }
 
   @Override
-  @NotNull
-  public byte[] getContent() {
+  public byte @NotNull [] getContent() {
     LOG.assertTrue(myOperation.isLoaded());
     return myOperation.getFileBytes();
   }
 
   @Override
-  @NotNull
-  public byte[] loadContent() throws IOException, VcsException {
+  public byte @NotNull [] loadContent() throws IOException, VcsException {
     if (!myOperation.isLoaded()) {
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
       executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file"), myOperation),

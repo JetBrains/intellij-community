@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,20 +17,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class JDOMXIncluder {
+public final class JDOMXIncluder {
   private static final Logger LOG = Logger.getInstance(JDOMXIncluder.class);
   public static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
-    @NotNull
     @Override
-    public URL resolvePath(@NotNull String relativePath, @Nullable URL base) throws MalformedURLException {
+    public @NotNull URL resolvePath(@NotNull String relativePath, @Nullable URL base) throws MalformedURLException {
       return base == null ? new URL(relativePath) : new URL(base, relativePath);
     }
   };
 
-  @NonNls private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
-  @NonNls private static final String XI = "xi";
   @NonNls private static final String INCLUDE = "include";
   @NonNls private static final String HREF = "href";
   @NonNls private static final String BASE = "base";
@@ -38,7 +34,6 @@ public class JDOMXIncluder {
   @NonNls private static final String XML = "xml";
   @NonNls private static final String XPOINTER = "xpointer";
 
-  public static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
   private final boolean myIgnoreMissing;
   private final PathResolver myPathResolver;
 
@@ -48,10 +43,9 @@ public class JDOMXIncluder {
   }
 
   /**
-   * Original element will be mutated in place.
+   * The original element will be mutated in place.
    */
-  @NotNull
-  public static Element resolveRoot(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
+  public static @NotNull Element resolveRoot(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
     List<Element> resolved = new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original.clone(), base);
     if (resolved.size() == 1) {
       return resolved.get(0);
@@ -67,23 +61,22 @@ public class JDOMXIncluder {
   /**
    * @deprecated Use {@link #resolveRoot(Element, URL)}
    */
-  @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public static Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
+  public static @NotNull Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
     return new Document(resolveRoot(original.getRootElement(), new URL((base))));
   }
 
-  @NotNull
-  public static List<Element> resolve(@NotNull Element original, String base, boolean ignoreMissing, PathResolver pathResolver)
-    throws XIncludeException, MalformedURLException {
-    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, new URL(base));
-  }
-
   /**
-   * Original element will be mutated in place.
+   * The original element will be mutated in place.
+   *
+   * (used by groovy).
    */
-  public static void resolveNonXIncludeElement(@NotNull Element original, @Nullable URL base, boolean ignoreMissing, @NotNull PathResolver pathResolver)
+  @SuppressWarnings("unused")
+  public static void resolveNonXIncludeElement(@NotNull Element original,
+                                               @Nullable URL base,
+                                               boolean ignoreMissing,
+                                               @NotNull PathResolver pathResolver)
     throws XIncludeException, MalformedURLException {
     LOG.assertTrue(!isIncludeElement(original));
 
@@ -94,13 +87,11 @@ public class JDOMXIncluder {
     new JDOMXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
   }
 
-  @NotNull
-  public static List<Element> resolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
+  public static @NotNull List<Element> resolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
     return new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original, base);
   }
 
-  @NotNull
-  private List<Element> doResolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
+  private @NotNull List<Element> doResolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
     Stack<URL> bases = new Stack<>();
     if (base != null) {
       bases.push(base);
@@ -108,12 +99,11 @@ public class JDOMXIncluder {
     return resolve(original, bases);
   }
 
-  protected static boolean isIncludeElement(Element element) {
-    return element.getName().equals(INCLUDE) && element.getNamespace().equals(XINCLUDE_NAMESPACE);
+  private static boolean isIncludeElement(Element element) {
+    return element.getName().equals(INCLUDE) && element.getNamespace().equals(JDOMUtil.XINCLUDE_NAMESPACE);
   }
 
-  @NotNull
-  private List<Element> resolve(@NotNull Element original, @NotNull Stack<URL> bases) throws XIncludeException, MalformedURLException {
+  private @NotNull List<Element> resolve(@NotNull Element original, @NotNull Stack<URL> bases) throws XIncludeException, MalformedURLException {
     if (isIncludeElement(original)) {
       return resolveXIncludeElement(original, bases);
     }
@@ -123,8 +113,7 @@ public class JDOMXIncluder {
     }
   }
 
-  @NotNull
-  protected List<Element> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<URL> bases)
+  private @NotNull List<Element> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<URL> bases)
     throws XIncludeException, MalformedURLException {
     URL base = null;
     if (!bases.isEmpty()) {
@@ -173,26 +162,19 @@ public class JDOMXIncluder {
     return remoteParsed;
   }
 
-  //xpointer($1)
-  @NonNls public static final Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
-
-  // /$1(/$2)?/*
-  public static final Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
-
-  @NotNull
-  private static List<Element> extractNeededChildren(@NotNull Element element, @NotNull List<Element> remoteElements) {
+  private static @NotNull List<Element> extractNeededChildren(@NotNull Element element, @NotNull List<Element> remoteElements) {
     final String xpointer = element.getAttributeValue(XPOINTER);
     if (xpointer == null) {
       return remoteElements;
     }
 
-    Matcher matcher = XPOINTER_PATTERN.matcher(xpointer);
+    Matcher matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer);
     if (!matcher.matches()) {
       throw new XIncludeException("Unsupported XPointer: " + xpointer);
     }
 
     String pointer = matcher.group(1);
-    matcher = CHILDREN_PATTERN.matcher(pointer);
+    matcher = JDOMUtil.CHILDREN_PATTERN.matcher(pointer);
     if (!matcher.matches()) {
       throw new XIncludeException("Unsupported pointer: " + pointer);
     }
@@ -214,14 +196,11 @@ public class JDOMXIncluder {
     return new ArrayList<>(e.getChildren());
   }
 
-  @NotNull
-  private List<Element> parseRemote(@NotNull Stack<URL> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
+  private @NotNull List<Element> parseRemote(@NotNull Stack<URL> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
     try {
       bases.push(remote);
       Element root = JDOMUtil.loadResource(remote);
-      List<Element> list = resolve(root, bases);
-      bases.pop();
-      return list;
+      return resolve(root, bases);
     }
     catch (JDOMException e) {
       throw new XIncludeException(e);
@@ -236,6 +215,9 @@ public class JDOMXIncluder {
         return Collections.emptyList();
       }
       throw new XIncludeException(e);
+    }
+    finally {
+      bases.pop();
     }
   }
 

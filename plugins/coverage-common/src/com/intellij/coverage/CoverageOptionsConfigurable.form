@@ -17,14 +17,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="When new coverage is gathered"/>
+        <border type="none" title-resource-bundle="messages/CoverageBundle" title-key="settings.coverage.when.new.coverage.is.gathered"/>
         <children>
           <component id="752a8" class="javax.swing.JRadioButton" binding="myShowOptionsRB" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Show options before applying coverage to the editor"/>
+              <text resource-bundle="messages/CoverageBundle" key="settings.coverage.show.options.before.applying.coverage.to.the.editor"/>
             </properties>
           </component>
           <component id="f4cb4" class="javax.swing.JRadioButton" binding="myReplaceRB" default-binding="true">
@@ -32,7 +32,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Replace active suites with the new one"/>
+              <text resource-bundle="messages/CoverageBundle" key="settings.coverage.replace.active.suites.with.the.new.one"/>
             </properties>
           </component>
           <component id="61030" class="javax.swing.JRadioButton" binding="myAddRB" default-binding="true">
@@ -40,7 +40,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="A&amp;dd to the active suites"/>
+              <text resource-bundle="messages/CoverageBundle" key="settings.coverage.add.to.the.active.suites"/>
             </properties>
           </component>
           <component id="20e67" class="javax.swing.JRadioButton" binding="myDoNotApplyRB" default-binding="true">
@@ -48,7 +48,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Do &amp;not apply collected coverage"/>
+              <text resource-bundle="messages/CoverageBundle" key="settings.coverage.do.not.apply.collected.coverage"/>
             </properties>
           </component>
           <component id="a9b9e" class="javax.swing.JCheckBox" binding="myActivateCoverageViewCB">
@@ -57,7 +57,7 @@
             </constraints>
             <properties>
               <margin top="8" left="3" bottom="2" right="3"/>
-              <text value="Activate Coverage &amp;View "/>
+              <text resource-bundle="messages/CoverageBundle" key="settings.coverage.activate.coverage.view"/>
             </properties>
           </component>
         </children>

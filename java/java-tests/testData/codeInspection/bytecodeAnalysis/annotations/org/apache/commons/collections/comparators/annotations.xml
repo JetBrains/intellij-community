@@ -44,6 +44,11 @@
     <item name='org.apache.commons.collections.comparators.BooleanComparator int compare(java.lang.Object, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.comparators.BooleanComparator int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.comparators.BooleanComparator org.apache.commons.collections.comparators.BooleanComparator getBooleanComparator(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -66,6 +71,11 @@
     </item>
     <item name='org.apache.commons.collections.comparators.ComparableComparator int compare(java.lang.Object, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.comparators.ComparableComparator int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.comparators.ComparableComparator org.apache.commons.collections.comparators.ComparableComparator getInstance()'>
         <annotation name='org.jetbrains.annotations.Contract'>

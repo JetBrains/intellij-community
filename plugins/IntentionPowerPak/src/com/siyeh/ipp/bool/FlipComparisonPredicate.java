@@ -26,6 +26,10 @@ class FlipComparisonPredicate implements PsiElementPredicate {
         return false;
       }
     }
+    if (expression.getParent() instanceof PsiAssignmentExpression &&
+        ((PsiAssignmentExpression)expression.getParent()).getLExpression() == expression) {
+      return false;
+    }
     return !ErrorUtil.containsDeepError(element);
   }
 }

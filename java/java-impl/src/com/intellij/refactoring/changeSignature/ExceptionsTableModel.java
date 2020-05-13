@@ -127,8 +127,7 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
     return factory.createTypeCodeFragment(typeText, context, true, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
   }
 
-  @NotNull
-  public PsiTypeCodeFragment[] getTypeCodeFragments() {
+  public PsiTypeCodeFragment @NotNull [] getTypeCodeFragments() {
     return myTypeCodeFragments.toArray(new PsiTypeCodeFragment[0]);
   }
 

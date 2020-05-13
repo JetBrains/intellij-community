@@ -14,9 +14,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworkVersionComponent {
   private final JPanel myMainPanel;
   private final FrameworkSupportModelBase myModel;

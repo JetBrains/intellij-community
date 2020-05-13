@@ -8,10 +8,11 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.python.psi" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
   </component>
 </module>

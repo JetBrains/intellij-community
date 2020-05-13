@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -10,10 +9,7 @@ import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProvider;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class FormUsageTypeProvider implements UsageTypeProvider {
+final class FormUsageTypeProvider implements UsageTypeProvider {
   @Override
   @Nullable
   public UsageType getUsageType(PsiElement element) {
@@ -24,5 +20,5 @@ public class FormUsageTypeProvider implements UsageTypeProvider {
     return null;
   }
 
-  private static final UsageType FORM_USAGE_TYPE = new UsageType(UIDesignerBundle.message("form.usage.type"));
+  private static final UsageType FORM_USAGE_TYPE = new UsageType(UIDesignerBundle.messagePointer("form.usage.type"));
 }

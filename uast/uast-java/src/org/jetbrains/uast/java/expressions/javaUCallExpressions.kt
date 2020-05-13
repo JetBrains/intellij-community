@@ -28,13 +28,20 @@ class JavaUCallExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UElementWithLocation, UMultiResolvable {
   override val kind: UastCallKind
-    get() = UastCallKind.METHOD_CALL
+    get() {
+      val element = nameReferenceElement
+      if (element is PsiKeyword && (element.text == PsiKeyword.THIS || element.text == PsiKeyword.SUPER))
+        return UastCallKind.CONSTRUCTOR_CALL
+
+      return UastCallKind.METHOD_CALL
+    }
 
   override val methodIdentifier: UIdentifier? by lz {
-    val methodExpression = sourcePsi.methodExpression
-    val nameElement = methodExpression.referenceNameElement ?: return@lz null
-    UIdentifier(nameElement, this)
+    nameReferenceElement?.let { UIdentifier(it, this) }
   }
+
+  private val nameReferenceElement: PsiElement?
+    get() = sourcePsi.methodExpression.referenceNameElement
 
   override val classReference: UReferenceExpression?
     get() = null
@@ -180,8 +187,16 @@ class JavaConstructorUCallExpression(
     get() = null
 
   override fun resolve(): PsiMethod? = sourcePsi.resolveMethod()
-  override fun multiResolve(): Iterable<ResolveResult> =
-    sourcePsi.classReference?.multiResolve(false)?.asIterable() ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> {
+    val methodResolve = sourcePsi.resolveMethodGenerics()
+    if (methodResolve != JavaResolveResult.EMPTY) {
+      // if there is a non-default constructor
+      return listOf<ResolveResult>(methodResolve)
+    }
+    // unable to resolve constructor method - resolve to class
+    val classResolve = sourcePsi.classReference?.multiResolve(false) ?: emptyArray()
+    return classResolve.asIterable()
+  }
 }
 
 class JavaArrayInitializerUCallExpression(

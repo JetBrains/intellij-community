@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public class JavaStylePropertiesInvocationInspection extends BaseInspection {
   @NotNull

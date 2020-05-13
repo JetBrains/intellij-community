@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -18,18 +17,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GrImplicitCallReference;
-import org.jetbrains.plugins.groovy.util.SafePublicationClearableLazyValue;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrExplicitMethodCallReference;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isExplicitCall;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isImplicitCall;
 
 /**
  * @author Maxim.Medvedev
  */
 public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
-  private static final Logger LOG = Logger.getInstance(GrMethodCallImpl.class);
 
-  private final SafePublicationClearableLazyValue<GroovyMethodCallReference> myImplicitCallReference =
-    new SafePublicationClearableLazyValue<>(() -> isImplicitCall(this) ? new GrImplicitCallReference(this) : null);
+  private final GroovyMethodCallReference myImplicitCallReference = new GrImplicitCallReference(this);
+  private final GroovyMethodCallReference myExplicitCallReference = new GrExplicitMethodCallReference(this);
 
   public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);
@@ -38,18 +37,24 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @Nullable
   @Override
   public GroovyMethodCallReference getImplicitCallReference() {
-    return myImplicitCallReference.getValue();
+    return isImplicitCall(this) ? myImplicitCallReference : null;
+  }
+
+  @Nullable
+  @Override
+  public GroovyMethodCallReference getExplicitCallReference() {
+    return isExplicitCall(this) ? myExplicitCallReference : null;
+  }
+
+  @Nullable
+  @Override
+  public GroovyMethodCallReference getCallReference() {
+    GroovyMethodCallReference explicitCallReference = getExplicitCallReference();
+    return explicitCallReference == null ? getImplicitCallReference() : explicitCallReference;
   }
 
   @Override
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    myImplicitCallReference.clear();
-  }
-
-  @Override
-  @NotNull
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
     return ((GrReferenceExpression)invoked).multiResolve(true);
@@ -72,21 +77,17 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return ((GrReferenceExpression)expression).getDotToken() == null;
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final GroovyMethodCallReference implicitCallReference = getImplicitCallReference();
     if (implicitCallReference != null) {
       return implicitCallReference.multiResolve(incompleteCode);
     }
-    final GrExpression invokedExpression = getInvokedExpression();
-    if (invokedExpression instanceof GrReferenceExpression) {
-      return ((GrReferenceExpression)invokedExpression).multiResolve(incompleteCode);
+    final GroovyMethodCallReference explicitCallReference = getExplicitCallReference();
+    if (explicitCallReference != null) {
+      return explicitCallReference.multiResolve(incompleteCode);
     }
-    else {
-      LOG.error("Invoked expression is not a reference expression and there is no implicit call reference: '" + getText() + "'");
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 
   @Override

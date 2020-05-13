@@ -5,7 +5,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -22,13 +24,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.LazyKt.recursionSafeLazy;
+import static kotlin.LazyKt.lazyOf;
+
 /**
  * @author ven
  */
 public class GrClosureType extends GrLiteralClassType {
 
   private final List<GrSignature> mySignatures;
-  private volatile PsiType[] myTypeArgs;
+  private final Lazy<PsiType[]> myTypeArgs;
 
   private GrClosureType(@NotNull LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,
@@ -37,14 +42,15 @@ public class GrClosureType extends GrLiteralClassType {
                         boolean shouldInferTypeParameters) {
     super(languageLevel, scope, facade);
     mySignatures = signatures;
-    if (!shouldInferTypeParameters) myTypeArgs = PsiType.EMPTY_ARRAY;
+    myTypeArgs = shouldInferTypeParameters ? recursionSafeLazy(null, this::inferParameters)
+                                           : lazyOf(PsiType.EMPTY_ARRAY);
   }
 
   private GrClosureType(@NotNull LanguageLevel level,
                         @NotNull GlobalSearchScope scope,
                         @NotNull JavaPsiFacade facade,
                         @NotNull List<GrSignature> signatures,
-                        @Nullable PsiType[] typeArgs) {
+                        @Nullable Lazy<PsiType[]> typeArgs) {
     super(level, scope, facade);
     mySignatures = signatures;
     myTypeArgs = typeArgs;
@@ -57,17 +63,12 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     if (ourForbidClosureInference) throw new IllegalStateException();
-    if (myTypeArgs == null) {
-      myTypeArgs = inferParameters();
-    }
-    return myTypeArgs;
+    return ObjectUtils.notNull(myTypeArgs.getValue(), PsiType.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public PsiType[] inferParameters() {
+  public PsiType @NotNull [] inferParameters() {
     final PsiClass psiClass = resolve();
     if (psiClass != null && psiClass.getTypeParameters().length == 1) {
       final PsiType type = GrClosureSignatureUtil.getReturnType(mySignatures);
@@ -92,7 +93,8 @@ public class GrClosureType extends GrLiteralClassType {
   @Override
   @NotNull
   public PsiClassType rawType() {
-    if (myTypeArgs != null && myTypeArgs.length == 0) {
+    PsiType[] typeArgs = myTypeArgs.getValue();
+    if (typeArgs != null && typeArgs.length == 0) {
       return this;
     }
 
@@ -149,7 +151,7 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Nullable
-  public PsiType curry(@NotNull PsiType[] args, int position, @NotNull PsiElement context) {
+  public PsiType curry(PsiType @NotNull [] args, int position, @NotNull PsiElement context) {
     final List<GrSignature> curried = CurryKt.curry(mySignatures, args, position, context);
     if (curried.isEmpty()) {
       return null;

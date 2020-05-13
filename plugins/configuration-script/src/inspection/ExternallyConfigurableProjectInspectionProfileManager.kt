@@ -72,7 +72,6 @@ internal class ExternallyConfigurableProjectInspectionProfileManager(project: Pr
     if (value != null) {
       return value
     }
-
     return super.getCurrentProfile()
   }
 }

@@ -15,15 +15,13 @@
  */
 package com.intellij.openapi.roots.libraries;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class LibraryKind {
   private final String myKindId;
   private static final Map<String, LibraryKind> ourAllKinds = new HashMap<>();
@@ -33,7 +31,8 @@ public class LibraryKind {
    */
   public LibraryKind(@NotNull @NonNls String kindId) {
     myKindId = kindId;
-    if (ourAllKinds.containsKey(kindId)) {
+    LibraryKind kind = ourAllKinds.get(kindId);
+    if (kind != null && !(kind instanceof TemporaryLibraryKind)) {
       throw new IllegalArgumentException("Kind " + kindId + " is not unique");
     }
     ourAllKinds.put(kindId, this);
@@ -58,5 +57,15 @@ public class LibraryKind {
 
   public static LibraryKind findById(String kindId) {
     return ourAllKinds.get(kindId);
+  }
+
+  @ApiStatus.Internal
+  public static void unregisterKind(@NotNull LibraryKind kind) {
+    ourAllKinds.remove(kind.getKindId());
+  }
+
+  @ApiStatus.Internal
+  public static void registerKind(@NotNull LibraryKind kind) {
+    ourAllKinds.put(kind.getKindId(), kind);
   }
 }

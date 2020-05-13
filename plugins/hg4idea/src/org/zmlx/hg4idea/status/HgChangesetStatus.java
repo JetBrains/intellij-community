@@ -13,6 +13,8 @@
 package org.zmlx.hg4idea.status;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 
 public class HgChangesetStatus {
@@ -21,20 +23,14 @@ public class HgChangesetStatus {
   private int numChanges;
   private String toolTip;
 
-  public HgChangesetStatus(String name) {
+  public HgChangesetStatus(@NotNull @Nls String name) {
     myName = name;
   }
 
   public void setChanges(final int count, final ChangesetWriter formatter) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (count == 0) {
-        numChanges = 0;
-        toolTip = "";
-        return;
-      }
-
       numChanges = count;
-      toolTip = formatter.asString();
+      toolTip = count != 0 ? formatter.asString() : "";
     });
   }
 
@@ -42,11 +38,9 @@ public class HgChangesetStatus {
     return myName;
   }
 
-
   public int getNumChanges() {
     return numChanges;
   }
-
 
   public String getToolTip() {
     return toolTip;
@@ -54,6 +48,7 @@ public class HgChangesetStatus {
 
 
   public interface ChangesetWriter {
+    @Nls
     String asString();
   }
 

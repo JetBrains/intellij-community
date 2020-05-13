@@ -39,7 +39,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     myName = getName(kind);
   }
 
-  public PsiPrimitiveType(@Nullable("for NULL type") JvmPrimitiveTypeKind kind, @NotNull PsiAnnotation[] annotations) {
+  public PsiPrimitiveType(@Nullable("for NULL type") JvmPrimitiveTypeKind kind, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myKind = kind;
     myName = getName(kind);
@@ -66,7 +66,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
    * @deprecated please don't use {@link PsiPrimitiveType} to represent fake types
    */
   @Deprecated
-  public PsiPrimitiveType(@NotNull String name, @NotNull PsiAnnotation[] annotations) {
+  public PsiPrimitiveType(@NotNull String name, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myKind = null;
     myName = name;
@@ -158,8 +158,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return EMPTY_ARRAY;
   }
 

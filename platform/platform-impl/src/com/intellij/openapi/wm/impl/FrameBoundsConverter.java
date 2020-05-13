@@ -38,9 +38,11 @@ public final class FrameBoundsConverter {
         if (b.y < screen.y) b.y = screen.y;
         if (b.width > screen.width) b.width = screen.width;
         if (b.height > screen.height) b.height = screen.height;
-        break;
+        return b;
       }
     }
+    //We didn't find proper device at all, probably it was an external screen that is unavailable now, we cannot use specified bounds
+    ScreenUtil.fitToScreen(b);
     return b;
   }
 

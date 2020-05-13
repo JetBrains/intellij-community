@@ -1,32 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.ShallowNodeComparator;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTNode> {
   private final ProgressIndicator myIndicator;
 
@@ -56,7 +39,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     if (oldNode instanceof ForeignLeafPsiElement) {
       return newNode instanceof ForeignLeafPsiElement && oldNode.getText().equals(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
     }
-    
+
     if (newNode instanceof ForeignLeafPsiElement) return ThreeState.NO;
 
     if (oldNode instanceof LeafElement) {
@@ -69,7 +52,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     if (oldNode instanceof PsiErrorElement && newNode instanceof PsiErrorElement) {
       final PsiErrorElement e1 = (PsiErrorElement)oldNode;
       final PsiErrorElement e2 = (PsiErrorElement)newNode;
-      if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return ThreeState.NO;
+      if (!Objects.equals(e1.getErrorDescription(), e2.getErrorDescription())) return ThreeState.NO;
     }
 
     return ThreeState.UNSURE;
@@ -119,7 +102,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     if (n1 instanceof PsiErrorElement && n2 instanceof PsiErrorElement) {
       final PsiErrorElement e1 = (PsiErrorElement)n1;
       final PsiErrorElement e2 = (PsiErrorElement)n2;
-      if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return false;
+      if (!Objects.equals(e1.getErrorDescription(), e2.getErrorDescription())) return false;
     }
 
     return ((TreeElement)n1).hc() == ((TreeElement)n2).hc();

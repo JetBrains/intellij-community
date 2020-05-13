@@ -16,24 +16,26 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.comparison.InnerFragmentsPolicy;
+import com.intellij.openapi.diff.DiffBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 public enum HighlightPolicy {
-  BY_LINE("Highlight lines"),
-  BY_WORD("Highlight words"),
-  BY_WORD_SPLIT("Highlight split changes"),
-  BY_CHAR("Highlight symbols"),
-  DO_NOT_HIGHLIGHT("Do not highlight");
+  BY_LINE("option.highlighting.policy.lines"),
+  BY_WORD("option.highlighting.policy.words"),
+  BY_WORD_SPLIT("option.highlighting.policy.split"),
+  BY_CHAR("option.highlighting.policy.symbols"),
+  DO_NOT_HIGHLIGHT("option.highlighting.policy.none");
 
-  @NotNull private final String myText;
+  @NotNull private final String myTextKey;
 
-  HighlightPolicy(@NotNull String text) {
-    myText = text;
+  HighlightPolicy(@NotNull @PropertyKey(resourceBundle = DiffBundle.BUNDLE) String textKey) {
+    myTextKey = textKey;
   }
 
   @NotNull
   public String getText() {
-    return myText;
+    return DiffBundle.message(myTextKey);
   }
 
   public boolean isShouldCompare() {

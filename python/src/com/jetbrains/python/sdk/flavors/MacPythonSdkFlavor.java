@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,8 +36,12 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
   private MacPythonSdkFlavor() {
   }
 
-  public static final MacPythonSdkFlavor INSTANCE = new MacPythonSdkFlavor();
   private static final String[] POSSIBLE_BINARY_NAMES = {"python", "python2", "python3"};
+
+  @Override
+  public boolean isApplicable() {
+    return SystemInfo.isMac;
+  }
 
   @NotNull
   @Override

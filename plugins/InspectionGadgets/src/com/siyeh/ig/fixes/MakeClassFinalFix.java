@@ -45,7 +45,7 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Make class final";
+    return InspectionGadgetsBundle.message("make.class.final.fix.family.name");
   }
 
   @Override

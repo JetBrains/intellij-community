@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.application.options.CodeStyle
@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileTypes.StdFileTypes
@@ -26,7 +27,6 @@ import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.ArrayUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
@@ -35,6 +35,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.jar.Manifest
 
@@ -68,7 +69,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   private val myLogger = lazy { IdeaLogger() }
   private val myOptions = lazy { getOptions() }
-  private val myFutures = ContainerUtil.newConcurrentMap<VirtualFile, Future<CharSequence>>()
+  private val myFutures = ConcurrentHashMap<VirtualFile, Future<CharSequence>>()
   @Volatile private var myLegalNoticeAccepted = false
 
   init {
@@ -80,7 +81,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   private fun intercept() {
     val app = ApplicationManager.getApplication()
-    val connection = app.messageBus.connect(app)
+    val connection = app.messageBus.connect()
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
       override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
         if (!myLegalNoticeAccepted && file.fileType === StdFileTypes.CLASS && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {
@@ -107,7 +108,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
             DECLINE_EXIT_CODE -> {
               myFutures.remove(file)?.cancel(true)
-              PluginManagerCore.disablePlugin("org.jetbrains.java.decompiler")
+              PluginManagerCore.disablePlugin(PluginId.getId("org.jetbrains.java.decompiler"))
               ApplicationManagerEx.getApplicationEx().restart(true)
             }
 

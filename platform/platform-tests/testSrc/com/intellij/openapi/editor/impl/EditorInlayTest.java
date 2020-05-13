@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +129,7 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testDocumentEditingWithSoftWraps() {
     initText("long line");
     configureSoftWraps(7);
-    Inlay inlay = addInlay(1);
+    Inlay<?> inlay = addInlay(1);
     assertNotNull(getEditor().getSoftWrapModel().getSoftWrap(5));
     runWriteCommand(() -> getEditor().getDocument().setText(" "));
     assertFalse(inlay.isValid());
@@ -137,7 +138,7 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testInlayDoesntGetInsideSurrogatePair() {
     initText(""); // Cannot set up text with singular surrogate characters directly
     runWriteCommand(() -> getEditor().getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
-    Inlay inlay = addInlay(2);
+    Inlay<?> inlay = addInlay(2);
     assertNotNull(inlay);
     assertTrue(inlay.isValid());
     runWriteCommand(() -> ((DocumentEx)getEditor().getDocument()).moveText(2, 3, 1));
@@ -168,8 +169,8 @@ public class EditorInlayTest extends AbstractEditorTest {
 
   public void testTypingBetweenInlaysAtSameOffset() {
     initText("ab");
-    Inlay inlay1 = addInlay(1);
-    Inlay inlay2 = addInlay(1);
+    Inlay<?> inlay1 = addInlay(1);
+    Inlay<?> inlay2 = addInlay(1);
     right();
     right();
     type(' ');
@@ -262,7 +263,7 @@ public class EditorInlayTest extends AbstractEditorTest {
 
   public void testCaretPositionAfterInlayDisposalToTheLeft() {
     initText("ab");
-    Inlay inlay = addInlay(1);
+    Inlay<?> inlay = addInlay(1);
     addInlay(1);
     right();
     right();
@@ -273,7 +274,7 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testCaretPositionAfterInlayDisposalToTheRight() {
     initText("ab");
     addInlay(1);
-    Inlay inlay = addInlay(1);
+    Inlay<?> inlay = addInlay(1);
     right();
     right();
     Disposer.dispose(inlay);
@@ -302,8 +303,8 @@ public class EditorInlayTest extends AbstractEditorTest {
 
   public void testBehaviourOnTextInsertion() {
     initText("abc");
-    Inlay i1 = addInlay(1, false);
-    Inlay i2 = addInlay(2, true);
+    Inlay<?> i1 = addInlay(1, false);
+    Inlay<?> i2 = addInlay(2, true);
     runWriteCommand(() -> {
       getEditor().getDocument().insertString(2, " ");
       getEditor().getDocument().insertString(1, " ");
@@ -330,9 +331,9 @@ public class EditorInlayTest extends AbstractEditorTest {
 
   public void testInlayOrderAfterMerge() {
     initText("ab");
-    Inlay i0 = addInlay(0);
-    Inlay i1 = addInlay(1);
-    Inlay i2 = addInlay(2);
+    Inlay<?> i0 = addInlay(0);
+    Inlay<?> i1 = addInlay(1);
+    Inlay<?> i2 = addInlay(2);
     runWriteCommand(() -> {
       getEditor().getDocument().deleteString(0, 1);
       getEditor().getDocument().deleteString(0, 1);
@@ -342,9 +343,9 @@ public class EditorInlayTest extends AbstractEditorTest {
 
   public void testInlayOrderAfterDocumentModification() {
     initText("abc");
-    Inlay i1 = addInlay(2);
+    Inlay<?> i1 = addInlay(2);
     runWriteCommand(() -> getEditor().getDocument().deleteString(1, 2));
-    Inlay i2 = addInlay(1);
+    Inlay<?> i2 = addInlay(1);
     assertEquals(Arrays.asList(i1, i2), getEditor().getInlayModel().getInlineElementsInRange(1, 1));
   }
 
@@ -363,8 +364,15 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testInlayIsAddedIntoCollapsedFoldRegion() {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    addBlockInlay(0);
+    EditorTestUtil.addBlockInlay(getEditor(), 0, true, false, 0, null);
     assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT), getEditor().visualLineToY(1));
+  }
+
+  public void testInlayIsAddedIntoCollapsedFoldRegionDifferentRelatesFlag() {
+    initText("abc");
+    addCollapsedFoldRegion(0, 3, "...");
+    EditorTestUtil.addBlockInlay(getEditor(), 0, false, false, 0, null);
+    assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * 2, getEditor().visualLineToY(1));
   }
 
   public void testVerticalCaretMovementInPresenceOfBothTypesOfInlays() {
@@ -402,8 +410,8 @@ public class EditorInlayTest extends AbstractEditorTest {
     initText("text");
     addBlockInlay(0, true);
     addBlockInlay(0, true);
-    List<Inlay> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
-    List<Inlay> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, true);
+    List<Inlay<?>> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
+    List<Inlay<?>> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, true);
     Collections.reverse(list2);
     assertEquals(list1, list2);
   }
@@ -412,8 +420,8 @@ public class EditorInlayTest extends AbstractEditorTest {
     initText("text");
     addBlockInlay(0, false);
     addBlockInlay(0, false);
-    List<Inlay> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
-    List<Inlay> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, false);
+    List<Inlay<?>> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
+    List<Inlay<?>> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, false);
     assertEquals(list1, list2);
   }
 
@@ -424,6 +432,26 @@ public class EditorInlayTest extends AbstractEditorTest {
     verifySoftWrapPositions(7);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> ((EditorEx)getEditor()).getDocument().moveText(0, 1, 7));
     verifySoftWrapPositions(7, 16);
+  }
+
+  public void testInlineElementAtDocumentEnd() {
+    initText("");
+    addInlay(0, 10);
+    assertNull(getEditor().getInlayModel().getElementAt(new Point(5, getEditor().getLineHeight() * 3 / 2)));
+  }
+
+  public void testAfterLineEndElementAtDocumentEnd() {
+    initText("");
+    addAfterLineEndInlay(0, 10);
+    assertNull(getEditor().getInlayModel().getElementAt(new Point(TEST_CHAR_WIDTH + 5, getEditor().getLineHeight() * 3 / 2)));
+  }
+
+  public void testInlayForDisposedEditor() {
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+    Inlay<?> inlay = EditorTestUtil.addInlay(editor, 0);
+    assertTrue(inlay.isValid());
+    EditorFactory.getInstance().releaseEditor(editor);
+    assertFalse(inlay.isValid());
   }
 
   private void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

@@ -43,12 +43,10 @@ public abstract class FoldingBuilderEx implements FoldingBuilder {
    *                 If true, one should perform no reference resolving and avoid complex checks if possible.
    * @return the array of folding descriptors.
    */
-  @NotNull
-  public abstract FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick);
+  public abstract FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick);
 
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     return buildFoldRegions(node.getPsi(), document, false);
   }
 

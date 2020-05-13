@@ -27,10 +27,9 @@ import org.jetbrains.annotations.NotNull;
  * Checks each method by name
  */
 abstract class PyTestsFunctionBasedRunner<T extends PyScriptTestProcessRunner<?>> extends PyProcessWithConsoleTestTask<T> {
-  @NotNull
-  protected final String[] myFunctionsToCheck;
+  protected final String @NotNull [] myFunctionsToCheck;
 
-  protected PyTestsFunctionBasedRunner(@NotNull final String... functionsToCheck) {
+  protected PyTestsFunctionBasedRunner(final String @NotNull ... functionsToCheck) {
     super("/testRunner/env/testsInFolder", SdkCreationType.EMPTY_SDK);
     assert functionsToCheck.length > 0 : "Provide functions";
     myFunctionsToCheck = functionsToCheck.clone();

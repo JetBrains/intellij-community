@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.diff.DiffContentFactory;
@@ -17,6 +17,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -140,7 +141,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     if (model.isOperationsEnabled()) {
-      new DumbAwareAction("Change diff operation") {
+      new DumbAwareAction(DiffBundle.messagePointer("action.Anonymous.text.change.diff.operation")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           changeOperationForSelection();
@@ -170,21 +171,21 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
     final TableColumnModel columnModel = myTable.getColumnModel();
     for (int i = 0; i < columnModel.getColumnCount(); i++) {
-      final String name = myModel.getColumnName(i);
-      final TableColumn column = columnModel.getColumn(i);
-      if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
+      DirDiffTableModel.ColumnType type = myModel.getColumnType(i);
+      TableColumn column = columnModel.getColumn(i);
+      if (type == DirDiffTableModel.ColumnType.DATE) {
         column.setPreferredWidth(JBUIScale.scale(110));
         column.setMinWidth(JBUIScale.scale(90));
       }
-      else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
+      else if (type == DirDiffTableModel.ColumnType.SIZE) {
         column.setPreferredWidth(JBUIScale.scale(120));
         column.setMinWidth(JBUIScale.scale(90));
       }
-      else if (DirDiffTableModel.COLUMN_NAME.equals(name)) {
+      else if (type == DirDiffTableModel.ColumnType.NAME) {
         column.setPreferredWidth(JBUIScale.scale(800));
         column.setMinWidth(JBUIScale.scale(120));
       }
-      else if (DirDiffTableModel.COLUMN_OPERATION.equals(name)) {
+      else if (type == DirDiffTableModel.ColumnType.OPERATION) {
         column.setMaxWidth(JBUIScale.scale(25));
         column.setMinWidth(JBUIScale.scale(25));
       }
@@ -196,8 +197,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
     if (model.isOperationsEnabled()) {
-      final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements." +
-                                        " Enter to perform.", SwingConstants.CENTER);
+      final JBLabel label = new JBLabel(DiffBundle.message("use.space.button.or.mouse.click"), SwingConstants.CENTER);
       label.setForeground(UIUtil.getInactiveTextColor());
       UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
       myFilesPanel.add(label, BorderLayout.SOUTH);
@@ -218,9 +218,10 @@ public class DirDiffPanel implements Disposable, DataProvider {
       @Override
       public void onLoadingFinish() {
         if (showHelp && myModel.isOperationsEnabled() && myModel.getRowCount() > 0) {
-          final long count = PropertiesComponent.getInstance().getOrInitLong("dir.diff.space.button.info", 0);
+          final long count = PropertiesComponent.getInstance().getLong("dir.diff.space.button.info", 0);
           if (count < 3) {
-            JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(" Use Space button to change operation"))
+            JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(
+              DiffBundle.message("use.space.button.to.change.operation")))
               .setFadeoutTime(5000)
               .setContentInsets(JBUI.insets(15))
               .createBalloon().show(new RelativePoint(myTable, new Point(myTable.getWidth() / 2, 0)), Balloon.Position.above);
@@ -231,7 +232,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     loadingPanel.add(myComponent, BorderLayout.CENTER);
-    UIUtil.putClientProperty(myTable, DirDiffTableModel.DECORATOR_KEY, loadingPanel);
+    ComponentUtil.putClientProperty(myTable, DirDiffTableModel.DECORATOR_KEY, loadingPanel);
     myTable.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentShown(ComponentEvent e) {
@@ -476,8 +477,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     return null;
   }
 
-  @NotNull
-  private Navigatable[] getNavigatableArray() {
+  private Navigatable @NotNull [] getNavigatableArray() {
     Project project = myModel.getProject();
     List<DirDiffElementImpl> elements = myModel.getSelectedElements();
     List<Navigatable> navigatables = new ArrayList<>();

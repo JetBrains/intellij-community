@@ -89,14 +89,12 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType @NotNull [] getExtendsListTypes() {
     return PsiClassImplUtil.getExtendsListTypes(this);
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getImplementsListTypes() {
+  public PsiClassType @NotNull [] getImplementsListTypes() {
     return PsiClassImplUtil.getImplementsListTypes(this);
   }
 
@@ -106,45 +104,38 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     return PsiClassImplUtil.getSuperClass(this);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getInterfaces() {
+  public PsiClass @NotNull [] getInterfaces() {
     return PsiClassImplUtil.getInterfaces(this);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getSupers() {
+  public PsiClass @NotNull [] getSupers() {
     return PsiClassImplUtil.getSupers(this);
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getSuperTypes() {
+  public PsiClassType @NotNull [] getSuperTypes() {
     return PsiClassImplUtil.getSuperTypes(this);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getConstructors() {
+  public PsiMethod @NotNull [] getConstructors() {
     return PsiImplUtil.getConstructors(this);
   }
 
-  @NotNull
   @Override
-  public PsiField[] getAllFields() {
+  public PsiField @NotNull [] getAllFields() {
     return PsiClassImplUtil.getAllFields(this);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getAllMethods() {
+  public PsiMethod @NotNull [] getAllMethods() {
     return PsiClassImplUtil.getAllMethods(this);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getAllInnerClasses() {
+  public PsiClass @NotNull [] getAllInnerClasses() {
     return PsiClassImplUtil.getAllInnerClasses(this);
   }
 
@@ -160,15 +151,13 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsByName(@NonNls String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
@@ -245,9 +234,8 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     return PsiImplUtil.hasTypeParameters(this);
   }
 
-  @NotNull
   @Override
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return PsiImplUtil.getTypeParameters(this);
   }
 

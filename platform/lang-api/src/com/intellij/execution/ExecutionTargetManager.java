@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,10 @@ public abstract class ExecutionTargetManager {
   public static List<ExecutionTarget> getTargetsToChooseFor(@NotNull Project project, @Nullable RunConfiguration configuration) {
     List<ExecutionTarget> result = getInstance(project).getTargetsFor(configuration);
     if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) return Collections.emptyList();
+    result = Collections.unmodifiableList(ContainerUtil.filter(result, target -> !target.isExternallyManaged()));
+    if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) {
+      return Collections.emptyList();
+    }
     return result;
   }
 
@@ -58,7 +63,7 @@ public abstract class ExecutionTargetManager {
     return settings != null && canRun(settings.getConfiguration(), environment.getExecutionTarget());
   }
 
-  protected abstract boolean doCanRun(@Nullable RunConfiguration configuration, @NotNull ExecutionTarget target);
+  public abstract boolean doCanRun(@Nullable RunConfiguration configuration, @NotNull ExecutionTarget target);
 
   public static void update(@NotNull Project project) {
     getInstance(project).update();

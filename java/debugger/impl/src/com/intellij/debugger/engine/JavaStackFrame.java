@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -49,9 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author egor
- */
 public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProvider {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
   public static final DummyMessageValueNode LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE =
@@ -194,6 +191,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   @NotNull
   protected List<? extends XNamedValue> createExceptionNodes(EvaluationContextImpl evaluationContext) {
+    if (myDescriptor.getUiIndex() != 0) {
+      return Collections.emptyList();
+    }
     return StreamEx.of(DebuggerUtilsEx.getEventDescriptors(evaluationContext.getSuspendContext()))
       .map(p -> p.getSecond())
       .select(ExceptionEvent.class)
@@ -205,7 +205,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   // copied from DebuggerTree
-  private void buildVariablesThreadAction(DebuggerContextImpl debuggerContext, XValueChildrenList children, XCompositeNode node) {
+  protected void buildVariablesThreadAction(DebuggerContextImpl debuggerContext, XValueChildrenList children, XCompositeNode node) {
     try {
       final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
       if (evaluationContext == null) {
@@ -246,7 +246,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
     catch (InternalException e) {
       if (e.errorCode() == JvmtiError.INVALID_SLOT) {
-        node.setErrorMessage(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()));
+        node.setErrorMessage(JavaDebuggerBundle.message("error.corrupt.debug.info", e.getMessage()));
       }
       else {
         throw e;
@@ -456,7 +456,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitElement(final PsiElement element) {
+    public void visitElement(@NotNull final PsiElement element) {
       if (myLineRange.intersects(element.getTextRange())) {
         super.visitElement(element);
       }

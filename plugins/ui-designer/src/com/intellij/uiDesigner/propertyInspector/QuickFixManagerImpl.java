@@ -18,7 +18,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.propertyInspector.QuickFixManagerImpl");
+  private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);
 
   QuickFixManagerImpl(final GuiEditor editor, final PropertyInspectorTable propertyInspectorTable, final JViewport viewPort) {
     super(editor, propertyInspectorTable, viewPort);
@@ -45,8 +45,7 @@ final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>
   }
 
   @Override
-  @NotNull
-  public ErrorInfo[] getErrorInfos() {
+  public ErrorInfo @NotNull [] getErrorInfos() {
     final int selectedRow = myComponent.getSelectedRow();
     if(selectedRow < 0 || selectedRow >= myComponent.getRowCount()){
       return ErrorInfo.EMPTY_ARRAY;

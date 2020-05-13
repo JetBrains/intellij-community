@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +48,8 @@ public class HierarchicalFilePathComparator implements Comparator<FilePath> {
 
   @Override
   public int compare(@NotNull FilePath filePath1, @NotNull FilePath filePath2) {
-    String path1 = FileUtilRt.toSystemIndependentName(filePath1.getPath());
-    String path2 = FileUtilRt.toSystemIndependentName(filePath2.getPath());
+    String path1 = filePath1.getPath();
+    String path2 = filePath2.getPath();
 
     int commonPrefix = StringUtil.commonPrefixLength(path1, path2, myIgnoreCase);
 

@@ -119,7 +119,7 @@ class ImportMavenRepositoriesTask {
 
   @NotNull
   private static Collection<? extends GrClosableBlock> findClosableBlocks(@NotNull final PsiElement element,
-                                                                          @NotNull final String... blockNames) {
+                                                                          final String @NotNull ... blockNames) {
     List<GrMethodCall> methodCalls = PsiTreeUtil.getChildrenOfTypeAsList(element, GrMethodCall.class);
     return ContainerUtil.mapNotNull(methodCalls, call -> {
       if (call == null || call.getClosureArguments().length != 1) return null;

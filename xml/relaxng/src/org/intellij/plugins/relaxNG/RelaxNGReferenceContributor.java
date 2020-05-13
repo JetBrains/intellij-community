@@ -15,18 +15,19 @@ import static com.intellij.patterns.XmlPatterns.*;
  * @author peter
  */
 public class RelaxNGReferenceContributor extends PsiReferenceContributor {
-  private static final XmlNamedElementPattern RNG_TAG_PATTERN = xmlTag().withNamespace(RelaxNgMetaDataContributor.RNG_NAMESPACE);
+  private static class Holder {
+    private static final XmlNamedElementPattern RNG_TAG_PATTERN = xmlTag().withNamespace(RelaxNgMetaDataContributor.RNG_NAMESPACE);
 
-  private static final XmlNamedElementPattern.XmlAttributePattern NAME_ATTR_PATTERN = xmlAttribute("name");
+    private static final XmlNamedElementPattern.XmlAttributePattern NAME_ATTR_PATTERN = xmlAttribute("name");
 
-  private static final XmlNamedElementPattern.XmlAttributePattern NAME_PATTERN = NAME_ATTR_PATTERN.withParent(
-    RNG_TAG_PATTERN.withLocalName("element", "attribute"));
-
+    private static final XmlNamedElementPattern.XmlAttributePattern NAME_PATTERN = NAME_ATTR_PATTERN.withParent(
+      RNG_TAG_PATTERN.withLocalName("element", "attribute"));
+  }
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[]{
       "name"
-    }, new PatternFilter(xmlAttributeValue().withParent(NAME_PATTERN)), true, new PrefixReferenceProvider());
+    }, new PatternFilter(xmlAttributeValue().withParent(Holder.NAME_PATTERN)), true, new PrefixReferenceProvider());
 
 //    final XmlAttributeValuePattern id = xmlAttributeValue().withParent(xmlAttribute()).with(IdRefProvider.HAS_ID_REF_TYPE);
 //    final XmlAttributeValuePattern idref = xmlAttributeValue().withParent(xmlAttribute()).with(IdRefProvider.HAS_ID_TYPE);

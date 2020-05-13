@@ -1,1 +1,0 @@
-deprecated: typeScript.svg; to be removed in IDEA 2020 - use JavaScriptPsiIcons.FileTypes.TypeScriptFile

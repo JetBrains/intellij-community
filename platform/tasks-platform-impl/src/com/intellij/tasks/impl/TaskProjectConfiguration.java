@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.project.Project;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -19,7 +21,7 @@ import java.util.List;
 * @author Dmitry Avdeev
 */
 @State(name = "TaskProjectConfiguration")
-public class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
+public final class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
   @Tag("server")
   public static class SharedServer {
     @Attribute("type")
@@ -55,12 +57,13 @@ public class TaskProjectConfiguration implements PersistentStateComponent<TaskPr
   private final TaskManagerImpl myManager;
 
   // for serialization
+  @NonInjectable
   public TaskProjectConfiguration() {
     myManager = null;
   }
 
-  public TaskProjectConfiguration(TaskManager manager) {
-    myManager = (TaskManagerImpl)manager;
+  public TaskProjectConfiguration(@NotNull Project project) {
+    myManager = (TaskManagerImpl)TaskManager.getManager(project);
   }
 
   @Override

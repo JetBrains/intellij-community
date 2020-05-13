@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -91,7 +92,8 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
-    PsiElement resolve = refExpr.resolve();
+    final GroovyReference rValueReference = refExpr.getRValueReference();
+    PsiElement resolve = rValueReference == null ? null : rValueReference.resolve();
     boolean mixinOnly = resolve instanceof GrField && isCompileStatic(refExpr);
 
     final VariableDescriptor descriptor = createDescriptor(refExpr);
@@ -135,7 +137,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  static List<DefinitionMap> getDefUseMaps(@NotNull Instruction[] flow, @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
+  static List<DefinitionMap> getDefUseMaps(Instruction @NotNull [] flow, @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
     final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);

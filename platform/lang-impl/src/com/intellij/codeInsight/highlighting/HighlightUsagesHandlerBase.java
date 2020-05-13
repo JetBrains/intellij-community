@@ -53,9 +53,6 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
 
   public void highlightUsages() {
     List<T> targets = getTargets();
-    if (targets == null) {
-      return;
-    }
     selectTargets(targets, targets1 -> {
       computeUsages(targets1);
       performHighlighting();
@@ -95,6 +92,7 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     }
   }
 
+  @NotNull
   public abstract List<T> getTargets();
 
   @Nullable
@@ -102,9 +100,9 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     return null;
   }
 
-  protected abstract void selectTargets(List<T> targets, Consumer<List<T>> selectionConsumer);
+  protected abstract void selectTargets(@NotNull List<? extends T> targets, @NotNull Consumer<? super List<? extends T>> selectionConsumer);
 
-  public abstract void computeUsages(List<T> targets);
+  public abstract void computeUsages(@NotNull List<? extends T> targets);
 
   protected void addOccurrence(@NotNull PsiElement element) {
     TextRange range = element.getTextRange();

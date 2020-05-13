@@ -21,11 +21,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter");
-  private static final int[] EXCEPT_OVERRIDDEN = {
+  private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
+  private static final int[] IGNORE_FOR_COMPILED = {
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,
-    Pass.UPDATE_ALL,
     Pass.LOCAL_INSPECTIONS,
     Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
     Pass.EXTERNAL_TOOLS,
@@ -51,7 +50,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   }
 
   @NotNull
-  List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
+  List<TextEditorHighlightingPass> getPasses(int @NotNull [] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
 
     LOG.assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(myDocument));
@@ -62,10 +61,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     boolean compiled = file instanceof PsiCompiledFile;
     if (compiled) {
       file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-    }
-
-    if (compiled) {
-      passesToIgnore = EXCEPT_OVERRIDDEN;
+      passesToIgnore = IGNORE_FOR_COMPILED;
     }
     else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
       return Collections.emptyList();
@@ -76,14 +72,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   }
 
   @Override
-  @NotNull
-  public TextEditorHighlightingPass[] createPassesForVisibleArea() {
-    return createPassesForEditor();
-  }
-
-  @Override
-  @NotNull
-  public TextEditorHighlightingPass[] createPassesForEditor() {
+  public TextEditorHighlightingPass @NotNull [] createPassesForEditor() {
     List<TextEditorHighlightingPass> passes = getPasses(ArrayUtilRt.EMPTY_INT_ARRAY);
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
   }

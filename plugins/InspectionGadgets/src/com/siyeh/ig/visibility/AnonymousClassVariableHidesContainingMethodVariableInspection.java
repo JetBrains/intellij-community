@@ -33,13 +33,6 @@ public class AnonymousClassVariableHidesContainingMethodVariableInspection exten
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "anonymous.class.variable.hides.containing.method.variable.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiParameter) {

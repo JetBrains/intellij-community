@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,12 +24,12 @@ class VcsConfirmationDialog extends OptionsDialog {
   private final String myDoNotShowMessage;
 
   VcsConfirmationDialog(@NotNull Project project,
-                        @NotNull String title,
-                        @NotNull String okText,
-                        @NotNull String cancelText,
+                        @NotNull @NlsContexts.DialogTitle String title,
+                        @NotNull @NlsContexts.Button String okText,
+                        @NotNull @NlsContexts.Button String cancelText,
                         @NotNull VcsShowConfirmationOption option,
-                        @NotNull String message,
-                        @NotNull String doNotShowMessage) {
+                        @NotNull @NlsContexts.Label String message,
+                        @NotNull @NlsContexts.Checkbox String doNotShowMessage) {
     super(project);
     myOkText = okText;
     myCancelText = cancelText;
@@ -68,9 +69,8 @@ class VcsConfirmationDialog extends OptionsDialog {
     return myDoNotShowMessage;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     final AbstractAction okAction = new AbstractAction(myOkText) {
       {
         putValue(DEFAULT_ACTION, Boolean.TRUE);

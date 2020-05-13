@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.commander;
 
@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -54,7 +55,7 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class CommanderPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.commander.CommanderPanel");
+  private static final Logger LOG = Logger.getInstance(CommanderPanel.class);
 
   private static final Color DARK_BLUE = new Color(55, 85, 134);
   private static final Color DARK_BLUE_BRIGHTER = new Color(58, 92, 149);
@@ -119,7 +120,7 @@ public class CommanderPanel extends JPanel {
     });
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         drillDown();
         return true;
       }
@@ -317,10 +318,10 @@ public class CommanderPanel extends JPanel {
   }
 
   @NotNull
-  private List<AbstractTreeNode> getSelectedNodes() {
+  private List<AbstractTreeNode<?>> getSelectedNodes() {
     if (myBuilder == null) return Collections.emptyList();
     final int[] indices = myList.getSelectedIndices();
-    ArrayList<AbstractTreeNode> result = new ArrayList<>();
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>();
     for (int index : indices) {
       if (index >= myModel.getSize()) continue;
       Object elementAtIndex = myModel.getElementAt(index);
@@ -410,7 +411,7 @@ public class CommanderPanel extends JPanel {
 
   public final void dispose() {
     if (myBuilder != null) {
-      myBuilder.dispose();
+      Disposer.dispose(myBuilder);
       myBuilder = null;
     }
     myProject = null;
@@ -489,8 +490,7 @@ public class CommanderPanel extends JPanel {
     return elements.toArray(new Navigatable[0]);
   }
 
-  @Nullable
-  private static PsiElement[] filterInvalidElements(final PsiElement[] elements) {
+  private static PsiElement @Nullable [] filterInvalidElements(final PsiElement[] elements) {
     if (elements == null || elements.length == 0) {
       return null;
     }
@@ -582,9 +582,8 @@ public class CommanderPanel extends JPanel {
       }
     }
 
-    @NotNull
     @Override
-    public PsiDirectory[] getDirectories() {
+    public PsiDirectory @NotNull [] getDirectories() {
       PsiDirectory directory = getDirectory();
       return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
     }

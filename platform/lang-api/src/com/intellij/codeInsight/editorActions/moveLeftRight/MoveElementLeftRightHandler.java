@@ -30,6 +30,5 @@ public abstract class MoveElementLeftRightHandler {
    * Returns a list of sub-elements (usually children) of given PSI element, which can be moved using 'move element left/right' actions.
    * Should return an empty array if there are no such elements.
    */
-  @NotNull
-  public abstract PsiElement[] getMovableSubElements(@NotNull PsiElement element);
+  public abstract PsiElement @NotNull [] getMovableSubElements(@NotNull PsiElement element);
 }

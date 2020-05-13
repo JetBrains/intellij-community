@@ -20,9 +20,6 @@ import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class ExternalDependenciesConfigurableProvider extends ConfigurableProvider {
   private final Project myProject;
 

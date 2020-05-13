@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.util.Arrays;
@@ -10,7 +10,7 @@ public class ValidationResult implements Comparable<ValidationResult> {
   }
 
   public enum Action {
-    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), NO_ACTION(""), VALIDATE("Validate");
+    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), VALIDATE("Validate");
 
     private final String myDisplayString;
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ public class ListWrappingTableModel extends AbstractTableModel implements ItemRe
   private final List<String> columnNames = new ArrayList<>();
 
   public ListWrappingTableModel(@NotNull List<List<String>> list,
-                                @NotNull String... columnNames) {
+                                String @NotNull @ColumnName ... columnNames) {
     this.list = list;
     ContainerUtil.addAll(this.columnNames, columnNames);
   }
@@ -41,7 +42,7 @@ public class ListWrappingTableModel extends AbstractTableModel implements ItemRe
    * @param list       the rows of the table
    * @param columnName the name in the column header
    */
-  public ListWrappingTableModel(@NotNull List<String> list, @NotNull String columnName) {
+  public ListWrappingTableModel(@NotNull List<String> list, @NotNull @ColumnName String columnName) {
     this.list = new ArrayList<>();
     this.list.add(list);
     columnNames.add(columnName);

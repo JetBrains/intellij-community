@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
@@ -17,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationManager {
   private final Project myProject;
 
@@ -48,7 +46,7 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
     if (remoteServer != null) {
       runConfiguration.setServerName(remoteServer.getName());
     }
-    if (RunDialog.editConfiguration(myProject, settings, "Create Deployment Configuration",
+    if (RunDialog.editConfiguration(myProject, settings, CloudBundle.message("dialog.title.create.deployment.configuration"),
                                     DefaultRunExecutor.getRunExecutorInstance())) {
       runManager.addConfiguration(settings);
       runManager.setSelectedConfiguration(settings);

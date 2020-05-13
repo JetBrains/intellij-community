@@ -16,11 +16,11 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
               !REF_ATTR_NAME.equals(name)) {
             host.addMessage(
               attr.getNameElement(),
-              XmlErrorMessages.message("xml.schema.validation.attr.not.allowed.with.ref", name),
+              XmlPsiBundle.message("xml.schema.validation.attr.not.allowed.with.ref", name),
               ValidationHost.ErrorType.ERROR
             );
           }
@@ -75,7 +75,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
           if (maxOccurs < minOccurs) {
             host.addMessage(
               tag.getAttribute(MAX_OCCURS_ATTR_VALUE, null).getValueElement(),
-              XmlErrorMessages.message("xml.schema.validation.max.occurs.should.be.not.less.than.min.occurs"),
+              XmlPsiBundle.message("xml.schema.validation.max.occurs.should.be.not.less.than.min.occurs"),
               ValidationHost.ErrorType.ERROR
             );
           }
@@ -88,7 +88,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
       if (!hasRefAttribute && tag.getAttributeValue(NAME_ATTR_NAME) == null) {
         host.addMessage(
           tag,
-          XmlErrorMessages.message("xml.schema.validation.name.or.ref.should.present"),
+          XmlPsiBundle.message("xml.schema.validation.name.or.ref.should.present"),
           ValidationHost.ErrorType.ERROR
         );
       }
@@ -103,7 +103,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
       if (tag.getAttributeValue(REF_ATTR_NAME) == null && tag.getAttributeValue(NAME_ATTR_NAME) == null) {
         host.addMessage(
           tag,
-          XmlErrorMessages.message("xml.schema.validation.name.or.ref.should.present"),
+          XmlPsiBundle.message("xml.schema.validation.name.or.ref.should.present"),
           ValidationHost.ErrorType.ERROR
         );
       }
@@ -111,13 +111,13 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
       if (tag.getAttributeValue(DEFAULT_ATTR_NAME) != null && tag.getAttributeValue(FIXED_ATTR_NAME) != null) {
         host.addMessage(
           tag.getAttribute(DEFAULT_ATTR_NAME, null).getNameElement(),
-          XmlErrorMessages.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
+          XmlPsiBundle.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
           ValidationHost.ErrorType.ERROR
         );
 
         host.addMessage(
           tag.getAttribute(FIXED_ATTR_NAME, null).getNameElement(),
-          XmlErrorMessages.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
+          XmlPsiBundle.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
           ValidationHost.ErrorType.ERROR
         );
       }

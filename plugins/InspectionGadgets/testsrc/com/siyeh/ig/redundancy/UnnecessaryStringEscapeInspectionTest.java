@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -15,11 +15,17 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
   public void testEndOfTextBlockQuote() { doQuickFixTest(); }
   public void testNewlinesAndQuotes() { doQuickFixTest(); }
   public void testDoubleQuoteInChar() { doQuickFixTest(); }
-  public void testSingleQuoteInString() { doTest(); }
+  public void testSingleQuoteInString() { doQuickFixTest(); }
+  public void testMultipleProblemsInSingleString() { doQuickFixTest(); }
 
   protected void doQuickFixTest() {
     super.doTest();
-    checkQuickFix("Fix all 'Unnecessarily escaped character' problems in file");
+    checkQuickFixAll();
+  }
+
+  @Override
+  protected Class<? extends InspectionProfileEntry> getInspectionClass() {
+    return UnnecessaryStringEscapeInspection.class;
   }
 
   @Nullable
@@ -33,6 +39,6 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
+    return JAVA_14;
   }
 }

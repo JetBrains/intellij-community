@@ -25,9 +25,8 @@ public class EditorConfigIndentStatusBarUIContributor extends IndentStatusBarUIC
     return myEditorConfigIndentOptions;
   }
 
-  @Nullable
   @Override
-  public AnAction[] getActions(@NotNull PsiFile file) {
+  public AnAction @Nullable [] getActions(@NotNull PsiFile file) {
     if (myEditorConfigIndentOptions) {
       return EditorConfigActionUtil.createNavigationActions(file);
     }

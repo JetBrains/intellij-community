@@ -32,9 +32,8 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
   public static final long INVALID_REVISION_NUMBER = -1L;
 
-  @NotNull
   @Override
-  public CommitInfo[] commit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
+  public CommitInfo @NotNull [] commit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
     // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
     // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
     // there at least some child-parent relationships in passed paths
@@ -43,8 +42,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return runCommit(paths, message);
   }
 
-  @NotNull
-  private CommitInfo[] runCommit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
+  private CommitInfo @NotNull [] runCommit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
     if (ContainerUtil.isEmpty(paths)) return new CommitInfo[]{CommitInfo.EMPTY};
 
     Command command = newCommand(SvnCommandName.ci);
@@ -210,12 +208,12 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
               myHandler.committedRevision(myCommittedRevision);
             }
           } catch (NumberFormatException e) {
-            final String message = "Wrong committed revision number: " + num.toString() + ", string: " + line;
+            final String message = "Wrong committed revision number: " + num + ", string: " + line;
             LOG.info(message, e);
             throw new SvnBindException(message);
           }
         } else {
-          final String message = "Missing committed revision number: " + num.toString() + ", string: " + line;
+          final String message = "Missing committed revision number: " + num + ", string: " + line;
           LOG.info(message);
           throw new SvnBindException(message);
         }

@@ -16,7 +16,7 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.editor.PlatformEditorBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,8 +66,8 @@ public interface Sorter extends TreeAction {
     @Override
     @NotNull
     public ActionPresentation getPresentation() {
-      return new ActionPresentationData(IdeBundle.message("action.sort.alphabetically"),
-                                        IdeBundle.message("action.sort.alphabetically"),
+      return new ActionPresentationData(PlatformEditorBundle.message("action.sort.alphabetically"),
+                                        PlatformEditorBundle.message("action.sort.alphabetically"),
                                         AllIcons.ObjectBrowser.Sorted);
     }
 

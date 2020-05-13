@@ -25,7 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaDocUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocUtil");
+  private static final Logger LOG = Logger.getInstance(JavaDocUtil.class);
 
   @NonNls private static final Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
 
@@ -111,12 +111,11 @@ public class JavaDocUtil {
       else {
         String memberRefText = refText.substring(1);
         PsiElement scope = context;
-        while (true) {
-          if (scope instanceof PsiFile || scope == null) break;
+        while (scope != null && !(scope instanceof PsiFile)) {
           if (scope instanceof PsiClass) {
             PsiElement member = findReferencedMember((PsiClass)scope, memberRefText, context);
             if (member != null) {
-              return useNavigationElement ? member.getNavigationElement() :  member;
+              return useNavigationElement ? member.getNavigationElement() : member;
             }
           }
           scope = scope.getParent();
@@ -352,8 +351,7 @@ public class JavaDocUtil {
         }
         if (refClass instanceof PsiClass) {
           PsiElement scope = context;
-          while (true) {
-            if (scope == null || scope instanceof PsiFile) break;
+          while (scope != null && !(scope instanceof PsiFile)) {
             if (scope.equals(refClass)) {
               return memberLabel;
             }
@@ -398,7 +396,7 @@ public class JavaDocUtil {
         }
       }
     }
-    return memberText.substring(0, parenthIndex + 1) + buffer.toString() + ")";
+    return memberText.substring(0, parenthIndex + 1) + buffer + ")";
   }
 
   public static PsiClassType[] getImplementsList(PsiClass aClass) {

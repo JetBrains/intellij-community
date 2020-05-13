@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -21,11 +22,11 @@ import java.util.Set;
 /**
  * @author pti
  */
-class PluginUpdateInfoDialog extends AbstractUpdateDialog {
-  private final Collection<? extends PluginDownloader> myUploadedPlugins;
+final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
+  private final Collection<PluginDownloader> myUploadedPlugins;
   private final boolean myPlatformUpdate;
 
-  PluginUpdateInfoDialog(Collection<? extends PluginDownloader> uploadedPlugins, boolean enableLink) {
+  PluginUpdateInfoDialog(Collection<PluginDownloader> uploadedPlugins, boolean enableLink) {
     super(enableLink);
     myUploadedPlugins = uploadedPlugins;
     myPlatformUpdate = false;
@@ -35,7 +36,7 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   /**
    * Used from {@link UpdateInfoDialog} when both platform and plugin updates are available.
    */
-  PluginUpdateInfoDialog(@NotNull Collection<? extends PluginDownloader> updatePlugins) {
+  PluginUpdateInfoDialog(@NotNull Collection<PluginDownloader> updatePlugins) {
     super(false);
     myUploadedPlugins = updatePlugins;
     myPlatformUpdate = true;
@@ -87,9 +88,8 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
                   }
                   else {
                     message = "Updated " + result.getPluginsInstalled() + " plugins";
-
                   }
-                  UpdateChecker.NOTIFICATIONS.createNotification(message, NotificationType.INFORMATION).notify(myProject);
+                  UpdateChecker.getNotificationGroup().createNotification(message, NotificationType.INFORMATION).notify(myProject);
                 }
               }
             });
@@ -122,8 +122,8 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
 
     private void updateState(DetectedPluginsPanel panel) {
       if (!myPlatformUpdate) {
-        Set<String> skipped = panel.getSkippedPlugins();
-        boolean nothingSelected = myUploadedPlugins.stream().allMatch(plugin -> skipped.contains(plugin.getPluginId()));
+        Set<PluginId> skipped = panel.getSkippedPlugins();
+        boolean nothingSelected = myUploadedPlugins.stream().allMatch(plugin -> skipped.contains(plugin.getId()));
         getOKAction().setEnabled(!nothingSelected);
       }
     }

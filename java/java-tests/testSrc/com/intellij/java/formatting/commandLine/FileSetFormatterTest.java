@@ -16,6 +16,7 @@
 package com.intellij.java.formatting.commandLine;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.commandLine.FileSetFormatter;
 import com.intellij.formatting.commandLine.MessageOutput;
 import com.intellij.lang.java.JavaLanguage;
@@ -36,7 +37,7 @@ public class FileSetFormatterTest extends LightPlatformTestCase {
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/commandLine";
 
   public void testFormat() throws IOException {
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.getIndentOptions().INDENT_SIZE = 2;
     javaSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

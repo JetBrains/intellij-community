@@ -12,22 +12,24 @@ import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.PostponableLogRefresher;
+import git4idea.branch.GitBranchPair;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import static git4idea.GitUtil.*;
+import static git4idea.GitUtil.isUnderGit;
+import static java.util.Arrays.asList;
 
 public class GitUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
@@ -43,22 +45,13 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] filePaths, UpdatedFiles updatedFiles, ProgressIndicator progressIndicator, @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef) throws ProcessCanceledException {
-    Set<VirtualFile> roots = getRootsForFilePathsIfAny(myProject, Arrays.asList(filePaths));
-    GitRepositoryManager repositoryManager = getRepositoryManager(myProject);
-
-    final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject,
-                                                                   progressIndicator, getRepositoriesFromRoots(repositoryManager, roots),
-                                                                   updatedFiles, true, true);
-    UpdateMethod method = GitVcsSettings.getInstance(myProject).getUpdateMethod();
-    boolean result = gitUpdateProcess.update(method).isSuccess();
-
-    Map<GitRepository, HashRange> updatedRanges = gitUpdateProcess.getUpdatedRanges();
-    GitUpdateInfoAsLog.NotificationData notificationData = updatedRanges != null ?
-                                                           new GitUpdateInfoAsLog(myProject, updatedRanges).calculateDataAndCreateLogTab() :
-                                                           null;
-
-    return new GitUpdateSession(myProject, notificationData, result, gitUpdateProcess.getSkippedRoots());
+  public UpdateSession updateDirectories(FilePath @NotNull [] filePaths,
+                                         UpdatedFiles updatedFiles,
+                                         ProgressIndicator progressIndicator,
+                                         @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
+    throws ProcessCanceledException {
+    return performUpdate(myProject, filePaths, updatedFiles, progressIndicator, GitVcsSettings.getInstance(myProject).getUpdateMethod(),
+                         null);
   }
 
   @Override
@@ -84,5 +77,28 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     // Unless we force refresh it by hands, but if we do it, calculating update project info would take enormous amount of time & memory.
     boolean keepLogUpToDate = PostponableLogRefresher.keepUpToDate();
     return Registry.is("git.update.project.info.as.log") && keepLogUpToDate;
+  }
+
+  @ApiStatus.Internal
+  public static UpdateSession performUpdate(Project project,
+                                            FilePath[] filePaths,
+                                            UpdatedFiles updatedFiles,
+                                            ProgressIndicator progressIndicator,
+                                            UpdateMethod updateMethod,
+                                            Map<GitRepository, GitBranchPair> updateConfig) {
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+    Set<GitRepository> repositories = ContainerUtil.map2SetNotNull(asList(filePaths), manager::getRepositoryForFile);
+
+    final GitUpdateProcess gitUpdateProcess =
+      new GitUpdateProcess(project, progressIndicator, repositories, updatedFiles, updateConfig, true, true);
+
+    boolean result = gitUpdateProcess.update(updateMethod).isSuccess();
+
+    Map<GitRepository, HashRange> updatedRanges = gitUpdateProcess.getUpdatedRanges();
+    GitUpdateInfoAsLog.NotificationData notificationData = updatedRanges != null
+                                                           ? new GitUpdateInfoAsLog(project, updatedRanges).calculateDataAndCreateLogTab()
+                                                           : null;
+
+    return new GitUpdateSession(project, notificationData, result, gitUpdateProcess.getSkippedRoots());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -51,6 +51,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     new ClassFilter("sun.*"),
     new ClassFilter("jdk.internal.*"),
     new ClassFilter("junit.*"),
+    new ClassFilter("org.junit.*"),
     new ClassFilter("com.intellij.rt.*"),
     new ClassFilter("com.yourkit.runtime.*"),
     new ClassFilter("com.springsource.loaded.*"),

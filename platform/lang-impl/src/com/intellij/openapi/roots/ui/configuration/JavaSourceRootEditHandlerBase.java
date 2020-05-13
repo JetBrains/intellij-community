@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -17,9 +16,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEditHandler<JavaSourceRootProperties> {
   public JavaSourceRootEditHandlerBase(JpsModuleSourceRootType<JavaSourceRootProperties> rootType) {
     super(rootType);
@@ -59,8 +55,8 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
   public JComponent createPropertiesEditor(@NotNull final SourceFolder folder,
                                            @NotNull final JComponent parentComponent,
                                            @NotNull final ContentRootPanel.ActionCallback callback) {
-    final IconActionComponent iconComponent = new IconActionComponent(AllIcons.Modules.SetPackagePrefix,
-                                                                      AllIcons.Modules.SetPackagePrefixRollover,
+    final IconActionComponent iconComponent = new IconActionComponent(AllIcons.General.Inline_edit,
+                                                                      AllIcons.General.Inline_edit_hovered,
                                                                       ProjectBundle.message("module.paths.edit.properties.tooltip"), () -> {
                                                                         JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
                                                                         assert properties != null;
@@ -87,9 +83,9 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
       myProperties = properties;
       setTitle(ProjectBundle.message("module.paths.edit.properties.title"));
       myPackagePrefixField = new JTextField();
-      myIsGeneratedCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("For &generated sources"));
+      myIsGeneratedCheckBox = new JCheckBox(ProjectBundle.message("checkbox.for.generated.sources"));
       myMainPanel = FormBuilder.createFormBuilder()
-        .addLabeledComponent("Package &prefix:", myPackagePrefixField)
+        .addLabeledComponent(ProjectBundle.message("label.package.prefix"), myPackagePrefixField)
         .addComponent(myIsGeneratedCheckBox)
         .getPanel();
       myPackagePrefixField.setText(myProperties.getPackagePrefix());

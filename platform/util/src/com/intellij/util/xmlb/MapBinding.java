@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -21,7 +21,7 @@ import java.util.*;
 
 import static com.intellij.util.xmlb.Constants.*;
 
-class MapBinding implements MultiNodeBinding, NestedBinding {
+final class MapBinding implements MultiNodeBinding, NestedBinding {
   private static final Comparator<Object> KEY_COMPARATOR = (o1, o2) -> {
     if (o1 instanceof Comparable && o2 instanceof Comparable) {
       Comparable c1 = (Comparable)o1;
@@ -34,7 +34,7 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
   private final MapAnnotation oldAnnotation;
   private final XMap annotation;
 
-  @NotNull private final Class<? extends Map> mapClass;
+  private final @NotNull Class<? extends Map> mapClass;
 
   private Class<?> keyClass;
   private Class<?> valueClass;
@@ -42,7 +42,7 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  protected final MutableAccessor myAccessor;
+  private final MutableAccessor myAccessor;
 
   MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
     myAccessor = accessor;
@@ -52,9 +52,8 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
     this.mapClass = mapClass;
   }
 
-  @NotNull
   @Override
-  public MutableAccessor getAccessor() {
+  public @NotNull MutableAccessor getAccessor() {
     return myAccessor;
   }
 
@@ -83,9 +82,8 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
     return oldAnnotation == null || oldAnnotation.sortBeforeSave();
   }
 
-  @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Element serialized = isSurroundWithTag() ? new Element(MAP) : (Element)context;
     assert serialized != null;
 
@@ -135,9 +133,8 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
     return oldAnnotation == null ? VALUE : oldAnnotation.valueAttributeName();
   }
 
-  @Nullable
   @Override
-  public Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     List<? extends Element> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
@@ -154,8 +151,7 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
     return null;
   }
 
-  @Nullable
-  public Object deserialize(@Nullable Object context, @NotNull Element element) {
+  public @Nullable Object deserialize(@Nullable Object context, @NotNull Element element) {
     if (isSurroundWithTag()) {
       return deserialize(context, element.getChildren());
     }
@@ -164,8 +160,7 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
     }
   }
 
-  @Nullable
-  private Map deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
+  private @Nullable Map deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
     // if accessor is null, it is sub-map and we must not use context
     Map map = myAccessor == null ? null : (Map)context;
     if (map != null) {

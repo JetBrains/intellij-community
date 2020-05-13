@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.project.Project;
@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Stream;
 
-/**
- * @author max
- */
 public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   private static final SmartTypePointer NULL_POINTER = () -> null;
 
@@ -102,7 +99,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
                      @NotNull SmartPsiElementPointer<?> aClass,
                      @NotNull LanguageLevel languageLevel,
                      @NotNull Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> map,
-                     @NotNull SmartPsiElementPointer<?>[] annotations) {
+                     SmartPsiElementPointer<?> @NotNull [] annotations) {
       super(type);
       myClass = aClass;
       myLevel = languageLevel;
@@ -153,25 +150,25 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
 
   private class SmartTypeCreatingVisitor extends PsiTypeVisitor<SmartTypePointer> {
     @Override
-    public SmartTypePointer visitPrimitiveType(PsiPrimitiveType primitiveType) {
+    public SmartTypePointer visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
       return new SimpleTypePointer(primitiveType);
     }
 
     @Override
-    public SmartTypePointer visitArrayType(PsiArrayType arrayType) {
+    public SmartTypePointer visitArrayType(@NotNull PsiArrayType arrayType) {
       final SmartTypePointer componentTypePointer = arrayType.getComponentType().accept(this);
       return componentTypePointer != null ? new ArrayTypePointer(arrayType, componentTypePointer) : null;
     }
 
     @Override
-    public SmartTypePointer visitWildcardType(PsiWildcardType wildcardType) {
+    public SmartTypePointer visitWildcardType(@NotNull PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
       final SmartTypePointer boundPointer = bound == null ? null : bound.accept(this);
       return new WildcardTypePointer(wildcardType, boundPointer);
     }
 
     @Override
-    public SmartTypePointer visitClassType(PsiClassType classType) {
+    public SmartTypePointer visitClassType(@NotNull PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) {
@@ -210,7 +207,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     }
 
     @Override
-    public SmartTypePointer visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+    public SmartTypePointer visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
       return new DisjunctionTypePointer(disjunctionType);
     }
   }

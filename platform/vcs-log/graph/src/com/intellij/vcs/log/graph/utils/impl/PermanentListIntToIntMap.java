@@ -77,9 +77,9 @@ public class PermanentListIntToIntMap extends AbstractIntToIntMap implements Int
   private final int myShortSize;
 
   private final int myBlockSize;
-  @NotNull private final int[] myStrongShortIndexes;
+  private final int @NotNull [] myStrongShortIndexes;
 
-  private PermanentListIntToIntMap(@NotNull Flags visibleIndexes, int shortSize, int blockSize, @NotNull int[] strongShortIndexes) {
+  private PermanentListIntToIntMap(@NotNull Flags visibleIndexes, int shortSize, int blockSize, int @NotNull [] strongShortIndexes) {
     myVisibleIndexes = visibleIndexes;
     myLongSize = visibleIndexes.size();
     myShortSize = shortSize;

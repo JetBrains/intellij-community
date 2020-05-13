@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlTextContextType extends TemplateContextType {
 
   public XmlTextContextType() {
-    super("XML_TEXT", "XML Text", XmlContextType.class);
+    super("XML_TEXT", XmlBundle.message("xml.text"), XmlContextType.class);
   }
 
   @Override

@@ -60,12 +60,6 @@ public class ObjectEqualityInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("object.comparison.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("object.comparison.problem.description");
   }
@@ -85,9 +79,8 @@ public class ObjectEqualityInspection extends BaseInspection {
     return new ObjectEqualityVisitor();
   }
 
-  @NotNull
   @Override
-  public InspectionGadgetsFix[] buildFixes(Object... infos) {
+  public InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return EqualityToEqualsFix.buildEqualityFixes((PsiBinaryExpression)infos[0]);
   }
 

@@ -7,7 +7,8 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parents
+import com.intellij.psi.util.parentOfTypes
+import com.intellij.psi.util.parentsWithSelf
 import com.intellij.util.containers.withPrevious
 
 internal class CreateMethodFromJavaUsageRequest(
@@ -24,8 +25,8 @@ internal class CreateMethodFromJavaUsageRequest(
   override fun getReturnType() = guessExpectedTypes(call, call.parent is PsiStatement).map(::ExpectedJavaType)
 
   fun getAnchor(targetClass: PsiClass): PsiElement? {
-    val enclosingMember = call.parentOfType(PsiMethod::class, PsiField::class, PsiClassInitializer::class) ?: return null
-    for ((parent, lastParent) in enclosingMember.parents().withPrevious()) {
+    val enclosingMember = call.parentOfTypes(PsiMethod::class, PsiField::class, PsiClassInitializer::class) ?: return null
+    for ((parent, lastParent) in enclosingMember.parentsWithSelf.withPrevious()) {
       if (parent == targetClass) return lastParent
     }
     return null

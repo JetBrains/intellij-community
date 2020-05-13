@@ -33,7 +33,7 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
   private final Project myProject;
   private Object myLastValue;
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.array.ArrayTableCellEditor");
+  private static final Logger LOG = Logger.getInstance(ArrayTableCellEditor.class);
 
   public ArrayTableCellEditor(Project project) {
     myProject = project;

@@ -164,10 +164,10 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     mySymbolsDrawingIndex = -1;
   }
 
-  private static <K, V> Map<K, V> asMap(Iterable<K> keys, Iterable<V> values) throws IllegalArgumentException {
+  private static <K, V> Map<K, V> asMap(Iterable<? extends K> keys, Iterable<? extends V> values) throws IllegalArgumentException {
     Map<K, V> result = new HashMap<>();
-    Iterator<K> keyIterator = keys.iterator();
-    Iterator<V> valueIterator = values.iterator();
+    Iterator<? extends K> keyIterator = keys.iterator();
+    Iterator<? extends V> valueIterator = values.iterator();
     while (keyIterator.hasNext()) {
       if (!valueIterator.hasNext()) {
         throw new IllegalArgumentException(

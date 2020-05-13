@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
       appendCount(renderer);
     }
 
-    renderer.setIcon(file.getFileType(), file.isDirectory());
+    renderer.setIcon(VcsUtil.getFilePath(file), file.isDirectory());
   }
 
   @Override
@@ -77,7 +78,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
 
   @NotNull
   private FileStatus getFileStatus() {
-    if (myProject == null) return FileStatus.NOT_CHANGED;
+    if (myProject == null || myProject.isDisposed()) return FileStatus.NOT_CHANGED;
     return ChangeListManager.getInstance(myProject).getStatus(getUserObject());
   }
 }

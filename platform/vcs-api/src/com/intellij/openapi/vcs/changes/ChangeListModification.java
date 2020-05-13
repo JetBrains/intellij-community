@@ -30,7 +30,7 @@ public interface ChangeListModification {
   void removeChangeList(@NotNull String name);
   void removeChangeList(@NotNull LocalChangeList list);
 
-  void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes);
+  void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes);
 
   /**
    * Prohibit changelist deletion or rename until Project is closed

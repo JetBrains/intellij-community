@@ -27,6 +27,7 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.history.FileHistoryPaths;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,6 +119,7 @@ public class VisiblePack implements VcsLogDataPack {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "VisiblePack{size=" +
            myVisibleGraph.getVisibleCommitCount() +

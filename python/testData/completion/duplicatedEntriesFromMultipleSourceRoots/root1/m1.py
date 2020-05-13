@@ -1,2 +1,2 @@
-class Cls:
+class SomeCls:
     pass

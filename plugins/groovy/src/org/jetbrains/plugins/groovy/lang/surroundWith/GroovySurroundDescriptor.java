@@ -53,8 +53,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
   };
 
   @Override
-  @NotNull
-  public Surrounder[] getSurrounders() {
+  public Surrounder @NotNull [] getSurrounders() {
     return ourSurrounders;
   }
 
@@ -64,8 +63,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     return GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, true);
   }
 

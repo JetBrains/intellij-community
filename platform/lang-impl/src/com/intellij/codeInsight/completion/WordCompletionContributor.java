@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -23,6 +9,7 @@ import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -42,15 +29,11 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author peter
  */
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
-  @Override
-  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
-    if (context.getCompletionType() == CompletionType.BASIC && isWordCompletionDefinitelyEnabled(context.getFile())) {
-      context.setDummyIdentifier("");
-    }
-  }
+
+  public static final Key<String> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
-    return DumbService.isDumb(file.getProject()) ||
+    return (DumbService.isDumb(file.getProject()) && !CompletionIgnoreDumbnessEP.isIgnoringDumbnessAllowed(file.getLanguage())) ||
            file instanceof PsiPlainTextFile && file.getViewProvider().getLanguages().size() == 1;
   }
 
@@ -114,14 +97,14 @@ public class WordCompletionContributor extends CompletionContributor implements 
     CompletionResultSet fullStringResult = result.withPrefixMatcher(new PlainPrefixMatcher(prefix));
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element == localString) {
           return;
         }
         if (pattern.accepts(element)) {
           element.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
-            public void visitElement(PsiElement each) {
+            public void visitElement(@NotNull PsiElement each) {
               String valueText = ElementManipulators.getValueText(each);
               if (StringUtil.isNotEmpty(valueText) && !realExcludes.contains(valueText)) {
                 final LookupElement item = LookupElementBuilder.create(valueText);
@@ -141,8 +124,13 @@ public class WordCompletionContributor extends CompletionContributor implements 
       return false;
     }
 
+    if (parameters.getOriginalFile().getUserData(FORBID_WORD_COMPLETION) != null) {
+      return false;
+    }
+
     PsiElement insertedElement = parameters.getPosition();
     PsiFile file = insertedElement.getContainingFile();
+
     if (isWordCompletionDefinitelyEnabled(file)) {
       return true;
     }

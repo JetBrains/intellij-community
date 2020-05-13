@@ -81,7 +81,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     }
 
     @Nullable
-    public static LevelPattern findBestMatchingPattern(@NotNull String text, @NotNull LevelPattern[] patterns) {
+    public static LevelPattern findBestMatchingPattern(@NotNull String text, LevelPattern @NotNull [] patterns) {
       int bestStart = Integer.MAX_VALUE;
       LevelPattern bestMatch = null;
       for (LevelPattern next : patterns) {

@@ -22,8 +22,7 @@ public class PyDelStatementImpl extends PyElementImpl implements PyDelStatement 
   }
 
   @Override
-  @NotNull
-  public PyExpression[] getTargets() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
+  public PyExpression @NotNull [] getTargets() {
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 }

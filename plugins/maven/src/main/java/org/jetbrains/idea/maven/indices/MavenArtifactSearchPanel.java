@@ -1,22 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
@@ -76,7 +75,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   private void initComponents(String initialText) {
     myResultList = new Tree();
     myResultList.setExpandableItemsEnabled(false);
-    myResultList.getEmptyText().setText("Loading...");
+    myResultList.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myResultList.setRootVisible(false);
     myResultList.setShowsRootHandles(true);
     myResultList.setModel(null);
@@ -148,7 +147,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         final TreePath path = myResultList.getPathForLocation(e.getX(), e.getY());
         if (path != null && myResultList.isPathSelected(path)) {
           Object sel = path.getLastPathComponent();
@@ -189,7 +188,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     SwingUtilities.invokeLater(() -> {
       if (!myDialog.isVisible()) return;
 
-      myResultList.getEmptyText().setText("No results");
+      myResultList.getEmptyText().setText(MavenDomBundle.message("maven.search.no.results"));
       myResultList.setModel(model);
       myResultList.setSelectionRow(0);
       myResultList.setPaintBusy(false);
@@ -331,7 +330,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       myLeftComponent.clear();
       myRightComponent.clear();
 
-      setBackground(selected ? UIUtil.getTreeSelectionBackground(hasFocus) : tree.getBackground());
+      setBackground(RenderingUtil.getBackground(tree, selected));
 
       myLeftComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);
       myRightComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);

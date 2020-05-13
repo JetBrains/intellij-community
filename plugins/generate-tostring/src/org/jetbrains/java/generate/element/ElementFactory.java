@@ -17,6 +17,7 @@ package org.jetbrains.java.generate.element;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
@@ -74,6 +75,7 @@ public class ElementFactory {
 
     if (PsiAdapter.isConstantField(field)) fe.setConstant(true);
     if (PsiAdapter.isEnumField(field)) fe.setEnum(true);
+    if (JavaPsiRecordUtil.getComponentForField(field) != null) fe.setRecordComponent(true);
     PsiModifierList modifiers = field.getModifierList();
     if (modifiers != null) {
       if (modifiers.hasModifierProperty(PsiModifier.TRANSIENT)) fe.setModifierTransient(true);

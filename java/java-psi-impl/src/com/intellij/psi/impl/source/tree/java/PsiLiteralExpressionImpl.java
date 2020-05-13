@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.text.LiteralFormatUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,6 @@ public class PsiLiteralExpressionImpl
   extends JavaStubPsiElement<PsiLiteralStub>
   implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
 
-  private static final String QUOT = "&quot;";
   private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(ElementType.INTEGER_LITERALS, ElementType.REAL_LITERALS);
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
@@ -36,8 +36,7 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return ((CompositeElement)getNode()).getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
@@ -72,6 +71,11 @@ public class PsiLiteralExpressionImpl
     return null;
   }
 
+  @Override
+  public boolean isTextBlock() {
+    return getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
+  }
+
   public IElementType getLiteralElementType() {
     PsiLiteralStub stub = getGreenStub();
     if (stub != null) return stub.getLiteralType();
@@ -103,10 +107,10 @@ public class PsiLiteralExpressionImpl
     }
 
     if (type == JavaTokenType.STRING_LITERAL) {
-      return internedParseStringCharacters(getInnerText());
+      return internedParseStringCharacters(PsiLiteralUtil.getStringLiteralContent(this));
     }
     if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      return internedParseStringCharacters(getTextBlockText());
+      return internedParseStringCharacters(PsiLiteralUtil.getTextBlockText(this));
     }
 
     String text = NUMERIC_LITERALS.contains(type) ? StringUtil.toLowerCase(getCanonicalText()) : getCanonicalText();
@@ -140,68 +144,14 @@ public class PsiLiteralExpressionImpl
     return null;
   }
 
+  /**
+   * @deprecated use {@link PsiLiteralUtil#getStringLiteralContent(PsiLiteralExpression)} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Nullable
   public String getInnerText() {
-    String text = getCanonicalText();
-    int textLength = text.length();
-    if (textLength > 1 && text.charAt(0) == '\"' && text.charAt(textLength - 1) == '\"') {
-      return text.substring(1, textLength - 1);
-    }
-    if (textLength > QUOT.length() && text.startsWith(QUOT) && text.endsWith(QUOT)) {
-      return text.substring(QUOT.length(), textLength - QUOT.length());
-    }
-    return null;
-  }
-
-  @Nullable
-  public String getTextBlockText() {
-    String[] lines = getTextBlockLines();
-    if (lines == null) return null;
-
-    int prefix = getTextBlockIndent(lines);
-
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      if (line.length() > 0) {
-        sb.append(StringUtil.trimTrailing(line.substring(prefix), ' '));
-      }
-      if (i < lines.length - 1) {
-        sb.append('\n');
-      }
-    }
-    return sb.toString();
-  }
-
-  public int getTextBlockIndent() {
-    String[] lines = getTextBlockLines();
-    if (lines == null) return -1;
-    return getTextBlockIndent(lines);
-  }
-  
-  private static int getTextBlockIndent(String[] lines) {
-    int prefix = Integer.MAX_VALUE;
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      int indent = 0;
-      while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
-      if (indent == line.length() && i < lines.length - 1) lines[i] = "";
-      else if (indent < prefix) prefix = indent;
-    }
-    return prefix;
-  }
-
-  @Nullable
-  public String[] getTextBlockLines() {
-    String rawText = getText();
-    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
-    int start = 3;
-    while (true) {
-      char c = rawText.charAt(start++);
-      if (c == '\n') break;
-      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
-    }
-    return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+    return PsiLiteralUtil.getStringLiteralContent(this);
   }
 
   @Nullable
@@ -212,7 +162,7 @@ public class PsiLiteralExpressionImpl
     return success ? outChars.toString() : null;
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {
     return CodeInsightUtilCore.parseStringCharacters(chars, outChars, sourceOffsets);
   }
 
@@ -237,8 +187,7 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     IElementType type = getLiteralElementType();
     return ElementType.STRING_LITERALS.contains(type) || type == JavaTokenType.INTEGER_LITERAL  // int literals could refer to SQL parameters
            ? PsiReferenceService.getService().getContributedReferences(this)

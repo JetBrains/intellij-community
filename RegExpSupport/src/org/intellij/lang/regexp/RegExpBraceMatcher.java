@@ -23,9 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RegExpBraceMatcher implements PairedBraceMatcher {
-  @NotNull
   @Override
-  public BracePair[] getPairs() {
+  public BracePair @NotNull [] getPairs() {
     return new BracePair[]{
       new BracePair(RegExpTT.GROUP_BEGIN, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.SET_OPTIONS, RegExpTT.GROUP_END, true), new BracePair(RegExpTT.NON_CAPT_GROUP, RegExpTT.GROUP_END, true),
@@ -34,6 +33,9 @@ public class RegExpBraceMatcher implements PairedBraceMatcher {
       new BracePair(RegExpTT.POS_LOOKBEHIND, RegExpTT.GROUP_END, true), new BracePair(RegExpTT.NEG_LOOKBEHIND, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.PYTHON_NAMED_GROUP, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.PYTHON_NAMED_GROUP_REF, RegExpTT.GROUP_END, true),
+      new BracePair(RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF, RegExpTT.GROUP_END, true),
+      new BracePair(RegExpTT.PCRE_COND_REF, RegExpTT.GROUP_END, true),
+      new BracePair(RegExpTT.PCRE_BRANCH_RESET, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.RUBY_NAMED_GROUP, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.RUBY_QUOTED_NAMED_GROUP, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.RUBY_NAMED_GROUP_REF, RegExpTT.GT, true),

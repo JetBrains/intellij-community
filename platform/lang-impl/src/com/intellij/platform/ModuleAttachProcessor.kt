@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform
 
 import com.intellij.CommonBundle
 import com.intellij.configurationStore.StoreUtil
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
@@ -13,22 +14,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsDirectoryMapping
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
-import java.io.File
 import java.nio.file.Path
 import java.util.*
 
@@ -108,6 +102,8 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
       return false
     }
 
+    LifecycleUsageTriggerCollector.onProjectModuleAttached(project)
+
     if (newModule != null) {
       callback?.projectOpened(project, newModule)
       return true
@@ -119,7 +115,7 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
   }
 
   override fun beforeDetach(module: Module) {
-    removeVcsMapping(module)
+   module.project.messageBus.syncPublisher(ModuleAttachListener.TOPIC).beforeDetach(module)
   }
 }
 
@@ -139,36 +135,8 @@ private fun attachModule(project: Project, imlFile: Path): Module {
 
   val newModule = ModuleManager.getInstance(project).findModuleByName(module.name)!!
   val primaryModule = addPrimaryModuleDependency(project, newModule)
-  if (primaryModule != null) {
-    val dotIdeaDirParent = imlFile.parent?.parent?.let { LocalFileSystem.getInstance().findFileByPath(it.toString()) }
-    if (dotIdeaDirParent != null) {
-      addVcsMapping(primaryModule, dotIdeaDirParent)
-    }
-  }
+  module.project.messageBus.syncPublisher(ModuleAttachListener.TOPIC).afterAttach(newModule, primaryModule, imlFile)
   return newModule
-}
-
-private fun addVcsMapping(primaryModule: Module, addedModuleContentRoot: VirtualFile) {
-  val project = primaryModule.project
-  val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  val mappings = vcsManager.directoryMappings
-  if (mappings.size == 1) {
-    val contentRoots = ModuleRootManager.getInstance(primaryModule).contentRoots
-    // if we had one mapping for the root of the primary module and the added module uses the same VCS, change mapping to <Project Root>
-    if (contentRoots.size == 1 && FileUtil.filesEqual(File(contentRoots[0].path), File(mappings[0].directory))) {
-      val vcs = vcsManager.findVersioningVcs(addedModuleContentRoot)
-      if (vcs != null && vcs.name == mappings[0].vcs) {
-        vcsManager.directoryMappings = listOf(VcsDirectoryMapping.createDefault(vcs.name))
-        return
-      }
-    }
-  }
-  val vcs = vcsManager.findVersioningVcs(addedModuleContentRoot)
-  if (vcs != null) {
-    val newMappings = ArrayList(mappings)
-    newMappings.add(VcsDirectoryMapping(addedModuleContentRoot.path, vcs.name))
-    vcsManager.directoryMappings = newMappings
-  }
 }
 
 private fun addPrimaryModuleDependency(project: Project, newModule: Module): Module? {
@@ -178,19 +146,4 @@ private fun addPrimaryModuleDependency(project: Project, newModule: Module): Mod
     return module
   }
   return null
-}
-
-private fun removeVcsMapping(module: Module) {
-  val project = module.project
-  val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  val mappings = vcsManager.directoryMappings
-  val newMappings = ArrayList(mappings)
-  for (mapping in mappings) {
-    for (root in ModuleRootManager.getInstance(module).contentRoots) {
-      if (FileUtil.filesEqual(File(root.path), File(mapping.directory))) {
-        newMappings.remove(mapping)
-      }
-    }
-  }
-  vcsManager.directoryMappings = newMappings
 }

@@ -39,8 +39,8 @@ import java.util.Objects;
  * @author Maxim.Medvedev
  */
 public class GrChangeInfoImpl implements JavaChangeInfo {
-  GrMethod method;
-  final String newName;
+  private GrMethod method;
+  private final String newName;
   @Nullable private final CanonicalTypes.Type returnType;
   private final String visibilityModifier;
   private final List<? extends GrParameterInfo> parameters;
@@ -64,11 +64,11 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   private final String[] myOldParameterNames;
   private final String[] myOldParameterTypes;
 
-  public GrChangeInfoImpl(GrMethod method,
+  public GrChangeInfoImpl(@NotNull GrMethod method,
                           @Nullable String visibilityModifier,
                           @Nullable CanonicalTypes.Type returnType,
                           String newName,
-                          List<? extends GrParameterInfo> parameters, @Nullable ThrownExceptionInfo[] exceptions, boolean generateDelegate) {
+                          List<? extends GrParameterInfo> parameters, ThrownExceptionInfo @Nullable [] exceptions, boolean generateDelegate) {
     this.method = method;
     this.visibilityModifier = visibilityModifier == null ? VisibilityUtil.getVisibilityModifier(method.getModifierList()) : visibilityModifier;
     this.returnType = returnType;
@@ -220,8 +220,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  @NotNull
-  public JavaParameterInfo[] getNewParameters() {
+  public JavaParameterInfo @NotNull [] getNewParameters() {
     return parameters.toArray(new GrParameterInfo[0]);
   }
 
@@ -272,7 +271,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  public GrMethod getMethod() {
+  public @NotNull GrMethod getMethod() {
     return method;
   }
 
@@ -297,14 +296,12 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  @NotNull
-  public String[] getOldParameterNames() {
+  public String @NotNull [] getOldParameterNames() {
     return myOldParameterNames;
   }
 
   @Override
-  @NotNull
-  public String[] getOldParameterTypes() {
+  public String @NotNull [] getOldParameterTypes() {
     return myOldParameterTypes;
   }
 
@@ -356,14 +353,14 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  public void updateMethod(PsiMethod psiMethod) {
+  public void updateMethod(@NotNull PsiMethod psiMethod) {
     if (psiMethod instanceof GrMethod) {
       method = (GrMethod)psiMethod;
     }
   }
 
   @Override
-  public Collection<PsiMethod> getMethodsToPropagateParameters() {
+  public @NotNull Collection<PsiMethod> getMethodsToPropagateParameters() {
     return Collections.emptyList();
   }
 }

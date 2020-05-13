@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 public class UnwrapTagFix implements LocalQuickFix {
@@ -39,13 +40,13 @@ public class UnwrapTagFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return "Unwrap '" + myTagName + "'";
+    return JavaFXBundle.message("inspection.javafx.default.tag.unwrap.tag.fix.name", myTagName);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Unwrap tag";
+    return JavaFXBundle.message("inspection.javafx.default.tag.unwrap.tag.fix.family.name");
   }
 
   @Override

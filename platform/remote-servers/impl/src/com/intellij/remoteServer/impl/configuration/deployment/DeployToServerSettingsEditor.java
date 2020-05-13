@@ -33,7 +33,7 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConnectionTester;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -49,9 +49,6 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author nik
- */
 public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration>
   extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
 
@@ -152,7 +149,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
   @Override
   protected JComponent createEditor() {
     FormBuilder builder = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Server:", myServerCombo);
+      .addLabeledComponent(CloudBundle.message("label.text.server"), myServerCombo);
 
     addDeploymentSourceUi(builder);
 
@@ -197,7 +194,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
 
     @Override
     protected void addDeploymentSourceUi(FormBuilder formBuilder) {
-      formBuilder.addLabeledComponent("Deployment:", mySourceComboBox);
+      formBuilder.addLabeledComponent(CloudBundle.message("label.text.deployment"), mySourceComboBox);
     }
   }
 
@@ -266,7 +263,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       IN_PROGRESS {
         @Override
         public void validateConnection() throws RuntimeConfigurationException {
-          throw new RuntimeConfigurationWarning(CloudBundle.getText("remote.server.combo.message.test.connection.in.progress"));
+          throw new RuntimeConfigurationWarning(CloudBundle.message("remote.server.combo.message.test.connection.in.progress"));
         }
       },
       SUCCESSFUL {
@@ -279,7 +276,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
         @Override
         public void validateConnection() throws RuntimeConfigurationException {
           throw new RuntimeConfigurationError(
-            CloudBundle.getText("remote.server.combo.message.test.connection.failed")/*, () -> createAndEditNewServer()*/);
+            CloudBundle.message("remote.server.combo.message.test.connection.failed")/*, () -> createAndEditNewServer()*/);
         }
       };
 
@@ -300,7 +297,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
         ui.setIcon(getServerType().getIcon());
 
         boolean failed = myTestConnectionStateA.get() == TestConnectionState.FAILED;
-        ui.append(CloudBundle.getText("remote.server.combo.auto.detected.server", getServerType().getPresentableName()),
+        ui.append(CloudBundle.message("remote.server.combo.auto.detected.server", getServerType().getPresentableName()),
                   failed ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
       }
 

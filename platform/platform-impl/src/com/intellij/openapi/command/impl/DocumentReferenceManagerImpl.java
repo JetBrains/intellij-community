@@ -6,10 +6,11 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -17,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -27,54 +27,44 @@ import java.util.List;
 import java.util.Map;
 
 public final class DocumentReferenceManagerImpl extends DocumentReferenceManager {
-  private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
-
   private final Map<Document, DocumentReference> myDocToRef = ContainerUtil.createWeakKeyWeakValueMap();
 
   private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
   private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = ContainerUtil.createWeakValueMap();
 
-  DocumentReferenceManagerImpl(@NotNull MessageBus messageBus) {
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+  DocumentReferenceManagerImpl() {
+    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
+      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+        List<VirtualFile> deletedFiles = new NotNullList<>();
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
-            beforeFileDeletion((VFileDeleteEvent)event);
+            collectDeletedFiles(((VFileDeleteEvent)event).getFile(), deletedFiles);
           }
         }
+
+        return new ChangeApplier() {
+          @Override
+          public void afterVfsChange() {
+            for (VirtualFile each : deletedFiles) {
+              fileDeleted(each);
+            }
+            for (VFileEvent event : events) {
+              if (event instanceof VFileCreateEvent) {
+                fileCreated((VFileCreateEvent)event);
+              }
+            }
+          }
+
+        };
       }
 
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileCreateEvent) {
-            fileCreated((VFileCreateEvent)event);
-          }
-          else if (event instanceof VFileDeleteEvent) {
-            fileDeleted((VFileDeleteEvent)event);
-          }
-        }
-      }
-
-      private void beforeFileDeletion(@NotNull VFileDeleteEvent event) {
-        VirtualFile f = event.getFile();
-        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new NotNullList<>()));
-      }
-
-      private void fileDeleted(@NotNull VFileDeleteEvent event) {
-        VirtualFile f = event.getFile();
-        List<VirtualFile> files = f.getUserData(DELETED_FILES);
-        f.putUserData(DELETED_FILES, null);
-
-        assert files != null : f;
-        for (VirtualFile each : files) {
-          DocumentReference ref = SoftReference.dereference(each.getUserData(FILE_TO_REF_KEY));
-          each.putUserData(FILE_TO_REF_KEY, null);
-          if (ref != null) {
-            myDeletedFilePathToRef.put(new FilePath(each.getUrl()), ref);
-          }
+      private void fileDeleted(VirtualFile each) {
+        DocumentReference ref = SoftReference.dereference(each.getUserData(FILE_TO_REF_KEY));
+        each.putUserData(FILE_TO_REF_KEY, null);
+        if (ref != null) {
+          myDeletedFilePathToRef.put(new FilePath(each.getUrl()), ref);
         }
       }
 
@@ -86,13 +76,13 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
           ((DocumentReferenceByVirtualFile)ref).update(f);
         }
       }
-    });
+    }, ApplicationManager.getApplication());
   }
 
-  @NotNull
-  private static List<VirtualFile> collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> files) {
-    if (!(f instanceof NewVirtualFile)) return files;
+  private static void collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> files) {
+    if (!(f instanceof NewVirtualFile)) return;
 
+    ProgressManager.checkCanceled();
     if (!f.isDirectory()) {
       files.add(f);
     }
@@ -101,13 +91,12 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
         collectDeletedFiles(each, files);
       }
     }
-    return files;
   }
 
   @NotNull
   @Override
   public DocumentReference create(@NotNull Document document) {
-    assertInDispatchThread();
+    assertIsWriteThread();
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return file == null ? createFromDocument(document) : create(file);
@@ -126,7 +115,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   @NotNull
   @Override
   public DocumentReference create(@NotNull VirtualFile file) {
-    assertInDispatchThread();
+    assertIsWriteThread();
 
     if (!file.isInLocalFileSystem()) { // we treat local files differently from non local because we can undo their deletion
       DocumentReference reference = file.getUserData(FILE_TO_STRONG_REF_KEY);
@@ -146,8 +135,8 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     return result;
   }
 
-  private static void assertInDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private static void assertIsWriteThread() {
+    ApplicationManager.getApplication().assertIsWriteThread();
   }
 
   @TestOnly

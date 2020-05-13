@@ -15,25 +15,88 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.util.JavaElementKind;
+import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author ven
 */
 public enum CreateClassKind implements ClassKind {
-  CLASS     (QuickFixBundle.message("create.class")),
-  INTERFACE (QuickFixBundle.message("create.interface")),
-  ENUM      (QuickFixBundle.message("create.enum")),
-  ANNOTATION("annotation");
+  CLASS(JavaElementKind.CLASS),
+  INTERFACE(JavaElementKind.INTERFACE),
+  ENUM(JavaElementKind.ENUM),
+  ANNOTATION(JavaElementKind.ANNOTATION),
+  RECORD(JavaElementKind.RECORD);
+  
+  private final JavaElementKind myKind;
 
-  private final String myDescription;
-
-  CreateClassKind(final String description) {
-    myDescription = description;
+  CreateClassKind(JavaElementKind kind) {
+    myKind = kind;
   }
 
   @Override
   public String getDescription() {
-    return myDescription;
+    return myKind.subject();
+  }
+
+  @Override
+  public String getDescriptionAccusative() {
+    return myKind.object();
+  }
+
+  @NotNull
+  public Icon getKindIcon() {
+    switch (this) {
+      case CLASS:      return PlatformIcons.CLASS_ICON;
+      case INTERFACE:  return PlatformIcons.INTERFACE_ICON;
+      case ENUM:       return PlatformIcons.ENUM_ICON;
+      case ANNOTATION: return PlatformIcons.ANNOTATION_TYPE_ICON;
+      case RECORD:     return PlatformIcons.RECORD_ICON;
+      default:         throw new IllegalStateException("Unexpected value: " + this);
+    }
+  }
+
+  /**
+   * Creates a non-physical class
+   * @param factory factory to use
+   * @param name name of the new class
+   * @return newly created class
+   */
+  @NotNull
+  public PsiClass create(PsiElementFactory factory, String name) {
+    switch (this) {
+      case CLASS:      return factory.createClass(name);
+      case INTERFACE:  return factory.createInterface(name);
+      case ENUM:       return factory.createEnum(name);
+      case ANNOTATION: return factory.createAnnotationType(name);
+      case RECORD:     return factory.createRecord(name);
+      default:         throw new IllegalStateException("Unexpected value: " + this);
+    }
+  }
+
+  /**
+   * Creates a new physical class in directory
+   * @param directory directory to create the class at
+   * @param name name of the new class
+   * @return newly created class
+   */
+  @NotNull
+  public PsiClass createInDirectory(PsiDirectory directory, String name) {
+    JavaDirectoryService service = JavaDirectoryService.getInstance();
+    switch (this) {
+      case INTERFACE:  return service.createInterface(directory, name);
+      case CLASS:      return service.createClass(directory, name);
+      case ENUM:       return service.createEnum(directory, name);
+      case RECORD:     return service.createRecord(directory, name);
+      case ANNOTATION: return service.createAnnotationType(directory, name);
+      default:         throw new IllegalStateException("Unexpected value: " + this);
+    }
   }
 }

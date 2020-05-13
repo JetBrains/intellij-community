@@ -16,17 +16,19 @@ import java.util.Map;
 import java.util.Set;
 
 public class JsonRainbowVisitor extends RainbowVisitor {
-  private static final Map<String, Set<String>> blacklist = createBlacklist();
+  private static class Holder {
+    private static final Map<String, Set<String>> blacklist = createBlacklist();
 
-  private static Map<String, Set<String>> createBlacklist() {
-    Map<String, Set<String>> blacklist = new HashMap<>();
-    blacklist.put("package.json", ContainerUtil.set("/dependencies",
-                                                    "/devDependencies",
-                                                    "/peerDependencies",
-                                                    "/scripts",
-                                                    "/directories",
-                                                    "/optionalDependencies"));
-    return blacklist;
+    private static Map<String, Set<String>> createBlacklist() {
+      Map<String, Set<String>> blacklist = new HashMap<>();
+      blacklist.put("package.json", ContainerUtil.set("/dependencies",
+                                                      "/devDependencies",
+                                                      "/peerDependencies",
+                                                      "/scripts",
+                                                      "/directories",
+                                                      "/optionalDependencies"));
+      return blacklist;
+    }
   }
 
   @Override
@@ -39,9 +41,9 @@ public class JsonRainbowVisitor extends RainbowVisitor {
     if (element instanceof JsonProperty) {
       PsiFile file = element.getContainingFile();
       String fileName = file.getName();
-      if (blacklist.containsKey(fileName)) {
+      if (Holder.blacklist.containsKey(fileName)) {
         JsonPointerPosition position = JsonOriginalPsiWalker.INSTANCE.findPosition(element, false);
-        if (position != null && blacklist.get(fileName).contains(position.toJsonPointer())) return;
+        if (position != null && Holder.blacklist.get(fileName).contains(position.toJsonPointer())) return;
       }
       String name = ((JsonProperty)element).getName();
       addInfo(getInfo(file, ((JsonProperty)element).getNameElement(), name, JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY));

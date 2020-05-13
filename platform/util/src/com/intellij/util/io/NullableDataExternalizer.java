@@ -18,17 +18,18 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.DataInput;
 
 /**
  * @author peter
  */
 public class NullableDataExternalizer<T> implements DataExternalizer<T> {
+  @NotNull
   private final DataExternalizer<T> myNotNullExternalizer;
 
-  public NullableDataExternalizer(DataExternalizer<T> externalizer) {
+  public NullableDataExternalizer(@NotNull DataExternalizer<T> externalizer) {
     myNotNullExternalizer = externalizer;
   }
 

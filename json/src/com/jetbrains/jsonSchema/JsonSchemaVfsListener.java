@@ -2,7 +2,9 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonFileType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -44,7 +46,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
       protected void onChange(@Nullable PsiFile file) {
         if (file != null) updater.onFileChange(file.getViewProvider().getVirtualFile());
       }
-    });
+    }, (Disposable)service);
   }
 
   private JsonSchemaVfsListener(@NotNull MyUpdater updater) {
@@ -68,12 +70,12 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     @NotNull private final JsonSchemaService myService;
     private final Set<VirtualFile> myDirtySchemas = ContainerUtil.newConcurrentSet();
     private final Runnable myRunnable;
-    private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
-      "JsonVfsUpdaterExecutor");
+    private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(JsonBundle.message(
+      "json.vfs.updater.executor"));
 
     protected MyUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
       myProject = project;
-      myUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, project);
+      myUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, (Disposable)service);
       myService = service;
       myRunnable = () -> {
         if (myProject.isDisposed()) return;
@@ -99,7 +101,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
               .forEach(file -> {
                 final Collection<VirtualFile> schemaFiles = ((JsonSchemaServiceImpl)myService).getSchemasForFile(file, false, true);
                 if (schemaFiles.stream().anyMatch(finalScope::contains)) {
-                  ReadAction.nonBlocking(() -> Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart)).submit(myTaskExecutor);
+                  ReadAction.nonBlocking(() -> Optional.ofNullable(file.isValid() ? psiManager.findFile(file) : null).ifPresent(analyzer::restart)).submit(myTaskExecutor);
                 }
               });
       };

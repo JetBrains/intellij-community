@@ -20,7 +20,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
@@ -28,13 +27,6 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
   @Deprecated
   @SuppressWarnings("PublicField")
   public boolean ignoreWithoutParameters;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("new.exception.without.arguments.display.name");
-  }
 
   @NotNull
   @Override

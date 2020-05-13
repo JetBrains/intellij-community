@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -31,7 +31,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     super(project, true);
     myChooserFilter = filter;
     myProject = project;
-    setTitle(DebuggerBundle.message("class.filters.dialog.title"));
+    setTitle(JavaDebuggerBundle.message("class.filters.dialog.title"));
     init();
   }
 
@@ -48,13 +48,13 @@ public class EditClassFiltersDialog extends DialogWrapper {
     myClassFilterEditor = createClassFilterEditor(myProject);
     myClassFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myClassFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
-      DebuggerBundle.message("class.filters.dialog.inclusion.filters.group"), false));
+      JavaDebuggerBundle.message("class.filters.dialog.inclusion.filters.group"), false));
     mainPanel.add(myClassFilterEditor);
 
     myClassExclusionFilterEditor = createClassFilterEditor(myProject);
     myClassExclusionFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myClassExclusionFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
-      DebuggerBundle.message("class.filters.dialog.exclusion.filters.group"), false));
+      JavaDebuggerBundle.message("class.filters.dialog.exclusion.filters.group"), false));
     mainPanel.add(myClassExclusionFilterEditor);
 
     contentPanel.add(mainPanel, BorderLayout.CENTER);

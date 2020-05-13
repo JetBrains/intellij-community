@@ -32,22 +32,19 @@ public class Value {
       return 1;
     }
 
-    @NotNull
-    private final Object[] myPossibleValues;
+    private final Object @NotNull [] myPossibleValues;
 
-    VAR_KIND(@NotNull Object[] possibleValues) {
+    VAR_KIND(Object @NotNull [] possibleValues) {
       myPossibleValues = possibleValues;
     }
 
-    @NotNull
-    public Object[] getPossibleValues() {
+    public Object @NotNull [] getPossibleValues() {
       return myPossibleValues;
     }
 
     public abstract boolean accepts(@NotNull String name, @NotNull Object value);
 
-    @NotNull
-    private static Object[] getRMValues() {
+    private static Object @NotNull [] getRMValues() {
       int from = 10;
       int to = 120;
       Object[] ret = new Object[to - from + 1];
@@ -159,7 +156,7 @@ public class Value {
 
     private final Class<?> myVarClass;
 
-    public CLASS_BASED_VAR_KIND(@NotNull Object[] possibleValues, @NotNull Class<?> varClass) {
+    public CLASS_BASED_VAR_KIND(Object @NotNull [] possibleValues, @NotNull Class<?> varClass) {
       super(possibleValues);
       myVarClass = varClass;
     }

@@ -40,7 +40,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     } else {
       final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
       this.importStatements = new ArrayList<>(Arrays.asList(importStatements));
-      Collections.sort(this.importStatements, ImportStatementComparator.getInstance());
+      this.importStatements.sort(ImportStatementComparator.getInstance());
     }
   }
 
@@ -50,7 +50,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     if (importStatements.isEmpty()) {
       return;
     }
@@ -153,8 +153,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     return null;
   }
 
-  @NotNull
-  PsiImportStatementBase[] getUnusedImportStatements() {
+  PsiImportStatementBase @NotNull [] getUnusedImportStatements() {
     if (importStatements.isEmpty()) {
       return PsiImportStatementBase.EMPTY_ARRAY;
     }

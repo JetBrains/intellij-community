@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.PathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.AsyncFileListener.ChangeApplier;
@@ -84,9 +85,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   private static class EventDescriptor {
     @NotNull private final VirtualFilePointerListener myListener;
-    @NotNull private final VirtualFilePointer[] myPointers;
+    private final VirtualFilePointer @NotNull [] myPointers;
 
-    private EventDescriptor(@NotNull VirtualFilePointerListener listener, @NotNull VirtualFilePointer[] pointers) {
+    private EventDescriptor(@NotNull VirtualFilePointerListener listener, VirtualFilePointer @NotNull [] pointers) {
       myListener = listener;
       myPointers = pointers;
       if (pointers.length == 0) throw new IllegalArgumentException();
@@ -101,8 +102,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  @NotNull
-  private static VirtualFilePointer[] toPointers(@NotNull Collection<? extends FilePointerPartNode> nodes) {
+  private static VirtualFilePointer @NotNull [] toPointers(@NotNull Collection<? extends FilePointerPartNode> nodes) {
     if (nodes.isEmpty()) return VirtualFilePointer.EMPTY_ARRAY;
     List<VirtualFilePointer> list = new ArrayList<>(nodes.size());
     for (FilePointerPartNode node : nodes) {
@@ -278,7 +278,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   // convert \ -> /
-  // convert // -> /
+  // convert // -> / (except // at the beginning of a UNC path)
   // convert /. ->
   // trim trailing /
   @NotNull
@@ -292,7 +292,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
       char next = path.charAt(slash + 1);
 
-      if (next == '/' && !(i == 0 && SystemInfo.isWindows) || // additional condition for Windows UNC
+      if (next == '/' && i != 0 ||
+          next == '/' && !SystemInfo.isWindows || // additional condition for Windows UNC
+          next == '/' && SystemInfo.isWindows && slash == 2 && path.charAt(1) == ':' && PathUtil.isDriveLetter(path.charAt(0)) ||   // Z://foo -> Z:/foo
           next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
         return cleanupTail(path, slash);
       }
@@ -383,7 +385,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   private synchronized void assertAllPointersDisposed() {
     List<VirtualFilePointer> leaked = new ArrayList<>(dumpAllPointers());
-    Collections.sort(leaked, Comparator.comparing(VirtualFilePointer::getUrl));
+    leaked.sort(Comparator.comparing(VirtualFilePointer::getUrl));
     for (VirtualFilePointer pointer : leaked) {
       try {
         ((VirtualFilePointerImpl)pointer).throwDisposalError("Not disposed pointer: " + pointer);
@@ -602,11 +604,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private void after(@NotNull MultiMap<VirtualFilePointerListener, FilePointerPartNode> toFireEvents,
                      @NotNull MultiMap<VirtualFilePointerListener, FilePointerPartNode> toUpdateUrls,
                      @NotNull List<? extends EventDescriptor> eventList,
-                     @NotNull VirtualFilePointer[] allPointers,
+                     VirtualFilePointer @NotNull [] allPointers,
                      long prepareElapsedMs,
                      int eventsSize) {
     long start = System.currentTimeMillis();
-    ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
+    ApplicationManager.getApplication().assertIsWriteThread(); // guarantees no attempts to get read action lock under "this" lock
     incModificationCount();
 
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
@@ -665,13 +667,22 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       synchronized (this) {
         totalPointers = myRoots.values().stream().flatMapToInt(myPointers->myPointers.values().stream().mapToInt(root -> root.pointersUnder)).sum();
       }
-      LOG.warn("VirtualFilePointerManagerImpl.prepareChange("+eventsSize+" events): "+prepareElapsedMs+"ms." +
-               " after(toFireEvents: "+toFireEvents.size()+", toUpdateUrl: "+toUpdateUrls+", eventList: "+eventList+"): "+afterElapsedMs+"ms." +
-               " total pointers: "+totalPointers);
+      LOG.warn("VirtualFilePointerManagerImpl.prepareChange("+eventsSize+" events): "+prepareElapsedMs+"ms. total pointers: "+totalPointers
+               +"; afterElapsedMs: "+afterElapsedMs+"ms.; eventList.size(): "+eventList.size()+
+               "; toFireEvents.size(): "+toFireEvents.size()+"; toUpdateUrls.size(): "+toUpdateUrls.size()+"; eventList: "+
+               ContainerUtil.getFirstItems(eventList, 100));
     }
   }
 
-  synchronized void removeNodeFrom(@NotNull VirtualFilePointerImpl pointer) {
+  synchronized boolean decrementUsageCount(@NotNull VirtualFilePointerImpl pointer) {
+    boolean shouldKill = pointer.incrementUsageCount(-1) == 0;
+    if (shouldKill) {
+        removeNodeFrom(pointer);
+    }
+    return shouldKill;
+  }
+
+  private void removeNodeFrom(@NotNull VirtualFilePointerImpl pointer) {
     FilePointerPartNode root = pointer.myNode.remove();
     boolean rootNodeEmpty = root.children.length == 0 ;
     if (rootNodeEmpty) {

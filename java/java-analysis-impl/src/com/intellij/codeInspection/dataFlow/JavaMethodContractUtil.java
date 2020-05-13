@@ -1,14 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.DefaultInferredAnnotationProvider;
+import com.intellij.codeInsight.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -38,8 +38,7 @@ public class JavaMethodContractUtil {
    * @param call a method call site.
    * @return list of contracts (empty list if no contracts found)
    */
-  @NotNull
-  public static List<? extends MethodContract> getMethodCallContracts(@NotNull PsiCallExpression call) {
+  public static @NotNull List<? extends MethodContract> getMethodCallContracts(@NotNull PsiCallExpression call) {
     PsiMethod method = call.resolveMethod();
     return method == null ? Collections.emptyList() : getMethodCallContracts(method, call);
   }
@@ -52,12 +51,21 @@ public class JavaMethodContractUtil {
    *             testing methods like assertThat(x, is(null))
    * @return list of contracts (empty list if no contracts found)
    */
-  @NotNull
-  public static List<? extends MethodContract> getMethodCallContracts(@NotNull final PsiMethod method,
-                                                                      @Nullable PsiCallExpression call) {
-    List<MethodContract> contracts =
+  public static @NotNull List<? extends MethodContract> getMethodCallContracts(@NotNull PsiMethod method,
+                                                                               @Nullable PsiCallExpression call) {
+    List<MethodContract> hardcoded =
       HardcodedContracts.getHardcodedContracts(method, ObjectUtils.tryCast(call, PsiMethodCallExpression.class));
-    return !contracts.isEmpty() ? contracts : getMethodContracts(method);
+    if (!hardcoded.isEmpty()) {
+      NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityInfo(method);
+      if (info == null || info.isExternal() || info.getNullability() != Nullability.NOT_NULL) {
+        return hardcoded;
+      }
+      if (HardcodedContracts.getHardcodedContracts(method, null).isEmpty()) {
+        // Contract is derived for the call (like AssertJ assertion) -- preserve it
+        return hardcoded;
+      }
+    }
+    return getMethodContracts(method);
   }
 
   /**
@@ -66,8 +74,7 @@ public class JavaMethodContractUtil {
    * @param method a method to check the contracts for
    * @return list of contracts (empty list if no contracts found)
    */
-  @NotNull
-  public static List<StandardMethodContract> getMethodContracts(@NotNull final PsiMethod method) {
+  public static @NotNull List<StandardMethodContract> getMethodContracts(@NotNull PsiMethod method) {
     return getContractInfo(method).getContracts();
   }
 
@@ -90,8 +97,7 @@ public class JavaMethodContractUtil {
    * @return new {@link PsiAnnotation} object which describes updated contracts or null if no annotation is required to represent
    * the target contracts (i.e. contracts is empty, method has no mutation signature and is not marked as pure).
    */
-  @Nullable
-  public static PsiAnnotation updateContract(PsiAnnotation annotation, List<StandardMethodContract> contracts) {
+  public static @Nullable PsiAnnotation updateContract(PsiAnnotation annotation, List<StandardMethodContract> contracts) {
     boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
     String mutates = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES));
     String resultValue = StreamEx.of(contracts).joining("; ");
@@ -101,6 +107,7 @@ public class JavaMethodContractUtil {
 
   static class ContractInfo {
     static final ContractInfo EMPTY = new ContractInfo(Collections.emptyList(), false, false, MutationSignature.UNKNOWN);
+    static final ContractInfo PURE = new ContractInfo(Collections.emptyList(), true, false, MutationSignature.PURE);
 
     private final @NotNull List<StandardMethodContract> myContracts;
     private final boolean myPure;
@@ -133,8 +140,10 @@ public class JavaMethodContractUtil {
     }
   }
 
-  @NotNull
-  static ContractInfo getContractInfo(@NotNull PsiMethod method) {
+  static @NotNull ContractInfo getContractInfo(@NotNull PsiMethod method) {
+    if (PsiUtil.isAnnotationMethod(method)) {
+      return ContractInfo.PURE;
+    }
     return CachedValuesManager.getCachedValue(method, () -> {
       final PsiAnnotation contractAnno = findContractAnnotation(method);
       ContractInfo info = ContractInfo.EMPTY;
@@ -169,8 +178,7 @@ public class JavaMethodContractUtil {
    * @param contractAnno a contract annotation
    * @return a list of parsed contracts
    */
-  @NotNull
-  public static List<StandardMethodContract> parseContracts(@NotNull PsiMethod method, @Nullable PsiAnnotation contractAnno) {
+  public static @NotNull List<StandardMethodContract> parseContracts(@NotNull PsiMethod method, @Nullable PsiAnnotation contractAnno) {
     if (contractAnno == null) return Collections.emptyList();
     String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
     if (text != null) {
@@ -193,8 +201,7 @@ public class JavaMethodContractUtil {
    * @param method a method
    * @return a found annotation (null if not found)
    */
-  @Nullable
-  public static PsiAnnotation findContractAnnotation(@NotNull PsiMethod method) {
+  public static @Nullable PsiAnnotation findContractAnnotation(@NotNull PsiMethod method) {
     return AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
   }
 
@@ -205,7 +212,7 @@ public class JavaMethodContractUtil {
    * @return true if the method known to be pure (see {@link Contract#pure()} for details).
    */
   public static boolean isPure(@NotNull PsiMethod method) {
-    return getContractInfo(method).myPure;
+    return getContractInfo(method).isPure();
   }
 
   /**
@@ -214,8 +221,7 @@ public class JavaMethodContractUtil {
    * @param contracts method contracts
    * @return common return value or null if there's no common return value
    */
-  @Nullable
-  public static ContractReturnValue getNonFailingReturnValue(List<? extends MethodContract> contracts) {
+  public static @Nullable ContractReturnValue getNonFailingReturnValue(List<? extends MethodContract> contracts) {
     List<ContractValue> failConditions = new ArrayList<>();
     for (MethodContract contract : contracts) {
       List<ContractValue> conditions = contract.getConditions();
@@ -243,9 +249,8 @@ public class JavaMethodContractUtil {
    * @return the expression which is always returned by this method if it completes successfully,
    * null if method may return something less trivial or its contract is unknown.
    */
-  @Nullable
   @Contract("null -> null")
-  public static PsiExpression findReturnedValue(@Nullable PsiMethodCallExpression call) {
+  public static @Nullable PsiExpression findReturnedValue(@Nullable PsiMethodCallExpression call) {
     if (call == null) return null;
     List<? extends MethodContract> contracts = getMethodCallContracts(call);
     ContractReturnValue returnValue = getNonFailingReturnValue(contracts);

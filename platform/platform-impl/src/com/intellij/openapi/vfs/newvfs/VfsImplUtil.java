@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -7,10 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Function;
@@ -18,14 +15,17 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 public class VfsImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
+  private static final Logger LOG = Logger.getInstance(VfsImplUtil.class);
 
   private static final String FILE_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separator);
 
@@ -87,10 +87,10 @@ public class VfsImplUtil {
         file = file.findChildIfCached(pathElement);
       }
 
-      if (file == null) return Pair.pair(null, last);
+      if (file == null) return pair(null, last);
     }
 
-    return Pair.pair(file, null);
+    return pair(file, null);
   }
 
   @Nullable
@@ -129,8 +129,8 @@ public class VfsImplUtil {
     }
 
     String basePath = vfs.extractRootPath(normalizedPath);
-    if (basePath.length() > normalizedPath.length() || basePath.isEmpty()) {
-      LOG.warn(vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
+    if (StringUtil.isEmptyOrSpaces(basePath) || basePath.length() > normalizedPath.length()) {
+      LOG.warn(vfs + " has extracted incorrect root '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
     }
 
@@ -140,7 +140,7 @@ public class VfsImplUtil {
     }
 
     Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
-    return Pair.create(root, parts);
+    return pair(root, parts);
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
@@ -148,10 +148,6 @@ public class VfsImplUtil {
     if (roots.length > 0) {
       RefreshQueue.getInstance().refresh(asynchronous, true, null, roots);
     }
-  }
-
-  public static String normalize(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    return vfs.normalize(path);
   }
 
   /**
@@ -183,7 +179,7 @@ public class VfsImplUtil {
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                         @NotNull VirtualFile entryFile,
                                                         @NotNull Function<? super String, ? extends T> producer) {
-    String localPath = vfs.extractLocalPath(vfs.extractRootPath(entryFile.getPath()));
+    String localPath = vfs.extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
     checkSubscription();
 
     T handler;
@@ -193,7 +189,7 @@ public class VfsImplUtil {
 
       if (record == null) {
         handler = producer.fun(localPath);
-        record = Pair.create(vfs, handler);
+        record = pair(vfs, handler);
         ourHandlers.put(localPath, record);
 
         forEachDirectoryComponent(localPath, containingDirectoryPath -> {
@@ -222,7 +218,10 @@ public class VfsImplUtil {
     if (ourSubscribed.getAndSet(true)) return;
 
     Application app = ApplicationManager.getApplication();
-    if (app.isDisposeInProgress()) return;  // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
+    if (app.isDisposed()) {
+      // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
+      return;
+    }
     app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -308,5 +307,12 @@ public class VfsImplUtil {
         RefreshQueue.getInstance().refresh(async, true, null, myRootsToRefresh);
       }
     }
+  }
+
+  @TestOnly
+  public static void releaseHandler(@NotNull String localPath) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
+    InvalidationState state = invalidate(null, localPath);
+    if (state == null) throw new IllegalArgumentException(localPath + " not in " + ourHandlers.keySet());
   }
 }

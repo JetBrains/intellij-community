@@ -141,9 +141,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return myBaseMethod;
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getSkippedParameters() {
+  public GrParameter @NotNull [] getSkippedParameters() {
     return mySkippedParameters;
   }
 
@@ -184,9 +183,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return myBaseMethod.getNamedParameters();
   }
 
-  @NotNull
   @Override
-  public GrReflectedMethod[] getReflectedMethods() {
+  public GrReflectedMethod @NotNull [] getReflectedMethods() {
     return GrReflectedMethod.EMPTY_ARRAY;
   }
 
@@ -201,9 +199,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return myBaseMethod.getNameIdentifierGroovy();
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getParameters() {
+  public GrParameter @NotNull [] getParameters() {
     return getParameterList().getParameters();
   }
 
@@ -254,17 +251,15 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return myBaseMethod.isPhysical();
   }
 
-  @NotNull
-  public static GrReflectedMethod[] createReflectedMethods(GrMethod method) {
+  public static GrReflectedMethod @NotNull [] createReflectedMethods(GrMethod method) {
     return CachedValuesManager.getCachedValue(method, () -> CachedValueProvider.Result.create(
       doCreateReflectedMethods(method, null, method.getParameters()), method
     ));
   }
 
-  @NotNull
-  public static GrReflectedMethod[] doCreateReflectedMethods(@NotNull GrMethod targetMethod,
-                                                              @Nullable PsiClassType categoryType,
-                                                              @NotNull GrParameter[] parameters) {
+  public static GrReflectedMethod @NotNull [] doCreateReflectedMethods(@NotNull GrMethod targetMethod,
+                                                                       @Nullable PsiClassType categoryType,
+                                                                       GrParameter @NotNull [] parameters) {
     int count = 0;
     for (GrParameter parameter : parameters) {
       if (parameter.isOptional()) count++;

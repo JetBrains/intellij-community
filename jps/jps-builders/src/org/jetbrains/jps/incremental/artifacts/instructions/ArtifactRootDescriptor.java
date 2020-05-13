@@ -15,9 +15,6 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-/**
- * @author nik
- */
 public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   protected final File myRoot;
   private final SourceFileFilter myFilter;

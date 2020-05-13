@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -8,11 +8,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface ProjectViewSettings extends ViewSettings {
-  boolean isShowExcludedFiles();
+  default boolean isShowExcludedFiles() {
+    return true;
+  }
 
   default boolean isShowVisibilityIcons() {
     return false;
@@ -35,7 +34,7 @@ public interface ProjectViewSettings extends ViewSettings {
 
     public Immutable(ProjectViewSettings settings) {
       super(settings);
-      myShowExcludedFiles = settings != null && settings.isShowExcludedFiles();
+      myShowExcludedFiles = settings == null || settings.isShowExcludedFiles();
       myShowVisibilityIcons = settings != null && settings.isShowVisibilityIcons();
       myUseFileNestingRules = settings == null || settings.isUseFileNestingRules();
     }
@@ -116,11 +115,6 @@ public interface ProjectViewSettings extends ViewSettings {
     public boolean isShowMembers() {
       ProjectView view = getProjectView();
       return view != null && view.isShowMembers(getPaneID(view));
-    }
-
-    @Override
-    public boolean isStructureView() {
-      return false;
     }
 
     @Override

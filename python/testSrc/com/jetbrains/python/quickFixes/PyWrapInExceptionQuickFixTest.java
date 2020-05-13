@@ -16,7 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyStringExceptionInspection;
 
@@ -24,10 +24,10 @@ import com.jetbrains.python.inspections.PyStringExceptionInspection;
 public class PyWrapInExceptionQuickFixTest extends PyQuickFixTestCase {
 
   public void testSimple() {
-    doQuickFixTest(PyStringExceptionInspection.class, PyBundle.message("QFIX.NAME.wrap.in.exception"));
+    doQuickFixTest(PyStringExceptionInspection.class, PyPsiBundle.message("QFIX.NAME.wrap.in.exception"));
   }
 
   public void testInFunction() {
-    doQuickFixTest(PyStringExceptionInspection.class, PyBundle.message("QFIX.NAME.wrap.in.exception"));
+    doQuickFixTest(PyStringExceptionInspection.class, PyPsiBundle.message("QFIX.NAME.wrap.in.exception"));
   }
 }

@@ -47,7 +47,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
+  private static final Logger LOG = Logger.getInstance(DomInvocationHandler.class);
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
   private static final JavaMethod ourGetValue = JavaMethod.getMethod(GenericValue.class, new JavaMethodSignature("getValue"));

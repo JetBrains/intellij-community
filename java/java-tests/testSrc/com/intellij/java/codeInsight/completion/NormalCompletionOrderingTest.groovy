@@ -91,6 +91,10 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "booleanMethod", "voidMethod", "AN_OBJECT", "BOOLEAN", "class")
   }
 
+  void testPreferClassLiteralWhenClassIsExpected() {
+    checkPreferredItems(0, "class")
+  }
+
   void testJComponentInstanceMembers() throws Throwable {
     checkPreferredItems(0, "getAccessibleContext", "getUI", "getUIClassID")
   }
@@ -270,6 +274,12 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems 0, 'constx1', 'constx2', 'const1', 'const2'
   }
 
+  void testPreferExpectedEnumConstantsInComparison() {
+    checkPreferredItems 0, 'MyEnum.const1', 'MyEnum', 'MyEnum.const2'
+    incUseCount(lookup, myFixture.lookupElementStrings.indexOf('String')) // select some unrelated class
+    assertPreferredItems 0, 'MyEnum.const1', 'MyEnum', 'MyEnum.const2'
+  }
+
   void testPreferElse() {
     checkPreferredItems(0, "else", "element")
   }
@@ -400,6 +410,10 @@ interface TxANotAnno {}
 
   void testDispreferReturnInVoidMethodTopLevel() {
     checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+
+  void testDispreferReturnAsLoopBody() {
+    checkPreferredItems 0, 'returnMethod', 'return'
   }
 
   void testDispreferReturnInVoidLambda() {

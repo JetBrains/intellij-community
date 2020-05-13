@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +28,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
 public class EditorComboBox extends ComboBox implements DocumentListener {
   public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<EditorComboBox>() {
     @Override
@@ -117,13 +113,6 @@ public class EditorComboBox extends ComboBox implements DocumentListener {
     for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.documentChanged(event);
     }
-  }
-
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-
-    MacUIUtil.drawComboboxFocusRing(this, g);
   }
 
   public Project getProject() {

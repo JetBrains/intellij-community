@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -24,14 +10,12 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author max
- */
 public class PropertiesHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> keys1;
   private static final Map<IElementType, TextAttributesKey> keys2;
@@ -86,21 +70,16 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     return SyntaxHighlighterBase.pack(keys1.get(tokenType), keys2.get(tokenType));
   }
 
-  public static final Map<TextAttributesKey, Pair<String, HighlightSeverity>> DISPLAY_NAMES = new THashMap<>(6);
-  static {
-    DISPLAY_NAMES.put(PROPERTY_KEY, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.key"), null));
-    DISPLAY_NAMES.put(PROPERTY_VALUE, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.value"), null));
-    DISPLAY_NAMES.put(PROPERTY_KEY_VALUE_SEPARATOR,
-                      new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.key.value.separator"), null));
-    DISPLAY_NAMES.put(PROPERTY_COMMENT, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.comment"), null));
-    DISPLAY_NAMES.put(PROPERTIES_VALID_STRING_ESCAPE,
-                      new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.valid.string.escape"), null));
-    DISPLAY_NAMES.put(PROPERTIES_INVALID_STRING_ESCAPE, Pair
-      .create(PropertiesBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), HighlightSeverity.WARNING));
-  }
+  public static final Map<TextAttributesKey, Pair<String, HighlightSeverity>> DISPLAY_NAMES = ContainerUtil.<TextAttributesKey, Pair<String, HighlightSeverity>>immutableMapBuilder()
+    .put(PROPERTY_KEY, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.key"), null))
+    .put(PROPERTY_VALUE, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.value"), null))
+    .put(PROPERTY_KEY_VALUE_SEPARATOR, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.key.value.separator"), null))
+    .put(PROPERTY_COMMENT, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.comment"), null))
+    .put(PROPERTIES_VALID_STRING_ESCAPE, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.valid.string.escape"), null))
+    .put(PROPERTIES_INVALID_STRING_ESCAPE, Pair.create(PropertiesBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), HighlightSeverity.WARNING))
+    .build();
 }

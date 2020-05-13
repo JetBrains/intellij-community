@@ -59,8 +59,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(myElement.getProject());
     List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(myElement.getResolveScope(), myBundleName, this);
     return PsiElementResolveResult.createResults(ContainerUtil.map(propertiesFiles, PROPERTIES_FILE_PSI_ELEMENT_FUNCTION));
@@ -114,8 +113,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(getElement().getProject());
     final PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getElement().getProject());
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.impl;
 
-import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -25,7 +25,7 @@ import org.jetbrains.yaml.psi.YAMLValue;
 import java.util.Objects;
 
 @ApiStatus.Internal
-public abstract class YamlDocumentationProviderBase extends AbstractDocumentationProvider {
+public abstract class YamlDocumentationProviderBase implements DocumentationProvider {
 
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
@@ -40,7 +40,8 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement) {
+                                                  @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     if (contextElement == null || !isRelevant(contextElement)) {
       return null;
     }
@@ -50,6 +51,9 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
 
   @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement contextElement) {
+    if(!isRelevant(contextElement))
+      return null;
+
     if (object instanceof ForcedCompletionPath) {  // deep completion
       return createFromCompletionPath((ForcedCompletionPath)object, contextElement);
     }

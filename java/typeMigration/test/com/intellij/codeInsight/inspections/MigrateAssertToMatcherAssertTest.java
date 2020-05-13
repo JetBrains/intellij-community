@@ -24,6 +24,8 @@ public class MigrateAssertToMatcherAssertTest extends JavaCodeInsightFixtureTest
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("test-env",
                              ArrayUtilRt.toStringArray(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4")));
+    moduleBuilder.addLibrary("test-env",
+                             ArrayUtilRt.toStringArray(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("hamcrest")));
   }
 
   public void testAll() {

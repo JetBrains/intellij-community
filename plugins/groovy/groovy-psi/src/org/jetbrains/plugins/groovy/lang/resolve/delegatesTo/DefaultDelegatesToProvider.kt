@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.psi.PsiMethod
@@ -27,7 +27,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
 
     val argumentMapping = (result as? GroovyMethodResult)?.candidate?.argumentMapping ?: return null
 
-    val parameter = argumentMapping.targetParameter(ExpressionArgument(expression)) ?: return null
+    val parameter = argumentMapping.targetParameter(ExpressionArgument(expression))?.psi ?: return null
 
     parameter.getUserData(DELEGATES_TO_KEY)?.let {
       return it

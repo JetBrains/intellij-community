@@ -122,9 +122,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     }
     catch (Throwable t) {
       // catching the exception so that the rest of copy/paste functionality can still work fine
-      LOG.error("Error generating text with markup",
-                new Attachment("exception", t),
-                new Attachment("highlighter.txt", String.valueOf(highlighter)));
+      LOG.error("Error generating text with markup", t, new Attachment("highlighter.txt", String.valueOf(highlighter)));
     }
     finally {
       if (highlighter != null && editorColorsScheme != schemeToUse) {
@@ -151,8 +149,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
   }
 
   private static void logInitial(@NotNull Editor editor,
-                                 @NotNull int[] startOffsets,
-                                 @NotNull int[] endOffsets,
+                                 int @NotNull [] startOffsets,
+                                 int @NotNull [] endOffsets,
                                  int indentSymbolsToStrip,
                                  int firstLineStartOffset) {
     if (!LOG.isDebugEnabled()) {

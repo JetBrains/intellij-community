@@ -44,7 +44,7 @@ public class TypeCookAction extends BaseJavaRefactoringAction {
   }
 
   @Override
-  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  public boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return elements.length > 0 && Arrays.stream(elements).allMatch(
       e -> e instanceof PsiClass || e instanceof PsiJavaFile || e instanceof PsiDirectory || e instanceof PsiPackage);
   }

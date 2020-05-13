@@ -21,6 +21,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +45,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class ImplementAbstractMethodHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler");
+  private static final Logger LOG = Logger.getInstance(ImplementAbstractMethodHandler.class);
 
   private final Project myProject;
   private final Editor myEditor;
@@ -85,15 +86,15 @@ public class ImplementAbstractMethodHandler {
         }
         result[0] = PsiUtilCore.toPsiElementArray(enumConstants);
       }
-    }), CodeInsightBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"), true, myProject);
+    }), JavaBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"), true, myProject);
 
     PsiElement[] elements = result[0];
     if (elements == null) return;
 
     if (elements.length == 0) {
       Messages.showMessageDialog(myProject,
-                                 problemDetected.isNull() ? CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.message") : problemDetected.get(),
-                                 CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.title"),
+                                 problemDetected.isNull() ? JavaBundle.message("intention.implement.abstract.method.error.no.classes.message") : problemDetected.get(),
+                                 JavaBundle.message("intention.implement.abstract.method.error.no.classes.title"),
                                  Messages.getInformationIcon());
       return;
     }
@@ -114,7 +115,8 @@ public class ImplementAbstractMethodHandler {
           if (!selectedValues.isEmpty()) {
             implementInClass(ArrayUtil.toObjectArray(selectedValues));
           }
-        });
+        })
+      .withHintUpdateSupply();
     elementListCellRenderer.installSpeedSearch(builder);
     builder.createPopup().showInBestPositionFor(myEditor);
   }
@@ -149,7 +151,7 @@ public class ImplementAbstractMethodHandler {
           }
         }
       });
-    }, CodeInsightBundle.message("intention.implement.abstract.method.command.name"), null);
+    }, JavaBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
   private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<? super String> problemDetected) {

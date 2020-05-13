@@ -1,20 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.*
-import com.intellij.psi.impl.PsiClassImplUtil.correctType
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
+import org.jetbrains.plugins.groovy.lang.resolve.api.DelegateArgumentMapping
 
-fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
-  if (left is GdkArgumentMapping) {
-    return compare(left.original, right)
+fun <X : CallParameter> compare(left: ArgumentMapping<X>, right: ArgumentMapping<X>): Int {
+  if (left is DelegateArgumentMapping) {
+    return compare(left.delegate, right)
   }
-  else if (right is GdkArgumentMapping) {
-    return compare(left, right.original)
+  else if (right is DelegateArgumentMapping) {
+    return compare(left, right.delegate)
   }
 
   if (left is NullArgumentMapping && right is NullArgumentMapping) {
@@ -30,7 +32,7 @@ fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
   }
 
   if (left is VarargArgumentMapping && right is VarargArgumentMapping) {
-    return left.compare(right)
+    return VarargArgumentMapping.compare(left, right)
   }
   else if (left is VarargArgumentMapping) {
     // prefer right
@@ -50,11 +52,11 @@ fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
   }
 }
 
-fun positionalParametersDistance(map: Map<Argument, PsiParameter>, context: PsiElement): Long {
+fun positionalParametersDistance(map: Map<Argument, CallParameter>, context: PsiElement): Long {
   var result = 0L
   for ((argument, parameter) in map) {
     val runtimeType = argument.runtimeType ?: continue
-    val parameterType = correctType(parameter.type, context.resolveScope) ?: continue
+    val parameterType = parameter.type ?: continue
     result += parameterDistance(runtimeType, parameterType, context)
   }
   return result
@@ -64,6 +66,10 @@ fun positionalParametersDistance(map: Map<Argument, PsiParameter>, context: PsiE
  * @see org.codehaus.groovy.runtime.MetaClassHelper.calculateParameterDistance
  */
 fun parameterDistance(argument: PsiType, parameter: PsiType, context: PsiElement): Long {
+  return parameterDistance0(argument, TypeConversionUtil.erasure(parameter), context)
+}
+
+private fun parameterDistance0(argument: PsiType, parameter: PsiType, context: PsiElement): Long {
   if (argument == parameter) return 0
   val parameterClass = (parameter as? PsiClassType)?.resolve()
   val argumentClass = (argument as? PsiClassType)?.resolve()

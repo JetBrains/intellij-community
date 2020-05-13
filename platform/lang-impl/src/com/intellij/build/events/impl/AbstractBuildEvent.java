@@ -2,6 +2,7 @@
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildEventsNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ public abstract class AbstractBuildEvent implements BuildEvent {
   @NotNull
   private final Object myEventId;
   @Nullable
-  private final Object myParentId;
+  private Object myParentId;
   private final long myEventTime;
   @NotNull
   private final String myMessage;
@@ -22,7 +23,7 @@ public abstract class AbstractBuildEvent implements BuildEvent {
   @Nullable
   private String myDescription;
 
-  public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
+  public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull @BuildEventsNls.Message String message) {
     myEventId = eventId;
     myParentId = parentId;
     myEventTime = eventTime;
@@ -41,6 +42,10 @@ public abstract class AbstractBuildEvent implements BuildEvent {
     return myParentId;
   }
 
+  public void setParentId(@Nullable Object parentId) {
+    myParentId = parentId;
+  }
+
   @Override
   public long getEventTime() {
     return myEventTime;
@@ -48,6 +53,7 @@ public abstract class AbstractBuildEvent implements BuildEvent {
 
   @NotNull
   @Override
+  @BuildEventsNls.Message
   public String getMessage() {
     return myMessage;
   }
@@ -64,11 +70,12 @@ public abstract class AbstractBuildEvent implements BuildEvent {
 
   @Nullable
   @Override
+  @BuildEventsNls.Description
   public String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@Nullable String description) {
+  public void setDescription(@Nullable @BuildEventsNls.Description String description) {
     myDescription = description;
   }
 

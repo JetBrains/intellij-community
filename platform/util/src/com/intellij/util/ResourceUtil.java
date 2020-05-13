@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,19 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * @author max
- */
-public class ResourceUtil {
-
+public final class ResourceUtil {
   private ResourceUtil() {
   }
 
-  public static URL getResource(@NotNull Class loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
+  public static URL getResource(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResource(loaderClass.getClassLoader(), basePath, fileName);
   }
 
-  public static InputStream getResourceAsStream(@NotNull Class loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
+  public static InputStream getResourceAsStream(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResourceAsStream(loaderClass.getClassLoader(), basePath, fileName);
   }
 

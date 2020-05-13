@@ -57,15 +57,15 @@ import java.util.List;
  */
 public class DiffFragmentBuilder {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffFragmentBuilder");
+  private static final Logger LOG = Logger.getInstance(DiffFragmentBuilder.class);
 
-  @NotNull private final DiffString[] mySource1;
-  @NotNull private final DiffString[] mySource2;
+  private final DiffString @NotNull [] mySource1;
+  private final DiffString @NotNull [] mySource2;
   private int myLastLine1 = 1;
   private int myLastLine2 = 1;
   @NotNull private final List<DiffFragment> myData = new LinkedList<>();
 
-  public DiffFragmentBuilder(@NotNull DiffString[] source1, @NotNull DiffString[] source2) {
+  public DiffFragmentBuilder(DiffString @NotNull [] source1, DiffString @NotNull [] source2) {
     mySource1 = source1;
     mySource2 = source2;
     init();
@@ -160,12 +160,11 @@ public class DiffFragmentBuilder {
   }
 
   @NotNull
-  private static DiffString concatenate(@NotNull DiffString[] strings, int start, int end) {
+  private static DiffString concatenate(DiffString @NotNull [] strings, int start, int end) {
     return DiffString.concatenate(strings, start - 1, end - start + 1);
   }
 
-  @NotNull
-  public DiffFragment[] buildFragments(@Nullable Diff.Change change) {
+  public DiffFragment @NotNull [] buildFragments(@Nullable Diff.Change change) {
     while (change != null) {
       if (change.inserted > 0 && change.deleted > 0) {
         change(

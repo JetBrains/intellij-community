@@ -54,7 +54,7 @@ public class DomReflectionUtil {
 
   public static JavaMethod[] getGetterMethods(final String[] path, final Class<? extends DomElement> startClass) {
     final JavaMethod[] methods = new JavaMethod[path.length];
-    Class aClass = startClass;
+    Class<?> aClass = startClass;
     for (int i = 0; i < path.length; i++) {
       final JavaMethod getter = findGetter(aClass, path[i]);
       assert getter != null : "Couldn't find getter for property " + path[i] + " in class " + aClass;
@@ -68,7 +68,7 @@ public class DomReflectionUtil {
   }
 
   @Nullable
-  public static JavaMethod findGetter(Class aClass, String propertyName) {
+  public static JavaMethod findGetter(Class<?> aClass, String propertyName) {
     final String capitalized = StringUtil.capitalize(propertyName);
     Method method = ReflectionUtil.getMethod(aClass, "get" + capitalized);
     if (method != null) return JavaMethod.getMethod(aClass, method);

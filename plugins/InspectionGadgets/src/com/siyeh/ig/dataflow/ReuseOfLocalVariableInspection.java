@@ -37,7 +37,6 @@ import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,13 +51,6 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "reuse.of.local.variable.display.name");
   }
 
   @Override
@@ -219,7 +211,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
     }
 
     private static <T extends PsiElement> boolean hasParentOfTypeBeforeAncestor(@NotNull PsiElement descendant, @NotNull PsiElement ancestor,
-                                                                                @NotNull final Class<? extends T>... classes) {
+                                                                                final Class<? extends T> @NotNull ... classes) {
       PsiElement elementToTest = descendant.getParent();
       while (elementToTest != null) {
         if (elementToTest.equals(ancestor)) return false;

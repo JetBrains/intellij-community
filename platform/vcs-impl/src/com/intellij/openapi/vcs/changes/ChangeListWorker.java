@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -22,19 +22,27 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcsUtil.VcsUtil;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /** should work under _external_ lock
  * just logic here: do modifications to group of change lists
  */
 public class ChangeListWorker {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListWorker");
+  private final static Logger LOG = Logger.getInstance(ChangeListWorker.class);
   @NotNull private final Project myProject;
   @NotNull private final DelayedNotificator myDelayedNotificator;
   private final boolean myMainWorker;
@@ -128,7 +136,7 @@ public class ChangeListWorker {
     if (myDefault != null) return;
 
     if (myLists.isEmpty()) {
-      putNewListData(new ListData(null, LocalChangeList.DEFAULT_NAME));
+      putNewListData(new ListData(null, LocalChangeList.getDefaultName()));
     }
 
     myDefault = myLists.iterator().next();
@@ -443,7 +451,7 @@ public class ChangeListWorker {
     if (list == null) return null;
 
     final String oldComment = list.comment;
-    if (!Comparing.equal(oldComment, newComment)) {
+    if (!Objects.equals(oldComment, newComment)) {
       list.comment = newComment;
     }
 
@@ -1036,9 +1044,8 @@ public class ChangeListWorker {
       if (b1 != null && b2 != null) {
         final VcsRevisionNumber rn1 = b1.getRevisionNumber();
         final VcsRevisionNumber rn2 = b2.getRevisionNumber();
-        final boolean isBinary1 = (b1 instanceof BinaryContentRevision);
-        final boolean isBinary2 = (b2 instanceof BinaryContentRevision);
-        return rn1 != VcsRevisionNumber.NULL && rn2 != VcsRevisionNumber.NULL && rn1.compareTo(rn2) == 0 && isBinary1 == isBinary2;
+        return rn1 != VcsRevisionNumber.NULL && rn2 != VcsRevisionNumber.NULL &&
+               b1.getClass() == b2.getClass() && rn1.compareTo(rn2) == 0;
       }
       return b1 == null && b2 == null;
     }

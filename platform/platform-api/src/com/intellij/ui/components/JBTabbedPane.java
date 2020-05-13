@@ -5,6 +5,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,8 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   }
 
   @Override
-  public void insertTab(String title, Icon icon, Component component, String tip, int index) {
+  public void insertTab(@Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon, Component component,
+                        @Nls(capitalization = Nls.Capitalization.Sentence) String tip, int index) {
     super.insertTab(title, icon, component, tip, index);
 
     //set custom label for correct work spotlighting in settings
@@ -59,6 +61,18 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
 
     revalidate();
     repaint();
+  }
+
+  @Override
+  public void setTitleAt(int index, String title) {
+    super.setTitleAt(index, title);
+    Component tabComponent = getTabComponentAt(index);
+    if (tabComponent instanceof JLabel) {
+      JLabel label = (JLabel) tabComponent;
+      if (Boolean.TRUE.equals(label.getClientProperty(LABEL_FROM_TABBED_PANE))) {
+        label.setText(title);
+      }
+    }
   }
 
   @Override

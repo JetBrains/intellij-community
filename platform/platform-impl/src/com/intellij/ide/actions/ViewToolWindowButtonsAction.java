@@ -8,10 +8,6 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 public class ViewToolWindowButtonsAction extends ToggleAction implements DumbAware {
-  public ViewToolWindowButtonsAction() {
-    super("Tool Window Bars");
-  }
-
   @Override
   public boolean isSelected(@NotNull AnActionEvent event) {
     return !UISettings.getInstance().getHideToolStripes();

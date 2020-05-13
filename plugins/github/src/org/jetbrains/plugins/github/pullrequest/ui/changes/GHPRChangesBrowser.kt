@@ -1,128 +1,117 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
-import com.intellij.diff.chains.DiffRequestChain
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.project.DumbAware
+import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.ComponentWithEmptyText
-import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.xml.util.XmlStringUtil
-import git4idea.GitCommit
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProvider
-import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
-import javax.swing.border.Border
-import javax.swing.tree.DefaultTreeModel
+import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
+import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffAction
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-internal class GHPRChangesBrowser(private val model: GHPRChangesModel, project: Project)
-  : ChangesBrowserBase(project, false, false),
-    ComponentWithEmptyText {
+object GHPRChangesBrowser {
 
-  var diffReviewThreadsProvider: GHPRDiffReviewThreadsProvider? = null
+  fun create(project: Project,
+             changesModel: GHPRChangesModel,
+             diffHelper: GHPRChangesDiffHelper,
+             @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String,
+             disposable: Disposable): JComponent {
 
-  init {
-    init()
-    model.addStateChangesListener {
-      myViewer.rebuildTree()
+    val actionManager = ActionManager.getInstance()
+
+    val diffAction = GHPRShowDiffAction().apply {
+      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
     }
+    val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
+
+    val changesTreePanel = GHPRChangesTree.createLazyTreePanel(changesModel) {
+      createTree(project, changesModel, diffAction, diffHelper, reloadAction, it, disposable).apply {
+        emptyText.text = panelEmptyText
+      }
+    }.apply {
+      emptyText.text = panelEmptyText
+    }
+
+    val toolbar = createToolbar(actionManager, diffAction, changesTreePanel)
+    val scrollPane = ScrollPaneFactory.createScrollPane(changesTreePanel, SideBorder.TOP).apply {
+      isOpaque = false
+      viewport.isOpaque = false
+    }
+
+    return BorderLayoutPanel().andTransparent()
+      .addToTop(toolbar)
+      .addToCenter(scrollPane)
   }
 
-  override fun updateDiffContext(chain: DiffRequestChain) {
-    super.updateDiffContext(chain)
-    if (model.zipChanges) {
-      chain.putUserData(GHPRDiffReviewThreadsProvider.KEY, diffReviewThreadsProvider)
-    }
-    else {
-      //TODO: commits comments provider
-    }
+  private fun createToolbar(actionManager: ActionManager, diffAction: GHPRShowDiffAction, target: JComponent)
+    : TreeActionsToolbarPanel {
+
+    val reviewSubmitAction = GHPRReviewSubmitAction()
+    val changesToolbarActionGroup = DefaultActionGroup(diffAction, reviewSubmitAction, Separator(),
+                                                       actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
+    val changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true)
+    val treeActionsGroup = DefaultActionGroup(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL),
+                                              actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL))
+    return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
   }
 
-  override fun getEmptyText() = myViewer.emptyText
+  fun create(project: Project,
+             loadingModel: GHLoadingModel,
+             changesModel: GHPRChangesModel,
+             diffHelper: GHPRChangesDiffHelper,
+             @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String = "",
+             disposable: Disposable): JComponent {
 
-  override fun createTreeList(project: Project, showCheckboxes: Boolean, highlightProblems: Boolean): ChangesBrowserTreeList {
-    return super.createTreeList(project, showCheckboxes, highlightProblems).also {
-      it.addFocusListener(object : FocusListener {
-        override fun focusGained(e: FocusEvent?) {
-          if (it.isSelectionEmpty && !it.isEmpty) TreeUtil.selectFirstNode(it)
+    val actionManager = ActionManager.getInstance()
+
+    val diffAction = GHPRShowDiffAction().apply {
+      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
+    }
+    val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
+
+    val loadingPanel = GHLoadingPanel.create(loadingModel, {
+      createTree(project, changesModel, diffAction, diffHelper, reloadAction, it, disposable).apply {
+        emptyText.text = panelEmptyText
+      }.let { tree ->
+        ScrollPaneFactory.createScrollPane(tree, true)
+      }
+    }, disposable, GithubBundle.message("cannot.load.changes")).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.TOP)
+    }
+
+    val toolbar = createToolbar(actionManager, diffAction, loadingPanel)
+
+    return BorderLayoutPanel().andTransparent()
+      .addToTop(toolbar)
+      .addToCenter(loadingPanel)
+  }
+
+  private fun createTree(project: Project, changesModel: GHPRChangesModel,
+                         diffAction: GHPRShowDiffAction, diffHelper: GHPRChangesDiffHelper, reloadAction: AnAction,
+                         parentPanel: JPanel,
+                         disposable: Disposable) =
+    GHPRChangesTree.create(project, changesModel).also {
+      DataManager.registerDataProvider(parentPanel) { dataId ->
+        when {
+          GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
+          else -> it.getData(dataId)
         }
-
-        override fun focusLost(e: FocusEvent?) {}
-      })
-    }
-  }
-
-  override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
-
-  override fun buildTreeModel(): DefaultTreeModel {
-    val builder = MyTreeModelBuilder(myProject, grouping)
-    if (model.zipChanges) {
-      val zipped = CommittedChangesTreeBrowser.zipChanges(model.commits.flatMap { it.changes })
-      builder.setChanges(zipped, null)
-    }
-    else {
-      for (commit in model.commits) {
-        builder.addCommit(commit)
       }
+
+      diffAction.registerCustomShortcutSet(CompositeShortcutSet(diffAction.shortcutSet, CommonShortcuts.DOUBLE_CLICK_1), it)
+      reloadAction.registerCustomShortcutSet(it, disposable)
+      it.installPopupHandler(DefaultActionGroup(diffAction, reloadAction))
     }
-    return builder.build()
-  }
-
-  private class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory) : TreeModelBuilder(project, grouping) {
-    fun addCommit(commit: GitCommit) {
-      val parentNode = CommitTagBrowserNode(commit)
-      parentNode.markAsHelperNode()
-
-      myModel.insertNodeInto(parentNode, myRoot, myRoot.childCount)
-      for (change in commit.changes) {
-        insertChangeNode(change, parentNode, createChangeNode(change, null))
-      }
-    }
-  }
-
-  private class CommitTagBrowserNode(val commit: GitCommit) : ChangesBrowserNode<Any>(commit) {
-    override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-      renderer.icon = AllIcons.Vcs.CommitNode
-      renderer.append(commit.subject, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      renderer.append(" by ${commit.author.name} on ${DateFormatUtil.formatDate(commit.authorTime)}",
-                      SimpleTextAttributes.GRAYED_ATTRIBUTES)
-
-      val tooltip = "commit ${commit.id.asString()}\n" +
-                    "Author: ${commit.author.name}\n" +
-                    "Date: ${DateFormatUtil.formatDateTime(commit.authorTime)}\n\n" +
-                    commit.fullMessage
-      renderer.toolTipText = XmlStringUtil.escapeString(tooltip)
-    }
-
-    override fun getTextPresentation(): String {
-      return commit.subject
-    }
-  }
-
-  class ToggleZipCommitsAction : ToggleAction("Commit"), DumbAware {
-
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isEnabledAndVisible = e.getData(DATA_KEY) is GHPRChangesBrowser
-    }
-
-    override fun isSelected(e: AnActionEvent): Boolean {
-      val project = e.project ?: return false
-      return !GithubPullRequestsProjectUISettings.getInstance(project).zipChanges
-    }
-
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      val project = e.project ?: return
-      GithubPullRequestsProjectUISettings.getInstance(project).zipChanges = !state
-    }
-  }
 }

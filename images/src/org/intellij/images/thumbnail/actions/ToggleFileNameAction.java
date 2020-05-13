@@ -2,6 +2,7 @@
 
 package org.intellij.images.thumbnail.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.options.OptionsManager;
@@ -29,6 +30,6 @@ public final class ToggleFileNameAction extends ToggleAction {
         super.update(e);
         ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
         e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
-        e.getPresentation().setText(isSelected(e) ? "Hide File Name" : "Show File Name");
+        e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.file.name") : IdeBundle.message("action.text.show.file.name"));
     }
 }

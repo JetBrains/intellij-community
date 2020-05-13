@@ -57,11 +57,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.facet.AppEngineSupportProvider");
+  private static final Logger LOG = Logger.getInstance(AppEngineSupportProvider.class);
   public static final String JPA_FRAMEWORK_ID = "facet:jpa";
 
   @NotNull

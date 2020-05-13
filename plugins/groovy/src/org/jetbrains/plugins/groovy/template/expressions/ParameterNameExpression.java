@@ -3,12 +3,14 @@ package org.jetbrains.plugins.groovy.template.expressions;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,5 +47,11 @@ public abstract class ParameterNameExpression extends Expression {
       result[i++] = LookupElementBuilder.create(name);
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public LookupFocusDegree getLookupFocusDegree() {
+    return LookupFocusDegree.UNFOCUSED;
   }
 }

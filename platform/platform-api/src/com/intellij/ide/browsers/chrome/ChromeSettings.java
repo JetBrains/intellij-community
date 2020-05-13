@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.chrome;
 
 import com.intellij.ide.browsers.BrowserSpecificSettings;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
@@ -10,12 +9,12 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ChromeSettings extends BrowserSpecificSettings {
   public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
@@ -113,8 +112,8 @@ public final class ChromeSettings extends BrowserSpecificSettings {
 
     ChromeSettings settings = (ChromeSettings)o;
     return myUseCustomProfile == settings.myUseCustomProfile &&
-           Comparing.equal(myCommandLineOptions, settings.myCommandLineOptions) &&
-           (!myUseCustomProfile || Comparing.equal(myUserDataDirectoryPath, settings.myUserDataDirectoryPath)) &&
+           Objects.equals(myCommandLineOptions, settings.myCommandLineOptions) &&
+           (!myUseCustomProfile || Objects.equals(myUserDataDirectoryPath, settings.myUserDataDirectoryPath)) &&
            myEnvironmentVariables.equals(settings.myEnvironmentVariables);
   }
 }

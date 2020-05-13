@@ -34,10 +34,6 @@ public class MappedFileInputStream extends InputStream {
     setup(pos, limit);
   }
 
-  public MappedFileInputStream(@NotNull ResizeableMappedFile raf, final long pos) throws IOException {
-    this(raf, pos, raf.length());
-  }
-
   public void setup(final long pos, final long limit) {
     this.cur = (int)pos;
     this.limit = limit;
@@ -67,7 +63,7 @@ public class MappedFileInputStream extends InputStream {
   }
 
   @Override
-  public int read(@NotNull byte[] b, int offset, int length ) throws IOException
+  public int read(byte @NotNull [] b, int offset, int length ) throws IOException
   {
       //only allow a read of the amount available.
       if( length > available() )

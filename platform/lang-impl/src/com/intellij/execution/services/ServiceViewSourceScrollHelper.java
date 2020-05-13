@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -84,7 +85,7 @@ class ServiceViewSourceScrollHelper {
 
     @Override
     protected void setAutoScrollEnabled(boolean enabled) {
-      PropertiesComponent.getInstance(myProject).setValue(AUTO_SCROLL_FROM_SOURCE_PROPERTY, enabled);
+      PropertiesComponent.getInstance(myProject).setValue(AUTO_SCROLL_FROM_SOURCE_PROPERTY, enabled, PlatformUtils.isDataGrip());
     }
 
     @Override
@@ -105,7 +106,9 @@ class ServiceViewSourceScrollHelper {
     private final ServiceViewAutoScrollFromSourceHandler myScrollFromHandler;
 
     ScrollFromEditorAction(ServiceViewAutoScrollFromSourceHandler scrollFromHandler) {
-      super("Scroll from Source", "Select node open in the active editor", AllIcons.General.Locate);
+      super(ExecutionBundle.message("service.view.scroll.from.editor.action.name"),
+            ExecutionBundle.message("service.view.scroll.from.editor.action.description"),
+            AllIcons.General.Locate);
       myScrollFromHandler = scrollFromHandler;
     }
 

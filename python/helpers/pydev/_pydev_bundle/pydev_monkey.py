@@ -3,7 +3,8 @@ import os
 import sys
 import traceback
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, IS_JYTHON, IS_PY36_OR_LESSER, get_current_thread_id
+from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, IS_JYTHON, IS_PY36_OR_LESSER, IS_PY38_OR_GREATER, \
+    get_current_thread_id
 from _pydev_bundle import pydev_log
 
 try:
@@ -117,12 +118,15 @@ def is_python(path):
 
 
 def remove_quotes_from_args(args):
-    new_args = []
-    for x in args:
-        if len(x) > 1 and x.startswith('"') and x.endswith('"'):
-            x = x[1:-1]
-        new_args.append(x)
-    return new_args
+    if sys.platform == "win32":
+        new_args = []
+        for x in args:
+            if len(x) > 1 and x.startswith('"') and x.endswith('"'):
+                x = x[1:-1]
+            new_args.append(x)
+        return new_args
+    else:
+        return args
 
 
 def quote_args(args):
@@ -227,6 +231,7 @@ def patch_args(args):
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
         from _pydevd_bundle.pydevd_command_line_handling import setup_to_argv
+        SetupHolder.setup['module'] = False  # clean module param from parent process
         original = setup_to_argv(SetupHolder.setup) + ['--file']
         while i < len(args):
             if args[i] == '-m':
@@ -497,6 +502,19 @@ def create_spawnve(original_name):
     return new_spawnve
 
 
+def create_posix_spawn(original_name):
+    """
+    os.posix_spawn(path, argv, env, *, file_actions=None, ... (6 more))
+    os.posix_spawnp(path, argv, env, *, file_actions=None, ... (6 more))
+    """
+    def new_posix_spawn(path, argv, env, **kwargs):
+        import os
+        argv = patch_args(argv)
+        send_process_created_message()
+        return getattr(os, original_name)(path, argv, env, **kwargs)
+    return new_posix_spawn
+
+
 def create_fork_exec(original_name):
     """
     _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
@@ -656,6 +674,10 @@ def patch_new_process_functions():
     monkey_patch_os('spawnvp', create_spawnv)
     monkey_patch_os('spawnvpe', create_spawnve)
 
+    if IS_PY38_OR_GREATER and not IS_WINDOWS:
+        monkey_patch_os('posix_spawn', create_posix_spawn)
+        monkey_patch_os('posix_spawnp', create_posix_spawn)
+
     if not IS_JYTHON:
         if not IS_WINDOWS:
             monkey_patch_os('fork', create_fork)
@@ -690,6 +712,10 @@ def patch_new_process_functions_with_warning():
     monkey_patch_os('spawnve', create_warn_multiproc)
     monkey_patch_os('spawnvp', create_warn_multiproc)
     monkey_patch_os('spawnvpe', create_warn_multiproc)
+
+    if IS_PY38_OR_GREATER and not IS_WINDOWS:
+        monkey_patch_os('posix_spawn', create_warn_multiproc)
+        monkey_patch_os('posix_spawnp', create_warn_multiproc)
 
     if not IS_JYTHON:
         if not IS_WINDOWS:

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -12,13 +12,11 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +30,12 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
+
 /**
  * @author Vladislav.Kaznacheev
  */
-public final class MavenRunConfigurationType extends AbstractExternalSystemTaskConfigurationType implements ConfigurationType {
+public final class MavenRunConfigurationType implements ConfigurationType {
   private static final Key<Boolean> IS_DELEGATE_BUILD = new Key<>("IS_DELEGATE_BUILD");
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
@@ -48,7 +48,6 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
    * reflection
    */
   MavenRunConfigurationType() {
-    super(MavenUtil.SYSTEM_ID);
     myFactory = new MavenRunConfigurationFactory(this);
   }
 
@@ -65,7 +64,7 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.MavenLogo;
+    return RepositoryLibraryLogo;
   }
 
   @Override
@@ -172,7 +171,10 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
     ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configSettings, project);
     environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
     try {
-      runner.execute(environment, callback);
+      if (callback != null) {
+        environment.setCallback(callback);
+      }
+      runner.execute(environment);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, "Failed to execute Maven goal", e);
@@ -223,6 +225,11 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
     @Override
     public RunConfiguration createTemplateConfiguration(@NotNull Project project, @NotNull RunManager runManager) {
       return new MavenRunConfiguration(project, this, "");
+    }
+
+    @Override
+    public @NotNull String getId() {
+      return "Maven";
     }
 
     @NotNull

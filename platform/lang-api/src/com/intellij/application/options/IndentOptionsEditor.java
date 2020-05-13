@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.components.fields.IntegerField;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,26 +35,18 @@ import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.Setti
 
 @SuppressWarnings({"deprecation", "DeprecatedIsStillUsed"})
 public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
-  private static final String INDENT_LABEL = ApplicationBundle.message("editbox.indent.indent");
-  private static final String TAB_SIZE_LABEL = ApplicationBundle.message("editbox.indent.tab.size");
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JTextField myIndentField;
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JCheckBox myCbUseTab;
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JTextField myTabSizeField;
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JLabel myTabSizeLabel;
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JLabel myIndentLabel;
 
@@ -89,14 +80,14 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   }
 
   protected void addIndentField() {
-    myIndentField = createIndentTextField(INDENT_LABEL, MIN_INDENT_SIZE, MAX_INDENT_SIZE, DEFAULT_INDENT_SIZE);
-    myIndentLabel = new JLabel(INDENT_LABEL);
+    myIndentField = createIndentTextField(getIndentLabel(), MIN_INDENT_SIZE, MAX_INDENT_SIZE, DEFAULT_INDENT_SIZE);
+    myIndentLabel = new JLabel(getIndentLabel());
     add(myIndentLabel, myIndentField);
   }
 
   protected void addTabSizeField() {
-    myTabSizeField = createIndentTextField(TAB_SIZE_LABEL, MIN_TAB_SIZE, MAX_TAB_SIZE, DEFAULT_TAB_SIZE);
-    myTabSizeLabel = new JLabel(TAB_SIZE_LABEL);
+    myTabSizeField = createIndentTextField(getTabSizeLabel(), MIN_TAB_SIZE, MAX_TAB_SIZE, DEFAULT_TAB_SIZE);
+    myTabSizeLabel = new JLabel(getTabSizeLabel());
     add(myTabSizeLabel, myTabSizeField);
   }
 
@@ -228,4 +219,11 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     myCbUseTab.setVisible(visible);
   }
 
+  private static String getIndentLabel() {
+    return ApplicationBundle.message("editbox.indent.indent");
+  }
+
+  private static String getTabSizeLabel() {
+    return ApplicationBundle.message("editbox.indent.tab.size");
+  }
 }

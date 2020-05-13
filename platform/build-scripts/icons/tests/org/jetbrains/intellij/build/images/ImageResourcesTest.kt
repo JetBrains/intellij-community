@@ -145,8 +145,7 @@ abstract class ImageResourcesTestBase {
     private fun collectModules(root: TestRoot,
                                model: JpsModel): List<JpsModule> {
       val home = getHomePath(root)
-      return model.project.modules
-        .filterNot { root == TestRoot.ULTIMATE && isCommunityModule(home, it) }
+      return model.project.modules.filterNot { root == TestRoot.ULTIMATE && isCommunityModule(home, it) }
     }
 
     private fun getHomePath(root: TestRoot): File {

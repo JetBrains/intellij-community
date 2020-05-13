@@ -1,31 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.naming;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.IntArrayList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.Nls;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +19,7 @@ import java.util.Objects;
 /**
  * @author Bas Leijdekkers
  */
-public class LambdaUnfriendlyMethodOverloadInspection extends BaseInspection {
-
+public final class LambdaUnfriendlyMethodOverloadInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -49,13 +33,6 @@ public class LambdaUnfriendlyMethodOverloadInspection extends BaseInspection {
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.unfriendly.method.overload.display.name");
   }
 
   @NotNull
@@ -117,7 +94,7 @@ public class LambdaUnfriendlyMethodOverloadInspection extends BaseInspection {
         final int max = functionalIndices.size();
         boolean equalTypes = true;
         for (int i = 0; i < max; i++) {
-          final int index = functionalIndices.get(i);
+          final int index = functionalIndices.getInt(i);
           final PsiType otherFunctionalType = otherParameters[index].getType();
           if (!LambdaUtil.isFunctionalType(otherFunctionalType)) {
             continue outer;

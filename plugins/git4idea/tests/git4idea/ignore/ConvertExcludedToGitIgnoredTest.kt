@@ -9,10 +9,12 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.TimeoutUtil
 import com.intellij.vcsUtil.VcsImplUtil
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
 import java.io.File
@@ -50,13 +52,12 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     createChildData(excluded, "excluded.txt") //Don't mark empty directories like ignored since versioning such directories not supported in Git
     PsiTestUtil.addExcludedRoot(myModule, excluded)
 
-    VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
+    generateIgnoreFileAndWaitHoldersUpdate()
     assertGitignoreValid(gitIgnore, """
     # Project exclude paths
     /exc/
     """)
 
-    refreshChanges()
     assertFalse(changeListManager.isIgnoredFile(moduleContentRoot))
     assertTrue(changeListManager.isIgnoredFile(excluded))
   }
@@ -66,13 +67,12 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     PsiTestUtil.setCompilerOutputPath(myModule, output.url, false)
     createChildData(output, "out.class")
 
-    VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
+    generateIgnoreFileAndWaitHoldersUpdate()
     assertGitignoreValid(gitIgnore, """
     # Project exclude paths
     /out/
     """)
 
-    refreshChanges()
     assertFalse(changeListManager.isIgnoredFile(moduleContentRoot))
     assertTrue(changeListManager.isIgnoredFile(output))
   }
@@ -82,13 +82,12 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     createChildData(output, "out.class")
     CompilerProjectExtension.getInstance(project)!!.compilerOutputUrl = output.url
 
-    VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
+    generateIgnoreFileAndWaitHoldersUpdate()
     assertGitignoreValid(gitIgnore, """
     # Project exclude paths
     /projectOutput/
     """)
 
-    refreshChanges()
     assertTrue(changeListManager.isIgnoredFile(output))
   }
 
@@ -99,13 +98,12 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     val moduleOutput = createChildDirectory(output, "module")
     PsiTestUtil.setCompilerOutputPath(myModule, moduleOutput.url, false)
 
-    VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
+    generateIgnoreFileAndWaitHoldersUpdate()
     assertGitignoreValid(gitIgnore, """
     # Project exclude paths
     /projectOutput/
     """)
 
-    refreshChanges()
     assertTrue(changeListManager.isIgnoredFile(output))
     assertTrue(changeListManager.isIgnoredFile(moduleOutput))
   }
@@ -118,13 +116,12 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     createChildData(moduleOutput, "out.class")
     PsiTestUtil.setCompilerOutputPath(myModule, moduleOutput.url, false)
 
-    VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
+    generateIgnoreFileAndWaitHoldersUpdate()
     assertGitignoreValid(gitIgnore, """
     # Project exclude paths
     /target/
     """)
 
-    refreshChanges()
     assertTrue(changeListManager.isIgnoredFile(excluded))
     assertTrue(changeListManager.isIgnoredFile(moduleOutput))
   }
@@ -135,19 +132,23 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     PsiTestUtil.addModule(myProject, ModuleType.EMPTY, "inner", inner)
     PsiTestUtil.addExcludedRoot(myModule, inner)
 
-    refreshChanges()
     assertFalse(changeListManager.isIgnoredFile(inner))
   }
 
-  private fun refreshChanges() {
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty()
-    if (gitIgnore.exists()) {
-      (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).createWaiter().waitFor()
-    }
-    changeListManager.ensureUpToDate()
-    val exception = changeListManager.updateException
-    if (exception != null) {
-      throw RuntimeException(exception)
+  private fun generateIgnoreFileAndWaitHoldersUpdate() {
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
+    flushIgnoreHoldersQueue()
+    val waiter = (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).createWaiter()
+    VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
+    waiter.waitFor()
+  }
+
+  private fun flushIgnoreHoldersQueue() {
+    with(VcsIgnoreManagerImpl.getInstanceImpl(project).ignoreRefreshQueue) {
+      flush()
+      while (isFlushing) {
+        TimeoutUtil.sleep(100)
+      }
     }
   }
 }

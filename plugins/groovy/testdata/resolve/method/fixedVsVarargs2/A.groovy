@@ -1,5 +1,5 @@
 class StringPutterCategory {}
 
 
-<ref>use(StringPutterCategory) {
+<caret>use(StringPutterCategory) {
 }

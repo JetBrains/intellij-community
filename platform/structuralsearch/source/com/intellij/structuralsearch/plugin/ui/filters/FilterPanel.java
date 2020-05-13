@@ -1,18 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.NamedScriptableDefinition;
-import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.ui.SimpleColoredComponent;
@@ -51,18 +50,23 @@ public class FilterPanel implements FilterTable {
   @NotNull final Project myProject;
   private CompiledPattern myCompiledPattern;
   NamedScriptableDefinition myConstraint;
-  StructuralSearchProfile myProfile;
+  LanguageFileType myFileType;
 
   final Header myHeader = new Header();
   private final ScriptFilter myScriptFilter = new ScriptFilter(this);
   private final List<FilterAction> myFilters =
-    Arrays.asList(new TextFilter(this), new CountFilter(this), new TypeFilter(this), new ReferenceFilter(this), myScriptFilter);
+    Arrays.asList(new TextFilter(this),
+                  new CountFilter(this),
+                  new TypeFilter(this),
+                  new ReferenceFilter(this),
+                  new ContextFilter(this),
+                  myScriptFilter);
   private Runnable myConstraintChangedCallback;
   boolean myValid;
 
-  public FilterPanel(@NotNull Project project, StructuralSearchProfile profile, Disposable parent) {
+  public FilterPanel(@NotNull Project project, LanguageFileType fileType, Disposable parent) {
     myProject = project;
-    myProfile = profile;
+    myFileType = fileType;
     myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
       @Nullable
       @Override
@@ -167,7 +171,9 @@ public class FilterPanel implements FilterTable {
   @Override
   @NotNull
   public StructuralSearchProfile getProfile() {
-    return myProfile;
+    final StructuralSearchProfile fileType = StructuralSearchUtil.getProfileByFileType(myFileType);
+    assert fileType != null;
+    return fileType;
   }
 
   @Override
@@ -181,15 +187,13 @@ public class FilterPanel implements FilterTable {
     if (myConstraint instanceof MatchVariableConstraint) {
       final DefaultActionGroup group = new DefaultActionGroup(myFilters);
       final DataContext context = DataManager.getInstance().getDataContext(component);
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Add Filter", group, context,
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.title"), group, context,
                                                                                   JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
                                                                                   null);
       popup.show(point);
     }
     else {
-      final AnActionEvent event =
-        AnActionEvent.createFromAnAction(myScriptFilter, null, ActionPlaces.UNKNOWN,
-                                         DataContext.EMPTY_CONTEXT);
+      final AnActionEvent event = AnActionEvent.createFromAnAction(myScriptFilter, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT);
       myScriptFilter.actionPerformed(event);
     }
   }
@@ -198,8 +202,8 @@ public class FilterPanel implements FilterTable {
     return myFilterPanel;
   }
 
-  public void setProfile(@NotNull StructuralSearchProfile profile) {
-    myProfile = profile;
+  public void setFileType(@NotNull LanguageFileType fileType) {
+    myFileType = fileType;
   }
 
   public void setCompiledPattern(@NotNull CompiledPattern compiledPattern) {
@@ -234,16 +238,18 @@ public class FilterPanel implements FilterTable {
     final String message;
     if (constraint instanceof MatchVariableConstraint) {
       message = Configuration.CONTEXT_VAR_NAME.equals(varName)
-                ? "No filters added for the whole template."
-                : "No filters added for $" + varName + "$.";
+                ? SSRBundle.message("no.filters.whole.template.label")
+                : SSRBundle.message("no.filters.for.0.label", varName);
     }
     else {
-      message = "No script added for $" + varName + "$.";
+      message = SSRBundle.message("no.script.for.0.label", varName);
     }
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
     statusText.setText(message);
     if (myValid) {
-      statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint ? "Add filter" : "Add script",
+      statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint
+                                     ? SSRBundle.message("add.filter.label")
+                                     : SSRBundle.message("add.script.label"),
                                      SimpleTextAttributes.LINK_ATTRIBUTES,
                                      e -> {
                                        final JBTable table = myFilterTable.getTable();
@@ -277,8 +283,8 @@ public class FilterPanel implements FilterTable {
       myLabel.clear();
       final String varName = myConstraint.getName();
       myLabel.append(Configuration.CONTEXT_VAR_NAME.equals(varName)
-                     ? "Filters for the whole template:"
-                     : "Filters for $" + varName + "$:",
+                     ? SSRBundle.message("filters.for.whole.template.title")
+                     : SSRBundle.message("filters.for.0.title", varName),
                      SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return myLabel;
     }

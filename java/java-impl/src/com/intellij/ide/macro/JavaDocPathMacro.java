@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.javadoc.JavadocConfiguration;
 import com.intellij.javadoc.JavadocGenerationManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public final class JavaDocPathMacro extends Macro {
+final class JavaDocPathMacro extends Macro {
   @NotNull
   @Override
   public String getName() {
@@ -21,20 +21,22 @@ public final class JavaDocPathMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.javadoc.output.directory");
+    return JavaBundle.message("macro.javadoc.output.directory");
   }
 
   @Override
   public String expand(@NotNull DataContext dataContext) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }
-    JavadocGenerationManager manager = project.getComponent(JavadocGenerationManager.class);
+
+    JavadocGenerationManager manager = project.getService(JavadocGenerationManager.class);
     if (manager == null) {
       return null;
     }
-    final JavadocConfiguration configuration = manager.getConfiguration();
+
+    JavadocConfiguration configuration = manager.getConfiguration();
     return configuration.OUTPUT_DIRECTORY == null ? null : configuration.OUTPUT_DIRECTORY.replace('/', File.separatorChar);
   }
 }

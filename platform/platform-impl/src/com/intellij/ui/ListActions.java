@@ -1,22 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JList;
+import javax.swing.*;
 
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class ListActions extends SwingActionDelegate {
   private ListActions(String actionId) {
     super(actionId);
   }
 
+  @Nullable
   @Override
   protected JList getComponent(AnActionEvent event) {
     JList list = tryCast(super.getComponent(event), JList.class);

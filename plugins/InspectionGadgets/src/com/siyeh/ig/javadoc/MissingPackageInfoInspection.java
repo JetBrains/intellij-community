@@ -20,7 +20,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,19 +36,11 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
     return new LocalMissingPackageInfoInspection(this);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("missing.package.info.display.name");
-  }
-
-  @Nullable
-  @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext) {
     if (!(refEntity instanceof RefPackage)) {
       return null;
     }
@@ -111,7 +102,7 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
         @NotNull
         @Override
         public String getFamilyName() {
-          return "Create 'package-info.java'";
+          return InspectionGadgetsBundle.message("create.package.info.java.family.name");
         }
 
         @Override

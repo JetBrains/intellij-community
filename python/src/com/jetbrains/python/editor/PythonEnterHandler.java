@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -49,33 +35,6 @@ import java.util.regex.Matcher;
  */
 public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private int myPostprocessShift = 0;
-
-  public static final Class[] IMPLICIT_WRAP_CLASSES = new Class[] {
-    PyListLiteralExpression.class,
-    PySetLiteralExpression.class,
-    PyDictLiteralExpression.class,
-    PyDictLiteralExpression.class,
-    PyParenthesizedExpression.class,
-    PyArgumentList.class,
-    PyParameterList.class
-  };
-
-  private static final Class[] WRAPPABLE_CLASSES = new Class[]{
-    PsiComment.class,
-    PyParenthesizedExpression.class,
-    PyListCompExpression.class,
-    PyDictCompExpression.class,
-    PySetCompExpression.class,
-    PyDictLiteralExpression.class,
-    PySetLiteralExpression.class,
-    PyListLiteralExpression.class,
-    PyArgumentList.class,
-    PyParameterList.class,
-    PyDecoratorList.class,
-    PySliceExpression.class,
-    PySubscriptionExpression.class,
-    PyGeneratorExpression.class
-  };
 
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
@@ -156,7 +115,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
         myPostprocessShift = pref.length() + quote.length();
 
-        if (PsiTreeUtil.getParentOfType(stringElement, IMPLICIT_WRAP_CLASSES) != null) {
+        if (PsiTreeUtil.getParentOfType(stringElement, PyEditorHandlerConfig.IMPLICIT_WRAP_CLASSES) != null) {
           doc.insertString(offset, quote + pref + quote);
           caretOffset.set(caretOffset.get() + 1);
         }
@@ -240,7 +199,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     PsiElement wrappableAfter = findWrappable(nodeAtCaret, false);
     if (!(wrappableBefore instanceof PsiComment)) {
       while (wrappableBefore != null) {
-        PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, WRAPPABLE_CLASSES);
+        PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, PyEditorHandlerConfig.WRAPPABLE_CLASSES);
         if (next == null) {
           break;
         }
@@ -249,7 +208,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
     if (!(wrappableAfter instanceof PsiComment)) {
       while (wrappableAfter != null) {
-        PsiElement next = PsiTreeUtil.getParentOfType(wrappableAfter, WRAPPABLE_CLASSES);
+        PsiElement next = PsiTreeUtil.getParentOfType(wrappableAfter, PyEditorHandlerConfig.WRAPPABLE_CLASSES);
         if (next == null) {
           break;
         }
@@ -288,8 +247,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   @Nullable
   private static PsiElement findWrappable(ASTNode nodeAtCaret, boolean before) {
     PsiElement wrappable = before
-                                 ? findBeforeCaret(nodeAtCaret, WRAPPABLE_CLASSES)
-                                 : findAfterCaret(nodeAtCaret, WRAPPABLE_CLASSES);
+                                 ? findBeforeCaret(nodeAtCaret, PyEditorHandlerConfig.WRAPPABLE_CLASSES)
+                                 : findAfterCaret(nodeAtCaret, PyEditorHandlerConfig.WRAPPABLE_CLASSES);
     if (wrappable == null) {
       PsiElement emptyTuple = before
                               ? findBeforeCaret(nodeAtCaret, PyTupleExpression.class)
@@ -332,7 +291,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   @Nullable
-  private static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
+  private static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, Class<? extends T> @NotNull ... classes) {
     PsiElement run = element;
     while (run != null) {
       for (Class<? extends T> aClass : classes) {

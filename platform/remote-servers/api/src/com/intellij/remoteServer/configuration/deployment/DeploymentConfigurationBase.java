@@ -8,9 +8,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class DeploymentConfigurationBase<Self extends DeploymentConfigurationBase> extends DeploymentConfiguration
   implements PersistentStateComponent<Self> {
   @Override

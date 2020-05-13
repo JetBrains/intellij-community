@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManager;
@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class TogglePresentationModeAction extends AnAction implements DumbAware {
+public final class TogglePresentationModeAction extends AnAction implements DumbAware {
   private static final Map<Object, Object> ourSavedValues = new LinkedHashMap<>();
   private static float ourSavedScaleFactor = JBUIScale.scale(1f);
   private static int ourSavedConsoleFontSize;
@@ -56,13 +56,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     setPresentationMode(project, !settings.getPresentationMode());
   }
 
-  //public static void restorePresentationMode() {
-  //  UISettings instance = UISettings.getInstance();
-  //  tweakUIDefaults(instance, true);
-  //  tweakEditorAndFireUpdateUI(instance, true);
-  //}
-
-  public static void setPresentationMode(final Project project, final boolean inPresentation) {
+  public static void setPresentationMode(@Nullable Project project, boolean inPresentation) {
     final UISettings settings = UISettings.getInstance();
     settings.setPresentationMode(inPresentation);
 
@@ -157,14 +151,13 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     }
   }
 
-  private static boolean hideAllToolWindows(ToolWindowManagerEx manager) {
+  private static boolean hideAllToolWindows(@NotNull ToolWindowManagerEx manager) {
     // to clear windows stack
     manager.clearSideStack();
 
-    String[] ids = manager.getToolWindowIds();
     boolean hasVisible = false;
-    for (String id : ids) {
-      final ToolWindow toolWindow = manager.getToolWindow(id);
+    for (String id : manager.getToolWindowIds()) {
+      ToolWindow toolWindow = manager.getToolWindow(id);
       if (toolWindow.isVisible()) {
         toolWindow.hide(null);
         hasVisible = true;
@@ -177,8 +170,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     if (project == null) return false;
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
 
-    DesktopLayout layout = new DesktopLayout();
-    layout.copyFrom(manager.getLayout());
+    DesktopLayout layout = manager.getLayout().copy();
     boolean hasVisible = hideAllToolWindows(manager);
 
     if (hasVisible) {
@@ -189,7 +181,10 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
   }
 
   static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
-    if (project == null || !needsRestore) return;
+    if (project == null || !needsRestore) {
+      return;
+    }
+
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
     if (!inPresentation && restoreLayout != null) {

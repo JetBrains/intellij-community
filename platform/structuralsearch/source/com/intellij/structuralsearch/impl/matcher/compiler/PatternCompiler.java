@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.reference.SoftReference;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -46,40 +46,25 @@ import java.util.regex.Pattern;
  * Compiles the handlers for usability
  */
 public class PatternCompiler {
-  private static final Object LOCK = new Object();
-  private static SoftReference<CompiledPattern> ourLastCompiledPattern;
-  private static MatchOptions ourLastMatchOptions;
-  private static boolean ourLastCompileSuccessful = true;
+
+  private static final Logger LOG = Logger.getInstance(PatternCompiler.class);
   private static String ourLastSearchPlan;
 
-  public static CompiledPattern compilePattern(Project project, MatchOptions options,
-                                               boolean checkForErrors, boolean optimizeScope)
+  public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
-    if (!checkForErrors) {
-      synchronized (LOCK) {
-        if (options.equals(ourLastMatchOptions) &&
-            (!(options.getScope() instanceof GlobalSearchScope) || options.getScope() == ourLastMatchOptions.getScope())) {
-          if (!ourLastCompileSuccessful) return null;
-          assert ourLastCompiledPattern != null;
-          final CompiledPattern lastCompiledPattern = ourLastCompiledPattern.get();
-          if (lastCompiledPattern != null) {
-            return lastCompiledPattern;
-          }
-        }
-      }
-    }
-    return !ApplicationManager.getApplication().isDispatchThread()
-           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope))
-           : doCompilePattern(project, options, checkForErrors, optimizeScope);
+    return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
   }
 
-  @NotNull
+  @Nullable
   private static CompiledPattern doCompilePattern(Project project, MatchOptions options,
                                                   boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
-    assert profile != null : "no profile found for " + options.getFileType().getDescription();
+    if (profile == null) {
+      LOG.warn("no profile found for " + options.getFileType().getDescription());
+      return null;
+    }
     final CompiledPattern result = profile.createCompiledPattern();
 
     final String[] prefixes = result.getTypedVarPrefixes();
@@ -90,22 +75,8 @@ public class PatternCompiler {
     try {
       final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes, checkForErrors);
       final CompiledPattern pattern = context.getPattern();
-      try {
-        checkForUnknownVariables(pattern, elements);
-        pattern.setNodes(elements);
-        synchronized (LOCK) {
-          ourLastMatchOptions = options.copy();
-          ourLastCompiledPattern = new SoftReference<>(result);
-          ourLastCompileSuccessful = true;
-        }
-      } catch (MalformedPatternException e) {
-        synchronized (LOCK) {
-          ourLastMatchOptions = options.copy();
-          ourLastCompiledPattern = null;
-          ourLastCompileSuccessful = false;
-        }
-        throw e;
-      }
+      checkForUnknownVariables(pattern, elements);
+      pattern.setNodes(elements);
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
       }
@@ -146,7 +117,7 @@ public class PatternCompiler {
       pattern.putVariableNode(Configuration.CONTEXT_VAR_NAME, element);
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
             return;
           }
@@ -172,7 +143,7 @@ public class PatternCompiler {
       });
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           collectNode(element, element.getUserData(CompiledPattern.HANDLER_KEY));
           super.visitElement(element);
 
@@ -203,7 +174,7 @@ public class PatternCompiler {
                                                        MatchOptions options,
                                                        CompiledPattern pattern,
                                                        CompileContext context,
-                                                       @NotNull String[] applicablePrefixes,
+                                                       String @NotNull [] applicablePrefixes,
                                                        boolean checkForErrors) throws MalformedPatternException {
     if (applicablePrefixes.length == 0) {
       return Collections.emptyList();
@@ -318,13 +289,12 @@ public class PatternCompiler {
            null;
   }
 
-  @NotNull
-  private static int[] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
+  private static int @NotNull [] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
     final TIntHashSet result = new TIntHashSet();
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
 
         if (element instanceof LeafElement) {
@@ -364,7 +334,7 @@ public class PatternCompiler {
 
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitErrorElement(PsiErrorElement element) {
+      public void visitErrorElement(@NotNull PsiErrorElement element) {
         super.visitErrorElement(element);
 
         final int startOffset = element.getTextRange().getStartOffset();
@@ -409,7 +379,7 @@ public class PatternCompiler {
   private static class ArrayPrefixProvider implements PrefixProvider {
     private final String[] myPrefixes;
 
-    ArrayPrefixProvider(@NotNull String[] prefixes) {
+    ArrayPrefixProvider(String @NotNull [] prefixes) {
       myPrefixes = prefixes;
     }
 
@@ -554,8 +524,11 @@ public class PatternCompiler {
 
     final PsiElement[] patternElements;
     try {
-      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
-                                                           options.getDialect(), options.getPatternContext(), project, false);
+      PatternContextInfo contextInfo = new PatternContextInfo(PatternTreeContext.Block,
+                                                              options.getPatternContext(),
+                                                              constraint != null ? constraint.getContextConstraint() : null);
+      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), contextInfo, options.getFileType(),
+                                                           options.getDialect(), project, false);
       if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
     }
     catch (IncorrectOperationException e) {

@@ -10,9 +10,6 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
   public void testRenameFile() {
     final VirtualFile file = createFile("file.txt");

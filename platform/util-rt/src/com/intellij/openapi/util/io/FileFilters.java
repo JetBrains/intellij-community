@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileFilter;
 
-/**
- * @author nik
- */
 public class FileFilters {
   private FileFilters() { }
 

@@ -351,19 +351,24 @@ public class SyncScrollSupport {
       if (master.getDocument().getTextLength() == 0) return;
 
       Rectangle viewRect = master.getScrollingModel().getVisibleArea();
-      int middleY = viewRect.height / 3;
       int lineHeight = master.getLineHeight();
 
       boolean onlyMajorForward = false;
       boolean onlyMajorBackward = false;
       int offset;
       if (myAnchor == null) {
-        int masterVisualLine = master.yToVisualLine(viewRect.y + middleY);
+        int middleY = viewRect.height / 3;
+        int masterOffset = viewRect.y + middleY;
+
+        int masterVisualLine = master.yToVisualLine(masterOffset);
         int convertedVisualLine = transferVisualLine(masterVisualLine);
 
-        int pointY = slave.visualLineToY(convertedVisualLine);
-        int correction = (viewRect.y + middleY) % lineHeight;
-        offset = pointY - middleY + correction;
+        int slaveOffset = slave.visualLineToY(convertedVisualLine);
+        int masterOffsetRaw = master.visualLineToY(masterVisualLine);
+        // ensure that anchor lines are in the same phase
+        int correction = (masterOffset - masterOffsetRaw) % lineHeight;
+
+        offset = slaveOffset - middleY + correction;
 
         onlyMajorBackward = correction < lineHeight / 2 && masterVisualLine > 0 &&
                             convertedVisualLine == transferVisualLine(masterVisualLine - 1);
@@ -441,18 +446,16 @@ public class SyncScrollSupport {
     return header == null ? 0 : header.getHeight();
   }
 
-  @NotNull
-  public static int[] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
-                                       int startLine1, int endLine1, int startLine2, int endLine2,
-                                       int preferredTopShift) {
+  public static int @NotNull [] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
+                                                 int startLine1, int endLine1, int startLine2, int endLine2,
+                                                 int preferredTopShift) {
     return getTargetOffsets(new Editor[]{editor1, editor2},
                             new int[]{startLine1, startLine2},
                             new int[]{endLine1, endLine2},
                             preferredTopShift);
   }
 
-  @NotNull
-  private static int[] getTargetOffsets(@NotNull Editor[] editors, int[] startLines, int[] endLines, int preferredTopShift) {
+  private static int @NotNull [] getTargetOffsets(Editor @NotNull [] editors, int[] startLines, int[] endLines, int preferredTopShift) {
     int count = editors.length;
     assert startLines.length == count;
     assert endLines.length == count;

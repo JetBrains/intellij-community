@@ -4,8 +4,13 @@
 package com.intellij.analysis.dialog;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -23,18 +28,26 @@ public class ModuleScopeItemPresenter implements ModelScopeItemPresenter {
   public JRadioButton getButton(ModelScopeItem m) {
     ModuleScopeItem model = (ModuleScopeItem) m;
     JRadioButton button = new JRadioButton();
-    button.setText(AnalysisScopeBundle.message("scope.option.module.with.mnemonic", model.Module.getName()));
+    button.setText(CodeInsightBundle.message("scope.option.module.with.mnemonic", model.Module.getName()));
     return button;
   }
 
   @NotNull
   @Override
-  public List<JComponent> getAdditionalComponents(JRadioButton b, ModelScopeItem m) {
+  public List<JComponent> getAdditionalComponents(JRadioButton b, ModelScopeItem m, Disposable dialogDisposable) {
     return Collections.emptyList();
   }
 
   @Override
   public boolean isApplicable(ModelScopeItem model) {
     return model instanceof ModuleScopeItem;
+  }
+
+  @Override
+  public @Nullable ModelScopeItem tryCreate(@NotNull Project project,
+                                            @NotNull AnalysisScope scope,
+                                            @Nullable Module module,
+                                            @Nullable PsiElement context) {
+    return ModuleScopeItem.tryCreate(module);
   }
 }

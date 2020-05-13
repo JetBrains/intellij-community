@@ -145,3 +145,13 @@ class Switch {
     }
   }
 }
+class Sample {
+  public static void main(String[] args) {
+    try {
+      throw new NullPointerException("1");
+    } finally {
+      System.out.println("boom");
+      return; //helps to avoid NullPointerException if present
+    }
+  }
+}

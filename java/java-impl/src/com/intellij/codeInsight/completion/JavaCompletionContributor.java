@@ -1,30 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
@@ -36,9 +40,9 @@ import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -57,13 +61,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionContributor");
+  private static final Logger LOG = Logger.getInstance(JavaCompletionContributor.class);
 
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
@@ -378,7 +381,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static void registerClassFromTypeElement(LookupElement element, JavaCompletionSession session) {
-    PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
+    PsiType type = Objects.requireNonNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
     if (type instanceof PsiPrimitiveType) {
       session.registerKeyword(type.getCanonicalText(false));
     }
@@ -423,7 +426,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public static void advertiseSecondCompletion(Project project, CompletionResultSet result) {
     if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.SECOND_BASIC_COMPLETION, project)) {
-      result.addLookupAdvertisement("Press " + CompletionUtil.getActionShortcut(IdeActions.ACTION_CODE_COMPLETION) + " to see non-imported classes");
+      result.addLookupAdvertisement(JavaBundle.message("press.0.to.see.non.imported.classes",
+                                                             KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION)));
     }
   }
 
@@ -503,9 +507,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
 
       final Object[] variants = reference.getVariants();
-      //noinspection ConstantConditions
       if (variants == null) {
         LOG.error("Reference=" + reference);
+        return;
       }
       for (Object completion : variants) {
         if (completion == null) {
@@ -576,13 +580,13 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   public static boolean mayStartClassName(CompletionResultSet result) {
-    return StringUtil.isNotEmpty(result.getPrefixMatcher().getPrefix());
+    return InternalCompletionSettings.getInstance().mayStartClassNameCompletion(result);
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,
                                                       CompletionParameters parameters) {
     PsiNameValuePair pair = PsiTreeUtil.getParentOfType(insertedElement, PsiNameValuePair.class);
-    PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)assertNotNull(pair).getParent();
+    PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)Objects.requireNonNull(pair).getParent();
     PsiAnnotation anno = (PsiAnnotation)parameterList.getParent();
     boolean showClasses = psiElement().afterLeaf("(").accepts(insertedElement);
     PsiClass annoClass = null;
@@ -616,7 +620,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         final String attrName = method.getName();
         for (PsiNameValuePair existingAttr : existingPairs) {
           if (PsiTreeUtil.isAncestor(existingAttr, insertedElement, false)) break;
-          if (Comparing.equal(existingAttr.getName(), attrName) ||
+          if (Objects.equals(existingAttr.getName(), attrName) ||
               PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attrName) && existingAttr.getName() == null) continue methods;
         }
         LookupElementBuilder element = LookupElementBuilder.createWithIcon(method)
@@ -657,9 +661,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       PsiElement position = parameters.getPosition();
       if (psiElement().withParent(psiReferenceExpression().withFirstChild(psiReferenceExpression().referencing(psiClass()))).accepts(position)) {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
-          final String shortcut = CompletionUtil.getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
+          final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
-            return "Pressing " + shortcut + " twice without a class qualifier would show all accessible static methods";
+            return JavaBundle.message("pressing.0.twice.without.a.class.qualifier", shortcut);
           }
         }
       }
@@ -667,9 +671,9 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (parameters.getCompletionType() != CompletionType.SMART && shouldSuggestSmartCompletion(parameters.getPosition())) {
       if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL)) {
-        final String shortcut = CompletionUtil.getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+        final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
         if (StringUtil.isNotEmpty(shortcut)) {
-          return CompletionBundle.message("completion.smart.hint", shortcut);
+          return JavaBundle.message("completion.smart.hint", shortcut);
         }
       }
     }
@@ -678,24 +682,24 @@ public class JavaCompletionContributor extends CompletionContributor {
       final PsiType[] psiTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
       if (psiTypes.length > 0) {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR)) {
-          final String shortcut = CompletionUtil.getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
             for (final PsiType psiType : psiTypes) {
               final PsiType type = PsiUtil.extractIterableTypeParameter(psiType, false);
               if (type != null) {
-                return CompletionBundle.message("completion.smart.aslist.hint", shortcut, type.getPresentableText());
+                return JavaBundle.message("completion.smart.aslist.hint", shortcut, type.getPresentableText());
               }
             }
           }
         }
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_ASLIST)) {
-          final String shortcut = CompletionUtil.getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
             for (final PsiType psiType : psiTypes) {
               if (psiType instanceof PsiArrayType) {
                 final PsiType componentType = ((PsiArrayType)psiType).getComponentType();
                 if (!(componentType instanceof PsiPrimitiveType)) {
-                  return CompletionBundle.message("completion.smart.toar.hint", shortcut, componentType.getPresentableText());
+                  return JavaBundle.message("completion.smart.toar.hint", shortcut, componentType.getPresentableText());
                 }
               }
             }
@@ -703,9 +707,9 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
 
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN)) {
-          final String shortcut = CompletionUtil.getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
-            return CompletionBundle.message("completion.smart.chain.hint", shortcut);
+            return JavaBundle.message("completion.smart.chain.hint", shortcut);
           }
         }
       }
@@ -744,12 +748,12 @@ public class JavaCompletionContributor extends CompletionContributor {
 
           if (deepComponentType instanceof PsiClassType) {
             if (((PsiClassType)deepComponentType).resolve() != null) {
-              return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
+              return JavaBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
             }
-            return CompletionBundle.message("completion.unknown.type", expectedType) + suffix;
+            return JavaBundle.message("completion.unknown.type", expectedType) + suffix;
           }
           if (!PsiType.NULL.equals(type)) {
-            return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
+            return JavaBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
           }
         }
       }
@@ -759,7 +763,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   @Override
   public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
-    return typeChar == ':' && JavaTokenType.COLON == position.getNode().getElementType();
+    return typeChar == ':' && JavaTokenType.COLON == PsiUtilCore.getElementType(position);
   }
 
   private static boolean shouldSuggestSmartCompletion(final PsiElement element) {
@@ -840,7 +844,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
     }
 
-    if (semicolonNeeded(context.getEditor(), file, offset)) {
+    if (semicolonNeeded(file, offset)) {
       return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";";
     }
 
@@ -852,54 +856,66 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public static boolean semicolonNeeded(Editor editor, PsiFile file, int startOffset) {
+  public static boolean semicolonNeeded(PsiFile file, int startOffset) {
+    return semicolonNeeded(null, file, startOffset);
+  }
+
+  /**
+   * @deprecated use {@link #semicolonNeeded(PsiFile, int)}
+   */
+  @Deprecated
+  public static boolean semicolonNeeded(@Nullable Editor editor, PsiFile file, int startOffset) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
     if (ref != null && !(ref instanceof PsiReferenceExpression)) {
       if (ref.getParent() instanceof PsiTypeElement) {
         return true;
       }
     }
-    if (psiElement(PsiIdentifier.class).withParent(psiParameter()).accepts(file.findElementAt(startOffset))) {
+    PsiElement at = file.findElementAt(startOffset);
+    if (psiElement(PsiIdentifier.class).withParent(psiParameter()).accepts(at)) {
       return true;
     }
 
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);
-    if (iterator.atEnd()) return false;
-
-    if (iterator.getTokenType() == JavaTokenType.IDENTIFIER) {
-      iterator.advance();
+    if (PsiUtilCore.getElementType(at) == JavaTokenType.IDENTIFIER) {
+      at = PsiTreeUtil.nextLeaf(at);
     }
 
-    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
-      iterator.advance();
-    }
+    at = skipWhitespacesAndComments(at);
 
-    if (!iterator.atEnd() &&
-        iterator.getTokenType() == JavaTokenType.LPARENTH &&
+    if (PsiUtilCore.getElementType(at) == JavaTokenType.LPARENTH &&
         PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
       // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }
 
-    if (!iterator.atEnd() &&
-        iterator.getTokenType() == JavaTokenType.COLON &&
+    if (PsiUtilCore.getElementType(at) == JavaTokenType.COLON &&
         PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiConditionalExpression.class, false) == null) {
       return true;
     }
 
-    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
-      iterator.advance();
+    at = skipWhitespacesAndComments(at);
+
+    if (PsiUtilCore.getElementType(at) != JavaTokenType.IDENTIFIER) {
+      return false;
     }
 
-    if (iterator.atEnd() || iterator.getTokenType() != JavaTokenType.IDENTIFIER) return false;
-    iterator.advance();
+    at = PsiTreeUtil.nextLeaf(at);
+    at = skipWhitespacesAndComments(at);
 
-    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
-      iterator.advance();
+    // <caret> foo = something, we don't want the reference to be treated as a type
+    return at != null && at.getNode().getElementType() == JavaTokenType.EQ;
+  }
+
+  @Nullable
+  private static PsiElement skipWhitespacesAndComments(@Nullable PsiElement at) {
+    PsiElement nextLeaf = at;
+    while (nextLeaf != null && (nextLeaf instanceof PsiWhiteSpace ||
+                                nextLeaf instanceof PsiComment ||
+                                nextLeaf instanceof PsiErrorElement ||
+                                nextLeaf.getTextLength() == 0)) {
+      nextLeaf = PsiTreeUtil.nextLeaf(nextLeaf, true);
     }
-    if (iterator.atEnd()) return false;
-
-    return iterator.getTokenType() == JavaTokenType.EQ; // <caret> foo = something, we don't want the reference to be treated as a type
+    return nextLeaf;
   }
 
   private static void autoImport(@NotNull final PsiFile file, int offset, @NotNull final Editor editor) {
@@ -928,7 +944,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       element = qualifier;
     }
     if (!(element.getParent() instanceof PsiMethodCallExpression) && element.multiResolve(true).length == 0) {
-      new ImportClassFix(element).doFix(editor, false, false);
+      new ImportClassFix(element).fixSilently(editor);
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     }
   }
@@ -975,21 +991,31 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (requires) {
           Module module = ModuleUtilCore.findModuleForFile(originalFile);
           if (module != null) {
+            scope = GlobalSearchScope.projectScope(project);
+            for (String name : JavaSourceModuleNameIndex.getAllKeys(project)) {
+              if (JavaSourceModuleNameIndex.getFilesByKey(name, scope).size() > 0) {
+                addAutoModuleReference(name, parent, filter, result);
+              }
+            }
             VirtualFile[] roots = ModuleRootManager.getInstance(module).orderEntries().withoutSdk().librariesOnly().getClassesRoots();
             scope = GlobalSearchScope.filesScope(project, Arrays.asList(roots));
             for (String name : JavaAutoModuleNameIndex.getAllKeys(project)) {
-              if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0 &&
-                  PsiNameHelper.isValidModuleName(name, parent) &&
-                  filter.add(name)) {
-                LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
-                lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
-                lookup = PrioritizedLookupElement.withPriority(lookup, -1);
-                result.addElement(lookup);
+              if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0) {
+                addAutoModuleReference(name, parent, filter, result);
               }
             }
           }
         }
       }
+    }
+  }
+
+  private static void addAutoModuleReference(String name, PsiElement parent, Set<String> filter, CompletionResultSet result) {
+    if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
+      LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
+      lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
+      lookup = PrioritizedLookupElement.withPriority(lookup, -1);
+      result.addElement(lookup);
     }
   }
 

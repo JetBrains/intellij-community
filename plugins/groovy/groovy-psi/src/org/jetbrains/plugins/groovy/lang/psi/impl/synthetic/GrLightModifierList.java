@@ -89,9 +89,8 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getRawAnnotations() {
+  public GrAnnotation @NotNull [] getRawAnnotations() {
     return getAnnotations();
   }
 
@@ -101,14 +100,12 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   @Override
-  @NotNull
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return myAnnotations.toArray(GrAnnotation.EMPTY_ARRAY);
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return getAnnotations();
   }
 
@@ -176,8 +173,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getModifiers() {
+  public PsiElement @NotNull [] getModifiers() {
     return PsiElement.EMPTY_ARRAY;
   }
 

@@ -16,7 +16,7 @@
 package com.intellij.projectImport;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -76,7 +76,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
   }
 
   protected String getTitle() {
-    return IdeBundle.message("project.import.wizard.title", getName());
+    return JavaUiBundle.message("project.import.wizard.title", getName());
   }
 
   @Override

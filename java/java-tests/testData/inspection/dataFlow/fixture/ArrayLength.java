@@ -1,6 +1,11 @@
 import java.util.Arrays;
 
 public final class ArrayLength {
+  public static void diff(String[] args, String[] args2) {
+    String[] arr = new String[args2.length - args.length];
+    if (arr.length > 0) {}
+  }
+  
   void testForSimple2(int[] arr, int[][] arr2) {
     boolean b = arr2[0].length == arr.length;
     for(int i=0; i<arr.length; i++) {

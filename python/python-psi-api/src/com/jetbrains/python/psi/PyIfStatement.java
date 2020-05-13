@@ -22,5 +22,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PyIfStatement extends PyStatementWithElse {
   @NotNull PyIfPart getIfPart();
-  @NotNull PyIfPart[] getElifParts();
+  PyIfPart @NotNull [] getElifParts();
 }

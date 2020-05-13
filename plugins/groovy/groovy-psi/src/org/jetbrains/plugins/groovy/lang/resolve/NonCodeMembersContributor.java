@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -16,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
-import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,8 +76,21 @@ import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContr
 public abstract class NonCodeMembersContributor {
   public static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
 
-  private static volatile MultiMap<String, NonCodeMembersContributor> ourClassSpecifiedContributors;
-  private static NonCodeMembersContributor[] ourAllTypeContributors;
+  static {
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<NonCodeMembersContributor>() {
+      @Override
+      public void extensionAdded(@NotNull NonCodeMembersContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull NonCodeMembersContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+    }, null);
+  }
+
+  private static volatile Cache cache;
 
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      @NotNull PsiScopeProcessor processor,
@@ -108,8 +122,12 @@ public abstract class NonCodeMembersContributor {
     return className == null ? Collections.emptyList() : Collections.singletonList(className);
   }
 
+  private static void dropCache() {
+    cache = null;
+  }
+
   private static void ensureInit() {
-    if (ourClassSpecifiedContributors != null) return;
+    if (cache != null) return;
 
     final Collection<NonCodeMembersContributor> allTypeContributors = new ArrayList<>();
     final MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<>();
@@ -124,8 +142,7 @@ public abstract class NonCodeMembersContributor {
         }
       }
     }
-    ourAllTypeContributors = allTypeContributors.toArray(new NonCodeMembersContributor[0]);
-    ourClassSpecifiedContributors = contributorMap;
+    cache = new Cache(contributorMap, allTypeContributors.toArray(new NonCodeMembersContributor[0]));
   }
 
   @NotNull
@@ -133,10 +150,10 @@ public abstract class NonCodeMembersContributor {
     final List<NonCodeMembersContributor> result = new ArrayList<>();
     if (clazz != null) {
       for (String superClassName : ClassUtil.getSuperClassesWithCache(clazz).keySet()) {
-        result.addAll(ourClassSpecifiedContributors.get(superClassName));
+        result.addAll(cache.classSpecifiedContributors.get(superClassName));
       }
     }
-    ContainerUtil.addAll(result, ourAllTypeContributors);
+    ContainerUtil.addAll(result, cache.allTypeContributors);
     return result;
   }
 
@@ -147,7 +164,6 @@ public abstract class NonCodeMembersContributor {
     ensureInit();
 
     final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
-    if (TransformationUtilKt.isUnderTransformation(aClass)) return true;
 
     final Iterable<? extends PsiScopeProcessor> unwrappedOriginals = MultiProcessor.allProcessors(processor);
     for (PsiScopeProcessor each : unwrappedOriginals) {
@@ -202,6 +218,17 @@ public abstract class NonCodeMembersContributor {
     @Override
     public Iterable<? extends PsiScopeProcessor> getProcessors() {
       return MultiProcessor.allProcessors(getDelegate());
+    }
+  }
+
+  private static final class Cache {
+    public final MultiMap<String, NonCodeMembersContributor> classSpecifiedContributors;
+    public final NonCodeMembersContributor[] allTypeContributors;
+
+    private Cache(MultiMap<String, NonCodeMembersContributor> classSpecifiedContributors,
+                  NonCodeMembersContributor[] allTypeContributors) {
+      this.classSpecifiedContributors = classSpecifiedContributors;
+      this.allTypeContributors = allTypeContributors;
     }
   }
 }

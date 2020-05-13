@@ -52,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
+  private static final Logger LOG = Logger.getInstance(MethodReturnTypeFix.class);
 
   private final SmartTypePointer myReturnTypePointer;
   private final boolean myFixWholeHierarchy;
@@ -153,7 +153,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @NotNull
-  private static List<PsiType> getReturnTypes(@NotNull PsiType[] types, @NotNull PsiType defaultType) {
+  private static List<PsiType> getReturnTypes(PsiType @NotNull [] types, @NotNull PsiType defaultType) {
     Map<String, PsiType> map = new THashMap<>();
     String defaultTypeKey = serialize(defaultType);
     map.put(defaultTypeKey, defaultType);
@@ -391,7 +391,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     private UsagesAwareChangeSignatureProcessor(final Project project, final PsiMethod method, final boolean generateDelegate,
                                                 @PsiModifier.ModifierConstant final String newVisibility, final String newName, final PsiType newType,
-                                                @NotNull final ParameterInfoImpl[] parameterInfo, final UsageVisitor usageVisitor) {
+                                                final ParameterInfoImpl @NotNull [] parameterInfo, final UsageVisitor usageVisitor) {
       super(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo);
       myUsageVisitor = usageVisitor;
     }
@@ -402,7 +402,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
 
     @Override
-    protected void performRefactoring(@NotNull final UsageInfo[] usages) {
+    protected void performRefactoring(final UsageInfo @NotNull [] usages) {
       super.performRefactoring(usages);
 
       for (UsageInfo usage : usages) {

@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class OpenTHashSet<T> extends THashSet<T> {
     super(ts, strategy);
   }
 
-  public OpenTHashSet(@NotNull TObjectHashingStrategy<T> strategy, @NotNull T... ts) {
+  public OpenTHashSet(@NotNull TObjectHashingStrategy<T> strategy, T @NotNull ... ts) {
     super(Arrays.asList(ts), strategy);
   }
 
@@ -82,5 +83,23 @@ public class OpenTHashSet<T> extends THashSet<T> {
   public T get(final T obj) {
     final int index = index(obj);
     return index < 0 ? null : get(index);
+  }
+
+  /**
+   * Returns an element of this set equal to the given one, or adds the given one to the set and returns it.
+   * Can be used for interning objects to save memory.
+   */
+  @Contract("!null -> !null")
+  public T getOrAdd(final T obj) {
+    final int index = insertionIndex(obj);
+
+    boolean alreadyStored = index < 0;
+    if (alreadyStored) return get(-index - 1);
+
+    Object old = _set[index];
+    _set[index] = obj;
+
+    postInsertHook(old == null);
+    return obj;
   }
 }

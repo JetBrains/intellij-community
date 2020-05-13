@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +44,7 @@ class ServiceViewTree extends Tree {
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new ServiceViewTreeCellRenderer());
-    UIUtil.putClientProperty(this, ANIMATION_IN_RENDERER_ALLOWED, true);
+    ComponentUtil.putClientProperty(this, ANIMATION_IN_RENDERER_ALLOWED, true);
 
     // listeners
     new TreeSpeedSearch(this, DISPLAY_NAME_CONVERTER, true);
@@ -53,7 +52,7 @@ class ServiceViewTree extends Tree {
     mouseListener.installOn(this);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         TreePath path = getPathForLocation(e.getX(), e.getY());
         if (path == null) return false;
 
@@ -80,6 +79,7 @@ class ServiceViewTree extends Tree {
       myDescriptor = value instanceof ServiceViewItem ? ((ServiceViewItem)value).getViewDescriptor() : null;
       myComponent = tree;
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+      myDescriptor = null;
     }
 
     @Nullable
@@ -89,13 +89,7 @@ class ServiceViewTree extends Tree {
       if (!(node instanceof ServiceViewItem)) return null;
 
       ServiceViewOptions viewOptions = DataManager.getInstance().getDataContext(myComponent).getData(ServiceViewActionUtils.OPTIONS_KEY);
-      ServiceViewDescriptor viewDescriptor = ((ServiceViewItem)node).getViewDescriptor();
-      ItemPresentation presentation =
-        viewOptions == null ? viewDescriptor.getPresentation() : viewDescriptor.getCustomPresentation(viewOptions);
-      return presentation instanceof PresentationData ? presentation : new PresentationData(presentation.getPresentableText(),
-                                                                                            presentation.getLocationString(),
-                                                                                            presentation.getIcon(false),
-                                                                                            null);
+      return ((ServiceViewItem)node).getItemPresentation(viewOptions);
     }
 
     @Override

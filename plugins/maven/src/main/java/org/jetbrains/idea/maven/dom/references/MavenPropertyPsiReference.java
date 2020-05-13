@@ -1,9 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.DefaultXmlSuppressionProvider;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -27,7 +31,6 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import gnu.trove.THashSet;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -53,6 +56,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
@@ -355,8 +360,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     List<Object> result = new ArrayList<>();
     collectVariants(result, new THashSet<>());
     return ArrayUtil.toObjectArray(result);
@@ -385,22 +389,22 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     final String prefix = prefixLength == 0 ? null : myText.substring(0, prefixLength);
 
     PsiDirectory baseDir = getBaseDir(mavenProject);
-    addVariant(result, "basedir", baseDir, prefix, MavenIcons.MavenLogo);
+    addVariant(result, "basedir", baseDir, prefix, RepositoryLibraryLogo);
     if (prefix == null) {
-      result.add(createLookupElement(baseDir, "project.baseUri", MavenIcons.MavenLogo));
-      result.add(createLookupElement(baseDir, "pom.baseUri", MavenIcons.MavenLogo));
-      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(MavenIcons.MavenLogo));
+      result.add(createLookupElement(baseDir, "project.baseUri", RepositoryLibraryLogo));
+      result.add(createLookupElement(baseDir, "pom.baseUri", RepositoryLibraryLogo));
+      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(RepositoryLibraryLogo));
     }
 
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {
       if (property.startsWith("project.")) {
-        addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MavenLogo);
+        addVariant(result, property.substring("project.".length()), descriptor, prefix, RepositoryLibraryLogo);
       }
       return null;
     });
 
     processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, (property, descriptor) -> {
-      result.add(createLookupElement(descriptor, property, MavenIcons.MavenLogo));
+      result.add(createLookupElement(descriptor, property, RepositoryLibraryLogo));
       return null;
     });
 
@@ -568,10 +572,13 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     T process(@NotNull String property, XmlElementDescriptor descriptor);
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
-    return new LocalQuickFix[] {new LocalQuickFixBase(MavenDomBundle.message("fix.ignore.unresolved.maven.property")) {
+  public LocalQuickFix @Nullable [] getQuickFixes() {
+    return new LocalQuickFix[]{new LocalQuickFix() {
+      @Override
+      public @IntentionFamilyName @NotNull String getFamilyName() {
+        return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
+      }
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

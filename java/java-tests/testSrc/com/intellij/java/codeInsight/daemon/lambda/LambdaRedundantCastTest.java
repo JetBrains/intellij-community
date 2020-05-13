@@ -24,9 +24,8 @@ import org.jetbrains.annotations.NotNull;
 public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/redundantCast";
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new RedundantCastInspection()
     };
@@ -83,6 +82,13 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testCastInsideLambdaReturnExpressionPassedToEnumConstant() { doTest(); }
   public void testGroundTargetTypeDiffersFromCastType() { doTest(); }
   public void testInferenceErrorForApplicableMethod() { doTest(); }
+  public void testLambdaWithCastInReturnStatement() { doTest(); }
+  public void testCastInNeighbourArgument() { doTest(); }
+  public void testErasedTargetType() { doTest(); }
+  public void testThrowsStatementInLambdaBody() { doTest(); }
+  public void testSynchronizeCasts() { doTest(); }
+  public void testBoxingInConditionalOfLambdaReturn() { doTest(); }
+  public void testRawMiddleMan() { doTest(); }
   public void testRejectReturnTypeChange() {
     doTest();
   }

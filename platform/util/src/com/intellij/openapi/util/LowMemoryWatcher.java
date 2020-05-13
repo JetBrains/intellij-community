@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Eugene Zhuravlev
  */
 public class LowMemoryWatcher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcher");
+  private static final Logger LOG = Logger.getInstance(LowMemoryWatcher.class);
 
   public enum LowMemoryWatcherType {
     ALWAYS,
@@ -23,10 +23,21 @@ public class LowMemoryWatcher {
   private static final WeakList<LowMemoryWatcher> ourListeners = new WeakList<>();
   private final Runnable myRunnable;
   private final LowMemoryWatcherType myType;
-  public static final AtomicBoolean ourNotificationsSuppressed = new AtomicBoolean();
+  private static final AtomicBoolean ourNotificationsSuppressed = new AtomicBoolean();
+
+  public static <T> T runWithNotificationsSuppressed(Computable<T> runnable) {
+    if (ourNotificationsSuppressed.getAndSet(true)) {
+      throw new IllegalStateException("runWithNotificationsSuppressed does not support reentrancy");
+    }
+    try {
+      return runnable.compute();
+    }
+    finally {
+      ourNotificationsSuppressed.set(false);
+    }
+  }
 
   public static void onLowMemorySignalReceived(boolean afterGc) {
-    if (ourNotificationsSuppressed.get()) return;
     LOG.info("Low memory signal received: afterGc=" + afterGc);
     for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
       try {
@@ -39,6 +50,10 @@ public class LowMemoryWatcher {
         LOG.info(e);
       }
     }
+  }
+
+  static boolean notificationsSuppressed() {
+    return ourNotificationsSuppressed.get();
   }
 
   /**

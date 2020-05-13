@@ -67,8 +67,7 @@ public class CodeInsightUtil {
     return CodeInsightUtilCore.findElementInRange(file, startOffset, endOffset, klass, JavaLanguage.INSTANCE);
   }
 
-  @NotNull
-  public static PsiElement[] findStatementsInRange(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public static PsiElement @NotNull [] findStatementsInRange(@NotNull PsiFile file, int startOffset, int endOffset) {
     Language language = findJavaOrLikeLanguage(file);
     if (language == null) return PsiElement.EMPTY_ARRAY;
     FileViewProvider viewProvider = file.getViewProvider();
@@ -157,8 +156,7 @@ public class CodeInsightUtil {
     return false;
   }
 
-  @NotNull
-  private static PsiElement[] getStatementsInRange(PsiElement[] children, PsiElement element1, PsiElement element2) {
+  private static PsiElement @NotNull [] getStatementsInRange(PsiElement[] children, PsiElement element1, PsiElement element2) {
     ArrayList<PsiElement> array = new ArrayList<>();
     boolean flag = false;
     for (PsiElement child : children) {
@@ -221,8 +219,7 @@ public class CodeInsightUtil {
     return qname1.compareToIgnoreCase(qname2);
   }
 
-  @NotNull
-  public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
+  public static PsiExpression @NotNull [] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
     List<PsiExpression> array = new ArrayList<>();
     addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
     if (expr.isPhysical()) {
@@ -251,8 +248,7 @@ public class CodeInsightUtil {
     }
   }
 
-  @NotNull
-  public static PsiExpression[] findReferenceExpressions(PsiElement scope, PsiElement referee) {
+  public static PsiExpression @NotNull [] findReferenceExpressions(PsiElement scope, PsiElement referee) {
     if (scope == null) return PsiExpression.EMPTY_ARRAY;
     List<PsiExpression> array = new ArrayList<>();
     addReferenceExpressions(array, scope, referee);
@@ -286,7 +282,7 @@ public class CodeInsightUtil {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  public static boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
+  public static boolean preparePsiElementsForWrite(PsiElement @NotNull ... elements) {
     return FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(elements));
   }
 

@@ -17,9 +17,6 @@ package com.intellij.xdebugger.frame;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class XValueContainer {
   /**
    * Start computing children of the value. Call {@link XCompositeNode#addChildren(XValueChildrenList, boolean)} to add child nodes.

@@ -12,9 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * @see ManualMinMaxCalculationInspection
  */
 public class ManualMinMaxCalculationInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ManualMinMaxCalculationInspection()};
   }
 

@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -14,7 +14,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.util.registry.Registry;
-import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
 import com.sun.jdi.StringReference;
 
@@ -64,7 +63,7 @@ class LiteralEvaluator implements Evaluator {
       });
     }
     throw EvaluateExceptionUtil
-      .createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", myExpectedType));
+      .createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", myExpectedType));
   }
 
   @Override

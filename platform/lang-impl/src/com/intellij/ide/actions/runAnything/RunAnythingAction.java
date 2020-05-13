@@ -3,6 +3,7 @@ package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.GotoActionBase;
@@ -10,13 +11,14 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecution
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,17 +41,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private boolean myIsDoubleCtrlRegistered;
 
-  private static final NotNullLazyValue<Boolean> IS_ACTION_ENABLED = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
-        .anyMatch(provider -> !(provider instanceof RunAnythingRunConfigurationProvider ||
-                                provider instanceof RunAnythingRecentProjectProvider ||
-                                provider instanceof RunAnythingRecentCommandProvider ||
-                                provider instanceof RunAnythingCommandExecutionProvider));
-    }
-  };
+  private static class Holder {
+    private static final boolean IS_ACTION_ENABLED = Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
+          .anyMatch(provider -> !(provider instanceof RunAnythingRunConfigurationProvider ||
+                                  provider instanceof RunAnythingRecentProjectProvider ||
+                                  provider instanceof RunAnythingRecentCommandProvider ||
+                                  provider instanceof RunAnythingCommandExecutionProvider));
+  }
 
   static {
     IdeEventQueue.getInstance().addPostprocessor(event -> {
@@ -74,10 +72,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
     }
 
-    if (e.getProject() != null) {
+    final Project project = e.getProject();
+    if (project != null && !LightEdit.owns(project)) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_RUN_ANYTHING);
 
-      RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(e.getProject());
+      RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(project);
       String text = GotoActionBase.getInitialTextForNavigation(e);
       runAnythingManager.show(text, e);
     }
@@ -98,7 +97,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
     }
 
-    boolean isEnabled = IS_ACTION_ENABLED.getValue();
+    boolean isEnabled = Holder.IS_ACTION_ENABLED;
     e.getPresentation().setEnabledAndVisible(isEnabled);
   }
 
@@ -106,12 +105,21 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      @Override
+      protected void updateToolTipText() {
+        HelpTooltip.dispose(this);
+
+        new HelpTooltip()
+          .setTitle(myPresentation.getText())
+          .setShortcut(getShortcut())
+          .setDescription(IdeBundle.message("run.anything.action.tooltip.text"))
+          .installOn(this);
+      }
 
       @Nullable
-      @Override
-      protected String getShortcutText() {
+      private String getShortcut() {
         if (myIsDoubleCtrlRegistered) {
-          return IdeBundle.message("run.anything.double.ctrl.shortcut",
+          return IdeBundle.message("double.ctrl.or.shift.shortcut",
                                    SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl");
         }
         //keymap shortcut is added automatically

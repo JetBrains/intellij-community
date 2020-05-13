@@ -39,7 +39,7 @@ import java.util.List;
  * @author yole
  */
 public class MorphAction extends AbstractGuiEditorAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.MorphAction");
+  private static final Logger LOG = Logger.getInstance(MorphAction.class);
 
   private final ComponentItem myLastMorphComponent = null;
 

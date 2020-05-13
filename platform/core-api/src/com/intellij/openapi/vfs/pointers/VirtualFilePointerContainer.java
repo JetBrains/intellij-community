@@ -42,16 +42,13 @@ public interface VirtualFilePointerContainer {
 
   void addAll(@NotNull VirtualFilePointerContainer that);
 
-  @NotNull
-  String[] getUrls();
+  String @NotNull [] getUrls();
 
   boolean isEmpty();
 
-  @NotNull
-  VirtualFile[] getFiles();
+  VirtualFile @NotNull [] getFiles();
 
-  @NotNull
-  VirtualFile[] getDirectories();
+  VirtualFile @NotNull [] getDirectories();
 
   @Nullable
   VirtualFilePointer findByUrl(@NotNull String url);

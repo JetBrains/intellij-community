@@ -88,13 +88,11 @@ public class UpdaterTreeState {
     return target;
   }
 
-  @NotNull
-  public Object[] getToSelect() {
+  public Object @NotNull [] getToSelect() {
     return ArrayUtil.toObjectArray(myToSelect.keySet());
   }
 
-  @NotNull
-  public Object[] getToExpand() {
+  public Object @NotNull [] getToExpand() {
     return ArrayUtil.toObjectArray(myToExpand.keySet());
   }
 

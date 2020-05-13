@@ -1,4 +1,4 @@
-// "Replace method call on lambda with lambda body" "false"
+// "Replace method call on lambda with lambda body" "true"
 
 import java.util.function.Predicate;
 

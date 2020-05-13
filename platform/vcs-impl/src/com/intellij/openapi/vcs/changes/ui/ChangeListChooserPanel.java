@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,12 +9,12 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +25,7 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Collection;
+import java.util.Objects;
 
 public class ChangeListChooserPanel extends JPanel {
 
@@ -93,7 +94,7 @@ public class ChangeListChooserPanel extends JPanel {
 
       @Override
       protected void nameChangedImpl(Project project, LocalChangeList initial) {
-        nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? "Cannot create new changelist with empty name." : null);
+        nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? VcsBundle.message("new.changelist.empty.name.error") : null);
       }
     };
     myOkEnabledListener = okEnabledListener;
@@ -216,7 +217,7 @@ public class ChangeListChooserPanel extends JPanel {
       super(PREF_WIDTH);
       JBColor fg = new JBColor(0x00b53d, 0x6ba65d);
       JBColor bg = new JBColor(0xebfcf1, 0x313b32);
-      TextIcon icon = new TextIcon("New", fg, bg, JBUIScale.scale(2));
+      TextIcon icon = new TextIcon(VcsBundle.message("new.changelist.new.label"), fg, bg, JBUIScale.scale(2));
       icon.setFont(RelativeFont.TINY.derive(getFont()));
       icon.setRound(JBUIScale.scale(4));
       JLabel label = new JLabel(icon);
@@ -232,7 +233,7 @@ public class ChangeListChooserPanel extends JPanel {
           panel.setVisible(!StringUtil.isEmptyOrSpaces(changeListName) && getExistingChangelistByName(changeListName) == null);
         }
       });
-      ObjectUtils.assertNotNull(myEditorTextField.getDocument()).putUserData(ChangeListCompletionContributor.COMBO_BOX_KEY, this);
+      Objects.requireNonNull(myEditorTextField.getDocument()).putUserData(ChangeListCompletionContributor.COMBO_BOX_KEY, this);
       ComboBoxCompositeEditor<Object, LanguageTextField> compositeEditor = new ComboBoxCompositeEditor<>(myEditorTextField, panel);
       myEditorTextField.addSettingsProvider((editor) -> {
         Color editorBackgroundColor = editor.getBackgroundColor();

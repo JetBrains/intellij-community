@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
@@ -13,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.xmlpull.mxp1.MXParser;
 
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -28,7 +28,8 @@ public class ProtocolParser {
     if (!"call_signature".equals(reader.getNodeName())) {
       throw new PyDebuggerException("Expected <call_signature>, found " + reader.getNodeName());
     }
-    final String file = readString(reader, "file", "");
+    String file = reader.getAttribute("file");
+    if (file == null) file = "";
     final String name = readString(reader, "name", "");
     PySignature signature = new PySignature(file, name);
 
@@ -209,7 +210,7 @@ public class ProtocolParser {
 
     final String id = readString(reader, "id", null);
     final String name = readString(reader, "name", null);
-    final String file = readString(reader, "file", null);
+    final String file = reader.getAttribute("file");
     final int line = readInt(reader, "line", 0);
 
     return new PyStackFrameInfo(threadId, id, name, positionConverter.convertPythonToFrame(file, line));
@@ -314,9 +315,22 @@ public class ProtocolParser {
     return result.createArrayChunk();
   }
 
+  public static @NotNull List<Pair<String, Boolean>> parseSmartStepIntoVariants(String text) throws PyDebuggerException {
+    XppReader reader = openReader(text, false);
+    List<Pair<String, Boolean>> variants = new ArrayList<>();
+    while (reader.hasMoreChildren()) {
+      reader.moveDown();
+      String variantName = read(reader, "name", true);
+      Boolean isVisited = read(reader, "isVisited", true).equals("true");
+      variants.add(Pair.create(variantName, isVisited));
+      reader.moveUp();
+    }
+    return variants;
+  }
+
   private static void parseArrayHeaderData(XppReader reader, ArrayChunkBuilder result) throws PyDebuggerException {
-    List<String> rowHeaders = Lists.newArrayList();
-    List<ArrayChunk.ColHeader> colHeaders = Lists.newArrayList();
+    List<String> rowHeaders = new ArrayList<>();
+    List<ArrayChunk.ColHeader> colHeaders = new ArrayList<>();
     reader.moveDown();
     while (reader.hasMoreChildren()) {
       reader.moveDown();

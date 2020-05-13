@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -35,13 +36,13 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor imple
   }
 
   @Override
-  public void visitElement(final PsiElement element) {
+  public void visitElement(@NotNull final PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
     element.acceptChildren(this);
   }
 
   @Override
-  public void visitFile(final PsiFile file) {
+  public void visitFile(@NotNull final PsiFile file) {
     if (myVisitAllFileRoots) {
       final FileViewProvider viewProvider = file.getViewProvider();
       final List<PsiFile> allFiles = viewProvider.getAllFiles();

@@ -1,19 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.intellij.util.PlatformIcons;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,13 +27,13 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 public abstract class AbstractFieldPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractFieldPanel");
+  private static final Logger LOG = Logger.getInstance(AbstractFieldPanel.class);
   private final JComponent myComponent;
   private Runnable myChangeListener;
   protected ArrayList<JButton> myButtons = new ArrayList<>(1);
   protected JLabel myLabel;
   private ActionListener myBrowseButtonActionListener;
-  private String myViewerDialogTitle;
+  private final String myViewerDialogTitle;
   private String myLabelText;
   private TextFieldWithBrowseButton.MyDoClickAction myDoClickAction;
 
@@ -43,7 +43,7 @@ public abstract class AbstractFieldPanel extends JPanel {
 
   public AbstractFieldPanel(JComponent component,
                             String labelText,
-                            final String viewerDialogTitle,
+                            @NlsContexts.DialogTitle String viewerDialogTitle,
                             ActionListener browseButtonActionListener,
                             Runnable changeListener) {
     myComponent = component;
@@ -110,7 +110,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
 
     if (myBrowseButtonActionListener != null) {
-      if (Experiments.getInstance().isFeatureEnabled("inline.browse.button") && myComponent instanceof ExtendableTextComponent) {
+      if (myComponent instanceof ExtendableTextComponent && ComponentWithBrowseButton.isUseInlineBrowserButton()) {
         ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
           getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListener));
         new DumbAwareAction() {
@@ -136,7 +136,7 @@ public abstract class AbstractFieldPanel extends JPanel {
         myDoClickAction = new TextFieldWithBrowseButton.MyDoClickAction(showViewerButton);
       }
       showViewerButton.setFocusable(false);
-      showViewerButton.setIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
+      showViewerButton.setIcon(AllIcons.Actions.ShowViewer);
       showViewerButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -175,10 +175,6 @@ public abstract class AbstractFieldPanel extends JPanel {
     myBrowseButtonActionListener = browseButtonActionListener;
   }
 
-  public void setViewerDialogTitle(String viewerDialogTitle) {
-    myViewerDialogTitle = viewerDialogTitle;
-  }
-
   public void setLabelText(String labelText) {
     myLabelText = labelText;
   }
@@ -200,8 +196,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 

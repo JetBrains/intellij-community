@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
 import com.google.common.collect.Lists;
@@ -8,9 +8,13 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,22 +27,21 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class PyExecuteSelectionAction extends AnAction {
-
-  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute Selection in Python Console";
-  public static final String EXECUTE_LINE_IN_CONSOLE = "Execute Line in Python Console";
+public class PyExecuteSelectionAction extends DumbAwareAction {
 
   public PyExecuteSelectionAction() {
-    super(EXECUTE_SELECTION_IN_CONSOLE);
+    super(PyBundle.messagePointer("python.execute.selection.action.execute.selection.in.console"));
   }
 
   @Override
@@ -151,12 +154,12 @@ public class PyExecuteSelectionAction extends AnAction {
     if (isPython(editor)) {
       String text = getSelectionText(editor);
       if (text != null) {
-        presentation.setText(EXECUTE_SELECTION_IN_CONSOLE);
+        presentation.setText(PyBundle.message("python.execute.selection.action.execute.selection.in.console"));
       }
       else {
         text = getLineUnderCaret(editor);
         if (text != null) {
-          presentation.setText(EXECUTE_LINE_IN_CONSOLE);
+          presentation.setText(PyBundle.message("python.execute.selection.action.execute.line.in.console"));
         }
       }
 
@@ -231,7 +234,7 @@ public class PyExecuteSelectionAction extends AnAction {
 
     if (toolWindow != null && toolWindow.getToolWindow().isVisible()) {
       RunContentDescriptor selectedContentDescriptor = toolWindow.getSelectedContentDescriptor();
-      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : Lists.newArrayList();
+      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : new ArrayList<>();
     }
 
     Collection<RunContentDescriptor> descriptors =

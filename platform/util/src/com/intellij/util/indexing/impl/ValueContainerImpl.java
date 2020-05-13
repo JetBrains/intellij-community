@@ -17,7 +17,6 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
@@ -25,6 +24,7 @@ import com.intellij.util.indexing.containers.IntIdsIterator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,13 +39,14 @@ import java.util.NoSuchElementException;
 /**
  * @author Eugene Zhuravlev
  */
-class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.ValueContainerImpl");
+@ApiStatus.Internal
+public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
+  private static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
   private static final Object myNullValue = new Object();
 
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
-  // when there are several value mapped, myInputIdMapping is THashMap<Value, Data>, myInputIdMappingValue = null
+  // when there are several value mapped, myInputIdMapping is ValueToInputMap<Value, Data> (it's actually just THashMap), myInputIdMappingValue = null
   private Object myInputIdMapping;
   private Object myInputIdMappingValue;
 
@@ -71,9 +72,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   @Nullable
-  private THashMap<Value, Object> asMapping() {
+  private ValueToInputMap<Value> asMapping() {
     //noinspection unchecked
-    return myInputIdMapping instanceof THashMap ? (THashMap<Value, Object>)myInputIdMapping : null;
+    return myInputIdMapping instanceof ValueToInputMap ? (ValueToInputMap<Value>)myInputIdMapping : null;
   }
 
   private Value asValue() {
@@ -99,7 +100,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public int size() {
-    return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap<?,?>)myInputIdMapping).size(): 1 : 0;
+    return myInputIdMapping != null ? myInputIdMapping instanceof ValueToInputMap ? ((ValueToInputMap<?>)myInputIdMapping).size(): 1 : 0;
   }
 
   @Override
@@ -115,8 +116,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           fileSetObjects = new SmartList<>();
           valueObjects = new SmartList<>();
         }
-        else if (DebugAssertions.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + DebugAssertions.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
+        else if (IndexDebugAssertions.DEBUG) {
+          LOG.error("Expected only one value per-inputId for " + IndexDebugAssertions.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);
@@ -161,7 +162,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         Value mappingValue = mapping.keySet().iterator().next();
         myInputIdMapping = mappingValue;
         Object inputIdMappingValue = mapping.get(mappingValue);
-        // prevent NPEs on file set due to Value class being mutable or having inconsistent equals wrt disk persistence 
+        // prevent NPEs on file set due to Value class being mutable or having inconsistent equals wrt disk persistence
         // (instance that is serialized and new instance created with deserialization from the same bytes are expected to be equal)
         myInputIdMappingValue = inputIdMappingValue != null ? inputIdMappingValue : new Integer(0);
       }
@@ -340,9 +341,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     try {
       //noinspection unchecked
       ValueContainerImpl<Value> clone = (ValueContainerImpl<Value>)super.clone();
-      THashMap<Value, Object> mapping = asMapping();
+      ValueToInputMap<Value> mapping = asMapping();
       if (mapping != null) {
-        final THashMap<Value, Object> cloned = mapping.clone();
+        final ValueToInputMap<Value> cloned = mapping.clone();
         cloned.forEachEntry((key, val) -> {
           if (val instanceof ChangeBufferingList) {
             cloned.put(key, ((ChangeBufferingList)val).clone());
@@ -420,7 +421,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       Map<Value, Object> mapping = asMapping();
       if (mapping == null) {
         Value oldMapping = asValue();
-        myInputIdMapping = mapping = new THashMap<>(2);
+        myInputIdMapping = mapping = new ValueToInputMap<>(2);
         mapping.put(oldMapping, myInputIdMappingValue);
         myInputIdMappingValue = null;
       }
@@ -447,7 +448,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         // serialize positive file ids with delta encoding
         ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
         IntIdsIterator intIterator = originalInput.sortedIntIterator();
-        if (DebugAssertions.DEBUG) DebugAssertions.assertTrue(intIterator.hasAscendingOrder());
+        if (IndexDebugAssertions.DEBUG) IndexDebugAssertions.assertTrue(intIterator.hasAscendingOrder());
 
         if (intIterator.size() == 1) {
           DataInputOutputUtil.writeINT(out, intIterator.next());
@@ -469,25 +470,27 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   public void readFrom(@NotNull DataInputStream stream,
                        @NotNull DataExternalizer<? extends Value> externalizer,
-                       @NotNull IntIntFunction inputRemapping) throws IOException {
+                       @NotNull ValueContainerInputRemapping remapping) throws IOException {
     FileId2ValueMapping<Value> mapping = null;
 
     while (stream.available() > 0) {
       final int valueCount = DataInputOutputUtil.readINT(stream);
       if (valueCount < 0) {
         // ChangeTrackingValueContainer marked inputId as invalidated, see ChangeTrackingValueContainer.saveTo
-        final int inputId = inputRemapping.fun(-valueCount);
+        final int[] inputIds = remapping.remap(-valueCount);
 
         if (mapping == null && size() > NUMBER_OF_VALUES_THRESHOLD) { // avoid O(NumberOfValues)
           mapping = new FileId2ValueMapping<>(this);
         }
 
-        boolean doCompact;
-        if(mapping != null) {
-          doCompact = mapping.removeFileId(inputId);
-        } else {
-          removeAssociatedValue(inputId);
-          doCompact = true;
+        boolean doCompact = false;
+        for (int inputId : inputIds) {
+          if(mapping != null) {
+            if (mapping.removeFileId(inputId)) doCompact = true;
+          } else {
+            removeAssociatedValue(inputId);
+            doCompact = true;
+          }
         }
 
         if (doCompact) setNeedsCompacting(true);
@@ -498,8 +501,12 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           int idCountOrSingleValue = DataInputOutputUtil.readINT(stream);
 
           if (idCountOrSingleValue > 0) {
-            addValue(idCountOrSingleValue, value);
-            if (mapping != null) mapping.associateFileIdToValue(inputRemapping.fun(idCountOrSingleValue), value);
+            int[] inputIds = remapping.remap(idCountOrSingleValue);
+            for (int inputId : inputIds) {
+              addValue(inputId, value);
+              if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+            }
+
           } else {
             idCountOrSingleValue = -idCountOrSingleValue;
             ChangeBufferingList changeBufferingList = ensureFileSetCapacityForValue(value, idCountOrSingleValue);
@@ -507,10 +514,13 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
             for (int i = 0; i < idCountOrSingleValue; i++) {
               final int id = DataInputOutputUtil.readINT(stream);
-              int remappedInputId = inputRemapping.fun(prev + id);
-              if (changeBufferingList != null) changeBufferingList.add(remappedInputId);
-              else addValue(remappedInputId, value);
-              if (mapping != null) mapping.associateFileIdToValue(remappedInputId, value);
+              int[] inputIds = remapping.remap(prev + id);
+              for (int inputId : inputIds) {
+                if (changeBufferingList != null) changeBufferingList.add(inputId);
+                else addValue(inputId, value);
+                if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+              }
+
               prev += id;
             }
           }
@@ -555,4 +565,16 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   private static final IntPredicate EMPTY_PREDICATE = __ -> false;
+
+  // a class to distinguish a difference between user-value with THashMap type and internal value container
+  private static class ValueToInputMap<Value> extends THashMap<Value, Object> {
+    ValueToInputMap(int size) {
+      super(size);
+    }
+
+    @Override
+    public ValueToInputMap<Value> clone() {
+      return (ValueToInputMap<Value>)super.clone();
+    }
+  }
 }

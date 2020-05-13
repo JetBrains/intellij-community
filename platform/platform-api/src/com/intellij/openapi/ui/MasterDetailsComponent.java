@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -24,6 +24,7 @@ import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -42,7 +43,7 @@ import java.util.*;
  * @author anna
  */
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
+  protected static final Logger LOG = Logger.getInstance(MasterDetailsComponent.class);
 
   protected static final Icon COPY_ICON = PlatformIcons.COPY_ICON;
 
@@ -54,16 +55,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected History myHistory = new History(new Place.Navigator() {
     @Override
-    public void setHistory(final History history) {
+    public void setHistory(History history) {
       myHistory = history;
     }
-
-    @Override
-    @Nullable
-    public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-      return null;
-    }
   });
+
   private JComponent myMaster;
 
   public void setHistory(final History history) {
@@ -119,11 +115,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     mySplitter.setHonorComponentsMinimumSize(true);
 
     installAutoScroll();
-    reInitWholePanelIfNeeded();
   }
 
   protected void reInitWholePanelIfNeeded() {
-    if (!myToReInitWholePanel) return;
+    if (!myToReInitWholePanel) {
+      return;
+    }
 
     myWholePanel = new NonOpaquePanel(new BorderLayout()) {
       @Override
@@ -155,13 +152,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     };
 
-    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree);
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
+      .setScrollPaneBorder(JBUI.Borders.empty());
     DefaultActionGroup group = createToolbarActionGroup();
     if (group != null) {
       decorator.setActionGroup(group);
     }
     //left.add(myNorthPanel, BorderLayout.NORTH);
-    myMaster = decorator.setAsUsualTopToolbar().setPanelBorder(JBUI.Borders.empty()).createPanel();
+    myMaster = decorator.createPanel();
     myNorthPanel.setVisible(false);
     left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
@@ -653,6 +653,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
+  @NlsContexts.StatusText
   @Nullable
   protected String getEmptySelectionString() {
     return null;
@@ -772,7 +773,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     public MyDeleteAction(Condition<Object[]> availableCondition) {
-      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);
+      super(CommonBundle.messagePointer("button.delete"), CommonBundle.messagePointer("button.delete"), PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE), myTree);
       myCondition = availableCondition;
     }

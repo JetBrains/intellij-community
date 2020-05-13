@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,22 +37,20 @@ import java.util.Collection;
 public class SelectTagDialog extends DialogWrapper {
   private final Collection<JList> myLists = new ArrayList<>();
   private final JPanel myPanel;
-  public static final String EXISTING_REVISIONS = CvsBundle.message("label.existing.revisions");
-  public static final String EXISTING_TAGS = CvsBundle.message("label.existing.tags");
 
   public SelectTagDialog(Collection<String> tags, Collection<String> revisions) {
     super(true);
     myPanel = new JPanel(new GridLayout(1, 0, 4, 8));
 
     if (tags.isEmpty()){
-      createList(CvsBundle.message("dialog.title.select.revision"), revisions, EXISTING_REVISIONS);
+      createList(CvsBundle.message("dialog.title.select.revision"), revisions, getExistingRevisions());
     }
     else if (revisions.isEmpty()){
-      createList(CvsBundle.message("operation.name.select.tag"), tags, EXISTING_TAGS);
+      createList(CvsBundle.message("operation.name.select.tag"), tags, getExistingTags());
     }
     else{
-      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, EXISTING_REVISIONS);
-      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), tags, EXISTING_TAGS);
+      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, getExistingRevisions());
+      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), tags, getExistingTags());
     }
 
     setOkEnabled();
@@ -74,7 +73,7 @@ public class SelectTagDialog extends DialogWrapper {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (isOKActionEnabled()) {
           doOKAction();
           return true;
@@ -133,5 +132,13 @@ public class SelectTagDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  public static String getExistingRevisions() {
+    return CvsBundle.message("label.existing.revisions");
+  }
+
+  public static String getExistingTags() {
+    return CvsBundle.message("label.existing.tags");
   }
 }

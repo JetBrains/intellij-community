@@ -1,17 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 
-/**
- * @author nik
- */
 class WinExeInstallerBuilder {
   private final BuildContext buildContext
   private final AntBuilder ant
@@ -62,7 +59,6 @@ class WinExeInstallerBuilder {
   }
 
   void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
-
     if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
@@ -82,9 +78,7 @@ class WinExeInstallerBuilder {
     }
 
     ant.copy(todir: "$box/nsiconf") {
-      fileset(dir: "$communityHome/build/conf/nsis") {
-        exclude(name: "version*")
-      }
+      fileset(dir: "$communityHome/build/conf/nsis")
     }
 
     generateInstallationConfigFileForSilentMode()
@@ -105,13 +99,6 @@ class WinExeInstallerBuilder {
       }
 
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
-
-      if (buildContext.bundledJreManager.doBundleSecondJre()) {
-        String jre32Dir = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x32)
-        if (jre32Dir != null) {
-          generator.addDirectory(jre32Dir)
-        }
-      }
 
       generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
     }
@@ -183,8 +170,7 @@ class WinExeInstallerBuilder {
 
     def extensionsList = getFileAssociations()
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
-    def linkToJre = customizer.getBaseDownloadUrlForJre() != null ?
-                    "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" : null
+    def linkToX86Jre = customizer.include32BitLauncher ? buildContext.bundledJreManager.x86JreDownloadUrl(OsFamily.WINDOWS) : null
     new File(box, "nsiconf/strings.nsi").text = """
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
 !define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(buildContext.applicationInfo)}"
@@ -197,7 +183,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
 !define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
-!define LINK_TO_JRE "$linkToJre"
+!define LINK_TO_JRE "$linkToX86Jre"
 !define JRE_32BIT_VERSION_SUPPORTED "${jre32BitVersionSupported ? 1 : 0 }"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
@@ -206,16 +192,15 @@ class WinExeInstallerBuilder {
 """
 
     def versionString = buildContext.applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
+    def installDirAndShortcutName = customizer.getNameForInstallDirAndDesktopShortcut(buildContext.applicationInfo, buildContext.buildNumber)
     new File(box, "nsiconf/version.nsi").text = """
 !define MUI_VERSION_MAJOR "${buildContext.applicationInfo.majorVersion}"
 !define MUI_VERSION_MINOR "${buildContext.applicationInfo.minorVersion}"
 
 !define VER_BUILD ${buildContext.buildNumber}
-
+!define INSTALL_DIR_AND_SHORTCUT_NAME "${installDirAndShortcutName}"
 !define PRODUCT_WITH_VER "\${MUI_PRODUCT} $versionString"
-!define PRODUCT_FULL_NAME_WITH_VER "\${PRODUCT_FULL_NAME} $versionString"
 !define PRODUCT_PATHS_SELECTOR "${buildContext.systemSelector}"
-!define PRODUCT_SETTINGS_DIR ".\${PRODUCT_PATHS_SELECTOR}"
 """
   }
 }

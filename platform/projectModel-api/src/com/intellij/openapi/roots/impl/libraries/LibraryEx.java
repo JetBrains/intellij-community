@@ -52,18 +52,23 @@ public interface LibraryEx extends Library {
    * won't be counted as belonging to this library so they won't be indexed.
    * @return URLs of excluded directories
    */
-  @NotNull
-  String[] getExcludedRootUrls();
+  String @NotNull [] getExcludedRootUrls();
 
   /**
    * @see #getExcludedRootUrls()
    * @return excluded directories
    */
-  @NotNull
-  VirtualFile[] getExcludedRoots();
+  VirtualFile @NotNull [] getExcludedRoots();
 
   @Nullable("will return non-null value only for module level libraries")
   Module getModule();
+
+  /**
+   * In case of modifiable library returns origin library it was created from
+   */
+  @ApiStatus.Internal
+  @Nullable
+  Library getSource();
 
   interface ModifiableModelEx extends ModifiableModel {
     void setProperties(LibraryProperties properties);
@@ -75,6 +80,13 @@ public interface LibraryEx extends Library {
     PersistentLibraryKind<?> getKind();
 
     /**
+     * Removes custom library kind and associated properties if any
+     */
+    void forgetKind();
+
+    void restoreKind();
+
+    /**
      * Add a URL to list of directories excluded from the library. The directory specified by {@code url} must be located under some
      * of the library roots.
      * @see LibraryEx#getExcludedRootUrls()
@@ -84,7 +96,6 @@ public interface LibraryEx extends Library {
 
     boolean removeExcludedRoot(@NotNull String url);
 
-    @NotNull
-    String[] getExcludedRootUrls();
+    String @NotNull [] getExcludedRootUrls();
   }
 }

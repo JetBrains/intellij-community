@@ -5,6 +5,7 @@ package com.intellij.psi.impl.cache.impl.id;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,18 +13,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -58,22 +59,9 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
     }
   };
 
-  private final DataIndexer<IdIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileContent>() {
-    @Override
-    @NotNull
-    public Map<IdIndexEntry, Integer> map(@NotNull final FileContent inputData) {
-      final IdIndexer indexer = IdTableBuilding.getFileTypeIndexer(inputData.getFileType());
-      if (indexer != null) {
-        return indexer.map(inputData);
-      }
-
-      return Collections.emptyMap();
-    }
-  };
-
   @Override
   public int getVersion() {
-    return 16 + (FileBasedIndex.ourSnapshotMappingsEnabled ? 0xFF:0); // TODO: version should enumerate all word scanner versions and build version upon that set
+    return 16;
   }
 
   @Override
@@ -90,7 +78,31 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   @NotNull
   @Override
   public DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
-    return myIndexer;
+    return new CompositeDataIndexer<IdIndexEntry, Integer, IdIndexer, String>() {
+      @Nullable
+      @Override
+      public IdIndexer calculateSubIndexer(@NotNull IndexedFile file) {
+        return IdTableBuilding.getFileTypeIndexer(file.getFileType());
+      }
+
+      @NotNull
+      @Override
+      public String getSubIndexerVersion(@NotNull IdIndexer indexer) {
+        return indexer.getClass().getName() + ":" + indexer.getVersion();
+      }
+
+      @NotNull
+      @Override
+      public KeyDescriptor<String> getSubIndexerVersionDescriptor() {
+        return EnumeratorStringDescriptor.INSTANCE;
+      }
+
+      @NotNull
+      @Override
+      public Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData, @NotNull IdIndexer indexer) {
+        return indexer.map(inputData);
+      }
+    };
   }
 
   @NotNull
@@ -112,7 +124,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   }
 
   public static boolean isIndexable(FileType fileType) {
-    return fileType instanceof LanguageFileType ||
+    return (fileType instanceof LanguageFileType && (fileType != PlainTextFileType.INSTANCE || !FileBasedIndex.IGNORE_PLAIN_TEXT_FILES)) ||
            fileType instanceof CustomSyntaxTableFileType ||
            IdTableBuilding.isIdIndexerRegistered(fileType) ||
            CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
@@ -121,6 +133,11 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   @Override
   public boolean hasSnapshotMapping() {
     return true;
+  }
+
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
   }
 
   public static boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {

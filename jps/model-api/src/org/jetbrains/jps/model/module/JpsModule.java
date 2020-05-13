@@ -27,9 +27,6 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsModule>, JpsCompositeElement {
   @NotNull
   JpsUrlList getContentRootsList();

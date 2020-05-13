@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui
 
@@ -27,7 +27,7 @@ class SessionDialog @JvmOverloads constructor(
 
   init {
     val configurationComponentName = myConfigurationComponent?.getClientProperty(VCS_CONFIGURATION_UI_TITLE) as? String
-    setTitle(if (configurationComponentName.isNullOrBlank()) removeEllipsisSuffix(title) else configurationComponentName)
+    setTitle(if (configurationComponentName.isNullOrBlank()) title.removeEllipsisSuffix() else configurationComponentName)
     init()
     initValidation()
   }

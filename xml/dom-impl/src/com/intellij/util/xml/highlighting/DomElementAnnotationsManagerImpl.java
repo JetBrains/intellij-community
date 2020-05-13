@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -11,19 +10,16 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
@@ -32,12 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager {
-  public static final Object LOCK = new Object();
+  static final Object LOCK = new Object();
 
-  private static final Key<DomElementsProblemsHolderImpl> DOM_PROBLEM_HOLDER_KEY = Key.create("DomProblemHolder");
-  private static final Key<CachedValue<Boolean>> CACHED_VALUE_KEY = Key.create("DomProblemHolderCachedValue");
   private final EventDispatcher<DomHighlightingListener> myDispatcher = EventDispatcher.create(DomHighlightingListener.class);
 
   private static final DomElementsProblemsHolder EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolder() {
@@ -75,11 +70,11 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
 
   };
-  private final Project myProject;
+  private final Map<XmlTag, DomElementsProblemsHolderImpl> myHolders = ContainerUtil.createWeakMap();
 
   public DomElementAnnotationsManagerImpl(@NotNull Project project) {
-    myProject = project;
-    project.getMessageBus().connect().subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
       public void profileActivated(InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
         dropAnnotationsCache();
@@ -90,11 +85,14 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         dropAnnotationsCache();
       }
     });
+    connection.subscribe(PsiModificationTracker.TOPIC, this::dropAnnotationsCache);
   }
 
   @Override
   public void dropAnnotationsCache() {
-    incModificationCount();
+    synchronized (LOCK) {
+      myHolders.clear();
+    }
   }
 
   public final List<DomElementProblemDescriptor> appendProblems(@NotNull DomFileElement element, @NotNull DomElementAnnotationHolder annotationHolder, Class<? extends DomElementsInspection> inspectionClass) {
@@ -107,40 +105,37 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return Collections.unmodifiableList(holderImpl);
   }
 
+  @NotNull
   private DomElementsProblemsHolderImpl _getOrCreateProblemsHolder(final DomFileElement element) {
-    DomElementsProblemsHolderImpl holder;
-    final DomElement rootElement = element.getRootElement();
-    final XmlTag rootTag = rootElement.getXmlTag();
+    XmlTag rootTag = element.getRootElement().getXmlTag();
     if (rootTag == null) return new DomElementsProblemsHolderImpl(element);
 
-    holder = rootTag.getUserData(DOM_PROBLEM_HOLDER_KEY);
-    if (isHolderOutdated(element.getFile()) || holder == null) {
-      holder = new DomElementsProblemsHolderImpl(element);
-      rootTag.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
-      final CachedValue<Boolean> cachedValue = CachedValuesManager.getManager(myProject).createCachedValue(
-        () -> new CachedValueProvider.Result<>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT,
-                                               this, ProjectRootManager.getInstance(myProject)), false);
-      cachedValue.getValue();
-      element.getFile().putUserData(CACHED_VALUE_KEY, cachedValue);
-    }
-    return holder;
+    return myHolders.computeIfAbsent(rootTag, __ -> new DomElementsProblemsHolderImpl(element));
   }
 
-  public static boolean isHolderUpToDate(DomElement element) {
+  public boolean isHolderUpToDate(DomElement element) {
+    return !isHolderOutdated(DomUtil.getFile(element));
+  }
+
+  public void outdateProblemHolder(DomElement element) {
+    XmlTag rootTag = getRootTagIfParsed(DomUtil.getFile(element));
     synchronized (LOCK) {
-      return !isHolderOutdated(DomUtil.getFile(element));
+      if (rootTag != null) {
+        myHolders.remove(rootTag);
+      }
     }
   }
 
-  public static void outdateProblemHolder(final DomElement element) {
+  private boolean isHolderOutdated(XmlFile file) {
     synchronized (LOCK) {
-      DomUtil.getFile(element).putUserData(CACHED_VALUE_KEY, null);
+      XmlTag rootTag = getRootTagIfParsed(file);
+      return rootTag == null || !myHolders.containsKey(rootTag);
     }
   }
 
-  private static boolean isHolderOutdated(final XmlFile file) {
-    final CachedValue<Boolean> cachedValue = file.getUserData(CACHED_VALUE_KEY);
-    return cachedValue == null || !cachedValue.hasUpToDateValue();
+  @Nullable
+  private static XmlTag getRootTagIfParsed(@NotNull XmlFile file) {
+    return ((XmlFileImpl)file).isContentsLoaded() ? file.getRootTag() : null;
   }
 
   @Override
@@ -152,7 +147,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     synchronized (LOCK) {
       final XmlTag tag = fileElement.getRootElement().getXmlTag();
       if (tag != null) {
-        final DomElementsProblemsHolder readyHolder = tag.getUserData(DOM_PROBLEM_HOLDER_KEY);
+        DomElementsProblemsHolder readyHolder = myHolders.get(tag);
         if (readyHolder != null) {
           return readyHolder;
         }

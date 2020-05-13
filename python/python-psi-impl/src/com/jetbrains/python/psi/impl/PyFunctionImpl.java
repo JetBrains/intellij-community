@@ -139,7 +139,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (id == null) {
       ASTNode error = getNode().findChildByType(TokenType.ERROR_ELEMENT);
       if (error != null) {
-        id = error.findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens());
+        id = error.findChildByType(PythonDialectsTokenSetProvider.getInstance().getKeywordTokens());
       }
     }
     return id;
@@ -279,7 +279,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         type = null;
       }
     }
-    if (receiver != null) {
+    else if (receiver != null) {
       type = replaceSelf(type, receiver, context);
     }
     if (type != null && isDynamicallyEvaluated(parameters.values(), context)) {
@@ -733,7 +733,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         }
 
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (!containsYield.get()) {
             super.visitElement(element);
           }
@@ -858,7 +858,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
             return deconame;
           }
-          for (PyKnownDecoratorProvider provider : PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+          for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getIterable()) {
             String name = provider.toKnownDecorator(deconame);
             if (name != null) {
               return name;

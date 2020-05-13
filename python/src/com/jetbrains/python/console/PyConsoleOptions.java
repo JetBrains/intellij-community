@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author traff
- */
 @State(
   name = "PyConsoleOptionsProvider",
   storages = {
@@ -90,7 +87,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   public static class State {
     public PyConsoleSettings myPythonConsoleState = new PyConsoleSettings();
 
-    public boolean myShowDebugConsoleByDefault = false;
+    public boolean myShowDebugConsoleByDefault = true;
     public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
     public boolean myUseExistingConsole = false;

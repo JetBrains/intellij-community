@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +51,7 @@ import org.zmlx.hg4idea.provider.commit.HgMQNewExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.roots.HgIntegrationEnabler;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
-import org.zmlx.hg4idea.status.ui.HgHideableWidget;
-import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
-import org.zmlx.hg4idea.status.ui.HgStatusWidget;
+import org.zmlx.hg4idea.status.ui.HgWidgetUpdater;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
@@ -68,11 +65,9 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class HgVcs extends AbstractVcs {
-
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<>("hg4idea.status", HgUpdater.class);
-  public static final Topic<HgHideableWidget> INCOMING_OUTGOING_CHECK_TOPIC =
-    new Topic<>("hg4idea.incomingcheck", HgHideableWidget.class);
+  public static final Topic<HgWidgetUpdater> INCOMING_OUTGOING_CHECK_TOPIC = new Topic<>("hg4idea.incomingcheck", HgWidgetUpdater.class);
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
@@ -91,9 +86,6 @@ public class HgVcs extends AbstractVcs {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
-  private MessageBusConnection messageBusConnection;
-  @NotNull private final HgGlobalSettings globalSettings;
-  @NotNull private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
 
   private HgVFSListener myVFSListener;
@@ -106,19 +98,12 @@ public class HgVcs extends AbstractVcs {
   private final HgCloseBranchExecutor myCloseBranchExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
-  private HgStatusWidget myStatusWidget;
-  private HgIncomingOutgoingWidget myIncomingWidget;
-  private HgIncomingOutgoingWidget myOutgoingWidget;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
-  public HgVcs(@NotNull Project project,
-               @NotNull HgGlobalSettings globalSettings,
-               @NotNull HgProjectSettings projectSettings,
-               ProjectLevelVcsManager vcsManager) {
+  public HgVcs(@NotNull Project project) {
     super(project, VCS_NAME);
-    this.globalSettings = globalSettings;
-    this.projectSettings = projectSettings;
-    myVcsManager = vcsManager;
+
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
@@ -129,8 +114,8 @@ public class HgVcs extends AbstractVcs {
     committedChangesProvider = new HgCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor();
-    myMqNewExecutor = new HgMQNewExecutor(checkinEnvironment);
-    myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
+    myMqNewExecutor = new HgMQNewExecutor();
+    myCloseBranchExecutor = new HgCloseBranchExecutor();
   }
 
   @Override
@@ -147,12 +132,12 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public Configurable getConfigurable() {
-    return new HgProjectConfigurable(myProject, globalSettings, projectSettings);
+    return new HgProjectConfigurable(myProject);
   }
 
   @NotNull
   public HgProjectSettings getProjectSettings() {
-    return projectSettings;
+    return HgProjectSettings.getInstance(myProject);
   }
 
   @Override
@@ -249,25 +234,8 @@ public class HgVcs extends AbstractVcs {
     // validate hg executable on start and update hg version
     checkExecutableAndVersion();
 
-    // status bar
-    myStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
-    myStatusWidget.activate();
-
-    myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
-    myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (myIncomingWidget != null) myIncomingWidget.activate();
-      if (myOutgoingWidget != null) myOutgoingWidget.activate();
-    });
-
     // updaters and listeners
-    myHgRemoteStatusUpdater =
-      new HgRemoteStatusUpdater(this, myIncomingWidget.getChangesetStatus(), myOutgoingWidget.getChangesetStatus(),
-                                projectSettings);
-    myHgRemoteStatusUpdater.activate();
-
-    messageBusConnection = myProject.getMessageBus().connect();
+    myHgRemoteStatusUpdater = new HgRemoteStatusUpdater(this);
     myVFSListener = HgVFSListener.createInstance(this);
 
     // ignore temporary files
@@ -287,23 +255,8 @@ public class HgVcs extends AbstractVcs {
   @Override
   public void deactivate() {
     if (myHgRemoteStatusUpdater != null) {
-      myHgRemoteStatusUpdater.deactivate();
+      Disposer.dispose(myHgRemoteStatusUpdater);
       myHgRemoteStatusUpdater = null;
-    }
-    if (myStatusWidget != null) {
-      myStatusWidget.deactivate();
-      myStatusWidget = null;
-    }
-    if (myIncomingWidget != null) {
-      myIncomingWidget.deactivate();
-      myIncomingWidget = null;
-    }
-    if (myOutgoingWidget != null) {
-      myOutgoingWidget.deactivate();
-      myOutgoingWidget = null;
-    }
-    if (messageBusConnection != null) {
-      messageBusConnection.disconnect();
     }
 
     if (myVFSListener != null) {
@@ -324,11 +277,6 @@ public class HgVcs extends AbstractVcs {
       return null;
     }
     return (HgVcs)vcsManager.findVcsByName(VCS_NAME);
-  }
-
-  @NotNull
-  public HgGlobalSettings getGlobalSettings() {
-    return globalSettings;
   }
 
   public void showMessageInConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
@@ -359,6 +307,11 @@ public class HgVcs extends AbstractVcs {
   @NotNull
   public HgCloseBranchExecutor getCloseBranchExecutor() {
     return myCloseBranchExecutor;
+  }
+
+  @Nullable
+  public HgRemoteStatusUpdater getRemoteStatusUpdater() {
+    return myHgRemoteStatusUpdater;
   }
 
   public static VcsKey getKey() {
@@ -411,17 +364,14 @@ public class HgVcs extends AbstractVcs {
       //if version is not supported, but have valid hg executable
       if (!myVersion.isSupported()) {
         LOG.info("Unsupported Hg version: " + myVersion);
-        String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Hg is not supported: %s.<br/> " +
-                                       "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
-                                       myVersion, HgVersion.MIN);
-        vcsNotifier.notifyError("Unsupported Hg version", message, linkAdapter);
+        String message = HgBundle.message("hg4idea.version.update", SETTINGS_LINK, myVersion, HgVersion.MIN, UPDATE_LINK);
+        vcsNotifier.notifyError(HgBundle.message("hg4idea.version.unsupported"), message, linkAdapter);
       }
       else if (myVersion.hasUnsupportedExtensions()) {
         String unsupportedExtensionsAsString = myVersion.getUnsupportedExtensions().toString();
         LOG.warn("Unsupported Hg extensions: " + unsupportedExtensionsAsString);
-        String message = String.format("Some hg extensions %s are not found or not supported by your hg version and will be ignored.\n" +
-                                       "Please, update your hgrc or Mercurial.ini file", unsupportedExtensionsAsString);
-        vcsNotifier.notifyWarning("Unsupported Hg version", message);
+        String message = HgBundle.message("hg4idea.version.unsupported.ext", unsupportedExtensionsAsString);
+        vcsNotifier.notifyWarning(HgBundle.message("hg4idea.version.unsupported"), message);
       }
     }
     catch (Exception e) {
@@ -429,12 +379,9 @@ public class HgVcs extends AbstractVcs {
         //sometimes not hg application has version command, but we couldn't parse an answer as valid hg,
         // so parse(output) throw ParseException, but hg and git executable seems to be valid in this case
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-        String message = HgVcsMessages.message("hg4idea.unable.to.run.hg", executable);
+        String message = HgBundle.message("hg4idea.unable.to.run.hg", executable);
         vcsNotifier.notifyError(message,
-                                reason +
-                                "<br/> Please check your hg executable path in <a href='" +
-                                SETTINGS_LINK +
-                                "'> settings </a>",
+                                HgBundle.message("hg4idea.exec.not.found", reason, SETTINGS_LINK),
                                 linkAdapter
         );
       }

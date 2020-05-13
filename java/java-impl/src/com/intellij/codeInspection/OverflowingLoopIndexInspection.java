@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -33,7 +34,7 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
 
         if(!isMonotonousUpdate(statement.getUpdate(), conditionType, indexVariable)) return;
         if (indexUpdatedInBody(statement, indexVariable, conditionType)) return;
-        holder.registerProblem(statement.getFirstChild(), InspectionsBundle.message("inspection.overflowing.loop.index.inspection.description"));
+        holder.registerProblem(statement.getFirstChild(), JavaBundle.message("inspection.overflowing.loop.index.inspection.description"));
       }
     };
   }

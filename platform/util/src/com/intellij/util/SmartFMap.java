@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
@@ -7,14 +7,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * An immutable map optimized for storing few entries with relatively rare updates.
  *
  * @author peter
  */
-public class SmartFMap<K,V> implements Map<K,V> {
-  private static final SmartFMap EMPTY = new SmartFMap(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
+public final class SmartFMap<K,V> implements Map<K,V> {
+  private static final SmartFMap<?, ?> EMPTY = new SmartFMap<>(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   private static final int ARRAY_THRESHOLD = 8;
   private final Object myMap; // Object[] for map sizes up to ARRAY_THRESHOLD or Map
 
@@ -22,19 +23,19 @@ public class SmartFMap<K,V> implements Map<K,V> {
     myMap = map;
   }
 
-  public static <K,V> SmartFMap<K, V> emptyMap() {
+  public static @NotNull<K, V> SmartFMap<K, V> emptyMap() {
     //noinspection unchecked
-    return EMPTY;
+    return (SmartFMap<K, V>)EMPTY;
   }
 
-  public SmartFMap<K, V> plus(@NotNull K key, V value) {
+  public @NotNull SmartFMap<K, V> plus(@NotNull K key, V value) {
     return new SmartFMap<>(doPlus(myMap, key, value));
   }
 
   private static Object doPlus(Object oldMap, Object key, Object value) {
     if (oldMap instanceof Map) {
       //noinspection unchecked
-      Map<Object,Object> newMap = new THashMap<>((Map)oldMap);
+      Map<Object, Object> newMap = new THashMap<>((Map<Object, Object>)oldMap);
       newMap.put(key, value);
       return newMap;
     }
@@ -119,10 +120,14 @@ public class SmartFMap<K,V> implements Map<K,V> {
       return myMap.equals(obj);
     }
 
-    if (!(obj instanceof Map)) return false;
+    if (!(obj instanceof Map)) {
+      return false;
+    }
 
-    Map map = (Map)obj;
-    if (size() != map.size()) return false;
+    Map<?, ?> map = (Map<?, ?>)obj;
+    if (size() != map.size()) {
+      return false;
+    }
 
     Object[] array = (Object[])myMap;
     for (int i = 0; i < array.length; i += 2) {
@@ -278,6 +283,20 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return Collections.unmodifiableSet(set);
   }
 
+  @Override
+  public void forEach(@NotNull BiConsumer<? super K, ? super V> action) {
+    if (myMap instanceof Map) {
+      asMap().forEach(action);
+    }
+    else {
+      Object[] array = (Object[])myMap;
+      for (int i = 0; i < array.length; i += 2) {
+        //noinspection unchecked
+        action.accept((K)array[i], (V)array[i + 1]);
+      }
+    }
+  }
+
   // copied from AbstractMap
   @Override
   public String toString() {
@@ -300,5 +319,4 @@ public class SmartFMap<K,V> implements Map<K,V> {
       sb.append(", ");
     }
   }
-
 }

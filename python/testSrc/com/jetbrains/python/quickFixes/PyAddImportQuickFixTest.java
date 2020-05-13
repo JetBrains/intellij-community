@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,7 +156,17 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-20976
   public void testCombinedElementOrdering() {
-    doTestProposedImportsOrdering("path", "path from sys", "first.path", "first.second.path()", "os.path", "first._third.path");
+    runWithAdditionalFileInLibDir(
+      "os/__init__.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "os/path.py",
+          "",
+          (___) -> doTestProposedImportsOrdering("path",
+                                                 "path from sys", "first.path", "first.second.path()", "os.path", "first._third.path")
+        )
+    );
   }
 
   // PY-20976
@@ -163,7 +174,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestProposedImportsOrdering("path", "pkg.path", "sys.path", "os.path")
+      (__) -> doTestProposedImportsOrdering("path", "pkg.path", "sys.path")
     );
   }
 
@@ -172,7 +183,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "os.path", "_private.path")
+      (__) -> doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "_private.path")
     );
   }
 
@@ -193,10 +204,47 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-20976
   public void testOrderingWithExistingImport() {
-    doTestProposedImportsOrdering("path", "path from sys", "src.path", "os.path");
+    runWithAdditionalFileInLibDir(
+      "os/__init__.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "os/path.py",
+          "",
+          (___) -> doTestProposedImportsOrdering("path", "path from sys", "src.path", "os.path")
+        )
+    );
   }
 
-  private void doTestProposedImportsOrdering(@NotNull String text, @NotNull String... expected) {
+  // PY-34818
+  public void testReferenceInsideFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      doMultiFileAutoImportTest("Import");
+    });
+  }
+
+  // PY-23968
+  public void testOrderingOfNamesInFromImportBeginning() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-23968
+  public void testOrderingOfNamesInFromImportInTheMiddle() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-23968
+  public void testOrderingOfNamesInFromImportEnd() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  private void doTestProposedImportsOrdering(@NotNull String text, String @NotNull ... expected) {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText(text));
       assertNotNull(candidates);

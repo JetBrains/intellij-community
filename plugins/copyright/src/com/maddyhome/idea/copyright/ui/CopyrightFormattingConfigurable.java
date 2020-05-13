@@ -2,19 +2,24 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightBundle;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
-public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
+public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll, Configurable.WithEpDependencies {
   private final Project myProject;
   private TemplateCommentPanel myPanel;
 
@@ -30,8 +35,8 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
 
   @Override
   @Nls
-    public String getDisplayName() {
-    return "Formatting";
+  public String getDisplayName() {
+    return CopyrightBundle.message("configurable.CopyrightFormattingConfigurable.display.name");
   }
 
   @Override
@@ -80,12 +85,18 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
 
   @Override
   protected Configurable[] buildConfigurables() {
-    final FileType[] types = FileTypeUtil.getInstance().getSupportedTypes();
+    final FileType[] types = FileTypeUtil.getSupportedTypes().toArray(FileType.EMPTY_ARRAY);
     final Configurable[] children = new Configurable[types.length];
     Arrays.sort(types, new FileTypeUtil.SortByName());
     for (int i = 0; i < types.length; i++) {
       children[i] = FileTypeCopyrightConfigurableFactory.createFileTypeConfigurable(myProject, types[i], getOrCreateMainPanel());
     }
     return children;
+  }
+
+  @NotNull
+  @Override
+  public Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Collections.singletonList(CopyrightUpdaters.EP_NAME);
   }
 }

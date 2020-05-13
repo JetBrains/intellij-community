@@ -56,8 +56,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   }
 
   @Override
-  @NotNull
-  protected Class[] getSuitableClasses() {
+  protected Class @NotNull [] getSuitableClasses() {
     return CLASSES;
   }
 
@@ -75,8 +74,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return SORTERS;
   }
 }

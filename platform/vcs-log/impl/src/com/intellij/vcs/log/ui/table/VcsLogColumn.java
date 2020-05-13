@@ -5,7 +5,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.DateTimeFormatManager;
 import com.intellij.util.text.JBDateFormat;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,24 +22,50 @@ import java.util.Locale;
  * If you want to tweak the default order of columns, change the corresponding implementation of {@link com.intellij.vcs.log.impl.VcsLogUiProperties}.
  */
 public enum VcsLogColumn {
-  ROOT("", FilePath.class),
-  COMMIT("Subject", GraphCommitCell.class),
-  AUTHOR("Author", String.class),
+  ROOT("", FilePath.class) {
+    @Override
+    public String getLocalizedName() {
+      return "";
+    }
+  },
+  COMMIT("Subject", GraphCommitCell.class) {
+    @Override
+    public String getLocalizedName() {
+      return VcsLogBundle.message("vcs.log.column.subject");
+    }
+  },
+  AUTHOR("Author", String.class) {
+    @Override
+    public String getLocalizedName() {
+      return VcsLogBundle.message("vcs.log.column.author");
+    }
+  },
   DATE("Date", String.class) {
     @Override
+    public String getLocalizedName() {
+      return VcsLogBundle.message("vcs.log.column.date");
+    }
+
+    @Override
     public String getContentSample() {
-      return JBDateFormat.getFormatter("vcs.log").formatDateTime(DateFormatUtil.getSampleDateTime());
+      if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed()) return null;
+      return JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime());
     }
   },
   HASH("Hash", String.class) {
+    @Override
+    public String getLocalizedName() {
+      return VcsLogBundle.message("vcs.log.column.hash");
+    }
+
     @Override
     public String getContentSample() {
       return StringUtil.repeat("e", VcsLogUtil.SHORT_HASH_LENGTH);
     }
   };
 
-  public static final @NotNull List<VcsLogColumn> DYNAMIC_COLUMNS = ContainerUtil.immutableList(AUTHOR, DATE, HASH);
-  private static final VcsLogColumn[] COLUMNS = values(); // to reduce copying overhead
+  @NotNull public static final List<VcsLogColumn> DYNAMIC_COLUMNS = ContainerUtil.immutableList(AUTHOR, DATE, HASH);
+  private static final VcsLogColumn @NotNull [] COLUMNS = values(); // to reduce copying overhead
 
   @NotNull private final String myName;
   @NotNull private final Class<?> myContentClass;
@@ -55,6 +83,8 @@ public enum VcsLogColumn {
   public String getName() {
     return myName;
   }
+
+  abstract public String getLocalizedName();
 
   /**
    * @return stable name (to identify column in statistics)

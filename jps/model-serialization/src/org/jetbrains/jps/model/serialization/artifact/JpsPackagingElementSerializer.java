@@ -18,9 +18,6 @@ package org.jetbrains.jps.model.serialization.artifact;
 import org.jdom.Element;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
-/**
- * @author nik
- */
 public abstract class JpsPackagingElementSerializer<E extends JpsPackagingElement> {
   private final String myTypeId;
   private final Class<? extends E> myElementClass;

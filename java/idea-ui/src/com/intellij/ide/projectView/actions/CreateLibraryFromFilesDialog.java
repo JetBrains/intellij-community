@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -30,9 +31,6 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private final ModulesComboBox myModulesComboBox;
@@ -43,7 +41,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<? extends OrderRoot> roots) {
     super(project, true);
-    setTitle("Create Library");
+    setTitle(JavaUiBundle.message("dialog.title.create.library"));
     myProject = project;
     myRoots = roots;
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
@@ -55,7 +53,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     myModulesComboBox = new ModulesComboBox();
     myModulesComboBox.fillModules(myProject);
     myModulesComboBox.setSelectedModule(findModule(roots));
-    builder.addLabeledComponent("&Add to module:", myModulesComboBox);
+    builder.addLabeledComponent(JavaUiBundle.message("label.add.to.module"), myModulesComboBox);
     myPanel = builder.getPanel();
     myNameAndLevelPanel.getLibraryNameField().selectAll();
     myNameAndLevelPanel.getLevelComboBox().addActionListener(new ActionListener() {

@@ -2,6 +2,7 @@
 
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.ModuleType;
 
 public class EmptyModuleBuilder extends ModuleBuilder {
@@ -22,7 +23,7 @@ public class EmptyModuleBuilder extends ModuleBuilder {
 
   @Override
   public String getPresentableName() {
-    return "Empty Project";
+    return IdeBundle.message("empty.project.generator.name");
   }
 
   @Override
@@ -37,6 +38,6 @@ public class EmptyModuleBuilder extends ModuleBuilder {
 
   @Override
   public String getDescription() {
-    return "Empty project without modules. Use it to create free-style module structure.";
+    return IdeBundle.message("empty.project.generator.description");
   }
 }

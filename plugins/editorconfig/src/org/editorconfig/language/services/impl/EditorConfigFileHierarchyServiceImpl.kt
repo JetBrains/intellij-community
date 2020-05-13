@@ -37,7 +37,7 @@ import org.editorconfig.language.util.matches
 import java.lang.ref.Reference
 
 class EditorConfigFileHierarchyServiceImpl(private val project: Project) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener {
-  private val taskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("editorconfig.notification.vfs.update.executor")
+  private val taskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("EditorConfig.notification.vfs.update.executor")
 
   private val updateQueue = MergingUpdateQueue("EditorConfigFileHierarchy UpdateQueue", 500, true, null, project)
 

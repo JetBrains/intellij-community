@@ -22,13 +22,13 @@ public class ImportSpecBuilder {
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
   private boolean myForceWhenUptodate;
-  private boolean myWhenAutoImportEnabled;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean isReportRefreshError = true;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   private boolean myCreateDirectoriesForEmptyContentRoots;
+  @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -41,8 +41,12 @@ public class ImportSpecBuilder {
     apply(importSpec);
   }
 
+  /**
+   * @deprecated see {@link com.intellij.openapi.externalSystem.settings.ExternalProjectSettings#setUseAutoImport} for details
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public ImportSpecBuilder whenAutoImportEnabled() {
-    myWhenAutoImportEnabled = true;
     return this;
   }
 
@@ -90,6 +94,12 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  @ApiStatus.Experimental
+  public ImportSpecBuilder projectResolverPolicy(@NotNull ProjectResolverPolicy projectResolverPolicy) {
+    myProjectResolverPolicy = projectResolverPolicy;
+    return this;
+  }
+
   /**
    * @deprecated no need to call the method, default callback is used by default
    */
@@ -102,7 +112,6 @@ public class ImportSpecBuilder {
 
   public ImportSpec build() {
     ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
-    mySpec.setWhenAutoImportEnabled(myWhenAutoImportEnabled);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
@@ -110,12 +119,22 @@ public class ImportSpecBuilder {
     mySpec.setReportRefreshError(isReportRefreshError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
-    mySpec.setCallback(myCallback == null ? new DefaultProjectRefreshCallback(mySpec) : myCallback);
+    mySpec.setProjectResolverPolicy(myProjectResolverPolicy);
+    ExternalProjectRefreshCallback callback;
+    if (myCallback != null) {
+      callback = myCallback;
+    }
+    else if (myProjectResolverPolicy == null || !myProjectResolverPolicy.isPartialDataResolveAllowed()) {
+      callback = new DefaultProjectRefreshCallback(mySpec);
+    }
+    else {
+      callback = null;
+    }
+    mySpec.setCallback(callback);
     return mySpec;
   }
 
   private void apply(ImportSpec spec) {
-    myWhenAutoImportEnabled = spec.whenAutoImportEnabled();
     myProgressExecutionMode = spec.getProgressExecutionMode();
     myForceWhenUptodate = spec.isForceWhenUptodate();
     myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();

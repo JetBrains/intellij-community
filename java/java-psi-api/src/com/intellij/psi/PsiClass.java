@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -27,7 +27,7 @@ public interface PsiClass
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */
-  @NotNull PsiClass[] EMPTY_ARRAY = new PsiClass[0];
+  PsiClass @NotNull [] EMPTY_ARRAY = new PsiClass[0];
 
   ArrayFactory<PsiClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiClass[count];
 
@@ -62,6 +62,15 @@ public interface PsiClass
   boolean isEnum();
 
   /**
+   * Checks if the class is a record.
+   *
+   * @return true if the class is an record, false otherwise.
+   */
+  default boolean isRecord() {
+    return false;
+  }
+
+  /**
    * Returns the list of classes that this class or interface extends.
    *
    * @return the extends list, or null for anonymous classes.
@@ -82,8 +91,7 @@ public interface PsiClass
    *
    * @return the list of extended class types, or an empty list for anonymous classes.
    */
-  @NotNull
-  PsiClassType[] getExtendsListTypes();
+  PsiClassType @NotNull [] getExtendsListTypes();
 
   /**
    * Returns the list of class types for the interfaces that this class implements.
@@ -91,8 +99,7 @@ public interface PsiClass
    * @return the list of extended class types, or an empty list for anonymous classes,
    * enums and annotation types
    */
-  @NotNull
-  PsiClassType[] getImplementsListTypes();
+  PsiClassType @NotNull [] getImplementsListTypes();
 
   /**
    * Returns the base class of this class.
@@ -108,8 +115,7 @@ public interface PsiClass
    *
    * @return the list of interfaces.
    */
-  @NotNull
-  PsiClass[] getInterfaces();
+  PsiClass @NotNull [] getInterfaces();
 
   /**
    * Returns the list of classes and interfaces extended or implemented by the class.
@@ -117,8 +123,7 @@ public interface PsiClass
    * @return the list of classes or interfaces. May return zero elements when jdk is
    * not configured, so no java.lang.Object is found
    */
-  @NotNull
-  PsiClass[] getSupers();
+  PsiClass @NotNull [] getSupers();
 
   /**
    * Returns the list of class types for the classes and interfaces extended or
@@ -128,8 +133,7 @@ public interface PsiClass
    * For the class with no explicit extends list, the returned list always contains at least one element for the java.lang.Object type.
    * If psiClass is java.lang.Object, returned list is empty.
    */
-  @NotNull
-  PsiClassType[] getSuperTypes();
+  PsiClassType @NotNull [] getSuperTypes();
 
   /**
    * Returns the list of fields in the class.
@@ -137,8 +141,7 @@ public interface PsiClass
    * @return the list of fields.
    */
   @Override
-  @NotNull
-  PsiField[] getFields();
+  PsiField @NotNull [] getFields();
 
   /**
    * Returns the list of methods in the class.
@@ -146,16 +149,14 @@ public interface PsiClass
    * @return the list of methods.
    */
   @Override
-  @NotNull
-  PsiMethod[] getMethods();
+  PsiMethod @NotNull [] getMethods();
 
   /**
    * Returns the list of constructors for the class.
    *
    * @return the list of constructors,
    */
-  @NotNull
-  PsiMethod[] getConstructors();
+  PsiMethod @NotNull [] getConstructors();
 
   /**
    * Returns the list of inner classes for the class.
@@ -163,40 +164,35 @@ public interface PsiClass
    * @return the list of inner classes.
    */
   @Override
-  @NotNull
-  PsiClass[] getInnerClasses();
+  PsiClass @NotNull [] getInnerClasses();
 
   /**
    * Returns the list of class initializers for the class.
    *
    * @return the list of class initializers.
    */
-  @NotNull
-  PsiClassInitializer[] getInitializers();
+  PsiClassInitializer @NotNull [] getInitializers();
 
   /**
    * Returns the list of fields in the class and all its superclasses.
    *
    * @return the list of fields.
    */
-  @NotNull
-  PsiField[] getAllFields();
+  PsiField @NotNull [] getAllFields();
 
   /**
    * Returns the list of methods in the class and all its superclasses.
    *
    * @return the list of methods.
    */
-  @NotNull
-  PsiMethod[] getAllMethods();
+  PsiMethod @NotNull [] getAllMethods();
 
   /**
    * Returns the list of inner classes for the class and all its superclasses.
    *
    * @return the list of inner classes.
    */
-  @NotNull
-  PsiClass[] getAllInnerClasses();
+  PsiClass @NotNull [] getAllInnerClasses();
 
   /**
    * Searches the class (and optionally its superclasses) for the field with the specified name.
@@ -228,12 +224,10 @@ public interface PsiClass
    * @param checkBases    if true, the method is also searched in the base classes of the class.
    * @return the found methods, or an empty array if no methods are found.
    */
-  @NotNull
-  PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
+  PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
 
-  @NotNull
   @Override
-  default JvmMethod[] findMethodsByName(@NotNull String methodName) {
+  default JvmMethod @NotNull [] findMethodsByName(@NotNull String methodName) {
     return findMethodsByName(methodName, false);
   }
 
@@ -244,8 +238,7 @@ public interface PsiClass
    * @param checkBases if true, the methods are also searched in the base classes of the class.
    * @return the found methods, or an empty array if no methods are found.
    */
-  @NotNull
-  PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases);
+  PsiMethod @NotNull [] findMethodsByName(@NonNls String name, boolean checkBases);
 
   /**
    * Searches the class (and optionally its superclasses) for the methods with the specified name
@@ -371,9 +364,17 @@ public interface PsiClass
     return PsiJvmConversionHelper.getClassSuperType(this);
   }
 
-  @NotNull
   @Override
-  default JvmReferenceType[] getInterfaceTypes() {
+  default JvmReferenceType @NotNull [] getInterfaceTypes() {
     return PsiJvmConversionHelper.getClassInterfaces(this);
+  }
+
+  default PsiRecordComponent @NotNull [] getRecordComponents() {
+    return PsiRecordComponent.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  default PsiRecordHeader getRecordHeader() {
+    return null;
   }
 }

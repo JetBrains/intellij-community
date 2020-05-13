@@ -2,16 +2,11 @@
 package com.jetbrains.builtInHelp
 
 import io.netty.channel.Channel
-import io.netty.channel.ChannelFutureListener
-import io.netty.handler.codec.http.*
-import io.netty.handler.stream.ChunkedStream
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaders
+import io.netty.handler.codec.http.HttpRequest
 import org.apache.commons.compress.utils.IOUtils
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.io.FileResponses
-import org.jetbrains.io.addCommonHeaders
-import org.jetbrains.io.addKeepAliveIfNeed
-import java.io.ByteArrayInputStream
-import java.util.*
 
 /**
  * Created by Egor.Malyshev on 7/13/2017.
@@ -30,32 +25,4 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
                     resourceName, request, channel, extraHeaders)
   }
 
-  protected fun sendData(content: ByteArray, name: String, request: FullHttpRequest, channel: Channel, extraHeaders: HttpHeaders): Boolean {
-
-    val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
-    response.headers().set(HttpHeaderNames.CONTENT_TYPE, FileResponses.getContentType(name))
-    response.addCommonHeaders()
-    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
-    response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
-    response.headers().add(extraHeaders)
-
-    val keepAlive = response.addKeepAliveIfNeed(request)
-    if (request.method() != HttpMethod.HEAD) {
-      HttpUtil.setContentLength(response, content.size.toLong())
-    }
-
-    channel.write(response)
-
-    if (request.method() != HttpMethod.HEAD) {
-      val stream = ByteArrayInputStream(content)
-      channel.write(ChunkedStream(stream))
-      stream.close()
-    }
-
-    val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
-    if (!keepAlive) {
-      future.addListener(ChannelFutureListener.CLOSE)
-    }
-    return true
-  }
 }

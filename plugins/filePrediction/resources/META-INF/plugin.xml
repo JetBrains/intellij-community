@@ -1,0 +1,37 @@
+<idea-plugin>
+  <id>com.jetbrains.filePrediction</id>
+  <name>Next File Prediction</name>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[Predicts next file which will be open in IDE to start long running analysis and pre-load caches.]]></description>
+
+  <depends optional="true" config-file="file-prediction-java.xml">com.intellij.java</depends>
+  <depends optional="true" config-file="file-prediction-vcs.xml">com.jetbrains.changeReminder</depends>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.FilePredictionFeatureProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.FileExternalReferencesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.ml.model" interface="com.intellij.filePrediction.predictor.model.FilePredictionModelProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="filePrediction.calculate.features" defaultValue="true" description="Record opened files features to predict which file will be opened next and pre-load caches."/>
+
+    <statistics.counterUsagesCollector groupId="file.prediction" version="4"/>
+
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionGeneralFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionFileTypeFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.FilePredictionHistoryFeatures"/>
+
+    <applicationService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
+    <projectService serviceImplementation="com.intellij.filePrediction.history.FilePredictionHistory"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.filePrediction.FilePredictionEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+
+  <applicationListeners>
+    <listener class="com.intellij.filePrediction.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
+</idea-plugin>

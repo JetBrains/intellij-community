@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.xml.highlighting;
 
@@ -33,12 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder {
   private final Map<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>> myCachedErrors =
-    ContainerUtil.newConcurrentMap();
+    new ConcurrentHashMap<>();
   private final Map<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>> myCachedChildrenErrors =
-    ContainerUtil.newConcurrentMap();
+    new ConcurrentHashMap<>();
   private final List<Annotation> myAnnotations = new ArrayList<>();
 
   private final Function<DomElement, List<DomElementProblemDescriptor>> myDomProblemsGetter =
@@ -50,7 +37,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   private final DomFileElement myElement;
 
   private static final Factory<Map<Class<? extends DomElementsInspection>,List<DomElementProblemDescriptor>>> CONCURRENT_HASH_MAP_FACTORY =
-    () -> ContainerUtil.newConcurrentMap();
+    () -> new ConcurrentHashMap<>();
   private static final Factory<List<DomElementProblemDescriptor>> SMART_LIST_FACTORY = () -> new SmartList<>();
   private final Set<Class<? extends DomElementsInspection>> myPassedInspections = new THashSet<>();
 
@@ -69,7 +56,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   }
 
   @Override
-  public final boolean isInspectionCompleted(@NotNull final DomElementsInspection inspection) {
+  public final boolean isInspectionCompleted(final @NotNull DomElementsInspection inspection) {
     return isInspectionCompleted(inspection.getClass());
   }
 
@@ -90,8 +77,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   }
 
   @Override
-  @NotNull
-  public synchronized List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
+  public synchronized @NotNull List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
     if (domElement == null || !domElement.isValid()) return Collections.emptyList();
     return myDomProblemsGetter.fun(domElement);
   }
@@ -121,8 +107,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
   }
 
-  @NotNull
-  private Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> getProblemsMap(final DomElement domElement) {
+  private @NotNull Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> getProblemsMap(final DomElement domElement) {
     final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> map = myCachedChildrenErrors.get(domElement);
     if (map != null) {
       return map;
@@ -149,7 +134,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     return problems;
   }
 
-  private static <T> void mergeMaps(final Map<T, List<DomElementProblemDescriptor>> accumulator, @Nullable final Map<T, List<DomElementProblemDescriptor>> toAdd) {
+  private static <T> void mergeMaps(final Map<T, List<DomElementProblemDescriptor>> accumulator, final @Nullable Map<T, List<DomElementProblemDescriptor>> toAdd) {
     if (toAdd == null) return;
     for (final Map.Entry<T, List<DomElementProblemDescriptor>> entry : toAdd.entrySet()) {
       ContainerUtil.getOrCreate(accumulator, entry.getKey(), SMART_LIST_FACTORY).addAll(entry.getValue());

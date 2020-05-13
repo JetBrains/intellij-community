@@ -7,13 +7,13 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
@@ -60,18 +60,12 @@ import java.util.concurrent.ConcurrentMap;
 class CachedValueStabilityChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueStabilityChecker.class);
   private static final Set<String> ourReportedKeys = ContainerUtil.newConcurrentSet();
-  private static final ConcurrentMap<Class, List<Field>> ourFieldCache = ConcurrentFactoryMap.createMap(ReflectionUtil::collectFields);
+  private static final ConcurrentMap<Class<?>, List<Field>> ourFieldCache = ConcurrentFactoryMap.createMap(ReflectionUtil::collectFields);
   private static final boolean DO_CHECKS = shouldDoChecks();
 
   private static boolean shouldDoChecks() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode()) return true;
-
-    // JDK version check happens after the unit test check on purpose:
-    // reflection access should be enabled in tests on any version of Java, otherwise we'd miss useful results
-    if (SystemInfo.IS_AT_LEAST_JAVA9) return false;
-
-    return app.isInternal() || app.isEAP();
+    return app.isUnitTestMode() || app.isInternal() || app.isEAP();
   }
 
   static void checkProvidersEquivalent(CachedValueProvider<?> p1, CachedValueProvider<?> p2, Key<?> key) {
@@ -147,6 +141,10 @@ class CachedValueStabilityChecker {
       return Arrays.deepEquals((Object[])v1, (Object[])v2);
     }
 
+    if (v1 instanceof Reference && v2 instanceof Reference) {
+      return Objects.equals(((Reference<?>)v1).get(), ((Reference<?>)v2).get());
+    }
+
     return false;
   }
 
@@ -179,5 +177,9 @@ class CachedValueStabilityChecker {
     }
 
     return "kotlin.jvm.internal.Lambda".equals(superclass.getName());
+  }
+
+  static void cleanupFieldCache() {
+    ourFieldCache.clear();
   }
 }

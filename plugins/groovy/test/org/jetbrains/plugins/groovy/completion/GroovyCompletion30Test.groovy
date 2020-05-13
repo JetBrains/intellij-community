@@ -42,6 +42,46 @@ foo(1) { it.byteValue()<caret> }
 ''')
   }
 
+  void testInferArgumentTypeFromLambda() {
+    doBasicTest('''
+def foo(a, closure) {
+  closure(a)
+}
+
+foo(1, (it) -> it.byt<caret> )
+''', '''
+def foo(a, closure) {
+  closure(a)
+}
+
+foo(1, (it) -> it.byteValue()<caret> )
+''')
+  }
+
+  void testInferArgumentTypeFromClosureInsideClass() {
+    doBasicTest '''
+class K {
+  def foo(a, closure) {
+    closure(a)
+  }
+
+  def bar() {
+    foo(1) { it.byt<caret> }
+  }
+}
+''', '''
+class K {
+  def foo(a, closure) {
+    closure(a)
+  }
+
+  def bar() {
+    foo(1) { it.byteValue()<caret> }
+  }
+}
+'''
+  }
+
   void testInferArgumentTypeForClosure() {
     doBasicTest '''
 def foo(a, b) { b(a) }
@@ -70,5 +110,21 @@ def foo(a) {
 
 foo 1
 ''')
+  }
+
+  void testCompletionAfterComplexStatement() {
+    doBasicTest '''
+def x(List<Integer> l){}
+
+void m(l) {
+    x([l])
+    l.by<caret>
+}''', '''
+def x(List<Integer> l){}
+
+void m(l) {
+    x([l])
+    l.byteValue()<caret>
+}'''
   }
 }

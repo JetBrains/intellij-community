@@ -32,9 +32,6 @@ import java.util.Map;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
-/**
- * @author nik
- */
 public class JpsAntArtifactBuilderTaskTest extends ArtifactBuilderTestCase {
   private File myArtifactsOutput;
 

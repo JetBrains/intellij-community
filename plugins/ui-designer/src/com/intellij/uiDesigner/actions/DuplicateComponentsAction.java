@@ -24,7 +24,7 @@ import java.util.*;
  * @author yole
  */
 public class DuplicateComponentsAction extends AbstractGuiEditorAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.DuplicateComponentsAction");
+  private static final Logger LOG = Logger.getInstance(DuplicateComponentsAction.class);
 
   public DuplicateComponentsAction() {
     super(true);

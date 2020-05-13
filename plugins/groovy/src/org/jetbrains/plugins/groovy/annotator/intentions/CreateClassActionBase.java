@@ -45,7 +45,7 @@ public abstract class CreateClassActionBase extends Intention {
   private final GrCreateClassKind myType;
 
   protected final GrReferenceElement myRefElement;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase");
+  private static final Logger LOG = Logger.getInstance(CreateClassActionBase.class);
 
   public CreateClassActionBase(GrCreateClassKind type, GrReferenceElement refElement) {
     myType = type;

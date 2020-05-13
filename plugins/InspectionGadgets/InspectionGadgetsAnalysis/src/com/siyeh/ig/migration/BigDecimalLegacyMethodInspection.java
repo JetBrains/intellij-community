@@ -28,7 +28,6 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,13 +35,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class BigDecimalLegacyMethodInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("bigdecimal.legacy.method.display.name");
-  }
 
   @NotNull
   @Override

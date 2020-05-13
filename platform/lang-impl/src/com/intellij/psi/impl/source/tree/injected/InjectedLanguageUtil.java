@@ -10,7 +10,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -52,7 +51,6 @@ import java.util.List;
  */
 @Deprecated
 public class InjectedLanguageUtil {
-  private static final Logger LOG = Logger.getInstance(InjectedLanguageUtil.class);
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
 
@@ -264,15 +262,21 @@ public class InjectedLanguageUtil {
     return getInjectedEditorForInjectedFile(hostEditor, hostEditor.getCaretModel().getCurrentCaret(), injectedFile);
   }
 
+  /**
+   * @param hostCaret if not {@code null}, take into account caret's selection (in case it's not contained completely in injected fragment,
+   *                  return host editor)
+   */
   @NotNull
-  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, @NotNull Caret hostCaret, @Nullable final PsiFile injectedFile) {
+  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor,
+                                                        @Nullable Caret hostCaret,
+                                                        @Nullable final PsiFile injectedFile) {
     if (injectedFile == null || hostEditor instanceof EditorWindow || hostEditor.isDisposed()) return hostEditor;
     Project project = hostEditor.getProject();
     if (project == null) project = injectedFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(injectedFile);
     if (!(document instanceof DocumentWindowImpl)) return hostEditor;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
-    if (hostCaret.hasSelection()) {
+    if (hostCaret != null && hostCaret.hasSelection()) {
       int selstart = hostCaret.getSelectionStart();
       if (selstart != -1) {
         int selend = Math.max(selstart, hostCaret.getSelectionEnd());
@@ -665,7 +669,7 @@ public class InjectedLanguageUtil {
       Boolean myState = startElement == null ? Boolean.TRUE : null;
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element == startElement) myState = Boolean.TRUE;
         if (element == endElement) myState = Boolean.FALSE;
         if (Boolean.FALSE == myState) return;

@@ -16,7 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyMissingConstructorInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -25,19 +25,19 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PyAddCallSuperQuickFixTest extends PyQuickFixTestCase {
 
   public void testOldStyle() {
-    doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"));
+    doQuickFixTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"));
   }
 
   public void testNewStyle() {
-    doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"));
+    doQuickFixTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"));
   }
 
   public void testKwargs() {
-    doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"));
+    doQuickFixTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"));
   }
 
   // PY-35512
   public void testPositionalOnlyParameters() {
-    doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), LanguageLevel.PYTHON38);
+    doQuickFixTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), LanguageLevel.PYTHON38);
   }
 }

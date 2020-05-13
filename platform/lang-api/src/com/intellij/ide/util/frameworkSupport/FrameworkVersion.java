@@ -19,9 +19,6 @@ package com.intellij.ide.util.frameworkSupport;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class FrameworkVersion {
   public static final FrameworkVersion[] EMPTY_ARRAY = new FrameworkVersion[0];
   private final String myVersionName;
@@ -44,7 +41,7 @@ public class FrameworkVersion {
     this(versionName, libraryName, libraries, false);
   }
 
-  public FrameworkVersion(@NotNull String versionName, @NotNull String libraryName, @NotNull LibraryInfo[] libraries, boolean aDefault) {
+  public FrameworkVersion(@NotNull String versionName, @NotNull String libraryName, LibraryInfo @NotNull [] libraries, boolean aDefault) {
     myVersionName = versionName;
     myLibraryName = libraryName;
     myLibraries = libraries;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
@@ -57,19 +56,20 @@ public class HgVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected String getAddTitle() {
-    return HgVcsMessages.message("hg4idea.add.title");
+    return HgBundle.message("hg4idea.add.title");
   }
 
   @NotNull
   @Override
   protected String getSingleFileAddTitle() {
-    return HgVcsMessages.message("hg4idea.add.single.title");
+    return HgBundle.message("hg4idea.add.single.title");
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   @NotNull
   @Override
   protected String getSingleFileAddPromptTemplate() {
-    return HgVcsMessages.message("hg4idea.add.body");
+    return HgBundle.message("hg4idea.add.body");
   }
 
   @Override
@@ -104,7 +104,7 @@ public class HgVFSListener extends VcsVFSListener {
     // exclude files which are ignored in .hgignore in background and execute adding after that
     final Map<VirtualFile, Collection<VirtualFile>> sortedFiles = HgUtil.sortByHgRoots(myProject, addedFiles);
     final HashSet<VirtualFile> untrackedFiles = new HashSet<>();
-    new Task.Backgroundable(myProject, HgVcsMessages.message("hg4idea.progress.checking.ignored"), false) {
+    new Task.Backgroundable(myProject, HgBundle.message("hg4idea.progress.checking.ignored"), false) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
         for (Map.Entry<VirtualFile, Collection<VirtualFile>> e : sortedFiles.entrySet()) {
@@ -127,7 +127,7 @@ public class HgVFSListener extends VcsVFSListener {
 
   @NotNull
   VcsRepositoryIgnoredFilesHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
-    return ObjectUtils.assertNotNull(HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
+    return Objects.requireNonNull(HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
   }
   /**
    * The version of execute add before overriding
@@ -143,7 +143,7 @@ public class HgVFSListener extends VcsVFSListener {
   protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFilesFrom) {
     Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(copiedFilesFrom);
     (new Task.ConditionalModal(myProject,
-                               HgVcsMessages.message("hg4idea.add.progress"),
+                               HgBundle.message("hg4idea.add.progress"),
                                false,
                                VcsConfiguration.getInstance(myProject).getAddRemoveOption() ) {
       @Override public void run(@NotNull ProgressIndicator aProgressIndicator) {
@@ -201,17 +201,18 @@ public class HgVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected String getDeleteTitle() {
-    return HgVcsMessages.message("hg4idea.remove.multiple.title");
+    return HgBundle.message("hg4idea.remove.multiple.title");
   }
 
   @Override
   protected String getSingleFileDeleteTitle() {
-    return HgVcsMessages.message("hg4idea.remove.single.title");
+    return HgBundle.message("hg4idea.remove.single.title");
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   @Override
   protected String getSingleFileDeletePromptTemplate() {
-    return HgVcsMessages.message("hg4idea.remove.single.body");
+    return HgBundle.message("hg4idea.remove.single.body");
   }
 
   @NotNull
@@ -247,7 +248,7 @@ public class HgVFSListener extends VcsVFSListener {
     }
 
     new Task.ConditionalModal(myProject,
-                              HgVcsMessages.message("hg4idea.remove.progress"),
+                              HgBundle.message("hg4idea.remove.progress"),
                               false,
                               VcsConfiguration.getInstance(myProject).getAddRemoveOption()) {
       @Override public void run( @NotNull ProgressIndicator indicator ) {
@@ -318,7 +319,7 @@ public class HgVFSListener extends VcsVFSListener {
   protected void performMoveRename(@NotNull List<MovedFileInfo> movedFiles) {
     final List<MovedFileInfo> failedToMove = new ArrayList<>();
     (new VcsBackgroundTask<MovedFileInfo>(myProject,
-                                          HgVcsMessages.message("hg4idea.move.progress"),
+                                          HgBundle.message("hg4idea.move.progress"),
                                           VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
                                           movedFiles) {
       @Override
@@ -329,15 +330,16 @@ public class HgVFSListener extends VcsVFSListener {
       }
 
       private void handleRenameError() {
-        NotificationAction viewFilesAction = NotificationAction.createSimple("View Files...", () -> {
+        NotificationAction viewFilesAction =
+          NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files"), () -> {
           DialogWrapper dialog =
             new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
-          dialog.setTitle("Failed to Rename");
+          dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
           dialog.show();
         });
-        NotificationAction retryAction = NotificationAction.createSimpleExpiring("Retry", () -> performMoveRename(failedToMove));
+        NotificationAction retryAction = NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
         VcsNotifier.getInstance(myProject)
-          .notifyError("Rename Failed", "Couldn't mark some files as renamed", viewFilesAction, retryAction);
+          .notifyError(HgBundle.message("hg4idea.rename.error"), HgBundle.message("hg4idea.rename.error.msg"), viewFilesAction, retryAction);
       }
 
       @Override
@@ -382,9 +384,8 @@ public class HgVFSListener extends VcsVFSListener {
       super(project, files, null, null, null, null, false);
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction()};
     }
   }

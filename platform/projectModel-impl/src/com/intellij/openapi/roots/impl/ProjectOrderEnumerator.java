@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private final Project myProject;
 

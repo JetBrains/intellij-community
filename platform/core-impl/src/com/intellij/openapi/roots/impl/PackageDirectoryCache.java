@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,20 +9,22 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
  */
 public class PackageDirectoryCache {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PackageDirectoryCache");
+  private static final Logger LOG = Logger.getInstance(PackageDirectoryCache.class);
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();
-  private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
+  private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = new ConcurrentHashMap<>();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
 
   public PackageDirectoryCache(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
@@ -61,21 +49,19 @@ public class PackageDirectoryCache {
     myNonExistentPackages.clear();
   }
 
-  @NotNull
-  public List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName) {
+  public @NotNull List<VirtualFile> getDirectoriesByPackageName(final @NotNull String packageName) {
     PackageInfo info = getPackageInfo(packageName);
     return info == null ? Collections.emptyList() : Collections.unmodifiableList(info.myPackageDirectories);
   }
 
-  @Nullable
-  private PackageInfo getPackageInfo(@NotNull final String packageName) {
+  private @Nullable PackageInfo getPackageInfo(final @NotNull String packageName) {
     PackageInfo info = myDirectoriesByPackageNameCache.get(packageName);
     if (info == null && !myNonExistentPackages.contains(packageName)) {
       if (packageName.length() > Registry.intValue("java.max.package.name.length") || StringUtil.containsAnyChar(packageName, ";[/")) {
         return null;
       }
 
-      List<VirtualFile> result = ContainerUtil.newSmartList();
+      List<VirtualFile> result = new SmartList<>();
 
       if (StringUtil.isNotEmpty(packageName) && !StringUtil.startsWithChar(packageName, '.')) {
         int i = packageName.lastIndexOf('.');
@@ -107,14 +93,12 @@ public class PackageDirectoryCache {
     return info;
   }
 
-  @NotNull
-  public Set<String> getSubpackageNames(@NotNull final String packageName) {
+  public @NotNull Set<String> getSubpackageNames(final @NotNull String packageName) {
     final PackageInfo info = getPackageInfo(packageName);
     return info == null ? Collections.emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
   }
 
-  @NotNull
-  public Set<String> getSubpackageNames(@NotNull final String packageName, @NotNull GlobalSearchScope scope) {
+  public @NotNull Set<String> getSubpackageNames(final @NotNull String packageName, @NotNull GlobalSearchScope scope) {
     final PackageInfo info = getPackageInfo(packageName);
     if (info == null) return Collections.emptySet();
 
@@ -129,22 +113,18 @@ public class PackageDirectoryCache {
     return Collections.unmodifiableSet(result);
   }
 
-  @NotNull
-  public static PackageDirectoryCache createCache(@NotNull List<? extends VirtualFile> roots) {
+  public static @NotNull PackageDirectoryCache createCache(@NotNull List<? extends VirtualFile> roots) {
     MultiMap<String, VirtualFile> map = MultiMap.create();
     map.putValues("", roots);
     return new PackageDirectoryCache(map);
   }
 
   private class PackageInfo {
-    @NotNull
-    final String myQname;
-    @NotNull
-    final List<? extends VirtualFile> myPackageDirectories;
+    final @NotNull String myQname;
+    final @NotNull List<? extends VirtualFile> myPackageDirectories;
     final NotNullLazyValue<MultiMap<String, VirtualFile>> mySubPackages = new VolatileNotNullLazyValue<MultiMap<String, VirtualFile>>() {
-      @NotNull
       @Override
-      protected MultiMap<String, VirtualFile> compute() {
+      protected @NotNull MultiMap<String, VirtualFile> compute() {
         MultiMap<String, VirtualFile> result = MultiMap.createLinked();
         for (VirtualFile directory : myPackageDirectories) {
           ProgressManager.checkCanceled();

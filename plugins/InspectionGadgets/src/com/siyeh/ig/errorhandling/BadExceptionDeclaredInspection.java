@@ -104,12 +104,6 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("bad.exception.declared.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("bad.exception.declared.problem.descriptor");
   }

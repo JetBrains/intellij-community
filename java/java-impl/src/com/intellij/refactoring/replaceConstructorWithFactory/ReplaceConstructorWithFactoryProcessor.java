@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
@@ -46,8 +46,7 @@ import java.util.List;
  * @author dsl
  */
 public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor");
+  private static final Logger LOG = Logger.getInstance(ReplaceConstructorWithFactoryProcessor.class);
   private final PsiMethod myConstructor;
   private final String myFactoryName;
   private final PsiElementFactory myFactory;
@@ -82,7 +81,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     if (myConstructor != null) {
       return new ReplaceConstructorWithFactoryViewDescriptor(myConstructor);
     }
@@ -94,8 +93,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   private List<PsiElement> myNonNewConstructorUsages;
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
 
     ArrayList<UsageInfo> usages = new ArrayList<>();
@@ -141,7 +139,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
     final PsiClass constructorContainingClass = getConstructorContainingClass();
     if (!helper.isAccessible(constructorContainingClass, myTargetClass, null)) {
-      String message = RefactoringBundle.message("class.0.is.not.accessible.from.target.1",
+      String message = JavaRefactoringBundle.message("class.0.is.not.accessible.from.target.1",
                                                  RefactoringUIUtil.getDescription(constructorContainingClass, true),
                                                  RefactoringUIUtil.getDescription(myTargetClass, true));
       conflicts.putValue(constructorContainingClass, message);
@@ -154,7 +152,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       if (!reportedContainers.contains(container)) {
         reportedContainers.add(container);
         if (!helper.isAccessible(myTargetClass, usage.getElement(), null)) {
-          String message = RefactoringBundle.message("target.0.is.not.accessible.from.1",
+          String message = JavaRefactoringBundle.message("target.0.is.not.accessible.from.1",
                                                      targetClassDescription,
                                                      RefactoringUIUtil.getDescription(container, true));
           conflicts.putValue(myTargetClass, message);
@@ -169,7 +167,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
           final PsiClass containingClass = field.getContainingClass();
 
           if (PsiTreeUtil.isAncestor(containingClass, myTargetClass, true)) {
-            String message = RefactoringBundle.message("constructor.being.refactored.is.used.in.initializer.of.0",
+            String message = JavaRefactoringBundle.message("constructor.being.refactored.is.used.in.initializer.of.0",
                                                        RefactoringUIUtil.getDescription(field, true), RefactoringUIUtil.getDescription(
                 constructorContainingClass, false));
             conflicts.putValue(field, message);
@@ -196,7 +194,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
 
     try {
       PsiReferenceExpression classReferenceExpression =
@@ -317,11 +315,11 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   @NotNull
   protected String getCommandName() {
     if (myConstructor != null) {
-      return RefactoringBundle.message("replace.constructor.0.with.a.factory.method",
+      return JavaRefactoringBundle.message("replace.constructor.0.with.a.factory.method",
                                        DescriptiveNameUtil.getDescriptiveName(myConstructor));
     }
     else {
-      return RefactoringBundle.message("replace.default.constructor.of.0.with.a.factory.method",
+      return JavaRefactoringBundle.message("replace.default.constructor.of.0.with.a.factory.method",
                                        DescriptiveNameUtil.getDescriptiveName(myOriginalClass));
     }
   }

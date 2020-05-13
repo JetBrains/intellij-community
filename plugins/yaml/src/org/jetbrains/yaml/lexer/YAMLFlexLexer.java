@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.lexer;
 
 import com.intellij.lexer.FlexAdapter;
@@ -8,12 +9,9 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 
 import java.io.Reader;
 
-/**
- * @author oleg
- */
 public class YAMLFlexLexer extends MergingLexerAdapter {
   private static final TokenSet TOKENS_TO_MERGE = TokenSet.create(YAMLTokenTypes.TEXT);
-  
+
   private static final int DIRTY_STATE = 239;
 
   public YAMLFlexLexer() {
@@ -58,7 +56,7 @@ public class YAMLFlexLexer extends MergingLexerAdapter {
       else {
         // That should not occur normally, but some complex lexers (e.g. black and white lexer)
         // require "suspending" of the lexer to pass some template language. In these cases we
-        // believe that the same instance of the lexer would be restored (with its internal state) 
+        // believe that the same instance of the lexer would be restored (with its internal state)
         initialState = 0;
       }
 

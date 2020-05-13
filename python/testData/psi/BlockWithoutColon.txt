@@ -15,7 +15,7 @@ PyFile:BlockWithoutColon.py
           PsiWhiteSpace(' ')
           PyReferenceExpression: True
             PsiElement(Py:IDENTIFIER)('True')
-          PsiErrorElement:Colon expected
+          PsiErrorElement:':' expected
             <empty list>
           PsiWhiteSpace('\n        ')
           PyStatementList

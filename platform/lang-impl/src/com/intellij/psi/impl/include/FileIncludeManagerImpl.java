@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.include;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -32,7 +35,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public final class FileIncludeManagerImpl extends FileIncludeManager {
+public final class FileIncludeManagerImpl extends FileIncludeManager implements Disposable {
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final PsiFileFactory myPsiFileFactory;
@@ -53,8 +56,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager {
       return VfsUtilCore.toVirtualFileArray(files);
     }
   };
-  private final Map<String, FileIncludeProvider> myProviderMap;
-
+  
   public void processIncludes(PsiFile file, Processor<? super FileIncludeInfo> processor) {
     List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), myProject);
     for (FileIncludeInfo info : infoList) {
@@ -116,17 +118,29 @@ public final class FileIncludeManagerImpl extends FileIncludeManager {
     return names;
   }
 
-  public FileIncludeManagerImpl(Project project) {
+  private final Map<String, FileIncludeProvider> myProviderMap = new HashMap<>();
+
+  public FileIncludeManagerImpl(@NotNull Project project) {
     myProject = project;
     myPsiManager = PsiManager.getInstance(project);
     myPsiFileFactory = PsiFileFactory.getInstance(myProject);
 
-    List<FileIncludeProvider> providers = FileIncludeProvider.EP_NAME.getExtensionList();
-    myProviderMap = new HashMap<>(providers.size());
-    for (FileIncludeProvider provider : providers) {
-      FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);
-      assert old == null;
-    }
+    FileIncludeProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<FileIncludeProvider>() {
+      @Override
+      public void extensionAdded(@NotNull FileIncludeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);
+        assert old == null;
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull FileIncludeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        myProviderMap.remove(provider.getId());
+      }
+    }, true, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -199,8 +213,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager {
       RUNTIME_KEY = Key.create(runtimeKey);
     }
 
-    @NotNull
-    private VirtualFile[] getAllFiles(@NotNull VirtualFile file, boolean compileTimeOnly, boolean recursively) {
+    private VirtualFile @NotNull [] getAllFiles(@NotNull VirtualFile file, boolean compileTimeOnly, boolean recursively) {
       if (recursively) {
         Set<VirtualFile> result = new HashSet<>();
         getAllFilesRecursively(file, compileTimeOnly, result);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.versionBrowser;
 
@@ -20,6 +6,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.text.DateFormatUtil;
 import com.michaelbaranov.microba.calendar.DatePicker;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,9 +16,6 @@ import java.beans.PropertyVetoException;
 import java.text.DateFormat;
 import java.util.Date;
 
-/**
- * @author yole
- */
 public class DateFilterComponent {
   private JPanel myDatePanel;
   private JCheckBox myUseDateAfterFilter;
@@ -44,7 +28,7 @@ public class DateFilterComponent {
     this(true, DateFormatUtil.getDateTimeFormat().getDelegate());
   }
 
-  public DateFilterComponent(final boolean showBorder, final DateFormat dateFormat) {
+  public DateFilterComponent(boolean showBorder, @NotNull DateFormat dateFormat) {
     if (showBorder) {
       myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
     }
@@ -61,34 +45,33 @@ public class DateFilterComponent {
     updateAllEnabled(null);
   }
 
-  private void updateAllEnabled(final ActionEvent e) {
+  private void updateAllEnabled(@Nullable ActionEvent e) {
     StandardVersionFilterComponent.updatePair(myUseDateBeforeFilter, myDateBefore, e);
     StandardVersionFilterComponent.updatePair(myUseDateAfterFilter, myDateAfter, e);
   }
 
+  @NotNull
   public JPanel getPanel() {
     return myRootPanel;
   }
 
-  public void setBefore(final long beforeTs) {
+  public void setBefore(long beforeTs) {
     myUseDateBeforeFilter.setSelected(true);
     try {
       myDateBefore.setDate(new Date(beforeTs));
       myDateBefore.setEnabled(true);
     }
-    catch (PropertyVetoException e) {
-      //
+    catch (PropertyVetoException ignored) {
     }
   }
 
-  public void setAfter(final long afterTs) {
+  public void setAfter(long afterTs) {
     myUseDateAfterFilter.setSelected(true);
     try {
       myDateAfter.setDate(new Date(afterTs));
       myDateAfter.setEnabled(true);
     }
-    catch (PropertyVetoException e) {
-      //
+    catch (PropertyVetoException ignored) {
     }
   }
 
@@ -100,7 +83,7 @@ public class DateFilterComponent {
     return myUseDateAfterFilter.isSelected() ? myDateAfter.getDate().getTime() : -1;
   }
 
-  public void initValues(ChangeBrowserSettings settings) {
+  public void initValues(@NotNull ChangeBrowserSettings settings) {
     myUseDateBeforeFilter.setSelected(settings.USE_DATE_BEFORE_FILTER);
     myUseDateAfterFilter.setSelected(settings.USE_DATE_AFTER_FILTER);
     try {
@@ -113,7 +96,7 @@ public class DateFilterComponent {
     updateAllEnabled(null);
   }
 
-  public void saveValues(ChangeBrowserSettings settings) {
+  public void saveValues(@NotNull ChangeBrowserSettings settings) {
     settings.USE_DATE_BEFORE_FILTER = myUseDateBeforeFilter.isSelected();
     settings.USE_DATE_AFTER_FILTER = myUseDateAfterFilter.isSelected();
     settings.setDateBefore(myDateBefore.getDate());

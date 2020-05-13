@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShAssignmentExpressionImpl extends ShBinaryExpressionImpl implements ShAssignmentExpression {
+public class ShAssignmentExpressionImpl extends ShAssignmentExpressionMixin implements ShAssignmentExpression {
 
   public ShAssignmentExpressionImpl(ASTNode node) {
     super(node);

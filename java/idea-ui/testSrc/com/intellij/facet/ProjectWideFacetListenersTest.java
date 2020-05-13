@@ -4,13 +4,15 @@ package com.intellij.facet;
 
 import com.intellij.facet.mock.MockFacet;
 import com.intellij.facet.mock.MockFacetType;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
+import java.io.File;
+
 public class ProjectWideFacetListenersTest extends FacetTestCase {
   public void testAddRemoveFacet() {
     final MyProjectWideFacetListener listener = new MyProjectWideFacetListener();
@@ -32,17 +34,17 @@ public class ProjectWideFacetListenersTest extends FacetTestCase {
     listenersRegistry.unregisterListener(MockFacetType.ID, listener);
   }
 
-  public void testLoadModuleWithFacet() {
+  public void testLoadModuleWithFacet() throws Exception {
     final MyProjectWideFacetListener listener = new MyProjectWideFacetListener();
     final ProjectWideFacetListenersRegistry listenersRegistry = ProjectWideFacetListenersRegistry.getInstance(myProject);
     listenersRegistry.registerListener(MockFacetType.ID, listener);
 
     assertEquals("", listener.getEvents());
-    final Module module = loadModule("facet/module/MyFacetModule.iml");
+    File imlFile = PathManagerEx.findFileUnderCommunityHome("java/java-tests/testData/facet/module/MyFacetModule.iml");
+    Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).loadModule(FileUtil.toSystemIndependentName(imlFile.getAbsolutePath())));
     assertEquals("firstAdded;added[MyMockFacet];", listener.getEvents());
 
     ModuleManager.getInstance(myProject).disposeModule(module);
-    myModulesToDispose.remove(module);
     assertEquals("beforeRemoved[MyMockFacet];removed[MyMockFacet];allRemoved;", listener.getEvents());
 
     listenersRegistry.unregisterListener(MockFacetType.ID, listener);

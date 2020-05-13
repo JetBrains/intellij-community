@@ -9,6 +9,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
@@ -30,12 +31,11 @@ import java.util.Objects;
 
 class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull final RefEntity refEntity,
-                                                @NotNull final AnalysisScope scope,
-                                                @NotNull final InspectionManager manager,
-                                                @NotNull final GlobalInspectionContext globalContext,
-                                                @NotNull final ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
+                                                           @NotNull final AnalysisScope scope,
+                                                           @NotNull final InspectionManager manager,
+                                                           @NotNull final GlobalInspectionContext globalContext,
+                                                           @NotNull final ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 
@@ -69,7 +69,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
         if (anchor != null) {
           result.add(manager.createProblemDescriptor(anchor,
-                                                     InspectionsBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
+                                                     JavaBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
                                                      new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
                                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
         }
@@ -204,7 +204,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.unused.parameter.delete.quickfix");
+      return JavaBundle.message("inspection.unused.parameter.delete.quickfix");
     }
 
     @Override

@@ -21,6 +21,7 @@ import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,17 +53,16 @@ class SignatureSuggesterPreviewDialog extends DialogWrapper {
     myOldCall = oldMethodCall;
     myNewCall = newMethodCall;
     myDuplicatesNumber = duplicatesNumber;
-    setTitle("Extract Parameters to Replace Duplicates");
-    setOKButtonText("Accept Signature Change");
-    setCancelButtonText("Keep Original Signature");
+    setTitle(JavaRefactoringBundle.message("extract.parameters.to.replace.duplicates"));
+    setOKButtonText(JavaRefactoringBundle.message("accept.signature.change"));
+    setCancelButtonText(JavaRefactoringBundle.message("keep.original.signature"));
     init();
   }
 
   @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    return new JLabel("<html><b>No exact method duplicates were found</b>, though changed method as shown below has " +
-                      myDuplicatesNumber + " duplicate" + (myDuplicatesNumber > 1 ? "s" : "") + " </html>");
+    return new JLabel(JavaRefactoringBundle.message("no.exact.method.duplicates.were.found", myDuplicatesNumber));
   }
 
   @Nullable

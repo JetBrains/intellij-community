@@ -45,13 +45,6 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       myDisplayName = displayName;
     }
   }
-  
-  @Override
-  @NotNull
-  @Nls
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("key.set.iteration.may.use.entry.set.display.name");
-  }
 
   @Override
   @NotNull

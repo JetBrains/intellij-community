@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveComponentManager
@@ -37,6 +37,7 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
     gitIgnore.writeText("!$configurationName")
 
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations") })
 
     gitIgnore.writeText("!$configurationName*")
 
@@ -51,6 +52,8 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
 
   fun `test remove run configuration from ignore`() {
     gitIgnore.writeText(".idea")
+    assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+    assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations") })
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })

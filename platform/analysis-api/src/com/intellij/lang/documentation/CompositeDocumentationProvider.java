@@ -5,6 +5,7 @@ package com.intellij.lang.documentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -17,8 +18,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-public class CompositeDocumentationProvider extends DocumentationProviderEx implements ExternalDocumentationProvider, ExternalDocumentationHandler {
+public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider, ExternalDocumentationHandler {
   private static final Logger LOG = Logger.getInstance(CompositeDocumentationProvider.class);
 
   private final List<DocumentationProvider> myProviders;
@@ -155,6 +157,25 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   }
 
   @Override
+  public @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+    for (DocumentationProvider provider : getAllProviders()) {
+      String result = provider.generateRenderedDoc(comment);
+      if (result != null) {
+        LOG.debug("generateRenderedDoc: ", provider);
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+    for (DocumentationProvider provider : getAllProviders()) {
+      provider.collectDocComments(file, sink);
+    }
+  }
+
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     for (DocumentationProvider provider : getAllProviders()) {
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager, object, element);
@@ -249,14 +270,13 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement) {
+                                                  @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof DocumentationProviderEx) {
-        PsiElement element = ((DocumentationProviderEx)provider).getCustomDocumentationElement(editor, file, contextElement);
-        if (element != null) {
-          LOG.debug("getCustomDocumentationElement: ", provider);
-          return element;
-        }
+      PsiElement element = provider.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
+      if (element != null) {
+        LOG.debug("getCustomDocumentationElement: ", provider);
+        return element;
       }
     }
     return null;

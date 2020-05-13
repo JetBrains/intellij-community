@@ -142,6 +142,10 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
   /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2794534">8.1.1.2. Block Chomping Indicator</a>*/
   @NotNull
   protected final ChompingIndicator getChompingIndicator() {
+    Boolean forceKeepChomping = getContainingFile().getOriginalFile().getUserData(FORCE_KEEP_CHOMPING);
+    if (forceKeepChomping != null && forceKeepChomping) {
+      return ChompingIndicator.KEEP;
+    }
     ASTNode headerNode = getNthContentTypeChild(0);
     assert headerNode != null;
 

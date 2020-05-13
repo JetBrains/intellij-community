@@ -31,13 +31,6 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "java.lang.import.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "java.lang.import.problem.descriptor");

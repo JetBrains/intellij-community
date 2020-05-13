@@ -119,7 +119,7 @@ def init_func_generator(spec):
         if sys.version_info >= (3, 8, 0):
             # Python 3.8 and above supports positional-only parameters. The number of such
             # parameters is passed to the constructor as the second argument.
-            args.insert(2, 0)
+            args.insert(1, 0)
         new_code = types.CodeType(*args)
     elif JYTHON:
         from org.python.core import PyBytecode

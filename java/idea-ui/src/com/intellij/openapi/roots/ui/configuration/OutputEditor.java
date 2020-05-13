@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class OutputEditor extends ModuleElementsEditor {
-  public static final String NAME = ProjectBundle.message("project.roots.path.tab.title");
   private final BuildElementsEditor myCompilerOutputEditor;
   private final JavadocEditor myJavadocEditor;
   private final AnnotationsEditor myAnnotationsEditor;
@@ -70,7 +69,7 @@ public class OutputEditor extends ModuleElementsEditor {
 
   @Override
   public String getDisplayName() {
-    return NAME;
+    return getName();
   }
 
   @Override
@@ -91,5 +90,9 @@ public class OutputEditor extends ModuleElementsEditor {
   @NonNls
   public String getHelpTopic() {
     return "projectStructure.modules.paths";
+  }
+
+  public static String getName() {
+    return JavaUiBundle.message("project.roots.path.tab.title");
   }
 }

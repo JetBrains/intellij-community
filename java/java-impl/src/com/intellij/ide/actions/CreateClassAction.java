@@ -2,12 +2,13 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -26,24 +27,30 @@ import java.util.Map;
  */
 public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> implements DumbAware {
   public CreateClassAction() {
-    super("", IdeBundle.message("action.create.new.class.description"), PlatformIcons.CLASS_ICON, true);
+    super("", JavaBundle.message("action.create.new.class.description"), PlatformIcons.CLASS_ICON, true);
   }
 
   @Override
   protected void buildDialog(final Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
-      .setTitle(IdeBundle.message("action.create.new.class"))
-      .addKind("Class", PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
-      .addKind("Interface", PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
+      .setTitle(JavaBundle.message("action.create.new.class"))
+      .addKind(JavaPsiBundle.message("node.class.tooltip"), PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
+      .addKind(JavaPsiBundle.message("node.interface.tooltip"), PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
+    if (HighlightingFeature.RECORDS.isAvailable(directory)) {
+      builder.addKind(JavaPsiBundle.message("node.record.tooltip"), PlatformIcons.RECORD_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);
+    }
     LanguageLevel level = PsiUtil.getLanguageLevel(directory);
     if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
-      builder.addKind("Enum", PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
-      builder.addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
+      builder.addKind(JavaPsiBundle.message("node.enum.tooltip"), PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
+      builder.addKind(JavaPsiBundle.message("node.annotation.tooltip"), PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
 
+    PsiDirectory[] dirs = {directory};
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
-      final JavaCreateFromTemplateHandler handler = new JavaCreateFromTemplateHandler();
-      if (handler.handlesTemplate(template) && JavaCreateFromTemplateHandler.canCreate(directory)) {
+      final @NotNull CreateFromTemplateHandler handler = FileTemplateUtil.findHandler(template);
+      if (handler instanceof JavaCreateFromTemplateHandler && 
+          handler.handlesTemplate(template) && 
+          handler.canCreate(dirs)) {
         builder.addKind(template.getName(), JavaFileType.INSTANCE.getIcon(), template.getName());
       }
     }
@@ -54,8 +61,9 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
         if (inputString.length() > 0 && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
           return "This is not a valid Java qualified name";
         }
-        if (level.isAtLeast(LanguageLevel.JDK_10) && PsiKeyword.VAR.equals(StringUtil.getShortName(inputString))) {
-          return "var cannot be used for type declarations";
+        String shortName = StringUtil.getShortName(inputString);
+        if (HighlightClassUtil.isRestrictedIdentifier(shortName, level)) {
+          return JavaErrorBundle.message("restricted.identifier", shortName);
         }
         return null;
       }
@@ -80,13 +88,13 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   @NotNull
   @Override
   protected String getErrorTitle() {
-    return IdeBundle.message("title.cannot.create.class");
+    return JavaBundle.message("title.cannot.create.class");
   }
 
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return IdeBundle.message("progress.creating.class", StringUtil.getQualifiedName(JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName(), newName));
+    return JavaBundle.message("progress.creating.class", StringUtil.getQualifiedName(JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName(), newName));
   }
 
   @Override
@@ -107,7 +115,5 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   @Override
   protected void postProcess(PsiClass createdElement, String templateName, Map<String, String> customProperties) {
     super.postProcess(createdElement, templateName, customProperties);
-
-    moveCaretAfterNameIdentifier(createdElement);
   }
 }

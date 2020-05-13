@@ -43,7 +43,7 @@ fi
 
 NEW_USERNAME=${NEW_USERNAME:-builduser}
 
-REPOSITORY="http://repo.labs.intellij.net/cache/${REPOSITORY/https:\//https}"
+REPOSITORY="https://repo.labs.intellij.net/cache/${REPOSITORY/https:\//https}"
 
 local wait_seconds="${2:-10}" # 10 seconds as default timeout
 
@@ -59,12 +59,12 @@ do
 	/usr/local/bin/brew install $PKG
 done
 
-local URL="${3:-http://repo.labs.intellij.net/download/oracle/$FILE}"
+local URL="${3:-https://repo.labs.intellij.net/download/oracle/$FILE}"
 
 
 for component in ${distrs[*]}
 do
-    wget -nv "http://repo.labs.intellij.net/download/oracle/${component}"
+    wget -nv "https://repo.labs.intellij.net/download/oracle/${component}"
 done
 
 ARGS="--install /usr/bin/java java $JAVA_HOME/bin/java 100"
@@ -84,3 +84,15 @@ declare -A SHA256MAP=( \
         ["10"]="c851df838a51af52517b74e3a4b251d90c54cf478a4ebed99e7285ef134c3435")
 
 type="${entry[[:space:]]*}"
+
+${parameter-word}
+${parameter=word}
+${parameter?word}
+${parameter+word}
+${@}
+
+${parameter:-{}
+
+line="${line%'\r'}"
+line="${line%$'\r'}"
+line="${line%"\r"}"

@@ -1,0 +1,58 @@
+<idea-plugin>
+  <id>com.intellij.properties.bundle.editor</id>
+  <name>Resource Bundle Editor</name>
+  <category>Languages</category>
+  <depends>com.intellij.modules.xml</depends>
+  <description>
+    Provides dedicated editor for .properties bundles.
+  </description>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.properties</depends>
+  <extensions defaultExtensionNs="com.intellij">
+
+    <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromEditorRenameHandler"/>
+
+    <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
+
+    <localInspection language="Properties" shortName="IncompleteProperty" unfair="true" bundle="messages.ResourceBundleEditorBundle"
+                     key="incomplete.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection"/>
+
+    <fileEditorProvider implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
+
+    <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoResourceBundleLocalizationsProvider"/>
+    <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
+
+    <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandlerEx" order="before properties"/>
+
+    <gotoDeclarationHandler implementation="com.intellij.lang.properties.editor.GotoPropertyParentDeclarationHandler"/>
+
+  </extensions>
+
+  <actions>
+    <action id="ChooseNextSubsequentPropertyValueEditorAction"
+            class="com.intellij.lang.properties.editor.ChooseSubsequentPropertyValueEditorAction$Next"
+            text="Choose Next Property Value Editor"
+            use-shortcut-of="MethodDown"/>
+    <action id="ChoosePrevSubsequentPropertyValueEditorAction"
+            class="com.intellij.lang.properties.editor.ChooseSubsequentPropertyValueEditorAction$Prev"
+            text="Choose Previous Property Value Editor"
+            use-shortcut-of="MethodUp"/>
+    <action id="NewPropertyAction" class="com.intellij.lang.properties.editor.NewPropertyAction"
+            text="Property"
+            description="Add Property to Resource Bundle">
+      <add-to-group group-id="NewGroup" anchor="first"/>
+    </action>
+    <action id="GotoNextIncompletePropertyAction"
+            class="com.intellij.lang.properties.editor.GotoNextIncompletePropertyAction"
+            text="Go to next incomplete property"
+            use-shortcut-of="GotoNextError"/>
+
+    <action id="ResourceBundleEditorShowIntentions"
+            class="com.intellij.lang.properties.editor.ResourceBundleEditorShowQuickFixesAction"
+            use-shortcut-of="ShowIntentionActions"/>
+
+  </actions>
+</idea-plugin>

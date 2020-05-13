@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,9 +25,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * @author max
- */
 public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFilesOptions {
   private static @NonNls final String HELP_ID = "Reformat Code on Directory Dialog";
 
@@ -55,8 +53,8 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   private JCheckBox myCbCleanupCode;
 
   public LayoutProjectCodeDialog(@NotNull Project project,
-                                 @NotNull String title,
-                                 @NotNull String text,
+                                 @NotNull @NlsContexts.DialogTitle String title,
+                                 @NotNull @NlsContexts.Label String text,
                                  boolean enableOnlyVCSChangedTextCb)
   {
     super(project, false);

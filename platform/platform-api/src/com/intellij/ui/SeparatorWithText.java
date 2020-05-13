@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -33,7 +34,6 @@ import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
 public class SeparatorWithText extends JComponent implements Accessible {
-
   private String myCaption;
   private int myPrefWidth;
   private int myAlignment;
@@ -73,7 +73,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
   }
 
   private Dimension getPreferredFontSize() {
-    Dimension size = new Dimension(myPrefWidth < 0 ? 0 : myPrefWidth, 1);
+    Dimension size = new Dimension(Math.max(myPrefWidth, 0), 1);
     String caption = getCaption();
     if (caption != null) {
       FontMetrics fm = getFontMetrics(getFont());
@@ -139,7 +139,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 
-  public void setCaption(String captionAboveOf) {
+  public void setCaption(@NlsContexts.Separator String captionAboveOf) {
     myCaption = captionAboveOf;
   }
 

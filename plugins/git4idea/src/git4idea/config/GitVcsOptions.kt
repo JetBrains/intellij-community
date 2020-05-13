@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PropertyName")
 package git4idea.config
 
@@ -19,12 +19,12 @@ class GitVcsOptions : BaseState() {
   val previousCommitAuthors by list<String>()
 
   // The policy that specifies how files are saved before update or rebase
-  @get:OptionTag("UPDATE_CHANGES_POLICY")
-  var updateChangesPolicy by enum(GitVcsSettings.UpdateChangesPolicy.STASH)
+  @get:OptionTag("SAVE_CHANGES_POLICY")
+  var saveChangesPolicy by enum(GitSaveChangesPolicy.SHELVE)
 
   @get:OptionTag("UPDATE_TYPE")
   @com.intellij.configurationStore.Property(description = "Update method")
-  var updateMethod by enum(UpdateMethod.BRANCH_DEFAULT)
+  var updateMethod by enum(UpdateMethod.MERGE)
 
   @com.intellij.configurationStore.Property(description = "gc.auto")
   var gcAuto by string()
@@ -78,7 +78,7 @@ class GitVcsOptions : BaseState() {
   @get:OptionTag("ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS")
   var isAddSuffixToCherryPicksOfPublishedCommits by property(true)
 
-  @get:OptionTag("FAVORITE_BRANCH_SETTINGS")
+  @get:OptionTag("BRANCH_SETTINGS")
   @get:Property(surroundWithTag = false, flat = true)
-  var favoriteBranchSettings by property(DvcsBranchSettings())
+  var branchSettings by property(DvcsBranchSettings())
 }

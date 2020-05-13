@@ -49,9 +49,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     super(stub, nodeType);
   }
 
-  @NotNull
   @Override
-  public final PsiReference[] getReferences() {
+  public final PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 
@@ -151,7 +150,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     if (stub != null && stub.getDefaultValueText() == null) {
       return null;
     }
-    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
     }
@@ -261,7 +260,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         // Guess the type from file-local calls
         if (context.allowCallContext(this)) {
           final List<PyType> types = new ArrayList<>();
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
           final PyCallableParameter parameter = PyCallableParameterImpl.psi(this);
 
           processLocalCalls(
@@ -448,7 +447,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             return Collections.emptyList();
           }
         }
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
         return callExpression.multiMapArguments(resolveContext)
           .stream()
           .flatMap(mapping -> mapping.getMappedParameters().entrySet().stream())

@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.cloneDialog
 
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -44,7 +46,7 @@ class VcsCloneDialog private constructor(private val project: Project,
 
   init {
     init()
-    title = "Get from Version Control"
+    title = VcsBundle.message("get.from.version.control")
     JBUI.size(FlatWelcomeFrame.MAX_DEFAULT_WIDTH, FlatWelcomeFrame.DEFAULT_HEIGHT).let {
       rootPane.minimumSize = it
       rootPane.preferredSize = it
@@ -87,9 +89,9 @@ class VcsCloneDialog private constructor(private val project: Project,
   private fun switchComponent(extension: VcsCloneDialogExtension) {
     val extensionId = extension.javaClass.name
     val mainComponent = extensionComponents.getOrPut(extensionId, {
-      val component = extension.createMainComponent(project)
+      val component = extension.createMainComponent(project, ModalityState.stateForComponent(window))
       mainPanel.add(component.getView(), extensionId)
-      disposable.attachChild(component)
+      Disposer.register(disposable, component)
       component.addComponentStateListener(listener)
       component
     })

@@ -4,18 +4,25 @@ package org.jetbrains.idea.maven.onlinecompletion;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenRepositoryProvider;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.kpmsearch.PackageSearchService;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.reposearch.DependencySearchProvider;
+import org.jetbrains.idea.reposearch.DependencySearchProvidersFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class MavenCompletionProviderFactory implements DependencyCompletionProviderFactory {
+public class MavenCompletionProviderFactory implements DependencySearchProvidersFactory {
 
   @Override
   public boolean isApplicable(Project project) {
@@ -24,8 +31,8 @@ public class MavenCompletionProviderFactory implements DependencyCompletionProvi
 
   @NotNull
   @Override
-  public List<DependencyCompletionProvider> getProviders(Project project) {
-    List<DependencyCompletionProvider> result = new ArrayList<>();
+  public List<DependencySearchProvider> getProviders(Project project) {
+    List<DependencySearchProvider> result = new ArrayList<>();
     result.add(new ProjectModulesCompletionProvider(project));
 
     addLocalIndex(project, result);
@@ -34,16 +41,16 @@ public class MavenCompletionProviderFactory implements DependencyCompletionProvi
     return result;
   }
 
-  private static void addRemoteIndices(Project project, List<DependencyCompletionProvider> result) {
+  private static void addRemoteIndices(Project project, List<DependencySearchProvider> result) {
     List<MavenIndex> privateIndices =
-      MavenIndicesManager.getInstance().ensureIndicesExist(project, collectRemoteRepositoriesIdsAndUrls(project));
+      MavenIndicesManager.getInstance().ensureIndicesExist(collectRemoteRepositoriesIdsAndUrls(project));
 
     for (MavenIndex index : privateIndices) {
       result.add(new IndexBasedCompletionProvider(index));
     }
   }
 
-  private static void addLocalIndex(Project project, List<DependencyCompletionProvider> result) {
+  private static void addLocalIndex(Project project, List<DependencySearchProvider> result) {
     File localRepository = ReadAction
       .compute(() -> project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getLocalRepository());
     MavenIndicesManager indicesManager = MavenIndicesManager.getInstance();

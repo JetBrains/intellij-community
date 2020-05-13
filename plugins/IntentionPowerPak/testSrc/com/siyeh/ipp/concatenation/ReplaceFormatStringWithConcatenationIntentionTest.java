@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
 import com.siyeh.ipp.IPPTestCase;
@@ -92,6 +92,47 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "  String x() {" +
            "    return \"foo\" + \".\";" +
            "  }" +
+           "}");
+  }
+
+  public void testConditional() {
+    doTest("class Info {\n" +
+           "\n" +
+           "    public String name;\n" +
+           "    public boolean isSource;\n" +
+           "\n" +
+           "    public boolean isSource() {\n" +
+           "        return isSource;\n" +
+           "    }\n" +
+           "\n" +
+           "    public String getName() {\n" +
+           "        return name;\n" +
+           "    }\n" +
+           "\n" +
+           "    @Override\n" +
+           "    public final String toString() {\n" +
+           "        return String.format(\"%s%s port\", getName(),\n" +
+           "                             isSource() ? \" source\" : /*_Replace 'String.format()' with concatenation*/\" target\");\n" +
+           "    }\n" +
+           "}",
+
+           "class Info {\n" +
+           "\n" +
+           "    public String name;\n" +
+           "    public boolean isSource;\n" +
+           "\n" +
+           "    public boolean isSource() {\n" +
+           "        return isSource;\n" +
+           "    }\n" +
+           "\n" +
+           "    public String getName() {\n" +
+           "        return name;\n" +
+           "    }\n" +
+           "\n" +
+           "    @Override\n" +
+           "    public final String toString() {\n" +
+           "        return getName() + (isSource() ? \" source\" : \" target\") + \" port\";\n" +
+           "    }\n" +
            "}");
   }
 }

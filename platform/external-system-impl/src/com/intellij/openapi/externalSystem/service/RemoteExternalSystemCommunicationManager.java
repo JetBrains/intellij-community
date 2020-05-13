@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.CommonBundle;
@@ -7,7 +7,6 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -34,12 +33,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.psi.PsiBundle;
 import com.intellij.serialization.ObjectSerializer;
 import com.intellij.ui.PlaceHolder;
 import com.intellij.util.Alarm;
@@ -98,7 +97,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
   }
 
   private RunProfileState createRunProfileState(final String configuration) {
-    return new CommandLineState(null) {
+    return new RunProfileState() {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
 
         final SimpleJavaParameters params = new SimpleJavaParameters();
@@ -109,15 +108,14 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
 
         // IDE jars.
         List<String> classPath = new ArrayList<>(PathManager.getUtilClassPath());
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ProjectBundle.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PlaceHolder.class));
-        ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.ProjectBundle", ProjectBundle.class);
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PsiBundle.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Alarm.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DependencyScope.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExtensionPointName.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtilKt.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Project.class)); //intellij.platform.core
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PlaceHolder.class)); //intellij.platform.editor
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DependencyScope.class)); //intellij.platform.projectModel
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ProjectExtension.class)); //intellij.platform.projectModel.impl
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Alarm.class)); //intellij.platform.ide
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExtensionPointName.class)); //intellij.platform.extensions
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtilKt.class)); //intellij.platform.ide.impl
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class)); //intellij.platform.externalSystem
 
         // java plugin jar if it's installed
         Class<? extends SdkType> javaSdkClass = ExternalSystemJdkProvider.getInstance().getJavaSdkType().getClass();
@@ -170,14 +168,13 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
 
       @Override
       @NotNull
-      public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+      public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
         ProcessHandler processHandler = startProcess();
         return new DefaultExecutionResult(processHandler);
       }
 
-      @Override
       @NotNull
-      protected OSProcessHandler startProcess() throws ExecutionException {
+      private OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
         GeneralCommandLine commandLine = params.toCommandLine();
         OSProcessHandler processHandler = new OSProcessHandler(commandLine);

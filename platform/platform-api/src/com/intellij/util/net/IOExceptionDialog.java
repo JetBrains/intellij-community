@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +44,8 @@ public class IOExceptionDialog extends DialogWrapper {
     return myErrorLabel;
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[] {
       new AbstractAction(UIBundle.message("io.error.dialog.no.proxy")) {
         @Override
@@ -60,7 +60,7 @@ public class IOExceptionDialog extends DialogWrapper {
    * Show the dialog
    * @return {@code true} if "Try Again" button pressed and {@code false} if "Cancel" button pressed
    */
-  public static boolean showErrorDialog(final String title, final String text) {
+  public static boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DetailedDescription String text) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(title + ": " + text);
     }

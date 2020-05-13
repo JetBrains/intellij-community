@@ -39,13 +39,13 @@ public class AddIgnoredRoleFix implements LocalQuickFix, LowPriorityAction {
   @NotNull
   @Override
   public String getName() {
-    return RestBundle.message("QFIX.ignore.role", myRole);
+    return RestBundle.message("QFIX.ignore.role.0", myRole);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Ignore undefined role";
+    return RestBundle.message("QFIX.ignore.role");
   }
 
   @Override

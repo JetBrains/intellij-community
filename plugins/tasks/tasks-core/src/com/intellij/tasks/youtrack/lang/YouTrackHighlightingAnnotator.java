@@ -1,8 +1,8 @@
 package com.intellij.tasks.youtrack.lang;
 
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
@@ -55,11 +55,11 @@ public class YouTrackHighlightingAnnotator extends ExternalAnnotator<QueryInfo, 
   public void apply(@NotNull PsiFile file, List<HighlightRange> ranges, @NotNull AnnotationHolder holder) {
     for (HighlightRange range : ranges) {
       if (range.getStyleClass().equals("error")) {
-        holder.createErrorAnnotation(range.getTextRange(), null);
+        holder.newSilentAnnotation(HighlightSeverity.ERROR).range(range.getTextRange()).create();
       }
       else {
-        final Annotation infoAnnotation = holder.createInfoAnnotation(range.getTextRange(), null);
-        infoAnnotation.setEnforcedTextAttributes(range.getTextAttributes());
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(range.getTextRange())
+        .enforcedTextAttributes(range.getTextAttributes()).create();
       }
     }
   }

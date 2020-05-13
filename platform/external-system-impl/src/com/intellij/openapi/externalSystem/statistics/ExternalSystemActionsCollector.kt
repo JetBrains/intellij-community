@@ -3,20 +3,31 @@ package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.execution.Executor
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.Companion.ACTION_INVOKED_EVENT_ID
+import com.intellij.internal.statistic.eventLog.EventFields
+import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 
-class ExternalSystemActionsCollector {
+class ExternalSystemActionsCollector : CounterUsagesCollector() {
   enum class ActionId {
     RunExternalSystemTaskAction,
     ExecuteExternalSystemRunConfigurationAction
   }
 
+  override fun getGroup(): EventLogGroup = GROUP
+
   companion object {
+    private val GROUP = EventLogGroup("build.tools.actions", 2)
+    private val EXTERNAL_SYSTEM_ID = EventFields.String("system_id").withCustomEnum("build_tools")
+    private val ACTION_INVOKED = ActionsEventLogGroup.registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, EXTERNAL_SYSTEM_ID)
+
     @JvmStatic
     fun trigger(project: Project?,
                 systemId: ProjectSystemId?,
@@ -24,12 +35,12 @@ class ExternalSystemActionsCollector {
                 place: String?,
                 isFromContextMenu: Boolean,
                 executor : Executor? = null) {
-      val data = FeatureUsageData().addOS().addProject(project)
+      val data = FeatureUsageData().addProject(project)
 
       if (place != null) {
         data.addPlace(place).addData("context_menu", isFromContextMenu)
       }
-      executor?.let { data.addExecutor(it) }
+      executor?.let { data.addData("executor", it.id) }
 
       addExternalSystemId(data, systemId)
 
@@ -41,7 +52,7 @@ class ExternalSystemActionsCollector {
                 systemId: ProjectSystemId?,
                 action: AnAction,
                 event: AnActionEvent) {
-      ActionsCollectorImpl.record("build.tools.actions", project, action, event) { data -> addExternalSystemId(data, systemId) }
+      ActionsCollectorImpl.record(ACTION_INVOKED, project, action, event, listOf(EXTERNAL_SYSTEM_ID with anonymizeSystemId(systemId)))
     }
 
     @JvmStatic

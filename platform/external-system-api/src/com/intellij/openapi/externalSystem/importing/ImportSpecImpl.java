@@ -19,24 +19,26 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class ImportSpecImpl implements ImportSpec {
   @NotNull private final Project myProject;
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
   private boolean forceWhenUptodate;
-  private boolean whenAutoImportEnabled;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean createDirectoriesForEmptyContentRoots;
   private boolean isReportRefreshError;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
+  @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
 
   public ImportSpecImpl(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -75,14 +77,12 @@ public class ImportSpecImpl implements ImportSpec {
     this.forceWhenUptodate = forceWhenUptodate;
   }
 
-  @Override
-  public boolean whenAutoImportEnabled() {
-    return whenAutoImportEnabled;
-  }
-
-  public void setWhenAutoImportEnabled(boolean whenAutoImportEnabled) {
-    this.whenAutoImportEnabled = whenAutoImportEnabled;
-  }
+  /**
+   * @deprecated see {@link com.intellij.openapi.externalSystem.settings.ExternalProjectSettings#setUseAutoImport} for details
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public void setWhenAutoImportEnabled(boolean whenAutoImportEnabled) { }
 
   public void setCallback(@Nullable ExternalProjectRefreshCallback callback) {
     myCallback = callback;
@@ -139,5 +139,14 @@ public class ImportSpecImpl implements ImportSpec {
 
   public void setArguments(@Nullable String arguments) {
     myArguments = arguments;
+  }
+
+  @Nullable
+  public ProjectResolverPolicy getProjectResolverPolicy() {
+    return myProjectResolverPolicy;
+  }
+
+  void setProjectResolverPolicy(@Nullable ProjectResolverPolicy projectResolverPolicy) {
+    myProjectResolverPolicy = projectResolverPolicy;
   }
 }

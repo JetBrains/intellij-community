@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class IntroduceFunctionalParameterHandler extends IntroduceParameterHandler {
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (dataContext != null) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -55,7 +55,8 @@ public class IntroduceFunctionalParameterHandler extends IntroduceParameterHandl
 
   private static void showErrorMessage(@NotNull Project project, Editor editor) {
     final String message = RefactoringBundle
-      .getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", IntroduceFunctionalParameterAction.REFACTORING_NAME));
-    CommonRefactoringUtil.showErrorHint(project, editor, message, IntroduceFunctionalParameterAction.REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER);
+      .getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
+                                                          IntroduceFunctionalParameterAction.getRefactoringName()));
+    CommonRefactoringUtil.showErrorHint(project, editor, message, IntroduceFunctionalParameterAction.getRefactoringName(), HelpID.INTRODUCE_PARAMETER);
   }
 }

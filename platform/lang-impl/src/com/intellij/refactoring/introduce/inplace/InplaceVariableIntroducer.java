@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -18,10 +18,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.MyLookupExpression;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +61,8 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
           final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
           if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
             PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
-              () -> WriteCommandAction.writeCommandAction(project).withName("Normalize declaration").run(() -> node.getTreeParent().addChild(astNode, node)));
+              () -> WriteCommandAction.writeCommandAction(project).withName(
+                RefactoringBundle.message("introduce.normalize.declaration.command.name")).run(() -> node.getTreeParent().addChild(astNode, node)));
           }
         }
       }
@@ -180,8 +180,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       return myPointer.getElement();
     }
 
-    @Nullable
-    private LookupElement[] createLookupItems(String name, Editor editor, PsiNamedElement psiVariable) {
+    private LookupElement @Nullable [] createLookupItems(String name, Editor editor, PsiNamedElement psiVariable) {
       TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       if (psiVariable != null) {
         final TextResult insertedValue =
@@ -191,14 +190,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
           if (!text.isEmpty() && !Comparing.strEqual(text, name)) {
             final LinkedHashSet<String> names = new LinkedHashSet<>();
             names.add(text);
-            for (NameSuggestionProvider provider : NameSuggestionProvider.EP_NAME.getExtensionList()) {
-              final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(psiVariable, psiVariable, names);
-              if (suggestedNameInfo != null &&
-                  provider instanceof PreferrableNameSuggestionProvider &&
-                  !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) {
-                break;
-              }
-            }
+            NameSuggestionProvider.suggestNames(psiVariable, psiVariable, names);
             final LookupElement[] items = new LookupElement[names.size()];
             final Iterator<String> iterator = names.iterator();
             for (int i = 0; i < items.length; i++) {

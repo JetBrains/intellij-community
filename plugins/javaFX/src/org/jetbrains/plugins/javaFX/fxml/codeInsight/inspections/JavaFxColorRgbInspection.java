@@ -9,6 +9,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -69,7 +70,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
           try {
             double value = Double.parseDouble(propertyValue);
             if (value < 0.0 || value > 1.0) {
-              holder.registerProblem(location, "Color component has to be a number between 0.0 and 1.0, inclusively");
+              holder.registerProblem(location, JavaFXBundle.message("inspection.javafx.color.component.out.of.range.problem"));
             }
           }
           catch (NumberFormatException ignored) {

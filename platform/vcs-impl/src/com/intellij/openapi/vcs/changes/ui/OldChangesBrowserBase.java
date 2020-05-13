@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ListSelection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +115,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     add(createToolbar(), BorderLayout.NORTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
-    myViewer.setDoubleClickHandler(() -> showDiff());
+    myViewer.setDoubleClickAndEnterKeyHandler(() -> showDiff());
   }
 
   @NotNull
@@ -199,7 +199,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
 
   private class ToggleChangeAction extends CheckboxAction {
     ToggleChangeAction() {
-      super(VcsBundle.message("commit.dialog.include.action.name"));
+      super(VcsBundle.messagePointer("commit.dialog.include.action.name"));
     }
 
     @Override

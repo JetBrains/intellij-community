@@ -20,10 +20,9 @@
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -53,7 +52,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
   private static final FileBasedIndex.InputFilter INPUT_FILTER = file -> isIndexable(file.getFileType());
 
   public static boolean isIndexable(FileType fileType) {
-    return !fileType.isBinary();
+    return !fileType.isBinary() && (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
   }
 
   @NotNull
@@ -96,13 +95,19 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
 
   @Override
   public int getVersion() {
-    return 3 + (FileBasedIndex.ourSnapshotMappingsEnabled ? 0xFF : 0);
+    return 3;
   }
 
   @Override
   public boolean hasSnapshotMapping() {
     return true;
   }
+
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
+  }
+
   private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
 
   @NotNull

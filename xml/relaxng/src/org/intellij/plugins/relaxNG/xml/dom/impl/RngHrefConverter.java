@@ -49,8 +49,7 @@ public class RngHrefConverter extends Converter<XmlFile> implements CustomRefere
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue<XmlFile> genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<XmlFile> genericDomValue, PsiElement element, ConvertContext context) {
     final String s = genericDomValue.getStringValue();
     if (s == null || element == null) {
       return PsiReference.EMPTY_ARRAY;

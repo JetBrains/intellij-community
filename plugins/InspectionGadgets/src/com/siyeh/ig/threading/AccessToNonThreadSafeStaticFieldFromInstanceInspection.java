@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
@@ -9,23 +9,26 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends
-                                                                    BaseInspection {
+public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet nonThreadSafeClasses =
-    new ExternalizableStringSet("java.text.SimpleDateFormat",
-                                "java.text.MessageFormat",
-                                "java.text.DecimalFormat",
-                                "java.text.ChoiceFormat",
-                                "java.util.Calendar");
+    new ExternalizableStringSet(
+      "java.text.Format",
+      "java.text.DateFormat",
+      "java.text.SimpleDateFormat",
+      "java.text.MessageFormat",
+      "java.text.DecimalFormat",
+      "java.text.ChoiceFormat",
+      "java.util.Calendar"
+    );
+
   /**
    * Don't remove, otherwise user inspection profiles will be modified.
    */
@@ -45,13 +48,6 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends
   @Override
   public String getID() {
     return "AccessToNonThreadSafeStaticField";
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.display.name");
   }
 
   @Override

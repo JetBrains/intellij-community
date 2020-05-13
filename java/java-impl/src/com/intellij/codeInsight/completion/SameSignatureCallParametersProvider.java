@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -23,10 +23,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -162,7 +159,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
       PsiParameter callParam = callParams[i];
       PsiParameter parameter = parameters[i];
       requiredNames.put(callParam.getName(), substitutor.substitute(callParam.getType()));
-      if (checkNames && !Comparing.equal(parameter.getName(), callParam.getName()) ||
+      if (checkNames && !Objects.equals(parameter.getName(), callParam.getName()) ||
           !Comparing.equal(parameter.getType(), substitutor.substitute(callParam.getType()))) {
         sameTypes = false;
       }

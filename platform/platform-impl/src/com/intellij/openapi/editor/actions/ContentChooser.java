@@ -25,6 +25,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -58,11 +59,11 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   private Icon myListEntryIcon = AllIcons.FileTypes.Text;
   private boolean myUseNumbering = true;
 
-  public ContentChooser(Project project, String title, boolean useIdeaEditor) {
+  public ContentChooser(Project project, @NlsContexts.DialogTitle String title, boolean useIdeaEditor) {
     this(project, title, useIdeaEditor, false);
   }
 
-  public ContentChooser(Project project, String title, boolean useIdeaEditor, boolean allowMultipleSelections) {
+  public ContentChooser(Project project, @NlsContexts.DialogTitle String title, boolean useIdeaEditor, boolean allowMultipleSelections) {
     super(project, true);
     myProject = project;
     myUseIdeaEditor = useIdeaEditor;
@@ -119,7 +120,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         close(OK_EXIT_CODE);
         return true;
       }

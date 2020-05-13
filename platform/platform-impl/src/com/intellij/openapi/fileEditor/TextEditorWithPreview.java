@@ -8,6 +8,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -40,8 +41,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   private JComponent myComponent;
   private SplitEditorToolbar myToolbarWrapper;
   private final String myName;
+  public static final Key<Layout> DEFAULT_LAYOUT_FOR_FILE = Key.create("TextEditorWithPreview.DefaultLayout");
 
-  public TextEditorWithPreview(TextEditor editor, @NotNull FileEditor preview, @NotNull String editorName, @NotNull Layout defaultLayout) {
+  public TextEditorWithPreview(@NotNull TextEditor editor,
+                               @NotNull FileEditor preview,
+                               @NotNull String editorName,
+                               @NotNull Layout defaultLayout) {
     myEditor = editor;
     myPreview = preview;
     myName = editorName;
@@ -103,7 +108,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
       splitter.setDividerWidth(3);
 
       myToolbarWrapper = createMarkdownToolbarWrapper(splitter);
-      Disposer.register(this, myToolbarWrapper);
 
       if (myLayout == null) {
         String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
@@ -421,7 +425,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myLayout = myActionLayout;
-        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myName, Layout.SHOW_EDITOR_AND_PREVIEW.myName);
+        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myName, myDefaultLayout.myName);
         adjustEditorsVisibility();
       }
     }

@@ -49,9 +49,8 @@ public class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
     return ContentRevisionCache.getAsString(getContentAsBytes(), getFile(), myFile.getCharset());
   }
 
-  @Nullable
   @Override
-  public byte[] getContentAsBytes() throws VcsException {
+  public byte @Nullable [] getContentAsBytes() throws VcsException {
     return getVcsRevision().second;
   }
 

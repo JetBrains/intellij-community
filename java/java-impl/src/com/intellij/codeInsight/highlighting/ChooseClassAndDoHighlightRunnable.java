@@ -20,20 +20,22 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRunnable<PsiClass> {
-  public ChooseClassAndDoHighlightRunnable(PsiClassType[] classTypes, Editor editor, String title) {
+abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRunnable<PsiClass> {
+  ChooseClassAndDoHighlightRunnable(PsiClassType @NotNull [] classTypes, @NotNull Editor editor, @NotNull String title) {
     super(resolveClasses(classTypes), editor, title, PsiClass.class);
   }
 
-  protected ChooseClassAndDoHighlightRunnable(final List<PsiClass> classes, final Editor editor, final String title) {
+  ChooseClassAndDoHighlightRunnable(@NotNull List<? extends PsiClass> classes, @NotNull Editor editor, @NotNull String title) {
     super(classes, editor, title, PsiClass.class);
   }
 
-  public static List<PsiClass> resolveClasses(final PsiClassType[] classTypes) {
+  @NotNull
+  public static List<PsiClass> resolveClasses(PsiClassType @NotNull [] classTypes) {
     List<PsiClass> classes = new ArrayList<>();
     for (PsiClassType classType : classTypes) {
       PsiClass aClass = classType.resolve();
@@ -43,7 +45,7 @@ public abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRu
   }
 
   @Override
-  protected PsiElementListCellRenderer<PsiClass> createRenderer() {
+  protected @NotNull PsiElementListCellRenderer<PsiClass> createRenderer() {
     return new PsiClassListCellRenderer();
   }
 }

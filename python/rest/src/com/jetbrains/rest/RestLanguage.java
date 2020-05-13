@@ -36,7 +36,7 @@ public class RestLanguage extends Language implements TemplateLanguage  {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Rest language";
+    return RestBundle.message("rest.language");
   }
 
   @Override

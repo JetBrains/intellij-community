@@ -16,6 +16,8 @@
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.holders.EditorHolder;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
+import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,9 +25,34 @@ import javax.swing.*;
 import java.awt.*;
 
 public class OnesideContentPanel extends JPanel {
-  public OnesideContentPanel(@NotNull EditorHolder holder, @Nullable JComponent titleComponent) {
+  private final DiffContentPanel myPanel;
+
+  public OnesideContentPanel(@NotNull JComponent content) {
     super(new BorderLayout());
 
-    add(new HolderPanel(holder, titleComponent), BorderLayout.CENTER);
+    myPanel = new DiffContentPanel(content);
+    add(myPanel, BorderLayout.CENTER);
+  }
+
+  public void setTitle(@Nullable JComponent titles) {
+    myPanel.setTitle(titles);
+  }
+
+  public void setBreadcrumbs(@Nullable DiffBreadcrumbsPanel breadcrumbs, @NotNull TextDiffSettings settings) {
+    if (breadcrumbs != null) {
+      myPanel.setBreadcrumbs(breadcrumbs);
+      myPanel.updateBreadcrumbsPlacement(settings.getBreadcrumbsPlacement());
+      settings.addListener(new TextDiffSettings.Listener.Adapter() {
+        @Override
+        public void breadcrumbsPlacementChanged() {
+          myPanel.updateBreadcrumbsPlacement(settings.getBreadcrumbsPlacement());
+        }
+      }, breadcrumbs);
+    }
+  }
+
+  @NotNull
+  public static OnesideContentPanel createFromHolder(@NotNull EditorHolder holder) {
+    return new OnesideContentPanel(holder.getComponent());
   }
 }

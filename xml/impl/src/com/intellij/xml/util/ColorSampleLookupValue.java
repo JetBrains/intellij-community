@@ -78,8 +78,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return true;
   }
 
-  @NotNull
-  public static ColorSampleLookupValue[] getColors() {
+  public static ColorSampleLookupValue @NotNull [] getColors() {
     if (ourColors == null) {
       synchronized (ColorSampleLookupValue.class) {
         if (ourColors == null) {
@@ -128,17 +127,6 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   public String getTypeHint() {
     return myName != null && !StringUtil.startsWithChar(myName, '#')
            && myValue != null && StringUtil.startsWithChar(myValue, '#') ? myValue : null;
-  }
-
-  @Override
-  @Nullable
-  public Color getColorHint() {
-    return null;
-  }
-
-  @Override
-  public boolean isBold() {
-    return false;
   }
 
   public String getName() {

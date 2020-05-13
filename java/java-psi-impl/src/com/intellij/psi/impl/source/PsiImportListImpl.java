@@ -65,20 +65,17 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   private static final TokenSet IMPORT_STATIC_STATEMENT_BIT_SET = TokenSet.create(JavaElementType.IMPORT_STATIC_STATEMENT);
 
   @Override
-  @NotNull
-  public PsiImportStatement[] getImportStatements() {
+  public PsiImportStatement @NotNull [] getImportStatements() {
     return getStubOrPsiChildren(IMPORT_STATEMENT_BIT_SET, PsiImportStatementImpl.ARRAY_FACTORY);
   }
 
   @Override
-  @NotNull
-  public PsiImportStaticStatement[] getImportStaticStatements() {
+  public PsiImportStaticStatement @NotNull [] getImportStaticStatements() {
     return getStubOrPsiChildren(IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.ARRAY_FACTORY);
   }
 
   @Override
-  @NotNull
-  public PsiImportStatementBase[] getAllImportStatements() {
+  public PsiImportStatementBase @NotNull [] getAllImportStatements() {
     return getStubOrPsiChildren(ElementType.IMPORT_STATEMENT_BASE_BIT_SET, ARRAY_FACTORY);
   }
 

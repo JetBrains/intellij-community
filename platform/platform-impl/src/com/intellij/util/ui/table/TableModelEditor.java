@@ -14,19 +14,16 @@ import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.CollectionItemEditor;
-import com.intellij.util.ui.CollectionModelEditor;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.*;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +34,9 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
   private final MyListTableModel model;
 
-  public TableModelEditor(@NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
+  public TableModelEditor(ColumnInfo @NotNull [] columns,
+                          @NotNull CollectionItemEditor<T> itemEditor,
+                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String emptyText) {
     this(Collections.emptyList(), columns, itemEditor, emptyText);
   }
 
@@ -46,7 +45,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
    *
    * Implement {@link DialogItemEditor} instead of {@link CollectionItemEditor} if you want provide dialog to edit.
    */
-  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
+  public TableModelEditor(@NotNull List<T> items, ColumnInfo @NotNull [] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
     super(itemEditor);
 
     model = new MyListTableModel(columns, new ArrayList<>(items));
@@ -54,7 +53,8 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
     table.setStriped(true);
     table.setEnableAntialiasing(true);
-    preferredScrollableViewportHeightInRows(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
+    table.setPreferredScrollableViewportSize(JBUI.size(200, -1));
+    table.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
     new TableSpeedSearch(table);
     ColumnInfo firstColumn = columns[0];
     if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
@@ -80,10 +80,6 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     if (itemEditor instanceof DialogItemEditor) {
       addDialogActions();
     }
-  }
-
-  public void preferredScrollableViewportHeightInRows(int rows) {
-    table.setPreferredScrollableViewportSize(new Dimension(200, table.getRowHeight() * rows));
   }
 
   private void addDialogActions() {
@@ -173,7 +169,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     private List<T> items;
     private DataChangedListener<T> dataChangedListener;
 
-    MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items) {
+    MyListTableModel(ColumnInfo @NotNull [] columns, @NotNull List<T> items) {
       super(columns, items);
 
       this.items = items;

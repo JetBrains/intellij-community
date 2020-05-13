@@ -44,9 +44,8 @@ public class MultiFileNsDescriptor implements XsdNsDescriptor {
     return getFirst(descriptor -> descriptor.getElementDescriptor(tag));
   }
 
-  @NotNull
   @Override
-  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable XmlDocument document) {
     return (XmlElementDescriptor[])myDescriptors.stream()
       .flatMap(descriptor -> Arrays.stream(descriptor.getRootElementsDescriptors(document))).toArray();
   }
@@ -77,9 +76,8 @@ public class MultiFileNsDescriptor implements XsdNsDescriptor {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies() {
+  public Object @NotNull [] getDependencies() {
     return myDescriptors.stream().flatMap(descriptor -> Arrays.stream(descriptor.getDependencies())).toArray();
   }
 

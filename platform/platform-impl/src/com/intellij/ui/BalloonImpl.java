@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.application.Topics;
@@ -28,12 +28,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.WeakFocusStackManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.jcef.HwFacadeJPanel;
+import com.intellij.ui.jcef.HwFacadeNonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -59,8 +59,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
-public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
-
+public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
   private static final Logger LOG = Logger.getInstance(BalloonImpl.class);
 
   /**
@@ -158,7 +157,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
           final boolean moveChanged = insideBalloon != myLastMoveWasInsideBalloon;
           myLastMoveWasInsideBalloon = insideBalloon;
           if (moveChanged) {
-            if (insideBalloon && myFadeoutAlarm.getActiveRequestCount() > 0) { //Pause hiding timer when mouse is hover
+            if (insideBalloon && !myFadeoutAlarm.isEmpty()) { //Pause hiding timer when mouse is hover
               myFadeoutAlarm.cancelAllRequests();
               myFadeoutRequestDelay -= System.currentTimeMillis() - myFadeoutRequestMillis;
             }
@@ -208,9 +207,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
   };
 
   private boolean isWithinChildWindow(@NotNull MouseEvent event) {
-    Component owner = UIUtil.getWindow(myContent);
+    Component owner = ComponentUtil.getWindow(myContent);
     if (owner != null) {
-      Component child = UIUtil.getWindow(event.getComponent());
+      Component child = ComponentUtil.getWindow(event.getComponent());
       if (child != owner) {
         for (; child != null; child = child.getParent()) {
           if (child == owner) {
@@ -468,7 +467,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
     myTracker = tracker;
     myTracker.init(this);
 
-    JRootPane root = ObjectUtils.notNull(UIUtil.getRootPane(comp));
+    JRootPane root = Objects.requireNonNull(UIUtil.getRootPane(comp));
 
     myVisible = true;
 
@@ -748,7 +747,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
 
         @Override
         public void layout(@NotNull Rectangle lpBounds) {
-          if (!myCloseButton.isVisible()) {
+          if (myCloseButton == null || !myCloseButton.isVisible()) {
             return;
           }
 
@@ -807,7 +806,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
 
   @Override
   public Window getUnderlyingWindow() {
-    return UIUtil.getWindow(myLayeredPane);
+    return ComponentUtil.getWindow(myLayeredPane);
   }
 
   @NotNull
@@ -822,7 +821,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
 
   @Override
   public void revalidate(@NotNull PositionTracker<Balloon> tracker) {
-    if (ApplicationManager.getApplication().isDisposeInProgress()) {
+    if (ApplicationManager.getApplication().isDisposed()) {
       return;
     }
     RelativePoint newPosition = tracker.recalculateLocation(this);
@@ -953,7 +952,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
     Topics.subscribe(FrameStateListener.TOPIC, this, new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
-        if (myFadeoutAlarm.getActiveRequestCount() > 0) {
+        if (!myFadeoutAlarm.isEmpty()) {
           myFadeoutAlarm.cancelAllRequests();
           mySmartFadeoutDelay = myFadeoutRequestDelay - (int)(System.currentTimeMillis() - myFadeoutRequestMillis);
           if (mySmartFadeoutDelay <= 0) {
@@ -1069,10 +1068,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
         if (myAnimator != null) {
           Disposer.dispose(myAnimator);
         }
-
-        myLayeredPane.remove(myComp);
-        myLayeredPane.revalidate();
-        myLayeredPane.repaint();
+        if (myComp != null) {
+          myLayeredPane.remove(myComp);
+          myLayeredPane.revalidate();
+          myLayeredPane.repaint();
+        }
         disposeRunnable.run();
       }
     }
@@ -1188,9 +1188,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
       if (balloon.myCornerToPointerDistance < indent) return indent;
 
       int limit = this == ABOVE || this == BELOW ? size.width - indent : size.height - indent;
-      if (balloon.myCornerToPointerDistance > limit) return limit;
-
-      return balloon.myCornerToPointerDistance;
+      return Math.min(balloon.myCornerToPointerDistance, limit);
     }
 
     abstract Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize, int distance);
@@ -1637,7 +1635,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
     void layout(@NotNull Rectangle bounds);
   }
 
-  public class ActionButton extends NonOpaquePanel implements IdeGlassPane.TopComponent {
+  public class ActionButton extends HwFacadeNonOpaquePanel implements IdeGlassPane.TopComponent {
     private final Icon myIcon;
     private final Icon myHoverIcon;
     private final Consumer<? super MouseEvent> myListener;
@@ -1700,7 +1698,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
     }
   }
 
-  private class MyComponent extends JPanel implements ComponentWithMnemonics {
+  private class MyComponent extends HwFacadeJPanel implements ComponentWithMnemonics {
 
     private BufferedImage myImage;
     private float myAlpha;

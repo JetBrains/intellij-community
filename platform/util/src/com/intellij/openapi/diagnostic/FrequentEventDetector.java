@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class FrequentEventDetector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diagnostic.FrequentEventDetector");
+  private static final Logger LOG = Logger.getInstance(FrequentEventDetector.class);
 
   public enum Level {INFO, WARN, ERROR}
 

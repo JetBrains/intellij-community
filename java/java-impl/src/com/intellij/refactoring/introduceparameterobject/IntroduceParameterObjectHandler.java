@@ -34,8 +34,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceParameterObjectHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  private static final String REFACTORING_NAME = RefactorJBundle.message("introduce.parameter.object");
-
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     final PsiMethod selectedMethod = getSelectedMethod(editor, file, dataContext);
@@ -54,7 +52,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     if (selectedMethod == null) {
       final String message = RefactorJBundle.message("cannot.perform.the.refactoring") +
                              RefactorJBundle.message("the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.IntroduceParameterObject);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.IntroduceParameterObject);
       return;
     }
     invoke(project, selectedMethod, editor);
@@ -88,7 +86,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1) {
       return;
     }
@@ -105,7 +103,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     if (newMethod == null) return;
     final String message = getErrorMessage(newMethod);
     if (message != null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.IntroduceParameterObject);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.IntroduceParameterObject);
       return;
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, newMethod)) return;
@@ -124,5 +122,9 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
              RefactorJBundle.message("the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class");
     }
     return null;
+  }
+
+  private static String getRefactoringName() {
+    return RefactorJBundle.message("introduce.parameter.object");
   }
 }

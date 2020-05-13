@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -24,8 +25,8 @@ private val LOG = Logger.getInstance(ProjectConfigurationFilesProcessorImpl::cla
 private val configurationFilesExtensionsOutsideStoreDirectory =
   ContainerUtil.newHashSet(ProjectFileType.DEFAULT_EXTENSION, ModuleFileType.DEFAULT_EXTENSION)
 
-private const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CONFIGURATION_FILES"
-private const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES"
+internal const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CONFIGURATION_FILES"
+internal const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES"
 
 class ProjectConfigurationFilesProcessorImpl(project: Project,
                                              private val parentDisposable: Disposable,
@@ -37,14 +38,12 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   private val fileSystem = LocalFileSystem.getInstance()
 
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install() {
     runReadAction {
       if (!project.isDisposed) {
-        changeListManager.addChangeListListener(this, parentDisposable)
+        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
       }
     }
   }
@@ -52,16 +51,20 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   fun filterNotProjectConfigurationFiles(files: List<VirtualFile>): List<VirtualFile> {
     val projectConfigurationFiles = doFilterFiles(files)
 
-    foundProjectConfigurationFiles.set(projectConfigurationFiles.isNotEmpty())
+    if (projectConfigurationFiles.isNotEmpty()) {
+      if (foundProjectConfigurationFiles.compareAndSet(false, true)) {
+        LOG.debug("Found new project configuration files ", projectConfigurationFiles)
+      }
+    }
 
     return files - projectConfigurationFiles
   }
 
   override fun changeListUpdateDone() {
     if (foundProjectConfigurationFiles.compareAndSet(true, false)) {
-      val unversionedProjectConfigurationFiles = doFilterFiles(changeListManager.unversionedFiles)
+      val unversionedProjectConfigurationFiles = doFilterFiles(ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles)
       if (unversionedProjectConfigurationFiles.isNotEmpty()) {
-        projectProperties.setValue(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, VcsImplUtil.isProjectSharedInVcs(project))
+        PropertiesComponent.getInstance(project).setValue(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, VcsImplUtil.isProjectSharedInVcs(project))
         processFiles(unversionedProjectConfigurationFiles.toList())
       }
     }
@@ -82,6 +85,8 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   override fun doActionOnChosenFiles(files: Collection<VirtualFile>) {
     addChosenFiles(files)
   }
+
+  override val notificationDisplayId: String = "project.configuration.files.added.notification"
 
   override val askedBeforeProperty = ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
 

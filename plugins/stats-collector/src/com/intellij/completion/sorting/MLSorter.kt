@@ -7,17 +7,18 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.common.PrefixMatchingUtil
+import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.stats.PerformanceTracker
-import com.intellij.stats.completion.ItemsDiffCustomizingContributor
-import com.intellij.stats.completion.RelevanceUtil
-import com.intellij.stats.completion.prefixLength
+import com.intellij.stats.completion.*
 import com.intellij.stats.personalization.session.SessionFactorsUtils
 import com.intellij.stats.storage.factors.MutableLookupStorage
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("DEPRECATION")
 class MLSorterFactory : CompletionFinalSorter.Factory {
@@ -28,7 +29,7 @@ class MLSorterFactory : CompletionFinalSorter.Factory {
 class MLSorter : CompletionFinalSorter() {
   private companion object {
     private val LOG = Logger.getInstance("#com.intellij.completion.sorting.MLSorter")
-    private const val REORDER_ONLY_TOP_K = 7
+    private const val REORDER_ONLY_TOP_K = 5
   }
 
   private val cachedScore: MutableMap<LookupElement, ItemRankInfo> = IdentityHashMap()
@@ -73,17 +74,18 @@ class MLSorter : CompletionFinalSorter() {
     // Do nothing if unable to reorder items or to log the weights
     if (!lookupStorage.shouldComputeFeatures()) return items
     val startedTimestamp = System.currentTimeMillis()
-    val prefixLength = lookup.prefixLength()
+    val queryLength = lookup.queryLength()
+    val prefix = lookup.prefix()
 
     val element2score = mutableMapOf<LookupElement, Double?>()
     val elements = items.toList()
 
     val positionsBefore = elements.withIndex().associate { it.value to it.index }
 
-    tryFillFromCache(element2score, elements, prefixLength)
+    tryFillFromCache(element2score, elements, queryLength)
     val itemsForScoring = if (element2score.size == elements.size) emptyList() else elements
     calculateScores(element2score, itemsForScoring, positionsBefore,
-                    prefixLength, lookup, lookupStorage, parameters)
+                    queryLength, prefix, lookup, lookupStorage, parameters)
     val finalRanking = sortByMlScores(elements, element2score, positionsBefore, lookupStorage)
 
     lookupStorage.performanceTracker.sortingPerformed(itemsForScoring.size, System.currentTimeMillis() - startedTimestamp)
@@ -93,9 +95,9 @@ class MLSorter : CompletionFinalSorter() {
 
   private fun tryFillFromCache(element2score: MutableMap<LookupElement, Double?>,
                                items: List<LookupElement>,
-                               prefixLength: Int) {
+                               queryLength: Int) {
     for ((position, element) in items.withIndex()) {
-      val cachedInfo = getCachedRankInfo(element, prefixLength, position)
+      val cachedInfo = getCachedRankInfo(element, queryLength, position)
       if (cachedInfo == null) return
       element2score[element] = cachedInfo.mlRank
     }
@@ -104,7 +106,8 @@ class MLSorter : CompletionFinalSorter() {
   private fun calculateScores(element2score: MutableMap<LookupElement, Double?>,
                               items: List<LookupElement>,
                               positionsBefore: Map<LookupElement, Int>,
-                              prefixLength: Int,
+                              queryLength: Int,
+                              prefix: String,
                               lookup: LookupImpl,
                               lookupStorage: MutableLookupStorage,
                               parameters: CompletionParameters) {
@@ -112,6 +115,7 @@ class MLSorter : CompletionFinalSorter() {
 
     val rankingModel = lookupStorage.model
 
+    lookupStorage.initUserFactors(lookup.project)
     val commonSessionFactors = SessionFactorsUtils.updateSessionFactors(lookupStorage, items)
     val contextFactors = lookupStorage.contextFactors
     val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors)
@@ -121,12 +125,12 @@ class MLSorter : CompletionFinalSorter() {
       val position = positionsBefore.getValue(element)
       val (relevance, additional) = RelevanceUtil.asRelevanceMaps(relevanceObjects.getOrDefault(element, emptyList()))
       SessionFactorsUtils.saveElementFactorsTo(additional, lookupStorage, element)
-      calculateAdditionalFeaturesTo(additional, element, prefixLength, position, parameters)
-      val score = when {
-        rankingModel != null -> tracker.measure {
-          calculateElementScore(rankingModel, element, position, features.withElementFeatures(relevance, additional), prefixLength)
-        }
-        else -> null
+      calculateAdditionalFeaturesTo(additional, element, queryLength, prefix.length, position, items.size, parameters)
+      lookupStorage.performanceTracker.trackElementFeaturesCalculation(PrefixMatchingUtil.baseName) {
+        PrefixMatchingUtil.calculateFeatures(element, prefix, additional)
+      }
+      val score = tracker.measure {
+        calculateElementScore(rankingModel, element, position, features.withElementFeatures(relevance, additional), queryLength)
       }
       element2score[element] = score
 
@@ -147,7 +151,7 @@ class MLSorter : CompletionFinalSorter() {
     }
 
     if (mlScoresUsed) {
-      lookupStorage.performanceTracker.reorderedByML()
+      lookupStorage.fireReorderedUsingMLScores()
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
       return items.reorderByMLScores(element2score, topItemsCount).addDiagnosticsIfNeeded(positionsBefore, topItemsCount)
     }
@@ -158,12 +162,16 @@ class MLSorter : CompletionFinalSorter() {
   private fun calculateAdditionalFeaturesTo(
     additionalMap: MutableMap<String, Any>,
     lookupElement: LookupElement,
+    oldQueryLength: Int,
     prefixLength: Int,
     position: Int,
+    itemsCount: Int,
     parameters: CompletionParameters) {
 
     additionalMap["position"] = position
-    additionalMap["query_length"] = prefixLength
+    additionalMap["relative_position"] = position.toDouble() / itemsCount
+    additionalMap["query_length"] = oldQueryLength // old version of prefix_length feature
+    additionalMap["prefix_length"] = prefixLength
     additionalMap["result_length"] = lookupElement.lookupString.length
     additionalMap["auto_popup"] = parameters.isAutoPopup
     additionalMap["completion_type"] = parameters.completionType.toString()
@@ -177,14 +185,11 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>, reordered: Int): Iterable<LookupElement> {
-    if (Registry.`is`("completion.stats.show.ml.ranking.diff")) {
+    if (CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
       this.forEachIndexed { position, element ->
         val before = positionsBefore.getValue(element)
         if (before < reordered || position < reordered) {
-          val diff = position - before
-          if (diff != 0) {
-            element.putUserData(ItemsDiffCustomizingContributor.DIFF_KEY, diff)
-          }
+          element.updateDiffValue(position - before)
         }
       }
     }
@@ -203,16 +208,23 @@ class MLSorter : CompletionFinalSorter() {
   /**
    * Null means we encountered unknown features and are unable to score
    */
-  private fun calculateElementScore(ranker: RankingModelWrapper,
+  private fun calculateElementScore(ranker: RankingModelWrapper?,
                                     element: LookupElement,
                                     position: Int,
                                     features: RankingFeatures,
                                     prefixLength: Int): Double? {
-    val mlRank: Double? = if (ranker.canScore(features)) ranker.score(features) else null
+    val mlRank: Double? = if (ranker != null && ranker.canScore(features)) ranker.score(features) else null
     val info = ItemRankInfo(position, mlRank, prefixLength)
     cachedScore[element] = info
 
     return info.mlRank
+  }
+
+  private fun LookupElement.updateDiffValue(newValue: Int) {
+    val diff = getUserData(ItemsDiffCustomizingContributor.DIFF_KEY) ?: AtomicInteger()
+      .apply { putUserData(ItemsDiffCustomizingContributor.DIFF_KEY, this) }
+
+    diff.set(newValue)
   }
 
   /*

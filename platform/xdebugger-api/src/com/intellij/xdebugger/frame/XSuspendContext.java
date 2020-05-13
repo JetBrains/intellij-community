@@ -10,8 +10,6 @@ import java.util.List;
 
 /**
  * Represents a suspended state of a debug process
- *
- * @author nik
  */
 public abstract class XSuspendContext {
 
@@ -24,8 +22,7 @@ public abstract class XSuspendContext {
     return null;
   }
 
-  @NotNull
-  public XExecutionStack[] getExecutionStacks() {
+  public XExecutionStack @NotNull [] getExecutionStacks() {
     XExecutionStack executionStack = getActiveExecutionStack();
     return executionStack != null ? new XExecutionStack[]{executionStack} : XExecutionStack.EMPTY_ARRAY;
   }

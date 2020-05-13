@@ -1,23 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -55,8 +57,9 @@ import java.util.stream.Stream;
 @SuppressWarnings("TestOnlyProblems")
 final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
   private Project myProject;
+  private volatile Module myModule;
   private final Set<Path> myFilesToDelete = new HashSet<>();
-  private IdeaTestApplication myApplication;
+  private TestApplicationManager myTestAppManager;
   private final Set<ModuleFixtureBuilder<?>> myModuleFixtureBuilders = new LinkedHashSet<>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
@@ -94,16 +97,21 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     RunAll runAll = new RunAll();
 
     if (myProject != null) {
+      Project project = myProject;
       runAll = runAll
-        .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
-        .append(() -> {
-          for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
-            moduleFixtureBuilder.getFixture().tearDown();
-          }
-        })
-        .append(() -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
-        .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
-        .append(() -> myProject = null);
+        .append(
+          () -> {
+            TestApplicationManagerKt.tearDownProjectAndApp(myProject, myTestAppManager);
+            myProject = null;
+          },
+          () -> {
+            for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
+              moduleFixtureBuilder.getFixture().tearDown();
+            }
+          },
+          () -> EdtTestUtil.runInEdtAndWait(() -> ProjectRule.checkThatNoOpenProjects()),
+          () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project)
+        );
     }
 
     JarFileSystemImpl.cleanupForNextTest();
@@ -134,24 +142,27 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     }
 
     runAll
-      .append(super::tearDown)
-      .append(() -> {
-        if (myEditorListenerTracker != null) {
-          myEditorListenerTracker.checkListenersLeak();
-        }
-      })
-      .append(() -> {
-        if (myThreadTracker != null) {
-          myThreadTracker.checkLeak();
-        }
-      })
-      .append(LightPlatformTestCase::checkEditorsReleased)
-      .append(() -> {
-        if (myOldSdks != null) {
-          myOldSdks.checkForJdkTableLeaks();
-        }
-      })
-      .append(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
+      .append(
+        () -> super.tearDown(),
+        () -> {
+          if (myEditorListenerTracker != null) {
+            myEditorListenerTracker.checkListenersLeak();
+          }
+        },
+        () -> {
+          if (myThreadTracker != null) {
+            myThreadTracker.checkLeak();
+          }
+        },
+        () -> LightPlatformTestCase.checkEditorsReleased(),
+        () -> {
+          if (myOldSdks != null) {
+            myOldSdks.checkForJdkTableLeaks();
+          }
+        },
+        // project is disposed by now, no point in passing it
+        () -> HeavyPlatformTestCase.cleanupApplicationCaches(null)
+      )
       .run();
   }
 
@@ -162,6 +173,14 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       myFilesToDelete.add(tempDirectory);
     }
     myProject = HeavyPlatformTestCase.createProject(generateProjectPath(tempDirectory));
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      @Override
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+        if (myModule == null) {
+          myModule = module;
+        }
+      }
+    });
 
     EdtTestUtil.runInEdtAndWait(() -> {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
@@ -182,8 +201,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void initApplication() {
-    myApplication = IdeaTestApplication.getInstance();
-    myApplication.setDataProvider(new MyDataProvider());
+    myTestAppManager = TestApplicationManager.getInstance();
+    myTestAppManager.setDataProvider(new MyDataProvider());
   }
 
   @Override
@@ -194,11 +213,10 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   @Override
   public Module getModule() {
-    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    return modules.length == 0 ? null : modules[0];
+    return myModule;
   }
 
-  private class MyDataProvider implements DataProvider {
+  private final class MyDataProvider implements DataProvider {
     @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
@@ -206,24 +224,29 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
         return myProject;
       }
       else if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-        if (myProject == null) return null;
+        if (myProject == null || myProject.isDisposed()) {
+          return null;
+        }
         return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       }
       else {
         Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
         if (editor != null) {
-          FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-          return manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
+          if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+            return TextEditorProvider.getInstance().getTextEditor(editor);
+          }
+          else {
+            FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
+            return manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
+          }
         }
         if (LangDataKeys.IDE_VIEW.is(dataId)) {
           VirtualFile[] contentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
           if (contentRoots.length > 0) {
             final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
             return new IdeView() {
-
-              @NotNull
               @Override
-              public PsiDirectory[] getDirectories() {
+              public PsiDirectory @NotNull [] getDirectories() {
                 return new PsiDirectory[] {psiDirectory};
               }
 

@@ -75,13 +75,11 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
 
   public static class Url extends MavenUrlConverter {
 
-    @NotNull
     @Override
-    public PsiReference[] createReferences(GenericDomValue value, final PsiElement element, final ConvertContext context) {
+    public PsiReference @NotNull [] createReferences(GenericDomValue value, final PsiElement element, final ConvertContext context) {
       return new PsiReference[]{new WebReference(element) {
-        @NotNull
         @Override
-        public Object[] getVariants() {
+        public Object @NotNull [] getVariants() {
           Module module = context.getModule();
 
           if (module != null) {

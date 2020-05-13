@@ -26,8 +26,8 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.mq.HgQGotoCommand;
 import org.zmlx.hg4idea.command.mq.HgQPopCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -44,8 +44,8 @@ public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
     final HgNameWithHashInfo parentPatchName = ContainerUtil.find(repository.getMQAppliedPatches(),
                                                                   info -> info.getHash().equals(parentHash));
     new Task.Backgroundable(repository.getProject(), parentPatchName != null
-                                                     ? HgVcsMessages.message("hg4idea.mq.progress.goto", parentPatchName)
-                                                     : HgVcsMessages.message("hg4idea.mq.progress.pop")) {
+                                                     ? HgBundle.message("hg4idea.mq.progress.goto", parentPatchName)
+                                                     : HgBundle.message("hg4idea.mq.progress.pop")) {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

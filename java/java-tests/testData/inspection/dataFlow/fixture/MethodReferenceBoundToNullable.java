@@ -4,6 +4,11 @@ import java.util.List;
 import java.util.function.Function;
 
 // IDEA-186732
+// In general nullability inference is unspecified and it's not clear whether `? super F` must be substituted via
+// `@Nullable String`. Now it works because we propagate annotations through 
+// com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint. However, normal Java 
+// type inference should ignore annotations completely, so we might drop the support of this case in the future
+// or define nullability inference in more strict way.
 class MethodRef {
 
   public static <F, T> List<T> transform(

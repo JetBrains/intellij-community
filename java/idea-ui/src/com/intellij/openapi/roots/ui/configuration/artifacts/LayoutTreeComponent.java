@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDTarget;
@@ -77,9 +78,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myOriginalArtifact = originalArtifact;
     mySortElements = sortElements;
     myTreeStructure = new LayoutTreeStructure();
-    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, this);
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, getComparator(), this);
     myTree = new LayoutTree(myArtifactsEditor, myStructureTreeModel);
-    myStructureTreeModel.setComparator(getComparator());
     myTree.setModel(new AsyncTreeModel(myStructureTreeModel, this));
     Disposer.register(this, myTree);
 
@@ -227,13 +227,16 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
     if (nodeSources.size() > 1) {
       Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
-                               "The selected node consist of several elements so it cannot be edited.\nSwitch off 'Show content of elements' checkbox to edit the output layout.");
+                               JavaUiBundle.message(
+                                 "error.message.the.selected.node.consist.of.several.elements.so.it.cannot.be.edited"));
     }
     else {
     final PackagingNodeSource source = ContainerUtil.getFirstItem(nodeSources, null);
       if (source != null) {
         Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
-                                 "The selected node belongs to '" + source.getPresentableName() + "' element so it cannot be edited.\nSwitch off 'Show content of elements' checkbox to edit the output layout.");
+                                 JavaUiBundle.message(
+                                   "error.message.the.selected.node.belongs.to.0.element.so.it.cannot.be.edited",
+                                   source.getPresentableName()));
       }
     }
     return false;
@@ -270,7 +273,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       else {
         message = "The selected node belongs to " + nodes.size() + " elements. Do you want to remove all these elements from the artifact?";
       }
-      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, "Remove Elements", null);
+      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, JavaUiBundle.message(
+        "dialog.title.remove.elements"), null);
       if (answer != Messages.YES) return false;
     }
     return true;
@@ -447,14 +451,6 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       path = path.getParentPath();
     }
     return null;
-  }
-
-  @Override
-  public void cleanUpOnLeave() {
-  }
-
-  @Override
-  public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
   }
 
   public void startRenaming(TreePath path) {

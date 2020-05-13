@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -78,7 +63,7 @@ class ParametersFolder {
     return false;
   }
 
-  void foldParameterUsagesInBody(@NotNull List<? extends VariableData> datum, @NotNull PsiElement[] elements, @NotNull SearchScope scope) {
+  void foldParameterUsagesInBody(@NotNull List<? extends VariableData> datum, PsiElement @NotNull [] elements, @NotNull SearchScope scope) {
     Map<VariableData, Set<PsiExpression>> equivalentExpressions = new LinkedHashMap<>();
     for (VariableData data : datum) {
       if (myDeleted.contains(data.variable)) continue;
@@ -140,8 +125,8 @@ class ParametersFolder {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(mostRanked.getProject());
       final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, mostRanked, data.type);
       if (nameInfo.names.length > 0 &&
-          !Comparing.equal(nameInfo.names[0], data.name) &&
-          !Comparing.equal(nameInfo.names[0], defaultName)) {
+          !Objects.equals(nameInfo.names[0], data.name) &&
+          !Objects.equals(nameInfo.names[0], defaultName)) {
         data.name = nameInfo.names[0];
         setUniqueName(data, nameGenerator, mostRanked, codeStyleManager);
       }
@@ -269,7 +254,7 @@ class ParametersFolder {
     final PsiExpression[] exprWithWriteAccessInside = new PsiExpression[1];
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (exprWithWriteAccessInside[0] != null) return;
         super.visitElement(element);
       }
@@ -285,7 +270,7 @@ class ParametersFolder {
     return exprWithWriteAccessInside[0] != null;
   }
 
-  private static boolean isAncestor(@NotNull PsiElement expression, @NotNull PsiElement[] scopeElements) {
+  private static boolean isAncestor(@NotNull PsiElement expression, PsiElement @NotNull [] scopeElements) {
     for (PsiElement scopeElement : scopeElements) {
       if (PsiTreeUtil.isAncestor(expression, scopeElement, false)) {
         return true;

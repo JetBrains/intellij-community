@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
@@ -32,12 +31,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrImmediateClosureS
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*;
 
 /**
  * @author ven
@@ -57,14 +54,6 @@ public class TypesUtil implements TypeConstants {
   };
 
   private TypesUtil() {
-  }
-
-
-  public static GroovyResolveResult[] getOverloadedUnaryOperatorCandidates(@NotNull PsiType thisType,
-                                                                           IElementType tokenType,
-                                                                           @NotNull GroovyPsiElement place,
-                                                                           PsiType[] argumentTypes) {
-    return ResolveUtil.getMethodCandidates(thisType, ourUnaryOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<>();
@@ -94,17 +83,6 @@ public class TypesUtil implements TypeConstants {
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBOOLEAN, CommonClassNames.JAVA_LANG_BOOLEAN);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kCHAR, CommonClassNames.JAVA_LANG_CHARACTER);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
-  }
-
-  private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<>();
-
-  static {
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mLNOT, AS_BOOLEAN);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, POSITIVE);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, NEGATIVE);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, PREVIOUS);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mINC, NEXT);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, BITWISE_NEGATE);
   }
 
   static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
@@ -525,7 +503,7 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Contract("null, _ -> false")
-  public static boolean isClassType(@Nullable PsiType type, @NotNull String... names) {
+  public static boolean isClassType(@Nullable PsiType type, String @NotNull ... names) {
     String fqn = getQualifiedName(type);
     if (fqn == null) return false;
     return ContainerUtil.or(names, it -> it.equals(fqn));
@@ -723,21 +701,21 @@ public class TypesUtil implements TypeConstants {
       parameter.accept(new PsiTypeVisitorEx<Object>() {
         @Nullable
         @Override
-        public Object visitClassType(PsiClassType classType) {
+        public Object visitClassType(@NotNull PsiClassType classType) {
             newParam.set(classType.rawType());
           return null;
         }
 
         @Nullable
         @Override
-        public Object visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        public Object visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
           newParam.set(capturedWildcardType.getWildcard().getBound());
           return null;
         }
 
         @Nullable
         @Override
-        public Object visitWildcardType(PsiWildcardType wildcardType) {
+        public Object visitWildcardType(@NotNull PsiWildcardType wildcardType) {
           newParam.set(wildcardType.getBound());
           return null;
         }
@@ -757,12 +735,12 @@ public class TypesUtil implements TypeConstants {
   public static PsiType rawWildcard(PsiType type, PsiElement context) {
     final PsiTypeMapper visitor = new GrTypeMapper(context) {
       @Override
-      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
 
       @Override
-      public PsiType visitWildcardType(PsiWildcardType capturedWildcardType) {
+      public PsiType visitWildcardType(@NotNull PsiWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
 

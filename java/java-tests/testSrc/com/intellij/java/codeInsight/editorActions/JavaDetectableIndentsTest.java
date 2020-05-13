@@ -15,15 +15,41 @@
  */
 package com.intellij.java.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.actions.FileInEditorProcessor;
+import com.intellij.codeInsight.actions.LayoutCodeOptions;
+import com.intellij.codeInsight.actions.TextRangeType;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class JavaDetectableIndentsTest extends LightJavaCodeInsightTestCase {
+public class JavaDetectableIndentsTest extends BasePlatformTestCase {
   private static final String BASE_PATH = "/codeInsight/editorActions/detectableIndents/";
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    DetectableIndentOptionsProvider.getInstance().setEnabledInTest(true);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      DetectableIndentOptionsProvider.getInstance().setEnabledInTest(false);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
   public void testSpaceIndent() {
     doTest();
@@ -33,18 +59,45 @@ public class JavaDetectableIndentsTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
-  private void doTest() {
-    DetectableIndentOptionsProvider provider = DetectableIndentOptionsProvider.getInstance();
-    assertNotNull("DetectableIndentOptionsProvider not found", provider);
+  public void testWithFullReformat() {
     String testName = getTestName(true);
-    provider.setEnabledInTest(true);
-    try {
-      configureByFile(BASE_PATH + testName + ".java");
-      EditorTestUtil.performTypingAction(getEditor(), '\n');
-      checkResultByFile(BASE_PATH + testName + "_after.java");
-    }
-    finally {
-      provider.setEnabledInTest(false);
-    }
+    myFixture.configureByFile(BASE_PATH + testName + ".java");
+    CommonCodeStyleSettings javaSettings =
+      CodeStyle.getSettings(myFixture.getEditor()).getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.getIndentOptions().INDENT_SIZE = 2;
+    javaSettings.getIndentOptions().CONTINUATION_INDENT_SIZE = 2;
+    javaSettings.ALIGN_MULTILINE_BINARY_OPERATION = false;
+    LayoutCodeOptions options = new LayoutCodeOptions() {
+      @Override
+      public TextRangeType getTextRangeType() {
+        return TextRangeType.WHOLE_FILE;
+      }
+
+      @Override
+      public boolean isOptimizeImports() {
+        return false;
+      }
+
+      @Override
+      public boolean isRearrangeCode() {
+        return false;
+      }
+    };
+    FileInEditorProcessor processor = new FileInEditorProcessor(myFixture.getFile(), myFixture.getEditor(), options);
+    processor.processCode();
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n');
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.java");
+  }
+
+  private void doTest() {
+    String testName = getTestName(true);
+    myFixture.configureByFile(BASE_PATH + testName + ".java");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n');
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.java");
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return PathManagerEx.getTestDataPath();
   }
 }

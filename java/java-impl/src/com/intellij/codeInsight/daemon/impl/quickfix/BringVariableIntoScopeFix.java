@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,19 +29,60 @@ import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 /**
  * @author ven
  */
-public class BringVariableIntoScopeFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix");
-  private final PsiReferenceExpression myUnresolvedReference;
-  private volatile PsiLocalVariable myOutOfScopeVariable;
+public final class BringVariableIntoScopeFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance(BringVariableIntoScopeFix.class);
+  private final @NotNull PsiReferenceExpression myUnresolvedReference;
+  private final @NotNull PsiLocalVariable myOutOfScopeVariable;
 
-  BringVariableIntoScopeFix(@NotNull PsiReferenceExpression unresolvedReference) {
+  private BringVariableIntoScopeFix(@NotNull PsiReferenceExpression unresolvedReference, @NotNull PsiLocalVariable variable) {
     myUnresolvedReference = unresolvedReference;
+    myOutOfScopeVariable = variable;
+  }
+
+  static @Nullable BringVariableIntoScopeFix fromReference(PsiReferenceExpression unresolvedReference) {
+    if (unresolvedReference.isQualified()) return null;
+    final String referenceName = unresolvedReference.getReferenceName();
+    if (referenceName == null) return null;
+
+    PsiElement container = PsiTreeUtil.getParentOfType(unresolvedReference, PsiCodeBlock.class, PsiClass.class);
+    if (!(container instanceof PsiCodeBlock)) return null;
+    while(container.getParent() instanceof PsiStatement || container.getParent() instanceof PsiCatchSection) container = container.getParent();
+
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
+      int variableCount = 0;
+      PsiLocalVariable myOutOfScopeVariable;
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+
+      @Override
+      public void visitExpression(PsiExpression expression) {
+        //Don't look inside expressions
+      }
+
+      @Override
+      public void visitLocalVariable(PsiLocalVariable variable) {
+        if (referenceName.equals(variable.getName())) {
+          myOutOfScopeVariable = variable;
+          variableCount++;
+          if (variableCount > 1) {
+            stopWalking();
+          }
+        }
+      }
+    }
+    Visitor visitor = new Visitor();
+    container.accept(visitor);
+
+    if (visitor.variableCount != 1 || visitor.myOutOfScopeVariable instanceof PsiResourceVariable) return null;
+    return new BringVariableIntoScopeFix(unresolvedReference, visitor.myOutOfScopeVariable);
   }
 
   @Override
@@ -48,8 +90,8 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   public String getText() {
     PsiLocalVariable variable = myOutOfScopeVariable;
 
-    String varText = variable == null || !variable.isValid() ? "" : PsiFormatUtil.formatVariable(variable, PsiFormatUtilBase.SHOW_NAME |
-                                                                                    PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
+    String varText = !variable.isValid()
+                     ? "" : PsiFormatUtil.formatVariable(variable, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
     return QuickFixBundle.message("bring.variable.to.scope.text", varText);
   }
 
@@ -62,49 +104,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
-    if (!myUnresolvedReference.isValid() || !BaseIntentionAction.canModify(myUnresolvedReference)) return false;
-    PsiLocalVariable variable = myOutOfScopeVariable;
-    if (variable != null && !variable.isValid()) return false;
-    if (myUnresolvedReference.isQualified()) return false;
-
-    final String referenceName = myUnresolvedReference.getReferenceName();
-    if (referenceName == null) return false;
-
-
-    PsiElement container = PsiTreeUtil.getParentOfType(myUnresolvedReference, PsiCodeBlock.class, PsiClass.class);
-    if (!(container instanceof PsiCodeBlock)) return false;
-
-    while(container.getParent() instanceof PsiStatement || container.getParent() instanceof PsiCatchSection) container = container.getParent();
-
-    class Visitor extends JavaRecursiveElementWalkingVisitor {
-      PsiLocalVariable myOutOfScopeVariable;
-      
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
-
-      @Override
-      public void visitExpression(PsiExpression expression) {
-        //Don't look inside expressions
-      }
-
-      @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
-        if (referenceName.equals(variable.getName())) {
-          if (myOutOfScopeVariable == null) {
-            myOutOfScopeVariable = variable;
-          }
-          else {
-            myOutOfScopeVariable = null; //2 conflict variables
-          }
-        }
-      }
-    }
-    Visitor visitor = new Visitor();
-    container.accept(visitor);
-    
-    myOutOfScopeVariable = variable = visitor.myOutOfScopeVariable;
-
-    return variable != null && !(variable instanceof PsiResourceVariable);
+    return myUnresolvedReference.isValid() && BaseIntentionAction.canModify(myUnresolvedReference) && myOutOfScopeVariable.isValid();
   }
 
   @Override
@@ -176,5 +176,11 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new BringVariableIntoScopeFix(PsiTreeUtil.findSameElementInCopy(myUnresolvedReference, target), 
+                                         PsiTreeUtil.findSameElementInCopy(myOutOfScopeVariable, target));
   }
 }

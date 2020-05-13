@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException;
 import com.intellij.openapi.externalSystem.service.notification.*;
+import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -113,7 +114,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   @Override
-  public void execute(@NotNull final ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners) {
+  public void execute(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
     ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
@@ -133,7 +134,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   @Override
-  public void execute(@NotNull ExternalSystemTaskNotificationListener... listeners) {
+  public void execute(ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     if (!compareAndSetState(ExternalSystemTaskState.NOT_STARTED, ExternalSystemTaskState.IN_PROGRESS)) return;
 
     ExternalSystemProgressNotificationManager progressManager = ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
@@ -147,14 +148,14 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       setState(ExternalSystemTaskState.FINISHED);
     }
     catch (Exception e) {
-      setState(ExternalSystemTaskState.FAILED);
-      myError.set(e);
       LOG.debug(e);
+      myError.set(e);
+      setState(ExternalSystemTaskState.FAILED);
     }
     catch (Throwable e) {
-      setState(ExternalSystemTaskState.FAILED);
-      myError.set(e);
       LOG.error(e);
+      myError.set(e);
+      setState(ExternalSystemTaskState.FAILED);
     }
     finally {
       for (ExternalSystemTaskNotificationListener listener : listeners) {
@@ -167,7 +168,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   protected abstract void doExecute() throws Exception;
 
   @Override
-  public boolean cancel(@NotNull final ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners) {
+  public boolean cancel(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
     ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
@@ -187,7 +188,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   @Override
-  public boolean cancel(@NotNull ExternalSystemTaskNotificationListener... listeners) {
+  public boolean cancel(ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     ExternalSystemTaskState currentTaskState = getState();
     if (currentTaskState.isStopped()) return true;
 
@@ -284,5 +285,20 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     }
     String description = event.getDescription();
     indicator.setText(wrapProgressText(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')'));
+  }
+
+  @NotNull
+  protected static ExternalSystemTaskNotificationListener wrapWithListener(@NotNull ExternalSystemProgressNotificationManagerImpl manager) {
+    return new ExternalSystemTaskNotificationListenerAdapter() {
+      @Override
+      public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+        manager.onStatusChange(event);
+      }
+
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        manager.onTaskOutput(id, text, stdOut);
+      }
+    };
   }
 }

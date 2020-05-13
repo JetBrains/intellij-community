@@ -15,8 +15,8 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
@@ -77,16 +77,16 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
   public void calcFindUsagesOptions(final JavaThrowFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
     options.isUsages = isSelected(myCbUsages) || !myHasFindWhatPanel;
-    FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindThrowUsages", createFeatureUsageData(options));
+    FUCounterUsageLogger.getInstance().logEvent(EVENT_LOG_GROUP, "find.throw.started", createFeatureUsageData(options));
   }
 
   @Override
   protected JPanel createFindWhatPanel() {
     final JPanel findWhatPanel = new JPanel();
-    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
+    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
-    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox")       , myFindUsagesOptions.isUsages,            findWhatPanel,  true);
+    myCbUsages = addCheckboxToPanel(JavaBundle.message("find.what.usages.checkbox")       , myFindUsagesOptions.isUsages,            findWhatPanel,  true);
     //final ThrowSearchUtil.Root[] searchRoots = ThrowSearchUtil.getSearchRoots(getPsiElement ());
 
     //final PsiThrowStatement throwStatement = (PsiThrowStatement)getPsiElement();

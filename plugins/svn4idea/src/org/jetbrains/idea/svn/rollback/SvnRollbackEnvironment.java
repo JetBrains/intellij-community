@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -38,6 +39,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   @Override
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @NotNull
   public String getRollbackOperationName() {
     return SvnBundle.message("action.name.revert");
   }

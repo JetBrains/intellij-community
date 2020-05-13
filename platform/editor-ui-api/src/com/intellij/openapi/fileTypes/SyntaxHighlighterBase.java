@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,20 +19,17 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
   @Deprecated
   protected static final TextAttributesKey[] EMPTY = TextAttributesKey.EMPTY_ARRAY;
 
-  @NotNull
-  public static TextAttributesKey[] pack(@Nullable TextAttributesKey key) {
+  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key) {
     return key == null ? TextAttributesKey.EMPTY_ARRAY : new TextAttributesKey[]{key};
   }
 
-  @NotNull
-  public static TextAttributesKey[] pack(@Nullable TextAttributesKey key1, @Nullable TextAttributesKey key2) {
+  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key1, @Nullable TextAttributesKey key2) {
     if (key1 == null) return pack(key2);
     if (key2 == null) return pack(key1);
     return new TextAttributesKey[]{key1, key2};
   }
 
-  @NotNull
-  public static TextAttributesKey[] pack(@NotNull TextAttributesKey[] base, @Nullable TextAttributesKey key) {
+  public static TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey key) {
     if (key == null) return base;
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 0, base.length);
@@ -54,8 +37,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  @NotNull
-  public static TextAttributesKey[] pack(@Nullable TextAttributesKey key, @NotNull TextAttributesKey[] base) {
+  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, TextAttributesKey @NotNull [] base) {
     if (key == null) return base;
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 1, base.length);
@@ -63,8 +45,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  @NotNull
-  public static TextAttributesKey[] pack(@NotNull TextAttributesKey[] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
+  public static TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
     int add = 0;
     if (t1 != null) add++;
     if (t2 != null) add++;
@@ -77,11 +58,11 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  protected static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, @NotNull TokenSet keys, TextAttributesKey value) {
+  public static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, @NotNull TokenSet keys, TextAttributesKey value) {
     fillMap(map, value, keys.getTypes());
   }
 
-  protected static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, TextAttributesKey value, @NotNull IElementType... types) {
+  protected static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, TextAttributesKey value, IElementType @NotNull ... types) {
     for (IElementType type : types) {
       map.put(type, value);
     }

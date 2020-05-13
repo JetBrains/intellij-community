@@ -26,13 +26,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ViewClassHierarchyAction extends ChangeViewTypeActionBase {
   public ViewClassHierarchyAction() {
-    super(IdeBundle.message("action.view.class.hierarchy"),
-          IdeBundle.message("action.description.view.class.hierarchy"), AllIcons.Hierarchy.Class);
+    super(IdeBundle.messagePointer("action.view.class.hierarchy"),
+          IdeBundle.messagePointer("action.description.view.class.hierarchy"), AllIcons.Hierarchy.Class);
   }
 
   @Override
   protected final String getTypeName() {
-    return TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE;
+    return TypeHierarchyBrowserBase.getTypeHierarchyType();
   }
 
   @Override

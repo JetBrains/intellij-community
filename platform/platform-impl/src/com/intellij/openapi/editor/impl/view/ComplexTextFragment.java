@@ -22,12 +22,11 @@ class ComplexTextFragment extends TextFragment {
 
   @NotNull
   private final GlyphVector myGlyphVector;
-  @Nullable
-  private final short[] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
+  private final short @Nullable [] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
 
-  ComplexTextFragment(@NotNull char[] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
+  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
     super(end - start);
     assert start >= 0;
     assert end <= lineChars.length;

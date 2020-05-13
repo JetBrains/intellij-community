@@ -21,12 +21,28 @@ public class TypeParameterExtendsObjectInspectionTest extends LightJavaInspectio
   }
 
   public void testTypeParameterExtendsObject() {
+    final TypeParameterExtendsObjectInspection inspection = getTypeParameterExtendsObjectInspection(false);
+    myFixture.enableInspections(inspection);
+
     doTest();
+  }
+
+  public void testTypeParameterExtendsObjectIgnoreAnnotated() {
+    final TypeParameterExtendsObjectInspection inspection = getTypeParameterExtendsObjectInspection(true);
+    myFixture.enableInspections(inspection);
+
+    doTest();
+  }
+
+  private TypeParameterExtendsObjectInspection getTypeParameterExtendsObjectInspection(boolean ignoreAnnotatedObject) {
+    final TypeParameterExtendsObjectInspection inspection = new TypeParameterExtendsObjectInspection();
+    inspection.ignoreAnnotatedObject = ignoreAnnotatedObject;
+    return inspection;
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new TypeParameterExtendsObjectInspection();
+    return getTypeParameterExtendsObjectInspection(false);
   }
 }

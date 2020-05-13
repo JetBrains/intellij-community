@@ -175,13 +175,13 @@ public class PatchApplier {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
-    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, "Applying patch...", () -> {
+    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, VcsBundle.getString("patch.apply.progress.title"), () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
       }
 
-      final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before patch");
+      final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.before.patch.label.text"));
       final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
@@ -205,7 +205,7 @@ public class PatchApplier {
         }
         finally {
           VcsFileListenerContextHelper.getInstance(project).clearContext();
-          LocalHistory.getInstance().putSystemLabel(project, "After patch");
+          LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.after.patch.label.text"));
         }
       });
       result = refStatus.get();
@@ -256,18 +256,19 @@ public class PatchApplier {
       try {
         labelToRevert.revert(project, project.getBaseDir());
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning("Apply Patch Aborted", "All files changed during apply patch action were rolled back");
+          .notifyImportantWarning(VcsBundle.message("patch.apply.aborted.title"), VcsBundle.message("patch.apply.aborted.message"));
       }
       catch (LocalHistoryException e) {
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning("Rollback Failed", "Try using 'Local History' dialog to perform revert manually.");
+          .notifyImportantWarning(VcsBundle.message("patch.apply.rollback.failed.title"),
+                                  VcsBundle.message("patch.apply.rollback.failed.message"));
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(rollback, "Rollback Applied Changes...", true, project);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(rollback, VcsBundle.message("patch.apply.rollback.progress.title"), true, project);
     }
     else {
-      progress("Rollback Applied Changes...");
+      progress(VcsBundle.message("patch.apply.rollback.progress"));
       rollback.run();
     }
   }

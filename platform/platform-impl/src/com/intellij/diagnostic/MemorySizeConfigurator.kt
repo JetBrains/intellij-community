@@ -1,24 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
+import kotlin.math.max
 
-/**
- * @author yole
- */
-class MemorySizeConfigurator : StartupActivity.Background {
+private class MemorySizeConfigurator : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
-    var currentXmx = VMOptions.readOption(VMOptions.MemoryKind.HEAP, true)
-    if (currentXmx < 0) currentXmx = VMOptions.readOption(VMOptions.MemoryKind.HEAP, false)
+    val currentXmx = max(VMOptions.readOption(VMOptions.MemoryKind.HEAP, true),
+                         VMOptions.readOption(VMOptions.MemoryKind.HEAP, false))
     if (currentXmx < 0) {
       // Don't know how much -Xmx we have
       return
@@ -36,8 +34,8 @@ class MemorySizeConfigurator : StartupActivity.Background {
 
     val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(currentXmx, totalPhysicalMemory.toInt())
 
-    var currentXms = VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true)
-    if (currentXms < 0) currentXms = VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false)
+    val currentXms = max(VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true),
+                         VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false))
 
     if (currentXms < 0 || newXmx < currentXms) return
 
@@ -53,11 +51,11 @@ class MemorySizeConfigurator : StartupActivity.Background {
 
 // Allow overriding in other IDEs
 open class MemorySizeConfiguratorService {
-  open fun getSuggestedMemorySize(currentXmx: Int, totalPhysicalMemory: Int): Int {
-    return (totalPhysicalMemory / 8).coerceIn(750, 2048)
+  companion object {
+    fun getInstance(): MemorySizeConfiguratorService = service()
   }
 
-  companion object {
-    fun getInstance(): MemorySizeConfiguratorService = ServiceManager.getService(MemorySizeConfiguratorService::class.java)
+  open fun getSuggestedMemorySize(currentXmx: Int, totalPhysicalMemory: Int): Int {
+    return (totalPhysicalMemory / 8).coerceIn(750, 2048)
   }
 }

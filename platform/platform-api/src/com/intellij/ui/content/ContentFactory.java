@@ -1,17 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public interface ContentFactory {
-
   @NotNull
-  Content createContent(JComponent component, @Nls(capitalization = Nls.Capitalization.Title) String displayName, boolean isLockable);
+  Content createContent(@Nullable JComponent component, @Nullable @NlsContexts.TabTitle String displayName, boolean isLockable);
 
   @NotNull
   ContentManager createContentManager(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project);
@@ -24,7 +24,7 @@ public interface ContentFactory {
   @NotNull
   ContentManager createContentManager(boolean canCloseContents, @NotNull Project project);
 
-  class SERVICE {
+  final class SERVICE {
     private SERVICE() {
     }
 

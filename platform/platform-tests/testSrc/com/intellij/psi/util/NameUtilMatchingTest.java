@@ -188,6 +188,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("j.js", "jquery.autocomplete.js");
     assertDoesntMatch("j.ajs", "jquery.autocomplete.js");
     assertMatches("oracle.bnf", "oracle-11.2.bnf");
+    assertMatches("*foo.*bar", "foo.b.bar");
   }
 
   public void testNoExtension() {

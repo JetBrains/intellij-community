@@ -29,13 +29,6 @@ public class UseOfProcessBuilderInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "use.processbuilder.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.processbuilder.class.problem.descriptor");

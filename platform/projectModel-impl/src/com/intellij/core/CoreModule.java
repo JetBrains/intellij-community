@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,20 +33,19 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   @NotNull private final ModuleScopeProvider myModuleScopeProvider;
 
   public CoreModule(@NotNull Disposable parentDisposable, @NotNull Project project, String moduleFilePath) {
-    super(project.getPicoContainer(), parentDisposable);
+    super((DefaultPicoContainer)project.getPicoContainer(), parentDisposable);
     myLifetime = parentDisposable;
     myProject = project;
     myPath = moduleFilePath;
 
     initModuleExtensions();
 
-    final ModuleRootManagerImpl moduleRootManager =
-      new ModuleRootManagerImpl(this) {
-        @Override
-        public void loadState(@NotNull ModuleRootManagerState object) {
-          loadState(object, false);
-        }
-      };
+    ModuleRootManagerImpl moduleRootManager = new ModuleRootManagerImpl(this) {
+      @Override
+      public void loadState(@NotNull ModuleRootManagerState object) {
+        loadState(object, false);
+      }
+    };
     Disposer.register(parentDisposable, moduleRootManager);
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, createModulePathMacroManager(project));

@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -22,9 +21,6 @@ import java.util.List;
  * @see IntentionAction
  */
 public abstract class IntentionManager  {
-  public static final ExtensionPointName<IntentionActionBean> EP_INTENTION_ACTIONS =
-    new ExtensionPointName<>("com.intellij.intentionAction");
-
   /**
    * Key to be used within {@link UserDataHolder} in order to check presence of explicit indication on if intentions sub-menu
    * should be shown.
@@ -33,14 +29,10 @@ public abstract class IntentionManager  {
 
   /**
    * @deprecated Use {@link #getInstance()} instead.
-   * Returns instance of {@code IntentionManager} for given project.
-   *
-   * @param project the project for which the instance is returned.
-   * @return instance of the {@code IntentionManager} assigned for given project.
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
-  public static IntentionManager getInstance(Project project) {
+  public static IntentionManager getInstance(@SuppressWarnings("unused") Project project) {
     return getInstance();
   }
 
@@ -60,8 +52,7 @@ public abstract class IntentionManager  {
    *
    * @return array of registered actions.
    */
-  @NotNull
-  public abstract IntentionAction[] getIntentionActions();
+  public abstract IntentionAction @NotNull [] getIntentionActions();
 
   /**
    * Returns all registered intention actions which are available now
@@ -69,28 +60,21 @@ public abstract class IntentionManager  {
    *
    * @return array of actions.
    */
-  @NotNull
-  public abstract IntentionAction[] getAvailableIntentionActions();
+  public abstract @NotNull List<IntentionAction> getAvailableIntentions();
 
   /**
-   * Registers an intention action which can be enabled or disabled through the "Intention
-   * Settings" dialog. To provide the description and the example code for the intention,
-   * the directory with the name equal to {@link IntentionAction#getFamilyName()} needs to
-   * be created under the {@code intentionDescriptions} directory of the resource root.
-   * The directory needs to contain three files. {@code description.html} provides the
-   * description of the intention, {@code before.java.template} provides the sample code
-   * before the intention is invoked, and {@code after.java.template} provides the sample
-   * code after invoking the intention. The templates can contain a fragment of code surrounded
-   * with {@code <spot>} and {@code </spot>} markers. If present, that fragment
-   * will be surrounded by a blinking rectangle in the inspection preview pane.
-   *
-   * @param action   the intention action to register.
-   * @param category the name of the category or categories under which the intention will be shown
-   *                 in the "Intention Settings" dialog.
+   * @deprecated Use {@link #getAvailableIntentions()}
+   */
+  @Deprecated
+  public final IntentionAction @NotNull [] getAvailableIntentionActions() {
+    return getAvailableIntentions().toArray(IntentionAction.EMPTY_ARRAY);
+  }
+
+  /**
    * @deprecated Please use {@code <intentionAction>} extension point instead
    */
   @Deprecated
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category);
+  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, String @NotNull ... category);
 
   public abstract void unregisterIntention(@NotNull IntentionAction intentionAction);
 
@@ -106,7 +90,7 @@ public abstract class IntentionManager  {
    * @return "Fix all '' inspections problems for a file" intention if toolWrapper is local inspection or simple global one
    */
   @Nullable
-  public abstract IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull IntentionAction action);
+  public abstract IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull IntentionAction action);
 
   /**
    * @return intention to start code cleanup on file

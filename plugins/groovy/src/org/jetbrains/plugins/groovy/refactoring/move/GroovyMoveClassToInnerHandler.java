@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
 
@@ -81,7 +84,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     }
     else {
       //rebind imports first
-      Collections.sort(usageInfos, (o1, o2) -> PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement()));
+      usageInfos.sort((o1, o2) -> PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement()));
     }
     return importStatements;
   }
@@ -152,13 +155,13 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
 
   @Override
   public void retargetNonCodeUsages(@NotNull final Map<PsiElement, PsiElement> oldToNewElementMap,
-                                    @NotNull final NonCodeUsageInfo[] nonCodeUsages) {
+                                    final NonCodeUsageInfo @NotNull [] nonCodeUsages) {
     for (PsiElement newClass : oldToNewElementMap.values()) {
       if (!(newClass instanceof GrTypeDefinition)) continue;
 
       newClass.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(final PsiElement element) {
+        public void visitElement(@NotNull final PsiElement element) {
           super.visitElement(element);
           List<NonCodeUsageInfo> list = element.getCopyableUserData(MoveClassToInnerProcessor.ourNonCodeUsageKey);
           if (list != null) {

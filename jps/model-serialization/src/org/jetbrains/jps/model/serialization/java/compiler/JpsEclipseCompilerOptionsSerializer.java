@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
-/**
- * @author nik
- */
 public class JpsEclipseCompilerOptionsSerializer extends JpsProjectExtensionSerializer {
   private final String myCompilerId;
 
@@ -37,14 +34,14 @@ public class JpsEclipseCompilerOptionsSerializer extends JpsProjectExtensionSeri
 
   @Override
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     EclipseCompilerOptions options = XmlSerializer.deserialize(componentTag, EclipseCompilerOptions.class);
     configuration.setCompilerOptions(myCompilerId, options);
   }
 
   @Override
   public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     configuration.setCompilerOptions(myCompilerId, new EclipseCompilerOptions());
   }
 

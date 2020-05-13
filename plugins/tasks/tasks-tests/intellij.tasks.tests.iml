@@ -26,7 +26,10 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="library" scope="TEST" name="easymock" level="project" />
+    <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
     <orderEntry type="library" scope="TEST" name="http-client" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
   </component>
 </module>

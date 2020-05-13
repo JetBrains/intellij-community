@@ -52,7 +52,7 @@ public class TimedCommitParser {
   }
 
   @NotNull
-  public static List<TimedVcsCommit> log(@NotNull String... commits) {
+  public static List<TimedVcsCommit> log(String @NotNull ... commits) {
     return log(Arrays.asList(commits));
   }
 }

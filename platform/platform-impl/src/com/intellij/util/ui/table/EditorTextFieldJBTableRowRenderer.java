@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,8 +27,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldCellRenderer implements JBTableRowRenderer {
+  /** @deprecated Use {@link EditorTextFieldJBTableRowRenderer#EditorTextFieldJBTableRowRenderer(Project, Language, Disposable)}*/
+  @Deprecated
   protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
     super(project, fileType, parent);
+  }
+
+  protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @Nullable Language language, @NotNull Disposable parent) {
+    super(project, language, parent);
+  }
+
+  protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @NotNull Disposable parent) {
+    super(project, (Language)null, parent);
   }
 
   @Override

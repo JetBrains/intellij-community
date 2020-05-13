@@ -65,12 +65,60 @@
             "description": "Description in html format"
         },
         "x-intellij-language-injection": {
-            "type": "string",
-            "description": "IntelliJ language ID for language injection"
+            "description": "IntelliJ language ID for language injection",
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "language" : {
+                            "type": "string",
+                            "description": "Language ID. Invoke completion to see all options"
+                        },
+                        "prefix" : {
+                            "type": "string",
+                            "description": "Code fragment that will be appended before the user code"
+                        },
+                        "suffix" : {
+                            "type": "string",
+                            "description": "Code fragment that will be appended after the user code"
+                        }
+                    }
+                }
+            ]
         },
         "x-intellij-case-insensitive": {
             "type": "boolean",
             "description": "If 'true', enum options for this value will be checked case-insensitively"
+        },
+        "x-intellij-enum-metadata": {
+            "type": "object",
+            "description": "Provides description and deprecation data for enum values",
+            "additionalProperties": {
+                "oneOf": [
+                    {
+                        "type": "string"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "description": {
+                                "type": "string",
+                                "description": "Description for an enum value"
+                            },
+                            "deprecationMessage": {
+                                "type": "string",
+                                "description": "Deprecation message for an enum value"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
         },
         "default": {},
         "examples": {

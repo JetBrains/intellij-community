@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.sh.ShLanguage;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     return new CodeStyleAbstractConfigurable(settings, modelSettings, getLanguage().getID()) {
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new CodeStyleShPanel(settings, modelSettings);
+        return new ShCodeStylePanel(settings, modelSettings);
       }
     };
   }
@@ -41,6 +42,7 @@ public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     return ShLanguage.INSTANCE;
   }
 
+  @NonNls
   @NotNull
   @Override
   public String getExternalLanguageId() {

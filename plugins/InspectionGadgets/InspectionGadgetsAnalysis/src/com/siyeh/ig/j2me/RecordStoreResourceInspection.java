@@ -21,7 +21,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.resources.ResourceInspection;
 import org.jdom.Element;
@@ -33,13 +32,6 @@ public class RecordStoreResourceInspection extends ResourceInspection {
   @NotNull
   public String getID() {
     return "RecordStoreOpenedButNotSafelyClosed";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "recordstore.opened.not.safely.closed.display.name");
   }
 
   @Override

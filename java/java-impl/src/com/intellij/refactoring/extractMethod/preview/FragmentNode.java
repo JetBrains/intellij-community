@@ -48,8 +48,7 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
     return myLineNumberChunk;
   }
 
-  @NotNull
-  protected TextChunk[] createTextChunks(@NotNull PsiElement element) {
+  protected TextChunk @NotNull [] createTextChunks(@NotNull PsiElement element) {
     UsageInfo2UsageAdapter usageAdapter = new UsageInfo2UsageAdapter(new UsageInfo(element));
     PsiFile file = element.getContainingFile();
     TextRange range = element.getTextRange();

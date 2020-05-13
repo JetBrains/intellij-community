@@ -5,23 +5,35 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   protected final VirtualFile myFile;
   protected final String myFileName;
-  protected final FileType myFileType;
+  private volatile Project myProject;
+  private FileType mySubstituteFileType;
+  private final @NotNull FileType myType;
 
-  public IndexedFileImpl(@NotNull VirtualFile file, @NotNull FileType type) {
+  public IndexedFileImpl(@NotNull VirtualFile file, Project project) {
+    this(file, file.getFileType(), project);
+  }
+
+  public IndexedFileImpl(@NotNull VirtualFile file, @NotNull FileType type, Project project) {
     myFile = file;
     myFileName = file.getName();
-    myFileType = type;
+    myProject = project;
+    myType = type;
   }
 
   @NotNull
   @Override
   public FileType getFileType() {
-    return SubstitutedFileType.substituteFileType(myFile, myFileType, getProject());
+    if (mySubstituteFileType == null) {
+      mySubstituteFileType = SubstitutedFileType.substituteFileType(myFile, myType, getProject());
+    }
+    return mySubstituteFileType;
   }
 
   @NotNull
@@ -38,6 +50,15 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
 
   @Override
   public Project getProject() {
-    return getUserData(IndexingDataKeys.PROJECT);
+    return myProject;
+  }
+
+  public void setProject(@NotNull Project project) {
+    myProject = project;
+  }
+
+  @Override
+  public String toString() {
+    return "IndexedFileImpl(" + getFileName() + ")";
   }
 }

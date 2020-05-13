@@ -35,11 +35,11 @@ public class ArrangementSectionRule implements Cloneable {
     return myMatchRules;
   }
 
-  public static ArrangementSectionRule create(@NotNull StdArrangementMatchRule... rules) {
+  public static ArrangementSectionRule create(StdArrangementMatchRule @NotNull ... rules) {
     return create(null, null, rules);
   }
 
-  public static ArrangementSectionRule create(@Nullable String start, @Nullable String end, @NotNull StdArrangementMatchRule... rules) {
+  public static ArrangementSectionRule create(@Nullable String start, @Nullable String end, StdArrangementMatchRule @NotNull ... rules) {
     return create(start, end, rules.length == 0 ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(rules));
   }
 

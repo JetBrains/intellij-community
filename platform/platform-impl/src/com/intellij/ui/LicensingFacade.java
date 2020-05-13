@@ -18,6 +18,7 @@ public final class LicensingFacade {
   public Date perpetualFallbackDate;
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
+  public String metadata;
 
   public volatile static LicensingFacade INSTANCE;
 

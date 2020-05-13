@@ -23,24 +23,19 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiArrayAccessExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayAccessInstruction extends Instruction implements ExpressionPushingInstruction {
+import java.util.Objects;
+
+public class ArrayAccessInstruction extends ExpressionPushingInstruction<PsiArrayAccessExpression> {
   private final @NotNull DfaValue myValue;
-  private final @NotNull PsiArrayAccessExpression myExpression;
 
   public ArrayAccessInstruction(@NotNull DfaValue value, @NotNull PsiArrayAccessExpression expression) {
+    super(expression);
     myValue = value;
-    myExpression = expression;
   }
 
   @NotNull
   public DfaValue getValue() {
     return myValue;
-  }
-
-  @Override
-  @NotNull
-  public PsiArrayAccessExpression getExpression() {
-    return myExpression;
   }
 
   @Override
@@ -50,6 +45,6 @@ public class ArrayAccessInstruction extends Instruction implements ExpressionPus
 
   @Override
   public String toString() {
-    return "ARRAY_ACCESS "+myExpression.getText();
+    return "ARRAY_ACCESS " + Objects.requireNonNull(getExpression()).getText();
   }
 }

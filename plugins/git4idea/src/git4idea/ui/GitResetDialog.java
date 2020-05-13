@@ -18,18 +18,6 @@ import java.util.List;
  */
 public class GitResetDialog extends DialogWrapper {
   /**
-   * The --soft reset type
-   */
-  private static final String SOFT = GitBundle.getString("reset.type.soft");
-  /**
-   * The --mixed reset type
-   */
-  private static final String MIXED = GitBundle.getString("reset.type.mixed");
-  /**
-   * The --hard reset type
-   */
-  private static final String HARD = GitBundle.getString("reset.type.hard");
-  /**
    * Git root selector
    */
   private JComboBox myGitRootComboBox;
@@ -74,11 +62,11 @@ public class GitResetDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle(GitBundle.getString("reset.title"));
-    setOKButtonText(GitBundle.getString("reset.button"));
-    myResetTypeComboBox.addItem(MIXED);
-    myResetTypeComboBox.addItem(SOFT);
-    myResetTypeComboBox.addItem(HARD);
-    myResetTypeComboBox.setSelectedItem(MIXED);
+    setOKButtonText(GitBundle.message("git.reset.button"));
+    myResetTypeComboBox.addItem(getMixed());
+    myResetTypeComboBox.addItem(getSoft());
+    myResetTypeComboBox.addItem(getHard());
+    myResetTypeComboBox.setSelectedItem(getMixed());
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranchLabel);
     myGitReferenceValidator = new GitReferenceValidator(myProject, myGitRootComboBox, myCommitTextField, myValidateButton,
                                                         () -> validateFields());
@@ -109,13 +97,13 @@ public class GitResetDialog extends DialogWrapper {
   public GitLineHandler handler() {
     GitLineHandler handler = new GitLineHandler(myProject, getGitRoot(), GitCommand.RESET);
     String type = (String)myResetTypeComboBox.getSelectedItem();
-    if (SOFT.equals(type)) {
+    if (getSoft().equals(type)) {
       handler.addParameters("--soft");
     }
-    else if (HARD.equals(type)) {
+    else if (getHard().equals(type)) {
       handler.addParameters("--hard");
     }
-    else if (MIXED.equals(type)) {
+    else if (getMixed().equals(type)) {
       handler.addParameters("--mixed");
     }
     final String commit = myCommitTextField.getText().trim();
@@ -155,5 +143,26 @@ public class GitResetDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "gitResetHead";
+  }
+
+  /**
+   * The --soft reset type
+   */
+  static String getSoft() {
+    return GitBundle.getString("git.reset.mode.soft");
+  }
+
+  /**
+   * The --mixed reset type
+   */
+  static String getMixed() {
+    return GitBundle.getString("git.reset.mode.mixed");
+  }
+
+  /**
+   * The --hard reset type
+   */
+  static String getHard() {
+    return GitBundle.getString("git.reset.mode.hard");
   }
 }

@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -31,21 +16,21 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
 public class InvertBooleanProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.invertBoolean.InvertBooleanMethodProcessor");
+  private static final Logger LOG = Logger.getInstance(InvertBooleanProcessor.class);
   private final InvertBooleanDelegate myDelegate;
 
   private PsiElement myElement;
@@ -60,11 +45,11 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     myNewName = newName;
     final Project project = namedElement.getProject();
     final boolean canRename =
-      namedElement instanceof PsiNamedElement && !Comparing.equal(((PsiNamedElement)namedElement).getName(), myNewName);
+      namedElement instanceof PsiNamedElement && !Objects.equals(((PsiNamedElement)namedElement).getName(), myNewName);
     myRenameProcessor = canRename ? new RenameProcessor(project, namedElement, newName, false, false) {
       @NotNull
       @Override
-      protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
+      protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
         return new ConflictsDialog(myProject, conflicts, usages == null ? null : (Runnable)() -> InvertBooleanProcessor.this.execute(usages), false, true);
       }
 
@@ -80,7 +65,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InvertBooleanUsageViewDescriptor(myElement);
   }
 
@@ -89,7 +74,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final UsageInfo[] usageInfos = refUsages.get();
     myDelegate.findConflicts(usageInfos, conflicts);
-    
+
     if (!conflicts.isEmpty())  {
       return showConflicts(conflicts, usageInfos);
     }
@@ -102,8 +87,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<SmartPsiElementPointer> toInvert = new ArrayList<>();
 
     final LinkedHashSet<PsiElement> elementsToInvert = new LinkedHashSet<>();
@@ -140,7 +124,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     myElement = elements[0];
   }
 
@@ -158,7 +142,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     if (myRenameProcessor != null) {
       for (final PsiElement element : myRenameProcessor.getElements()) {
         try {
@@ -193,6 +177,6 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected String getCommandName() {
-    return InvertBooleanHandler.REFACTORING_NAME;
+    return InvertBooleanHandler.getRefactoringName();
   }
 }

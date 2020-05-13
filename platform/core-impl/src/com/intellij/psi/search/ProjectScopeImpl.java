@@ -15,12 +15,13 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -35,6 +36,7 @@ public class ProjectScopeImpl extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
+    if (file.getFileSystem() instanceof NonPhysicalFileSystem) return true;
     return myFileIndex.isInProjectScope(file);
   }
 
@@ -51,7 +53,7 @@ public class ProjectScopeImpl extends GlobalSearchScope {
   @NotNull
   @Override
   public String getDisplayName() {
-    return PsiBundle.message("psi.search.scope.project");
+    return CoreBundle.message("psi.search.scope.project");
   }
 
   @Override

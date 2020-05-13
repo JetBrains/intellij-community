@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -71,7 +72,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
         newElementName = newElementName.substring(keyPrefix.length());
       } else {
         throw new IncorrectOperationException(
-          PropertiesBundle.message("rename.prefix.based.property.key.error.message",keyPrefix,getCanonicalText(),newElementName)
+          JavaI18nBundle.message("rename.prefix.based.property.key.error.message",keyPrefix,getCanonicalText(),newElementName)
         );
       }
     }

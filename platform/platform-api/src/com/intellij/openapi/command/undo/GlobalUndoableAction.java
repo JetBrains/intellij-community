@@ -28,11 +28,11 @@ public abstract class GlobalUndoableAction extends BasicUndoableAction {
     super(refs);
   }
 
-  public GlobalUndoableAction(@NotNull Document... docs) {
+  public GlobalUndoableAction(Document @NotNull ... docs) {
     super(docs);
   }
 
-  public GlobalUndoableAction(@NotNull VirtualFile... files) {
+  public GlobalUndoableAction(VirtualFile @NotNull ... files) {
     super(files);
   }
 

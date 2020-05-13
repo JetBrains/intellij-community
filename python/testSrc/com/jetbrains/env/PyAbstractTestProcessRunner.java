@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -38,7 +23,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -58,6 +42,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
   extends ConfigurationBasedProcessRunner<CONF_T> {
 
   private final int myTimesToRerunFailedTests;
+  private boolean mySkipExitCodeAssertion;
 
   private int myCurrentRerunStep;
 
@@ -83,6 +68,24 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     myTimesToRerunFailedTests = timesToRerunFailedTests;
   }
 
+  public final void setSkipExitCodeAssertion(boolean skipExitCodeAssertion) {
+    mySkipExitCodeAssertion = skipExitCodeAssertion;
+  }
+
+  @Override
+  public final void assertExitCodeIsCorrect(int code) {
+    if (mySkipExitCodeAssertion) {
+      return;
+    }
+    // If test framework doesn't support exit codes, overwrite this method
+    SMRootTestProxy proxy = getTestProxy();
+    if (proxy.isPassed() || proxy.isIgnored()) {
+      Assert.assertEquals("Exit code must be 0 if all tests are passed or ignored", 0, code);
+    }
+    else {
+      Assert.assertNotEquals("Exit code must NOT be 0 if some tests failed", 0, code);
+    }
+  }
 
   @Override
   protected void fetchConsoleAndSetToField(@NotNull final RunContentDescriptor descriptor) {
@@ -210,12 +213,13 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     Assert.assertFalse("No runners to rerun", run.isEmpty());
     final ProgramRunner<?> runner = run.get(0);
 
-    final ExecutionEnvironment restartAction = RerunFailedActionsTestTools.findRestartAction(myLastProcessDescriptor);
+    ExecutionEnvironment restartAction = RerunFailedActionsTestTools.findRestartAction(myLastProcessDescriptor);
     Assert.assertNotNull("No restart action", restartAction);
 
     final Ref<ProcessHandler> handlerRef = new Ref<>();
     try {
-      runner.execute(restartAction, descriptor -> handlerRef.set(descriptor.getProcessHandler()));
+      restartAction.setCallback(descriptor -> handlerRef.set(descriptor.getProcessHandler()));
+      runner.execute(restartAction);
     }
     catch (final ExecutionException e) {
       throw new AssertionError("ExecutionException can't be thrown in tests. Probably, API changed. Got: " + e);

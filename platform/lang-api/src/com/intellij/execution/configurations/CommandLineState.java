@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.*;
@@ -28,7 +28,7 @@ public abstract class CommandLineState implements RunProfileState {
 
   private final ExecutionEnvironment myEnvironment;
 
-  protected CommandLineState(ExecutionEnvironment environment) {
+  protected CommandLineState(/*@NotNull*/ ExecutionEnvironment environment) {
     myEnvironment = environment;
     if (myEnvironment != null) {
       final Project project = myEnvironment.getProject();
@@ -57,7 +57,7 @@ public abstract class CommandLineState implements RunProfileState {
 
   @Override
   @NotNull
-  public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
     final ProcessHandler processHandler = startProcess();
     final ConsoleView console = createConsole(executor);
     if (console != null) {
@@ -83,13 +83,11 @@ public abstract class CommandLineState implements RunProfileState {
   @NotNull
   protected abstract ProcessHandler startProcess() throws ExecutionException;
 
-  @NotNull
-  protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler) {
+  protected AnAction @NotNull [] createActions(final ConsoleView console, final ProcessHandler processHandler) {
     return createActions(console, processHandler, null);
   }
 
-  @NotNull
-  protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler, Executor executor) {
+  protected AnAction @NotNull [] createActions(final ConsoleView console, final ProcessHandler processHandler, Executor executor) {
     return AnAction.EMPTY_ARRAY;
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -39,7 +40,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Expand static import";
+    return JavaBundle.message("intention.family.expand.static.import");
   }
 
   @Override
@@ -54,7 +55,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
     if (resolveScope instanceof PsiImportStaticStatement) {
       final PsiClass targetClass = ((PsiImportStaticStatement)resolveScope).resolveTargetClass();
       if (targetClass == null) return false;
-      setText("Replace static import with qualified access to " + targetClass.getName());
+      setText(JavaBundle.message("intention.text.replace.static.import.with.qualified.access.to.0", targetClass.getName()));
       return true;
     }
     return false;
@@ -81,7 +82,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
       }
       else {
         final BaseListPopupStep<String> step =
-          new BaseListPopupStep<String>("Multiple Usages of the Static Import Found", REPLACE_THIS_OCCURRENCE, REPLACE_ALL_AND_DELETE_IMPORT) {
+          new BaseListPopupStep<String>(JavaBundle.message("multiple.usages.of.static.import.found"), REPLACE_THIS_OCCURRENCE, REPLACE_ALL_AND_DELETE_IMPORT) {
             @Override
             public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
               WriteCommandAction.writeCommandAction(project).withName(ExpandStaticImportAction.this.getText()).run(() -> {

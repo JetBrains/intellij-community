@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -207,6 +207,10 @@ public interface Editor extends UserDataHolder {
    */
   @NotNull
   LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos);
+
+  default int visualPositionToOffset(@NotNull VisualPosition pos) {
+    return logicalPositionToOffset(visualToLogicalPosition(pos));
+  }
 
   /**
    * Maps an offset in the document to a logical position.

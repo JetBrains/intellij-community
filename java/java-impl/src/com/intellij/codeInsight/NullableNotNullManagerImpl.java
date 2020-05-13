@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
 import com.intellij.codeInsight.annoPackages.Jsr305Support;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -55,14 +57,14 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
-  public void setNotNulls(@NotNull String... annotations) {
+  public void setNotNulls(String @NotNull ... annotations) {
     myNotNulls.clear();
     Collections.addAll(myNotNulls, annotations);
     normalizeDefaults();
   }
 
   @Override
-  public void setNullables(@NotNull String... annotations) {
+  public void setNullables(String @NotNull ... annotations) {
     myNullables.clear();
     Collections.addAll(myNullables, annotations);
     normalizeDefaults();
@@ -207,22 +209,24 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       return Collections.emptyList();
     }
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
-      List<PsiClass> result = new ArrayList<>();
-      GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+      Set<PsiClass> result = new HashSet<>(getPossiblyUnresolvedJavaNicknameUsages());
+      GlobalSearchScope scope = new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(myProject)) {
+        @Override
+        public boolean contains(@NotNull VirtualFile file) {
+          return super.contains(file) && file.getFileType() != JavaFileType.INSTANCE;
+        }
+      };
       PsiClass[] nickDeclarations = JavaPsiFacade.getInstance(myProject).findClasses(Jsr305Support.TYPE_QUALIFIER_NICKNAME, scope);
       for (PsiClass tqNick : nickDeclarations) {
         result.addAll(ContainerUtil.findAll(MetaAnnotationUtil.getChildren(tqNick, scope), Jsr305Support::isNullabilityNickName));
       }
-      if (nickDeclarations.length == 0) {
-        result.addAll(getUnresolvedNicknameUsages());
-      }
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(new ArrayList<>(result), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
   // some frameworks use jsr305 annotations but don't have them in classpath
   @NotNull
-  private List<PsiClass> getUnresolvedNicknameUsages() {
+  private List<PsiClass> getPossiblyUnresolvedJavaNicknameUsages() {
     List<PsiClass> result = new ArrayList<>();
     Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(
       Jsr305Support.TYPE_QUALIFIER_NICKNAME), myProject, GlobalSearchScope.allScope(myProject));
@@ -241,14 +245,14 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   @Nullable
   NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
-                                              @NotNull PsiAnnotation.TargetType[] placeTargetTypes,
-                                              PsiModifierListOwner owner, boolean superPackage) {
+                                              PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                              PsiElement context, boolean superPackage) {
     PsiModifierList modifierList = container.getModifierList();
     if (modifierList == null) return null;
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (container instanceof PsiPackage) {
         VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
-        VirtualFile ownerFile = PsiUtilCore.getVirtualFile(owner);
+        VirtualFile ownerFile = PsiUtilCore.getVirtualFile(context);
         if (annotationFile != null && ownerFile != null && !annotationFile.equals(ownerFile)) {
           ProjectFileIndex index = ProjectRootManager.getInstance(container.getProject()).getFileIndex();
           VirtualFile annotationRoot = index.getClassRootForFile(annotationFile);
@@ -267,7 +271,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Nullable
-  private NullabilityAnnotationInfo checkNullityDefault(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType[] placeTargetTypes, boolean superPackage) {
+  private NullabilityAnnotationInfo checkNullityDefault(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType @NotNull [] placeTargetTypes, boolean superPackage) {
     for (AnnotationPackageSupport support : myAnnotationSupports) {
       NullabilityAnnotationInfo info = support.getNullabilityByContainerAnnotation(annotation, placeTargetTypes, superPackage);
       if (info != null) {

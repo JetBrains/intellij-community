@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +28,8 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class TreeInplaceEditor implements AWTEventListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor");
+  private static final Logger LOG = Logger.getInstance(TreeInplaceEditor.class);
   private JComponent myInplaceEditorComponent;
   private final List<Runnable> myRemoveActions = new ArrayList<>();
   protected final Disposable myDisposable = Disposer.newDisposable();
@@ -233,7 +230,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     // do not cancel editing if we click or scroll in editor popup
     final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(myInplaceEditorComponent);
     for (JBPopup popup : popups) {
-      if (!popup.isDisposed() && SwingUtilities.isDescendingFrom(sourceComponent, UIUtil.getWindow(popup.getContent()))) {
+      if (!popup.isDisposed() && SwingUtilities.isDescendingFrom(sourceComponent, ComponentUtil.getWindow(popup.getContent()))) {
         return;
       }
     }
@@ -261,7 +258,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       }
     }
 
-    if (UIUtil.getWindow(sourceComponent) == UIUtil.getWindow(myInplaceEditorComponent) && id == MouseEvent.MOUSE_PRESSED) {
+    if (ComponentUtil.getWindow(sourceComponent) == ComponentUtil.getWindow(myInplaceEditorComponent) && id == MouseEvent.MOUSE_PRESSED) {
       doOKAction();
     }
   }

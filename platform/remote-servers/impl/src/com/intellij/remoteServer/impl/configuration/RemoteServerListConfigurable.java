@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -13,14 +11,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.JBUI;
@@ -32,11 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class RemoteServerListConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
-
   @NonNls
   public static final String ID = "RemoteServers";
 
@@ -44,6 +37,8 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   private RemoteServer<?> myLastSelectedServer;
   private final String myInitialSelectedName;
   private final List<ServerType<?>> myDisplayedServerTypes;
+
+  private boolean isTreeInitialized;
 
   private RemoteServerListConfigurable(@NotNull RemoteServersManager manager,
                                        @NotNull ServerType<?> type,
@@ -56,10 +51,18 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
                                          @Nullable String initialSelectedName) {
     myServersManager = manager;
     myDisplayedServerTypes = displayedServerTypes;
-    initTree();
     myToReInitWholePanel = true;
     myInitialSelectedName = initialSelectedName;
-    reInitWholePanelIfNeeded();
+  }
+
+  @Override
+  @NotNull
+  public JComponent createComponent() {
+    if (!isTreeInitialized) {
+      initTree();
+      isTreeInitialized = true;
+    }
+    return super.createComponent();
   }
 
   @Nullable
@@ -79,10 +82,10 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected String getEmptySelectionString() {
     final String typeNames = StringUtil.join(getDisplayedServerTypes(),
-                                             type -> type.getPresentableName(), ", ");
+                                             ServerType::getPresentableName, ", ");
 
     if (typeNames.length() > 0) {
-      return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);
+      return CloudBundle.message("clouds.configure.empty.selection.string", typeNames);
     }
     return null;
   }
@@ -99,7 +102,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   public String getDisplayName() {
     ServerType<?> singleServerType = getSingleServerType();
-    return singleServerType == null ? "Clouds" : singleServerType.getPresentableName();
+    return singleServerType == null ? CloudBundle.message("configurable.display.name.clouds") : singleServerType.getPresentableName();
   }
 
   @Override
@@ -134,7 +137,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   @Override
   public Runnable enableSearch(final String option) {
-    return () -> ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
+    return () -> Objects.requireNonNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
   }
 
   @Override
@@ -237,13 +240,12 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   private class AddRemoteServerGroup extends ActionGroup implements ActionGroupWithPreselection {
     private AddRemoteServerGroup() {
-      super("Add", "", IconUtil.getAddIcon());
+      super(CloudBundle.message("group.action.AddRemoteServerGroup.text"), "", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       List<ServerType<?>> serverTypes = getDisplayedServerTypes();
       AnAction[] actions = new AnAction[serverTypes.size()];
       for (int i = 0; i < serverTypes.size(); i++) {

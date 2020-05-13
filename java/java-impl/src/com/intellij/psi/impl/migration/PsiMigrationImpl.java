@@ -32,7 +32,7 @@ import java.util.Map;
  * @author dsl
  */
 public class PsiMigrationImpl implements PsiMigration {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.migration.PsiMigrationImpl");
+  private static final Logger LOG = Logger.getInstance(PsiMigrationImpl.class);
   private final PsiMigrationManager myMigrationManager;
   private final JavaPsiFacade myFacade;
   private final PsiManagerImpl myManager;

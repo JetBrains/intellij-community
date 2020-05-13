@@ -27,7 +27,7 @@ public class PasswordUtil {
   }
 
   @NotNull
-  public static String encodePassword(@Nullable char[] password) {
+  public static String encodePassword(char @Nullable [] password) {
     if (password == null) {
       return "";
     }
@@ -43,8 +43,7 @@ public class PasswordUtil {
     return password == null ? "" : new String(decodePasswordAsCharArray(password));
   }
 
-  @NotNull
-  public static char[] decodePasswordAsCharArray(@Nullable String password) throws NumberFormatException {
+  public static char @NotNull [] decodePasswordAsCharArray(@Nullable String password) throws NumberFormatException {
     if (StringUtil.isEmpty(password)) {
       return ArrayUtilRt.EMPTY_CHAR_ARRAY;
     }

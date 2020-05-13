@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +16,8 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
-public class DecodeDefaultsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.ex.DecodeDefaultsUtil");
+public final class DecodeDefaultsUtil {
+  private static final Logger LOG = Logger.getInstance(DecodeDefaultsUtil.class);
   private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<>());
 
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
@@ -24,11 +25,19 @@ public class DecodeDefaultsUtil {
     if (url == null) {
       if (StringUtil.startsWithChar(componentResourcePath, '/')) {
         url = getResource(appendExt(componentResourcePath), requestor);
+        if (url == null && !(requestor instanceof UrlClassLoader)) {
+          url = getResource(appendExt(componentResourcePath.substring(1)), requestor);
+        }
       }
       else {
         url = getResource(appendExt("/idea/" + componentResourcePath), requestor);
         if (url == null) {
-          url = getResource(appendExt('/' + componentResourcePath), requestor);
+          if (requestor instanceof ClassLoader) {
+            url = getResource(appendExt(componentResourcePath), requestor);
+          }
+          else {
+            url = getResource(appendExt('/' + componentResourcePath), requestor);
+          }
         }
       }
       RESOURCE_CACHE.put(componentResourcePath, url);
@@ -51,8 +60,7 @@ public class DecodeDefaultsUtil {
     return head.endsWith(tail) ? head : head + tail;
   }
 
-  @Nullable
-  public static InputStream getDefaultsInputStream(Object requestor, @NotNull String componentResourcePath) {
+  public static @Nullable InputStream getDefaultsInputStream(Object requestor, @NotNull String componentResourcePath) {
     try {
       final URL defaults = getDefaults(requestor, componentResourcePath);
       return defaults == null ? null : URLUtil.openStream(defaults);

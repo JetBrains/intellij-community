@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,18 +26,10 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ArrayHashCodeInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("array.hash.code.display.name");
-  }
 
   @NotNull
   @Override
@@ -70,20 +63,13 @@ public class ArrayHashCodeInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      if (deepHashCode) {
-        return InspectionGadgetsBundle.message(
-          "arrays.deep.hash.code.quickfix");
-      }
-      else {
-        return InspectionGadgetsBundle.message(
-          "arrays.hash.code.quickfix");
-      }
+      return CommonQuickFixBundle.message("fix.replace.with.x", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with implicit 'hashCode'";
+      return InspectionGadgetsBundle.message("array.hash.code.fix.family.name");
     }
 
     @Override

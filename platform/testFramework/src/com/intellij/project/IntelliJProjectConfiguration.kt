@@ -22,8 +22,6 @@ import java.io.File
 /**
  * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries without
  * hardcoding paths to their JARs.
- *
- * @author nik
  */
 class IntelliJProjectConfiguration {
   private val projectHome = PathManager.getHomePath()

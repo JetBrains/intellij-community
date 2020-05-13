@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.projectImport;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -14,6 +14,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,7 +25,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
@@ -45,8 +45,8 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     myProviders = providers;
     mySequence = sequence;
 
-    myImportFrom.setText(ProjectBundle.message("project.new.wizard.import.title", context.getPresentationName()));
-    myCreateFromSources.setText(ProjectBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName()));
+    myImportFrom.setText(JavaUiBundle.message("project.new.wizard.import.title", context.getPresentationName()));
+    myCreateFromSources.setText(JavaUiBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName()));
     final DefaultListModel model = new DefaultListModel();
     for (ProjectImportProvider provider : sorted(providers)) {
       if (provider instanceof ImportFromSourcesProvider) {
@@ -96,7 +96,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         context.requestNextStep();
         return true;
       }
@@ -137,7 +137,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
 
   private static List<ProjectImportProvider> sorted(List<? extends ProjectImportProvider> providers) {
     List<ProjectImportProvider> result = new ArrayList<>(providers);
-    Collections.sort(result, (l, r) -> l.getName().compareToIgnoreCase(r.getName()));
+    result.sort((l, r) -> l.getName().compareToIgnoreCase(r.getName()));
     return result;
   }
 

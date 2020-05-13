@@ -46,8 +46,6 @@ import java.util.regex.Pattern
  * The builder processes *.p file, generates empty class for each such file and generates 'PackageFacade' class for each package
  * which references all classes from that package. Package name is derived from 'package <name>;' statement from a file or set to empty
  * if no such statement is found
- *
- * @author nik
  */
 class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   override fun build(context: CompileContext,

@@ -24,9 +24,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 
-/**
- * @author nik
- */
 public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
   public static final Comparator<XBreakpointGroupingRule> PRIORITY_COMPARATOR = (o1, o2) -> {
     final int res = o2.getPriority() - o1.getPriority();

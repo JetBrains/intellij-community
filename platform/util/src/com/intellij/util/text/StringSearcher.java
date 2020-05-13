@@ -96,8 +96,7 @@ public class StringSearcher {
     return scan(text, null, _start, _end);
   }
 
-  @NotNull
-  public int[] findAllOccurrences(@NotNull CharSequence text) {
+  public int @NotNull [] findAllOccurrences(@NotNull CharSequence text) {
     int end = text.length();
     TIntArrayList result = new TIntArrayList();
     for (int index = 0; index < end; index++) {
@@ -122,7 +121,7 @@ public class StringSearcher {
     return true;
   }
 
-  public int scan(@NotNull CharSequence text, @Nullable char[] textArray, int _start, int _end) {
+  public int scan(@NotNull CharSequence text, char @Nullable [] textArray, int _start, int _end) {
     if (_start > _end) {
       throw new AssertionError("start > end, " + _start + ">" + _end);
     }
@@ -201,7 +200,7 @@ public class StringSearcher {
     return -1;
   }
 
-  private char normalizedCharAt(@NotNull CharSequence text, @Nullable char[] textArray, int index) {
+  private char normalizedCharAt(@NotNull CharSequence text, char @Nullable [] textArray, int index) {
     char lastChar = textArray != null ? textArray[index] : text.charAt(index);
     if (myCaseSensitive) {
       return lastChar;

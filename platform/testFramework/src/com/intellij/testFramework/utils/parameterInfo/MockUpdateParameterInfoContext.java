@@ -27,7 +27,7 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
     this(editor, file, null);
   }
 
-  public MockUpdateParameterInfoContext(@NotNull Editor editor, @NotNull PsiFile file, @Nullable Object[] items) {
+  public MockUpdateParameterInfoContext(@NotNull Editor editor, @NotNull PsiFile file, Object @Nullable [] items) {
     myEditor = editor;
     myFile = file;
     myItems = items == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : items;

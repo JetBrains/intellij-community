@@ -51,7 +51,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
 
   @Override
   public void appendCoverageArgument(String sessionDataFilePath,
-                                     @Nullable String[] patterns,
+                                     String @Nullable [] patterns,
                                      SimpleJavaParameters parameters,
                                      boolean collectLineInfo,
                                      boolean isSampling) {

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerActionBase extends AnAction implements AnAction.TransparentUpdate {
   private final boolean myHideDisabledInPopup;
 

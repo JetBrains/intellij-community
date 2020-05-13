@@ -20,9 +20,8 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
+import static com.intellij.openapi.util.NlsContexts.Label;
+
 abstract class DetectedFrameworkTreeNodeBase extends CheckedTreeNode {
   protected DetectedFrameworkTreeNodeBase(Object userObject) {
     super(userObject);
@@ -32,9 +31,11 @@ abstract class DetectedFrameworkTreeNodeBase extends CheckedTreeNode {
   public abstract void renderNode(ColoredTreeCellRenderer renderer);
 
   @Nullable
+  @Label
   public abstract String getCheckedDescription();
 
   @Nullable
+  @Label
   public abstract String getUncheckedDescription();
 
   public abstract void disableDetection(DetectionExcludesConfiguration configuration);

@@ -1,29 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tools
 
-import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.io.Compressor
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
-import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import java.io.File
 import kotlin.math.abs
 import kotlin.system.exitProcess
 
-/**
- * @author traff
- */
-
-const val PYCHARM_PYTHONS: String = "PYCHARM_PYTHONS"
+internal const val PYCHARM_PYTHONS = "PYCHARM_PYTHONS"
 
 fun main() {
   println("Starting build process")
-  val app = IdeaTestApplication.getInstance()
+  val app = TestApplicationManager.getInstance()
   println("App started: ${app}")
 
   try {
@@ -42,7 +36,10 @@ fun main() {
       println("Generating skeletons in ${skeletonsDir.absolutePath}")
 
       val refresher = PySkeletonRefresher(null, null, sdk, skeletonsDir.absolutePath, null, null)
-      refresher.regenerateSkeletons(SkeletonVersionChecker(PySkeletonHeader.PREGENERATED_VERSION))
+      refresher.generator
+        .commandBuilder()
+        .inPrebuildingMode()
+        .runGeneration(null)
 
       val artifactName = DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true)
       val dirPacked = File(skeletonsDir.parent, artifactName!!)

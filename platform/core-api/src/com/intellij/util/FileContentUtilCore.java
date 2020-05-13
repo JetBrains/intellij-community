@@ -17,7 +17,7 @@ import java.util.*;
  *
  * @author peter
  */
-public class FileContentUtilCore {
+public final class FileContentUtilCore {
   public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";
 
   /**
@@ -25,7 +25,7 @@ public class FileContentUtilCore {
    *
    * @param files the files to reparse.
    */
-  public static void reparseFiles(@NotNull VirtualFile... files) {
+  public static void reparseFiles(VirtualFile @NotNull ... files) {
     reparseFiles(Arrays.asList(files));
   }
 

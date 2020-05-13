@@ -41,7 +41,7 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
   public FileContentImpl(@Nullable Project project,
                          @NotNull VirtualFile file,
                          @Nullable VirtualFile highlightFile) {
-    assert file.isValid() && !file.isDirectory();
+    assert !file.isDirectory();
     myFile = file;
     myProject = project;
     myType = file.getFileType();

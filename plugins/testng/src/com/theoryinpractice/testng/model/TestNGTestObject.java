@@ -82,7 +82,7 @@ public abstract class TestNGTestObject {
   protected static void calculateDependencies(PsiMethod[] methods,
                                               final Map<PsiClass, Map<PsiMethod, List<String>>> results,
                                               GlobalSearchScope searchScope,
-                                              @Nullable final PsiClass... classes) {
+                                              final PsiClass @Nullable ... classes) {
     calculateDependencies(methods, results, new LinkedHashSet<>(), searchScope, classes);
   }
 
@@ -90,7 +90,7 @@ public abstract class TestNGTestObject {
                                             final Map<PsiClass, Map<PsiMethod, List<String>>> results,
                                             final Set<PsiMember> alreadyMarkedToBeChecked,
                                             final GlobalSearchScope searchScope,
-                                            @Nullable final PsiClass... classes) {
+                                            final PsiClass @Nullable ... classes) {
     if (classes != null && classes.length > 0) {
       final Set<PsiMember> membersToCheckNow = new LinkedHashSet<>();
 

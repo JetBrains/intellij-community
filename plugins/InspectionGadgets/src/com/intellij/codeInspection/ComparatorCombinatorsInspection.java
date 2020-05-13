@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -57,7 +58,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           String qualifiedName = Objects.requireNonNull(StringUtil.substringBefore(replacementText, "("));
           String methodName = StringUtil.getShortName(qualifiedName);
           holder
-            .registerProblem(lambda, "Can be replaced with Comparator." + methodName,
+            .registerProblem(lambda, InspectionGadgetsBundle.message("inspection.comparator.combinators.description2", methodName),
                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator." + methodName));
           return;
         }
@@ -69,7 +70,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           if (chainCombinator == null) return;
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, chainCombinator)) return;
           holder
-            .registerProblem(lambda, "Can be replaced with Comparator chain",
+            .registerProblem(lambda, InspectionGadgetsBundle.message("inspection.comparator.combinators.description"),
                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator chain"));
         }
       }
@@ -78,7 +79,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
 
 
   @Nullable("when failed to extract")
-  private static List<ComparisonBlock> extractComparisonChain(@NotNull PsiStatement[] statements,
+  private static List<ComparisonBlock> extractComparisonChain(PsiStatement @NotNull [] statements,
                                                               @NotNull PsiVariable first,
                                                               @NotNull PsiVariable second) {
     if (statements.length == 0) return null;
@@ -527,14 +528,14 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     @NotNull
     @Override
     public String getName() {
-      return "Replace with " + myMessage;
+      return InspectionGadgetsBundle.message("replace.with.comparator.fix.text", myMessage);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify comparator using Comparator static methods";
+      return InspectionGadgetsBundle.message("replace.with.comparator.fix.family.name");
     }
 
     @Override

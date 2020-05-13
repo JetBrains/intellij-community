@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.ui;
 
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.images.editor.ImageDocument;
 
 import javax.swing.*;
@@ -37,7 +37,7 @@ public class ImageComponentUI extends ComponentUI {
             ImageDocument document = ic.getDocument();
             BufferedImage image = document.getValue(ic.getZoomFactor());
             if (image != null) {
-                if (ic.isFileSizeVisible()) paintBorder(g, ic);
+                if (ic.isFileSizeVisible() && ic.isBorderVisible()) paintBorder(g, ic);
 
                 Dimension size = ic.getCanvasSize();
                 Graphics igc = g.create(ImageComponent.IMAGE_INSETS, ImageComponent.IMAGE_INSETS, size.width, size.height);
@@ -120,10 +120,10 @@ public class ImageComponentUI extends ComponentUI {
             g.setColor(ic.getGridLineColor());
             int ls = ic.getGridLineSpan();
             for (int dx = ls; dx < imageWidth; dx += ls) {
-              UIUtil.drawLine(g, (int)((double)dx * zoomX), 0, (int)((double)dx * zoomX), size.height);
+              LinePainter2D.paint((Graphics2D)g, (int)((double)dx * zoomX), 0, (int)((double)dx * zoomX), size.height);
             }
             for (int dy = ls; dy < imageHeight; dy += ls) {
-              UIUtil.drawLine(g, 0, (int)((double)dy * zoomY), size.width, (int)((double)dy * zoomY));
+              LinePainter2D.paint((Graphics2D)g, 0, (int)((double)dy * zoomY), size.width, (int)((double)dy * zoomY));
             }
         }
     }

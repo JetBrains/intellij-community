@@ -33,7 +33,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -89,15 +89,16 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   }
 
   static void jumpToRevision(@NotNull Project project, @NotNull Hash hash) {
-    VcsLogContentUtil.openMainLogAndExecute(project, logUi -> jumpToRevisionUnderProgress(project, logUi, hash));
+    VcsLogContentUtil.runInMainLog(project, logUi -> jumpToRevisionUnderProgress(project, logUi, hash));
   }
 
   private static void jumpToRevisionUnderProgress(@NotNull Project project,
-                                                  @NotNull VcsLogUiImpl logUi,
+                                                  @NotNull VcsLogUiEx logUi,
                                                   @NotNull Hash hash) {
     Future<Boolean> future = logUi.getVcsLog().jumpToReference(hash.asString());
     if (!future.isDone()) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching for revision " + hash.asString(),
+      ProgressManager.getInstance().run(new Task.Backgroundable(project,
+                                                                GitBundle.message("git.log.show.commit.in.log.process", hash.asString()),
                                                                 false/*can not cancel*/,
                                                                 PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override

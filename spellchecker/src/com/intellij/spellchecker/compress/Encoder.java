@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.compress;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,6 @@ public final class Encoder {
   private final Alphabet alphabet;
   private static final int offset = 0;
   static final UnitBitSet WORD_OF_ENTIRELY_UNKNOWN_LETTERS = new UnitBitSet(new byte[1],new Alphabet());
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.compress");
 
   public Encoder() {
     this(new Alphabet());
@@ -58,12 +56,12 @@ public final class Encoder {
   }
 
   @NotNull
-  public String decode(@NotNull byte[] compressed) {
+  public String decode(byte @NotNull [] compressed) {
     return UnitBitSet.decode(compressed, alphabet);
   }
 
   @NotNull
-  public String decode(@NotNull byte[] data, int from, int to) {
+  public String decode(byte @NotNull [] data, int from, int to) {
     return UnitBitSet.decode(data, from, to, alphabet);
   }
 

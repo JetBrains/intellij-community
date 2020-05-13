@@ -11,11 +11,14 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AnimatedIcon;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -28,11 +31,10 @@ import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.idea.maven.indices.MavenSearchIndex.Kind.REMOTE;
-
 public class MavenRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private final MavenProjectIndicesManager myManager;
 
+
+  private final Project myProject;
   private JPanel myMainPanel;
   private JBTable myIndicesTable;
   private JButton myUpdateButton;
@@ -43,10 +45,12 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   private ActionListener myTimerListener;
 
   public MavenRepositoriesConfigurable(Project project) {
-    myManager = MavenProjectIndicesManager.getInstance(project);
+    myProject = project;
     configControls();
 
-    myBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Indexed Maven repositories:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myBorderPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.repositories.title"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
   }
 
   @Override
@@ -86,7 +90,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myIndicesTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
                                       new MyIconCellRenderer());
 
-    myIndicesTable.getEmptyText().setText("No remote repositories");
+    myIndicesTable.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.repositories.no"));
 
     updateButtonsState();
   }
@@ -108,7 +112,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private void doUpdateIndex() {
-    myManager.scheduleUpdate(getSelectedIndices());
+    MavenProjectIndicesManager.getInstance(myProject).scheduleUpdate(getSelectedIndices());
   }
 
   private List<MavenIndex> getSelectedIndices() {
@@ -151,7 +155,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
   @Override
   public void reset() {
-    myIndicesTable.setModel(new MyTableModel(myManager.getIndices()));
+    myIndicesTable.setModel(new MyTableModel(MavenProjectIndicesManager.getInstance(myProject).getIndices()));
     myIndicesTable.getColumnModel().getColumn(0).setPreferredWidth(400);
     myIndicesTable.getColumnModel().getColumn(1).setPreferredWidth(50);
     myIndicesTable.getColumnModel().getColumn(2).setPreferredWidth(50);
@@ -232,7 +236,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
           return DateFormatUtil.formatDate(timestamp);
         case 3:
-          return myManager.getUpdatingState(i);
+          return MavenProjectIndicesManager.getInstance(myProject).getUpdatingState(i);
       }
       throw new RuntimeException();
     }

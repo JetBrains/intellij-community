@@ -163,6 +163,7 @@ public class Test01 {
     return copy;
   }
 
+  @ExpectContract(mutates="param1")
   private static void set(@ExpectNotNull long[] copy) {
     copy[1] = 2;
   }

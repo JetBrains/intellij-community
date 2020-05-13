@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
@@ -14,9 +15,6 @@ import com.intellij.refactoring.inline.InlineOptionsDialog;
 * @author Max Medvedev
 */
 class InlineGroovyFieldDialog extends InlineOptionsDialog {
-
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
-
   private final PsiField myField;
 
   InlineGroovyFieldDialog(Project project, PsiField field, boolean invokedOnReference) {
@@ -24,7 +22,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
     myField = field;
     myInvokedOnReference = invokedOnReference;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
 
     init();
   }
@@ -33,7 +31,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
   protected String getNameLabelText() {
     @SuppressWarnings("StaticFieldReferencedViaSubclass")
     String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
-    return RefactoringBundle.message("inline.field.field.name.label", fieldText);
+    return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText, "");
   }
 
   @Override
@@ -43,12 +41,12 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
 
   @Override
   protected String getInlineThisText() {
-    return RefactoringBundle.message("this.reference.only.and.keep.the.field");
+    return JavaRefactoringBundle.message("this.reference.only.and.keep.the.field");
   }
 
   @Override
   protected String getInlineAllText() {
-    return RefactoringBundle.message("all.references.and.remove.the.field");
+    return JavaRefactoringBundle.message("all.references.and.remove.the.field");
   }
 
   @Override
@@ -70,5 +68,9 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
   @Override
   protected String getHelpId() {
     return HelpID.INLINE_FIELD;
+  }
+
+  public static String getRefactoringName() {
+    return JavaRefactoringBundle.message("inline.field.title");
   }
 }

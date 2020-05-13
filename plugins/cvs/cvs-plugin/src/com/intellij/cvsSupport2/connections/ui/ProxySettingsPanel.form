@@ -9,14 +9,14 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
-    <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.configure.proxy.proxy.settings"/>
+    <border type="etched" title-resource-bundle="messages/CvsBundle" title-key="border.title.configure.proxy.proxy.settings"/>
     <children>
       <component id="cfc45" class="javax.swing.JCheckBox" binding="myUseProxy">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbox.configure.proxy.use.proxy"/>
+          <text resource-bundle="messages/CvsBundle" key="checkbox.configure.proxy.use.proxy"/>
         </properties>
       </component>
       <grid id="1547e" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -32,7 +32,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.configure.proxy.protocol.http"/>
+              <text resource-bundle="messages/CvsBundle" key="radio.configure.proxy.protocol.http"/>
             </properties>
           </component>
           <component id="2c543" class="javax.swing.JRadioButton" binding="mySocks4">
@@ -40,7 +40,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.configure.proxy.protocol.socks4"/>
+              <text resource-bundle="messages/CvsBundle" key="radio.configure.proxy.protocol.socks4"/>
             </properties>
           </component>
           <component id="48da4" class="javax.swing.JRadioButton" binding="mySocks5">
@@ -48,7 +48,7 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.configure.proxy.protocol.socks5"/>
+              <text resource-bundle="messages/CvsBundle" key="radio.configure.proxy.protocol.socks5"/>
             </properties>
           </component>
         </children>
@@ -75,7 +75,7 @@
             </constraints>
             <properties>
               <labelFor value="6c959"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.proxy.login"/>
+              <text resource-bundle="messages/CvsBundle" key="label.configure.proxy.login"/>
             </properties>
           </component>
           <component id="ab44a" class="javax.swing.JLabel">
@@ -84,7 +84,7 @@
             </constraints>
             <properties>
               <labelFor value="f4e35"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.proxy.password"/>
+              <text resource-bundle="messages/CvsBundle" key="label.configure.proxy.password"/>
             </properties>
           </component>
           <component id="f4e35" class="javax.swing.JPasswordField" binding="myPassword">
@@ -109,7 +109,7 @@
             </constraints>
             <properties>
               <labelFor value="327d8"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.proxy.proxy.host"/>
+              <text resource-bundle="messages/CvsBundle" key="label.configure.proxy.proxy.host"/>
             </properties>
           </component>
           <component id="f6e98" class="javax.swing.JLabel">
@@ -118,7 +118,7 @@
             </constraints>
             <properties>
               <labelFor value="802e6"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.proxy.proxy.port"/>
+              <text resource-bundle="messages/CvsBundle" key="label.configure.proxy.proxy.port"/>
             </properties>
           </component>
           <grid id="2421c" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

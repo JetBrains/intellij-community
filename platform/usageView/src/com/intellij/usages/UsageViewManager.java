@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 
@@ -25,25 +11,22 @@ import com.intellij.usages.rules.PsiElementUsage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public abstract class UsageViewManager {
   public static UsageViewManager getInstance (Project project) {
     return ServiceManager.getService(project, UsageViewManager.class);
   }
 
   @NotNull
-  public abstract UsageView createUsageView(@NotNull UsageTarget[] targets, @NotNull Usage[] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
+  public abstract UsageView createUsageView(UsageTarget @NotNull [] targets, Usage @NotNull [] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
 
   @NotNull
-  public abstract UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory);
+  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory);
 
   @NotNull
-  public abstract UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation);
+  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation);
 
   @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
-  public abstract UsageView searchAndShowUsages(@NotNull UsageTarget[] searchFor,
+  public abstract UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
                                                 @NotNull Factory<UsageSearcher> searcherFactory,
                                                 boolean showPanelIfOnlyOneUsage,
                                                 boolean showNotFoundMessage,
@@ -55,7 +38,7 @@ public abstract class UsageViewManager {
     void findingUsagesFinished(@Nullable UsageView usageView);
   }
 
-  public abstract void searchAndShowUsages(@NotNull UsageTarget[] searchFor,
+  public abstract void searchAndShowUsages(UsageTarget @NotNull [] searchFor,
                                            @NotNull Factory<UsageSearcher> searcherFactory,
                                            @NotNull FindUsagesProcessPresentation processPresentation,
                                            @NotNull UsageViewPresentation presentation,
@@ -64,7 +47,7 @@ public abstract class UsageViewManager {
   @Nullable
   public abstract UsageView getSelectedUsageView();
 
-  public static boolean isSelfUsage(@NotNull final Usage usage, @NotNull final UsageTarget[] searchForTarget) {
+  public static boolean isSelfUsage(@NotNull final Usage usage, final UsageTarget @NotNull [] searchForTarget) {
     if (!(usage instanceof PsiElementUsage)) return false;
     return ReadAction.compute(() -> {
       final PsiElement element = ((PsiElementUsage)usage).getElement();

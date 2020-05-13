@@ -34,12 +34,6 @@ public class OctalLiteralInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("octal.literal.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("octal.literal.problem.descriptor");
   }
@@ -49,9 +43,8 @@ public class OctalLiteralInspection extends BaseInspection {
     return true;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return new InspectionGadgetsFix[]{
       new ConvertOctalLiteralToDecimalFix(),
       new RemoveLeadingZeroFix()

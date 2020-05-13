@@ -3,27 +3,15 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
-import java.util.*
 
-class FilePathHolder(private val project: Project, private val type: FileHolder.HolderType) : FileHolder {
-  private val files = HashSet<FilePath>()
+class FilePathHolder(private val project: Project) : FileHolder {
+  private val files = hashSetOf<FilePath>()
 
-  // todo track number of copies made
-  fun getFiles() = files.toList()
+  fun getFiles(): List<FilePath> = files.toList()
 
-  override fun getType() = type
-
-  override fun notifyVcsStarted(vcs: AbstractVcs) {}
-
-  override fun cleanAll() {
-    files.clear()
-  }
-
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) {
-    cleanScope(files, scope)
-  }
+  override fun cleanAll() = files.clear()
+  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = cleanScope(files, scope)
 
   fun addFile(file: FilePath) {
     files.add(file)
@@ -33,52 +21,37 @@ class FilePathHolder(private val project: Project, private val type: FileHolder.
     files.remove(file)
   }
 
-  override fun copy(): FilePathHolder {
-    val copyHolder = FilePathHolder(project, type)
-    copyHolder.files.addAll(files)
-    return copyHolder
+  override fun copy(): FilePathHolder =
+    FilePathHolder(project).also {
+      it.files.addAll(files)
+    }
+
+  fun containsFile(file: FilePath) = file in files
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as FilePathHolder
+
+    return files == other.files
   }
 
-  fun containsFile(file: FilePath) = files.contains(file)
-
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o == null || javaClass != o.javaClass) return false
-
-    val that = (o as? FilePathHolder?) ?: return false
-
-    return files == that.files
-  }
-
-  override fun hashCode() = files.hashCode()
+  override fun hashCode(): Int = files.hashCode()
 
   companion object {
-
     internal fun cleanScope(files: MutableCollection<FilePath>, scope: VcsModifiableDirtyScope) {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 
       if (scope.recursivelyDirtyDirectories.size == 0) {
-        val dirtyFiles = scope.dirtyFiles
-        for (dirtyFile in dirtyFiles) {
-          files.remove(dirtyFile)
-        }
-        val iterator = files.iterator()
-        while (iterator.hasNext()) {
-          val filePath = iterator.next()
-          iterator.remove()
-          scope.addDirtyFile(filePath)
-        }
+        // `files` set is case-sensitive depending on OS, `scope.dirtyFiles` set is always case-sensitive
+        // `AbstractSet.removeAll()` chooses collection to iterate through depending on its size
+        // so we explicitly iterate through `scope.dirtyFiles` here
+        scope.dirtyFiles.forEach { files.remove(it) }
       }
       else {
-        val iterator = files.iterator()
-        while (iterator.hasNext()) {
-          val filePath = iterator.next()
-          scope.addDirtyFile(filePath)
-          if (scope.belongsTo(filePath)) {
-            iterator.remove()
-          }
-        }
+        files.removeIf { scope.belongsTo(it) }
       }
     }
   }

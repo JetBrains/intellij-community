@@ -80,7 +80,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitComment(PsiComment comment) {
+  public void visitComment(@NotNull PsiComment comment) {
     if (myProcessedSectionsComments.contains(comment)) {
       return;
     }

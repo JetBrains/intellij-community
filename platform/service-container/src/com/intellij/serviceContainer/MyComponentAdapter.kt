@@ -1,23 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 
 internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   override val implementationClassName: String,
                                   pluginDescriptor: PluginDescriptor,
-                                  componentManager: PlatformComponentManagerImpl,
+                                  componentManager: ComponentManagerImpl,
                                   implementationClass: Class<*>?,
                                   val isWorkspaceComponent: Boolean = false) : BaseComponentAdapter(componentManager, pluginDescriptor, null, implementationClass) {
   override fun getComponentKey() = componentKey
 
-  override fun getActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory? {
+  override fun isImplementationEqualsToInterface() = componentKey.name == implementationClassName
+
+  override fun getActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory? {
     if (componentManager.activityNamePrefix() == null) {
       return null
     }
@@ -30,24 +30,34 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
     }
   }
 
-  override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
+  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
     try {
       val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
       if (instance is Disposable) {
-        Disposer.register(componentManager, instance)
+        Disposer.register(componentManager.serviceParentDisposable, instance)
       }
-      componentManager.registerComponentInstance(instance, indicator)
-      componentManager.initializeComponent(instance, null)
-      if (instance is BaseComponent) {
-        (instance as BaseComponent).initComponent()
+
+      componentManager.initializeComponent(instance, serviceDescriptor = null, pluginId = pluginId)
+      @Suppress("DEPRECATION")
+      if (instance is com.intellij.openapi.components.BaseComponent) {
+        @Suppress("DEPRECATION")
+        instance.initComponent()
+        if (instance !is Disposable) {
+          @Suppress("ObjectLiteralToLambda")
+          Disposer.register(componentManager.serviceParentDisposable, object : Disposable {
+            override fun dispose() {
+              @Suppress("DEPRECATION")
+              instance.disposeComponent()
+            }
+          })
+        }
       }
+
+      componentManager.componentCreated(indicator)
       return instance
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
     catch (t: Throwable) {
-      componentManager.handleInitComponentError(t, getComponentKey().name, pluginId)
+      componentManager.handleInitComponentError(t, componentKey.name, pluginId)
       throw t
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
@@ -126,7 +126,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
 
   private static boolean isSemicolonNeeded(@NotNull PsiFile file, @NotNull Editor editor) {
     int startOffset = CompletionInitializationContext.calcStartOffset(editor.getCaretModel().getCurrentCaret());
-    return JavaCompletionContributor.semicolonNeeded(editor, file, startOffset);
+    return JavaCompletionContributor.semicolonNeeded(file, startOffset);
   }
 
   @Nullable

@@ -2,6 +2,7 @@
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.RunManagerEx;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
@@ -55,7 +56,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final CompositeAppearance oldText = myHighlightedText;
     final boolean isMeta = myTarget instanceof MetaTarget;
 
-    setIcon(isMeta ? AntIcons.MetaTarget : AntIcons.Target);
+    setIcon(isMeta ? AntIcons.MetaTarget : AllIcons.Nodes.Target);
 
     myHighlightedText = new CompositeAppearance();
 
@@ -109,10 +110,9 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
   }
 
   public static boolean addShortcutText(String actionId, CompositeAppearance appearance) {
-    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] shortcuts = activeKeymap.getShortcuts(actionId);
-    if (shortcuts != null && shortcuts.length > 0) {
-      appearance.getEnding().addText(" (" + KeymapUtil.getShortcutText(shortcuts[0]) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    Shortcut shortcut = KeymapUtil.getPrimaryShortcut(actionId);
+    if (shortcut != null) {
+      appearance.getEnding().addText(" (" + KeymapUtil.getShortcutText(shortcut) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       return true;
     } else return false;
   }

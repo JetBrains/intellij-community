@@ -27,7 +27,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.update.SvnUpdateRootOptionsPanel.SvnUpdateRootOptionsPanel");
+  private final static Logger LOG = Logger.getInstance(SvnUpdateRootOptionsPanel.class);
   private TextFieldWithBrowseButton myURLText;
   private JCheckBox myRevisionBox;
   private TextFieldWithBrowseButton myRevisionText;

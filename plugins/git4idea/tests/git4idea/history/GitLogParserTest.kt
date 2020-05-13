@@ -372,7 +372,7 @@ private fun generateRecords(newRefsFormat: Boolean): MutableList<GitTestLogRecor
 
                                           "Then comes a long long description.\n" +
                                           "Probably multilined."),
-                               Pair(REF_NAMES, Arrays.asList("HEAD", "refs/heads/master")),
+                               Pair(REF_NAMES, Arrays.asList("HEAD", "refs/heads/master", "refs/heads/(ref1)", "refs/heads/ref2")),
                                changes = listOf(moved("file2", "file3"),
                                                 added("readme.txt"),
                                                 modified("src/CClass.java"),

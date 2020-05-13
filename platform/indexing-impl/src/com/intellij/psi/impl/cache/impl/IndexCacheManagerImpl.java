@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -18,6 +17,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +35,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   @Override
-  @NotNull
-  public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public PsiFile @NotNull [] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {
       return PsiFile.EMPTY_ARRAY;
     }
@@ -48,15 +47,16 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getVirtualFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public VirtualFile @NotNull [] getVirtualFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {
       return VirtualFile.EMPTY_ARRAY;
     }
 
     final List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-    collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    }, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
     return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
@@ -75,18 +75,13 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     try {
       return ReadAction.compute(() -> FileBasedIndex.getInstance()
-        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-          final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
-
-          @Override
-          public boolean process(@NotNull final VirtualFile file, final Integer value) {
-            ProgressIndicatorProvider.checkCanceled();
-            final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0) {
-              if (!fileProcessor.process(file)) return false;
-            }
-            return true;
+        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, (file, value) -> {
+          ProgressIndicatorProvider.checkCanceled();
+          final int mask = value.intValue();
+          if ((mask & occurrenceMask) != 0) {
+            if (!fileProcessor.process(file)) return false;
           }
+          return true;
         }, scope));
     }
     catch (IndexNotReadyException e) {

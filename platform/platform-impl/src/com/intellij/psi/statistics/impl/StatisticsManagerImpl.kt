@@ -21,7 +21,7 @@ import org.jetbrains.annotations.TestOnly
 import java.io.BufferedOutputStream
 import java.io.IOException
 import java.nio.file.Path
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.collections.ArrayList
 import kotlin.concurrent.read
@@ -79,7 +79,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
       return
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
 
     for (conjunct in info.conjuncts) {
       doIncUseCount(conjunct)

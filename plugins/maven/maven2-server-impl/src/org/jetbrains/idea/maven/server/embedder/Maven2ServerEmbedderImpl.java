@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -64,10 +63,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   private final MavenEmbedder myImpl;
@@ -281,11 +277,12 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                                                @NotNull final Collection<String> activeProfiles,
                                                                @NotNull final Collection<String> inactiveProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
-    return ContainerUtilRt.mapNotNull(files, new Function<File, MavenServerExecutionResult>() {
+    return ContainerUtilRt.map2List(files, new Function<File, MavenServerExecutionResult>() {
       @Override
       public MavenServerExecutionResult fun(final File file) {
         try {
           return doExecute(new Executor<MavenServerExecutionResult>() {
+            @NotNull
             @Override
             public MavenServerExecutionResult execute() throws Exception {
               DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
@@ -372,6 +369,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     throws MavenServerProcessCanceledException, RemoteException {
     MavenServerUtil.checkToken(token);
     return doExecute(new Executor<MavenArtifact>() {
+      @NotNull
       @Override
       public MavenArtifact execute() throws Exception {
         return doResolve(info, remoteRepositories);
@@ -405,6 +403,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return Collections.emptyList();
   }
 
+  @NotNull
   private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
     Artifact resolved = doResolve(createArtifact(info), convertRepositories(remoteRepositories));
     return Maven2ModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
@@ -450,6 +449,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                                  final boolean transitive, MavenToken token) throws MavenServerProcessCanceledException, RemoteException {
     MavenServerUtil.checkToken(token);
     return doExecute(new Executor<Collection<MavenArtifact>>() {
+      @NotNull
       @Override
       public Collection<MavenArtifact> execute() throws Exception {
         try {
@@ -512,6 +512,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                             final boolean alsoMakeDependents, MavenToken token) throws RemoteException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
     return doExecute(new Executor<MavenServerExecutionResult>() {
+      @NotNull
       @Override
       public MavenServerExecutionResult execute() throws Exception {
         MavenExecutionResult result = myImpl
@@ -575,23 +576,13 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return myImpl.getContainer();
   }
 
+  @NotNull
   private <T> T doExecute(final Executor<T> executor) throws MavenServerProcessCanceledException, RemoteException {
-    final Ref<T> result = new Ref<T>();
-    final boolean[] cancelled = new boolean[1];
-    final Throwable[] exception = new Throwable[1];
-
-    Future<?> future = ExecutorManager.execute(new Runnable() {
+    Future<T> future = ExecutorManager.execute(new Callable<T>() {
       @Override
-      public void run() {
-        try {
-          result.set(executor.execute());
-        }
-        catch (MavenProcessCanceledRuntimeException e) {
-          cancelled[0] = true;
-        }
-        catch (Throwable e) {
-          exception[0] = e;
-        }
+      @NotNull
+      public T call() throws Exception {
+        return executor.execute();
       }
     });
 
@@ -600,28 +591,24 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
       if (indicator.isCanceled()) throw new MavenServerProcessCanceledException();
 
       try {
-        future.get(50, TimeUnit.MILLISECONDS);
+        return future.get(50, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException ignore) {
       }
       catch (ExecutionException e) {
-        throw rethrowException(e);
+        Throwable cause = e.getCause();
+        if (cause instanceof MavenProcessCanceledRuntimeException) {
+          throw new MavenServerProcessCanceledException();
+        }
+        if (cause instanceof RuntimeRemoteException) {
+          throw ((RuntimeRemoteException)cause).getCause();
+        }
+        throw getRethrowable(cause);
       }
       catch (InterruptedException e) {
         throw new MavenServerProcessCanceledException();
       }
-
-      if (future.isDone()) break;
     }
-
-    if (cancelled[0]) throw new MavenServerProcessCanceledException();
-    if (exception[0] != null) {
-      if (exception[0] instanceof RuntimeRemoteException) throw ((RuntimeRemoteException)exception[0]).getCause();
-
-      throw getRethrowable(exception[0]);
-    }
-
-    return result.get();
   }
 
   private RuntimeException getRethrowable(Throwable throwable) {
@@ -779,6 +766,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   private interface Executor<T> {
+    @NotNull
     T execute() throws Exception;
   }
 }

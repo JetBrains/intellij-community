@@ -20,18 +20,19 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
-import com.intellij.util.ThreeState;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
+import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     performAction(operation);
   }
 
-  private static boolean isTestClass(PsiFile file, Editor editor) {
+  private static boolean isTestClass(@NotNull PsiFile file, Editor editor) {
     PsiElement element1 = null;
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
@@ -76,7 +77,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     if (element1 != null) {
       final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-      if (clazz != null && PythonUnitTestUtil.isTestClass(clazz, ThreeState.UNSURE, null)) return true;
+      if (clazz != null && PythonUnitTestDetectorsKt.isTestClass(clazz, TypeEvalContext.userInitiated(file.getProject(), file))) return true;
     }
     return false;
   }
@@ -92,7 +93,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected boolean checkEnabled(IntroduceOperation operation) {
     if (PyUtil.getContainingClassOrSelf(operation.getElement()) == null) {
-      CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(), "Cannot introduce field: not in class", myDialogTitle,
+      CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(),
+                                          PyBundle.message("refactoring.introduce.field.not.in.class"), myDialogTitle,
                                           getHelpId());
       return false;
     }
@@ -241,7 +243,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected boolean checkIntroduceContext(PsiFile file, Editor editor, PsiElement element) {
     if (element != null && isInStaticMethod(element)) {
-      CommonRefactoringUtil.showErrorHint(file.getProject(), editor, "Introduce Field refactoring cannot be used in static methods",
+      CommonRefactoringUtil.showErrorHint(file.getProject(), editor,
+                                          PyBundle.message("refactoring.introduce.field.cannot.be.used.in.static.methods"),
                                           RefactoringBundle.message("introduce.field.title"),
                                           "refactoring.extractMethod");
       return false;

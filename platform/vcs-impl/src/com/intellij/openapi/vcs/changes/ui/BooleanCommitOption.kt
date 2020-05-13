@@ -9,20 +9,21 @@ import com.intellij.openapi.vcs.configurable.CommitOptionsConfigurable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.vcs.commit.isNonModalCommit
+import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
 open class BooleanCommitOption(
   private val checkinPanel: CheckinProjectPanel,
-  text: String,
+  @Nls text: String,
   disableWhenDumb: Boolean,
   private val getter: () -> Boolean,
   private val setter: Consumer<Boolean>
 ) : RefreshableOnComponent,
     UnnamedConfigurable {
 
-  constructor(panel: CheckinProjectPanel, text: String, disableWhenDumb: Boolean, property: KMutableProperty0<Boolean>) :
+  constructor(panel: CheckinProjectPanel, @Nls text: String, disableWhenDumb: Boolean, property: KMutableProperty0<Boolean>) :
     this(panel, text, disableWhenDumb, { property.get() }, Consumer { property.set(it) })
 
   protected val checkBox = JBCheckBox(text).apply {

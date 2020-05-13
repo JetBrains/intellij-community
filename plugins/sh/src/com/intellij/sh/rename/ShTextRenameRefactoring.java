@@ -3,6 +3,7 @@ package com.intellij.sh.rename;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
@@ -19,16 +20,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 class ShTextRenameRefactoring {
-  private static final String FEATURE_ACTION_ID = "RenamingActionUsed";
-  private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  private static final String OTHER_VARIABLE_NAME = "OtherVariable";
+  @NonNls private static final String FEATURE_ACTION_ID = "RenamingActionUsed";
+  @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
 
   private final Editor myEditor;
   private final Project myProject;
@@ -77,7 +80,7 @@ class ShTextRenameRefactoring {
       }
     }
     createCaretRangeMarker();
-    WriteCommandAction.writeCommandAction(myProject).withName("Rename " + myOccurrenceText).run(() -> startTemplate(builder));
+    WriteCommandAction.writeCommandAction(myProject).withName(ShBundle.message("sh.rename.occurence", myOccurrenceText)).run(() -> startTemplate(builder));
     ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   }
 
@@ -168,7 +171,7 @@ class ShTextRenameRefactoring {
 
     LookupImpl lookup = (LookupImpl) LookupManager.getActiveLookup(myEditor);
     if (lookup != null && lookup.getLookupStart() <= (restoreCaretOffset(offset))) {
-      lookup.setFocusDegree(LookupImpl.FocusDegree.UNFOCUSED);
+      lookup.setLookupFocusDegree(LookupFocusDegree.UNFOCUSED);
       lookup.performGuardedChange(runnable);
     }
     else {

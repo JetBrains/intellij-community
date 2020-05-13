@@ -10,10 +10,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class ToggleFocusViewModeAction extends ToggleAction {
-  protected ToggleFocusViewModeAction() {
-    super("Highlight Only Current Declaration");
-  }
-
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return EditorSettingsExternalizable.getInstance().isFocusMode();

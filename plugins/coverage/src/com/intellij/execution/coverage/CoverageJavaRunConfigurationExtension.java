@@ -186,8 +186,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return listener;
   }
 
-  @Nullable
-  private static String[] getFilters(JavaCoverageEnabledConfiguration coverageEnabledConfiguration) {
+  private static String @Nullable [] getFilters(JavaCoverageEnabledConfiguration coverageEnabledConfiguration) {
     final ClassFilter[] patterns = coverageEnabledConfiguration.getCoveragePatterns();
     if (patterns != null) {
       final List<String> filters = new ArrayList<>();

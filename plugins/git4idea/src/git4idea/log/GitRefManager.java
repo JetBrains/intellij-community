@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
@@ -21,6 +20,7 @@ import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitTag;
 import git4idea.branch.GitBranchType;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -107,7 +107,7 @@ public class GitRefManager implements VcsLogRefManager {
       VirtualFile root = entry.getKey();
       List<VcsRef> refsInRoot = ContainerUtil.sorted(entry.getValue(), myLabelsComparator);
 
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(root);
       if (repository == null) {
         LOG.warn("No repository for root: " + root);
         continue;
@@ -137,7 +137,7 @@ public class GitRefManager implements VcsLogRefManager {
 
     List<RefGroup> result = new ArrayList<>();
     result.addAll(simpleGroups);
-    if (!localBranches.isEmpty()) result.add(new SimpleRefGroup("Local", localBranches, false));
+    if (!localBranches.isEmpty()) result.add(new SimpleRefGroup(GitBundle.message("git.log.refGroup.local"), localBranches, false));
     for (Map.Entry<GitRemote, Collection<VcsRef>> entry : remoteRefGroups.entrySet()) {
       result.add(new RemoteRefGroup(entry.getKey(), entry.getValue()));
     }
@@ -154,9 +154,9 @@ public class GitRefManager implements VcsLogRefManager {
     if (groupedRefs.isEmpty()) return result;
 
     VcsRef head = null;
-    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ObjectUtils.notNull(ContainerUtil.getFirstItem(groupedRefs.entrySet()));
+    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = Objects.requireNonNull(ContainerUtil.getFirstItem(groupedRefs.entrySet()));
     if (firstGroup.getKey().equals(HEAD)) {
-      head = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
+      head = Objects.requireNonNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
       groupedRefs.remove(HEAD, head);
     }
 
@@ -177,7 +177,7 @@ public class GitRefManager implements VcsLogRefManager {
       }
       else {
         if (!result.isEmpty()) {
-          RefGroup first = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(result));
+          RefGroup first = Objects.requireNonNull(ContainerUtil.getFirstItem(result));
           first.getRefs().add(0, head);
         }
         else {
@@ -240,7 +240,7 @@ public class GitRefManager implements VcsLogRefManager {
   private GitRepository getRepository(@NotNull Collection<? extends VcsRef> references) {
     if (references.isEmpty()) return null;
 
-    VcsRef ref = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references));
+    VcsRef ref = Objects.requireNonNull(ContainerUtil.getFirstItem(references));
     GitRepository repository = getRepository(ref);
     if (repository == null) {
       LOG.warn("No repository for root: " + ref.getRoot());
@@ -268,7 +268,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @Nullable
   private GitRepository getRepository(@NotNull VcsRef reference) {
-    return myRepositoryManager.getRepositoryForRoot(reference.getRoot());
+    return myRepositoryManager.getRepositoryForRootQuick(reference.getRoot());
   }
 
   @Override

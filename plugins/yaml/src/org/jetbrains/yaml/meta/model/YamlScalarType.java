@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
@@ -21,7 +22,7 @@ import java.util.Set;
 @ApiStatus.Internal
 public abstract class YamlScalarType extends YamlMetaType {
 
-  protected YamlScalarType(@NotNull String typeName) {
+  protected YamlScalarType(@NonNls @NotNull String typeName) {
     super(typeName);
   }
 
@@ -69,7 +70,7 @@ public abstract class YamlScalarType extends YamlMetaType {
                                          @NotNull ForcedCompletionPath.Iteration iteration) {
     switch (relation) {
       case OBJECT_CONTENTS:
-        // weird, but lets ignore and breakthrough to defaults
+        // weird, but let's ignore and breakthrough to defaults
       case SCALAR_VALUE: {
         markup.append(": ");
         if (iteration.isEndOfPathReached()) {
@@ -92,7 +93,7 @@ public abstract class YamlScalarType extends YamlMetaType {
         break;
       }
       default:
-        throw new IllegalStateException("Unknown relation: " + relation);
+        throw new IllegalStateException("Unknown relation: " + relation); //NON-NLS
     }
   }
 }

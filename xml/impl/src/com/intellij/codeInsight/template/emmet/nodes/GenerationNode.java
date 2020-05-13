@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.google.common.base.Strings;
@@ -29,6 +15,7 @@ import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorI
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
@@ -55,11 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 public class GenerationNode extends UserDataHolderBase {
   private final TemplateToken myTemplateToken;
-  private final List<GenerationNode> myChildren = newArrayList();
+  private final List<GenerationNode> myChildren = new ArrayList<>();
   private final int myNumberInIteration;
   private final int myTotalIterations;
   private String mySurroundedText;
@@ -160,7 +145,7 @@ public class GenerationNode extends UserDataHolderBase {
       Editor editor = callback.getEditor();
       Document document = editor.getDocument();
       if (document instanceof DocumentWindow && ((DocumentWindow)document).isOneLine()) {
-        /* 
+        /*
          * If document is one-line that in the moment of inserting text,
          * new line chars will be filtered (see DocumentWindowImpl#insertString).
          * So in this case we should filter text by SingleLineAvoid in order to avoid
@@ -265,11 +250,11 @@ public class GenerationNode extends UserDataHolderBase {
                                          @Nullable ZenCodingGenerator generator,
                                          final boolean hasChildren) {
     ZenCodingGenerator zenCodingGenerator = ObjectUtils.notNull(generator, XmlZenCodingGeneratorImpl.INSTANCE);
-    
+
     Map<String, String> attributes = token.getAttributes();
     TemplateImpl template = token.getTemplate();
     assert template != null;
-    
+
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(callback.getProject());
     PsiFile dummyFile = fileFactory.createFileFromText("dummy.html", callback.getFile().getLanguage(), token.getTemplateText(), false, true);
     XmlTag tag = PsiTreeUtil.findChildOfType(dummyFile, XmlTag.class);
@@ -429,7 +414,7 @@ public class GenerationNode extends UserDataHolderBase {
 
   private void setAttributeValues(@NotNull XmlTag tag,
                                   @NotNull final Map<String, String> attributes,
-                                  @NotNull CustomTemplateCallback callback, 
+                                  @NotNull CustomTemplateCallback callback,
                                   boolean isHtml) {
     // default and implied attributes
     final String defaultAttributeValue = attributes.get(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
@@ -464,7 +449,9 @@ public class GenerationNode extends UserDataHolderBase {
     for (XmlAttribute xmlAttribute : tag.getAttributes()) {
       final String attributeName = xmlAttribute.getName();
       final XmlAttributeValue xmlAttributeValueElement = xmlAttribute.getValueElement();
-      if ((xmlAttributeValueElement != null && !attributes.containsKey(attributeName)) || !ZenCodingUtil.isXML11ValidQName(attributeName)) {
+      if ((xmlAttributeValueElement != null && !attributes.containsKey(attributeName) ||
+           isImpliedAttribute(attributeName) ||
+           TemplateImplUtil.isValidVariable(attributeName))) {
         continue;
       }
 

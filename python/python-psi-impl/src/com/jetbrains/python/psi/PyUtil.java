@@ -6,23 +6,17 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.notebook.editor.BackedVirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,19 +28,24 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -524,7 +523,7 @@ public class PyUtil {
   }
 
   @NotNull
-  public static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
+  public static List<PsiElement> filterTopPriorityResults(ResolveResult @NotNull [] resolveResults) {
     if (resolveResults.length == 0) return Collections.emptyList();
 
     final int maxRate = getMaxRate(Arrays.asList(resolveResults));
@@ -565,88 +564,6 @@ public class PyUtil {
   @Nullable
   public static PyFunction getInitMethod(@NotNull final PyClass pyClass) {
     return pyClass.findMethodByName(PyNames.INIT, false, null);
-  }
-
-  /**
-   * Returns Python language level for a virtual file.
-   *
-   * @see LanguageLevel#forElement
-   */
-  @NotNull
-  public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project,
-                                                             @NotNull VirtualFile virtualFile) {
-    if (virtualFile instanceof VirtualFileWindow) {
-      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
-    }
-    virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
-
-    // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
-    final VirtualFile folder = virtualFile.getParent();
-    if (folder != null) {
-      final LanguageLevel folderLevel = folder.getUserData(LanguageLevel.KEY);
-      if (folderLevel != null) {
-        return folderLevel;
-      }
-      final LanguageLevel fileLevel = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
-      if (fileLevel != null) {
-        return fileLevel;
-      }
-    }
-    else {
-      // However this allows us to setup language level per file manually
-      // in case when it is LightVirtualFile
-      final LanguageLevel level = virtualFile.getUserData(LanguageLevel.KEY);
-      if (level != null) return level;
-
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        final LanguageLevel languageLevel = LanguageLevel.FORCE_LANGUAGE_LEVEL;
-        if (languageLevel != null) {
-          return languageLevel;
-        }
-      }
-    }
-    return guessLanguageLevelWithCaching(project);
-  }
-
-  @NotNull
-  public static LanguageLevel getLanguageLevelForModule(@NotNull Module module) {
-    return FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).getImmediateValue(module);
-  }
-
-  public static void invalidateLanguageLevelCache(@NotNull Project project) {
-    project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, null);
-  }
-
-  @NotNull
-  public static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
-    LanguageLevel languageLevel = project.getUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL);
-    if (languageLevel == null) {
-      languageLevel = guessLanguageLevel(project);
-      project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, languageLevel);
-    }
-
-    return languageLevel;
-  }
-
-  @NotNull
-  public static LanguageLevel guessLanguageLevel(@NotNull Project project) {
-    final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    if (moduleManager != null) {
-      LanguageLevel maxLevel = null;
-      for (Module projectModule : moduleManager.getModules()) {
-        final Sdk sdk = PythonSdkUtil.findPythonSdk(projectModule);
-        if (sdk != null) {
-          final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-          if (maxLevel == null || maxLevel.isOlderThan(level)) {
-            maxLevel = level;
-          }
-        }
-      }
-      if (maxLevel != null) {
-        return maxLevel;
-      }
-    }
-    return LanguageLevel.getDefault();
   }
 
   /**
@@ -803,7 +720,7 @@ public class PyUtil {
   @NotNull
   public static PsiElement getHeaderEndAnchor(@NotNull PyStatementListContainer container) {
     final PyStatementList statementList = container.getStatementList();
-    return ObjectUtils.notNull(PyPsiUtils.getPrevNonWhitespaceSibling(statementList));
+    return Objects.requireNonNull(PyPsiUtils.getPrevNonWhitespaceSibling(statementList));
   }
 
   public static boolean isPy2ReservedWord(@NotNull PyReferenceExpression node) {
@@ -958,13 +875,6 @@ public class PyUtil {
     return variables;
   }
 
-  public static class KnownDecoratorProviderHolder {
-    public static final List<PyKnownDecoratorProvider> KNOWN_DECORATOR_PROVIDERS = PyKnownDecoratorProvider.EP_NAME.getExtensionList();
-
-    private KnownDecoratorProviderHolder() {
-    }
-  }
-
   /**
    * If argument is a PsiDirectory, turn it into a PsiFile that points to __init__.py in that directory.
    * If there's no __init__.py there, null is returned, there's no point to resolve to a dir which is not a package.
@@ -1062,9 +972,7 @@ public class PyUtil {
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
-    final LanguageLevel level = anchor != null ?
-                                LanguageLevel.forElement(anchor) :
-                                getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
+    final LanguageLevel level = anchor != null ? LanguageLevel.forElement(anchor) : LanguageLevel.forElement(directory);
     if (!level.isPython2()) {
       return true;
     }
@@ -1582,7 +1490,7 @@ public class PyUtil {
                                              @NotNull String memberName,
                                              @Nullable PyExpression location,
                                              @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final List<? extends RatedResolveResult> resolveResults = type.resolveMember(memberName, location, AccessDirection.READ,
                                                                                  resolveContext);
 

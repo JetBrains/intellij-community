@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
 import com.intellij.lang.Language;
@@ -268,11 +269,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       suggestValuesForSchemaVariants(schema.getAllOf(), isSurelyValue);
 
       if (schema.getEnum() != null) {
+        Map<String, Map<String, String>> metadata = schema.getEnumMetadata();
         for (Object o : schema.getEnum()) {
           if (myInsideStringLiteral && !(o instanceof String)) continue;
           String variant = o.toString();
           if (!filtered.contains(variant)) {
-            addValueVariant(variant, null);
+            Map<String, String> valueMetadata = metadata == null ? null : metadata.get(StringUtil.unquoteString(variant));
+            String description = valueMetadata == null ? null : valueMetadata.get("description");
+            String deprecated = valueMetadata == null ? null : valueMetadata.get("deprecationMessage");
+            addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : null, null);
           }
         }
       }
@@ -305,6 +310,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         }
         else if (name.equals(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION)) {
           addInjectedLanguageVariants();
+        }
+        else if (name.equals("language")) {
+          JsonObjectValueAdapter parent = propertyAdapter.getParentObject();
+          if (parent != null) {
+            JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(parent.getDelegate());
+            if (adapter != null && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(adapter.getName())) {
+              addInjectedLanguageVariants();
+            }
+          }
         }
       }
     }
@@ -473,7 +487,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
       String deprecationMessage = jsonSchemaObject.getDeprecationMessage();
       if (deprecationMessage != null) {
-        builder = builder.withTailText(" (deprecated)", true).withStrikeoutness(true);
+        builder = builder.withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true);
       }
 
       myVariants.add(builder);
@@ -669,6 +683,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                 break;
               case _string:
               case _integer:
+              case _number:
                 insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, myWalker, insertColon);
                 break;
               default:

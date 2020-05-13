@@ -1,13 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
+import com.intellij.internal.statistic.FUCounterCollectorTestCase
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.utils.PluginInfo
+import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.UsefulTestCase
 import org.junit.Test
-import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
@@ -17,7 +20,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   @Test
   fun testSingleEvent() {
     testLogger(
-      { logger -> logger.log(EventLogGroup("group.id", 2), "test-action", false) },
+      { logger -> logger.logAsync(EventLogGroup("group.id", 2), "test-action", false) },
       newEvent("group.id", "test-action", groupVersion = "2")
     )
   }
@@ -26,8 +29,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testTwoEvents() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "second-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2"),
       newEvent("group.id", "second-action", groupVersion = "2")
@@ -38,8 +41,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2", count = 2)
     )
@@ -49,9 +52,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testTwoMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "second-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2", count = 2),
       newEvent("group.id", "second-action", groupVersion = "2", count = 1)
@@ -62,9 +65,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testNotMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "second-action", false)
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2"),
       newEvent("group.id", "second-action", groupVersion = "2"),
@@ -75,7 +78,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   @Test
   fun testStateEvent() {
     testLogger(
-      { logger -> logger.log(EventLogGroup("group.id", 2), "state", true) },
+      { logger -> logger.logAsync(EventLogGroup("group.id", 2), "state", true) },
       newStateEvent("group.id", "state", groupVersion = "2")
     )
   }
@@ -90,7 +93,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     expected.event.addData("type", "close")
     expected.event.addData("state", 1)
 
-    testLogger({ logger -> logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
+    testLogger({ logger -> logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
   }
 
   @Test
@@ -106,8 +109,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false)
-        logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false)
+        logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
+        logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
       }, expected)
   }
 
@@ -123,7 +126,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     expected.event.addData("value", true)
     expected.event.addData("default", false)
 
-    testLogger({ logger -> logger.log(EventLogGroup("settings", 3), "ui", data, true) }, expected)
+    testLogger({ logger -> logger.logAsync(EventLogGroup("settings", 3), "ui", data, true) }, expected)
   }
 
   @Test
@@ -140,8 +143,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("settings", 5), "ui", data, true)
-        logger.log(EventLogGroup("settings", 5), "ui", data, true)
+        logger.logAsync(EventLogGroup("settings", 5), "ui", data, true)
+        logger.logAsync(EventLogGroup("settings", 5), "ui", data, true)
       },
       expected, expected
     )
@@ -151,9 +154,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testDontMergeEventsWithDifferentGroupIds() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group", "test.action", groupVersion = "2"),
@@ -165,9 +168,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testDontMergeEventsWithDifferentGroupVersions() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 3), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 3), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group.id", "test.action", groupVersion = "3"),
@@ -179,9 +182,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testDontMergeEventsWithDifferentActions() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action.1", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action.1", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group.id", "test.action.1", groupVersion = "2"),
@@ -195,9 +198,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, recorderVersion = "99")
     )
@@ -209,9 +212,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, session = "test.session")
     )
@@ -223,9 +226,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, build = "123.456")
     )
@@ -237,9 +240,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, bucket = "215")
     )
@@ -251,9 +254,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent(
         recorderVersion = "29", groupId = "group.id", groupVersion = "2",
@@ -263,8 +266,185 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     )
   }
 
+  @Test
+  fun testLogSystemEventId() {
+    getSystemEventIdFile().delete()
+    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1",
+                                                 TestFeatureUsageEventWriter())
+    logger.logAsync(EventLogGroup("group.id.1", 1), "test.action.1", false)
+    logger.logAsync(EventLogGroup("group.id.2", 1), "test.action.2", false)
+    logger.dispose()
+    val logged = logger.testWriter.logged
+    UsefulTestCase.assertSize(2, logged)
+    assertEquals(logged[0].event.data["system_event_id"], 0.toLong())
+    assertEquals(logged[1].event.data["system_event_id"], 1.toLong())
+  }
+
+
+  @Test
+  fun testLogSystemEventIdFromFile() {
+    getSystemEventIdFile().writeText("42")
+    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1",
+                                                 TestFeatureUsageEventWriter())
+    logger.logAsync(EventLogGroup("group.id.1", 1), "test.action.1", false)
+    logger.logAsync(EventLogGroup("group.id.2", 1), "test.action.2", false)
+    logger.dispose()
+    val logged = logger.testWriter.logged
+    UsefulTestCase.assertSize(2, logged)
+    assertEquals(logged[0].event.data["system_event_id"], 42.toLong())
+    assertEquals(logged[1].event.data["system_event_id"], 43.toLong())
+  }
+
+  @Test
+  fun testObjectEvent() {
+    /* {
+      "intField" : 43
+      "obj": {
+        "name" : "testName",
+        "versions" : ["1", "2"]
+      }
+    } */
+
+    class TestObjDescription : ObjectDescription() {
+      var name by field(StringEventField("name").withCustomRule("name_rule"))
+      var versions by field(StringListEventField("versions").withCustomRule("version_rule"))
+    }
+
+    val group = EventLogGroup("newGroup", 1)
+    val event = group.registerEvent("testEvent", EventFields.Int("intField"),
+                                    ObjectEventField("obj", TestObjDescription()))
+
+    val intValue = 43
+    val testName = "testName"
+    val versionsValue = listOf("1", "2")
+    val events = FUCounterCollectorTestCase.collectLogEvents {
+      event.log(intValue, ObjectDescription.build(::TestObjDescription) {
+        versions = versionsValue
+        name = testName
+      })
+    }
+    UsefulTestCase.assertSize(1, events)
+    val eventData = events.first().event.data
+    UsefulTestCase.assertEquals(intValue, eventData["intField"])
+    val objEventData = eventData["obj"] as Map<*, *>
+    UsefulTestCase.assertEquals(testName, objEventData["name"])
+    val versions = objEventData["versions"] as List<*>
+    UsefulTestCase.assertEquals(versionsValue, versions)
+  }
+
+  @Test
+  fun testObjectVarargEvent() {
+    class TestObjDescription : ObjectDescription() {
+      var name by field(StringEventField("name").withCustomRule("name_rule"))
+      var versions by field(StringListEventField("versions").withCustomRule("version_rule"))
+    }
+
+    val group = EventLogGroup("newGroup", 1)
+    val intEventField = EventFields.Int("intField")
+    val objectEventField = ObjectEventField("obj", TestObjDescription())
+    val event = group.registerVarargEvent("testEvent", intEventField, objectEventField)
+
+    val intValue = 43
+    val testName = "testName"
+    val versionsValue = listOf("1", "2")
+    val events = FUCounterCollectorTestCase.collectLogEvents {
+      event.log(intEventField with intValue, objectEventField with ObjectDescription.build(::TestObjDescription) {
+        versions = versionsValue
+        name = testName
+      })
+    }
+    UsefulTestCase.assertSize(1, events)
+    val eventData = events.first().event.data
+    UsefulTestCase.assertEquals(intValue, eventData["intField"])
+    val objEventData = eventData["obj"] as Map<*, *>
+    UsefulTestCase.assertEquals(testName, objEventData["name"])
+    val versions = objEventData["versions"] as List<*>
+    UsefulTestCase.assertEquals(versionsValue, versions)
+  }
+
+  @Test
+  fun testObjectListEventByDescription() {
+    class TestObjDescription : ObjectDescription() {
+      var name by field(StringEventField("name").withCustomRule("name_rule"))
+      var version by field(StringEventField("versions").withCustomRule("version_rule"))
+    }
+
+    val group = EventLogGroup("newGroup", 1)
+    val objectListField: EventField<List<ObjectEventData>> = ObjectListEventField("objects", TestObjDescription())
+    val event = group.registerVarargEvent("testEvent", objectListField)
+
+    val events = FUCounterCollectorTestCase.collectLogEvents {
+      val objList = mutableListOf<ObjectEventData>()
+      objList.add(ObjectDescription.build(::TestObjDescription) {
+        name = "name1"
+        version = "version1"
+      })
+      objList.add(ObjectDescription.build(::TestObjDescription) {
+        name = "name2"
+        version = "version2"
+      })
+
+      event.log(objectListField with objList)
+    }
+    UsefulTestCase.assertSize(1, events)
+    val eventData = events.first().event.data
+    val objectsEventData = eventData["objects"] as List<*>
+    UsefulTestCase.assertSize(2, objectsEventData)
+  }
+
+  @Test
+  fun testObjectInObjectEvent() {
+    /* {
+      "intField" : 43
+      "obj1": {
+        "name" : "testName",
+        "obj2" : {
+          "foo": "fooValue",
+          "bar": "barValue",
+        }
+      }
+    } */
+
+    class InnerObjDescription : ObjectDescription() {
+      var foo by field(EventFields.String("foo").withCustomRule("foo_rule"))
+      var bar by field(EventFields.String("bar").withCustomRule("bar_rule"))
+    }
+
+    class OuterObjDescription : ObjectDescription() {
+      var name by field(StringEventField("name").withCustomRule("name_rule"))
+      var obj1 by field(ObjectEventField("obj2", InnerObjDescription()))
+    }
+
+    val group = EventLogGroup("newGroup", 1)
+    val event = group.registerEvent("testEvent", EventFields.Int("intField"),
+                                    ObjectEventField("obj1", OuterObjDescription()))
+
+    val events = FUCounterCollectorTestCase.collectLogEvents {
+      val objectValue = ObjectDescription.build(::OuterObjDescription) {
+        name = "testName"
+        obj1 = ObjectDescription.build(::InnerObjDescription) {
+          bar = "barValue"
+          foo = "fooValue"
+        }
+      }
+      event.log(43, objectValue)
+    }
+
+    UsefulTestCase.assertSize(1, events)
+    val eventData = events.first().event.data
+    UsefulTestCase.assertEquals(43, eventData["intField"])
+    val obj1EventData = eventData["obj1"] as Map<*, *>
+    val obj2EventData = obj1EventData["obj2"] as Map<*, *>
+    UsefulTestCase.assertEquals("barValue", obj2EventData["bar"])
+  }
+
+
+  private fun getSystemEventIdFile() =
+    EventLogConfiguration.getEventLogSettingsPath().resolve("test_system_event_id").toFile()
+
+
   private fun testLogger(callback: (TestFeatureUsageFileEventLogger) -> Unit, vararg expected: LogEvent) {
-    val logger = TestFeatureUsageFileEventLogger( DEFAULT_SESSION_ID, "999.999", "0", "1", TestFeatureUsageEventWriter())
+    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1", TestFeatureUsageEventWriter())
     testLoggerInternal(logger, callback, *expected)
   }
 
@@ -283,26 +463,27 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   private fun assertEvent(actual: LogEvent, expected: LogEvent) {
     // Compare events but skip event time
-    assertEquals(actual.recorderVersion, expected.recorderVersion)
-    assertEquals(actual.session, expected.session)
-    assertEquals(actual.bucket, expected.bucket)
-    assertEquals(actual.build, expected.build)
-    assertEquals(actual.group, expected.group)
-    assertEquals(actual.event.id, expected.event.id)
+    assertEquals(expected.recorderVersion, actual.recorderVersion)
+    assertEquals(expected.session, actual.session)
+    assertEquals(expected.bucket, actual.bucket)
+    assertEquals(expected.build, actual.build)
+    assertEquals(expected.group, actual.group)
+    assertEquals(expected.event.id, actual.event.id)
 
     assertTrue { actual.event.data.containsKey("created") }
+    assertTrue { actual.event.data.containsKey("system_event_id") }
     assertTrue { actual.time <= actual.event.data["created"] as Long }
 
     if (actual.event.isEventGroup()) {
-      assertEquals(actual.event.data.size - 2, expected.event.data.size)
+      assertEquals(expected.event.data.size, actual.event.data.size - 3)
       assertTrue { actual.event.data.containsKey("last") }
       assertTrue { actual.time <= actual.event.data["last"] as Long }
     }
     else {
-      assertEquals(actual.event.data.size - 1, expected.event.data.size)
+      assertEquals(expected.event.data.size, actual.event.data.size - 2)
     }
-    assertEquals(actual.event.state, expected.event.state)
-    assertEquals(actual.event.count, expected.event.count)
+    assertEquals(expected.event.state, actual.event.state)
+    assertEquals(expected.event.count, actual.event.count)
   }
 }
 
@@ -328,7 +509,7 @@ class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
   }
 
   override fun getActiveFile(): EventLogFile? = null
-  override fun getFiles(): List<EventLogFile> = emptyList()
+  override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
 }

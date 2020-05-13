@@ -103,8 +103,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
 
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue<PsiFileSystemItem> genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<PsiFileSystemItem> genericDomValue, PsiElement element, ConvertContext context) {
     if (genericDomValue instanceof GenericAttributeValue) {
       final GenericAttributeValue attrib = (GenericAttributeValue)genericDomValue;
       if (attrib.getRawText() != null) {

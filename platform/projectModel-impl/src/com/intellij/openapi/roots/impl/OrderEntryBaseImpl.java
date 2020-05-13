@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import org.jetbrains.annotations.NotNull;
 
 abstract class OrderEntryBaseImpl extends RootModelComponentBase implements OrderEntry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEntryVeryBaseImpl");
+  private static final Logger LOG = Logger.getInstance(OrderEntryBaseImpl.class);
 
   private int myIndex;
   private static int _hc;

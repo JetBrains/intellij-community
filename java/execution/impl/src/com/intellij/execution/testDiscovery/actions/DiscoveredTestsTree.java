@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.Disposable;
@@ -20,6 +21,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -49,7 +51,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
       return component instanceof PsiMember ? ((PsiMember)component).getName() : null;
     }, true);
     getSelectionModel().setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
-    getEmptyText().setText("No tests captured for " + title);
+    getEmptyText().setText(ExecutionBundle.message("no.tests.captured.for.0", title));
     setPaintBusy(true);
     setRootVisible(false);
     setCellRenderer(new ColoredTreeCellRenderer() {
@@ -125,8 +127,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
                   .collect(Collectors.toSet());
   }
 
-  @NotNull
-  TestMethodUsage[] getTestMethods() {
+  TestMethodUsage @NotNull [] getTestMethods() {
     return myModel.getTestMethods();
   }
 
@@ -157,7 +158,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
   public Object getData(@NotNull String dataId) {
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionModel().getSelectionPaths();
-      List<PsiElement> result = ContainerUtil.newSmartList();
+      List<PsiElement> result = new SmartList<>();
       TreeModel model = getModel();
       for (TreePath p : paths) {
         Object o = p.getLastPathComponent();

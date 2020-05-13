@@ -1,22 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +19,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NonNls;
@@ -51,9 +32,13 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * @author max
+ */
 public class VirtualFileImpl extends VirtualFileSystemEntry {
   VirtualFileImpl(int id, @NotNull VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);
+    registerLink(getFileSystem());
   }
 
   @Override
@@ -71,7 +56,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @NotNull
   @Override
   public Iterable<VirtualFile> iterInDbChildren() {
-    return ContainerUtil.emptyIterable();
+    return Collections.emptyList();
   }
 
   @Override
@@ -125,14 +110,12 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     return contentsToByteArray(true);
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(boolean cacheContent) throws IOException {
     checkNotTooLarge(null);
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
     if (preloadedContent != null) return preloadedContent;
@@ -161,13 +144,13 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     checkNotTooLarge(requestor);
     super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
     checkNotTooLarge(null);
     super.setBinaryContent(content, newModificationStamp, newTimeStamp);
   }
@@ -176,6 +159,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   public String getDetectedLineSeparator() {
     if (getFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED)) {
+      // optimization: do not waste space in user data for system line separator
       return LineSeparator.getSystemLineSeparator().getSeparatorString();
     }
     return super.getDetectedLineSeparator();
@@ -183,8 +167,10 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   public void setDetectedLineSeparator(String separator) {
+    // optimization: do not waste space in user data for system line separator
     boolean hasSystemSeparator = LineSeparator.getSystemLineSeparator().getSeparatorString().equals(separator);
     setFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
+
     super.setDetectedLineSeparator(hasSystemSeparator ? null : separator);
   }
 

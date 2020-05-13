@@ -764,8 +764,8 @@ public class EquivalenceChecker {
         && expressionsAreEquivalent(elseExpression1, elseExpression2);
   }
 
-  private static boolean expressionListsAreEquivalent(@Nullable GrExpression[] expressions1,
-                                                      @Nullable GrExpression[] expressions2) {
+  private static boolean expressionListsAreEquivalent(GrExpression @Nullable [] expressions1,
+                                                      GrExpression @Nullable [] expressions2) {
     if (expressions1 == null && expressions2 == null) {
       return true;
     }

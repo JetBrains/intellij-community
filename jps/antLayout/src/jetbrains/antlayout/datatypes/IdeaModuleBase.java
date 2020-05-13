@@ -21,9 +21,6 @@ import org.apache.tools.ant.types.ZipFileSet;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public abstract class IdeaModuleBase extends LayoutFileSet {
   private String name;
 

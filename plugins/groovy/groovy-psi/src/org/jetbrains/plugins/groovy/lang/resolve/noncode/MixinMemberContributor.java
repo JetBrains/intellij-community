@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
 import com.intellij.psi.*;
@@ -6,7 +6,6 @@ import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -21,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Max Medvedev
@@ -104,7 +104,7 @@ public class MixinMemberContributor {
     private final PsiMethod myPrototype;
 
     MixinedMethod(@NotNull PsiMethod method, String originInfo) {
-      super(method.getManager(), method, ObjectUtils.assertNotNull(method.getContainingClass()));
+      super(method.getManager(), method, Objects.requireNonNull(method.getContainingClass()));
       myOriginInfo = originInfo;
       myPrototype = method;
     }

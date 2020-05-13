@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.util.Ref;
@@ -18,7 +18,6 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
@@ -93,7 +92,7 @@ public class WcInfoLoader {
       }
     }
 
-    Collections.sort(branches, comparing(branch -> branch.getUrl().toDecodedString()));
+    branches.sort(comparing(branch -> branch.getUrl().toDecodedString()));
 
     return new WCInfoWithBranches(info, branches, rootUrlInfo.getRoot(), workingCopyBranch.get());
   }

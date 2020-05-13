@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -47,8 +48,7 @@ import java.util.*;
  * @author ven
  */
 public class MoveInstanceMethodHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler");
-  static final String REFACTORING_NAME = RefactoringBundle.message("move.instance.method.title");
+  private static final Logger LOG = Logger.getInstance(MoveInstanceMethodHandler.class);
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -62,8 +62,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     if (element instanceof PsiIdentifier) element = element.getParent();
 
     if (!(element instanceof PsiMethod)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.method"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MOVE_INSTANCE_METHOD);
       return;
     }
     if (LOG.isDebugEnabled()) {
@@ -73,21 +73,21 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod)) return;
     final PsiMethod method = (PsiMethod)elements[0];
     String message = null;
     if (!method.getManager().isInProject(method)) {
-      message = "Move method is not supported for non-project methods";
+      message = JavaRefactoringBundle.message("move.method.is.not.supported.for.non.project.methods");
     } else if (method.isConstructor()) {
-      message = RefactoringBundle.message("move.method.is.not.supported.for.constructors");
+      message = JavaRefactoringBundle.message("move.method.is.not.supported.for.constructors");
     } else if (method.getLanguage()!= JavaLanguage.INSTANCE) {
-      message = RefactoringBundle.message("move.method.is.not.supported.for.0", method.getLanguage().getDisplayName());
+      message = JavaRefactoringBundle.message("move.method.is.not.supported.for.0", method.getLanguage().getDisplayName());
     }
     else {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null && mentionTypeParameters(method)) {
-        message = RefactoringBundle.message("move.method.is.not.supported.for.generic.classes");
+        message = JavaRefactoringBundle.message("move.method.is.not.supported.for.generic.classes");
       }
       else if (method.findSuperMethods().length > 0 ||
                OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
@@ -97,9 +97,9 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         final Set<PsiClass> classes = MoveInstanceMembersUtil.getThisClassesToMembers(method).keySet();
         for (PsiClass aClass : classes) {
           if (aClass instanceof JspClass) {
-            message = RefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
+            message = JavaRefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
             Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-            CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
+            CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MOVE_INSTANCE_METHOD);
             break;
           }
         }
@@ -118,10 +118,11 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         showErrorHint(project, dataContext, message);
       }
       else {
-        final String suggestToMakeStaticMessage = "Would you like to make method \'" + method.getName() + "\' static and then move?";
+        final String suggestToMakeStaticMessage =
+          JavaRefactoringBundle.message("move.instance.method.handler.make.method.static", method.getName());
         if (Messages
           .showYesNoCancelDialog(project, message + ". " + suggestToMakeStaticMessage,
-                                 REFACTORING_NAME, Messages.getErrorIcon()) == Messages.YES) {
+                                 getRefactoringName(), Messages.getErrorIcon()) == Messages.YES) {
           MakeStaticHandler.invoke(method);
         }
       }
@@ -135,7 +136,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   private static void showErrorHint(Project project, DataContext dataContext, String message) {
     Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
-    CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
+    CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.MOVE_INSTANCE_METHOD);
   }
 
   @Nullable
@@ -164,13 +165,13 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
     if (suitableVariables.isEmpty()) {
       if (!classTypesFound) {
-        return RefactoringBundle.message("there.are.no.variables.that.have.reference.type");
+        return JavaRefactoringBundle.message("there.are.no.variables.that.have.reference.type");
       }
       else if (!resolvableClassesFound) {
-        return RefactoringBundle.message("all.candidate.variables.have.unknown.types");
+        return JavaRefactoringBundle.message("all.candidate.variables.have.unknown.types");
       }
       else if (!classesInProjectFound) {
-        return RefactoringBundle.message("all.candidate.variables.have.types.not.in.project");
+        return JavaRefactoringBundle.message("all.candidate.variables.have.types.not.in.project");
       }
     }
     return null;
@@ -204,5 +205,9 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       if (PsiTypesUtil.mentionsTypeParameters(parameter.getType(), typeParameters)) return true;
     }
     return PsiTypesUtil.mentionsTypeParameters(method.getReturnType(), typeParameters);
+  }
+
+  static String getRefactoringName() {
+    return RefactoringBundle.message("move.instance.method.title");
   }
 }

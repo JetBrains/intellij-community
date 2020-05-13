@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationCo
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderHelperLightPsiClass;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getBuilderClassName;
@@ -74,7 +75,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
 
     @NotNull
     private LightPsiClassBuilder createBuilderClass(@NotNull final PsiAnnotation annotation,
-                                                    @NotNull PsiVariable[] setters) {
+                                                    PsiVariable @NotNull [] setters) {
       final LightPsiClassBuilder builderClass = new BuilderHelperLightPsiClass(
         myContainingClass, getBuilderClassName(annotation, myContainingClass)
       );
@@ -175,9 +176,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
         builderClass.getResolveScope()
       );
       final PsiType[] mappings = PsiType.createArray(builderClass.getTypeParameters().length);
-      for (int i = 0; i < mappings.length; i++) {
-        mappings[i] = type;
-      }
+      Arrays.fill(mappings, type);
       return myElementFactory.createType(builderClass, mappings);
     }
   }

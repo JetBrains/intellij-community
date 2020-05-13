@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    * @return the display name of the configuration type.
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getDisplayName();
 
   /**
@@ -31,7 +33,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    *
    * @return the description of the configuration type.
    */
-  @Nls
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getConfigurationTypeDescription();
 
   /**
@@ -46,13 +48,13 @@ public interface ConfigurationType extends PossiblyDumbAware {
    * The ID is used to store run configuration settings in a project or workspace file and
    * must not change between plugin versions.
    */
-  @NotNull
+  @NotNull @NonNls
   String getId();
 
   /**
    * The name of the run configuration group in a configuration file. The same rules as for id. Useful when id cannot be changed.
    */
-  @NotNull
+  @NotNull @NonNls
   default String getTag() {
     return getId();
   }
@@ -71,6 +73,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    *
    * @return the help topic, or {@code null} if no help is available
    */
+  @NonNls
   @Nullable
   default String getHelpTopic() {
     return null;

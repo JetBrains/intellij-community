@@ -23,6 +23,5 @@ import org.jetbrains.annotations.NotNull;
  * @see PsiResourceList
  */
 public interface PsiResourceVariable extends PsiLocalVariable, PsiResourceListElement {
-  @NotNull
-  PsiElement[] getDeclarationScope();
+  PsiElement @NotNull [] getDeclarationScope();
 }

@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -31,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.Equality;
 import gnu.trove.THashSet;
@@ -39,9 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
@@ -63,11 +60,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       return v1 == v2;
     }
   };
-  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
-  static class State {
+  static final class State {
     @NotNull
     private Charset myDefaultEncoding = StandardCharsets.UTF_8;
+    private @NotNull Charset myDefaultConsoleEncoding = ChooseFileEncodingAction.NO_ENCODING;
 
     @Attribute("default_encoding")
     @NotNull
@@ -79,6 +76,17 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       myDefaultEncoding = name.isEmpty()
                           ? ChooseFileEncodingAction.NO_ENCODING
                           : ObjectUtils.notNull(CharsetToolkit.forName(name), CharsetToolkit.getDefaultSystemCharset());
+    }
+
+    @Attribute("default_console_encoding")
+    public @NotNull String getDefaultConsoleEncodingName() {
+      return myDefaultConsoleEncoding == ChooseFileEncodingAction.NO_ENCODING ? "" : myDefaultConsoleEncoding.name();
+    }
+
+    public void setDefaultConsoleEncodingName(@NotNull String name) {
+      myDefaultConsoleEncoding = name.isEmpty()
+                                 ? ChooseFileEncodingAction.NO_ENCODING
+                                 : ObjectUtils.notNull(CharsetToolkit.forName(name), ChooseFileEncodingAction.NO_ENCODING);
     }
   }
 
@@ -147,7 +155,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private void setCachedCharsetFromContent(Charset charset, Charset oldCached, @NotNull Document document) {
     document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
-    firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+    firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset, null);
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
@@ -252,6 +260,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   public void clearDocumentQueue() {
+    if (((BoundedTaskExecutor)changedDocumentExecutor).isEmpty()) return;
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call clearDocumentQueue() from under write action because some queued detectors require read action");
     }
@@ -334,17 +343,31 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
-    myPropertyChangeSupport.addPropertyChangeListener(listener);
-    Disposer.register(parentDisposable, () -> removePropertyChangeListener(listener));
+  public @NotNull Charset getDefaultConsoleEncoding() {
+    return myState.myDefaultConsoleEncoding == ChooseFileEncodingAction.NO_ENCODING ? CharsetToolkit.getDefaultSystemCharset() : myState.myDefaultConsoleEncoding;
   }
 
-  private void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
-    myPropertyChangeSupport.removePropertyChangeListener(listener);
+  /**
+   * @return default console encoding or {@link ChooseFileEncodingAction#NO_ENCODING} for system-default
+   */
+  public @NotNull Charset getDefaultConsoleEncodingInternal() {
+    return myState.myDefaultConsoleEncoding;
   }
 
-  void firePropertyChange(@Nullable Document document, @NotNull String propertyName, final Object oldValue, final Object newValue) {
-    Object source = document == null ? this : document;
-    myPropertyChangeSupport.firePropertyChange(new PropertyChangeEvent(source, propertyName, oldValue, newValue));
+  /**
+   * @param encoding default console encoding or {@link ChooseFileEncodingAction#NO_ENCODING} for system-default
+   */
+  public void setDefaultConsoleEncodingInternal(@NotNull Charset encoding) {
+    myState.myDefaultConsoleEncoding = encoding;
+  }
+
+  void firePropertyChange(@Nullable Document document,
+                          @NotNull String propertyName,
+                          final Object oldValue,
+                          final Object newValue,
+                          @Nullable Project project) {
+    MessageBus messageBus = (project != null ? project : ApplicationManager.getApplication()).getMessageBus();
+    EncodingManagerListener publisher = messageBus.syncPublisher(EncodingManagerListener.ENCODING_MANAGER_CHANGES);
+    publisher.propertyChanged(document, propertyName, oldValue, newValue);
   }
 }

@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface JpsDependenciesList extends JpsElement {
   @NotNull
   JpsModuleDependency addModuleDependency(@NotNull JpsModule module);

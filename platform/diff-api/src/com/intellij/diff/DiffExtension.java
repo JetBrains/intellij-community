@@ -32,7 +32,9 @@ public abstract class DiffExtension {
    * Can be used to extend existing DiffViewers without registering new DiffTool
    *
    * @see com.intellij.diff.tools.util.base.DiffViewerListener
-   * @see com.intellij.diff.tools.util.base.DiffViewerBase
+   * @see com.intellij.diff.tools.simple.SimpleDiffViewer
+   * @see com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
+   * @see com.intellij.diff.tools.fragmented.UnifiedDiffViewer
    */
   @CalledInAwt
   public abstract void onViewerCreated(@NotNull FrameDiffTool.DiffViewer viewer,

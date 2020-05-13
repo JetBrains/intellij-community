@@ -25,9 +25,6 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-/**
- * @author nik
- */
 @RunsInEdt
 class AutomaticModuleUnloaderTest {
   @Rule
@@ -177,8 +174,7 @@ class AutomaticModuleUnloaderTest {
 
   private fun saveAndCloseProject(project: Project) {
     PlatformTestUtil.saveProject(project, true)
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project, true)
-    runWriteAction { Disposer.dispose(project) }
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project)
   }
 
   private fun reloadProjectWithNewModules(project: Project, moduleFiles: List<File>, beforeReload: () -> Unit = {}): Project {
@@ -195,7 +191,7 @@ class AutomaticModuleUnloaderTest {
     JDOMUtil.write(rootElement, modulesXmlFile)
     beforeReload()
     val reloaded = ProjectManager.getInstance().loadAndOpenProject(project.basePath!!)!!
-    Disposer.register(disposableRule.disposable, Disposable { ProjectManagerEx.getInstanceEx().forceCloseProject(reloaded, true) })
+    Disposer.register(disposableRule.disposable, Disposable { ProjectManagerEx.getInstanceEx().forceCloseProject(reloaded) })
     return reloaded
   }
 

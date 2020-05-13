@@ -39,7 +39,7 @@ public class RollbackWorker {
   private final List<VcsException> myExceptions;
 
   public RollbackWorker(final Project project) {
-    this(project, DefaultRollbackEnvironment.ROLLBACK_OPERATION_NAME, false);
+    this(project, DefaultRollbackEnvironment.getRollbackOperationText(), false);
   }
 
   public RollbackWorker(final Project project, final String operationName, boolean invokedFromModalContext) {

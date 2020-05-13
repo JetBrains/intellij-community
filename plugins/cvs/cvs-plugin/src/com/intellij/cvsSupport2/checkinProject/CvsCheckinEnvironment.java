@@ -51,7 +51,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
+  public String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     if (filesToCheckin.length != 1) {
       return null;
     }

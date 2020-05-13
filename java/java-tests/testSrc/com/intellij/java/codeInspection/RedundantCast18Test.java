@@ -23,9 +23,8 @@ import org.jetbrains.annotations.NotNull;
 public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/inspection/redundantCast/lambda/";
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new RedundantCastInspection()
     };
@@ -46,4 +45,11 @@ public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   public void testCastInMultidimensionalArrayIndex() { doTest(); }
   public void testCastWithClassHierarchyWithPrivateMethods() { doTest(); }
   public void testFieldInitializer() { doTest();}
+  public void testDiamondWithUpperBounds() { doTest();}
+  public void testBinaryConversions() { doTest();}
+  public void testInferenceIncompatibilityWithoutCast() { doTest();}
+  public void testCastToPrimitive() { doTest();}
+  public void testParenthesisAroundConditional() { doTest();}
+  public void testMiscStatements() { doTest();}
+  public void testSameSubstitutor() { doTest();}
 }

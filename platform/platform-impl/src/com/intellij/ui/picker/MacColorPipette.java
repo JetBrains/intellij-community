@@ -182,8 +182,10 @@ public class MacColorPipette extends ColorPipetteBase {
     return captureScreen(null, new Rectangle(0, 0, 1, 1)) != null;
   }
 
+  // TODO-ank: Screen capturing looks like self-contained feature and should be placed to separate class. Note that it is also used from
+  //  com.android.tools.idea.ui.resourcechooser.colorpicker2.GraphicalColorPipette) to pick a color from any window on the screen
   @Nullable
-  static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
+  public static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
     ID pool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       ID windowId = belowWindow != null ? MacUtil.findWindowFromJavaWindow(belowWindow) : null;

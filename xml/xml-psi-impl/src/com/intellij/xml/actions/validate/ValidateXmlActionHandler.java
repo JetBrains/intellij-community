@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions.validate;
 
 import com.intellij.javaee.UriUtil;
@@ -37,11 +37,8 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Map;
 
-/**
- * @author Mike
- */
 public class ValidateXmlActionHandler implements ValidateXmlHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.validate.ValidateXmlAction");
+  private static final Logger LOG = Logger.getInstance(ValidateXmlActionHandler.class);
 
   private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;

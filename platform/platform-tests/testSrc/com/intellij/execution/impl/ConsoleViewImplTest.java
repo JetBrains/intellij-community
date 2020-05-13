@@ -40,7 +40,6 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -537,7 +536,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
                       "line1\nline2\nline3\nDone\n");
   }
 
-  private void assertPrintedText(@NotNull String[] textToPrint, @NotNull String expectedText) {
+  private void assertPrintedText(String @NotNull [] textToPrint, @NotNull String expectedText) {
     myConsole.clear();
     myConsole.waitAllRequests();
     Assert.assertEquals("", myConsole.getText());

@@ -45,13 +45,6 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 public class JUnit5ConverterInspection extends BaseInspection {
   private static final List<String> ruleAnnotations = Arrays.asList(JUnitCommonClassNames.ORG_JUNIT_RULE, JUnitCommonClassNames.ORG_JUNIT_CLASS_RULE);
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("junit5.converter.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -142,7 +135,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
 
     @Override
     public void applyFix(@NotNull Project project,
-                         @NotNull CommonProblemDescriptor[] descriptors,
+                         CommonProblemDescriptor @NotNull [] descriptors,
                          @NotNull List psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
       Set<PsiFile> files = Arrays.stream(descriptors).map(descriptor -> ((ProblemDescriptor)descriptor).getPsiElement())
@@ -195,9 +188,8 @@ public class JUnit5ConverterInspection extends BaseInspection {
         return showConflicts(conflicts, refUsages.get());
       }
 
-      @NotNull
       @Override
-      protected UsageInfo[] findUsages() {
+      protected UsageInfo @NotNull [] findUsages() {
         UsageInfo[] usages = super.findUsages();
         InspectionManager inspectionManager = InspectionManager.getInstance(myProject);
         GlobalInspectionContext globalContext = inspectionManager.createNewGlobalContext();
@@ -211,7 +203,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
       List<SmartPsiElementPointer<PsiElement>> myReplacedRefs = new ArrayList<>();
 
       @Override
-      protected void performRefactoring(@NotNull UsageInfo[] usages) {
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
         List<UsageInfo> migrateUsages = new ArrayList<>();
         List<ProblemDescriptor> descriptions = new ArrayList<>();
         SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);

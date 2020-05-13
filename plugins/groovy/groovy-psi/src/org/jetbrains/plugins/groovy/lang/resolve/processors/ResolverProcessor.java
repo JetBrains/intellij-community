@@ -96,8 +96,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
     return true;
   }
 
-  @NotNull
-  public GroovyResolveResult[] getCandidates() {
+  public GroovyResolveResult @NotNull [] getCandidates() {
     if (myCandidates == null) return GroovyResolveResult.EMPTY_ARRAY;
     return myCandidates.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }

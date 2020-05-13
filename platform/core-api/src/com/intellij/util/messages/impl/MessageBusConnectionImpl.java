@@ -1,29 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
-final class MessageBusConnectionImpl implements MessageBusConnection {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
-
-  private final MessageBusImpl myBus;
-  @SuppressWarnings("SSBasedInspection")
-  private final ThreadLocal<Queue<Message>> myPendingMessages = MessageBusImpl.createThreadLocalQueue();
+final class MessageBusConnectionImpl implements MessageBusConnection, MessageBusImpl.MessageHandlerHolder {
+  private MessageBusImpl myBus;
 
   private MessageHandler myDefaultHandler;
-  private volatile SmartFMap<Topic<?>, Object> mySubscriptions = SmartFMap.emptyMap();
+  private final AtomicReference<SmartFMap<Topic<?>, Object>> mySubscriptions = new AtomicReference<>(SmartFMap.emptyMap());
 
   MessageBusConnectionImpl(@NotNull MessageBusImpl bus) {
     myBus = bus;
@@ -31,53 +26,39 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   public <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) {
-    boolean notifyBusAboutTopic = false;
-    synchronized (myPendingMessages) {
-      Object currentHandler = mySubscriptions.get(topic);
-      if (currentHandler == null) {
-        mySubscriptions = mySubscriptions.plus(topic, handler);
-        notifyBusAboutTopic = true;
-      }
-      else if (currentHandler instanceof List<?>) {
-        //noinspection unchecked
-        ((List<L>)currentHandler).add(handler);
-      }
-      else {
-        List<Object> newList = new ArrayList<>();
-        newList.add(currentHandler);
-        newList.add(handler);
-        mySubscriptions = mySubscriptions.plus(topic, newList);
-      }
-    }
-
-    if (notifyBusAboutTopic) {
-      myBus.notifyOnSubscription(this, topic);
-    }
+    doSubscribe(topic, handler, mySubscriptions);
+    myBus.notifyOnSubscription(topic);
   }
 
-  // avoid notifyOnSubscription and map modification for each handler
-  <L> void subscribe(@NotNull Topic<L> topic, @NotNull List<Object> handlers) {
-    boolean notifyBusAboutTopic = false;
-    synchronized (myPendingMessages) {
-      Object currentHandler = mySubscriptions.get(topic);
+  static <L> void doSubscribe(@NotNull Topic<L> topic, @NotNull L handler, @NotNull AtomicReference<SmartFMap<Topic<?>, Object>> topicToHandlers) {
+    Object newHandlers;
+    SmartFMap<Topic<?>, Object> map;
+    do {
+      map = topicToHandlers.get();
+      Object currentHandler = map.get(topic);
       if (currentHandler == null) {
-        mySubscriptions = mySubscriptions.plus(topic, handlers);
-        notifyBusAboutTopic = true;
+        newHandlers = handler;
       }
-      else if (currentHandler instanceof List<?>) {
-        //noinspection unchecked
-        ((List<Object>)currentHandler).addAll(handlers);
+      else if (currentHandler instanceof Object[]) {
+        newHandlers = ArrayUtil.append((Object[])currentHandler, handler, Object[]::new);
       }
       else {
-        List<Object> newList = new ArrayList<>(handlers.size() + 1);
-        newList.add(currentHandler);
-        newList.addAll(handlers);
-        mySubscriptions = mySubscriptions.plus(topic, newList);
+        newHandlers = new Object[]{currentHandler, handler};
       }
     }
+    while (!topicToHandlers.compareAndSet(map, map.plus(topic, newHandlers)));
+  }
 
-    if (notifyBusAboutTopic) {
-      myBus.notifyOnSubscription(this, topic);
+  @Override
+  public void collectHandlers(@NotNull Topic<?> topic, @NotNull List<Object> result) {
+    Object handlers = mySubscriptions.get().get(topic);
+    if (handlers != null) {
+      if (handlers instanceof Object[]) {
+        Collections.addAll(result, (Object[])handlers);
+      }
+      else {
+        result.add(handlers);
+      }
     }
   }
 
@@ -104,9 +85,18 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   public void dispose() {
-    myPendingMessages.get();
-    myPendingMessages.remove();
-    myBus.notifyConnectionTerminated(this);
+    MessageBusImpl bus = myBus;
+    if (bus == null) {
+      // already disposed
+      return;
+    }
+
+    // reset as bus will not remove disposed connection from list immediately
+    SmartFMap<Topic<?>, Object> oldMap = mySubscriptions.getAndSet(SmartFMap.emptyMap());
+
+    myBus = null;
+    myDefaultHandler = null;
+    bus.notifyConnectionTerminated(oldMap);
   }
 
   @Override
@@ -116,73 +106,51 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   public void deliverImmediately() {
-    Queue<Message> messages = myPendingMessages.get();
-    while (!messages.isEmpty()) {
-      myBus.deliverSingleMessage();
+    myBus.deliverImmediately(this);
+  }
+
+  static boolean removeMyHandlers(@NotNull Message job, @NotNull Map<Topic<?>, Object> topicToHandlers) {
+    Object handlers = topicToHandlers.get(job.topic);
+    return handlers != null && removeHandlers(job, handlers);
+  }
+
+  static boolean removeHandlers(@NotNull Message job, @NotNull Object handlers) {
+    if (handlers instanceof Object[]) {
+      return job.handlers.removeIf(handler -> containsByIdentity(handler, (Object[])handlers));
+    }
+    else {
+      return job.handlers.removeIf(handler -> handlers == handler);
     }
   }
 
-  void deliverMessage(@NotNull Message message) {
-    final Message messageOnLocalQueue = myPendingMessages.get().poll();
-    assert messageOnLocalQueue == message;
-
-    Topic<?> topic = message.getTopic();
-    Object handler = mySubscriptions.get(topic);
-    try {
-      if (handler == myDefaultHandler) {
-        myDefaultHandler.handle(message.getListenerMethod(), message.getArgs());
-      }
-      else {
-        if (handler instanceof List<?>) {
-          for (Object o : (List<?>)handler) {
-            myBus.invokeListener(message, o);
-          }
-        }
-        else {
-          myBus.invokeListener(message, handler);
-        }
-      }
-    }
-    catch (AbstractMethodError e) {
-      //Do nothing. This listener just does not implement something newly added yet.
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (InvocationTargetException e) {
-      if (e.getCause() instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)e.getCause();
-      }
-      LOG.error(e.getCause() == null ? e : e.getCause());
-    }
-    catch (Throwable e) {
-      LOG.error(e.getCause() == null ? e : e.getCause());
-    }
-  }
-
-  void scheduleMessageDelivery(@NotNull Message message) {
-    myPendingMessages.get().offer(message);
-  }
-
-  boolean containsMessage(@NotNull Topic<?> topic) {
-    Queue<Message> pendingMessages = myPendingMessages.get();
-    if (pendingMessages.isEmpty()) return false;
-
-    for (Message message : pendingMessages) {
-      if (message.getTopic() == topic) {
-        return true;
-      }
-    }
-    return false;
+  @Override
+  public boolean isEmpty() {
+    return mySubscriptions.get().isEmpty();
   }
 
   @Override
   public String toString() {
-    return mySubscriptions.toString();
+    return mySubscriptions.get().toString();
   }
 
-  @NotNull
-  MessageBusImpl getBus() {
-    return myBus;
+  boolean isMyHandler(@NotNull Topic<?> topic, @NotNull Object handler) {
+    if (myDefaultHandler == handler) {
+      return true;
+    }
+
+    Object handlers = mySubscriptions.get().get(topic);
+    if (handlers == null) {
+      return false;
+    }
+    return handlers == handler || (handlers instanceof Object[] && containsByIdentity(handler, (Object[])handlers));
+  }
+
+  private static boolean containsByIdentity(@NotNull Object handler, @NotNull Object @NotNull[] handlers) {
+    for (Object item : handlers) {
+      if (handler == item) {
+        return true;
+      }
+    }
+    return false;
   }
 }

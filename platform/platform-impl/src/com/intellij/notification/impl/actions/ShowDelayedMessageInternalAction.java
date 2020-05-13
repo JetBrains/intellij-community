@@ -29,6 +29,7 @@ import javax.swing.*;
 /**
  * @author Denis Fokin
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class ShowDelayedMessageInternalAction extends AnAction implements DumbAware{
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -43,7 +44,7 @@ public class ShowDelayedMessageInternalAction extends AnAction implements DumbAw
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> MessageDialogBuilder.yesNo("Nothing happens after that", "Some message goes here").yesText(
           ApplicationBundle.message("command.exit")).noText(
-          CommonBundle.message("button.cancel")).show());
+          CommonBundle.getCancelButtonText()).show());
       }
     }.start();
 

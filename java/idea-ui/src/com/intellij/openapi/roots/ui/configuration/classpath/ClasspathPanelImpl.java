@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
@@ -65,7 +65,7 @@ import java.util.*;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl");
+  private static final Logger LOG = Logger.getInstance(ClasspathPanelImpl.class);
   private final JBTable myEntryTable;
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
@@ -146,9 +146,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         return myEntryTable.convertRowIndexToModel(viewIndex);
       }
 
-      @NotNull
       @Override
-      public Object[] getAllElements() {
+      public Object @NotNull [] getAllElements() {
         final int count = myModel.getRowCount();
         Object[] elements = new Object[count];
         for (int idx = 0; idx < count; idx++) {
@@ -175,7 +174,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
-    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
+    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.getExportColumnName());
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
     myEntryTable.getTableHeader().getColumnModel().getColumn(ClasspathTableModel.ITEM_COLUMN).setPreferredWidth(10000); // consume all available space
 
@@ -203,7 +202,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       WHEN_FOCUSED
     );
 
-    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
+    myEditButton = new AnActionButton(JavaUiBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         doEdit();
@@ -228,14 +227,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         navigate(true);
         return true;
       }
     }.installOn(myEntryTable);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {
+    final AnAction navigateAction = new AnAction(JavaUiBundle.message("classpath.panel.navigate.action.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(false);
@@ -421,7 +420,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       })
       .setMoveUpActionUpdater(moveUpDownUpdater)
-      .setMoveUpActionName("Move Up (disabled if items are shown in sorted order)")
+      .setMoveUpActionName(JavaUiBundle.message("action.text.class.path.move.up"))
       .setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -429,7 +428,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       })
       .setMoveDownActionUpdater(moveUpDownUpdater)
-      .setMoveDownActionName("Move Down (disabled if items are shown in sorted order)")
+      .setMoveDownActionName(JavaUiBundle.message("action.text.class.path.move.down"))
       .addExtraAction(myEditButton);
 
     final JPanel panel = decorator.createPanel();
@@ -552,7 +551,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       final List<AddItemPopupAction<?>> actions = new ArrayList<>();
       final StructureConfigurableContext context = getStructureConfigurableContext();
       actions.add(new AddNewModuleLibraryAction(this, actionIndex++, context));
-      actions.add(new AddLibraryDependencyAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
+      actions.add(new AddLibraryDependencyAction(this, actionIndex++, JavaUiBundle.message("classpath.add.library.action"), context));
       actions.add(new AddModuleDependencyAction(this, actionIndex, context)
       );
 

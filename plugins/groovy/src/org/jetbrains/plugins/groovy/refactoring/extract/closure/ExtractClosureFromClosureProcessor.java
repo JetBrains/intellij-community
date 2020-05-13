@@ -64,7 +64,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
 
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     GrIntroduceClosureParameterProcessor.processExternalUsages(usages, myHelper, generateClosure(myHelper));
     GrIntroduceClosureParameterProcessor.processClosure(usages, myHelper);
 
@@ -72,9 +72,8 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
     ExtractUtil.replaceStatement(declarationOwner, myHelper);
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final GrVariable var = (GrVariable)myHelper.getToSearchFor();
     if (var != null) {
       final List<UsageInfo> result = new ArrayList<>();

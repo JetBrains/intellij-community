@@ -705,6 +705,41 @@ static String test(String a, String b) {
 """)
     assert c == ['_, null -> null', 'null, !null -> null']
   }
+  
+  void "test primitive cast ignored"() {
+    def c = inferContracts("""static int test(long x) {return (int)x;}""")
+    assert c == []
+  }
+  
+  void "test return param is not propagated"() {
+    def c = inferContracts("""static String foo(Object x) {return String.class.cast(String.valueOf(x));}""")
+    assert c == []
+  }
+  
+  void "test return param propagated"() {
+    def c = inferContracts("""static Object foo(Class<?> c, Object x) {return c.cast(x);}""")
+    assert c == ['_, _ -> param2']
+  }
+  
+  void "test return param propagated to this"() {
+    def c = inferContracts("""Object foo(Class<?> c) {return c.cast(this);}""")
+    assert c == ['_ -> this']
+  }
+  
+  void "test return param propagated new"() {
+    def c = inferContracts("""static Object foo() {return java.util.Objects.requireNonNull(new Object());}""")
+    assert c == [' -> new']
+  }
+  
+  void "test this not propagated"() {
+    def c = inferContracts("""StringBuilder foo() {return new StringBuilder().append("foo");}""")
+    assert c == [' -> new']
+  }
+  
+  void "test this propagated to parameter"() {
+    def c = inferContracts("""StringBuilder foo(StringBuilder sb) {return sb.append("foo");}""")
+    assert c == ['_ -> param1']
+  }
 
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))

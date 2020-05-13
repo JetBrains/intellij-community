@@ -26,7 +26,7 @@ abstract class SourceOperation implements Operation {
   }
 
   @Nullable
-  static SourceOperation create(@NotNull String name, @NotNull PsiType type, @NotNull PsiExpression[] args) {
+  static SourceOperation create(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
     if ("empty".equals(name) && args.length == 0) {
       return new Empty(type);
     }
@@ -57,8 +57,8 @@ abstract class SourceOperation implements Operation {
     }
 
     @Override
-    public void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {
-      myArg = FunctionHelper.replaceVarReference(myArg, oldName, newName, context);
+    public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
+      myArg = FunctionHelper.replaceVarReference(myArg, oldName, newVar.getName(), context);
     }
 
     @Nullable
@@ -67,12 +67,12 @@ abstract class SourceOperation implements Operation {
                            @NotNull ChainVariable outVar,
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
-      if (SourceOperation.getSourceName(myArg) != null) {
-        return "if(" + outVar.getName() + " == null) throw new java.lang.NullPointerException();" +
+      if (SourceOperation.getSourceName(myArg) != null || myArg.getText().equals(outVar.getName())) {
+        return "if(" + outVar.getName() + "==null)throw new java.lang.NullPointerException();" +
                code;
       }
       return outVar.getDeclaration(myArg.getText()) +
-             "if(" + outVar.getName() + " == null) throw new java.lang.NullPointerException();" +
+             "if(" + outVar.getName() + "==null)throw new java.lang.NullPointerException();" +
              code;
     }
 
@@ -101,8 +101,8 @@ abstract class SourceOperation implements Operation {
     }
 
     @Override
-    public void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {
-      myArg = FunctionHelper.replaceVarReference(myArg, oldName, newName, context);
+    public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
+      myArg = FunctionHelper.replaceVarReference(myArg, oldName, newVar.getName(), context);
     }
 
     @Nullable
@@ -111,7 +111,7 @@ abstract class SourceOperation implements Operation {
                            @NotNull ChainVariable outVar,
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
-      if (SourceOperation.getSourceName(myArg) != null) {
+      if (SourceOperation.getSourceName(myArg) != null || myArg.getText().equals(outVar.getName())) {
         return context.generateNotNullCondition(outVar.getName(), code);
       }
       return outVar.getDeclaration(myArg.getText()) +

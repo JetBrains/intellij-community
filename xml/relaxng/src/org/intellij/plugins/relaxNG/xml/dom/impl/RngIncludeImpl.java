@@ -36,8 +36,7 @@ public abstract class RngIncludeImpl extends RngDomElementBase implements RngInc
   }
 
   @Override
-  @NotNull
-  public RngDefine[] getOverrides() {
+  public RngDefine @NotNull [] getOverrides() {
     // TODO: include stuff inside DIVs - fix when this is actually used
     final List<RngDefine> defines = DomUtil.getChildrenOfType(this, RngDefine.class);
     return defines.toArray(new RngDefine[0]);

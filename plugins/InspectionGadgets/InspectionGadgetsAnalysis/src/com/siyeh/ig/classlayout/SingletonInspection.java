@@ -26,12 +26,6 @@ public class SingletonInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("singleton.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return (Boolean)infos[0] ?
            InspectionGadgetsBundle.message("enum.singleton.problem.descriptor") :

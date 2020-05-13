@@ -61,9 +61,8 @@ public class XsltReferenceContributor {
         xmlAttributeValue("as")
           .withSuperParent(2, xsltTag)
           .withValue(string().contains(":")), new PsiReferenceProvider() {
-        @NotNull
         @Override
-        public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
           return new PsiReference[]{ new NamespacePrefixReference(element) };
         }
       });
@@ -75,15 +74,13 @@ public class XsltReferenceContributor {
       super((XmlAttribute)element.getParent());
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       return XsltNamespaceContext.getPrefixes(myAttribute).toArray();
     }
 
-    @Nullable
     @Override
-    public LocalQuickFix[] getQuickFixes() {
+    public LocalQuickFix @Nullable [] getQuickFixes() {
       final XmlAttributeValue valueElement = myAttribute.getValueElement();
       if (valueElement != null) {
         return new LocalQuickFix[] {
@@ -143,9 +140,8 @@ public class XsltReferenceContributor {
   static class SchemaTypeProvider extends PsiReferenceProvider {
     static final PsiReferenceProvider INSTANCE = new SchemaTypeProvider();
 
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
       final SchemaTypeReference reference = SchemaTypeReference.create(element);
       return reference != null ? new PsiReference[] { reference } : PsiReference.EMPTY_ARRAY;
     }

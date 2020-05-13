@@ -34,13 +34,6 @@ public class DollarSignInNameInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "dollar.sign.in.name.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "dollar.sign.in.name.problem.descriptor");

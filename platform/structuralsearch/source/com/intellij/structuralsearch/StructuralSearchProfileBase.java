@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
@@ -49,7 +49,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
     element.accept(new PsiRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         if (DuplocatorUtil.isIgnoredNode(element)) {
           return;
@@ -127,8 +127,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return true;
   }
 
-  @NotNull
-  protected abstract String[] getVarPrefixes();
+  protected abstract String @NotNull [] getVarPrefixes();
 
   @NotNull
   @Override
@@ -141,9 +140,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         return new MySubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
       }
 
-      @NotNull
       @Override
-      public String[] getTypedVarPrefixes() {
+      public String @NotNull [] getTypedVarPrefixes() {
         return getVarPrefixes();
       }
 
@@ -245,7 +243,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       doVisitElement(element);
 
       if (isStringLiteral(element)) {
@@ -315,9 +313,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     private void initTopLevelElement(PsiElement element) {
       final CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
 
-      final PsiElement newElement = SkippingHandler.skipNodeIfNeccessary(element);
+      final PsiElement newElement = SkippingHandler.skipNodeIfNecessary(element);
 
-      if (element != newElement && newElement != null) {
+      if (element != newElement) {
         // way to support partial matching (ex. if ($condition$) )
         newElement.accept(this);
         pattern.setHandler(element, new LightTopLevelMatchingHandler(pattern.getHandler(element)));
@@ -370,7 +368,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
 
       final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(element);
@@ -397,10 +395,10 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
           !shouldIgnoreVarNode(element)) {
 
         PsiElement matchedElement = myGlobalVisitor.getElement();
-        PsiElement newElement = SkippingHandler.skipNodeIfNeccessary(matchedElement);
+        PsiElement newElement = SkippingHandler.skipNodeIfNecessary(matchedElement);
         while (newElement != matchedElement) {
           matchedElement = newElement;
-          newElement = SkippingHandler.skipNodeIfNeccessary(matchedElement);
+          newElement = SkippingHandler.skipNodeIfNecessary(matchedElement);
         }
 
         myGlobalVisitor.setResult(myGlobalVisitor.handleTypedElement(element, matchedElement));

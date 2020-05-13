@@ -17,16 +17,16 @@
 package com.intellij.facet.autodetecting;
 
 import com.intellij.facet.FacetConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 /**
  * @deprecated use {@link com.intellij.framework.detection.FrameworkDetector} instead
- *
- * @author nik
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public abstract class UnderlyingFacetSelector<T, U extends FacetConfiguration> {
 
   @Nullable

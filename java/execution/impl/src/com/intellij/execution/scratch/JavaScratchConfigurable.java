@@ -52,12 +52,12 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   public JavaScratchConfigurable(final Project project) {
     myMainClass = new LabeledComponent<>();
     myMainClass.setLabelLocation(BorderLayout.WEST);
-    myMainClass.setText("Main &class:");
+    myMainClass.setText(ExecutionBundle.message("main.class"));
     myMainClass.setComponent(new JTextField());
 
     myScratchPathField = new LabeledComponent<>();
     myScratchPathField.setLabelLocation(BorderLayout.WEST);
-    myScratchPathField.setText("&Path to scratch file:");
+    myScratchPathField.setText(ExecutionBundle.message("path.to.scratch.file"));
     myScratchPathField.setComponent(new TextFieldWithBrowseButton(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -77,7 +77,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myModule = new LabeledComponent<>();
     myModule.setLabelLocation(BorderLayout.WEST);
     myModule.setComponent(new ModuleDescriptionsComboBox());
-    myModule.setText("Use classpath of &module:");
+    myModule.setText(ExecutionBundle.message("use.classpath.of.module"));
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
 
     myCommonProgramParameters = new CommonJavaParametersPanel();

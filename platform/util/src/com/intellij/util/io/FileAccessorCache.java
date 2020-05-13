@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class FileAccessorCache<K, T> implements com.intellij.util.containers.hash.EqualityPolicy<K> {
+public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
   /*@GuardedBy("myCacheLock")*/ private final SLRUMap<K, Handle<T>> myCache;
   /*@GuardedBy("myCacheLock")*/ private final List<T> myElementsToBeDisposed = new ArrayList<>();
   private final Object myCacheLock = new Object();

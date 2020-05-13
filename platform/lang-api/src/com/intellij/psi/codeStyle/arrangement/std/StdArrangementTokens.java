@@ -90,7 +90,7 @@ public class StdArrangementTokens {
 
   private static StdArrangementSettingsToken compositeToken(@NotNull String id,
                                                             @NotNull StdArrangementTokenType type,
-                                                            @NotNull ArrangementSettingsToken... alternativeTokens)
+                                                            ArrangementSettingsToken @NotNull ... alternativeTokens)
   {
     StdArrangementSettingsToken result = CompositeArrangementToken.create(id, type, alternativeTokens);
     TOKENS_BY_ID.put(id, result);

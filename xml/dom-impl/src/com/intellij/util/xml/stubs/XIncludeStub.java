@@ -2,6 +2,7 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -19,7 +20,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
     }
   }
 
-  private static void processChildrenWithLocalName(DomElement parent, String localName, Processor<DomElement> processor) {
+  private static void processChildrenWithLocalName(DomElement parent, String localName, Processor<? super DomElement> processor) {
     parent.acceptChildren(element -> {
       if (element.getXmlElementName().equals(localName)) {
         processor.process(element);
@@ -81,12 +81,12 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
     if (StringUtil.isEmpty(myHref) || StringUtil.isEmpty(myXpointer)) {
       return null;
     }
-    Matcher matcher = JDOMXIncluder.XPOINTER_PATTERN.matcher(myXpointer);
+    Matcher matcher = JDOMUtil.XPOINTER_PATTERN.matcher(myXpointer);
     if (!matcher.matches()) {
       return null;
     }
     String group = matcher.group(1);
-    matcher = JDOMXIncluder.CHILDREN_PATTERN.matcher(group);
+    matcher = JDOMUtil.CHILDREN_PATTERN.matcher(group);
     if (!matcher.matches()) {
       return null;
     }

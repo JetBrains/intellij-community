@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.IconManager;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
@@ -24,6 +25,7 @@ public interface PlatformIcons {
   Icon ABSTRACT_CLASS_ICON = AllIcons.Nodes.AbstractClass;
   Icon ANNOTATION_TYPE_ICON = AllIcons.Nodes.Annotationtype;
   Icon ENUM_ICON = AllIcons.Nodes.Enum;
+  Icon RECORD_ICON = AllIcons.Nodes.Record;
   Icon INTERFACE_ICON = AllIcons.Nodes.Interface;
   Icon METHOD_ICON = AllIcons.Nodes.Method;
   Icon FUNCTION_ICON = AllIcons.Nodes.Function;
@@ -75,6 +77,10 @@ public interface PlatformIcons {
   Icon CHECK_ICON_SMALL = AllIcons.Actions.Checked;
   Icon CHECK_ICON_SMALL_SELECTED = AllIcons.Actions.Checked_selected;
 
+  /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
+  @SuppressWarnings("unused")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   Icon OPEN_EDIT_DIALOG_ICON = AllIcons.Actions.ShowViewer;
   Icon FLATTEN_PACKAGES_ICON = AllIcons.ObjectBrowser.FlattenPackages;
   Icon EDIT_IN_SECTION_ICON = AllIcons.Actions.Edit;

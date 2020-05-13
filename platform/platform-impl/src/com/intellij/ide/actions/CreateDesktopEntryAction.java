@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -40,7 +41,7 @@ import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 public class CreateDesktopEntryAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateDesktopEntryAction");
+  private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {
     return SystemInfo.isXWindow && !ExternalUpdateManager.isRoaming() && SystemInfo.hasXdgOpen();
@@ -71,7 +72,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
           String message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
           Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop entry created", message, NotificationType.INFORMATION),
+            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.desktop.entry.created"), message, NotificationType.INFORMATION),
             getProject());
         }
         catch (Exception e) {
@@ -101,7 +102,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     LOG.warn(e);
     final String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
     Notifications.Bus.notify(
-      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop entry creation failed", message, NotificationType.ERROR),
+      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.desktop.entry.creation.failed"), message, NotificationType.ERROR),
       project);
   }
 
@@ -128,7 +129,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
 
     String name = names.getFullProductNameWithEdition();
-    String comment = names.getMotto();
+    String comment = StringUtil.notNullize(names.getMotto(), name);
     String wmClass = AppUIUtil.getFrameClass();
     Map<String, String> vars = newHashMap(pair("$NAME$", name),
                                           pair("$SCRIPT$", execPath),

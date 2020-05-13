@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template;
 
@@ -27,9 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * @author mike
- */
 public class TemplateBuilderImpl implements TemplateBuilder {
   private final RangeMarker myContainerElement;
   private final Map<RangeMarker,Expression> myExpressions = new HashMap<>();
@@ -77,6 +74,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     ));
   }
 
+  @Override
   public void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt) {
     replaceElement(element, varName, expression, alwaysStopAt, false);
   }
@@ -101,6 +99,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myElements.add(key);
   }
 
+  @Override
   public void replaceElement (PsiElement element, String varName, String dependantVariableName, boolean alwaysStopAt) {
     final RangeMarker key = wrapElement(element);
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);

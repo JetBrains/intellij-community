@@ -4,9 +4,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 
-/**
-* @author nik
-*/
 @Tag("remote-server")
 public class RemoteServerState {
   @Attribute("name")

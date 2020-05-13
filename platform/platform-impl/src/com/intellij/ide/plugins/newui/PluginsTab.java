@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.MultiPanel;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -49,7 +50,7 @@ public abstract class PluginsTab {
       query = (String)data;
     }
     else if (data instanceof TagComponent) {
-      query = "/" + SearchQueryParser.getTagQuery(((TagComponent)data).getText());
+      query = SearchQueryParser.getTagQuery(((TagComponent)data).getText());
     }
     else {
       return;
@@ -218,7 +219,7 @@ public abstract class PluginsTab {
     editor.setOpaque(true);
     editor.setBackground(PluginManagerConfigurable.SEARCH_BG_COLOR);
 
-    String text = "Type / to see options";
+    String text = IdeBundle.message("plugin.manager.options.command");
 
     StatusText emptyText = mySearchTextField.getTextEditor().getEmptyText();
     emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ListPluginComponent.GRAY_COLOR));

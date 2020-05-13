@@ -55,7 +55,7 @@ class CutLineActionHandler extends EditorWriteActionHandler {
     int start;
     int end;
     if (myToLineStart) {
-      start = lineStartOffset;
+      start = caret.getLogicalPosition().column == 0 ? lineStartOffset - 1 : lineStartOffset;
       end = caretOffset;
     }
     else {

@@ -18,12 +18,6 @@ import javax.swing.*;
 
 public class Json5StandardComplianceInspection extends JsonStandardComplianceInspection {
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return JsonBundle.message("inspection.compliance5.name");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

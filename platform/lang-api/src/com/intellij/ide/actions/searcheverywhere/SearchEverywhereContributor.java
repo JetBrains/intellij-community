@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +19,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware {
+public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Disposable {
 
   ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
 
@@ -25,6 +27,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware {
   String getSearchProviderId();
 
   @NotNull
+  @Nls
   String getGroupName();
 
   @NotNull
@@ -119,4 +122,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware {
   default boolean isEmptyPatternSupported() {
     return false;
   }
+
+  @Override
+  default void dispose() {}
 }

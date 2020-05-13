@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.pyi;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.icons.AllIcons;
@@ -29,7 +28,7 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
   public static final Icon ICON = AllIcons.Gutter.Unique;
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     if (element instanceof PyFunction || element instanceof PyTargetExpression || element instanceof PyClass) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)element);
       if (pythonStub != null) {
@@ -56,7 +55,7 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
     final SmartPsiElementPointer<PsiElement> relatedElementPointer = pointerManager.createSmartPsiElementPointer(relatedElement);
     final String stubFileName = relatedElement.getContainingFile().getName();
     return new RelatedItemLineMarkerInfo<>(
-      element, element.getTextRange(), ICON, Pass.LINE_MARKERS,
+      element, element.getTextRange(), ICON,
       element1 -> itemTitle + " in " + stubFileName, (e, elt) -> {
         final PsiElement restoredRelatedElement = relatedElementPointer.getElement();
         if (restoredRelatedElement == null) {
@@ -69,6 +68,6 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
                               .createNavigatable(restoredRelatedElement.getProject(), virtualFile, offset)
                               .navigate(true);
         }
-      }, GutterIconRenderer.Alignment.RIGHT, GotoRelatedItem.createItems(Collections.singletonList(relatedElement)));
+      }, GutterIconRenderer.Alignment.RIGHT, ()->GotoRelatedItem.createItems(Collections.singletonList(relatedElement)));
   }
 }

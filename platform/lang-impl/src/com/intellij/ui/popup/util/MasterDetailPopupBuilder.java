@@ -2,6 +2,7 @@
 package com.intellij.ui.popup.util;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -10,6 +11,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
+import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
@@ -36,6 +39,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   private DetailView myDetailView;
   private JLabel myPathLabel;
   private JBPopup myPopup;
+  private SpeedSearch mySpeedSearch;
 
   private String myDimensionServiceKey = null;
   private boolean myAddDetailViewToEast = true;
@@ -58,7 +62,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           removeSelectedItems();
         }
-        else if (e.getModifiersEx() == 0) {
+        else if (e.getModifiersEx() == 0 && !mySpeedSearch.isHoldingFilter()) {
           myDelegate.handleMnemonic(e, myProject, myPopup);
         }
       }
@@ -225,8 +229,8 @@ public class MasterDetailPopupBuilder implements MasterController {
       setUseDimensionServiceForXYLocation(myDimensionServiceKey != null).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
-      setItemChoosenCallback(itemCallback);
-      //setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
+      setItemChoosenCallback(itemCallback).
+      setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
 
     if (myPopupTuner != null) {
       myPopupTuner.consume(builder);
@@ -267,6 +271,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     myPopup = builder.createPopup();
 
     builder.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
+    mySpeedSearch = ((ListWithFilter)builder.getPreferableFocusComponent()).getSpeedSearch();
 
     myPopup.addListener(new JBPopupListener() {
       @Override
@@ -276,7 +281,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     });
 
     if (myDoneRunnable != null) {
-      new AnAction("Done") {
+      new AnAction(IdeBundle.messagePointer("action.Anonymous.text.done")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myDoneRunnable.run();

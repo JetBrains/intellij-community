@@ -7,8 +7,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
 /**
@@ -16,13 +16,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
  */
 public final class GrClassReferenceType extends PsiClassType {
 
-  private final @NotNull GrReferenceElement myReferenceElement;
+  private final @NotNull GrCodeReferenceElement myReferenceElement;
 
-  public GrClassReferenceType(@NotNull GrReferenceElement referenceElement) {
+  public GrClassReferenceType(@NotNull GrCodeReferenceElement referenceElement) {
     this(referenceElement, LanguageLevel.JDK_1_5);
   }
 
-  public GrClassReferenceType(@NotNull GrReferenceElement referenceElement, @NotNull LanguageLevel languageLevel) {
+  private GrClassReferenceType(@NotNull GrCodeReferenceElement referenceElement, @NotNull LanguageLevel languageLevel) {
     super(languageLevel);
     myReferenceElement = referenceElement;
   }
@@ -48,8 +48,7 @@ public final class GrClassReferenceType extends PsiClassType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     return myReferenceElement.getTypeArguments();
   }
 
@@ -154,7 +153,8 @@ public final class GrClassReferenceType extends PsiClassType {
     return new GrClassReferenceType(myReferenceElement, languageLevel);
   }
 
-  public GrReferenceElement getReference() {
+  @NotNull
+  public GrCodeReferenceElement getReference() {
     return myReferenceElement;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,16 +25,15 @@ import java.util.*;
  * @author dsl
  */
 public final class ModuleCompilerUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.ModuleCompilerUtil");
+  private static final Logger LOG = Logger.getInstance(ModuleCompilerUtil.class);
   private ModuleCompilerUtil() { }
 
-  @NotNull
-  public static Module[] getDependencies(Module module) {
+  public static Module @NotNull [] getDependencies(Module module) {
     return ModuleRootManager.getInstance(module).getDependencies();
   }
 
   @NotNull
-  private static Graph<Module> createModuleGraph(@NotNull Module[] modules) {
+  private static Graph<Module> createModuleGraph(Module @NotNull [] modules) {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
       @NotNull
       @Override
@@ -61,7 +60,7 @@ public final class ModuleCompilerUtil {
     return chunks;
   }
 
-  @NotNull 
+  @NotNull
   private static <Node> List<Chunk<Node>> getSortedChunks(@NotNull Graph<Node> graph) {
     final Graph<Chunk<Node>> chunkGraph = toChunkGraph(graph);
     final List<Chunk<Node>> chunks = new ArrayList<>(chunkGraph.getNodes());
@@ -71,7 +70,7 @@ public final class ModuleCompilerUtil {
       return null;
     }
 
-    Collections.sort(chunks, builder.comparator());
+    chunks.sort(builder.comparator());
     return chunks;
   }
 
@@ -83,7 +82,7 @@ public final class ModuleCompilerUtil {
   public static void sortModules(final Project project, final List<? extends Module> modules) {
     ApplicationManager.getApplication().runReadAction(() -> {
       Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
-      Collections.sort(modules, comparator);
+      modules.sort(comparator);
     });
   }
 

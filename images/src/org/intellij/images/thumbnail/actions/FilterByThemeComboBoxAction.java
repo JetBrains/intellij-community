@@ -16,6 +16,7 @@
 
 package org.intellij.images.thumbnail.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -39,7 +40,7 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
             .allMatch(filter -> project != null && filter.isApplicableToProject(project));
         e.getPresentation().setVisible(view != null && hasApplicableExtension);
         ThemeFilter filter = view != null ? view.getFilter() : null;
-        e.getPresentation().setText(filter == null ? "All" : filter.getDisplayName());
+        e.getPresentation().setText(filter == null ? CommonBundle.message("action.text.all") : filter.getDisplayName());
     }
 
     @NotNull

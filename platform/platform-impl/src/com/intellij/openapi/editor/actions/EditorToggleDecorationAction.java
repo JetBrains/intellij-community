@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -24,7 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class EditorToggleDecorationAction extends ToggleAction implements DumbAware {
+public abstract class EditorToggleDecorationAction extends ToggleAction implements DumbAware, LightEditCompatible {
   @Override
   public final void setSelected(@NotNull AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);

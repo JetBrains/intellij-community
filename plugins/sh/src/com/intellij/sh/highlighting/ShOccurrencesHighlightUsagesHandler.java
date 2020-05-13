@@ -19,17 +19,17 @@ public class ShOccurrencesHighlightUsagesHandler extends HighlightUsagesHandlerB
   }
 
   @Override
-  public List<PsiElement> getTargets() {
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myFile);
   }
 
   @Override
-  protected void selectTargets(List<PsiElement> targets, Consumer<List<PsiElement>> selectionConsumer) {
+  protected void selectTargets(@NotNull List<? extends PsiElement> targets, @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
   @Override
-  public void computeUsages(List<PsiElement> targets) {
+  public void computeUsages(@NotNull List<? extends PsiElement> targets) {
     TextRange textRange = ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(myEditor);
     if (textRange != null) {
       CharSequence documentText = StringUtil.newBombedCharSequence(myEditor.getDocument().getImmutableCharSequence(), 3000);

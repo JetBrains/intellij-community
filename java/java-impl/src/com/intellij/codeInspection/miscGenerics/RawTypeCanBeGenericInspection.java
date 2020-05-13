@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -32,7 +33,7 @@ public class RawTypeCanBeGenericInspection extends AbstractBaseJavaLocalInspecti
           if (type != null) {
             final String typeText = type.getPresentableText();
             final String message =
-              InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", variable.getName(), typeText);
+              JavaBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", variable.getName(), typeText);
             final PsiElement beforeInitializer =
               PsiTreeUtil.skipWhitespacesAndCommentsBackward(variable.getInitializer());
             final ProblemDescriptor descriptor =
@@ -89,7 +90,7 @@ public class RawTypeCanBeGenericInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.family.quickfix");
+      return JavaBundle.message("inspection.raw.variable.type.can.be.generic.family.quickfix");
     }
 
     @Override

@@ -21,18 +21,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LogicalRoot;
-import com.intellij.util.LogicalRootsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author yole
  */
 public class JavaQualifiedNameProvider implements QualifiedNameProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.JavaQualifiedNameProvider");
+  private static final Logger LOG = Logger.getInstance(JavaQualifiedNameProvider.class);
 
   @Override
   @Nullable
@@ -133,12 +129,11 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   private static VirtualFile findFile(String fqn, Project project) {
-    List<LogicalRoot> lr = LogicalRootsManager.getLogicalRootsManager(project).getLogicalRoots();
-    for (LogicalRoot root : lr) {
-      VirtualFile vfr = root.getVirtualFile();
-      if (vfr == null) continue;
-      VirtualFile virtualFile = vfr.findFileByRelativePath(fqn);
-      if (virtualFile != null) return virtualFile;
+    for (VirtualFile root : ProjectRootManager.getInstance(project).getContentSourceRoots()) {
+      VirtualFile rel = root.findFileByRelativePath(fqn);
+      if (rel != null) {
+        return rel;
+      }
     }
     for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
       VirtualFile rel = root.findFileByRelativePath(fqn);

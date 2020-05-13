@@ -305,11 +305,6 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-19522
-  public void testCsvRegisterDialect() {
-    doMultiFileTest();
-  }
-
   // PY-20364
   public void testActualBasestringExpectedUnionStrUnicode() {
     doTest();
@@ -519,6 +514,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-26628
   public void testTypingProtocolsInheritorAgainstHashable() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-11977
+  public void testMetaclassInstanceMembersProvidedAndNoTypeCheckWarningWhenPassIntoMethodUseThisMembers() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 
   // PY-28720
@@ -906,19 +906,45 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-35235, PY-42281
+  public void testExpectedTypingLiteralReturnType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Literal\n" +
+                         "def foo() -> Literal[\"ok\"]:\n" +
+                         "    return \"ok\"")
+    );
+  }
+
+  // PY-33500
+  public void testImplicitGenericDunderCallCallOnTypedElement() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypeVar, Generic\n" +
+                         "\n" +
+                         "_T = TypeVar('_T')\n" +
+                         "\n" +
+                         "class Callback(Generic[_T]):\n" +
+                         "    def __call__(self, arg: _T):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "def foo(cb: Callback[int]):\n" +
+                         "    cb(<weak_warning descr=\"Expected type 'int' (matched generic type '_T'), got 'str' instead\">\"42\"</weak_warning>)")
+    );
+  }
+
   // PY-36008
-  public void testTypedDictDefinitionAlternativeSyntax() {
+  public void testTypedDictUsageAlternativeSyntax() {
     doTestByText("from typing import TypedDict\n" +
                  "\n" +
                  "Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)\n" +
-                 "movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, Union[str, int]]' instead\">{'name': 'Blade Runner', 'lo': 1234}</warning> # type: Movie\n" +
-                 "movie['year'] = '1984'\n");
+                 "movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, Union[str, int]]' instead\">{'name': 'Blade Runner', 'lo': 1234}</warning> # type: Movie\n");
   }
 
   // PY-36008
   public void testTypedDictAsArgument() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
+      LanguageLevel.getLatest(),
       () -> doTestByText("from typing import TypedDict\n" +
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
@@ -932,7 +958,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-36008
   public void testTypedDictSubscriptionAsArgument() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
+      LanguageLevel.getLatest(),
       () -> doTestByText("from typing import TypedDict\n" +
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
@@ -948,24 +974,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-36008
-  public void testTypedDictSubscriptionAssignment() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("from typing import TypedDict\n" +
-                         "class X(TypedDict):\n" +
-                         "    x: int\n" +
-                         "f = X(x=12)\n" +
-                         "f['x'] = 13\n" +
-                         "f['x'] = <weak_warning descr=\"Expected type 'int' (matched generic type '_VT'), got 'str' instead\">'14'</weak_warning>\n" +
-                         "g: X = {'x': 12}\n" +
-                         "g['x'] = 13\n" +
-                         "g['x'] = <weak_warning descr=\"Expected type 'int' (matched generic type '_VT'), got 'str' instead\">'14'</weak_warning>"));
-  }
-
-  // PY-36008
   public void testTypedDictAssignment() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
+      LanguageLevel.getLatest(),
       () -> doTestByText("from typing import TypedDict\n" +
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
@@ -978,21 +989,143 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-36008
+  public void testTypedDictAlternativeSyntaxAssignment() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "Movie = TypedDict('Movie', {'name': str, 'year': int})\n" +
+                         "m1: Movie = dict(name='Alien', year=1979)\n" +
+                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
+                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m5 = Movie(name='Garden State', year=2004)"));
+  }
+
+  // PY-36008
   public void testTypedDictDefinition() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
+      LanguageLevel.getLatest(),
       () -> doTestByText("from typing import TypedDict\n" +
                          "class Employee(TypedDict):\n" +
                          "    name: str\n" +
                          "    id: int\n" +
                          "class Employee2(Employee, total=False):\n" +
                          "    director: str\n" +
-                         "em = Employee2(name='John Dorian', id=1234, <warning descr=\"Expected type 'str', got 'int' instead\">director=3</warning>)\n" +
-                         "Movie = TypedDict(<warning descr=\"Expected type 'str', got 'int' instead\">3</warning>, <warning descr=\"Expected type 'dict', got 'List[int]' instead\">[1, 2, 3]</warning>)"));
+                         "em = Employee2(name='John Dorian', id=1234, director='3')\n" +
+                         "em2 = Employee2(name='John Dorian', id=1234, <warning descr=\"Expected type 'str', got 'int' instead\">director=3</warning>)"));
+  }
+
+  // PY-36008
+  public void testTypedDictDefinitionAlternativeSyntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "Movie = TypedDict(<warning descr=\"Expected type 'str', got 'int' instead\">3</warning>, <warning descr=\"Expected type 'Dict[str, Any]', got 'List[int]' instead\">[1, 2, 3]</warning>)\n" +
+                         "Movie = TypedDict('Movie', {})"));
   }
 
   // PY-36008
   public void testTypedDictConsistency() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-36008
+  public void testTypedDictKeyValueRead() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "\n" +
+                         "Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)\n" +
+                         "class Movie2(TypedDict, total=False):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "movie = Movie()\n" +
+                         "movie2 = Movie2()\n" +
+                         "s: str = <warning descr=\"Expected type 'str', got 'int' instead\">movie['year']</warning>\n" +
+                         "s2: str = <warning descr=\"Expected type 'str', got 'int' instead\">movie2['year']</warning>\n"));
+  }
+
+  // PY-38873
+  public void testTypedDictWithListField() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict, List\n" +
+                         "\n" +
+                         "Movie = TypedDict('Movie', {'address': List[str]}, total=False)\n" +
+                         "class Movie2(TypedDict, total=False):\n" +
+                         "    address: List[str]\n" +
+                         "movie = Movie()\n" +
+                         "movie2 = Movie2()\n" +
+                         "s: str = movie['address'][0]\n" +
+                         "s: str = movie2['address'][0]\n" +
+                         "s: str = movie['address'][<warning descr=\"Unexpected type(s):(str)Possible types:(int)(slice)\">'i'</warning>]\n" +
+                         "s2: str = movie2['address'][<warning descr=\"Unexpected type(s):(str)Possible types:(int)(slice)\">'i'</warning>]\n"));
+  }
+
+  // PY-36008
+  public void testIncorrectTotalityValue() {
+    doTestByText("from typing import TypedDict\n" +
+                 "Movie = TypedDict(\"Movie\", {}, <warning descr=\"Expected type 'bool', got 'int' instead\">total=2</warning>)");
+  }
+
+  // PY-33548
+  public void testTypeVarsChainBeforeNonTypeVarSubstitution() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText(
+        "from typing import TypeVar, Mapping\n" +
+        "\n" +
+        "MyKT = TypeVar(\"MyKT\")\n" +
+        "MyVT = TypeVar(\"MyVT\")\n" +
+        "\n" +
+        "class MyMapping(Mapping[MyKT, MyVT]):\n" +
+        "    pass\n" +
+        "\n" +
+        "d: MyMapping[str, str] = undefined1\n" +
+        "d.get(undefined2)\n" +
+        "d.get(\"str\")\n" +
+        "d.get(<weak_warning descr=\"Expected type 'str' (matched generic type '_KT'), got 'int' instead\">1</weak_warning>)"
+      )
+    );
+  }
+
+  // PY-38412
+  public void testTypedDictInStub() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+  }
+
+  // PY-28364
+  public void testDefinitionAgainstCallableInstance() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("class B:\n" +
+                         "    def __call__(self, *args, **kwargs):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "def some_fn(arg: B):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "some_fn(<warning descr=\"Expected type 'B', got 'Type[B]' instead\">B</warning>)")
+    );
+  }
+
+  // PY-29993
+  public void testCallableInstanceAgainstOtherCallableInstance() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("class MyCls:\n" +
+                         "    def __call__(self):\n" +
+                         "        return True\n" +
+                         "\n" +
+                         "class DifferentCls:\n" +
+                         "    def __call__(self):\n" +
+                         "        return True\n" +
+                         "\n" +
+                         "def foo(arg: MyCls):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "foo(MyCls())\n" +
+                         "foo(<warning descr=\"Expected type 'MyCls', got 'DifferentCls' instead\">DifferentCls()</warning>)")
+    );
   }
 }

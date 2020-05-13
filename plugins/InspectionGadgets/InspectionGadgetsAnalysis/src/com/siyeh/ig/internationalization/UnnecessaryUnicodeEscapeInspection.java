@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
@@ -16,7 +17,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +31,6 @@ import java.nio.charset.CodingErrorAction;
  * @author Bas Leijdekkers
  */
 public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.unicode.escape.display.name");
-  }
 
   @NotNull
   @Override
@@ -71,18 +65,18 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     @Override
     public String getName() {
       if (c == '\n') {
-        return "Replace with line feed character";
+        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
       }
       else if (c == '\t') {
-        return "Replace with tab character";
+        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
       }
-      return "Replace with '" + c + "'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", c);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with character";
+      return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.family.name");
     }
 
     @Override
@@ -99,7 +93,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file) || !file.isPhysical()) {
         return;
@@ -142,6 +136,11 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
             StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
+          if (d == '\uFFFD') {
+            // this character is used as a replacement when a unicode character can't be displayed: �
+            // replacing the escape with the character may cause confusion, so ignore it.
+            continue;
+          }
           final int type = Character.getType(d);
           if (type == Character.CONTROL && d != '\n' && d != '\t') {
             continue;

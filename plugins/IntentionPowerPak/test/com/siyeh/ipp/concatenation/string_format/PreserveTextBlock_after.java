@@ -1,8 +1,8 @@
 class C {
     //keep me
-    String s = String.format("""
-              the text
+    String s = """
+              the text\s
              block
               line2
-            %d%d t<caret>o be""", 1, 2);
+            %d%d to be""".formatted(1, 2)<caret>;
 }

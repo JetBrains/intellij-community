@@ -14,14 +14,13 @@ import java.util.List;
 public class ProcessOutput {
   private final StringBuilder myStdoutBuilder = new StringBuilder();
   private final StringBuilder myStderrBuilder = new StringBuilder();
-  @Nullable private Integer myExitCode;
+  private @Nullable Integer myExitCode;
   private boolean myTimeout;
   private boolean myCancelled;
 
-  public ProcessOutput() {
-  }
+  public ProcessOutput() { }
 
-  public ProcessOutput(final int exitCode) {
+  public ProcessOutput(int exitCode) {
     myExitCode = exitCode;
   }
 
@@ -63,25 +62,30 @@ public class ProcessOutput {
     return splitLines(getStderr(), excludeEmptyLines);
   }
 
-  @NotNull
   private static List<String> splitLines(String s, boolean excludeEmptyLines) {
     String converted = StringUtil.convertLineSeparators(s);
     return StringUtil.split(converted, "\n", true, excludeEmptyLines);
   }
 
   /**
-   * If exit code is nonzero or the process timed out, logs stderr and exit code and returns false,
-   * else just returns true.
-   *
-   * @param logger where to put error information
-   * @return true iff exit code is zero
+   * If exit code is nonzero or the process timed out, logs exit code and process output (if any) and returns {@code false},
+   * otherwise just returns {@code true}.
    */
-  public boolean checkSuccess(@NotNull final Logger logger) {
-    if (getExitCode() != 0 || isTimeout()) {
-      logger.info(getStderr() + (isTimeout()? "\nTimed out" : "\nExit code " + getExitCode()));
-      return false;
+  public boolean checkSuccess(@NotNull Logger logger) {
+    int ec = getExitCode();
+    if (ec == 0 && !isTimeout()) {
+      return true;
     }
-    return true;
+
+    logger.info(isTimeout() ? "Timed out" : "Exit code " + ec);
+
+    String output = getStderr();
+    if (output.isEmpty()) output = getStdout();
+    if (!output.isEmpty()) {
+      logger.info(output);
+    }
+
+    return false;
   }
 
   public void setExitCode(int exitCode) {
@@ -94,8 +98,7 @@ public class ProcessOutput {
   }
 
   /**
-   * @return false if exit code wasn't set,
-   * for example, when our CapturingProcessHandler.runProcess() is interrupted)
+   * Returns {@code false} if exit code wasn't set (e.g. when {@code CapturingProcessHandler.runProcess()} execution was interrupted).
    */
   public boolean isExitCodeSet() {
     return myExitCode != null;

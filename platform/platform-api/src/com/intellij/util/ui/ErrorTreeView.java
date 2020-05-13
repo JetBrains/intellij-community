@@ -31,7 +31,7 @@ public interface ErrorTreeView extends Disposable {
    * If file is not null, allows to navigate to this file, line, column
    */
   void addMessage(int type,
-                  @NotNull String[] text,
+                  String @NotNull [] text,
                   @Nullable VirtualFile file,
                   int line,
                   int column,
@@ -41,7 +41,7 @@ public interface ErrorTreeView extends Disposable {
    * Allows adding messages related to other files under 'underFileGroup'
    */
   void addMessage(int type,
-                  @NotNull String[] text,
+                  String @NotNull [] text,
                   @Nullable VirtualFile underFileGroup,
                   @Nullable VirtualFile file,
                   int line,
@@ -52,7 +52,7 @@ public interface ErrorTreeView extends Disposable {
    * add message, allowing navigation via custom Navigatable object
    */
   void addMessage(int type,
-                  @NotNull String[] text,
+                  String @NotNull [] text,
                   @Nullable String groupName,
                   @NotNull Navigatable navigatable,
                   @Nullable String exportTextPrefix,

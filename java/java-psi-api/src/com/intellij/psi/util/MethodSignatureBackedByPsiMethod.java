@@ -28,8 +28,8 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   protected MethodSignatureBackedByPsiMethod(@NotNull PsiMethod method,
                                              @NotNull PsiSubstitutor substitutor,
                                              boolean isRaw,
-                                             @NotNull PsiType[] parameterTypes,
-                                             @NotNull PsiTypeParameter[] methodTypeParameters) {
+                                             PsiType @NotNull [] parameterTypes,
+                                             PsiTypeParameter @NotNull [] methodTypeParameters) {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
     myMethod = method;

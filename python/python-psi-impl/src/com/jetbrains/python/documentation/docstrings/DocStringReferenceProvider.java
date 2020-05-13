@@ -22,10 +22,7 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference.ReferenceType;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.toolbox.Substring;
@@ -38,9 +35,13 @@ import java.util.*;
  * @author yole
  */
 public class DocStringReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+  public boolean acceptsTarget(@NotNull PsiElement target) {
+    return target instanceof PyElement;
+  }
+
+  @Override
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     if (element == DocStringUtil.getParentDefinitionDocString(element)) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
       final List<TextRange> ranges = expr.getStringValueTextRanges();

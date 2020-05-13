@@ -49,9 +49,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author yole
- */
 public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void testCheckCanceledHasStackFrame() {
     ProgressIndicator pib = new ProgressIndicatorBase();
@@ -724,7 +721,24 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
   }
 
-  public void test_runInReadActionWithWriteActionPriority_DoesNotHang() throws Exception {
+  public void test_runUnderDisposeAwareIndicator_DoesNotHang_ByCancelThreadProgress() {
+    final EmptyProgressIndicator threadIndicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
+    ProgressIndicatorUtils.awaitWithCheckCanceled(
+      ApplicationManager.getApplication().executeOnPooledThread(
+        () -> ProgressManager.getInstance().executeProcessUnderProgress(
+          () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(
+            getTestRootDisposable(),
+            () -> {
+              threadIndicator.cancel();
+              ProgressManager.checkCanceled();
+              fail();
+            }),
+          threadIndicator
+        )
+      ));
+  }
+
+  public void test_runInReadActionWithWriteActionPriority_DoesNotHang() {
     AtomicBoolean finished = new AtomicBoolean();
     Runnable action = () -> {
       TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
@@ -762,16 +776,9 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     waitForFutures(futures);
   }
 
-  private static void waitForFutures(List<? extends Future<?>> futures)
-    throws InterruptedException, ExecutionException, TimeoutException {
-    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
-    while (!t.timedOut() && !futures.stream().allMatch(Future::isDone)) {
-      UIUtil.dispatchAllInvocationEvents();
-      TimeoutUtil.sleep(10);
-    }
-
+  private static void waitForFutures(List<? extends Future<?>> futures) {
     for (Future<?> future : futures) {
-      future.get(1, TimeUnit.SECONDS);
+      PlatformTestUtil.waitForFuture(future, 10_000);
     }
   }
 
@@ -855,5 +862,49 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
     catch (ProcessCanceledException ignored) {
     }
+  }
+
+  public void testEmptyIndicatorMustConformToAtLeastSomeSimpleLifecycleConstrains() {
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    for (int i = 0; i < 2; i++) {
+      assertThrows(IllegalStateException.class, indicator::stop);
+      indicator.start();
+      assertThrows(IllegalStateException.class, indicator::start);
+      indicator.stop();
+      assertThrows(IllegalStateException.class, indicator::stop);
+    }
+  }
+
+  public void testProgressIndicatorsAttachToStartedProgress() {
+    ProgressIndicatorEx progressIndicator = new ProgressIndicatorBase();
+    progressIndicator.start();
+    progressIndicator.setText("Progress 0/2");
+
+    // attach
+    ProgressIndicatorEx progressIndicatorWatcher1 = new ProgressIndicatorBase();
+    ProgressIndicatorEx progressIndicatorGroup = new ProgressIndicatorBase();
+    progressIndicatorGroup.addStateDelegate(progressIndicatorWatcher1);
+
+    progressIndicator.addStateDelegate(progressIndicatorGroup);
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+
+    progressIndicator.setText("Progress 1/2");
+
+    // attach
+    ProgressIndicatorEx progressIndicatorWatcher2 = new ProgressIndicatorBase();
+    progressIndicatorGroup.addStateDelegate(progressIndicatorWatcher2);
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher2.getText());
+
+    progressIndicator.setText("Progress 2/2");
+    progressIndicator.stop();
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher2.getText());
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -12,11 +13,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.ExpressionConverter;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.ChangedMethodCallInfo;
 import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.refactoring.introduceParameter.InternalUsageInfo;
@@ -92,11 +92,10 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return new PsiElement[]{toSearchFor != null ? toSearchFor : toReplaceIn};
       }
 
@@ -125,7 +124,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(containingClass, usageInfo.getElement(), false)) {
-              conflicts.putValue(expression, RefactoringBundle
+              conflicts.putValue(expression, JavaRefactoringBundle
                 .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class", CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
             }
@@ -153,9 +152,8 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       mySettings.replaceFieldsWithGetters() != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, myProject);
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     if (!mySettings.generateDelegate() && toSearchFor != null) {
@@ -250,7 +248,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     processExternalUsages(usages, mySettings, myParameterInitializer.getExpression());
     processClosure(usages, mySettings);
 
@@ -290,7 +288,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final StringPartInfo info = settings.getStringPartInfo();
     if (info != null) {
       final GrExpression expr = info.replaceLiteralWithConcatenation(settings.getName());
-      final Editor editor = PsiUtilBase.findEditor(expr);
+      final Editor editor = PsiEditorUtil.findEditor(expr);
       if (editor != null) {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());
@@ -582,7 +580,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   @NotNull
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
+    return JavaRefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 
 

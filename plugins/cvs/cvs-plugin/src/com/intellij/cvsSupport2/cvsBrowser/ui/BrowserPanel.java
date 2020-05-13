@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsBrowser.ui;
 
 import com.intellij.CvsBundle;
@@ -79,7 +79,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     result.add(new MyCheckoutAction());
     result.add(new MyHistoryAction());
     result.add(new MyAnnotateAction());
-    result.add(new BrowseChangesAction());
+    result.add(new BrowseCommittedChangesAction());
     return result;
   }
 
@@ -105,7 +105,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class MyCheckoutAction extends AnAction implements DumbAware {
     MyCheckoutAction() {
-      super(CvsBundle.message("operation.name.check.out"), null, AllIcons.Actions.CheckOut);
+      super(CvsBundle.messagePointer("operation.name.check.out"), AllIcons.Actions.CheckOut);
     }
 
     @Override
@@ -147,8 +147,8 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class MyHistoryAction extends AnAction implements DumbAware {
     MyHistoryAction() {
-      super(CvsBundle.message("operation.name.show.file.history"),
-            CvsBundle.message("operation.name.show.file.history.description"), AllIcons.Vcs.History);
+      super(CvsBundle.messagePointer("operation.name.show.file.history"),
+            CvsBundle.messagePointer("operation.name.show.file.history.description"), AllIcons.Vcs.History);
     }
 
     @Override
@@ -177,7 +177,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class MyAnnotateAction extends AnAction implements DumbAware {
     MyAnnotateAction() {
-      super(CvsBundle.message("operation.name.annotate"), null, AllIcons.Actions.Annotate);
+      super(CvsBundle.messagePointer("operation.name.annotate"), AllIcons.Actions.Annotate);
     }
 
     @Override
@@ -199,7 +199,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       try {
         final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
         final FileAnnotation annotation = vcs
-            .createAnnotation(vcsVirtualFile, vcsVirtualFile.getRevision(), myCvsRootConfiguration);
+          .createAnnotation(vcsVirtualFile, vcsVirtualFile.getRevision(), myCvsRootConfiguration);
         AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, vcsVirtualFile, vcs);
       }
       catch (VcsException e1) {
@@ -208,20 +208,21 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class BrowseChangesAction extends AnAction implements DumbAware {
-    BrowseChangesAction() {
-      super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.Preview);
+  private class BrowseCommittedChangesAction extends AnAction implements DumbAware {
+    BrowseCommittedChangesAction() {
+      super(VcsBundle.messagePointer("browse.changes.action"), () -> "", AllIcons.Actions.Preview);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       CvsElement[] currentSelection = myTree.getCurrentSelection();
       assert currentSelection.length == 1;
-      final String moduleName = currentSelection [0].getElementPath();
+      final String moduleName = currentSelection[0].getElementPath();
       final CvsRepositoryLocation location = new CvsRepositoryLocation(null, myCvsRootConfiguration, moduleName);
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(CvsVcs2.getInstance(myProject).getCommittedChangesProvider(),
-                                                                  location,
-                                                                  VcsBundle.message("browse.changes.scope", moduleName), BrowserPanel.this);
+      AbstractVcsHelper.getInstance(myProject).showCommittedChangesBrowser(
+        CvsVcs2.getInstance(myProject).getCommittedChangesProvider(), location, VcsBundle.message("browse.changes.scope", moduleName),
+        BrowserPanel.this
+      );
     }
 
     @Override

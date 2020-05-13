@@ -24,8 +24,6 @@ import org.jetbrains.jps.model.JpsElement;
  * @see JpsCompositePackagingElement
  * @see JpsFileCopyPackagingElement
  * @see JpsDirectoryCopyPackagingElement
- *
- * @author nik
  */
 public interface JpsPackagingElement extends JpsElement {
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -220,8 +220,7 @@ public class Patch {
     File toDir = toBaseDir(rootDir);
     boolean checkWarnings = true;
     while (checkWarnings) {
-      // always collect files and folders - to avoid cases such as IDEA-152249
-      files = Utils.collectRelativePaths(toDir);
+      files = Utils.collectRelativePaths(toDir.toPath());
       checkWarnings = false;
       for (String file : files) {
         String warning = myWarnings.get(file);
@@ -416,8 +415,7 @@ public class Patch {
 
   public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize) throws IOException {
     Map<String, Long> result = new LinkedHashMap<>();
-    //always collect files and folders to avoid cases such as IDEA-152249
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir);
+    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir.toPath());
     for (String each : paths) {
       if (!ignoredFiles.contains(each)) {
         result.put(each, digestFile(new File(dir, each), normalize));

@@ -37,7 +37,7 @@ import java.util.List;
  * @author yole
  */
 public class CustomCreateProperty extends Property<RadComponent, Boolean> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty");
+  private static final Logger LOG = Logger.getInstance(CustomCreateProperty.class);
 
   public static CustomCreateProperty getInstance(Project project) {
     return ServiceManager.getService(project, CustomCreateProperty.class);

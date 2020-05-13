@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -57,19 +57,21 @@ import java.util.function.Supplier;
  * @author Maxim.Mossienko
  */
 public class UIUtil {
-  private static final String MODIFY_EDITOR_CONTENT = SSRBundle.message("modify.editor.content.command.name");
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
   public static final NotificationGroup SSR_NOTIFICATION_GROUP =
-    new NotificationGroup(SSRBundle.message("structural.search.title"), NotificationDisplayType.STICKY_BALLOON, true, ToolWindowId.FIND);
+    new NotificationGroup("Structural Search", NotificationDisplayType.STICKY_BALLOON, true, ToolWindowId.FIND, null,
+                          SSRBundle.message("structural.search.title"), null);
 
   @NonNls public static final String TEXT = "TEXT";
   @NonNls public static final String TEXT_HIERARCHY = "TEXT HIERARCHY";
   @NonNls public static final String REFERENCE = "REFERENCE";
   @NonNls public static final String TYPE = "TYPE";
+  @NonNls public static final String TYPE_REGEX = "TYPE REGEX";
   @NonNls public static final String EXPECTED_TYPE = "EXPECTED TYPE";
   @NonNls public static final String MINIMUM_ZERO = "MINIMUM ZERO";
   @NonNls public static final String MAXIMUM_UNLIMITED = "MAXIMUM UNLIMITED";
+  @NonNls public static final String CONTEXT = "CONTEXT";
 
   private UIUtil() {
   }
@@ -108,14 +110,14 @@ public class UIUtil {
   public static void setContent(@NotNull final Editor editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
-    WriteCommandAction.runWriteCommandAction(editor.getProject(), MODIFY_EDITOR_CONTENT, SS_GROUP,
+    WriteCommandAction.runWriteCommandAction(editor.getProject(), SSRBundle.message("modify.editor.content.command.name"), SS_GROUP,
                                              () -> document.replaceString(0, document.getTextLength(), value));
   }
 
   public static void setContent(@NotNull EditorTextField editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
-    WriteCommandAction.runWriteCommandAction(editor.getProject(), MODIFY_EDITOR_CONTENT, SS_GROUP,
+    WriteCommandAction.runWriteCommandAction(editor.getProject(), SSRBundle.message("modify.editor.content.command.name"), SS_GROUP,
                                              () -> document.replaceString(0, document.getTextLength(), value));
   }
 

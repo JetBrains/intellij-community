@@ -22,10 +22,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +82,7 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
   }
 
   protected void showChangesBetweenRevisions(@NotNull final FilePath path, @NotNull final T older, @Nullable final T newer) {
-    new CollectChangesTask("Comparing revisions...") {
+    new CollectChangesTask(VcsBundle.message("file.history.diff.handler.comparing.process")) {
 
       @NotNull
       @Override
@@ -97,7 +99,7 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
   }
 
   protected void showAffectedChanges(@NotNull final FilePath path, @NotNull final T rev) {
-    new CollectChangesTask("Collecting affected changes...") {
+    new CollectChangesTask(VcsBundle.message("file.history.diff.handler.collecting.affected.process")) {
 
       @NotNull
       @Override
@@ -125,34 +127,38 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
   @NotNull
   protected abstract String getPresentableName(@NotNull T revision);
 
-  protected void showChangesDialog(@NotNull String title, @NotNull List<? extends Change> changes) {
+  protected void showChangesDialog(@NotNull @Nls String title, @NotNull List<? extends Change> changes) {
     VcsDiffUtil.showChangesDialog(myProject, title, changes);
   }
 
-  protected void showError(@NotNull VcsException e, @NotNull String logMessage) {
+  protected void showError(@NotNull VcsException e, @NotNull @Nls String logMessage) {
     LOG.info(logMessage, e);
     VcsBalloonProblemNotifier.showOverVersionControlView(myProject, e.getMessage(), MessageType.ERROR);
   }
 
+  @Nls
   @NotNull
   protected String getChangesBetweenRevisionsDialogTitle(@NotNull final FilePath path, @NotNull final T rev1, @Nullable final T rev2) {
     String rev1Title = getPresentableName(rev1);
-
-    return rev2 != null
-           ? String.format("Difference between %s and %s in %s", rev1Title, getPresentableName(rev2), path.getName())
-           : String.format("Difference between %s and local version in %s", rev1Title, path.getName());
+    if (rev2 == null) {
+      return VcsBundle.message("file.history.diff.handler.paths.diff.with.local.title", rev1Title, path.getName());
+    }
+    
+    String rev2Title = getPresentableName(rev2);
+    return VcsBundle.message("file.history.diff.handler.paths.diff.title", rev1Title, rev2Title, path.getName());
   }
 
+  @Nls
   @NotNull
   protected String getAffectedChangesDialogTitle(@NotNull final FilePath path, @NotNull final T rev) {
-    return String.format("Initial commit %s in %s", getPresentableName(rev), path.getName());
+    return VcsBundle.message("file.history.diff.handler.affected.changes.title", getPresentableName(rev), path.getName());
   }
 
   protected abstract class CollectChangesTask extends Task.Backgroundable {
 
     private List<Change> myChanges;
 
-    public CollectChangesTask(@NotNull String title) {
+    public CollectChangesTask(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
       super(BaseDiffFromHistoryHandler.this.myProject, title);
     }
 
@@ -162,13 +168,14 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
         myChanges = getChanges();
       }
       catch (VcsException e) {
-        showError(e, "Error during task: " + getDialogTitle());
+        showError(e, VcsBundle.message("file.history.diff.handler.process.error", getDialogTitle()));
       }
     }
 
     @NotNull
     public abstract List<Change> getChanges() throws VcsException;
 
+    @Nls
     @NotNull
     public abstract String getDialogTitle();
 

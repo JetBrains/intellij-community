@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.mock.MockSmartPointerManager;
@@ -151,6 +151,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharClasses70() throws IOException { doCodeTest("[&&&&a]"); }
   public void testCharClasses71() throws IOException { doCodeTest("[a-\\Qz\\E]"); }
   public void testCharClasses72() throws IOException { doCodeTest("([\\^])"); }
+  public void testCharClasses73() throws IOException { doCodeTest("[i-[:]]*"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }

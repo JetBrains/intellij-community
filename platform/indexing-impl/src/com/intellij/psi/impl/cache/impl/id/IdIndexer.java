@@ -5,7 +5,11 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 
 /**
+ * Id index is used in the reference searcher and other API that require "plain text" search by the identifier.
+ * Please note that for "find in path" search usually  {@link com.intellij.find.ngrams.TrigramIndex} is used instead
+ * 
  * @author traff
+ * @see IdIndex
  */
 public interface IdIndexer extends DataIndexer<IdIndexEntry, Integer, FileContent> {
   default int getVersion() {

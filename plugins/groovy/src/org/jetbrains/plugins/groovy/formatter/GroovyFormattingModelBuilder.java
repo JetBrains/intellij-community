@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.formatter;
 
@@ -49,7 +49,7 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     if (customSettings.USE_FLYING_GEESE_BRACES) {
       element.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (GeeseUtil.isClosureRBrace(element)) {
             GeeseUtil.calculateRBraceAlignment(element, alignments);
           }
@@ -59,7 +59,14 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
         }
       });
     }
-    final GroovyBlock block = new GroovyBlock(astNode, Indent.getAbsoluteNoneIndent(), null, new FormattingContext(groovySettings, alignments, customSettings, false));
+
+    final GroovyBlock block = new GroovyBlock(
+      astNode,
+      Indent.getAbsoluteNoneIndent(),
+      null,
+      new FormattingContext(groovySettings, alignments, customSettings, false, false)
+    );
+
     if (Registry.is("groovy.document.based.formatting")) {
       return new DocumentBasedFormattingModel(block, settings, containingFile);
     }

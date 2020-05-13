@@ -26,9 +26,8 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
-  @NotNull
   @Override
-  public PsiElement[] getAnonymousElements(@NotNull PsiElement parent) {
+  public PsiElement @NotNull [] getAnonymousElements(@NotNull PsiElement parent) {
     if (suite(parent)) {
       if (parent instanceof PsiCompiledElement) {
         parent = parent.getNavigationElement();

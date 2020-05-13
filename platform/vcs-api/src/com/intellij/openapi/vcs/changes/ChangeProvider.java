@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +12,7 @@ import java.util.List;
 /**
  * The provider of change information (from the point of view of VCS).
  */
-public interface ChangeProvider extends VcsProviderMarker {
+public interface ChangeProvider {
   /**
    * <p>Get changes from point of view of VCS. The vcs plugin should invoke
    * methods on the {@code builder} object to report how changes in dirtyScope
@@ -56,8 +41,11 @@ public interface ChangeProvider extends VcsProviderMarker {
   boolean isModifiedDocumentTrackingRequired();
 
   /**
-   * performs working copy "cleanup"
-   * @param files - locked directories
+   * Accepts files for which vcs operations are temporarily blocked and tries to "cleanup" them - make vcs operations available again.
+   * Such files could be reported using {@link ChangelistBuilder#processLockedFolder(VirtualFile)}.
+   * <p>
+   * For instance, for Subversion this method is used to perform "svn cleanup" on corresponding locked working copy directories.
    */
-  void doCleanup(final List<VirtualFile> files);
+  default void doCleanup(@NotNull List<VirtualFile> files) {
+  }
 }

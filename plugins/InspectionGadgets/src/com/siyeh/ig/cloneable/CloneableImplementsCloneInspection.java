@@ -50,12 +50,6 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("cloneable.class.without.clone.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("cloneable.class.without.clone.problem.descriptor");
   }
@@ -125,7 +119,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       methodText.append("{\nreturn (").append(element.getText()).append(") super.clone();\n").append("}");
       final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(methodText.toString(), element);
       final PsiElement newElement = parent.add(method);
-      if (isOnTheFly()) {
+      if (isOnTheFly() && newElement.isPhysical()) {
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor != null) {
           GenerateMembersUtil.positionCaret(editor, newElement, true);

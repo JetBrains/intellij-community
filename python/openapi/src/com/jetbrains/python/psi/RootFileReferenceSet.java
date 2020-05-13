@@ -42,7 +42,7 @@ public class RootFileReferenceSet extends FileReferenceSet {
                               PsiReferenceProvider provider,
                               boolean caseSensitive,
                               boolean endingSlashNotAllowed,
-                              @Nullable FileType[] suitableFileTypes) {
+                              FileType @Nullable [] suitableFileTypes) {
     super(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes);
   }
 

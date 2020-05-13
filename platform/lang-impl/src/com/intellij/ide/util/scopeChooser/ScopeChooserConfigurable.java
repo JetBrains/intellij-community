@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -134,7 +135,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       final String name = scopeConfigurable.getDisplayName();
       if (predefinedScopes.contains(name)) {
         selectNodeInTree(node);
-        throw new ConfigurationException("Scope name equals to predefined one", ProjectBundle.message("rename.scope.title"));
+        throw new ConfigurationException(LangBundle.message("dialog.message.scope.name.equals.to.predefined.one"), ProjectBundle.message("rename.scope.title"));
       }
     }
   }
@@ -265,7 +266,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   protected
   @Nullable
   String getEmptySelectionString() {
-    return "Select a scope to view or edit its details here";
+    return IdeBundle.message("scope.chooser.select.scope.text");
   }
 
   private String createUniqueName() {
@@ -349,8 +350,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
 
     @Override
-    @NotNull
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (myChildren == null) {
         myChildren = new AnAction[2];
         myChildren[0] = new DumbAwareAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
@@ -463,8 +463,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private class MySaveAsAction extends AnAction {
     MySaveAsAction() {
-      super(ExecutionBundle.message("action.name.save.as.configuration"), ExecutionBundle.message("action.name.save.as.configuration"),
-            AllIcons.Actions.Menu_saveall);
+      super(ExecutionBundle.messagePointer("action.name.save.as.configuration"),
+            ExecutionBundle.messagePointer("action.name.save.as.configuration"), AllIcons.Actions.Menu_saveall);
     }
 
     @Override

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ToolWindowContentUiType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ToolWindowContentUiType");
+  private static final Logger LOG = Logger.getInstance(ToolWindowContentUiType.class);
 
   public static final ToolWindowContentUiType TABBED = new ToolWindowContentUiType("tabs");
   public static final ToolWindowContentUiType COMBO = new ToolWindowContentUiType("combo");

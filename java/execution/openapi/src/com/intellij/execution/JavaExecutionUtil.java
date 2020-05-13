@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * @author spleaner
  */
-public class JavaExecutionUtil {
+public final class JavaExecutionUtil {
   private static final Logger LOG = Logger.getInstance(JavaExecutionUtil.class);
 
   private JavaExecutionUtil() {
@@ -77,7 +77,7 @@ public class JavaExecutionUtil {
    */
   @Deprecated
   @Nullable
-  public static String getPresentableClassName(@Nullable String rtClassName, JavaRunConfigurationModule configurationModule) {
+  public static String getPresentableClassName(@Nullable String rtClassName, @SuppressWarnings("unused") JavaRunConfigurationModule configurationModule) {
     if (StringUtil.isEmpty(rtClassName)) {
       return null;
     }
@@ -129,7 +129,9 @@ public class JavaExecutionUtil {
     return fqName == null ? "" : StringUtil.getShortName(fqName);
   }
 
-  public static void showExecutionErrorMessage(final ExecutionException e, final String title, final Project project) {
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated
+  public static void showExecutionErrorMessage(ExecutionException e, String title, Project project) {
     ExecutionErrorDialog.show(e, title, project);
   }
 

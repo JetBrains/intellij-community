@@ -81,7 +81,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project)
-            .notifyError("Exception during merge commit with " + branch, e.getMessage());
+            .notifyError(HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
         }
       });
     }

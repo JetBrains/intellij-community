@@ -78,12 +78,14 @@ public class ToolAction extends AnAction implements DumbAware {
     Tool tool = findTool(actionId, context);
     if (tool != null) {
       tool.execute(e, new HackyDataContext(context), executionId, processListener);
+    } else {
+      Tool.notifyCouldNotStart(processListener);
     }
   }
 
   @Nullable
   @Override
   public String getTemplateText() {
-    return "External Tool";
+    return ToolsBundle.message("action.text.external.tool");
   }
 }

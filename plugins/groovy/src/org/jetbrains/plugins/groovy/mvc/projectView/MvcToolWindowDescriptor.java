@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
@@ -52,7 +38,7 @@ public abstract class MvcToolWindowDescriptor implements ToolWindowFactory, Cond
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    toolWindow.setAvailable(true, null);
+    toolWindow.setAvailable(true);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setTitle(myFramework.getDisplayName());
 
@@ -73,7 +59,7 @@ public abstract class MvcToolWindowDescriptor implements ToolWindowFactory, Cond
     return framework.getFrameworkName() + " View";
   }
 
-  public abstract void fillModuleChildren(List<AbstractTreeNode> result, final Module module, final ViewSettings viewSettings, VirtualFile root);
+  public abstract void fillModuleChildren(List<AbstractTreeNode<?>> result, final Module module, final ViewSettings viewSettings, VirtualFile root);
 
   public abstract Icon getModuleNodeIcon();
 

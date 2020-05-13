@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERATORS;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 import static org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference.hasOperatorReference;
 
 /**
@@ -24,9 +22,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorRef
  */
 public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl implements GrBinaryExpression {
 
-  private final NullableLazyValue<GroovyCallReference> myReference = AtomicNullableLazyValue.createValue(
-    () -> hasOperatorReference(this) && !isFake(this) ? new GrOperatorReference(this) : null
-  );
+  private final GroovyCallReference myReference = new GrOperatorReference(this);
 
   public GrBinaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -35,7 +31,7 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
   @Nullable
   @Override
   public GroovyCallReference getReference() {
-    return myReference.getValue();
+    return hasOperatorReference(this) && !isFake(this) ? myReference : null;
   }
 
   @Override

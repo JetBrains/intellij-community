@@ -28,7 +28,7 @@ public interface CachedValueProvider<T> {
    * @param <T> the type of the cached value
    */
   class Result<T> {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.CachedValueProvider.Result");
+    private static final Logger LOG = Logger.getInstance(Result.class);
     private final T myValue;
     private final Object[] myDependencyItems;
 
@@ -36,7 +36,7 @@ public interface CachedValueProvider<T> {
      * Constructor
      * @see #getDependencyItems()
      */
-    public Result(@Nullable T value, @NotNull Object... dependencyItems) {
+    public Result(@Nullable T value, Object @NotNull ... dependencyItems) {
       myValue = value;
       myDependencyItems = dependencyItems;
 
@@ -77,8 +77,7 @@ public interface CachedValueProvider<T> {
      * @see PsiModificationTracker
      * @see com.intellij.openapi.roots.ProjectRootModificationTracker
      */
-    @NotNull
-    public Object[] getDependencyItems() {
+    public Object @NotNull [] getDependencyItems() {
       return myDependencyItems;
     }
 
@@ -96,7 +95,7 @@ public interface CachedValueProvider<T> {
      * @see #getDependencyItems()
      */
     @NotNull
-    public static <T> Result<T> create(@Nullable T value, @NotNull Object... dependencies) {
+    public static <T> Result<T> create(@Nullable T value, Object @NotNull ... dependencies) {
       return new Result<>(value, dependencies);
     }
 

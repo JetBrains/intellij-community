@@ -30,8 +30,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.jar.JarFile;
 
 public class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
@@ -64,7 +63,7 @@ public class JavaModuleGraphUtil {
           }
         }
         else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
-          return LightJavaModule.getModule(PsiManager.getInstance(project), root);
+          return LightJavaModule.findModule(PsiManager.getInstance(project), root);
         }
       }
     }
@@ -79,14 +78,23 @@ public class JavaModuleGraphUtil {
   public static PsiJavaModule findDescriptorByModule(@Nullable Module module, boolean inTests) {
     if (module != null) {
       JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-      List<VirtualFile> files = ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream()
-        .map(root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+      List<VirtualFile> files = ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getSourceRoots(rootType),
+        root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
       if (files.size() == 1) {
         PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(files.get(0));
         if (psiFile instanceof PsiJavaFile) {
           return ((PsiJavaFile)psiFile).getModuleDeclaration();
+        }
+      }
+      else if (files.isEmpty()) {
+        files = ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getSourceRoots(rootType),
+          root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
+        if (files.size() == 1) {
+          VirtualFile manifest = files.get(0);
+          String name = LightJavaModule.claimedModuleName(manifest);
+          if (name != null) {
+            return LightJavaModule.findModule(PsiManager.getInstance(module.getProject()), manifest.getParent().getParent());
+          }
         }
       }
     }
@@ -135,17 +143,15 @@ public class JavaModuleGraphUtil {
 
   /*
    * Looks for cycles between Java modules in the project sources.
-   * Library/JDK modules are excluded - in an assumption there can't be any lib -> src dependencies.
+   * Library/JDK modules are excluded — in an assumption there can't be any lib -> src dependencies.
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
   @NotNull
   private static List<Set<PsiJavaModule>> findCycles(Project project) {
     Set<PsiJavaModule> projectModules = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      List<PsiJavaModule> descriptors = Stream.of(ModuleRootManager.getInstance(module).getSourceRoots(true))
-        .map(root -> findDescriptorByFile(root, project))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+      List<PsiJavaModule> descriptors = ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getSourceRoots(true),
+        root -> findDescriptorByFile(root, project));
       if (descriptors.size() > 1) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
       if (descriptors.size() == 1) projectModules.add(descriptors.get(0));
     }

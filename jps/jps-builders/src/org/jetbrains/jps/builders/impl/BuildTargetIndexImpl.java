@@ -14,9 +14,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class BuildTargetIndexImpl implements BuildTargetIndex {
   private final BuildTargetRegistry myRegistry;
   private final BuildRootIndexImpl myBuildRootIndex;

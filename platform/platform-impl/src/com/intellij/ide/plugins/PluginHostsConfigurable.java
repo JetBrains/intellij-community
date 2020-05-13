@@ -195,7 +195,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
     myTable.repaint();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Checking Plugins Repository...", true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.title.checking.plugins.repository"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (int i = 0, size = infos.size(); i < size; i++) {
@@ -243,7 +243,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
   @Override
   public String getDisplayName() {
-    return "Custom Plugin Repositories";
+    return IdeBundle.message("configurable.PluginHostsConfigurable.display.name");
   }
 
   @Override
@@ -268,6 +268,8 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
   @Override
   public void apply() throws ConfigurationException {
+    myTable.editingStopped(null);
+
     List<String> list = UpdateSettings.getInstance().getStoredPluginHosts();
     list.clear();
     for (UrlInfo item : myModel.getItems()) {

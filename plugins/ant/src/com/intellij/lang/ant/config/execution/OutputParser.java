@@ -40,7 +40,7 @@ public class OutputParser{
 
   private static final String JAVAC = "javac";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.OutputParser");
+  private static final Logger LOG = Logger.getInstance(OutputParser.class);
   private final Project myProject;
   private final AntBuildMessageView myMessageView;
   private final WeakReference<ProgressIndicator> myProgress;

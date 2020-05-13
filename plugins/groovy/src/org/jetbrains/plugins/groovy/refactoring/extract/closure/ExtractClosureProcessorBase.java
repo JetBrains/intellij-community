@@ -40,11 +40,10 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return new PsiElement[]{myHelper.getToSearchFor()};
       }
 

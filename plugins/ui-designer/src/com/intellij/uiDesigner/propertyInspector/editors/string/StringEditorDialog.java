@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.CommonBundle;
@@ -55,7 +55,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class StringEditorDialog extends DialogWrapper{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog");
+  private static final Logger LOG = Logger.getInstance(StringEditorDialog.class);
 
   @NonNls private static final String CARD_STRING = "string";
   @NonNls private static final String CARD_BUNDLE = "bundle";
@@ -367,7 +367,8 @@ public final class StringEditorDialog extends DialogWrapper{
               }
             });
             fileChooser.showDialog();
-            PropertiesFile propertiesFile = (PropertiesFile)fileChooser.getSelectedFile();
+            PsiFile selectedFile = fileChooser.getSelectedFile();
+            PropertiesFile propertiesFile = selectedFile instanceof PropertiesFile ? (PropertiesFile)selectedFile : null;
             if (propertiesFile == null) {
               return;
             }

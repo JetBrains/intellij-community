@@ -935,6 +935,9 @@
         <option name="FOREGROUND" value="61CE3C" />
       </value>
     </option>
+    <option name="JavaScript:INJECTED_LANGUAGE_FRAGMENT">
+      <value/>
+    </option>
     <option name="LABEL">
       <value>
         <option name="FOREGROUND" value="FBDE2D" />

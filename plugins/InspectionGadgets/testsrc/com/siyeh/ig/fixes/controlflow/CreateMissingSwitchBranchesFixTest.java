@@ -9,9 +9,8 @@ import com.siyeh.ig.controlflow.EnumSwitchStatementWhichMissesCasesInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateMissingSwitchBranchesFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new EnumSwitchStatementWhichMissesCasesInspection[]{new EnumSwitchStatementWhichMissesCasesInspection()};
   }
 

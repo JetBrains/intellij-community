@@ -1,54 +1,42 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
-import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.impl.CacheDiffRequestProcessor
-import com.intellij.diff.requests.NoDiffRequest
-import com.intellij.diff.util.DiffPlaces
+import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
-import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
+import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.ui.frame.EditorDiffPreview
+import org.jetbrains.annotations.Nls
+import javax.swing.JComponent
+import javax.swing.event.ListSelectionListener
 
-internal class FileHistoryDiffPreview(project: Project,
-                                      private val changeGetter: () -> Change?,
-                                      isInEditor: Boolean,
-                                      disposable: Disposable
-) : CacheDiffRequestProcessor.Simple(project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_LOG_VIEW),
-    DiffPreviewUpdateProcessor {
+class FileHistoryEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val fileHistoryPanel: FileHistoryPanel) :
+  EditorDiffPreview(uiProperties, fileHistoryPanel) {
 
   init {
-    myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    Disposer.register(disposable, this)
+    init(project)
   }
 
-  fun updatePreview(state: Boolean) {
-    if (state) {
-      refresh(false)
+  override fun getOwnerComponent(): JComponent = fileHistoryPanel.graphTable
+
+  override fun getEditorTabName(): @Nls String = fileHistoryPanel.filePath.name
+
+  override fun addSelectionListener(listener: () -> Unit) {
+    val selectionListener = ListSelectionListener {
+      if (!fileHistoryPanel.graphTable.selectionModel.isSelectionEmpty) {
+        listener()
+      }
     }
-    else {
-      clear()
-    }
+
+    fileHistoryPanel.graphTable.selectionModel.addListSelectionListener(selectionListener)
+    Disposer.register(owner, Disposable { fileHistoryPanel.graphTable.selectionModel.removeListSelectionListener(selectionListener) })
   }
 
-  override fun clear() {
-    applyRequest(NoDiffRequest.INSTANCE, false, null)
+  override fun createDiffRequestProcessor(): DiffRequestProcessor {
+    val preview: FileHistoryDiffProcessor = fileHistoryPanel.createDiffPreview(true)
+    preview.updatePreview(true)
+    return preview
   }
 
-  override fun refresh(fromModelRefresh: Boolean) {
-    updateRequest()
-  }
-
-  override fun getFastLoadingTimeMillis(): Int {
-    return 10
-  }
-
-  override fun getCurrentRequestProvider(): DiffRequestProducer? {
-    val change = changeGetter() ?: return null
-    return VcsLogChangesBrowser.createDiffRequestProducer(project!!, change, HashMap(), true)
-  }
 }

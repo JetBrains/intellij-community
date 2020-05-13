@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class TextComponentInlayModel implements InlayModel {
+final class TextComponentInlayModel implements InlayModel {
   @Nullable
   @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
@@ -42,19 +42,19 @@ public class TextComponentInlayModel implements InlayModel {
 
   @NotNull
   @Override
-  public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
+  public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
     return Collections.emptyList();
   }
 
   @NotNull
   @Override
-  public List<Inlay> getBlockElementsInRange(int startOffset, int endOffset) {
+  public List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
     return Collections.emptyList();
   }
 
   @NotNull
   @Override
-  public List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above) {
+  public List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above) {
     return Collections.emptyList();
   }
 
@@ -65,30 +65,40 @@ public class TextComponentInlayModel implements InlayModel {
 
   @Nullable
   @Override
-  public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
+  public Inlay<?> getInlineElementAt(@NotNull VisualPosition visualPosition) {
     return null;
   }
 
   @Nullable
   @Override
-  public Inlay getElementAt(@NotNull Point point) {
+  public Inlay<?> getElementAt(@NotNull Point point) {
     return null;
   }
 
   @NotNull
   @Override
-  public List<Inlay> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
+  public List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
     return Collections.emptyList();
   }
 
   @NotNull
   @Override
-  public List<Inlay> getAfterLineEndElementsForLogicalLine(int logicalLine) {
+  public List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine) {
     return Collections.emptyList();
   }
 
   @Override
   public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {}
+
+  @Override
+  public void execute(boolean batchMode, @NotNull Runnable operation) {
+    operation.run();
+  }
+
+  @Override
+  public boolean isInBatchMode() {
+    return false;
+  }
 
   @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {

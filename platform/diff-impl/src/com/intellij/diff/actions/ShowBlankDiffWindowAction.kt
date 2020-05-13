@@ -14,6 +14,7 @@ import com.intellij.diff.util.Side
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.EditorDropHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileChooser.FileChooser
@@ -77,7 +78,7 @@ internal class SwitchToFileEditorAction : BlankActionBase() {
 
   override fun perform(viewer: TwosideTextDiffViewer, helper: MutableDiffRequestChain.Helper, side: Side) {
     val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
-    descriptor.title = "Select File to Compare"
+    descriptor.title = DiffBundle.message("select.file.to.compare")
     descriptor.description = ""
     val file = FileChooser.chooseFile(descriptor, viewer.component, viewer.project, null) ?: return
 
@@ -181,7 +182,7 @@ private class DnDHandler(val viewer: TwosideTextDiffViewer,
 }
 
 private fun createEditableContent(project: Project?, text: String): DocumentContent {
-  return DiffContentFactory.getInstance().createEditable(project, text, null)
+  return DiffContentFactoryEx.getInstanceEx().documentContent(project, false).buildFromText(text, false)
 }
 
 private fun createFileContent(project: Project?, file: File): DocumentContent? {

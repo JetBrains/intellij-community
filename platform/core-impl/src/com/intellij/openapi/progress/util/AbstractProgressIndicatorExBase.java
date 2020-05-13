@@ -21,12 +21,13 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private final boolean myReusable;
-  private volatile ProgressIndicatorEx[] myStateDelegates;
+  private volatile ProgressIndicatorEx @Nullable [] myStateDelegates;
   private volatile WeakList<TaskInfo> myFinished;
   private volatile boolean myWasStarted;
   private TaskInfo myOwnerTask;
@@ -159,8 +160,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
       delegate.initStateFrom(this);
       ProgressIndicatorEx[] stateDelegates = myStateDelegates;
       if (stateDelegates == null) {
-        myStateDelegates = stateDelegates = new ProgressIndicatorEx[1];
-        stateDelegates[0] = delegate;
+        myStateDelegates = new ProgressIndicatorEx[]{delegate};
       }
       else {
         // hard throw is essential for avoiding deadlocks
@@ -169,6 +169,20 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
         }
         myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
       }
+    }
+  }
+
+  public final void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+    synchronized (getLock()) {
+      ProgressIndicatorEx[] delegates = myStateDelegates;
+      if (delegates == null) return;
+      myStateDelegates = ArrayUtil.remove(delegates, delegate);
+    }
+  }
+
+  protected final void removeAllStateDelegates() {
+    synchronized (getLock()) {
+      myStateDelegates = null;
     }
   }
 
@@ -189,6 +203,12 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
         action.execute(each);
       }
     }
+  }
+
+  @Override
+  public void initStateFrom(@NotNull ProgressIndicator indicator) {
+    super.initStateFrom(indicator);
+    delegate(it -> it.initStateFrom(this));
   }
 
   protected void onProgressChange() {

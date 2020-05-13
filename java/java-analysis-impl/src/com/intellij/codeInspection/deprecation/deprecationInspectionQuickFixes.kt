@@ -15,14 +15,16 @@
  */
 package com.intellij.codeInspection.deprecation
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ObjectUtils
+import com.siyeh.InspectionGadgetsBundle
 import org.jetbrains.annotations.Nls
 
 private fun generateQualifierText(expr: PsiReferenceExpression,
@@ -47,12 +49,12 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     PsiFormatUtil.formatMethod(replacementMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME, 0)
 
   override fun getText(): String {
-    return "Replace method call with $myReplacementText"
+    return InspectionGadgetsBundle.message("replace.method.call.fix.text", myReplacementText)
   }
 
   @Nls
   override fun getFamilyName(): String {
-    return "Replace Method Call"
+    return InspectionGadgetsBundle.message("replace.method.call.fix.family.name")
   }
 
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
@@ -66,6 +68,13 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     val replaced = expr.replace(newMethodCall) as PsiMethodCallExpression
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced.methodExpression)
   }
+
+  override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+    val method = myReplacementMethodPointer.element
+    val expr = startElement as PsiMethodCallExpression?
+    if (method == null || expr == null) return null
+    return ReplaceMethodCallFix(PsiTreeUtil.findSameElementInCopy(expr, target), method)
+  }
 }
 
 internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacementField: PsiField) : LocalQuickFixOnPsiElement(expr) {
@@ -75,11 +84,11 @@ internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacemen
     PsiFormatUtil.formatVariable(replacementField, PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY)
 
   override fun getFamilyName(): String {
-    return "Replace Field Reference"
+    return InspectionGadgetsBundle.message("replace.field.reference.fix.family.name")
   }
 
   override fun getText(): String {
-    return "Replace field reference with $myReplacementText"
+    return InspectionGadgetsBundle.message("replace.field.reference.fix.text", myReplacementText)
   }
 
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {

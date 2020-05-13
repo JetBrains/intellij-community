@@ -35,8 +35,7 @@ public class MavenPropertyPsiReferenceInjector implements DomReferenceInjector {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
+  public PsiReference @NotNull [] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
     return MavenPropertyPsiReferenceProvider.getReferences(element, true);
   }
 }

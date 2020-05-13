@@ -7,6 +7,7 @@ import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.find.findUsages.JavaFindUsagesHelper;
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
@@ -138,9 +142,10 @@ public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
             }
           }
           return true;
-        }), "Processing Method Usages...", true, project);
+        }), JavaAnalysisBundle.message("processing.method.usages"), true, project);
 
-        if (breakSourceCode && Messages.showYesNoDialog(project, "Exception removal will break source code. Proceed anyway?", RefactoringBundle.getCannotRefactorMessage(null), null) == Messages.NO) {
+        if (breakSourceCode && Messages.showYesNoDialog(project, JavaAnalysisBundle
+          .message("exception.removal.will.break.source.code.proceed.anyway"), RefactoringBundle.getCannotRefactorMessage(null), null) == Messages.NO) {
           return;
         }
       }

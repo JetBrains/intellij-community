@@ -175,7 +175,7 @@ public class FinishMarker {
     }
     if (terminalReturn != null) {
       PsiExpression value = terminalReturn.getReturnValue();
-      if (value != null && canMoveToStart(value)) {
+      if (canMoveToStart(value)) {
         return new FinishMarker(FinishMarkerType.SEPARATE_VAR, value);
       }
     }
@@ -257,8 +257,8 @@ public class FinishMarker {
       PsiVariable target = tryCast(ref.resolve(), PsiVariable.class);
       if (target instanceof PsiLocalVariable) return false;
       if (target instanceof PsiParameter) {
-        PsiElement block = PsiUtil.getVariableCodeBlock(target, null);
-        return block != null && HighlightControlFlowUtil.isEffectivelyFinal(target, block, null);
+        PsiElement block = ((PsiParameter)target).getDeclarationScope();
+        return block instanceof PsiMethod && HighlightControlFlowUtil.isEffectivelyFinal(target, block, null);
       }
     }
     return true;

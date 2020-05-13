@@ -1,7 +1,16 @@
 <html>
 <body>
-               Reports any @GuardedBy annotations (net.jcip.annotations|javax.annotation.concurrent|org.apache.http.annotation) annotations where the guarding field
-                is not final. Guarding on a non-final field may result in unexpected race conditions, as locks will
-                be held on the value of the field (which may change), rather than the field itself.
+Reports <b>@GuardedBy</b> annotations annotations where the guarding field
+is not <b>final</b>. Guarding on a non-final field may result in unexpected race conditions, as locks will
+be held on the value of the field (which may change), rather than the field itself.
+Supported <b>@GuardedBy</b> annotations are:
+<ul>
+  <li>net.jcip.annotations.GuardedBy</li>
+  <li>javax.annotation.concurrent.GuardedBy</li>
+  <li>org.apache.http.annotation.GuardedBy</li>
+  <li>com.android.annotations.concurrency.GuardedBy</li>
+  <li>androidx.annotation.GuardedBy</li>
+  <li>com.google.errorprone.annotations.concurrent.GuardedBy</li>
+</ul>
 </body>
 </html>

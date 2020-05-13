@@ -43,7 +43,7 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Remove redundant statement";
+    return InspectionGadgetsBundle.message("delete.unnecessary.statement.fix.family.name");
   }
 
   @Override

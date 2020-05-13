@@ -44,10 +44,10 @@ public abstract class PyBaseRefactoringAction extends BaseRefactoringAction {
     return isEnabledOnElementInsideEditor(element, editor, file, context);
   }
 
-  protected abstract boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements);
+  protected abstract boolean isEnabledOnElementsOutsideEditor(PsiElement @NotNull [] elements);
 
   @Override
-  protected final boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected final boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return isEnabledOnElementsOutsideEditor(elements);
   }
 

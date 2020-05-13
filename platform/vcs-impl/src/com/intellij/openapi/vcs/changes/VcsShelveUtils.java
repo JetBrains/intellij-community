@@ -120,6 +120,7 @@ public class VcsShelveUtils {
       BackgroundTaskUtil.syncPublisher(project, ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(VcsShelveUtils.class));
       return shelve;
     }
+
     catch (IOException e) {
       exceptions.add(new VcsException("Shelving changes failed: " + description, e));
       return null;

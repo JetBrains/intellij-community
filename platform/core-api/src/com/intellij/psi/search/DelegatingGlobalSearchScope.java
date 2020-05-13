@@ -23,7 +23,7 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     this(baseScope, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
-  public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope, @NotNull Object... equality) {
+  public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope, Object @NotNull ... equality) {
     super(baseScope.getProject());
     myBaseScope = baseScope;
     myEquality = Arrays.asList(equality);

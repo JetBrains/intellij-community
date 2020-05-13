@@ -69,8 +69,7 @@ public abstract class RequestBuilder {
     connect(request -> request.saveToFile(file, indicator));
   }
 
-  @NotNull
-  public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
+  public byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
     return connect(request -> request.readBytes(indicator));
   }
 
@@ -101,7 +100,7 @@ public abstract class RequestBuilder {
     });
   }
 
-  public void write(@NotNull byte[] data) throws IOException {
+  public void write(byte @NotNull [] data) throws IOException {
     connect(request -> {
       request.write(data);
       return null;

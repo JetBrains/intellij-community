@@ -32,6 +32,7 @@ import java.util.List;
 public class BalloonLayoutData {
   public String groupId;
   public String id;
+  @Nullable public String displayId;
   public MergeInfo mergeData;
 
   public boolean showFullContent;
@@ -62,6 +63,9 @@ public class BalloonLayoutData {
   public Color fillColor;
   public Color borderColor;
 
+  public boolean isExpandable;
+
+
   @NotNull
   public static BalloonLayoutData createEmpty() {
     BalloonLayoutData layoutData = new BalloonLayoutData();
@@ -79,21 +83,35 @@ public class BalloonLayoutData {
 
   @NotNull
   public MergeInfo merge() {
-    return new MergeInfo(mergeData, id);
+    return new MergeInfo(mergeData, new ID(id, displayId));
   }
 
   @NotNull
   public List<String> getMergeIds() {
-    List<String> ids = new ArrayList<>(mergeData.linkIds);
+    List<ID> linkIds = mergeData.linkIds;
+    List<String> ids = new ArrayList<>(linkIds.size());
+    for (ID linkId : linkIds) {
+      ids.add(linkId.notificationId);
+    }
     ids.add(id);
     return ids;
   }
 
+  public static class ID {
+    @NotNull final String notificationId;
+    @Nullable final String notificationDisplayId;
+
+    public ID(@NotNull String notificationId, @Nullable String notificationDisplayId) {
+      this.notificationId = notificationId;
+      this.notificationDisplayId = notificationDisplayId;
+    }
+  }
+
   public static class MergeInfo {
-    public List<String> linkIds;
+    public List<ID> linkIds;
     public int count;
 
-    public MergeInfo(@Nullable MergeInfo info, @NotNull String linkId) {
+    public MergeInfo(@Nullable MergeInfo info, @NotNull ID linkId) {
       if (info == null) {
         linkIds = new ArrayList<>();
         count = 1;

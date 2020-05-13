@@ -4,6 +4,6 @@ def b = 'one'
 
 a.with {
   b.with {
-    print intV<ref>alue()
+    print intV<caret>alue()
   }
 }

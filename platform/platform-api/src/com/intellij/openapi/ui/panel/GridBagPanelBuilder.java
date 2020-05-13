@@ -8,5 +8,5 @@ import java.awt.*;
 
 public interface GridBagPanelBuilder extends PanelBuilder {
   int gridWidth();
-  void addToPanel(JPanel panel, GridBagConstraints gc);
+  void addToPanel(JPanel panel, GridBagConstraints gc, boolean splitColumns);
 }

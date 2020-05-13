@@ -25,7 +25,7 @@
 package org.jetbrains.lang.manifest.header;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -41,12 +41,12 @@ import java.util.Set;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class HeaderParserRepository {
+public final class HeaderParserRepository {
   public static HeaderParserRepository getInstance() {
     return ServiceManager.getService(HeaderParserRepository.class);
   }
 
-  private final NotNullLazyValue<Map<String, HeaderParser>> myParsers = new NotNullLazyValue<Map<String, HeaderParser>>() {
+  private final ClearableLazyValue<Map<String, HeaderParser>> myParsers = new ClearableLazyValue<Map<String, HeaderParser>>() {
     @NotNull
     @Override
     protected Map<String, HeaderParser> compute() {
@@ -57,6 +57,10 @@ public class HeaderParserRepository {
       return map;
     }
   };
+
+  public HeaderParserRepository() {
+    HeaderParserProvider.EP_NAME.addChangeListener(myParsers::drop, null);
+  }
 
   @Nullable
   public HeaderParser getHeaderParser(@Nullable String headerName) {
@@ -74,8 +78,7 @@ public class HeaderParserRepository {
     return parser != null ? parser.getConvertedValue(header) : null;
   }
 
-  @NotNull
-  public PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart) {
+  public PsiReference @NotNull [] getReferences(@NotNull HeaderValuePart headerValuePart) {
     Header header = PsiTreeUtil.getParentOfType(headerValuePart, Header.class);
     if (header != null) {
       HeaderParser parser = getHeaderParser(header.getName());

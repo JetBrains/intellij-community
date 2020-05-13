@@ -33,13 +33,6 @@ public class NumericToStringInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "call.to.numeric.tostring.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "call.to.numeric.tostring.problem.descriptor");
@@ -75,7 +68,7 @@ public class NumericToStringInspection extends BaseInspection {
         return;
       }
       final String className = aClass.getQualifiedName();
-      if (!TypeConversionUtil.isPrimitiveWrapper(className)) {
+      if (className == null || !TypeConversionUtil.isPrimitiveWrapper(className)) {
         return;
       }
       if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {

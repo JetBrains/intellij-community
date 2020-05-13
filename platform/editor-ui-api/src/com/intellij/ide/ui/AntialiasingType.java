@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -9,9 +10,9 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 
 public enum AntialiasingType {
-  SUBPIXEL("Subpixel", RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, true),
-  GREYSCALE("Greyscale", RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true),
-  OFF("No antialiasing", RenderingHints.VALUE_TEXT_ANTIALIAS_OFF, false);
+  SUBPIXEL(PlatformEditorBundle.message("settings.editor.antialiasing.subpixel"), RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, true),
+  GREYSCALE(PlatformEditorBundle.message("settings.editor.antialiasing.greyscale"), RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true),
+  OFF(PlatformEditorBundle.message("settings.editor.antialiasing.no.antialiasing"), RenderingHints.VALUE_TEXT_ANTIALIAS_OFF, false);
 
   public static Object getAAHintForSwingComponent() {
     UISettings uiSettings = UISettings.getInstanceOrNull();

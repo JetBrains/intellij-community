@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
@@ -18,7 +18,7 @@ public abstract class HandleType {
   private final String myName;
   private final boolean myUseVcs;
 
-  public static final HandleType USE_FILE_SYSTEM = new HandleType(VcsBundle.message("handle.ro.file.status.type.using.file.system"), false) {
+  public static final HandleType USE_FILE_SYSTEM = new HandleType(IdeBundle.message("handle.ro.file.status.type.using.file.system"), false) {
     @Override
     public void processFiles(final Collection<? extends VirtualFile> files, String changelist) {
       ApplicationManager.getApplication().runWriteAction(() -> {

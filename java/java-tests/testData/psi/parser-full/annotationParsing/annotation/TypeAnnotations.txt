@@ -569,7 +569,7 @@ PsiJavaFile:TypeAnnotations.java
             PsiWhiteSpace(' ')
             PsiJavaToken:EQ('=')
             PsiWhiteSpace(' ')
-            PsiInstanceofExpression:myString instanceof @NonNull String
+            PsiInstanceofExpression
               PsiReferenceExpression:myString
                 PsiReferenceParameterList
                   <empty list>
@@ -577,20 +577,21 @@ PsiJavaFile:TypeAnnotations.java
               PsiWhiteSpace(' ')
               PsiKeyword:instanceof('instanceof')
               PsiWhiteSpace(' ')
-              PsiTypeElement:@NonNull String
-                PsiAnnotation
-                  PsiJavaToken:AT('@')
-                  PsiJavaCodeReferenceElement:NonNull
-                    PsiIdentifier:NonNull('NonNull')
+              PsiTypeTestPattern
+                PsiTypeElement:@NonNull String
+                  PsiAnnotation
+                    PsiJavaToken:AT('@')
+                    PsiJavaCodeReferenceElement:NonNull
+                      PsiIdentifier:NonNull('NonNull')
+                      PsiReferenceParameterList
+                        <empty list>
+                    PsiAnnotationParameterList
+                      <empty list>
+                  PsiWhiteSpace(' ')
+                  PsiJavaCodeReferenceElement:String
+                    PsiIdentifier:String('String')
                     PsiReferenceParameterList
                       <empty list>
-                  PsiAnnotationParameterList
-                    <empty list>
-                PsiWhiteSpace(' ')
-                PsiJavaCodeReferenceElement:String
-                  PsiIdentifier:String('String')
-                  PsiReferenceParameterList
-                    <empty list>
           PsiJavaToken:SEMICOLON(';')
         PsiWhiteSpace('\n    ')
         PsiExpressionStatement
@@ -602,7 +603,7 @@ PsiJavaFile:TypeAnnotations.java
             PsiWhiteSpace(' ')
             PsiJavaToken:EQ('=')
             PsiWhiteSpace(' ')
-            PsiInstanceofExpression:myString instanceof @NonNull
+            PsiInstanceofExpression
               PsiReferenceExpression:myString
                 PsiReferenceParameterList
                   <empty list>

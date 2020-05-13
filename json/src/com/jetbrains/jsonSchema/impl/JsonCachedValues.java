@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -15,6 +15,7 @@ import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JsonCachedValues {
+public final class JsonCachedValues {
   private static final Key<CachedValue<JsonSchemaObject>> JSON_OBJECT_CACHE_KEY = Key.create("JsonSchemaObjectCache");
 
   @Nullable
@@ -75,6 +76,9 @@ public class JsonCachedValues {
   @Nullable
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
+    //skip content loading for generated schema files (IntellijConfigurationJsonSchemaProviderFactory)
+    if (schemaFile instanceof LightVirtualFile) return null;
+
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, ID_CACHE_KEY);
     if (value != null && !JsonSchemaFileValuesIndex.NULL.equals(value)) return JsonPointerUtil.normalizeId(value);
     String obsoleteValue = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, OBSOLETE_ID_CACHE_KEY);
@@ -210,6 +214,7 @@ public class JsonCachedValues {
   }
 
   public static final Key<CachedValue<JsonSchemaObject>> OBJECT_FOR_FILE_KEY = new Key<>("JsonCachedValues.OBJ_KEY");
+
   @Nullable
   static JsonSchemaObject computeSchemaForFile(@NotNull PsiFile file, @NotNull JsonSchemaService service) {
     final PsiFile originalFile = CompletionUtil.getOriginalOrSelf(file);

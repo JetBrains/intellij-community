@@ -63,7 +63,7 @@ abstract class TerminalOperation extends Operation {
   abstract String generate(ChainVariable inVar, StreamToLoopReplacementContext context);
 
   @Nullable
-  static TerminalOperation createTerminal(@NotNull String name, @NotNull PsiExpression[] args,
+  static TerminalOperation createTerminal(@NotNull String name, PsiExpression @NotNull [] args,
                                           @NotNull PsiType elementType, @NotNull PsiType resultType, boolean isVoid) {
     if(isVoid) {
       if ((name.equals("forEach") || name.equals("forEachOrdered")) && args.length == 1) {
@@ -156,6 +156,7 @@ abstract class TerminalOperation extends Operation {
   @Contract("_, _, null -> null")
   @Nullable
   private static TerminalOperation fromCollector(@NotNull PsiType elementType, @NotNull PsiType resultType, PsiExpression expr) {
+    expr = PsiUtil.skipParenthesizedExprDown(expr);
     if (!(expr instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)expr;
     PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();

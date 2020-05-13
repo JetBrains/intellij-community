@@ -58,7 +58,9 @@ import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.WaitFor;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,7 +112,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertNotNull(FindInProjectUtil.getDirectory(findModel));
   }
 
-  public void testFindString() throws InterruptedException {
+  public void testFindString() throws InterruptedException, ExecutionException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
     @Language("JAVA")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
@@ -160,7 +162,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setProjectScope(true);
 
     final FindResult[] findResultArr = new FindResult[1];
-    Thread thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
+    Future<?> thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
     new WaitFor(30 *1000){
       @Override
       protected boolean condition() {
@@ -169,23 +171,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     }.assertCompleted();
 
     assertFalse(findResultArr[0].isStringFound());
-    thread.join();
+    thread.get();
   }
 
-  private static Thread findInNewThread(final FindModel model,
-                                  final FindManager findManager,
-                                  final CharSequence text,
-                                  final int offset,
-                                  final FindResult[] op_result){
+  private static Future<?> findInNewThread(final FindModel model,
+                                           final FindManager findManager,
+                                           final CharSequence text,
+                                           final int offset,
+                                           final FindResult[] op_result){
     op_result[0] = null;
-    Thread findThread = new Thread("find man test"){
-      @Override
-      public void run(){
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> {
         op_result[0] = findManager.findString(text, offset, model);
       }
-    };
-    findThread.start();
-    return findThread;
+    );
   }
 
   public void testFindUsages() {
@@ -222,9 +220,8 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   private List<UsageInfo> findInProject(@NotNull FindModel findModel) {
     List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
-    final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<>(result);
-    FindInProjectUtil
-      .findUsages(findModel, myProject, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
+    FindUsagesProcessPresentation presentation = new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel));
+    FindInProjectUtil.findUsages(findModel, myProject, new CommonProcessors.CollectProcessor<>(result), presentation);
     return result;
   }
 
@@ -932,11 +929,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testRegexReplacementStringForIndices() {
     assertEquals("public static   MyType my   = 1;", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("public static (@A)? MyType my\\w+?  = 1;", myProject));
-    assertEquals(" Foo ", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
+    assertEquals("Foo", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
     assertEquals("", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("foo|bar", myProject));
-    assertEquals(" Exit Foo Bar Baz", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\nExit\\tFoo\\rBar\\fBaz", myProject));
-    assertEquals(" Foo Bar Baz Exit", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\012Foo\\u000ABar\\x0ABaz\\aExit", myProject));
-    assertEquals(" Foo Bar BazCooBoo", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\1Foo\\sBar\\DBaz\\QCoo\\E\\QBoo", myProject));
+    assertEquals("Exit Foo Bar Baz", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\nExit\\tFoo\\rBar\\fBaz", myProject));
+    assertEquals("Foo Bar Baz Exit", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\012Foo\\u000ABar\\x0ABaz\\aExit", myProject));
+    assertEquals("Foo Bar BazCooBoo", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\1Foo\\sBar\\DBaz\\QCoo\\E\\QBoo", myProject));
   }
 
   public void testCreateFileMaskCondition() {
@@ -1158,4 +1155,29 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(1, findInProject(findModel));
   }
 
+  public void testFindInPathDoesStopAtOneHundredUsagesWhenAskedTo() throws Exception {
+    createFile(myModule, "A.txt", StringUtil.repeat("foo ", 200));
+
+    FindModel findModel = new FindModel();
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(true);
+    findModel.setProjectScope(true);
+
+    findModel.setStringToFind("foo");
+
+    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
+    Processor<UsageInfo> collector = info -> {
+      if (info.equals(ContainerUtil.getLastItem(result))) {
+        throw new RuntimeException("duplicate elements found");
+      }
+      result.add(info);
+      return result.size() < 100;
+    };
+    FindUsagesProcessPresentation presentation = new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel));
+    FindInProjectUtil.findUsages(findModel, myProject, collector, presentation);
+
+    assertEquals(100, result.size());
+  }
 }

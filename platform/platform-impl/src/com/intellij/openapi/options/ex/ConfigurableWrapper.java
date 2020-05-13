@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,8 +9,6 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +20,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
-  private static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
+  static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
@@ -41,6 +39,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return createConfigurable(ep, LOG.isDebugEnabled());
   }
 
+  @Nullable
   private static <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
     long time = System.currentTimeMillis();
     T configurable = ep.createConfigurable();
@@ -53,8 +52,20 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return configurable;
   }
 
-  public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(name.getExtensions(), (NullableFunction<ConfigurableEP<T>, T>)ep -> wrapConfigurable(ep));
+  public static <T extends UnnamedConfigurable> List<T> createConfigurables(@NotNull ExtensionPointName<? extends ConfigurableEP<T>> name) {
+    Collection<? extends ConfigurableEP<T>> collection = name.getExtensionList();
+    if (collection.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<T> result = new ArrayList<>(collection.size());
+    for (ConfigurableEP<T> item : collection) {
+      T o = wrapConfigurable(item, false);
+      if (o != null) {
+        result.add(o);
+      }
+    }
+    return result.isEmpty() ? Collections.emptyList() : result;
   }
 
   public static boolean hasOwnContent(UnnamedConfigurable configurable) {
@@ -78,9 +89,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
           if (!type.isAssignableFrom(configurableType)) {
             return null; // do not create configurable that cannot be cast to the specified type
           }
-        }
-        else if (type == OptionalConfigurable.class) {
-          return null; // do not create configurable from ConfigurableProvider which replaces OptionalConfigurable
         }
       }
       configurable = wrapper.getConfigurable();
@@ -146,6 +154,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   @Nullable
+  public Project getProject() {
+    return myEp.getProject();
+  }
+
+  @Nullable
   @Override
   public String getHelpTopic() {
     UnnamedConfigurable configurable = getConfigurable();
@@ -155,7 +168,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   @Nullable
   @Override
   public JComponent createComponent() {
-    return getConfigurable().createComponent();
+    UnnamedConfigurable configurable = getConfigurable();
+    return configurable == null ? null : configurable.createComponent();
   }
 
   @Override
@@ -178,6 +192,15 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     UnnamedConfigurable configurable = myConfigurable;
     if (configurable != null) {
       configurable.disposeUIResources();
+      myConfigurable = null;
+    }
+  }
+
+  @Override
+  public void cancel() {
+    UnnamedConfigurable configurable = myConfigurable;
+    if (configurable != null) {
+      configurable.cancel();
     }
   }
 
@@ -235,7 +258,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     final UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof SearchableConfigurable
            ? ((SearchableConfigurable)configurable).getOriginalClass()
-           : configurable.getClass();
+           : configurable != null
+             ? configurable.getClass()
+             : getClass();
   }
 
   private static class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
@@ -249,9 +274,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       myKids = kids;
     }
 
-    @NotNull
     @Override
-    public Configurable[] getConfigurables() {
+    public Configurable @NotNull [] getConfigurables() {
       if (isInitialized) {
         return myKids;
       }
@@ -303,7 +327,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
         if (configurable instanceof Weighted) {
           if (((Weighted)configurable).getWeight() != 0) {
             myComparator = COMPARATOR;
-            Collections.sort(list, myComparator);
+            list.sort(myComparator);
             break;
           }
         }

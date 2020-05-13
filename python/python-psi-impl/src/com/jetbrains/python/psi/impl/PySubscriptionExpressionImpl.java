@@ -45,7 +45,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Override
   @NotNull
   public PyExpression getOperand() {
-    return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @NotNull
@@ -61,7 +61,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Override
   @Nullable
   public PyExpression getIndexExpression() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
   @Override
@@ -72,7 +72,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Nullable
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PsiPolyVariantReference reference = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
+    final PsiPolyVariantReference reference = getReference(PyResolveContext.defaultContext().withTypeEvalContext(context));
     final List<PyType> members = new ArrayList<>();
     final PyExpression indexExpression = getIndexExpression();
     final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
@@ -116,7 +116,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.noImplicits());
+    return getReference(PyResolveContext.defaultContext());
   }
 
   @NotNull

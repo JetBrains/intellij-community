@@ -18,13 +18,14 @@ package org.jetbrains.plugins.groovy.dgm;
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
 public class DGMImplicitPropertyUsageProvider extends ImplicitPropertyUsageProvider {
   @Override
-  protected boolean isUsed(Property property) {
+  protected boolean isUsed(@NotNull Property property) {
     if (DGMUtil.isInDGMFile(property)) {
       String name = property.getName();
       return ArrayUtil.find(DGMUtil.KEYS, name) >= 0;

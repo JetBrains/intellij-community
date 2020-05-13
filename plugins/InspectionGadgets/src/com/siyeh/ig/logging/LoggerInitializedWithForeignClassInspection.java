@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -69,12 +70,6 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
                                  InspectionGadgetsBundle.message("logger.factory.class.name"),
                                  InspectionGadgetsBundle.message("logger.factory.method.name")));
     return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose logger factory class");
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.display.name");
   }
 
   @Override
@@ -134,13 +129,13 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.quickfix", newClassName);
+      return CommonQuickFixBundle.message("fix.replace.with.x", newClassName+".class");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace foreign class";
+      return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.fix.family.name");
     }
 
     @Override

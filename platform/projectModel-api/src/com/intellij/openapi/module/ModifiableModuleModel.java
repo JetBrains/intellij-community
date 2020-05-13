@@ -2,6 +2,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -15,14 +16,14 @@ import java.util.Map;
  *
  * @see ModuleManager#getModifiableModel()
  */
+@ApiStatus.NonExtendable
 public interface ModifiableModuleModel {
   /**
    * Returns the list of all modules in the project. Same as {@link ModuleManager#getModules()}.
    *
    * @return the array of modules.
    */
-  @NotNull
-  Module[] getModules();
+  Module @NotNull [] getModules();
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
@@ -37,15 +38,24 @@ public interface ModifiableModuleModel {
   Module newModule(@NotNull String filePath, @NotNull String moduleTypeId);
 
   /**
-   * Creates a module of the specified type at the specified path and adds it to the project
+   * Creates a non-persistent module of the specified type and adds it to the project
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.
    *
-   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
-   * @param moduleTypeId ID of the module type to create.
-   * @param options      map of module options to be used when creating the module
-   * @return the module instance.
+   * In contrast with modules created by {@link #newModule(String, String)},
+   * non-persistent modules aren't stored on a filesystem and aren't being written
+   * in a project XML file. When IDE closes, all non-persistent modules vanishes out.
    */
+  @ApiStatus.Experimental
+  @NotNull
+  default Module newNonPersistentModule(@NotNull String moduleName, @NotNull String moduleTypeId) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * @deprecated use {@link #newModule(String, String)} instead
+   */
+  @Deprecated
   @NotNull
   Module newModule(@NotNull String filePath, @NotNull String moduleTypeId, @Nullable Map<String, String> options);
 
@@ -128,12 +138,11 @@ public interface ModifiableModuleModel {
   @NotNull
   String getActualName(@NotNull Module module);
 
-  @Nullable
-  String[] getModuleGroupPath(@NotNull Module module);
+  String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
   boolean hasModuleGroups();
 
-  void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath);
+  void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath);
 
   @NotNull
   Project getProject();

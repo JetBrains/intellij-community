@@ -13,9 +13,9 @@ import org.jetbrains.annotations.Nullable;
 public class SimpleContentRevision implements ContentRevision {
   private final String myContent;
   private final FilePath myNewFilePath;
-  private final String myRevision;
+  @NotNull private final String myRevision;
 
-  public SimpleContentRevision(final String content, final FilePath newFilePath, final String revision) {
+  public SimpleContentRevision(final String content, final FilePath newFilePath, @NotNull final String revision) {
     myContent = content;
     myNewFilePath = newFilePath;
     myRevision = revision;

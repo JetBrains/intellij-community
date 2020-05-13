@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.internal
 
+import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -12,21 +13,23 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.asRecursiveLogString
 import org.jetbrains.uast.toUElement
 
-class DumpUastTreeAction : AnAction() {
+open class DumpUastTreeAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val file = e.getData(LangDataKeys.PSI_FILE) ?: return
     val project = e.project ?: return
 
-    val dump = runReadAction { file.toUElement()?.asRecursiveLogString() }
+    val dump = runReadAction { buildDump(file) }
     if (dump == null) {
       Notifications.Bus.notify(
-        Notification("UAST", "UAST", "Can't build UAST tree for file '${file.name}'", NotificationType.ERROR)
+        Notification("UAST", JvmAnalysisBundle.message("title.uast"),
+                     "${JvmAnalysisBundle.message("can.t.build.uast.tree.for.file")} '${file.name}'", NotificationType.ERROR)
       )
       return
     }
@@ -36,6 +39,8 @@ class DumpUastTreeAction : AnAction() {
       true
     )
   }
+
+  open fun buildDump(file: PsiFile) = file.toUElement()?.asRecursiveLogString()
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal && run {

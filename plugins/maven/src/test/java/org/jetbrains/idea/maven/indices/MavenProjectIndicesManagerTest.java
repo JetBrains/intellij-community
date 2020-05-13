@@ -15,10 +15,6 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
-import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
-import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
-
 public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
   private MavenIndicesTestFixture myIndicesFixture;
 
@@ -40,17 +36,5 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     finally {
       super.tearDown();
     }
-  }
-
-  public void testAutomaticallyAddSearchService() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    OfflineSearchService service = myIndicesFixture.getProjectIndicesManager().getOfflineSearchService();
-    assertEquals(2, service.getProviders().size());
-
-    assertTrue(service.getProviders().stream().anyMatch(it -> it instanceof IndexBasedCompletionProvider && ((IndexBasedCompletionProvider)it).getIndex().getKind() == MavenSearchIndex.Kind.LOCAL));
-    assertTrue(service.getProviders().stream().anyMatch(it -> it instanceof ProjectModulesCompletionProvider));
   }
 }

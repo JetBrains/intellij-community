@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@SuppressWarnings("HardCodedStringLiteral")
 public class MockLanguageFileType extends LanguageFileType {
   public static LanguageFileType INSTANCE = new MockLanguageFileType();
 

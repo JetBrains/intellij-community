@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.intentions;
 
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
@@ -24,11 +24,11 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
   
   private void doTest() {
-    doTest(PyBundle.message("INTN.convert.to.fstring.literal"), LanguageLevel.PYTHON36);
+    doTest(PyPsiBundle.message("INTN.convert.to.fstring.literal"), LanguageLevel.PYTHON36);
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.convert.to.fstring.literal")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.convert.to.fstring.literal")));
   }
   
   public void testFormatMethodByteString() {
@@ -88,9 +88,19 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
   public void testPercentOperatorExpressionContainsOriginalHostQuote() {
     doNegativeTest();
   }
-  
+
   public void testPercentOperatorExpressionContainsAlternativeHostQuote() {
     doNegativeTest();
+  }
+
+  // PY-24232
+  public void testPercentOperatorRemovingEscapingFromPercentSigns() {
+    doTest();
+  }
+
+  // PY-38319
+  public void testPercentOperatorAddingEscapingToCurlyBraces() {
+    doTest();
   }
 
   public void testFormatMethodSimple() {

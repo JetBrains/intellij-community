@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -13,20 +13,19 @@ import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListAdapter;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.ChangeListScope;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.TreeSpeedSearch;
@@ -59,7 +58,6 @@ import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY;
 import static com.intellij.util.concurrency.EdtExecutorService.getScheduledExecutorInstance;
-import static com.intellij.util.ui.UIUtil.invokeLaterIfNeeded;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public final class ScopeViewPane extends AbstractProjectViewPane {
@@ -69,7 +67,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private final NamedScopesHolder myDependencyValidationManager;
   private final NamedScopesHolder myNamedScopeManager;
   private ScopeViewTreeModel myTreeModel;
-  private Comparator<? super NodeDescriptor> myComparator;
+  private Comparator<? super NodeDescriptor<?>> myComparator;
   private LinkedHashMap<String, NamedScopeFilter> myFilters;
   private JScrollPane myScrollPane;
 
@@ -120,28 +118,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
     myDependencyValidationManager.addScopeListener(scopeListener, this);
     myNamedScopeManager.addScopeListener(scopeListener, this);
-    ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
-      @Override
-      public void changeListAdded(ChangeList list) {
-        invokeLaterIfNeeded(myDependencyValidationManager::fireScopeListeners);
-      }
-
-      @Override
-      public void changeListRemoved(ChangeList list) {
-        invokeLaterIfNeeded(myDependencyValidationManager::fireScopeListeners);
-      }
-
-      @Override
-      public void changeListRenamed(ChangeList list, String name) {
-        invokeLaterIfNeeded(myDependencyValidationManager::fireScopeListeners);
-      }
-
-      @Override
-      public void changeListsChanged() {
-        if (myTreeModel == null) return; // not initialized yet
-        myTreeModel.updateScopeIf(ChangeListScope.class);
-      }
-    }, this);
     installComparator();
   }
 
@@ -215,10 +191,8 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       myTree.getEmptyText()
         .setText(IdeBundle.message("scope.view.empty.text"))
         .appendSecondaryText(IdeBundle.message("scope.view.empty.link"), LINK_PLAIN_ATTRIBUTES, event -> {
-          for (NamedScopeFilter filter : getFilters()) {
-            selectScopeView(filter.toString());
-            return;
-          }
+          ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
+          if (view != null) view.changeView(ProjectViewPane.ID);
         });
     }
     if (myScrollPane == null) {
@@ -313,13 +287,11 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   protected void onSubIdChange() {
-    if (myTreeModel == null) return; // not initialized yet
-    myTreeModel.setFilter(getFilter(getSubId()));
+    updateSelectedScope();
   }
 
-  @NotNull
   @Override
-  public String[] getSubIds() {
+  public String @NotNull [] getSubIds() {
     LinkedHashMap<String, NamedScopeFilter> map = myFilters;
     if (map == null || map.isEmpty()) return EMPTY_STRING_ARRAY;
     return ArrayUtilRt.toStringArray(map.keySet());
@@ -340,7 +312,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
+  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (myTreeModel != null) {
       myTreeModel.setComparator(comparator);
     }
@@ -363,6 +335,17 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     //TODO:myViewPanel == null ? null : myViewPanel.getData(dataId);
     if (LangDataKeys.IDE_VIEW.is(dataId)) return myIdeView;
     return null;
+  }
+
+  public void updateSelectedScope() {
+    if (myTreeModel == null) return; // not initialized yet
+    myTreeModel.setFilter(getFilter(getSubId()));
+  }
+
+  @Nullable
+  public NamedScope getSelectedScope() {
+    NamedScopeFilter filter = getFilter(getSubId());
+    return filter == null ? null : filter.getScope();
   }
 
   @NotNull

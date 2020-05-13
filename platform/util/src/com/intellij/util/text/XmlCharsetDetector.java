@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class XmlCharsetDetector {
   @NonNls private static final String XML_PROLOG_START = "<?xml";
   @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_START);
@@ -34,7 +31,7 @@ public class XmlCharsetDetector {
   @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_END);
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(@NotNull byte[] bytes) {
+  public static String extractXmlEncodingFromProlog(byte @NotNull [] bytes) {
     int index = 0;
     if (CharsetToolkit.hasUTF8Bom(bytes)) {
       index = CharsetToolkit.UTF8_BOM.length;
@@ -99,7 +96,7 @@ public class XmlCharsetDetector {
     return null;
   }
 
-  private static int skipWhiteSpace(int start, @NotNull byte[] bytes) {
+  private static int skipWhiteSpace(int start, byte @NotNull [] bytes) {
     while (start < bytes.length) {
       char c = (char)bytes[start];
       if (!Character.isWhitespace(c)) break;

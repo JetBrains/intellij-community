@@ -87,7 +87,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   private List<CustomCodeStyleSettings> getCustomSettings() {
     List<CustomCodeStyleSettings> customSettingsList = new ArrayList<>();
     addCustomSettings(customSettingsList, getRootSettings(), CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
-    addCustomSettings(customSettingsList, getRootSettings(), LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
+    addCustomSettings(customSettingsList, getRootSettings(), new ArrayList<>(LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()));
     return customSettingsList;
   }
 
@@ -140,6 +140,6 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   @Override
   public String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
-    return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message(key) : null;
+    return OptionsBundle.INSTANCE.containsKey(key) ? OptionsBundle.message(key) : null;
   }
 }

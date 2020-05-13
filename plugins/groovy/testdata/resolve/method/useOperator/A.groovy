@@ -5,5 +5,5 @@ class Category {
 use(Category) {
     Object o = new Object()
 
-    o.<ref>r()
+    o.<caret>r()
 }

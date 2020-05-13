@@ -65,8 +65,8 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
       int insertIdx = -idx - 1;
       myTestClasses.add(insertIdx, classNode);
       myTests.put(classNode, methodNode == null
-                             ? ContainerUtil.newSmartList()
-                             : ContainerUtil.newSmartList(methodNode));
+                             ? new SmartList<>()
+                             : new SmartList<>(methodNode));
 
       treeStructureChanged(null, null, null);
       return;
@@ -106,8 +106,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return ClassUtil.getJVMClassName(c);
   }
 
-  @NotNull
-  synchronized TestMethodUsage[] getTestMethods() {
+  synchronized TestMethodUsage @NotNull [] getTestMethods() {
     return myTests
       .entrySet()
       .stream()

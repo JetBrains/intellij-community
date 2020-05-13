@@ -49,7 +49,7 @@ public class CvsUtil {
 
   @NonNls public static final String CVS_IGNORE_FILE = ".cvsignore";
   @NonNls public static final String CVS_ROOT_FILE = "Root";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.CvsUtil");
+  private static final Logger LOG = Logger.getInstance(CvsUtil.class);
   @NonNls private static final String REPOSITORY = "Repository";
   @NonNls private static final String TAG = "Tag";
   @NonNls public static final String CVS = "CVS";
@@ -502,8 +502,7 @@ public class CvsUtil {
     return storedRevisionFile;
   }
 
-  @Nullable
-  public static byte[] getCachedStoredContent(final VirtualFile parent, final String name, final String revision) {
+  public static byte @Nullable [] getCachedStoredContent(final VirtualFile parent, final String name, final String revision) {
     try {
       File storedRevisionFile = getCachedContentFile(parent, name, revision);
       if (storedRevisionFile == null) return null;

@@ -131,7 +131,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     return myWorkingDirectory;
   }
 
-  protected void injectMockDialogFlags(ReformatFilesOptions options) {
+  protected void injectMockDialogFlags(@NotNull ReformatFilesOptions options) {
     ReformatCodeAction.setTestOptions(options);
   }
 
@@ -141,7 +141,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
   }
 
   @NotNull
-  protected List<PsiFile> createTestFiles(@NotNull VirtualFile parentDirectory, @NotNull String[] fileNames) throws IOException {
+  protected List<PsiFile> createTestFiles(@NotNull VirtualFile parentDirectory, String @NotNull [] fileNames) throws IOException {
     String[] fileText = createTestJavaClassesWithAdditionalImports(fileNames);
     List<PsiFile> files = new ArrayList<>();
     for (int i = 0; i < fileNames.length; i++) {
@@ -152,7 +152,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
   }
 
   @NotNull
-  protected List<PsiFile> createTestFiles(@NotNull PsiDirectory parentDirectory, @NotNull String[] fileNames) throws IOException {
+  protected List<PsiFile> createTestFiles(@NotNull PsiDirectory parentDirectory, String @NotNull [] fileNames) throws IOException {
     return createTestFiles(parentDirectory.getVirtualFile(), fileNames);
   }
 
@@ -166,7 +166,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     action.actionPerformed(createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module)));
   }
 
-  protected void checkFormationAndImportsOptimizationFor(@NotNull List<PsiFile>... fileCollection) {
+  protected void checkFormationAndImportsOptimizationFor(List<PsiFile> @NotNull ... fileCollection) {
     for (List<PsiFile> files : fileCollection) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
@@ -175,7 +175,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     }
   }
 
-  protected void checkNoProcessingWasPerformedOn(@NotNull List<PsiFile>... fileCollections) {
+  protected void checkNoProcessingWasPerformedOn(List<PsiFile> @NotNull ... fileCollections) {
     for (List<PsiFile> files : fileCollections) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
@@ -213,8 +213,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     return file.getName().split("\\.")[0];
   }
 
-  @NotNull
-  protected String[] createTestJavaClassesWithAdditionalImports(String[] classNames) {
+  protected String @NotNull [] createTestJavaClassesWithAdditionalImports(String[] classNames) {
     String[] classes = new String[classNames.length];
     for (int i = 0; i < classNames.length; i++) {
       classes[i] = getUntouchedJavaSourceForTotalProcessing(classNames[i]);

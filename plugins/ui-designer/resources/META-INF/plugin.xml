@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>UI Designer</name>
   <id>com.intellij.uiDesigner</id>
+  <category>Swing</category>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.UIDesignerBundle</resource-bundle>
   <depends>com.intellij.java-i18n</depends>
@@ -32,6 +33,7 @@
 
     <fileType name="GUI_DESIGNER_FORM" extensions="form"
               implementationClass="com.intellij.uiDesigner.GuiFormFileType" fieldName="INSTANCE"/>
+    <syntaxHighlighter key="GUI_DESIGNER_FORM" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
 
     <projectConfigurable groupId="editor" instance="com.intellij.uiDesigner.GuiDesignerConfigurable" id="project.propGUI" key="title.gui.designer"
                          bundle="messages.UIDesignerBundle"/>
@@ -48,7 +50,7 @@
     <localInspection language="TEXT" displayName="Typo in a UI form"
                      groupKey="form.inspections.group" alternativeId="SpellCheckingInspection" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.FormSpellCheckingInspection"/>
-    <localInspection language="TEXT" displayName="Hard coded string literal in a UI form"
+    <localInspection language="TEXT" displayName="Hardcoded string literal in a UI form"
                      groupKey="form.inspections.group" alternativeId="HardCodedStringLiteral" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
     <localInspection language="TEXT" shortName="DuplicateMnemonic" bundle="messages.UIDesignerBundle" key="inspection.duplicate.mnemonics"
@@ -69,7 +71,7 @@
     <localInspection language="TEXT" shortName="NoScrollPane" bundle="messages.UIDesignerBundle" key="inspection.no.scroll.pane"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.NoScrollPaneInspection"/>
-    <localInspection shortName="BoundFieldAssignment" bundle="messages.UIDesignerBundle" key="inspection.bound.field.title"
+    <localInspection language="JAVA" shortName="BoundFieldAssignment" bundle="messages.UIDesignerBundle" key="inspection.bound.field.title"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.BoundFieldAssignmentInspection"/>
 
@@ -116,7 +118,7 @@
 
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
     <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
-    <postStartupActivity implementation="com.intellij.uiDesigner.make.FormTypeRegistrar" />
+    <compilableFileTypesProvider implementation="com.intellij.uiDesigner.make.FormTypeRegistrar" />
 
     <psi.referenceContributor language="TEXT" implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
 
@@ -130,18 +132,11 @@
     <projectService serviceImplementation="com.intellij.uiDesigner.palette.Palette"/>
 
     <projectService serviceImplementation="com.intellij.uiDesigner.clientProperties.ClientPropertiesManager"/>
-  </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager</implementation-class>
-      <headless-implementation-class/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.palette.impl.PaletteToolWindowManager</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </project-components>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager" headlessImplementation=""/>
+
+    <projectService serviceImplementation="com.intellij.ide.palette.impl.PaletteToolWindowManager" headlessImplementation=""/>
+  </extensions>
 
   <actions>
     <group id="GuiDesigner.MainToolbarActions">

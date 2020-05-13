@@ -2,8 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -36,17 +36,15 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       public void visitSwitchExpression(PsiSwitchExpression expression) {
         if (!isNonemptyRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
-        String message = InspectionsBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
-        PsiElement problemElement =
-          (InspectionProjectProfileManager.isInformationLevel(getShortName(), expression)) ? expression : expression.getFirstChild();
-        holder.registerProblem(problemElement, message, new ReplaceWithOldStyleSwitchFix());
+        String message = JavaBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
+        holder.registerProblem(expression.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
       }
 
       @Override
       public void visitSwitchStatement(PsiSwitchStatement statement) {
         if (!isNonemptyRuleFormatSwitch(statement)) return;
         if (findReplacer(statement) == null) return;
-        String message = InspectionsBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");
+        String message = JavaBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");
         holder.registerProblem(statement.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
       }
 
@@ -99,7 +97,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.replace.with.old.style.switch.statement.fix.name");
+      return JavaBundle.message("inspection.replace.with.old.style.switch.statement.fix.name");
     }
 
     @Override

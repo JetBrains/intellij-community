@@ -98,11 +98,10 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @param globalContext the context for the current global inspection run.
    * @return the problems found for the element, or null if no problems were found.
    */
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext) {
     return null;
   }
 
@@ -116,12 +115,11 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @param processor     the collector for problems reported by the inspection
    * @return the problems found for the element, or null if no problems were found.
    */
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext,
-                                                @NotNull ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext,
+                                                           @NotNull ProblemDescriptionsProcessor processor) {
     return checkElement(refEntity, scope, manager, globalContext);
   }
 
@@ -133,6 +131,16 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * reference graph (refEntities) and uses some other APIs for its processing.
    */
   public boolean isGraphNeeded() {
+    return true;
+  }
+
+  /**
+   * True by default to ensure third party plugins are not broken
+   * 
+   * @return true if inspection should be started ({@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}) in ReadAction,
+   *         false if ReadAction is taken by inspection itself
+   */
+  public boolean isReadActionNeeded() {
     return true;
   }
 
@@ -201,8 +209,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
    * ProgressIndicator should progress with {@link GlobalInspectionContext#incrementJobDoneAmount(JobDescriptor, String)}
    */
-  @Nullable
-  public JobDescriptor[] getAdditionalJobs() {
+  public JobDescriptor @Nullable [] getAdditionalJobs() {
     return null;
   }
 
@@ -211,8 +218,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
    * ProgressIndicator should progress with {@link GlobalInspectionContext#incrementJobDoneAmount(JobDescriptor, String)}
    */
-  @Nullable
-  public JobDescriptor[] getAdditionalJobs(GlobalInspectionContext context) {
+  public JobDescriptor @Nullable [] getAdditionalJobs(GlobalInspectionContext context) {
     return getAdditionalJobs();
   }
 
@@ -234,8 +240,5 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   @Nullable
   public LocalInspectionTool getSharedLocalInspectionTool() {
     return null;
-  }
-
-  public void initialize(@NotNull GlobalInspectionContext context) {
   }
 }

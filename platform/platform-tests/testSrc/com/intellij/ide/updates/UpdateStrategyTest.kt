@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.*
@@ -281,13 +281,13 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
           <products>
             <product name="IntelliJ IDEA">
               <code>IU</code>
-              ${testData}
+              $testData
             </product>
           </products>"""))
     val settings = UpdateSettings()
     settings.selectedChannelStatus = selectedChannel
     settings.ignoredBuildNumbers += ignoredBuilds
-    val result = UpdateStrategy(BuildNumber.fromString(currentBuild), updates, settings).checkForUpdates()
+    val result = UpdateStrategy(BuildNumber.fromString(currentBuild)!!, updates, settings).checkForUpdates()
     assertEquals(UpdateStrategy.State.LOADED, result.state)
     return result
   }

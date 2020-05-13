@@ -8,7 +8,11 @@
         <extensionPoint name="deprecatedEP" interface="foo.MyDeprecatedEP"/>
         <extensionPoint name="deprecatedBeanClassEP" beanClass="foo.MyDeprecatedEP"/>
         <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"
-                        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">dynamic="true"</warning>/>
+                        dynamic="true"/>
+        <extensionPoint name="intentionAction"
+                        beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
+          <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+        </extensionPoint>
     </extensionPoints>
 
     <depends>com.intellij.custom</depends>
@@ -19,6 +23,9 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <<error descr="'implementation' attribute should be defined">myPlugin.ext</error>/>
+
+        <<error descr="'className' child tag should be defined">myPlugin.intentionAction</error>/>
+
         <myPlugin.ext implementation="<error descr="Interface is not allowed">java.lang.Runnable</error>"/>
         <myPlugin.ext implementation="<error descr="'java.util.concurrent.TimeUnit' is not assignable to 'java.lang.Runnable'"><error descr="Enum is not allowed"><error descr="Abstract class is not allowed">java.util.concurrent.TimeUnit</error></error></error>"/>
         <myPlugin.ext implementation="<error descr="'java.lang.String' is not assignable to 'java.lang.Runnable'">java.lang.String</error>"/>
@@ -31,6 +38,13 @@
         <myService serviceImplementation="foo.<error descr="Cannot resolve class 'MyInvalid'">MyInvalid</error>"/>
 
         <myService serviceImplementation="foo.MyRunnable" os="mac"/>
+
+        <myService serviceImplementation="foo.MyRunnable" timeUnit="seconds" integerNullable="<error descr="Cannot convert empty string to target class 'java.lang.Integer'"></error>" intProperty="42"/>
+        <myService serviceImplementation="foo.MyRunnable" timeUnit="<error descr="Cannot resolve 'INVALID_VALUE' in java.util.concurrent.TimeUnit">INVALID_VALUE</error>"
+                   integerNullable="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
+                   intProperty="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
+        />
+
         <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
         <completion.contributor/>
         <custom.custom/>

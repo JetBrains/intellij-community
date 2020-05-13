@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -38,12 +38,13 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.PaintEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-class ActionUpdater {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionUpdater");
+final class ActionUpdater {
+  private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
 
   private final boolean myModalContext;
@@ -54,9 +55,9 @@ class ActionUpdater {
   private final boolean myToolbarAction;
   private final boolean myTransparentOnly;
 
-  private final Map<AnAction, Presentation> myUpdatedPresentations = ContainerUtil.newConcurrentMap();
-  private final Map<ActionGroup, List<AnAction>> myGroupChildren = ContainerUtil.newConcurrentMap();
-  private final Map<ActionGroup, Boolean> myCanBePerformedCache = ContainerUtil.newConcurrentMap();
+  private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
+  private final Map<ActionGroup, List<AnAction>> myGroupChildren = new ConcurrentHashMap<>();
+  private final Map<ActionGroup, Boolean> myCanBePerformedCache = new ConcurrentHashMap<>();
   private final UpdateStrategy myRealUpdateStrategy;
   private final UpdateStrategy myCheapStrategy;
   private final Utils.ActionGroupVisitor myVisitor;
@@ -129,7 +130,9 @@ class ActionUpdater {
   }
 
   private static <T> T callAction(AnAction action, String operation, Supplier<T> call) {
-    if (action instanceof UpdateInBackground || ApplicationManager.getApplication().isDispatchThread()) return call.get();
+    if (action instanceof UpdateInBackground || ApplicationManager.getApplication().isDispatchThread()) {
+      return call.get();
+    }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressManager.getInstance().getProgressIndicator());
 
@@ -423,8 +426,7 @@ class ActionUpdater {
     }
   }
 
-  @Nullable
-  private Presentation update(AnAction action, UpdateStrategy strategy) {
+  private @Nullable Presentation update(AnAction action, UpdateStrategy strategy) {
     Presentation cached = myUpdatedPresentations.get(action);
     if (cached != null) {
       return cached;

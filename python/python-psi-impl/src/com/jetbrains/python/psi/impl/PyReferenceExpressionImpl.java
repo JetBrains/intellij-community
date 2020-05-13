@@ -19,6 +19,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -31,8 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
 /**
  * Implements reference expression PSI.
@@ -41,7 +44,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyReferenceExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PyReferenceExpressionImpl.class);
 
   @Nullable private volatile QualifiedName myQualifiedName = null;
 
@@ -90,7 +93,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Override
   @Nullable
   public PyExpression getQualifier() {
-    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     return (PyExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
   }
 
@@ -213,38 +216,66 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    if (!TypeEvalStack.mayEvaluate(this)) {
-      return null;
+    final boolean qualified = isQualified();
+
+    final PyType providedType = getTypeFromProviders(context);
+    if (providedType != null) {
+      return providedType;
     }
 
-    try {
-      final boolean qualified = isQualified();
-
-      final PyType providedType = getTypeFromProviders(context);
-      if (providedType != null) {
-        return providedType;
+    if (qualified) {
+      final Ref<PyType> qualifiedReferenceType = getQualifiedReferenceType(context);
+      if (qualifiedReferenceType != null) {
+        return qualifiedReferenceType.get();
       }
+    }
 
-      if (qualified) {
-        final Ref<PyType> qualifiedReferenceType = getQualifiedReferenceType(context);
-        if (qualifiedReferenceType != null) {
-          return qualifiedReferenceType.get();
+    final PyType typeFromTargets = getTypeFromTargets(context);
+    if (qualified && typeFromTargets instanceof PyNoneType) {
+      return null;
+    }
+    final Ref<PyType> descriptorType = getDescriptorType(typeFromTargets, context);
+    if (descriptorType != null) {
+      return descriptorType.get();
+    }
+
+    final PyType callableType = getCallableType(context);
+    if (callableType != null) {
+      return callableType;
+    }
+
+    return typeFromTargets;
+  }
+
+  @Nullable
+  private PyType getCallableType(@NotNull TypeEvalContext context) {
+    PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
+    if (callExpression != null) {
+      List<PyCallableType> callableTypes = new ArrayList<>();
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+
+      for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(this, resolveContext)) {
+        for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(callExpression, resolveResult, resolveContext)) {
+          final PyCallableType callableType = markResolveResult(clarifiedResolveResult, context, 0);
+          if (callableType == null) continue;
+
+          callableTypes.add(callableType);
         }
       }
 
-      final PyType typeFromTargets = getTypeFromTargets(context);
-      if (qualified && typeFromTargets instanceof PyNoneType) {
-        return null;
+      PyType resolvedType =
+        PyUnionType.union(forEveryScopeTakeOverloadsOtherwiseImplementations(callableTypes, PyCallableType::getCallable, context)
+                            .collect(Collectors.toList())
+        );
+
+      if (PyTypeUtil
+            .toStream(resolvedType)
+            .noneMatch(type -> type instanceof PyCallableType && ((PyCallableType)type).getCallable() == null) &&
+          resolvedType != null) {
+        return resolvedType;
       }
-      final Ref<PyType> descriptorType = getDescriptorType(typeFromTargets, context);
-      if (descriptorType != null) {
-        return descriptorType.get();
-      }
-      return typeFromTargets;
     }
-    finally {
-      TypeEvalStack.evaluated(this);
-    }
+    return null;
   }
 
   @Nullable
@@ -289,7 +320,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private PyType getTypeFromTargets(@NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final List<PyType> members = new ArrayList<>();
 
     final PsiFile realFile = FileContextUtil.getContextFile(this);
@@ -487,7 +518,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                    @NotNull TypeEvalContext context,
                                                    @NotNull PyReferenceExpression anchor) {
     if (type instanceof PyFunctionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
-       return ((PyFunctionType)type).dropSelf(context);
+      return ((PyFunctionType)type).dropSelf(context);
     }
 
     return type;

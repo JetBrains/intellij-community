@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
 
   @Override

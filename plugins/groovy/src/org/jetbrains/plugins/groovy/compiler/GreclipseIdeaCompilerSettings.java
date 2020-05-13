@@ -28,4 +28,12 @@ public class GreclipseIdeaCompilerSettings implements PersistentStateComponent<G
   public static GreclipseSettings getSettings(@NotNull Project project) {
     return ServiceManager.getService(project, GreclipseIdeaCompilerSettings.class).mySettings;
   }
+
+  public static void setGrEclipsePath(@NotNull Project project, @NotNull String path){
+    ServiceManager.getService(project, GreclipseIdeaCompilerSettings.class).mySettings.greclipsePath = path;
+  }
+
+  public static void setGrCmdParams(@NotNull Project project, @NotNull String cmdLineParams){
+    ServiceManager.getService(project, GreclipseIdeaCompilerSettings.class).mySettings.cmdLineParams = cmdLineParams;
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -6,8 +6,8 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.ComponentValidator;
@@ -42,10 +42,10 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
 
   private static final BiFunction<Object, JComponent, ValidationInfo> validationInfoProducer = (value, component) ->
     (value == null || StringUtil.isEmpty(value.toString()) || ourPackagePattern.matcher(value.toString()).matches()) ?
-      null : new ValidationInfo("Illegal name: " + value.toString(), component);
+      null : new ValidationInfo(JavaBundle.message("illegal.name.validation.info", value.toString()), component);
 
   private static final Disposable validatorsDisposable = Disposer.newDisposable();
-  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>("Class/package/member qualified name mask") {
+  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>(JavaBundle.message("exclude.table.mask")) {
 
     @Nullable
     @Override
@@ -90,7 +90,8 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     }
   };
 
-  private static final ColumnInfo<Item, ExclusionScope> SCOPE_COLUMN = new ColumnInfo<Item, ExclusionScope>("Scope") {
+  private static final ColumnInfo<Item, ExclusionScope> SCOPE_COLUMN = new ColumnInfo<Item, ExclusionScope>(JavaBundle.message(
+    "exclude.table.scope.column")) {
     @Nullable
     @Override
     public ExclusionScope valueOf(Item pair) {
@@ -133,7 +134,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     myProject = project;
 
     JBTable table = getTableView();
-    table.getEmptyText().setText(ApplicationBundle.message("exclude.from.imports.no.exclusions"));
+    table.getEmptyText().setText(JavaBundle.message("exclude.from.imports.no.exclusions"));
     table.setStriped(false);
     new CellTooltipManager(myProject).withCellComponentProvider(CellComponentProvider.forTable(table)).installOn(table);
 
@@ -189,7 +190,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     for (String s : JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames) {
       rows.add(new Item(s, ExclusionScope.Project));
     }
-    Collections.sort(rows, Comparator.comparing(o -> o.exclude));
+    rows.sort(Comparator.comparing(o -> o.exclude));
 
     setValues(rows);
   }

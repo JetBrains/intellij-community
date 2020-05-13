@@ -28,15 +28,4 @@ public class InProcessRefCollectorCompilerToolExtension extends AbstractRefColle
     }
   }
 
-  @Override
-  protected boolean divideImportsRefs() {
-    if (hasServiceManager()) {
-      for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
-        if (registrar.isEnabled() && registrar.onlyImports()) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 }

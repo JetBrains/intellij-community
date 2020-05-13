@@ -25,9 +25,6 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class JpsMavenJavaBuildingTest extends JpsBuildTestCase {
   public void testCompileJava() throws IOException {
     File srcDir = PathManagerEx.findFileUnderProjectHome("plugins/maven/jps-plugin/testData/compiler/classpathTest", getClass());

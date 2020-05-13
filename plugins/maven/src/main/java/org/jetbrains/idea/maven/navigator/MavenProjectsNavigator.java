@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManagerListener;
@@ -12,10 +12,12 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -56,10 +58,10 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;
-  private ToolWindowEx myToolWindow;
+  private ToolWindow myToolWindow;
 
   public static MavenProjectsNavigator getInstance(Project project) {
-    return project.getComponent(MavenProjectsNavigator.class);
+    return project.getService(MavenProjectsNavigator.class);
   }
 
   public MavenProjectsNavigator(@NotNull Project project) {
@@ -159,7 +161,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     MavenProjectsManager.getInstance(myProject).addManagerListener(new MavenProjectsManager.Listener() {
       @Override
       public void activated() {
-        initToolWindow();
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> initToolWindow());
         listenForProjectsChanges();
         scheduleStructureUpdate();
       }
@@ -226,8 +228,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, myProject);
 
-    final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
-    myToolWindow = (ToolWindowEx)manager.registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, myProject, true);
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);
@@ -239,7 +240,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       boolean wasVisible = false;
 
       @Override
-      public void stateChanged() {
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
         if (myToolWindow.isDisposed()) return;
         boolean visible = myToolWindow.isVisible();
         if (!visible || wasVisible) {
@@ -259,7 +260,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     group.add(actionManager.getAction("Maven.AlwaysShowArtifactId"));
     group.add(actionManager.getAction("Maven.ShowVersions"));
 
-    myToolWindow.setAdditionalGearActions(group);
+    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(group);
   }
 
   private void initTree() {
@@ -271,7 +272,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
         myPane.setOpaque(false);
         String addIconText = "'+'";
         String refreshIconText = "'Reimport'";
-        String message = ProjectBundle.message("maven.navigator.nothing.to.display", addIconText, refreshIconText);
+        String message = MavenProjectBundle.message("maven.navigator.nothing.to.display", addIconText, refreshIconText);
         int firstEol = message.indexOf("\n");
         int addIconMarkerIndex = message.indexOf(addIconText);
         myPane.replaceSelection(message.substring(0, addIconMarkerIndex));
@@ -342,7 +343,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
 
       if (myToolWindow.isAvailable() != hasMavenProjects) {
-        myToolWindow.setAvailable(hasMavenProjects, null);
+        myToolWindow.setAvailable(hasMavenProjects);
 
         if (hasMavenProjects) {
           myToolWindow.activate(null);

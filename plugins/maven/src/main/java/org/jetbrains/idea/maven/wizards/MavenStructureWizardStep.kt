@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil.createSequentFileName
+import com.intellij.ui.layout.*
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
@@ -61,30 +62,30 @@ class MavenStructureWizardStep(
     }
   }
 
-  override fun validateName(): ValidationInfo? {
+  override fun ValidationInfoBuilder.validateName(): ValidationInfo? {
     val moduleNames = findAllModules().map { it.name }.toSet()
     if (entityName in moduleNames) {
       val message = MavenWizardBundle.message("maven.structure.wizard.entity.name.exists.error",
                                               context.presentationName.capitalize(), entityName)
-      return ValidationInfo(message)
+      return error(message)
     }
-    return super.validateName()
+    return superValidateName()
   }
 
-  override fun validateGroupId(): ValidationInfo? {
-    return validateCoordinates() ?: super.validateGroupId()
+  override fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? {
+    return validateCoordinates() ?: superValidateGroupId()
   }
 
-  override fun validateArtifactId(): ValidationInfo? {
-    return validateCoordinates() ?: super.validateArtifactId()
+  override fun ValidationInfoBuilder.validateArtifactId(): ValidationInfo? {
+    return validateCoordinates() ?: superValidateArtifactId()
   }
 
-  private fun validateCoordinates(): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateCoordinates(): ValidationInfo? {
     val mavenIds = parentsData.map { it.mavenId.groupId to it.mavenId.artifactId }.toSet()
     if (groupId to artifactId in mavenIds) {
       val message = MavenWizardBundle.message("maven.structure.wizard.entity.coordinates.already.exists.error",
                                               context.presentationName.capitalize(), "$groupId:$artifactId")
-      return ValidationInfo(message)
+      return error(message)
     }
     return null
   }

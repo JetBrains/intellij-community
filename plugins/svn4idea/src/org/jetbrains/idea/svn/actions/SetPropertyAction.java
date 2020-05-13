@@ -42,7 +42,7 @@ public class SetPropertyAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException {
     File[] ioFiles = toIoFiles(files);
     SetPropertyDialog dialog = new SetPropertyDialog(vcs.getProject(), ioFiles, null, true);
 

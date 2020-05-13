@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setTitle(String title) {
+  public ComponentPopupBuilder setTitle(@NlsContexts.PopupTitle String title) {
     myTitle = title;
     return this;
   }
@@ -334,7 +335,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setFocusOwners(@NotNull final Component[] focusOwners) {
+  public ComponentPopupBuilder setFocusOwners(final Component @NotNull [] focusOwners) {
     myFocusOwners = focusOwners;
     return this;
   }

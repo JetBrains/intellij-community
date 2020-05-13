@@ -966,6 +966,17 @@ public class PyStubsTest extends PyTestCase {
     );
   }
 
+  // PY-34374
+  public void testAttrsKwOnlyOnClass() {
+    final PyFile file = getTestFile();
+
+    assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+
+    assertNotParsed(file);
+  }
+
   // PY-27398
   public void testTypingNewType() {
     runWithLanguageLevel(
@@ -1018,6 +1029,111 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     assertNotNull(file.findTopLevelAttribute("total"));
     assertNotParsed(file);
+  }
+
+  // PY-36008
+  public void testFullyQualifiedTypedDict() {
+    doTestTypingTypedDict(
+      QualifiedName.fromDottedString("typing.TypedDict")
+    );
+  }
+
+  // PY-36008
+  public void testFullyQualifiedTypedDictWithAs() {
+    doTestTypingTypedDict(
+      QualifiedName.fromDottedString("T.TypedDict")
+    );
+  }
+
+  // PY-36008
+  public void testImportedTypedDict() {
+    doTestTypingTypedDict(
+      QualifiedName.fromComponents("TypedDict")
+    );
+  }
+
+  // PY-36008
+  public void testImportedTypedDictWithAs() {
+    doTestTypingTypedDict(
+      QualifiedName.fromComponents("TD")
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictNameReference() {
+    doTestTypingTypedDictArguments();
+  }
+
+  // PY-36008
+  public void testTypedDictNameKeyword() {
+    doTestTypingTypedDictArguments();
+  }
+
+  // PY-36008
+  public void testTypedDictFieldsKeyword() {
+    doTestTypingTypedDictArguments();
+  }
+
+  private void doTestTypingTypedDictArguments() {
+    doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
+  }
+
+  private void doTestTypingTypedDict(@NotNull QualifiedName expectedCalleeName) {
+    doTestTypedDict("name", Collections.singletonList("field"), Collections.singletonList("str"), expectedCalleeName);
+  }
+
+  private void doTestTypedDict(@NotNull String expectedName,
+                               @NotNull List<String> expectedFieldsNames,
+                               @NotNull List<String> expectedFieldsTypes,
+                               @NotNull QualifiedName expectedCalleeName) {
+    final PyFile file = getTestFile();
+
+    final PyTargetExpression attribute = file.findTopLevelAttribute("td");
+    assertNotNull(attribute);
+
+    final PyTypedDictStub stub = attribute.getStub().getCustomStub(PyTypedDictStub.class);
+    assertNotNull(stub);
+    assertEquals(expectedCalleeName, stub.getCalleeName());
+
+    final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
+    doTestTypedDict(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromStub);
+    assertNotParsed(file);
+
+    final FileASTNode astNode = file.getNode();
+    assertNotNull(astNode);
+
+    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
+    doTestTypedDict(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromAst);
+  }
+
+  private static void doTestTypedDict(@NotNull String expectedName,
+                                      @NotNull List<String> expectedFieldsNames,
+                                      @NotNull List<String> expectedFieldsTypes,
+                                      @Nullable PyType type) {
+    assertInstanceOf(type, PyTypedDictType.class);
+    final PyTypedDictType typedDictType = (PyTypedDictType)type;
+
+    assertEquals(expectedName, typedDictType.getName());
+
+    final Iterator<String> fieldsNamesIterator = expectedFieldsNames.iterator();
+    final Iterator<String> fieldsTypesIterator = expectedFieldsTypes.iterator();
+
+    for (Map.Entry<String, PyTypedDictType.FieldTypeAndTotality> entry : typedDictType.getFields().entrySet()) {
+      assertTrue(fieldsNamesIterator.hasNext());
+      assertTrue(fieldsTypesIterator.hasNext());
+
+      final String fieldName = entry.getKey();
+      final PyTypedDictType.FieldTypeAndTotality fieldTypeAndTotality = entry.getValue();
+
+      assertEquals(fieldsNamesIterator.next(), fieldName);
+
+      final PyType fieldType = fieldTypeAndTotality.getType();
+      assertEquals(fieldsTypesIterator.next(), fieldType == null ? null : fieldType.getName());
+      assertFalse(fieldTypeAndTotality.isRequired());
+    }
+
+    assertFalse(fieldsNamesIterator.hasNext());
+    assertFalse(fieldsTypesIterator.hasNext());
   }
 
   private static class DataclassFieldChecker {

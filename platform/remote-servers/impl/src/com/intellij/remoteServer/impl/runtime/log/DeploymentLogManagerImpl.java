@@ -30,9 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class DeploymentLogManagerImpl implements DeploymentLogManager {
   private final LoggingHandlerImpl myMainLoggingHandler;
   private final Project myProject;
@@ -55,6 +52,12 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
         disposeLogs();
       }
     });
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
   }
 
   public DeploymentLogManagerImpl withMainHandlerVisible(boolean mainHandlerVisible) {

@@ -27,12 +27,12 @@ import java.util.function.Function;
 
 public class IntersectionPackageSet extends CompoundPackageSet {
   @NotNull
-  public static PackageSet create(@NotNull PackageSet... sets) {
+  public static PackageSet create(PackageSet @NotNull ... sets) {
     if (sets.length == 0) throw new IllegalArgumentException("empty arguments");
     return sets.length == 1 ? sets[0] : new IntersectionPackageSet(sets);
   }
 
-  private IntersectionPackageSet(@NotNull PackageSet... sets) {
+  private IntersectionPackageSet(PackageSet @NotNull ... sets) {
     super(sets);
   }
 

@@ -10,8 +10,9 @@ import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
-import org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin
+import org.jetbrains.uast.java.declarations.JavaLazyParentUIdentifier
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
+import org.jetbrains.uast.java.expressions.JavaUModuleReferenceExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
 
@@ -136,9 +137,8 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     }
   }
 
-  override val analysisPlugin: UastAnalysisPlugin? by lazy {
-    UastAnalysisPlugin.byLanguage(JavaLanguage.INSTANCE)
-  }
+  override val analysisPlugin: UastAnalysisPlugin?
+    get() = UastAnalysisPlugin.byLanguage(JavaLanguage.INSTANCE)
 }
 
 internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?): UElement? {
@@ -188,12 +188,15 @@ internal object JavaConverter {
         is PsiExpression -> convertExpression(el, givenParent, requiredType)
         is PsiStatement -> convertStatement(el, givenParent, requiredType)
         is PsiImportStatementBase -> el<UImportStatement>(build(::JavaUImportStatement))
-        is PsiIdentifier -> el<USimpleNameReferenceExpression> { JavaUSimpleNameReferenceExpression(el, el.text, givenParent) }
-                            ?: el<UIdentifier> { LazyParentUIdentifier(el, givenParent) }
+        is PsiIdentifier -> el<UIdentifier> { JavaLazyParentUIdentifier(el, givenParent) }
+        is PsiKeyword -> if (el.text == PsiKeyword.SUPER || el.text == PsiKeyword.THIS)
+          el<UIdentifier> { JavaLazyParentUIdentifier(el, givenParent) }
+        else null
         is PsiNameValuePair -> el<UNamedExpression>(build(::JavaUNamedExpression))
         is PsiArrayInitializerMemberValue -> el<UCallExpression>(build(::JavaAnnotationArrayInitializerUCallExpression))
         is PsiTypeElement -> el<UTypeReferenceExpression>(build(::JavaUTypeReferenceExpression))
         is PsiJavaCodeReferenceElement -> convertReference(el, givenParent, requiredType)
+        is PsiJavaModuleReferenceElement -> el<UReferenceExpression> (build(::JavaUModuleReferenceExpression))
         is PsiAnnotation -> el.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let {
           el<UExpression> { JavaUAnnotationCallExpression(it, givenParent) }
         }
@@ -202,6 +205,7 @@ internal object JavaConverter {
           val methodOrFieldRef = el.parent as? PsiDocMethodOrFieldRef ?: return@let null
           JavaUSimpleNameReferenceExpression(el, el.text, givenParent, methodOrFieldRef.reference) }
         }
+        is PsiCatchSection -> el<UCatchClause>(build(::JavaUCatchClause))
         else -> null
       }
     }

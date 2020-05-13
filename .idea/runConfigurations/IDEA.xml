@@ -1,12 +1,12 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="IDEA" type="Application" factoryName="Application" singleton="true">
-    <log_file alias="idea.log" path="$PROJECT_DIR$/system/log/idea.log" />
-    <log_file alias="build.log" path="$PROJECT_DIR$/system/log/build-log/build.log" />
+    <log_file alias="idea.log" path="$PROJECT_DIR$/system/idea/log/idea.log" />
+    <log_file alias="build.log" path="$PROJECT_DIR$/system/idea/log/build-log/build.log" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <module name="intellij.idea.community.main" />
-    <option name="VM_PARAMETERS" value="-Xmx512m -XX:ReservedCodeCacheSize=240m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true -Dapple.laf.useScreenMenuBar=true -Dsun.awt.disablegrab=true -Didea.jre.check=true -Didea.is.internal=true -Didea.debug.mode=true -Didea.config.path=../config -Didea.system.path=../system" />
+    <shortenClasspath name="CLASSPATH_FILE" />
+    <option name="VM_PARAMETERS" value="-Xmx512m -XX:ReservedCodeCacheSize=240m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -XX:CICompilerCount=2 -ea -Dsun.io.useCanonCaches=false -Dapple.laf.useScreenMenuBar=true -Dsun.awt.disablegrab=true -Didea.jre.check=true -Didea.is.internal=true -Didea.debug.mode=true -Djdk.attach.allowAttachSelf -Dfus.internal.test.mode=true -Dkotlinx.coroutines.debug=off -Djdk.module.illegalAccess.silent=true -Didea.config.path=../config/idea -Didea.system.path=../system/idea -Didea.initially.ask.config=true -Didea.platform.prefix=Idea" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin" />
-    <shortenClasspath name="CLASSPATH_FILE"/>
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="60786" />
       <option name="TRANSPORT" value="0" />

@@ -45,6 +45,17 @@ class TryExceptInfo(object):
     __repr__ = __str__
 
 
+class ReturnInfo(object):
+
+    def __init__(self, return_line):
+        self.return_line = return_line
+
+    def __str__(self):
+        return '{return: %s}' % (self.return_line,)
+
+    __repr__ = __str__
+
+
 def _get_line(op_offset_to_line, op_offset, firstlineno, search=False):
     op_offset_original = op_offset
     while op_offset >= 0:
@@ -114,6 +125,41 @@ def _iter_as_bytecode_as_instructions_py2(co):
                 yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), free[oparg], is_jump_target, initial_bytecode_offset)
             else:
                 yield _Instruction(curr_op_name, op, _get_line(op_offset_to_line, initial_bytecode_offset, 0), oparg, is_jump_target, initial_bytecode_offset)
+
+
+def _iter_instructions(co):
+    if sys.version_info[0] < 3:
+        iter_in = _iter_as_bytecode_as_instructions_py2(co)
+    else:
+        iter_in = dis.Bytecode(co)
+    iter_in = list(iter_in)
+
+    bytecode_to_instruction = {}
+    for instruction in iter_in:
+        bytecode_to_instruction[instruction.offset] = instruction
+
+    if iter_in:
+        for instruction in iter_in:
+            yield instruction
+
+
+def collect_return_info(co, use_func_first_line=False):
+    if not hasattr(co, 'co_lnotab'):
+        return []
+
+    if use_func_first_line:
+        firstlineno = co.co_firstlineno
+    else:
+        firstlineno = 0
+
+    lst = []
+    op_offset_to_line = dict(dis.findlinestarts(co))
+    for instruction in _iter_instructions(co):
+        curr_op_name = instruction.opname
+        if curr_op_name == 'RETURN_VALUE':
+            lst.append(ReturnInfo(_get_line(op_offset_to_line, instruction.offset, firstlineno, search=True)))
+
+    return lst
 
 
 def collect_try_except_info(co, use_func_first_line=False):

@@ -3,14 +3,17 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +21,6 @@ import java.util.*;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
 
-/**
- * @author traff
- */
 public class PyTypeModelBuilder {
   private final Map<PyType, TypeModel> myVisited = Maps.newHashMap();
   private final TypeEvalContext myContext;
@@ -72,12 +72,12 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class CollectionOf extends TypeModel {
-    private final String collectionName;
+  private static class CollectionOf extends TypeModel {
+    private final TypeModel collectionType;
     private final List<TypeModel> elementTypes;
 
-    private CollectionOf(String collectionName, List<TypeModel> elementTypes) {
-      this.collectionName = collectionName;
+    private CollectionOf(TypeModel collectionType, List<TypeModel> elementTypes) {
+      this.collectionType = collectionType;
       this.elementTypes = elementTypes;
     }
 
@@ -151,19 +151,6 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class InferredTypedDictType extends TypeModel {
-    private final List<TypeModel> members;
-
-    InferredTypedDictType(List<TypeModel> members) {
-      this.members = members;
-    }
-
-    @Override
-    void accept(@NotNull TypeVisitor visitor) {
-      visitor.typedDict(this);
-    }
-  }
-
   static class FunctionType extends TypeModel {
     @NotNull private final TypeModel returnType;
     @Nullable private final Collection<TypeModel> parameters;
@@ -220,6 +207,21 @@ public class PyTypeModelBuilder {
     }
   }
 
+  private static class OneOfLiterals extends TypeModel {
+
+    @NotNull
+    private final List<PyLiteralType> literals;
+
+    private OneOfLiterals(@NotNull List<PyLiteralType> literals) {
+      this.literals = literals;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.oneOfLiterals(this);
+    }
+  }
+
   /**
    * Builds tree-like type model for PyType
    *
@@ -240,9 +242,12 @@ public class PyTypeModelBuilder {
 
     TypeModel result = null;
     if (type instanceof PyTypedDictType) {
-      if (((PyTypedDictType)type).isInferred()) {
-        result = new InferredTypedDictType(Collections.singletonList(build(((PyTypedDictType)type).getValuesType(), true)));
-      } else {
+      PyTypedDictType typedDictType = (PyTypedDictType)type;
+      if (typedDictType.isInferred()) {
+        return build(new PyCollectionTypeImpl(typedDictType.getPyClass(), false,
+                                              typedDictType.getElementTypes()), allowUnions);
+      }
+      else {
         result = NamedType.nameOrAny(type);
       }
     }
@@ -270,21 +275,33 @@ public class PyTypeModelBuilder {
       result = new TupleType(elementModels, tupleType.isHomogeneous());
     }
     else if (type instanceof PyCollectionType) {
-      final String name = type.getName();
-      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes();
+      final PyCollectionType asCollection = (PyCollectionType)type;
       final List<TypeModel> elementModels = new ArrayList<>();
-      for (PyType elementType : elementTypes) {
+      for (PyType elementType : asCollection.getElementTypes()) {
         elementModels.add(build(elementType, true));
       }
       if (!elementModels.isEmpty()) {
-        result = new CollectionOf(name, elementModels);
+        final TypeModel collectionType = build(new PyClassTypeImpl(asCollection.getPyClass(), asCollection.isDefinition()), false);
+        result = new CollectionOf(collectionType, elementModels);
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
       final PyUnionType unionType = (PyUnionType)type;
       final Collection<PyType> unionMembers = unionType.getMembers();
+      final Pair<List<PyLiteralType>, List<PyType>> literalsAndOthers = extractLiterals(unionType);
       final Ref<PyType> optionalType = getOptionalType(unionType);
-      if (optionalType != null) {
+      if (literalsAndOthers != null) {
+        final OneOfLiterals oneOfLiterals = new OneOfLiterals(literalsAndOthers.first);
+
+        if (!literalsAndOthers.second.isEmpty()) {
+          final List<TypeModel> otherTypeModels = ContainerUtil.map(literalsAndOthers.second, t -> build(t, false));
+          result = new OneOf(ContainerUtil.prepend(otherTypeModels, oneOfLiterals));
+        }
+        else {
+          result = oneOfLiterals;
+        }
+      }
+      else if (optionalType != null) {
         result = new OptionalType(build(optionalType.get(), true));
       }
       else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false, myContext)) {
@@ -303,6 +320,9 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyGenericType) {
       result = new GenericType(type.getName());
+    }
+    else if (type != null && type.isBuiltin() && PyNames.BUILTIN_PATH_LIKE.equals(type.getName())) {
+      result = new NamedType(PyNames.PATH_LIKE);
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -330,6 +350,17 @@ public class PyTypeModelBuilder {
       }
     }
     return null;
+  }
+
+  private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
+    final Collection<PyType> members = type.getMembers();
+
+    final List<PyLiteralType> literalTypes = ContainerUtil.filterIsInstance(members, PyLiteralType.class);
+    if (literalTypes.size() < 2) return null;
+
+    final List<PyType> otherTypes = ContainerUtil.filter(members, m -> !(m instanceof PyLiteralType));
+
+    return Pair.create(literalTypes, otherTypes);
   }
 
   private TypeModel buildCallable(@NotNull PyCallableType type) {
@@ -363,11 +394,11 @@ public class PyTypeModelBuilder {
 
     void tuple(TupleType type);
 
-    void typedDict(InferredTypedDictType type);
-
     void classObject(ClassObjectType type);
 
     void genericType(GenericType type);
+
+    void oneOfLiterals(OneOfLiterals literals);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -483,6 +514,7 @@ public class PyTypeModelBuilder {
   private abstract static class TypeNameVisitor implements TypeVisitor {
     private int myDepth = 0;
     private final static int MAX_DEPTH = 6;
+    private boolean switchBuiltinToTyping = false;
 
     @Override
     public void oneOf(OneOf oneOf) {
@@ -522,7 +554,7 @@ public class PyTypeModelBuilder {
       }
       final boolean allTypeParamsAreAny = ContainerUtil.and(collectionOf.elementTypes, t -> t == NamedType.ANY);
       if (allTypeParamsAreAny) {
-        name(collectionOf.collectionName);
+        collectionOf.collectionType.accept(this);
       }
       else {
         typingGenericFormat(collectionOf);
@@ -531,8 +563,11 @@ public class PyTypeModelBuilder {
     }
 
     protected void typingGenericFormat(CollectionOf collectionOf) {
-      final String name = collectionOf.collectionName;
-      addType(PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.getOrDefault(name, name));
+      final boolean prevSwitchBuiltinToTyping = switchBuiltinToTyping;
+      switchBuiltinToTyping = true;
+      collectionOf.collectionType.accept(this);
+      switchBuiltinToTyping = prevSwitchBuiltinToTyping;
+
       if (!collectionOf.elementTypes.isEmpty()) {
         add("[");
         processList(collectionOf.elementTypes);
@@ -544,7 +579,7 @@ public class PyTypeModelBuilder {
 
     @Override
     public void name(String name) {
-      addType(name);
+      addType(switchBuiltinToTyping ? PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.getOrDefault(name, name) : name);
     }
 
     @Override
@@ -616,24 +651,6 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    public void typedDict(InferredTypedDictType type) {
-      add("Dict[str, ");
-      boolean first = true;
-      if (!type.members.isEmpty()) {
-        for (TypeModel member : type.members) {
-          if (!first) {
-            add(", ");
-          }
-          else {
-            first = false;
-          }
-          member.accept(this);
-        }
-        add("]");
-      }
-    }
-
-    @Override
     public void classObject(ClassObjectType type) {
       add("Type[");
       type.classType.accept(this);
@@ -643,6 +660,17 @@ public class PyTypeModelBuilder {
     @Override
     public void genericType(GenericType type) {
       add(type.name);
+    }
+
+    @Override
+    public void oneOfLiterals(OneOfLiterals literals) {
+      add(
+        StreamEx
+          .of(literals.literals)
+          .map(PyLiteralType::getExpression)
+          .map(PyExpression::getText)
+          .joining(", ", "Literal[", "]")
+      );
     }
   }
 }

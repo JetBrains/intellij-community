@@ -33,8 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
-  protected static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromUsageBaseFix");
+  protected static final Logger LOG = Logger.getInstance(CreateClassFromUsageBaseFix.class);
   protected CreateClassKind myKind;
   private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRefElement;
 
@@ -71,7 +70,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
       }
     }
     else if (parent instanceof PsiReferenceList) {
-      if (myKind == CreateClassKind.ENUM) return false;
+      if (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD) return false;
       if (parent.getParent() instanceof PsiClass) {
         PsiClass psiClass = (PsiClass)parent.getParent();
         if (psiClass.getExtendsList() == parent) {
@@ -124,6 +123,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     final String superClassName = getSuperClassName(element);
     if (superClassName != null) {
       if (superClassName.equals(CommonClassNames.JAVA_LANG_ENUM) && myKind != CreateClassKind.ENUM) return false;
+      if (superClassName.equals(CommonClassNames.JAVA_LANG_RECORD) && myKind != CreateClassKind.RECORD) return false;
       final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(superClassName, GlobalSearchScope.allScope(project));
       if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) return false;
     }
@@ -172,7 +172,8 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
           if (aClass != null) return aClass.getQualifiedName();
         }
       }
-    } else if (ggParent instanceof PsiExpressionList && parent instanceof PsiExpression && myKind == CreateClassKind.ENUM) {
+    } else if (ggParent instanceof PsiExpressionList && parent instanceof PsiExpression && 
+               (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD)) {
       final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, false);
       if (expectedTypes.length == 1) {
         final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(expectedTypes[0].getType());

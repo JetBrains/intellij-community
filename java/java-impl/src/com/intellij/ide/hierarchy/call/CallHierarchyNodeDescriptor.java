@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -91,7 +92,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (enclosingElement instanceof PsiMethod || enclosingElement instanceof PsiField) {
       if (enclosingElement instanceof SyntheticElement) {
         PsiFile file = enclosingElement.getContainingFile();
-        myHighlightedText.getEnding().addText(file != null ? file.getName() : IdeBundle.message("node.call.hierarchy.unknown.jsp"), mainTextAttributes);
+        myHighlightedText.getEnding().addText(file != null ? file.getName() : JavaBundle.message("node.call.hierarchy.unknown.jsp"), mainTextAttributes);
       }
       else {
         StringBuilder buffer = new StringBuilder(128);
@@ -170,7 +171,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       FileEditorManager.getInstance(myProject).openFile(psiFile.getVirtualFile(), requestFocus);
     }
 
-    Editor editor = PsiUtilBase.findEditor(callElement);
+    Editor editor = PsiEditorUtil.findEditor(callElement);
 
     if (editor != null) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);

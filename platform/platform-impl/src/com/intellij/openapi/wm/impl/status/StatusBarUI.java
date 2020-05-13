@@ -2,8 +2,8 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -12,7 +12,6 @@ import java.awt.*;
 
 public class StatusBarUI extends ComponentUI {
   private static final Color BORDER_TOP_COLOR = JBColor.namedColor("StatusBar.borderColor", new JBColor(0x919191, 0x919191));
-  private static final JBValue BW = new JBValue.Float(1);
 
   @Override
   public void paint(final Graphics g, final JComponent c) {
@@ -23,7 +22,7 @@ public class StatusBarUI extends ComponentUI {
       g2d.fill(r);
 
       g2d.setColor(BORDER_TOP_COLOR);
-      g2d.fill(new Rectangle(r.x, r.y, r.width, BW.get()));
+      RectanglePainter2D.FILL.paint(g2d, r.x, r.y, r.width, 1);
     }
     finally {
       g2d.dispose();

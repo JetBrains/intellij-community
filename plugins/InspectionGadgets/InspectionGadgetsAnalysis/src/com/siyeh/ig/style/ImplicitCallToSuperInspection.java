@@ -37,15 +37,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
   public boolean m_ignoreForObjectSubclasses = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "implicit.call.to.super.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "implicit.call.to.super.problem.descriptor");
   }
@@ -65,8 +57,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
   private static class AddExplicitSuperCall extends InspectionGadgetsFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "implicit.call.to.super.make.explicit.quickfix");
     }
@@ -112,7 +103,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      if (containingClass.isEnum()) {
+      if (containingClass.isEnum() || containingClass.isRecord()) {
         return;
       }
       if (m_ignoreForObjectSubclasses) {

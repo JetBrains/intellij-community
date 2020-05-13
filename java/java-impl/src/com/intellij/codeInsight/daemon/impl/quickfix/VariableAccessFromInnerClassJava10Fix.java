@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -47,7 +48,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Variable accessFromInnerClass";
+    return JavaBundle.message("intention.family.variable.access.from.inner.class");
   }
 
   @Override

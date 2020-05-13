@@ -16,7 +16,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -108,9 +107,8 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Changelists";
+    return VcsBundle.message("configurable.ChangelistConflictConfigurable.display.name");
   }
 
   @Override

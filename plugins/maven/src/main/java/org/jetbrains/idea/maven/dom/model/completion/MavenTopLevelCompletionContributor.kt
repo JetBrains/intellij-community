@@ -14,9 +14,9 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.trimDummy
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenTopLevelDependencyInsertionHandler
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
+import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.reposearch.SearchParameters
 import java.util.concurrent.ConcurrentLinkedDeque
 
 abstract class MavenTopLevelCompletionContributor(val myName: String) : CompletionContributor() {
@@ -51,21 +51,18 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
   protected fun find(project: Project,
                      text: String,
                      parameters: CompletionParameters,
-                     cld: ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>): Promise<Void> {
+                     cld: ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>): Promise<Int> {
     val searchParameters = createSearchParameters(parameters)
     val searchString: String = trimDummy(text)
-    val service = MavenProjectIndicesManager.getInstance(project).dependencySearchService
+    val service = DependencySearchService.getInstance(project)
     val splitted = searchString.split(':')
     if (splitted.size < 2) {
-      return service.fulltextSearch(searchString, searchParameters) { cld.add(it) }
+      return service.fulltextSearch(searchString, searchParameters) { (it as? MavenRepositoryArtifactInfo)?.let { cld.add(it) } }
     }
-    return service.suggestPrefix(splitted[0], splitted[1], searchParameters) { cld.add(it) }
+    return service.suggestPrefix(splitted[0], splitted[1], searchParameters) { (it as? MavenRepositoryArtifactInfo)?.let { cld.add(it) } }
   }
 
   protected fun createSearchParameters(parameters: CompletionParameters): SearchParameters {
-    return if (parameters.invocationCount > 1 || ApplicationManager.getApplication().isUnitTestMode) {
-      SearchParameters.FULL
-    }
-    else SearchParameters.DEFAULT
+    return SearchParameters(parameters.invocationCount < 2, ApplicationManager.getApplication().isUnitTestMode)
   }
 }

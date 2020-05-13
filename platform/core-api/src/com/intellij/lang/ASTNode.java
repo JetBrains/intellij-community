@@ -138,8 +138,7 @@ public interface ASTNode extends UserDataHolder {
    *               all children should be returned.
    * @return the children array.
    */
-  @NotNull
-  ASTNode[] getChildren(@Nullable TokenSet filter);
+  ASTNode @NotNull [] getChildren(@Nullable TokenSet filter);
 
   /**
    * Adds the specified child node as the last child of this node.

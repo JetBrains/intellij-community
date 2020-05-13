@@ -44,9 +44,8 @@ public class MigrationElementFinder extends PsiElementFinder implements DumbAwar
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     PsiMigrationImpl migration = PsiMigrationManager.getInstance(myProject).getCurrentMigration();
     if (migration != null) {
       final PsiClass migrationClass = migration.getMigrationClass(qualifiedName);
@@ -57,9 +56,8 @@ public class MigrationElementFinder extends PsiElementFinder implements DumbAwar
     return PsiClass.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     PsiMigrationImpl migration = PsiMigrationManager.getInstance(myProject).getCurrentMigration();
     if (migration != null) {
       List<PsiClass> classes = migration.getMigrationClasses(psiPackage.getQualifiedName());
@@ -68,9 +66,8 @@ public class MigrationElementFinder extends PsiElementFinder implements DumbAwar
     return PsiClass.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     PsiMigrationImpl migration = PsiMigrationManager.getInstance(myProject).getCurrentMigration();
     if (migration != null) {
       List<PsiPackage> packages = migration.getMigrationPackages(psiPackage.getQualifiedName());

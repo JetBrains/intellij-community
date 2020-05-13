@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
@@ -23,11 +24,11 @@ public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTo
   private static final OptionDescription HIDE_TOOL_STRIPES = AppearanceOptionsTopHitProvider.appearance("Hide Tool Window Bars",
                                                                                                         "hideToolStripes");
   private static final OptionDescription SHOW_STATUS_BAR = AppearanceOptionsTopHitProvider.appearance("Show Status Bar", "showStatusBar");
-  private static final OptionDescription IS_BLOCK_CURSOR = EditorOptionsTopHitProvider.editor("Show Block Cursor", "IS_BLOCK_CURSOR");
-  private static final OptionDescription IS_WHITESPACES_SHOWN = EditorOptionsTopHitProvider.editor("Show Whitespaces", "IS_WHITESPACES_SHOWN");
-  private static final OptionDescription ARE_LINE_NUMBERS_SHOWN = EditorOptionsTopHitProvider.editor("Show Line Numbers",
-                                                                                                     "ARE_LINE_NUMBERS_SHOWN");
-  private static final OptionDescription SHOW_METHOD_SEPARATORS = new DaemonCodeAnalyzerOptionDescription("SHOW_METHOD_SEPARATORS", "Show Method Separators", "appearance");
+  private static final OptionDescription IS_BLOCK_CURSOR = EditorOptionsTopHitProvider.editor(IdeBundle.message("label.show.block.cursor"), "IS_BLOCK_CURSOR");
+  private static final OptionDescription IS_WHITESPACES_SHOWN = EditorOptionsTopHitProvider.editor(IdeBundle.message("label.show.whitespaces"), "IS_WHITESPACES_SHOWN");
+  private static final OptionDescription ARE_LINE_NUMBERS_SHOWN = EditorOptionsTopHitProvider.editor(IdeBundle.message("label.show.line.numbers"), "ARE_LINE_NUMBERS_SHOWN");
+  private static final OptionDescription SHOW_METHOD_SEPARATORS = new DaemonCodeAnalyzerOptionDescription("SHOW_METHOD_SEPARATORS", IdeBundle.message(
+    "label.show.method.separators"), "appearance");
 
 
   @Override

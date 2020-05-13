@@ -17,9 +17,12 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.util.SystemInfo.isMac;
 
 public class LimitHistoryCheck {
   @NotNull private final Project myProject;
@@ -46,9 +49,9 @@ public class LimitHistoryCheck {
     ++myCount;
     if (isOver()) {
       if (!myWarningShown) {
-        VcsBalloonProblemNotifier
-          .showOverChangesView(myProject, "File History: only " + myLimit + " revisions were loaded for " + myFilePath +
-                                          "\nTo change the history limit, go to Settings | Version Control.", MessageType.WARNING);
+        String path = isMac? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
+        String message = VcsBundle.message("file.history.exceeded.limit.message", myLimit, myFilePath) + path;
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
         myWarningShown = true;
       }
       throw new VcsFileHistoryLimitReachedException();

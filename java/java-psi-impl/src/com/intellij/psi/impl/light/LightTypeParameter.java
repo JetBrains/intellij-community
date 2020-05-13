@@ -56,15 +56,13 @@ public class LightTypeParameter extends LightClass implements PsiTypeParameter {
     return getDelegate().getIndex();
   }
 
-  @NotNull
   @Override
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     return getDelegate().getAnnotations();
   }
 
-  @NotNull
   @Override
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return getDelegate().getApplicableAnnotations();
   }
 

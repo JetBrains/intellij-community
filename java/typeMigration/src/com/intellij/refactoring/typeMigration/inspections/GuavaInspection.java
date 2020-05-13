@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
@@ -45,10 +46,10 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Report variables", "checkVariables");
-    panel.addCheckbox("Report method chains", "checkChains");
-    panel.addCheckbox("Report return types", "checkReturnTypes");
-    panel.addCheckbox("Erase @javax.annotations.Nullable from converted functions", "ignoreJavaxNullable");
+    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.variables.option"), "checkVariables");
+    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.method.chains.option"), "checkChains");
+    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.return.types.option"), "checkReturnTypes");
+    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.erase.option"), "ignoreJavaxNullable");
     return panel;
   }
 
@@ -288,7 +289,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       else {
         presentation = TypeMigrationProcessor.getPresentation(element);
       }
-      return "Migrate " + presentation + " type to '" + myTargetType.getCanonicalText(false) + "'";
+      return TypeMigrationBundle.message("migrate.fix.text", presentation, myTargetType.getCanonicalText(false));
     }
 
     @Nls
@@ -305,7 +306,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project,
-                         @NotNull CommonProblemDescriptor[] descriptors,
+                         CommonProblemDescriptor @NotNull [] descriptors,
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
       final List<PsiElement> elementsToFix = new ArrayList<>();

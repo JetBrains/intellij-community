@@ -76,14 +76,12 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ATTRIBUTE_DESCRIPTORS;
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
@@ -171,8 +169,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.inline_html", MarkdownHighlighterColors.INLINE_HTML_ATTR_KEY);
     }
 
-    @NotNull
-    public AttributesDescriptor[] get() {
+    public AttributesDescriptor @NotNull [] get() {
       final AttributesDescriptor[] result = new AttributesDescriptor[myMap.size()];
       int i = 0;
 

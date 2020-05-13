@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.openapi.application.AppUIExecutor
@@ -49,7 +49,7 @@ class JBNavigateCommandTest {
 
   @Rule
   @JvmField
-  val busConnection = RecentProjectManagerListenerRule()
+  internal val busConnection = RecentProjectManagerListenerRule()
 
   fun getTestDataPath(): String {
     return "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
@@ -58,56 +58,61 @@ class JBNavigateCommandTest {
   @Test
   fun pathWithLineColumn() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      configure(project)
-      navigate(project.name, mapOf("path" to "A.java:1:5"))
-      assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
-      val currentLogicalPosition = getCurrentLogicalPosition(project)
-      assertThat(currentLogicalPosition.line).isEqualTo(1)
-      assertThat(currentLogicalPosition.column).isEqualTo(5)
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        configure(project)
+        navigate(project.name, mapOf("path" to "A.java:1:5"))
+        assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
+        val currentLogicalPosition = getCurrentLogicalPosition(project)
+        assertThat(currentLogicalPosition.line).isEqualTo(1)
+        assertThat(currentLogicalPosition.column).isEqualTo(5)
+      }
     }
   }
 
   @Test
   fun pathWithLine() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      configure(project)
-      navigate(project.name, mapOf("path" to "A.java:2"))
-      assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
-      val currentLogicalPosition = getCurrentLogicalPosition(project)
-      assertThat(currentLogicalPosition.line).isEqualTo(2)
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        configure(project)
+        navigate(project.name, mapOf("path" to "A.java:2"))
+        assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
+        val currentLogicalPosition = getCurrentLogicalPosition(project)
+        assertThat(currentLogicalPosition.line).isEqualTo(2)
+      }
     }
   }
 
   @Test
   fun path1() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      configure(project)
-      navigate(project.name, mapOf("path" to "A.java"))
-      assertThat(getCurrentElement(project).name).isEqualTo("A.java")
+      runInEdtAndWait {
+        configure(project)
+        navigate(project.name, mapOf("path" to "A.java"))
+        assertThat(getCurrentElement(project).name).isEqualTo("A.java")
+      }
     }
   }
 
   @Test
-  fun pathOpenProject() = runBlocking {
+  fun pathOpenProject(): Unit = runBlocking {
     var projectName: String? = null
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      configure(project)
-      projectName = project.name
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        configure(project)
+        projectName = project.name
+      }
     }
 
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      var recentProject: Project? = null
-      try {
-        navigate(projectName!!, mapOf("path" to "A.java"))
-        UIUtil.dispatchAllInvocationEvents()
+      navigate(projectName!!, mapOf("path" to "A.java"))
+      UIUtil.dispatchAllInvocationEvents()
 
-        recentProject = ProjectManager.getInstance().openProjects.find { it.name == projectName }!!
+      ProjectManager.getInstance().openProjects.find { it.name == projectName }!!.use { recentProject ->
         assertThat(getCurrentElement(recentProject).name).isEqualTo("A.java")
       }
-      finally {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(recentProject ?: return@withContext)
-      }
     }
+
+    ProjectRule.checkThatNoOpenProjects()
   }
 
   private fun configure(project: Project) {
@@ -129,29 +134,28 @@ class JBNavigateCommandTest {
     }
   }
 
-  private fun getCurrentElement(project: Project) = getCurrentElements(project).first()
-
-  private fun getCurrentElements(project: Project): List<NavigatablePsiElement> {
-    return FileEditorManager.getInstance(project).allEditors.map {
-      val textEditor = it as TextEditor
-      val offset = textEditor.editor.caretModel.offset
-      val file = it.file
-      val psiFile = PsiManager.getInstance(project).findFile(file!!)
-
-      PsiTreeUtil.findElementOfClassAtOffset(psiFile!!, offset, NavigatablePsiElement::class.java, false)!!
-    }
-  }
-
-  private fun getCurrentLogicalPosition(project: Project): LogicalPosition {
-    return FileEditorManager.getInstance(project).allEditors.map {
-      (it as TextEditor).editor.offsetToLogicalPosition(it.editor.caretModel.offset)
-    }.first()
-  }
-
   private fun navigate(projectName: String, parameters: Map<String, String>) {
-    val navigateCommand = JBProtocolCommand.findCommand("navigate")
     val map = hashMapOf("project" to projectName)
     map.putAll(parameters)
-    navigateCommand?.perform("reference", map)
+    JBProtocolCommand.findCommand("navigate")!!.perform("reference", map)
+  }
+}
+
+private fun getCurrentLogicalPosition(project: Project): LogicalPosition {
+  return FileEditorManager.getInstance(project).allEditors.map {
+    (it as TextEditor).editor.offsetToLogicalPosition(it.editor.caretModel.offset)
+  }.first()
+}
+
+private fun getCurrentElement(project: Project) = getCurrentElements(project).first()
+
+private fun getCurrentElements(project: Project): List<NavigatablePsiElement> {
+  return FileEditorManager.getInstance(project).allEditors.map {
+    val textEditor = it as TextEditor
+    val offset = textEditor.editor.caretModel.offset
+    val file = it.file
+    val psiFile = PsiManager.getInstance(project).findFile(file!!)
+
+    PsiTreeUtil.findElementOfClassAtOffset(psiFile!!, offset, NavigatablePsiElement::class.java, false)!!
   }
 }

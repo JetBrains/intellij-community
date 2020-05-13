@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.externalDependencies.ProjectExternalDependency;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -36,10 +36,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-/**
- * @author nik
- */
-public class ExternalDependenciesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class ExternalDependenciesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
   private final ExternalDependenciesManager myDependenciesManager;
   private final CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
@@ -68,7 +65,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
   @Nls
   @Override
   public String getDisplayName() {
-    return "Required Plugins";
+    return IdeBundle.message("configurable.ExternalDependenciesConfigurable.display.name");
   }
 
   @Nullable
@@ -113,7 +110,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     });
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         return editSelectedDependency(dependenciesList);
       }
     }.installOn(dependenciesList);
@@ -135,8 +132,8 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
       })
       .createPanel();
 
-    String text = XmlStringUtil.wrapInHtml("Specify a list of plugins required for your project. " +
-                                           ApplicationNamesInfo.getInstance().getFullProductName() + " will notify you if a required plugin is missing or needs an update. ");
+    String text = XmlStringUtil
+      .wrapInHtml(IdeBundle.message("settings.required.plugins.title", ApplicationNamesInfo.getInstance().getFullProductName()));
     return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(new JBLabel(text));
   }
 
@@ -191,7 +188,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     if (!original.getPluginId().isEmpty() && !pluginIds.contains(original.getPluginId())) {
       pluginIds.add(original.getPluginId());
     }
-    Collections.sort(pluginIds, (o1, o2) -> getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2)));
+    pluginIds.sort((o1, o2) -> getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2)));
 
     ComboBox<String> pluginChooser = new ComboBox<>(ArrayUtilRt.toStringArray(pluginIds), 250);
     pluginChooser.setRenderer(SimpleListCellRenderer.create("", this::getPluginNameById));
@@ -205,16 +202,16 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
     final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getMinVersion()));
     final JBTextField maxVersionField = new JBTextField(StringUtil.notNullize(original.getMaxVersion()));
-    minVersionField.getEmptyText().setText("<any>");
+    minVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
     minVersionField.setColumns(10);
-    maxVersionField.getEmptyText().setText("<any>");
+    maxVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
     maxVersionField.setColumns(10);
     JPanel panel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Plugin:", pluginChooser)
-      .addLabeledComponent("Minimum version:", minVersionField)
-      .addLabeledComponent("Maximum version:", maxVersionField)
+      .addLabeledComponent(IdeBundle.message("label.plugin"), pluginChooser)
+      .addLabeledComponent(IdeBundle.message("label.minimum.version"), minVersionField)
+      .addLabeledComponent(IdeBundle.message("label.maximum.version"), maxVersionField)
       .getPanel();
-    final DialogBuilder dialogBuilder = new DialogBuilder(parent).title("Required Plugin").centerPanel(panel);
+    final DialogBuilder dialogBuilder = new DialogBuilder(parent).title(IdeBundle.message("dialog.title.required.plugin")).centerPanel(panel);
     dialogBuilder.setPreferredFocusComponent(pluginChooser);
     pluginChooser.addActionListener(new ActionListener() {
       @Override

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 import com.intellij.remoteServer.agent.util.log.TerminalListener;
@@ -31,6 +31,12 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
+  public String getProjectHash() {
+    Project project = myLogManager.getProject();
+    return "`" + project.getName() + "`:" + project.getLocationHash();
+  }
+
+  @Override
   public void println(String message) {
     myMainLoggingHandler.print(message + "\n");
   }
@@ -42,46 +48,9 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       return cached;
     }
 
-    LogListenerImpl result = new LogListenerImpl(myLogManager.addAdditionalLog(pipeName), true);
+    LogListenerImpl result = new LogListenerImpl(myLogManager.addAdditionalLog(pipeName));
     myPipeName2LogListener.put(pipeName, result);
     return result;
-  }
-
-  @Override
-  public LogListener getOrCreateEmptyLogListener(String pipeName) {
-    LogListenerImpl result = (LogListenerImpl)getOrCreateLogListener(pipeName);
-    result.clear();
-    return result;
-  }
-
-  @Override
-  public LogListener createConsole(String pipeName, final OutputStream consoleInput) {
-    final LoggingHandler loggingHandler = myLogManager.addAdditionalLog(pipeName);
-    loggingHandler.attachToProcess(new ProcessHandler() {
-
-      @Override
-      protected void destroyProcessImpl() {
-
-      }
-
-      @Override
-      protected void detachProcessImpl() {
-
-      }
-
-      @Override
-      public boolean detachIsDefault() {
-        return false;
-      }
-
-      @Nullable
-      @Override
-      public OutputStream getProcessInput() {
-        return consoleInput;
-      }
-    });
-
-    return new LogListenerImpl(loggingHandler, false);
   }
 
   @Override
@@ -115,18 +84,15 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   private static class LogListenerImpl implements LogListener {
-
     private final LoggingHandler myLoggingHandler;
-    private final boolean myAppendLineBreak;
 
-    LogListenerImpl(LoggingHandler loggingHandler, boolean appendLineBreak) {
+    LogListenerImpl(LoggingHandler loggingHandler) {
       myLoggingHandler = loggingHandler;
-      myAppendLineBreak = appendLineBreak;
     }
 
     @Override
     public void lineLogged(String line) {
-      myLoggingHandler.print(myAppendLineBreak ? line + "\n" : line);
+      myLoggingHandler.print(line);
     }
 
     @Override

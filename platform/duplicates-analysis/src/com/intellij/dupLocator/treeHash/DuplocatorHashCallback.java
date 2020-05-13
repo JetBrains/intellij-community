@@ -28,7 +28,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class DuplocatorHashCallback implements FragmentsCollector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.treeHash.DuplocatorHashCallback");
+  private static final Logger LOG = Logger.getInstance(DuplocatorHashCallback.class);
 
   private TIntObjectHashMap<List<List<PsiFragment>>> myDuplicates;
   private final int myBound;
@@ -255,7 +255,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
         }
         final int fileCount = files.size();
         final PsiFile psiFile = occurencies[0].getFile();
-        DuplicatesProfile profile = DuplicatesProfileCache.getProfile(this, pattern);
+        DuplicatesProfile profile = DuplicatesProfile.findProfileForDuplicate(this, pattern);
         String comment = profile != null ? profile.getComment(this, pattern) : "";
         final GroupNodeDescription description = new GroupNodeDescription(fileCount, psiFile != null ? psiFile.getName() : "unknown", comment);
         myPattern2Description.put(pattern, description);

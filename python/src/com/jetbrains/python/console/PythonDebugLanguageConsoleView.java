@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.DuplexConsoleView;
@@ -34,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author traff
- */
 public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleView, PythonConsoleView> implements PyCodeExecutor {
 
   public static final String DEBUG_CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))";
@@ -46,12 +29,12 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
    * @param testMode this console will be used to display test output and should support TC messages
    */
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView, final boolean testMode) {
-    super(consoleView, new PythonConsoleView(project, "Python Console", sdk, testMode));
+    super(consoleView, new PythonConsoleView(project, PyBundle.message("python.console"), sdk, testMode));
 
     enableConsole(!PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());
 
     getSwitchConsoleActionPresentation().setIcon(PythonIcons.Python.PythonConsole);
-    getSwitchConsoleActionPresentation().setText(PyBundle.message("run.configuration.show.command.line.action.name"));
+    getSwitchConsoleActionPresentation().setText(PyBundle.messagePointer("run.configuration.show.command.line.action.name"));
 
     List<AnAction> actions = ContainerUtil.newArrayList(PyConsoleUtil.createTabCompletionAction(getPydevConsoleView()));
     actions.add(PyConsoleUtil.createInterruptAction(getPydevConsoleView()));
@@ -98,7 +81,6 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
       PythonConsoleView console = getPydevConsoleView();
       if (!myDebugConsoleInitialized && console.getExecuteActionHandler() != null) {
         if (!console.getExecuteActionHandler().getConsoleCommunication().isWaitingForInput()) {
-          console.addConsoleFolding(true, false);
           showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
         }
         myDebugConsoleInitialized = true;

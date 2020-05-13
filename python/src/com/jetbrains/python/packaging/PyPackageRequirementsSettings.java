@@ -18,6 +18,7 @@ package com.jetbrains.python.packaging;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
@@ -54,6 +55,42 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     getState().myRequirementsPath = path;
   }
 
+  public boolean getSpecifyVersion() {
+    return getState().myVersionSpecifier != PyRequirementsVersionSpecifierType.NO_VERSION;
+  }
+
+  public final PyRequirementsVersionSpecifierType getVersionSpecifier() {
+    return getState().myVersionSpecifier;
+  }
+
+  public final void setVersionSpecifier(PyRequirementsVersionSpecifierType versionSpecifier) {
+    getState().myVersionSpecifier = versionSpecifier;
+  }
+
+  public final boolean getRemoveUnused() {
+    return getState().myRemoveUnused;
+  }
+
+  public final boolean setRemoveUnused(boolean removeUnused) {
+    return getState().myRemoveUnused = removeUnused;
+  }
+
+  public final boolean getModifyBaseFiles() {
+    return getState().myModifyBaseFiles;
+  }
+
+  public final boolean setModifyBaseFiles(boolean modifyBaseFiles) {
+    return getState().myModifyBaseFiles = modifyBaseFiles;
+  }
+
+  public final boolean getKeepMatchingSpecifier() {
+    return getState().myKeepMatchingSpecifier;
+  }
+
+  public final void setKeepMatchingSpecifier(boolean forceUpdateVersionSpecifier) {
+    getState().myKeepMatchingSpecifier = forceUpdateVersionSpecifier;
+  }
+
   public final boolean isDefaultPath() {
     return getRequirementsPath().equals(DEFAULT_REQUIREMENTS_PATH);
   }
@@ -70,7 +107,21 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
 
   public static final class ServiceState {
     @NotNull
+    @OptionTag("requirementsPath")
     public String myRequirementsPath = DEFAULT_REQUIREMENTS_PATH;
+
+    @NotNull
+    @OptionTag("versionSpecifier")
+    public PyRequirementsVersionSpecifierType myVersionSpecifier = PyRequirementsVersionSpecifierType.COMPATIBLE;
+
+    @OptionTag("removeUnused")
+    public boolean myRemoveUnused = false;
+
+    @OptionTag("modifyBaseFiles")
+    public boolean myModifyBaseFiles = false;
+
+    @OptionTag("keepMatchingSpecifier")
+    public boolean myKeepMatchingSpecifier = true;
   }
 
   @State(name = "AppPackageRequirementsSettings", storages = @Storage("PackageRequirementsSettings.xml"))

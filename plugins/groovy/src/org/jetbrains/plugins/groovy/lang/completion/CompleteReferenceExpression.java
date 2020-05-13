@@ -537,9 +537,8 @@ public class CompleteReferenceExpression {
       }
     }
 
-    @NotNull
     @Override
-    public GroovyResolveResult[] getCandidates() {
+    public GroovyResolveResult @NotNull [] getCandidates() {
       if (!hasCandidates()) return GroovyResolveResult.EMPTY_ARRAY;
       final GroovyResolveResult[] results = ResolveUtil.filterSameSignatureCandidates(getCandidatesInternal());
       List<GroovyResolveResult> list = new ArrayList<>(results.length);

@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,13 +30,13 @@ class PreviewTreeModel extends DefaultTreeModel {
     setValidImpl(true);
     DefaultMutableTreeNode root = getRoot();
 
-    myMethodGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.method"));
+    myMethodGroup = new DefaultMutableTreeNode(JavaRefactoringBundle.message("refactoring.extract.method.preview.group.method"));
     root.add(myMethodGroup);
     PsiMethod emptyMethod = processor.generateEmptyMethod(processor.getMethodName(), processor.getTargetClass());
     myMethodGroup.add(new MethodNode(emptyMethod)); // will be replaced in updateMethod()
 
     DefaultMutableTreeNode originalGroup =
-      new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.original"));
+      new DefaultMutableTreeNode(JavaRefactoringBundle.message("refactoring.extract.method.preview.group.original"));
     root.add(originalGroup);
     PsiElement[] elements = processor.getElements();
     myPatternNode = new PatternNode(elements);
@@ -44,7 +44,7 @@ class PreviewTreeModel extends DefaultTreeModel {
 
     List<Match> duplicates = processor.getAnyDuplicates();
     if (!ContainerUtil.isEmpty(duplicates)) {
-      myDuplicatesGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.duplicates"));
+      myDuplicatesGroup = new DefaultMutableTreeNode(JavaRefactoringBundle.message("refactoring.extract.method.preview.group.duplicates"));
       root.add(myDuplicatesGroup);
       for (Match duplicate : duplicates) {
         myDuplicatesGroup.add(new DuplicateNode(duplicate));

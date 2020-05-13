@@ -2,9 +2,9 @@
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
+import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -19,7 +19,6 @@ import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TextAccessor;
@@ -27,19 +26,11 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.*;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.web.WebView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +46,6 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import java.awt.*;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.MalformedURLException;
@@ -79,14 +68,22 @@ public class TipUIUtil {
   @NotNull
   public static String getPoweredByText(@NotNull TipAndTrickBean tip) {
     PluginDescriptor descriptor = tip.getPluginDescriptor();
-    return descriptor instanceof IdeaPluginDescriptor &&
-           !PluginManagerCore.CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString()) ?
-           ((IdeaPluginDescriptor)descriptor).getName() : "";
+    return descriptor != null &&
+           PluginManagerCore.CORE_ID != descriptor.getPluginId() ?
+           descriptor.getName() : "";
   }
 
   @Nullable
-  public static TipAndTrickBean getTip(String tipFileName) {
-    TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
+  public static TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
+    if (feature == null) {
+      return null;
+    }
+
+    String tipFileName = feature.getTipFileName();
+    TipAndTrickBean tip = TipAndTrickBean.findByFileName("neue-" + tipFileName);
+    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
+      tip = TipAndTrickBean.findByFileName(tipFileName);
+    }
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = new TipAndTrickBean();
       tip.fileName = tipFileName;
@@ -207,12 +204,7 @@ public class TipUIUtil {
             }
 
             String newImgTag;
-            if (Registry.is("ide.javafx.tips")) {
-              newImgTag = "<img src=\"data:image/" + trinity.first + ";base64," + Base64.getEncoder().encodeToString(trinity.third) + "\" ";
-            }
-            else {
-              newImgTag = "<img src=\"" + actualURL.toExternalForm() + "\" ";
-            }
+            newImgTag = "<img src=\"" + actualURL.toExternalForm() + "\" ";
             BufferedImage image = trinity.second;
             int w = image.getWidth();
             int h = image.getHeight();
@@ -335,7 +327,7 @@ public class TipUIUtil {
   }
 
   public static Browser createBrowser() {
-    return Registry.is("ide.javafx.tips") ? new JFXBrowser() : new SwingBrowser();
+    return new SwingBrowser();
   }
 
   public interface Browser extends TextAccessor {
@@ -492,75 +484,6 @@ public class TipUIUtil {
     @Override
     public JComponent getComponent() {
       return this;
-    }
-  }
-
-  private static class JFXBrowser extends JPanel implements Browser {
-    private final JFXPanel myPanel;
-    private WebView myWebView;
-    private String myRecentText = "";
-
-    JFXBrowser() {
-      setLayout(new GridLayout(1, 1));
-      setBackground(UIUtil.getTextFieldBackground());
-      Long mask = ReflectionUtil.getField(Component.class, this, long.class, "eventMask");
-      add(myPanel = new JFXPanel(){
-        {if (mask != null) enableEvents(mask);}
-      });
-      Platform.runLater(() -> {
-        Platform.setImplicitExit(false);
-        myPanel.addMouseWheelListener(new MouseWheelListener() {
-          @Override
-          public void mouseWheelMoved(MouseWheelEvent e) {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(() -> JFXBrowser.this.dispatchEvent(e));
-          }
-        });
-        myPanel.setScene(new Scene(myWebView = new WebView(), 600, 400));
-        myWebView.getEngine().getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
-          @Override
-          public void changed(ObservableValue<? extends Worker.State> observable, Worker.State oldValue, Worker.State newValue) {
-            if (newValue == Worker.State.SUCCEEDED) {
-              int height = 0;
-              int width = 0;
-              Integer size = (Integer)myWebView.getEngine().executeScript("document.body.children.length");
-              for (int i = 0; i < size; i++) {
-                Object w = myWebView.getEngine().executeScript("document.body.children[" + i + "].scrollWidth");
-                if (w instanceof Integer) {
-                  width = Math.max(width, (Integer)w);
-                }
-                Object h = myWebView.getEngine().executeScript("document.body.children[" + i + "].scrollHeight");
-                if (h instanceof Integer) {
-                  height += (Integer)h;
-                }
-              }
-              myPanel.setPreferredSize(new Dimension(width, height));
-              myPanel.revalidate();
-            }
-          }
-        });
-      });
-    }
-
-    @Override
-    public void setText(String html) {
-      myRecentText = html;
-      Platform.runLater(() -> myWebView.getEngine().loadContent(html));
-    }
-
-    @Override
-    public void load(String url) throws IOException {
-      setText(IOUtil.readString(new DataInputStream(new URL(url).openStream())));
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return this;
-    }
-
-    @Override
-    public String getText() {
-      return myRecentText;
     }
   }
 }

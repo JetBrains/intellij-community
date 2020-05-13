@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.switchbranches;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -10,6 +12,10 @@ public class CreateMissingSwitchBranchesActionTest extends IPPTestCase {
 
   public void testDataflowInt() {
     doTest(CreateSwitchBranchesUtil.getActionName(Arrays.asList("1", "3", "5", "7", "9")));
+  }
+  
+  public void testDataflowLong() {
+    assertIntentionNotAvailable(CreateSwitchBranchesUtil.getActionName(Arrays.asList("1", "2")));
   }
 
   public void testDataflowIntMixedTypes() {
@@ -39,5 +45,10 @@ public class CreateMissingSwitchBranchesActionTest extends IPPTestCase {
   @Override
   protected String getRelativePath() {
     return "switchbranches";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }

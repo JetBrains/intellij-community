@@ -215,8 +215,7 @@ public class GroovyCompletionData {
     }
   }
 
-  @NotNull
-  private static String[] addExtendsImplements(PsiElement context) {
+  private static String @NotNull [] addExtendsImplements(PsiElement context) {
     if (context.getParent() == null) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }

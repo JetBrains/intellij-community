@@ -25,7 +25,7 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 public abstract class ArtifactBasedBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   private final JpsArtifact myArtifact;
 
-  protected ArtifactBasedBuildTarget(BuildTargetType<?> targetType, @NotNull JpsArtifact artifact) {
+  protected ArtifactBasedBuildTarget(BuildTargetType<? extends BuildTarget<ArtifactRootDescriptor>> targetType, @NotNull JpsArtifact artifact) {
     super(targetType);
     myArtifact = artifact;
   }

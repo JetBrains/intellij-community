@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.Executor;
@@ -7,13 +7,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,21 +17,19 @@ import java.util.List;
 
 /**
  * The manager of tabs in the Run/Debug toolwindows.
- *
- * @see com.intellij.execution.ExecutionManager#getContentManager()
  */
 public interface RunContentManager {
-  Topic<RunContentWithExecutorListener> TOPIC =
-    Topic.create("Run Content", RunContentWithExecutorListener.class);
+  Topic<RunContentWithExecutorListener> TOPIC = Topic.create("Run Content", RunContentWithExecutorListener.class);
 
-  static RunContentManager getInstance(Project project) {
-    return ServiceManager.getService(project, RunContentManager.class);
+  @NotNull
+  static RunContentManager getInstance(@NotNull Project project) {
+    return project.getService(RunContentManager.class);
   }
 
-  /** @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead (to be removed in IDEA 16) */
-  @Deprecated @SuppressWarnings("UnusedDeclaration")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
-  DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
+  @Nullable
+  static RunContentManager getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(RunContentManager.class);
+  }
 
   /**
    * Returns the content descriptor for the selected run configuration in the last activated Run/Debug toolwindow.
@@ -44,17 +38,6 @@ public interface RunContentManager {
    */
   @Nullable
   RunContentDescriptor getSelectedContent();
-
-  /**
-   * Returns the content descriptor for the selected run configuration in the toolwindow corresponding to the specified executor.
-   *
-   * @param executor the executor (e.g. {@link com.intellij.execution.executors.DefaultRunExecutor#getRunExecutorInstance()} or
-   *                 {@link com.intellij.execution.executors.DefaultDebugExecutor#getDebugExecutorInstance()})
-   * @return the content descriptor, or null if there is no selected run configuration in the specified toolwindow.
-   */
-  @Nullable
-  @Deprecated
-  RunContentDescriptor getSelectedContent(Executor executor);
 
   /**
    * Returns the list of content descriptors for all currently displayed run/debug configurations.
@@ -89,9 +72,7 @@ public interface RunContentManager {
 
   void selectRunContent(@NotNull RunContentDescriptor descriptor);
 
-  /**
-   * @deprecated use {@link #getContentDescriptorToolWindowId(RunConfiguration)}
-   */
+  /** @deprecated use {@link #getContentDescriptorToolWindowId(RunConfiguration)} */
   @Nullable
   @Deprecated
   default String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings) {

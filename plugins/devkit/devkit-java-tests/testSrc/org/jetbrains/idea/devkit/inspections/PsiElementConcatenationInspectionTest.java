@@ -37,9 +37,8 @@ public class PsiElementConcatenationInspectionTest extends LightQuickFixParamete
     super.beforeActionStarted(testName, contents);
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new PsiElementConcatenationInspection()};
   }
 

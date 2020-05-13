@@ -2,6 +2,7 @@
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -11,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -34,11 +32,12 @@ public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
       Couple<DirDiffElementImpl> target = getSelectedSourceAndTarget(model);
       if (target != null) {
         e.getPresentation().setEnabled(true);
-        e.getPresentation().setDescription("Compare '" + target.first.getSourcePresentableName() + "' with '" + target.second.getTargetPresentableName() + "'");
+        e.getPresentation().setDescription(DiffBundle.message("compare.0.with.1", target.first.getSourcePresentableName(),
+                                                      target.second.getTargetPresentableName()));
         return;
       }
     }
-    e.getPresentation().setDescription("Compare selected new files on the left side and on the right side with each other.");
+    e.getPresentation().setDescription(DiffBundle.message("compare.selected.new.files"));
     e.getPresentation().setEnabled(false);
   }
 

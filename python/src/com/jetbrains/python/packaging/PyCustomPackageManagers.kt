@@ -17,9 +17,12 @@ interface PyPackageManagerProvider {
    * @see tryCreateCustomPackageManager
    */
   fun tryCreateForSdk(sdk: Sdk): PyPackageManager?
-}
 
-val EP_NAME: ExtensionPointName<PyPackageManagerProvider> = ExtensionPointName.create("Pythonid.packageManagerProvider")
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<PyPackageManagerProvider> = ExtensionPointName.create("Pythonid.packageManagerProvider")
+  }
+}
 
 private val LOG: Logger = Logger.getInstance("#com.jetbrains.python.packaging.PyCustomPackageManagers")
 
@@ -30,7 +33,7 @@ private val LOG: Logger = Logger.getInstance("#com.jetbrains.python.packaging.Py
  */
 @ApiStatus.Experimental
 fun tryCreateCustomPackageManager(sdk: Sdk): PyPackageManager? {
-  val managers: List<PyPackageManager> = EP_NAME.extensionList.mapNotNull { it.safeTryCreateForSdk(sdk) }
+  val managers: List<PyPackageManager> = PyPackageManagerProvider.EP_NAME.extensionList.mapNotNull { it.safeTryCreateForSdk(sdk) }
   if (managers.size > 1) {
     LOG.warn("Ambiguous Python package managers found: $managers")
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -36,26 +37,23 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "c.style.array.declaration.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiMethod) {
       return InspectionGadgetsBundle.message("cstyle.array.method.declaration.problem.descriptor");
     }
-    final int choice = info instanceof PsiField ? 1 : info instanceof PsiParameter ? 2 : 3;
+    final int choice;
+    if (info instanceof PsiField) choice = 1;
+    else if (info instanceof PsiParameter) choice = 2;
+    else if (info instanceof PsiRecordComponent)choice = 3;
+    else choice = 4;
     return InspectionGadgetsBundle.message("cstyle.array.variable.declaration.problem.descriptor", Integer.valueOf(choice));
   }
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore C-style declarations in variables", this, "ignoreVariables");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.c.style.array.declarations.option"), this, "ignoreVariables");
   }
 
   @Override
@@ -88,11 +86,11 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
       if (elementType.equals(declaredType)) {
         return;
       }
-      if (InspectionProjectProfileManager.isInformationLevel(getShortName(), variable)) {
-        registerError(variable, variable);
+      if (isVisibleHighlight(variable)) {
+        registerVariableError(variable, variable);
       }
       else {
-        registerVariableError(variable, variable);
+        registerError(variable, variable);
       }
     }
 
@@ -118,7 +116,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
         PsiJavaToken last = null;
         while (!(child instanceof PsiCodeBlock)) {
           if (child instanceof PsiJavaToken) {
-            PsiJavaToken token = (PsiJavaToken)child;
+            final PsiJavaToken token = (PsiJavaToken)child;
             final IElementType tokenType = token.getTokenType();
             if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
               if (first == null) first = token;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 
-/**
- * @author max
- */
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
 
   @Override
@@ -39,8 +22,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     throw new IOException("Cannot get content of " + this);
   }
 
@@ -67,17 +49,13 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
 
   public abstract void setTimeStamp(final long time) throws IOException;
-  
+
   @Override
   @NotNull
   public abstract CharSequence getNameSequence();
 
   @Override
   public abstract int getId();
-
-  @Nullable @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public NewVirtualFile findChildById(int id) {return null;}
 
   @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
@@ -128,8 +106,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract Iterable<VirtualFile> iterInDbChildren();
 
   @NotNull
-  @Deprecated
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
   }

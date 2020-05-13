@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -90,7 +90,7 @@ public class Reverter {
   }
 
   public void moveGroup() {
-    Collections.sort(myFromToModified, (o1, o2) -> FileUtil.compareFiles(o1.getTo(), o2.getTo()));
+    myFromToModified.sort((o1, o2) -> FileUtil.compareFiles(o1.getTo(), o2.getTo()));
     for (CopiedAsideInfo info : myFromToModified) {
       if (info.getParentImmediateReverted().exists()) {
         // parent successfully renamed/moved

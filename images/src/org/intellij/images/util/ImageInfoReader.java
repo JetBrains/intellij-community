@@ -15,7 +15,6 @@
  */
 package org.intellij.images.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
@@ -35,26 +34,16 @@ import java.util.Objects;
  * @author spleaner
  */
 public class ImageInfoReader {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.images.util.ImageInfoReader");
-
-  private ImageInfoReader() {
-  }
-
   @Nullable
-  public static Info getInfo(@NotNull byte[] data) {
-    return getInfo(data, null);
-  }
-
-  @Nullable
-  public static Info getInfo(@NotNull byte[] data, @Nullable String inputName) {
+  public static Info getInfo(byte @NotNull [] data) {
     Info info = getSvgInfo(data);
     if (info != null) return info;
 
-    return read(new ByteArrayInputStream(data), inputName);
+    return read(new ByteArrayInputStream(data));
   }
 
   @Nullable
-  private static Info getSvgInfo(@NotNull byte[] data) {
+  private static Info getSvgInfo(byte @NotNull [] data) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {
@@ -81,7 +70,7 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  private static Info read(@NotNull Object input, @Nullable String inputName) {
+  private static Info read(@NotNull Object input) {
     ImageIO.setUseCache(false);
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
       if (isAppleOptimizedPNG(iis)) {

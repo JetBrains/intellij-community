@@ -1,18 +1,22 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getLOperands;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getROperands;
@@ -34,19 +38,39 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
     final PsiElement gParent = parent.getParent();
     if (!(gParent instanceof PsiMethodCallExpression)) return false;
 
-    return MergeFilterChainAction.isFilterCall((PsiMethodCallExpression)gParent);
+    return MergeFilterChainAction.isFilterCall((PsiMethodCallExpression)gParent) &&
+           !hasPatternVariablesUsedAfterSplit(expression, element);
+  }
+
+  private static boolean hasPatternVariablesUsedAfterSplit(@NotNull PsiPolyadicExpression expression, @NotNull PsiElement token) {
+    List<PsiExpression> afterOperands = new ArrayList<>();
+    for (PsiElement after = token; after != null; after = after.getNextSibling()) {
+      if (after instanceof PsiExpression) {
+        afterOperands.add((PsiExpression)after);
+      }
+    }
+    for (PsiElement child = expression.getFirstChild(); child != token; child = child.getNextSibling()) {
+      if (child instanceof PsiExpression) {
+        for (PsiPatternVariable variable : JavaPsiPatternUtil.getExposedPatternVariables((PsiExpression)child)) {
+          for (PsiExpression operand : afterOperands) {
+            if (VariableAccessUtils.variableIsUsed(variable, operand)) return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.split.filter.text");
+    return JavaBundle.message("intention.split.filter.text");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.split.filter.family");
+    return JavaBundle.message("intention.split.filter.family");
   }
 
   @Override

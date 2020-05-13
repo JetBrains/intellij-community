@@ -31,7 +31,7 @@ public class ExtConfiguration implements JDOMExternalizable, Cloneable{
   public String PRIVATE_KEY_FILE = "";
   public String ADDITIONAL_PARAMETERS = "";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.ExtConfiguration");
+  private static final Logger LOG = Logger.getInstance(ExtConfiguration.class);
   public boolean USE_INTERNAL_SSH_IMPLEMENTATION = false;
 
   @Override

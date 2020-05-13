@@ -6,7 +6,6 @@ import com.intellij.ui.tabs.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -20,15 +19,6 @@ public abstract class SingleRowLayout extends TabLayout {
   private final SingleRowLayoutStrategy myLeft;
   private final SingleRowLayoutStrategy myBottom;
   private final SingleRowLayoutStrategy myRight;
-
-  public final MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
-    @Override
-    @Nullable
-    protected Rectangle getIconRec() {
-      return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
-    }
-  };
-  public JPopupMenu myMorePopup;
 
   @Override
   public boolean isSideComponentOnTabs() {
@@ -110,17 +100,17 @@ public abstract class SingleRowLayout extends TabLayout {
   public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos)  {
     SingleRowPassInfo data = new SingleRowPassInfo(this, visibleInfos);
 
-    final boolean layoutLabels = checkLayoutLabels(data);
-    if (!layoutLabels) {
+    final boolean shouldLayoutLabels = checkLayoutLabels(data);
+    if (!shouldLayoutLabels) {
       data = myLastSingRowLayout;
     }
 
     final TabInfo selected = myTabs.getSelectedInfo();
     prepareLayoutPassInfo(data, selected);
 
-    myTabs.resetLayout(layoutLabels || myTabs.isHideTabs());
+    myTabs.resetLayout(shouldLayoutLabels || myTabs.isHideTabs());
 
-    if (layoutLabels && !myTabs.isHideTabs()) {
+    if (shouldLayoutLabels && !myTabs.isHideTabs()) {
       recomputeToLayout(data);
 
       data.position = getStrategy().getStartPosition(data) - getScrollOffset();
@@ -134,8 +124,6 @@ public abstract class SingleRowLayout extends TabLayout {
       data.comp = new WeakReference<>(selected.getComponent());
       getStrategy().layoutComp(data);
     }
-
-    updateMoreIconVisibility(data);
 
     data.tabRectangle = new Rectangle();
 
@@ -171,11 +159,6 @@ public abstract class SingleRowLayout extends TabLayout {
     data.vToolbar =
       new WeakReference<>(selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ?  selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
-  }
-
-  protected void updateMoreIconVisibility(SingleRowPassInfo data) {
-    int counter = (int)data.myVisibleInfos.stream().filter(this::isTabHidden).count();
-    myMoreIcon.updateCounter(counter);
   }
 
   protected void layoutMoreButton(SingleRowPassInfo data) {

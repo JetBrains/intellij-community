@@ -25,7 +25,7 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public final class MainProcessor extends EventProcessor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.MainProcessor");
+  private static final Logger LOG = Logger.getInstance(MainProcessor.class);
 
   private static final int DRAGGER_SIZE = 10;
 

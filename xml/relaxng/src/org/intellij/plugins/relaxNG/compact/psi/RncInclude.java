@@ -21,6 +21,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface RncInclude extends RncFileReference, Include<RncElement, RncDefine> {
   @Override
-  @NotNull
-  RncDefine[] getOverrides();
+  RncDefine @NotNull [] getOverrides();
 }

@@ -59,7 +59,7 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
   }
 
   private static final ThreadLocalCachedByteArray ourSpareByteArray = new ThreadLocalCachedByteArray();
-  public static <Data> ByteArraySequence serializeToByteSeq(@NotNull Data data,
+  public static <Data> ByteArraySequence serializeToByteSeq(/*must be not null if externalizer doesn't support nulls*/ Data data,
                                                             @NotNull DataExternalizer<Data> externalizer,
                                                             int bufferInitialSize) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(ourSpareByteArray.getBuffer(bufferInitialSize));

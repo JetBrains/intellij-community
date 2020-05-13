@@ -16,9 +16,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactService {
   private static final JpsElementCollectionRole<JpsArtifact> SYNTHETIC_ARTIFACTS = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("synthetic artifact"));
 

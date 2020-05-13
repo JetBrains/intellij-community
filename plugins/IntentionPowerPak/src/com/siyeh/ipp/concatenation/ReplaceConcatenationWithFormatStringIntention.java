@@ -1,23 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class ReplaceConcatenationWithFormatStringIntention extends Intention {
+public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedIntention {
 
   @Override
   @NotNull
@@ -40,14 +43,26 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     }
     CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
-    newExpression.append("java.lang.String.format(");
-    appendFormatString(expression, formatString, false, newExpression);
-    for (PsiExpression formatParameter : formatParameters) {
-      newExpression.append(", ");
-      newExpression.append(commentTracker.text(formatParameter));
+    if (HighlightingFeature.TEXT_BLOCKS.isAvailable(element)) {
+      appendFormatString(expression, formatString, false, newExpression);
+      newExpression.append(".formatted(");
+    } else {
+      newExpression.append("java.lang.String.format(");
+      appendFormatString(expression, formatString, false, newExpression);
+      if (!formatParameters.isEmpty()) {
+        newExpression.append(", ");
+      }
     }
+    newExpression.append(StreamEx.of(formatParameters).map(commentTracker::text).joining(", "));
     newExpression.append(')');
     PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
+  }
+
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    return IntentionPowerPackBundle.message(HighlightingFeature.TEXT_BLOCKS.isAvailable(element)
+                                            ? "replace.concatenation.with.format.string.intention.name.formatted"
+                                            : "replace.concatenation.with.format.string.intention.name");
   }
 
   private static boolean replaceWithPrintfExpression(PsiPolyadicExpression expression, String formatString,
@@ -106,12 +121,14 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
                                          String formatString,
                                          boolean insertNewline,
                                          StringBuilder newExpression) {
-    boolean textBlocks = Arrays.stream(expression.getOperands())
-      .anyMatch(operand -> operand instanceof PsiLiteralExpressionImpl &&
-                           ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
+    final boolean textBlocks = Arrays.stream(expression.getOperands())
+      .anyMatch(operand -> operand instanceof PsiLiteralExpression && ((PsiLiteralExpression)operand).isTextBlock());
     if (textBlocks) {
       newExpression.append("\"\"\"\n");
-      newExpression.append(PsiLiteralUtil.escapeTextBlockCharacters(formatString));
+      formatString = Arrays.stream(formatString.split("\n"))
+        .map(s -> PsiLiteralUtil.escapeTextBlockCharacters(s))
+        .collect(Collectors.joining("\n"));
+      newExpression.append(formatString);
       if (insertNewline) {
         newExpression.append('\n');
       }

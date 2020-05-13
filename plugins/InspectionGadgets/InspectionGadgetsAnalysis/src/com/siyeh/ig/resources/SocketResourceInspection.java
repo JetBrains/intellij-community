@@ -19,7 +19,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,12 +29,6 @@ public class SocketResourceInspection extends ResourceInspection {
   @NotNull
   public String getID() {
     return "SocketOpenedButNotSafelyClosed";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("socket.opened.not.closed.display.name");
   }
 
   @Override

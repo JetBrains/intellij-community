@@ -4,8 +4,11 @@ package com.intellij.codeInsight.completion.ml
 
 sealed class MLFeatureValue {
   companion object {
+    private val TRUE = BinaryValue(true)
+    private val FALSE = BinaryValue(false)
+
     @JvmStatic
-    fun binary(value: Boolean): MLFeatureValue = if (value) BinaryValue.TRUE else BinaryValue.FALSE
+    fun binary(value: Boolean): MLFeatureValue = if (value) TRUE else FALSE
 
     @JvmStatic
     fun float(value: Int): MLFeatureValue = FloatValue(value.toDouble())
@@ -19,33 +22,19 @@ sealed class MLFeatureValue {
 
     // alias for float(Double), but could be used from java sources (since java forbids to use method named like a keyword)
     @JvmStatic
-    fun numerical(value:Double): MLFeatureValue = float(value)
+    fun numerical(value: Double): MLFeatureValue = float(value)
 
     @JvmStatic
     fun <T : Enum<*>> categorical(value: T): MLFeatureValue = CategoricalValue(value.toString())
+
+    @JvmStatic
+    fun <T : Class<*>> className(value: T, useSimpleName: Boolean = true): MLFeatureValue = ClassNameValue(value, useSimpleName)
   }
 
-  protected abstract val value: Any
-  fun asBinary(): Boolean? = value as? Boolean
-  fun asFloat(): Double? = value as? Double
-  fun asCategorical(): String? = value as? String
+  abstract val value: Any
 
-  private class BinaryValue private constructor(override val value: Boolean) : MLFeatureValue() {
-    companion object {
-      val TRUE = BinaryValue(true)
-      val FALSE = BinaryValue(false)
-    }
-
-    override fun toString(): String {
-      return if (value) "1" else "0"
-    }
-  }
-
-  private class FloatValue(override val value: Double) : MLFeatureValue() {
-    override fun toString(): String = value.toString()
-  }
-
-  private class CategoricalValue(override val value: String) : MLFeatureValue() {
-    override fun toString(): String = value
-  }
+  data class BinaryValue internal constructor(override val value: Boolean) : MLFeatureValue()
+  data class FloatValue internal constructor(override val value: Double) : MLFeatureValue()
+  data class CategoricalValue internal constructor(override val value: String) : MLFeatureValue()
+  data class ClassNameValue internal constructor(override val value: Class<*>, val useSimpleName: Boolean) : MLFeatureValue()
 }

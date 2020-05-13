@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
-/**
- * @author nik
- */
 public class AppEngineAccountDialog {
   private static final String PASSWORD_KEY = "GOOGLE_APP_ENGINE_PASSWORD";
 

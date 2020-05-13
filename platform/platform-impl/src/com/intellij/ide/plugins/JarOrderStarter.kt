@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.forEachGuaranteed
 import java.io.File
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.isAccessible

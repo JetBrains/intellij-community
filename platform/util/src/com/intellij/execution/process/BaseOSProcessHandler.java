@@ -8,7 +8,6 @@ import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.BaseOutputReader.Options;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,9 +77,8 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
       @Override
       public void startNotified(@NotNull final ProcessEvent event) {
         try {
-          Options options = readerOptions();
-          BaseDataReader stdOutReader = createOutputDataReader(options.policy());
-          BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader(options.policy()) : null;
+          BaseDataReader stdOutReader = createOutputDataReader();
+          BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader() : null;
 
           myWaitFor.setTerminationCallback(exitCode -> {
             try {
@@ -106,22 +104,6 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     });
 
     super.startNotify();
-  }
-
-  /** @deprecated override {@link #createOutputDataReader()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy policy) {
-    return createErrorDataReader();
-  }
-
-  /** @deprecated override {@link #createOutputDataReader()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy policy) {
-    return createOutputDataReader();
   }
 
   @NotNull
@@ -185,7 +167,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
         LOG.warn("Process hasn't generated any output for a long time.\n" +
                  "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with" +
                  " 'BaseOutputReader.Options.forMostlySilentProcess()' to reduce CPU usage.\n" +
-                 "Command line: " + StringUtil.trimLog(myCommandLine, 1000),
+                 "Command line: " + StringUtil.trimLog(StringUtil.notNullize(myCommandLine), 1000),
                  myProcessStart);
       }
     }

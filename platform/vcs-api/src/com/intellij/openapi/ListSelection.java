@@ -16,6 +16,7 @@
 package com.intellij.openapi;
 
 import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,21 +24,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @deprecated use @see com.intellij.util.ListSelection instead
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 public class ListSelection<T> {
-  @NotNull private final List<T> myList;
-  private final int mySelectedIndex;
+  @NotNull private final com.intellij.util.ListSelection<T> myInstance;
 
   private ListSelection(@NotNull List<T> list, int selectedIndex) {
-    myList = list;
-    if (myList.isEmpty()) {
-      mySelectedIndex = -1;
-    }
-    else if (selectedIndex >= 0 && selectedIndex < list.size()) {
-      mySelectedIndex = selectedIndex;
-    }
-    else {
-      mySelectedIndex = 0;
-    }
+    myInstance = com.intellij.util.ListSelection.createAt(list, selectedIndex);
   }
 
   @NotNull
@@ -51,7 +47,7 @@ public class ListSelection<T> {
   }
 
   @NotNull
-  public static <V> ListSelection<V> create(@NotNull V[] array, V selected) {
+  public static <V> ListSelection<V> create(V @NotNull [] array, V selected) {
     return create(Arrays.asList(array), selected);
   }
 
@@ -63,24 +59,24 @@ public class ListSelection<T> {
 
   @NotNull
   public List<T> getList() {
-    return myList;
+    return myInstance.getList();
   }
 
   public int getSelectedIndex() {
-    return mySelectedIndex;
+    return myInstance.getSelectedIndex();
   }
 
   public boolean isEmpty() {
-    return myList.isEmpty();
+    return myInstance.getList().isEmpty();
   }
 
   @NotNull
   public <V> ListSelection<V> map(@NotNull NullableFunction<? super T, ? extends V> convertor) {
     int newSelectionIndex = -1;
     List<V> result = new ArrayList<>();
-    for (int i = 0; i < myList.size(); i++) {
-      if (i == mySelectedIndex) newSelectionIndex = result.size();
-      V out = convertor.fun(myList.get(i));
+    for (int i = 0; i < getList().size(); i++) {
+      if (i == getSelectedIndex()) newSelectionIndex = result.size();
+      V out = convertor.fun(getList().get(i));
       if (out != null) result.add(out);
     }
     return new ListSelection<>(result, newSelectionIndex);

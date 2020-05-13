@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.icons.AllIcons;
@@ -23,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -139,12 +125,12 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public boolean isModified() {
     if (myServiceDirectoryPathField != null &&
-        !Comparing.equal(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()),
-                         ExternalSystemApiUtil.normalizePath(myInitialSettings.getServiceDirectoryPath()))) {
+        !Objects.equals(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()),
+                        ExternalSystemApiUtil.normalizePath(myInitialSettings.getServiceDirectoryPath()))) {
       return true;
     }
 
-    if (myGradleVmOptionsField != null && !Comparing.equal(trimIfPossible(myGradleVmOptionsField.getText()), trimIfPossible(
+    if (myGradleVmOptionsField != null && !Objects.equals(trimIfPossible(myGradleVmOptionsField.getText()), trimIfPossible(
       myInitialSettings.getGradleVmOptions()))) {
       return true;
     }
@@ -159,7 +145,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public void apply(@NotNull GradleSettings settings) {
     if (myServiceDirectoryPathField != null) {
-      settings.setServiceDirectoryPath(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()));
+      String serviceDirectoryPath = trimIfPossible(myServiceDirectoryPathField.getText());
+      settings.setServiceDirectoryPath(ExternalSystemApiUtil.normalizePath(serviceDirectoryPath));
     }
     if (myGradleVmOptionsField != null) {
       settings.setGradleVmOptions(trimIfPossible(myGradleVmOptionsField.getText()));
@@ -232,7 +219,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
 
   private void addVMOptionsControl(@NotNull PaintAwarePanel canvas, int indentLevel) {
     if (!dropVmOptions) {
-      JBLabel label = new JBLabel("Gradle VM options:");
+      JBLabel label = new JBLabel(GradleBundle.message("gradle.settings.text.vm.options"));
       canvas.add(label, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
       myGradleVmOptionsComponents.add(label);
 
@@ -261,8 +248,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
         protected void textChanged(@NotNull DocumentEvent e) {
           boolean showMigration = e.getDocument().getLength() > 0;
           fixLabel.setHyperlinkText(
-            "This setting is deprecated, please use 'org.gradle.jvmargs’ property in 'gradle.properties’ file instead ",
-            showMigration ? "Migrate" : "  ", "");
+            GradleBundle.message("gradle.settings.text.vm.options.link.tooltip") + " ",
+            showMigration ? GradleBundle.message("gradle.settings.text.vm.options.link.text") : "  ", "");
         }
       });
       myGradleVmOptionsField.setText(" "); // trigger listener
@@ -275,7 +262,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
 
           if (moveVMOptionsToGradleProperties(jvmArgs, myInitialSettings)) {
             myGradleVmOptionsField.setText(null);
-            myGradleVmOptionsField.getEmptyText().setText("VM options have been moved to gradle.properties");
+            myGradleVmOptionsField.getEmptyText().setText(GradleBundle.message("gradle.settings.text.vm.options.empty.text"));
           }
         }
       });
@@ -296,9 +283,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
 
     int result = Messages.showYesNoDialog(
       settings.getProject(),
-      "Would you like to move VM options to the '" + new File(gradleUserHomeDir, "gradle.properties") + "' file?\n" +
-      "Note that the existing 'org.gradle.jvmargs' property will be overwritten.\n\n" +
-      "You can do it manually any time later", "Gradle Settings",
+      GradleBundle.message("gradle.settings.text.vm.options.confirm.text", new File(gradleUserHomeDir, "gradle.properties")),
+      GradleBundle.message("gradle.title.gradle.settings"),
       getQuestionIcon());
     if (result != Messages.YES) return false;
 
@@ -322,8 +308,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     catch (IOException e) {
       Messages.showErrorDialog(settings.getProject(),
-                               e.getMessage() + "\n\nPlease migrate settings manually",
-                               "Migration Error");
+                               GradleBundle.message("gradle.settings.text.vm.options.migration.error.text", e.getMessage()),
+                               GradleBundle.message("gradle.settings.text.vm.options.migration.error.title"));
       return false;
     }
 

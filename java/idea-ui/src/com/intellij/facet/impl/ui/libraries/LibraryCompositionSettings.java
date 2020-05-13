@@ -39,9 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
-*/
 public class LibraryCompositionSettings implements Disposable {
   private final CustomLibraryDescription myLibraryDescription;
   @NotNull private final NotNullComputable<String> myPathProvider;

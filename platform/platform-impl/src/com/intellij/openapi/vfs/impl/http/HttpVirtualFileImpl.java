@@ -8,7 +8,10 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.SmartList;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +25,7 @@ import java.util.List;
 class HttpVirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
   @Nullable private final RemoteFileInfoImpl myFileInfo;
-  private FileType myInitialFileType;
+  @Nullable private FileType myInitialFileType;
   private final String myPath;
   private final String myParentPath;
   private final String myName;
@@ -47,7 +50,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
           ApplicationManager.getApplication().invokeLater(() -> {
             HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
             FileDocumentManager.getInstance().reloadFiles(file);
-            if (!FileTypeRegistry.getInstance().isFileOfType(localFile, myInitialFileType)) {
+            if (myInitialFileType != null && !FileTypeRegistry.getInstance().isFileOfType(localFile, myInitialFileType)) {
               FileContentUtilCore.reparseFiles(file);
             }
           });
@@ -188,8 +191,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     if (myFileInfo == null) {
       throw new UnsupportedOperationException();
     }

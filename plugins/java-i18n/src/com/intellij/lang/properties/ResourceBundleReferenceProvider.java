@@ -12,11 +12,10 @@ public class ResourceBundleReferenceProvider extends UastInjectionHostReferenceP
     return target instanceof PsiFile && PropertiesImplUtil.isPropertiesFile((PsiFile)target);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
-                                                      @NotNull PsiLanguageInjectionHost host,
-                                                      @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                                @NotNull PsiLanguageInjectionHost host,
+                                                                @NotNull ProcessingContext context) {
     return new PsiReference[]{new ResourceBundleReference(host, false)};
   }
 }

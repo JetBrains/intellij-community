@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CollectionUtil.createSimilarCollection
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_GROOVY_METHODS
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
@@ -12,6 +13,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 class DgmCallTypeCalculator : GrCallTypeCalculator {
 
   override fun getType(receiver: PsiType?, method: PsiMethod, arguments: Arguments?, context: PsiElement): PsiType? {
+    if (GroovyConfigUtils.getInstance().isVersionAtLeast(context, GroovyConfigUtils.GROOVY2_4)) return null
+
     if (arguments == null || arguments.isEmpty()) {
       return null
     }

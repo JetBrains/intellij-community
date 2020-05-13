@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class OpenRepositoryVersionAction extends AnAction implements DumbAware {
   public OpenRepositoryVersionAction() {
-    super(VcsBundle.message("open.repository.version.text"), VcsBundle.message("open.repository.version.description"), null);
+    super(VcsBundle.messagePointer("open.repository.version.text"), VcsBundle.messagePointer("open.repository.version.description"), null);
   }
 
   @Override
@@ -45,11 +45,11 @@ public class OpenRepositoryVersionAction extends AnAction implements DumbAware {
                                    ModalityState.NON_MODAL.equals(ModalityState.current()));
   }
 
-  private static boolean hasValidChanges(@NotNull Change[] changes) {
+  private static boolean hasValidChanges(Change @NotNull [] changes) {
     return ContainerUtil.exists(changes, c -> c.getAfterRevision() != null && !c.getAfterRevision().getFile().isDirectory());
   }
 
-  private static void openRepositoryVersion(@NotNull Project project, @NotNull Change[] changes) {
+  private static void openRepositoryVersion(@NotNull Project project, Change @NotNull [] changes) {
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
 

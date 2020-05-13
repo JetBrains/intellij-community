@@ -16,7 +16,7 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -38,7 +38,7 @@ import java.util.Collection;
 public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
   @Override
   public String getTemplateDescription() {
-    return CodeInsightBundle.message("surround.with.runnable.template");
+    return JavaBundle.message("surround.with.runnable.template");
   }
 
   @Override

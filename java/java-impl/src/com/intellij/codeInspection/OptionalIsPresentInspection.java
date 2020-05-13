@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -48,7 +49,8 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         if (this == INFO && !holder.isOnTheFly()) {
           return; //don't register fixes in batch mode
         }
-        holder.registerProblem(condition, "Can be replaced with single expression in functional style",
+        holder.registerProblem(condition, JavaBundle.message(
+          "inspection.message.can.be.replaced.with.single.expression.in.functional.style"),
                                this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new OptionalIsPresentFix(scenario));
       }
@@ -258,7 +260,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Optional.isPresent() condition with functional style expression";
+      return JavaBundle.message("intention.family.replace.optional.ispresent.condition.with.functional.style.expression");
     }
 
     @Override
@@ -287,7 +289,10 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       else {
         return;
       }
-      if (myScenario.getProblemType(optionalRef, thenElement, elseElement) == ProblemType.NONE) return;
+      if (myScenario.getProblemType(optionalRef, thenElement, elseElement) == ProblemType.NONE) {
+        // Probably the code was modified
+        return;
+      }
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CommentTracker ct = new CommentTracker();
       String replacementText = myScenario.generateReplacement(factory, ct, optionalRef, thenElement, elseElement);

@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,11 +102,6 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public boolean isRecursivelyDirty(VirtualFile vf) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void iterate(Processor<? super FilePath> iterator) {
     throw new UnsupportedOperationException();
   }
@@ -131,10 +125,5 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
     }
 
     return false;
-  }
-
-  @Override
-  public boolean belongsTo(FilePath path, Consumer<? super AbstractVcs> vcsConsumer) {
-    throw new UnsupportedOperationException();
   }
 }

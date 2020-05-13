@@ -56,7 +56,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariantsInclude(myProjectPom, "junit:junit:3.8.1", "jmock:jmock:1.0.0", "test:project:1");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit", "jmock", "test");
   }
 
   public void testArtifactIdCompletion() {
@@ -71,7 +71,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "junit:junit:3.8.1");
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "junit");
   }
 
   public void testDoNotCompleteArtifactIdOnUnknownGroup() {
@@ -144,17 +144,18 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     importProject();
 
     createModulePom("m2", "<groupId>project-group</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>2</version>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>2</version>" +
 
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>project-group</groupId>" +
-                    "    <artifactId><caret></artifactId>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>project-group</groupId>" +
+                          "    <artifactId><caret></artifactId>" +
+                          "  </dependency>" +
+                          "</dependencies>");
 
-    assertCompletionVariants(m, "project-group:project:1", "project-group:m1:1", "project-group:m2:2");
+    assertCompletionVariants(m, LOOKUP_STRING, "project-group:project:1", "project-group:m1:1", "project-group:m2:2");
+    assertCompletionVariants(m, RENDERING_TEXT, "project", "m1", "m2");
   }
 
   public void testResolvingPropertiesForLocalProjectsInCompletion() {
@@ -251,7 +252,8 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                     "  </dependency>" +
                     "</dependencies>");
 
-    assertCompletionVariants(m1, "test:project:1", "test:m1:1", "test:m2:1");
+    assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2:1");
+    assertCompletionVariants(m1, RENDERING_TEXT, "project", "m1", "m2");
 
     createModulePom("m1", "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
@@ -274,7 +276,8 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                           "  </dependency>" +
                           "</dependencies>");
 
-    assertCompletionVariants(m1, "test:project:1", "test:m1:1", "test:m2_new:1");
+    assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2_new:1");
+    assertCompletionVariants(m1, RENDERING_TEXT, "project", "m1", "m2_new");
   }
 
   public void testChangingExistingProjectsWithArtifactIdsRemoval() {
@@ -296,7 +299,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     importProjectsWithErrors(myProjectPom, m);
 
-    assertCompletionVariants(myProjectPom, "project-group:m1:1");
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "m1");
 
     createModulePom("m1", "");
     importProjectsWithErrors(myProjectPom, m);
@@ -322,24 +325,25 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                                           "<version>1</version>");
 
     configureProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+                        "<artifactId>project</artifactId>" +
+                        "<version>1</version>" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>project-group</groupId>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                        "<dependencies>" +
+                        "  <dependency>" +
+                        "    <groupId>project-group</groupId>" +
+                        "    <artifactId><caret></artifactId>" +
+                        "  </dependency>" +
+                        "</dependencies>");
 
     importProjectsWithErrors(myProjectPom, m);
 
-    assertCompletionVariantsInclude(myProjectPom, "project-group:m1:1");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "m1");
+    assertCompletionVariantsInclude(myProjectPom, LOOKUP_STRING, "project-group:m1:1");
 
-    myProjectsManager.listenForExternalChanges();
     WriteAction.runAndWait(() -> m.delete(null));
 
-    waitForReadingCompletion();
+    configConfirmationForYesAnswer();
+    importProject();
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -661,7 +665,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "junit-4.0.jar");
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "junit-4.0.jar");
   }
 
   public void testResolvingSystemScopeDependenciesFromSystemPath() throws Throwable {
@@ -747,16 +751,17 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   public void testTypeCompletion() {
     configureProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+                        "<artifactId>project</artifactId>" +
+                        "<version>1</version>" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <type><caret></type>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                        "<dependencies>" +
+                        "  <dependency>" +
+                        "    <type><caret></type>" +
+                        "  </dependency>" +
+                        "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "jar", "test-jar", "pom", "ear", "ejb", "ejb-client", "war", "bundle", "jboss-har", "jboss-sar", "maven-plugin");
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "jar", "test-jar", "pom", "ear", "ejb", "ejb-client", "war", "bundle",
+                             "jboss-har", "jboss-sar", "maven-plugin");
   }
 
   public void testDoNotHighlightUnknownType() {
@@ -787,7 +792,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "compile", "provided", "runtime", "test", "system");
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "compile", "provided", "runtime", "test", "system");
   }
 
   public void testDoNotHighlightUnknownScopes() {
@@ -1097,8 +1102,9 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "jmock:jmock:1.0.0");
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "jmock");
   }
+
 
   public void testDoNotHighlightUnknownExclusions() {
     createProjectPom("<groupId>test</groupId>" +

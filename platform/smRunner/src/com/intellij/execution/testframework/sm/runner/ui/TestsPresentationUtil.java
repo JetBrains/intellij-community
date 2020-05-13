@@ -17,7 +17,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
+import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
@@ -37,8 +37,11 @@ import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcon
  */
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
-  @NonNls private static final String NO_NAME_TEST = SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tests.tree.presentation.labels.test.noname");
+  private static class Holder {
+    private static String getNoNameTest() {
+      return SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.noname");
+    }
+  }
   @NonNls private static final String UNKNOWN_TESTS_COUNT = "<...>";
   @NonNls static final String DEFAULT_TESTS_CATEGORY = "Tests";
 
@@ -55,9 +58,9 @@ public class TestsPresentationUtil {
                                               final boolean isFinished) {
     final StringBuilder sb = new StringBuilder();
     if (endTime == 0) {
-      sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running"));
+      sb.append(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running"));
     } else {
-      sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.done"));
+      sb.append(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.done"));
     }
 
     if (allCategories != null) {
@@ -89,13 +92,13 @@ public class TestsPresentationUtil {
     }
 
     sb.append(' ').append(testsCount).append(' ');
-    sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.of"));
+    sb.append(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.of"));
     sb.append(' ').append(testsTotal != 0 ? testsTotal
                                           : !isFinished ? UNKNOWN_TESTS_COUNT : 0);
 
     if (failuresCount > 0) {
       sb.append(DOUBLE_SPACE);
-      sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.failed"));
+      sb.append(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.failed"));
       sb.append(' ').append(failuresCount);
     }
     if (endTime != 0) {
@@ -126,11 +129,11 @@ public class TestsPresentationUtil {
     if (presentableName != null) {
       text = presentableName;
     } else if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
-      text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running.tests");
+      text = SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running.tests");
     } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
-      text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.was.terminated");
+      text = SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.was.terminated");
     } else {
-      text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.results");
+      text = SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.results");
     }
     renderer.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     final String comment = testProxy.getComment();
@@ -147,28 +150,28 @@ public class TestsPresentationUtil {
         formatRootNodeWithChildren(testProxy, renderer);
       } else {
         renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
-        renderer.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
+        renderer.append(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
                         SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     } else if (magnitude == TestStateInfo.Magnitude.NOT_RUN_INDEX) {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
-      renderer.append(SMTestsRunnerBundle.message(
+      renderer.append(SmRunnerBundle.message(
           "sm.test.runner.ui.tests.tree.presentation.labels.not.test.results"),
                       SimpleTextAttributes.ERROR_ATTRIBUTES);
     } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
       renderer.setIcon(PoolOfTestIcons.TERMINATED_ICON);
-      renderer.append(SMTestsRunnerBundle.message(
+      renderer.append(SmRunnerBundle.message(
           "sm.test.runner.ui.tests.tree.presentation.labels.was.terminated"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
     } else if (magnitude == TestStateInfo.Magnitude.PASSED_INDEX) {
       renderer.setIcon(PoolOfTestIcons.PASSED_ICON);
-      renderer.append(SMTestsRunnerBundle.message(
+      renderer.append(SmRunnerBundle.message(
           "sm.test.runner.ui.tests.tree.presentation.labels.all.tests.passed"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     else if (magnitude == TestStateInfo.Magnitude.IGNORED_INDEX && !testProxy.hasErrors()) {
       renderer.setIcon(PoolOfTestIcons.IGNORED_ICON);
-      renderer.append(SMTestsRunnerBundle.message(
+      renderer.append(SmRunnerBundle.message(
         "sm.test.runner.ui.tests.tree.presentation.labels.all.but.ignored.passed"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES );
     }
@@ -181,8 +184,8 @@ public class TestsPresentationUtil {
       else {
         renderer.setIcon(PoolOfTestIcons.NOT_RAN);
         renderer.append(testProxy.isTestsReporterAttached()
-                        ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found")
-                        : SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached"),
+                        ? SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found")
+                        : SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached"),
                         SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }
@@ -200,7 +203,7 @@ public class TestsPresentationUtil {
     final String name = testProxy.getName();
 
     if (name == null) {
-      return NO_NAME_TEST;
+      return Holder.getNoNameTest();
     }
 
     String presentationCandidate = name;
@@ -239,7 +242,7 @@ public class TestsPresentationUtil {
     presentationCandidate = presentationCandidate.replaceAll("\\s+", " ");
 
     if (StringUtil.isEmpty(presentationCandidate)) {
-      return NO_NAME_TEST;
+      return Holder.getNoNameTest();
     }
 
     return presentationCandidate;
@@ -252,7 +255,7 @@ public class TestsPresentationUtil {
       name = name.trim();
     }
     if (name == null || name.isEmpty()) {
-      name = NO_NAME_TEST;
+      name = Holder.getNoNameTest();
     }
     return name;
   }

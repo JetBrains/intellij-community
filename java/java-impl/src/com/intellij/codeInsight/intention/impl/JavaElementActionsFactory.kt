@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
@@ -14,25 +15,28 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.uast.UDeclaration
 import java.util.*
 
 class JavaElementActionsFactory : JvmElementActionsFactory() {
 
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
-    val declaration = target as PsiModifierListOwner
+    val declaration = if (target is UDeclaration) target.javaPsi as PsiModifierListOwner else target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
-    val fix = object : ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true) {
-      override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
-
-      override fun isAvailable(project: Project,
-                               file: PsiFile,
-                               editor: Editor?,
-                               startElement: PsiElement,
-                               endElement: PsiElement): Boolean =
-        request.isValid && super.isAvailable(project, file, editor, startElement, endElement)
-    }
-    return listOf(fix)
+    return listOf(ChangeModifierFix(declaration, request))
   }
+  
+  internal class ChangeModifierFix(declaration: PsiModifierListOwner, @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) : 
+    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true) {
+    override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
+
+    override fun isAvailable(project: Project,
+                             file: PsiFile,
+                             editor: Editor?,
+                             startElement: PsiElement,
+                             endElement: PsiElement): Boolean =
+      request.isValid && super.isAvailable(project, file, editor, startElement, endElement)
+  } 
 
   override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
     val declaration = target as? PsiModifierListOwner ?: return emptyList()
@@ -43,7 +47,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
+    val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (constantRequested || request.fieldName.toUpperCase(Locale.ENGLISH) == request.fieldName) {
       result += CreateConstantAction(javaClass, request)

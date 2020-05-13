@@ -19,11 +19,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class AppEngineSdkUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.sdk.impl.AppEngineSdkUtil");
+  private static final Logger LOG = Logger.getInstance(AppEngineSdkUtil.class);
   @NonNls public static final String APP_ENGINE_DOWNLOAD_URL = "https://code.google.com/appengine/downloads.html#Google_App_Engine_SDK_for_Java";
   private static final FacetConfigurationQuickFix DOWNLOAD_SDK_QUICK_FIX = new FacetConfigurationQuickFix("Download...") {
     @Override

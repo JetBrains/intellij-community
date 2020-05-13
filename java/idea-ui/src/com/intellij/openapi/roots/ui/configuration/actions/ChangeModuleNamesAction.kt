@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.actions
 
+import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -14,8 +15,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.PathUtilRt
 
-class ChangeModuleNamesAction : DumbAwareAction(ProjectBundle.message("action.text.change.module.names"),
-                                                ProjectBundle.message("action.description.change.module.names"), null) {
+class ChangeModuleNamesAction : DumbAwareAction(JavaUiBundle.message("action.text.change.module.names"),
+                                                JavaUiBundle.message("action.description.change.module.names"), null) {
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isVisible = project != null && isQualifiedModuleNamesEnabled(project) && e.getData(LangDataKeys.MODIFIABLE_MODULE_MODEL) != null
@@ -35,13 +36,13 @@ class ChangeModuleNamesAction : DumbAwareAction(ProjectBundle.message("action.te
     val validator = object : InputValidatorEx {
       override fun getErrorText(inputString: String): String? {
         if (inputString.isNotEmpty() && inputString.split('.').any { it.isEmpty() }) {
-          return ProjectBundle.message("error.message.module.name.prefix.contains.empty.string")
+          return JavaUiBundle.message("error.message.module.name.prefix.contains.empty.string")
         }
         if (isPrefixEqualToModuleName && inputString.isEmpty()) {
-          return ProjectBundle.message("error.message.module.name.cannot.be.empty")
+          return JavaUiBundle.message("error.message.module.name.cannot.be.empty")
         }
         if (!PathUtilRt.isValidFileName(inputString + ModuleFileType.DOT_DEFAULT_EXTENSION, true)) {
-          return ProjectBundle.message("error.message.module.name.prefix.contains.invalid.chars")
+          return JavaUiBundle.message("error.message.module.name.prefix.contains.invalid.chars")
         }
         return null
       }
@@ -51,9 +52,9 @@ class ChangeModuleNamesAction : DumbAwareAction(ProjectBundle.message("action.te
       override fun canClose(inputString: String) = getErrorText(inputString) == null
     }
 
-    val newPrefix = Messages.showInputDialog(e.project, ProjectBundle.message("dialog.text.enter.common.prefix", modules.size),
-                                             ProjectBundle.message("dialog.title.change.module.names"), null, commonPrefix, validator,
-                                             TextRange.allOf(commonPrefix), ProjectBundle.message("dialog.text.enter.common.prefix.comment"))
+    val newPrefix = Messages.showInputDialog(e.project, JavaUiBundle.message("dialog.text.enter.common.prefix", modules.size),
+                                             JavaUiBundle.message("dialog.title.change.module.names"), null, commonPrefix, validator,
+                                             TextRange.allOf(commonPrefix), JavaUiBundle.message("dialog.text.enter.common.prefix.comment"))
     if (newPrefix == null) return
 
     val prefixToRemove = if (commonPrefix.isEmpty()) "" else "$commonPrefix."

@@ -22,12 +22,15 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -40,7 +43,9 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     NEW_OPERATOR("object.allocation.in.loop.new.descriptor"),
     METHOD_CALL("object.allocation.in.loop.problem.call.descriptor"),
     METHOD_REFERENCE("object.allocation.in.loop.problem.methodref.descriptor"),
-    CAPTURING_LAMBDA("object.allocation.in.loop.problem.lambda.descriptor");
+    CAPTURING_LAMBDA("object.allocation.in.loop.problem.lambda.descriptor"),
+    STRING_CONCAT("object.allocation.in.loop.problem.string.concat"),
+    ARRAY_INITIALIZER("object.allocation.in.loop.problem.array.initializer.descriptor");
 
     private final String myMessage;
 
@@ -52,13 +57,6 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     public String toString() {
       return myMessage;
     }
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "object.allocation.in.loop.display.name");
   }
 
   @Override
@@ -88,6 +86,15 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     }
 
     @Override
+    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+      if (!(expression.getParent() instanceof PsiNewExpression) &&
+          !(expression.getParent() instanceof PsiArrayInitializerExpression) &&
+          isPerformedRepeatedlyInLoop(expression)) {
+        registerError(expression, Kind.ARRAY_INITIALIZER);
+      }
+    }
+
+    @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
       if (!PsiMethodReferenceUtil.isStaticallyReferenced(expression) &&
@@ -108,8 +115,18 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (isPerformedRepeatedlyInLoop(expression)) {
-        registerNewExpressionError(expression, Kind.NEW_OPERATOR);
+        registerNewExpressionError(expression, expression.isArrayCreation() ? Kind.ARRAY_INITIALIZER : Kind.NEW_OPERATOR);
       }
+    }
+
+    @Override
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      IElementType type = expression.getOperationTokenType();
+      if (JavaTokenType.PLUS.equals(type) && TypeUtils.isJavaLangString(expression.getType()) &&
+          !PsiUtil.isConstantExpression(expression) && isPerformedRepeatedlyInLoop(expression)) {
+        registerError(expression, Kind.STRING_CONCAT);
+      }
+      super.visitPolyadicExpression(expression);
     }
 
     private static boolean isPerformedRepeatedlyInLoop(@NotNull PsiExpression expression) {

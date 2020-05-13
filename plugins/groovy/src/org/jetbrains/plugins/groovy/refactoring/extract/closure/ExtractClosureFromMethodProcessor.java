@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,10 +24,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -97,7 +97,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(myMethod.getContainingClass(), usageInfo.getElement(), false)) {
-              conflicts.putValue(statements[0], RefactoringBundle
+              conflicts.putValue(statements[0], JavaRefactoringBundle
                 .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
                          CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
@@ -123,9 +123,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     return true;
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> result = new ArrayList<>();
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();
@@ -165,7 +164,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     final IntroduceParameterData data = new IntroduceParameterDataAdapter();
 
     IntroduceParameterUtil.processUsages(usages, data);
@@ -206,7 +205,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     final GrStatement newStatement = ExtractUtil.replaceStatement(myDeclarationOwner, myHelper);
 
-    final Editor editor = PsiUtilBase.findEditor(newStatement);
+    final Editor editor = PsiEditorUtil.findEditor(newStatement);
     if (editor != null) {
       PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
       editor.getSelectionModel().removeSelection();

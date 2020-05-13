@@ -15,10 +15,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.MultiResolutionImageProvider;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -175,7 +172,7 @@ public abstract class AppIcon {
     private final Map<Object, AppImage> myProgressImagesCache = new HashMap<>();
 
     private BufferedImage getAppImage() {
-      assertIsDispatchThread();
+      EDT.assertIsEdt();
 
       try {
         if (myAppImage != null) return myAppImage;
@@ -209,7 +206,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setTextBadge(@Nullable JFrame frame, String text) {
-      assertIsDispatchThread();
+      EDT.assertIsEdt();
 
       try {
         getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
@@ -222,7 +219,7 @@ public abstract class AppIcon {
 
     @Override
     public void requestFocus() {
-      assertIsDispatchThread();
+      EDT.assertIsEdt();
 
       try {
         getAppMethod("requestForeground", boolean.class).invoke(getApp(), true);
@@ -236,7 +233,7 @@ public abstract class AppIcon {
 
     @Override
     public void _requestAttention(@Nullable JFrame frame, boolean critical) {
-      assertIsDispatchThread();
+      EDT.assertIsEdt();
 
       try {
         getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
@@ -256,7 +253,7 @@ public abstract class AppIcon {
 
     @Override
     public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
-      assertIsDispatchThread();
+      EDT.assertIsEdt();
 
       if (getAppImage() == null) return false;
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
@@ -271,7 +268,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
-      assertIsDispatchThread();
+      EDT.assertIsEdt();
 
       if (getAppImage() == null) return;
 
@@ -300,7 +297,7 @@ public abstract class AppIcon {
 
     @Override
     public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
-      assertIsDispatchThread();
+      EDT.assertIsEdt();
 
       if (getAppImage() == null) return false;
 
@@ -680,15 +677,5 @@ public abstract class AppIcon {
 
     @Override
     public void requestAttention(@Nullable Project project, boolean critical) { }
-  }
-
-  private static void assertIsDispatchThread() {
-    Application app = ApplicationManager.getApplication();
-    if (app == null) {
-      assert EventQueue.isDispatchThread();
-    }
-    else if (!app.isUnitTestMode()) {
-      app.assertIsDispatchThread();
-    }
   }
 }

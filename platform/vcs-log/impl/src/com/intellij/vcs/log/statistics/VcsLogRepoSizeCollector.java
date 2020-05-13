@@ -18,12 +18,14 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsProjectLog;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+@NonNls
 public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
 
   @NotNull

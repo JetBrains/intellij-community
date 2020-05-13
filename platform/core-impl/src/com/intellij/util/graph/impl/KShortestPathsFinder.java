@@ -16,11 +16,9 @@ import java.util.*;
 /**
  * Algorithm to search k shortest paths between two vertices in unweighted directed graph.
  * Based on article "Finding the k shortest paths" by D. Eppstein, 1997.
- *
- * @author nik
  */
 public class KShortestPathsFinder<Node> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.graph.impl.KShortestPathsFinder");
+  private static final Logger LOG = Logger.getInstance(KShortestPathsFinder.class);
   private final InboundSemiGraph<Node> myGraph;
   private final Node myStart;
   private final Node myFinish;

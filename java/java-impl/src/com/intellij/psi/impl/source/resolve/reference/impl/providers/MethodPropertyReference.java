@@ -96,8 +96,7 @@ public class MethodPropertyReference extends BasicAttributeValueReference {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     return JspSpiUtil.getMethodPropertyReferenceVariants(this, resolveClass(), myReadable);
   }
 

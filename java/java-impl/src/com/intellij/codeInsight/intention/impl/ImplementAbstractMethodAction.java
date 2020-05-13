@@ -16,9 +16,9 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -33,7 +33,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.implement.abstract.method.family");
+    return JavaBundle.message("intention.implement.abstract.method.family");
   }
 
   @Override
@@ -85,8 +85,8 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
 
   protected String getIntentionName(final PsiMethod method) {
     return method.hasModifierProperty(PsiModifier.ABSTRACT) ?
-           CodeInsightBundle.message("intention.implement.abstract.method.text", method.getName()) :
-           CodeInsightBundle.message("intention.override.method.text", method.getName())
+           JavaBundle.message("intention.implement.abstract.method.text", method.getName()) :
+           JavaBundle.message("intention.override.method.text", method.getName())
       ;
   }
 
@@ -155,7 +155,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getContentComponent().isShowing()) {
+    if (EditorActivityManager.getInstance().isVisible(editor)) {
       invokeHandler(project, editor, method);
     }
   }

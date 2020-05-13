@@ -17,10 +17,8 @@ package com.intellij.packaging.artifacts;
 
 import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface ModifiableArtifact extends Artifact {
 
   void setBuildOnMake(boolean enabled);
@@ -31,7 +29,11 @@ public interface ModifiableArtifact extends Artifact {
 
   void setRootElement(CompositePackagingElement<?> root);
 
-  void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties);
+  /**
+   * Sets custom properties corresponding to {@code provider} in the artifact configuration. If {@code properties} is {@code null} custom
+   * properties corresponding to {@code provider} are removed.
+   */
+  void setProperties(@NotNull ArtifactPropertiesProvider provider, @Nullable ArtifactProperties<?> properties);
 
   void setArtifactType(@NotNull ArtifactType selected);
 }

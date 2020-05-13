@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Konstantin Bulenkov
  * @see KeyWithDefaultValue
  */
+@NonNls
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private static final IntObjectMap<Key<?>> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
@@ -25,7 +27,7 @@ public class Key<T> {
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
 
-  public Key(@NotNull String name) {
+  public Key(@NonNls @NotNull String name) {
     myName = name;
     allKeys.put(myIndex, this);
   }
@@ -47,7 +49,7 @@ public class Key<T> {
   }
 
   @NotNull
-  public static <T> Key<T> create(@NotNull String name) {
+  public static <T> Key<T> create(@NonNls @NotNull String name) {
     return new Key<>(name);
   }
 
@@ -70,7 +72,7 @@ public class Key<T> {
 
   @NotNull
   public T getRequired(@NotNull UserDataHolder holder) {
-    return ObjectUtils.notNull(holder.getUserData(this));
+    return Objects.requireNonNull(holder.getUserData(this));
   }
 
   /**

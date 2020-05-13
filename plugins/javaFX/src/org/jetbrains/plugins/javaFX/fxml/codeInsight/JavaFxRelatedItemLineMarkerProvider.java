@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
@@ -49,7 +48,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
   private static final Logger LOG = Logger.getInstance(JavaFxRelatedItemLineMarkerProvider.class);
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull final Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement element, final @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     PsiElement f;
     if (element instanceof PsiIdentifier && (f = element.getParent()) instanceof PsiField) {
       final PsiField field = (PsiField)f;
@@ -70,9 +69,9 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
           if (targets.isEmpty()) return;
 
           result.add(new RelatedItemLineMarkerInfo<>((PsiIdentifier)element, element.getTextRange(),
-                                                     AllIcons.FileTypes.Xml, Pass.LINE_MARKERS, null,
+                                                     AllIcons.FileTypes.Xml, null,
                                                      new JavaFXIdIconNavigationHandler(), GutterIconRenderer.Alignment.LEFT,
-                                                     targets));
+                                                     ()->targets));
         }
       }
     }

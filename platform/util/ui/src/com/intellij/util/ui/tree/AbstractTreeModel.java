@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -9,9 +9,6 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class AbstractTreeModel implements Disposable, TreeModel {
   protected final TreeModelListenerList listeners = new TreeModelListenerList();
   protected volatile boolean disposed;

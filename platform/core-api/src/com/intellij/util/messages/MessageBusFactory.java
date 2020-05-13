@@ -1,31 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class MessageBusFactory {
   public static MessageBusFactory getInstance() {
-    return ServiceManager.getService(MessageBusFactory.class);
+    return ApplicationManager.getApplication().getService(MessageBusFactory.class);
   }
 
-  @NotNull
-  public abstract MessageBus createMessageBus(@NotNull Object owner);
-  @NotNull
-  public abstract MessageBus createMessageBus(@NotNull Object owner, @NotNull MessageBus parentBus);
+  public abstract @NotNull MessageBus createMessageBus(@NotNull MessageBusOwner owner, @Nullable MessageBus parentBus);
 
-  @NotNull
-  public static MessageBus newMessageBus(@NotNull Object owner) {
-    return getInstance().createMessageBus(owner);
+  public static @NotNull MessageBus newMessageBus(@NotNull MessageBusOwner owner) {
+    return getInstance().createMessageBus(owner, null);
   }
 
-  @NotNull
-  public static MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus) {
-    return parentBus == null ? newMessageBus(owner) : getInstance().createMessageBus(owner, parentBus);
+  public static @NotNull MessageBus newMessageBus(@NotNull MessageBusOwner owner, @Nullable MessageBus parentBus) {
+    return getInstance().createMessageBus(owner, parentBus);
   }
 }

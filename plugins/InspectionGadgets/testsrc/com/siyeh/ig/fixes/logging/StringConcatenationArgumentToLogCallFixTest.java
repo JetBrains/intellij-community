@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.logging;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -13,11 +13,16 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
     myDefaultHint = InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix");
     myFixture.addClass("package org.slf4j; public interface Logger { void info(String format); }");
     myFixture.addClass("package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}");
+    myFixture.addClass("package org.apache.logging.log4j; public interface LogBuilder { void log(String format); LogBuilder withLocation(); }");
+    myFixture.addClass("package org.apache.logging.log4j; public interface Logger { LogBuilder atInfo(); }");
+    myFixture.addClass("package org.apache.logging.log4j; public class LogManager { public static Logger getLogger(Class clazz) { return null; }}");
     myFixture.enableInspections(new StringConcatenationArgumentToLogCallInspection());
   }
 
   public void testUseOfConstant() { doTest(); }
   public void testCharLiteral() { doTest(); }
+  public void testQuoteCharLiteral() { doTest(); }
+  public void testLog4JLogBuilder() { doTest(); }
 
   @Override
   protected String getRelativePath() {

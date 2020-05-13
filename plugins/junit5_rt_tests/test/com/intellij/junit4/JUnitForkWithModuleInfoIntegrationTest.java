@@ -26,6 +26,8 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 //RUN ON JAVA 11 ONLY
 public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
 
+  private Module myModule2;
+
   @Override
   protected String getTestContentRoot() {
     return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/forkProjectWithModuleInfo");
@@ -36,10 +38,10 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
     super.setupModule();
     
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    Module module2 = createEmptyModule();
+    myModule2 = createEmptyModule();
     
-    ModuleRootModificationUtil.setModuleSdk(module2, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
-    ModuleRootModificationUtil.updateModel(module2, model -> {
+    ModuleRootModificationUtil.setModuleSdk(myModule2, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
+    ModuleRootModificationUtil.updateModel(myModule2, model -> {
       String contentUrl = getTestContentRoot() + "/module2";
       ContentEntry contentEntry = model.addContentEntry(contentUrl);
       contentEntry.addSourceFolder(contentUrl + "/test", true);
@@ -57,7 +59,7 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
     JpsMavenRepositoryLibraryDescriptor junit5Lib =
       new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2");
     addMavenLibs(myModule, junit5Lib, repoManager);
-    addMavenLibs(module2, junit5Lib, repoManager);
+    addMavenLibs(myModule2, junit5Lib, repoManager);
   }
 
   public void testForkPerModuleForModuleInfoInTestRoot() throws ExecutionException {
@@ -74,6 +76,23 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
     assertSize(3, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+  }
+
+  public void testForkPerModuleForModuleInfoInTestRootInModuleWithDependency() throws ExecutionException {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("p");
+    assertNotNull(aPackage);
+    RunConfiguration runConfiguration = createConfiguration(aPackage);
+    assertInstanceOf(runConfiguration, JUnitConfiguration.class);
+    final JUnitConfiguration configuration = (JUnitConfiguration)runConfiguration;
+    configuration.setWorkingDirectory("$MODULE_WORKING_DIR$");
+    configuration.setSearchScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
+    configuration.setModule(myModule2);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertTrue(processOutput.sys.toString().contains("-junit5"));
+    assertEmpty(processOutput.out);
+    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
   }
 
   public void testForkPerMethodForModuleInfoInTestRoot() throws ExecutionException {

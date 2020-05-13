@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.template.Expression;
@@ -49,7 +49,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @NonNls
   private static final String NAME_TEMPLATE_VARIABLE = "name";
 
-  public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,@NotNull String... values) {
+  public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName, String @NotNull ... values) {
     super(tag);
     myAttrName = attrName;
     myValues = values;
@@ -58,13 +58,13 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @Override
   @NotNull
   public String getText() {
-    return XmlErrorMessages.message("insert.required.attribute.quickfix.text", myAttrName);
+    return XmlErrorBundle.message("insert.required.attribute.quickfix.text", myAttrName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorMessages.message("insert.required.attribute.quickfix.family");
+    return XmlErrorBundle.message("insert.required.attribute.quickfix.family");
   }
 
   @Override

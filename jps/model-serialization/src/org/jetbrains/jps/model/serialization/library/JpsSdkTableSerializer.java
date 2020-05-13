@@ -42,9 +42,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsSdkTableSerializer {
   private static final Logger LOG = Logger.getInstance(JpsSdkTableSerializer.class);
 

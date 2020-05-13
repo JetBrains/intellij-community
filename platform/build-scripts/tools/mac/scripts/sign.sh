@@ -27,6 +27,9 @@ log "Signing libraries and executables..."
 for f in \
   "Contents/jdk/Contents/Home/lib" "Contents/jdk/Contents/Home/jre" "Contents/jdk/Contents/MacOS" \
   "Contents/jbr/Contents/Home/lib" "Contents/jbr/Contents/MacOS" \
+  "Contents/jbr/Contents/Home/Frameworks" \
+  "Contents/jbr/Contents/Frameworks" \
+  "Contents/Home/Frameworks" \
   "Contents/plugins" "Contents/lib"; do
   if [ -d "$APP_DIRECTORY/$f" ]; then
     find "$APP_DIRECTORY/$f" \

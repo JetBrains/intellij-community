@@ -2,6 +2,8 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.codeInspection.SuppressionUtilCore;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -63,11 +65,34 @@ public class JavadocManagerImpl implements JavadocManager {
     for (CustomJavadocTagProvider extension : CustomJavadocTagProvider.EP_NAME.getExtensionList()) {
       myInfos.addAll(extension.getSupportedTags());
     }
+
+    JavadocTagInfo.EP_NAME.getPoint(project).addExtensionPointListener(new ExtensionPointListener<JavadocTagInfo>() {
+      @Override
+      public void extensionAdded(@NotNull JavadocTagInfo extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myInfos.add(extension);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull JavadocTagInfo extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myInfos.remove(extension);
+      }
+    }, false, project);
+
+    CustomJavadocTagProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CustomJavadocTagProvider>() {
+      @Override
+      public void extensionAdded(@NotNull CustomJavadocTagProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myInfos.addAll(extension.getSupportedTags());
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull CustomJavadocTagProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myInfos.removeAll(extension.getSupportedTags());
+      }
+    }, null);
   }
 
   @Override
-  @NotNull
-  public JavadocTagInfo[] getTagInfos(PsiElement context) {
+  public JavadocTagInfo @NotNull [] getTagInfos(PsiElement context) {
     List<JavadocTagInfo> result = new ArrayList<>();
 
     for (JavadocTagInfo info : myInfos) {

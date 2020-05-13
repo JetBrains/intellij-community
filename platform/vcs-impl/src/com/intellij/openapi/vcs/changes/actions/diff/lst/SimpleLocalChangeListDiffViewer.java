@@ -15,6 +15,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -111,7 +112,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @NotNull
     @Override
     public Runnable done(boolean isContentsEqual,
-                         @NotNull CharSequence[] texts,
+                         CharSequence @NotNull [] texts,
                          @NotNull List<? extends LineFragment> fragments,
                          @NotNull List<LocalTrackerDiffUtil.LineFragmentData> fragmentsData) {
       List<SimpleDiffChange> changes = new ArrayList<>();
@@ -232,7 +233,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       Icon icon = isExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
 
       return createOperation(Side.RIGHT, (ctrlPressed, shiftPressed, altPressed) -> {
-        return new DiffGutterRenderer(icon, "Include into commit") {
+        return new DiffGutterRenderer(icon, DiffBundle.message("action.presentation.diff.include.into.commit.text")) {
           @Override
           protected void handleMouseClick() {
             if (!myChange.isValid()) return;

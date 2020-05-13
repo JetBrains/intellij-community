@@ -121,7 +121,7 @@ public class StringUtilRt {
           intactLength++;
         }
         else {
-          buffer.append(c);
+          buffer.append('\n');
         }
       }
       else if (c == '\r') {
@@ -131,7 +131,7 @@ public class StringUtilRt {
             intactLength++;
           }
           else {
-            buffer.append(c);
+            buffer.append('\r');
           }
           continue;
         }
@@ -212,7 +212,7 @@ public class StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String getShortName(@NotNull Class aClass) {
+  public static String getShortName(@NotNull Class<?> aClass) {
     return getShortName(aClass.getName());
   }
 

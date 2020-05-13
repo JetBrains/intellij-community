@@ -6,7 +6,7 @@ class Test {
     if (b) {
         sb.append("foo");
         sb.append("bar");
-        s = sb.toString();
-    }<caret>
+        s = sb<caret>.toString();
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import gnu.trove.TIntHashSet;
@@ -18,7 +19,6 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -43,7 +43,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexe
  & @author ven
  */
 public class UnusedDefInspection extends GroovyLocalInspectionBase {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection");
+  private static final Logger LOG = Logger.getInstance(UnusedDefInspection.class);
 
   @NotNull
   @Override
@@ -101,13 +101,21 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       return true;
     });
 
-    owner.accept(new GroovyRecursiveElementVisitor() {
+    owner.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitVariable(@NotNull GrVariable variable) {
-        if (checked.contains(variable) || variable.getInitializerGroovy() != null) return;
-
-        if (ReferencesSearch.search(variable, variable.getUseScope()).findFirst() == null) {
-          process(variable, checked, problemsHolder, GroovyInspectionBundle.message("unused.variable"));
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof GrControlFlowOwner) {
+          // don't go deeper
+        }
+        else if (element instanceof GrVariable && !(element instanceof GrField)) {
+          GrVariable variable = (GrVariable)element;
+          if (checked.contains(variable) || variable.getInitializerGroovy() != null) return;
+          if (ReferencesSearch.search(variable, variable.getUseScope()).findFirst() == null) {
+            process(variable, checked, problemsHolder, GroovyInspectionBundle.message("unused.variable"));
+          }
+        }
+        else {
+          super.visitElement(element);
         }
       }
     });

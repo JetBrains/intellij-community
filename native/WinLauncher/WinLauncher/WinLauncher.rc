@@ -105,12 +105,12 @@ IDI_WINLAUNCHER         ICON                    "WinLauncher.ico"
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE
 BEGIN
     "#ifndef APSTUDIO_INVOKED\r\n"
     "#include ""targetver.h""\r\n"
@@ -121,7 +121,7 @@ BEGIN
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE
 BEGIN
     "\r\n"
     "\0"
@@ -137,39 +137,23 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "WinLauncher"
-    IDS_JDK_ENV_VAR         "IDEA_JDK"
-    IDS_VM_OPTIONS_PATH     "%USERPROFILE%\\.__PRODUCT_PATHS_SELECTOR__"
-    IDS_VM_OPTION_ERRORFILE "-XX:ErrorFile=%USERPROFILE%\\java_error_in___product_uc___%p.log"
-    IDS_VM_OPTION_HEAPDUMPPATH "-XX:HeapDumpPath=%USERPROFILE%\\java_error_in___product_uc__.hprof"
-    IDS_MAIN_CLASS          "com/intellij/idea/Main"
-    IDS_CLASSPATH_LIBS      "bootstrap.jar;extensions.jar;util.jar;jdom.jar;log4j.jar;trove4j.jar;jna.jar"
-    IDS_JDK_ONLY            "true"
-    IDC_WINLAUNCHER         "WINLAUNCHER"
-    IDS_COMMAND_LINE_PROCESSOR_CLASS 
-                            "com/intellij/ide/WindowsCommandLineProcessor"
-END
+    IDS_MAIN_CLASS                    "com/intellij/idea/Main"
+    IDS_COMMAND_LINE_PROCESSOR_CLASS  "com/intellij/ide/WindowsCommandLineProcessor"
 
-STRINGTABLE
-BEGIN
-    IDS_VM_OPTIONS          "-Didea.jre.check=false -Dide.native.launcher=true"
-    IDS_PROPS_ENV_VAR       "IDEA_PROPERTIES"
-    IDS_VM_OPTIONS_ENV_VAR  "IDEA_VM_OPTIONS"
-    IDS_ERROR_LAUNCHING_APP "Error Launching IntelliJ Platform"
+    // placeholders to ensure table size
+    IDS_JDK_ONLY                      "-"
+    IDS_JDK_ENV_VAR                   "-"
+    IDS_APP_TITLE                     "-"
+    IDS_VM_OPTIONS_PATH               "-"
+    IDS_VM_OPTION_ERRORFILE           "-"
+    IDS_VM_OPTION_HEAPDUMPPATH        "-"
+    IDC_WINLAUNCHER                   "-"
+    IDS_PROPS_ENV_VAR                 "-"
+    IDS_VM_OPTIONS_ENV_VAR            "-"
+    IDS_ERROR_LAUNCHING_APP           "-"
+    IDS_VM_OPTIONS                    "-"
+    IDS_CLASSPATH_LIBS                "-"
 END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
-
-
-
-#ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED
-

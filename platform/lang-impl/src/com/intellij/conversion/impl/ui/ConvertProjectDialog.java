@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.conversion.impl.ui;
 
@@ -28,11 +28,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class ConvertProjectDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.conversion.impl.ui.ConvertProjectDialog");
+  private static final Logger LOG = Logger.getInstance(ConvertProjectDialog.class);
   private JPanel myMainPanel;
   private JTextPane myTextPane;
   private boolean myConverted;
@@ -80,7 +77,7 @@ public class ConvertProjectDialog extends DialogWrapper {
       }
     });
     init();
-    setOKButtonText("Convert");
+    setOKButtonText(IdeBundle.message("convert.project.dialog.button.text"));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl
 
 import com.intellij.ui.tabs.JBTabsPosition
@@ -7,7 +7,7 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
-class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
+internal class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
   override fun paintTab(position: JBTabsPosition,
                         g: Graphics2D,
                         rect: Rectangle,
@@ -18,8 +18,8 @@ class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
     rect.y += borderThickness
     rect.height -= borderThickness
 
-    when (position) {
-      JBTabsPosition.top -> rect.height -= borderThickness
+    if (position == JBTabsPosition.top) {
+      rect.height -= borderThickness
     }
 
     super.paintTab(position, g, rect, borderThickness, tabColor, active, hovered)

@@ -15,12 +15,20 @@
  */
 package com.intellij.codeInspection;
 
-public class DeprecationUtil {
+import com.intellij.analysis.AnalysisBundle;public class DeprecationUtil {
   public static final String DEPRECATION_SHORT_NAME = "Deprecation";
-  public static final String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
+
   public static final String DEPRECATION_ID = "deprecation";
 
   public static final String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
-  public static final String FOR_REMOVAL_DISPLAY_NAME = InspectionsBundle.message("inspection.marked.for.removal.display.name");
+
   public static final String FOR_REMOVAL_ID = "removal";
+
+  public static String getDeprecationDisplayName() {
+    return AnalysisBundle.message("inspection.deprecated.display.name");
+  }
+
+  public static String getForRemovalDisplayName() {
+    return AnalysisBundle.message("inspection.marked.for.removal.display.name");
+  }
 }

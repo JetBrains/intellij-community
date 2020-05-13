@@ -4,7 +4,6 @@
        Both Community and Professional editions. -->
   <module value="com.intellij.modules.pycharm"/>
 
-  <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PlatformLangXmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
@@ -14,8 +13,6 @@
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
-
-    <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.ImportPopupHectorComponentProvider"/>
 
     <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
     <applicationService serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
@@ -37,14 +34,14 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction" text="Save As...">
+    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction">
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
-    <group>
+    <group id="PyCharm.MarkRootGroup">
       <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction"/>
       <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
       <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>

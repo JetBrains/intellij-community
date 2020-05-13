@@ -1,40 +1,74 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Defines messaging endpoint within particular {@link MessageBus bus}.
  *
  * @param <L>  type of the interface that defines contract for working with the particular topic instance
  */
+@ApiStatus.NonExtendable
 public class Topic<L> {
-  private final String myDisplayName;
+  /**
+   * Indicates that messages the of annotated topic are published to a application level message bus.
+   */
+  @Retention(RetentionPolicy.SOURCE)
+  @Target(ElementType.FIELD)
+  public @interface AppLevel {}
+
+  /**
+   * Indicates that messages the of annotated topic are published to a project level message bus.
+   */
+  @Retention(RetentionPolicy.SOURCE)
+  @Target(ElementType.FIELD)
+  public @interface ProjectLevel {}
+
+  private final String name;
   private final Class<L> myListenerClass;
   private final BroadcastDirection myBroadcastDirection;
+  private final boolean immediateDelivery;
 
-  public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
-    this(displayName, listenerClass, BroadcastDirection.TO_CHILDREN);
+  public Topic(@NonNls @NotNull String name, @NotNull Class<L> listenerClass) {
+    this(name, listenerClass, BroadcastDirection.TO_CHILDREN);
   }
 
   public Topic(@NotNull Class<L> listenerClass) {
     this(listenerClass.getSimpleName(), listenerClass, BroadcastDirection.TO_CHILDREN);
   }
 
-  public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
-    myDisplayName = displayName;
+  public Topic(@NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
+    this(listenerClass.getSimpleName(), listenerClass, broadcastDirection);
+  }
+
+  @ApiStatus.Experimental
+  public Topic(@NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection, boolean immediateDelivery) {
+    name = listenerClass.getSimpleName();
     myListenerClass = listenerClass;
     myBroadcastDirection = broadcastDirection;
+    this.immediateDelivery = immediateDelivery;
+  }
+
+  public Topic(@NonNls @NotNull String name, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
+    this.name = name;
+    myListenerClass = listenerClass;
+    myBroadcastDirection = broadcastDirection;
+    immediateDelivery = false;
   }
 
   /**
-   * @return    human-readable name of the current topic. Is intended to be used in informational/logging purposes only
+   * @return human-readable name of the current topic. Is intended to be used in informational/logging purposes only
    */
-  @NotNull
   @NonNls
-  public String getDisplayName() {
-    return myDisplayName;
+  public @NotNull String getDisplayName() {
+    return name;
   }
 
   /**
@@ -52,22 +86,25 @@ public class Topic<L> {
    *
    * @return    class of the interface that defines contract for working with the current topic
    */
-  @NotNull
-  public Class<L> getListenerClass() {
+  public @NotNull Class<L> getListenerClass() {
     return myListenerClass;
   }
 
+  @Override
   public String toString() {
-    return myDisplayName;
+    return "Topic(" +
+           "name='" + name + '\'' +
+           ", listenerClass=" + myListenerClass +
+           ", broadcastDirection=" + myBroadcastDirection +
+           ", immediateDelivery=" + immediateDelivery +
+           ')';
   }
 
-  @NotNull
-  public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
     return new Topic<>(displayName, listenerClass);
   }
 
-  @NotNull
-  public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
     return new Topic<>(displayName, listenerClass, direction);
   }
 
@@ -75,9 +112,14 @@ public class Topic<L> {
    * @return    broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
    * @see BroadcastDirection
    */
-  @NotNull
-  public BroadcastDirection getBroadcastDirection() {
+  public @NotNull BroadcastDirection getBroadcastDirection() {
     return myBroadcastDirection;
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public boolean isImmediateDelivery() {
+    return immediateDelivery;
   }
 
   /**
@@ -88,7 +130,6 @@ public class Topic<L> {
    * Current enum holds available broadcasting options.
    */
   public enum BroadcastDirection {
-
     /**
      * The message is dispatched to all subscribers of the target topic registered within the child message buses.
      * <p/>
@@ -104,6 +145,12 @@ public class Topic<L> {
      * will receive the message sent to the {@code 'topic1'} topic at the {@code 'parent-bus'}.
      */
     TO_CHILDREN,
+
+    /**
+     * Use only for application level publishers. To avoid collection subscribers from modules.
+     */
+    @ApiStatus.Experimental
+    TO_DIRECT_CHILDREN,
 
     /**
      * No broadcasting is performed for the

@@ -33,10 +33,14 @@ public interface HighlightingTest extends BaseTest {
     profile.setErrorLevel(key, HighlightDisplayLevel.WARNING, project);
   }
 
-  default void highlightingTest(Class<? extends LocalInspectionTool>... inspections) {
+  default void fileHighlightingTest(Class<? extends LocalInspectionTool>... inspections) {
+    fileHighlightingTest(getTestName() + ".groovy", inspections);
+  }
+
+  default void fileHighlightingTest(@NotNull String filePath, Class<? extends LocalInspectionTool>... inspections) {
     getFixture().enableInspections(inspections);
     getFixture().enableInspections(getInspections());
-    getFixture().testHighlighting(getTestName() + ".groovy");
+    getFixture().testHighlighting(filePath);
   }
 
   default void highlightingTest(String text) {

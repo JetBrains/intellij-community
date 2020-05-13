@@ -20,9 +20,8 @@ public class ThemeEPPathReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("path"), new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         if (!PsiUtil.isPluginXmlPsiElement(element)) return PsiReference.EMPTY_ARRAY;
 
         XmlTag tag = ((XmlAttribute)element.getParent()).getParent();

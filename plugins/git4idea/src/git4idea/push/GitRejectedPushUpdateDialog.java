@@ -65,7 +65,7 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
 
     myUpdateAllRoots = new JCheckBox("Update not rejected repositories as well", initialSettings.shouldUpdateAllRoots());
     myUpdateAllRoots.setMnemonic('u');
-    myAutoUpdateInFuture = new JCheckBox("<html>Remember the update method choice and <u>s</u>ilently update in future <br/>(you may change this in the Settings)</html>");
+    myAutoUpdateInFuture = new JCheckBox("<html>Remember the update method and update <u>s</u>ilently in the future <br/>(you can change this in Settings/Preferences | Version Control)</html>");
     myAutoUpdateInFuture.setMnemonic('s');
 
     myMergeAction = new MergeAction();
@@ -148,7 +148,7 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
         return sb.toString();
       }
       else {
-        StringBuilder sb = new StringBuilder("<html>Push of current branch was rejected: <br/>");
+        StringBuilder sb = new StringBuilder("<html>Push of the current branch was rejected: <br/>");
         for (Map.Entry<GitRepository, GitBranch> entry : currentBranches.entrySet()) {
           GitRepository repository = entry.getKey();
           GitBranch currentBranch = entry.getValue();
@@ -198,9 +198,8 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
     return currentBranch;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[] { getCancelAction(), myMergeAction, myRebaseAction};
   }
 

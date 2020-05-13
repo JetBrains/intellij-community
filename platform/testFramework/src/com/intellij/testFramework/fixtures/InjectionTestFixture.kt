@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures
 
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.psi.PsiElement
@@ -18,7 +19,9 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
     get() = InjectedLanguageManager.getInstance(javaFixture.project)
 
   val injectedElement: PsiElement?
-    get() = injectedLanguageManager.findInjectedElementAt(topLevelFile, topLevelCaretPosition)
+    get() {
+      return injectedLanguageManager.findInjectedElementAt(topLevelFile ?: return null, topLevelCaretPosition)
+    }
 
   fun assertInjectedLangAtCaret(lang: String?) {
     val injectedElement = injectedElement
@@ -35,10 +38,9 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
     val injected = mutableListOf<Pair<PsiElement, PsiFile>>()
     val hosts = PsiTreeUtil.collectElementsOfType(topLevelFile, PsiLanguageInjectionHost::class.java)
     for (host in hosts) {
-      injectedLanguageManager.enumerate(host,
-                                        PsiLanguageInjectionHost.InjectedPsiVisitor { injectedPsi, places ->
-                                          injected.add(host to injectedPsi)
-                                        })
+      injectedLanguageManager.enumerate(host, PsiLanguageInjectionHost.InjectedPsiVisitor { injectedPsi, _ ->
+        injected.add(host to injectedPsi)
+      })
     }
     return injected
   }
@@ -58,14 +60,14 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
 
   }
 
-  val topLevelFile: PsiFile get() = javaFixture.file.let { injectedLanguageManager.getTopLevelFile(it) }
+  val topLevelFile: PsiFile
+    get() = javaFixture.file!!.let { injectedLanguageManager.getTopLevelFile(it) }
 
-  val topLevelCaretPosition get() = topLevelEditor.caretModel.offset
+  val topLevelCaretPosition
+    get() = topLevelEditor.caretModel.offset
 
-  val topLevelEditor
-    get() = (FileEditorManager.getInstance(
-      javaFixture.project).getSelectedEditor(topLevelFile.virtualFile) as TextEditor).editor
-
+  val topLevelEditor: Editor
+    get() = (FileEditorManager.getInstance(javaFixture.project).getSelectedEditor(topLevelFile!!.virtualFile) as TextEditor).editor
 }
 
 data class InjectionAssertionData(val text: String, val injectedLanguage: String? = null) {

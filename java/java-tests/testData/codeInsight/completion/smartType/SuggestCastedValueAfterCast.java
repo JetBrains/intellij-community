@@ -1,10 +1,10 @@
-public class TestCase extends Zzz {
+public class TestCase {
 
     Object ooo() {}
 
     {
         ((String) ooo()).toString();
 
-        String s = o<caret>
+        String s = oo<caret>
     }
 }

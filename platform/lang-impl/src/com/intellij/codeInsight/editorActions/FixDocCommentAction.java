@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.documentation.DocCommentFixer;
 import com.intellij.lang.*;
@@ -12,7 +13,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
@@ -20,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.DocCommentSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.text.CharArrayUtil;
@@ -118,8 +121,12 @@ public class FixDocCommentAction extends EditorAction {
         task = () -> fixer.fixComment(project, editor, pair.second);
       }
     }
-    final Runnable command = () -> ApplicationManager.getApplication().runWriteAction(task);
-    CommandProcessor.getInstance().executeCommand(project, command, "Fix documentation", null);
+    if (!element.isPhysical()) {
+      task.run();
+    } else {
+      final Runnable command = () -> ApplicationManager.getApplication().runWriteAction(task);
+      CommandProcessor.getInstance().executeCommand(project, command, CodeInsightBundle.message("command.fix.documentation"), null);
+    }
     
   }
 
@@ -226,14 +233,18 @@ public class FixDocCommentAction extends EditorAction {
   }
 
   private static void reformatCommentKeepingEmptyTags(@NotNull PsiFile file, @NotNull Project project, int start, int end) {
-    CodeStyleSettings tempSettings = CodeStyle.getSettings(file).clone();
-    LanguageCodeStyleSettingsProvider langProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
-    if (langProvider != null) {
-      DocCommentSettings docCommentSettings = langProvider.getDocCommentSettings(tempSettings);
-      docCommentSettings.setRemoveEmptyTags(false);
-    }
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    CodeStyle.doWithTemporarySettings(project, tempSettings, () -> codeStyleManager.reformatText(file, start, end));
+    CodeStyle.doWithTemporarySettings(
+      project,
+      CodeStyle.getSettings(file),
+      tempSettings -> {
+        LanguageCodeStyleSettingsProvider langProvider =
+          LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
+        if (langProvider != null) {
+          DocCommentSettings docCommentSettings = langProvider.getDocCommentSettings(tempSettings);
+          docCommentSettings.setRemoveEmptyTags(false);
+        }
+        CodeStyleManager.getInstance(project).reformatText(file, start, end);
+      });
   }
 
   private static int calcStartReformatOffset(@NotNull PsiElement element) {

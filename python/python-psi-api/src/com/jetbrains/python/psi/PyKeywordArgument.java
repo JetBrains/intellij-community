@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.lang.ASTNode;
 
@@ -23,6 +24,7 @@ import com.intellij.lang.ASTNode;
  * @author yole
  */
 public interface PyKeywordArgument extends PyExpression, PsiNamedElement {
+  @NonNls
   @Nullable
   String getKeyword();
 

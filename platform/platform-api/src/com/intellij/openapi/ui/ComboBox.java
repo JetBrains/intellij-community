@@ -53,12 +53,12 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     init(-1);
   }
 
-  public ComboBox(@NotNull E[] items) {
+  public ComboBox(E @NotNull [] items) {
     super(items);
     init(-1);
   }
 
-  public ComboBox(@NotNull E[] items, int width) {
+  public ComboBox(E @NotNull [] items, int width) {
     super(items);
     init(width);
   }
@@ -128,6 +128,15 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
   public void registerTableCellEditor(@NotNull TableCellEditor cellEditor) {
     registerTableCellEditor(this, cellEditor);
+  }
+
+  @SuppressWarnings("unchecked")
+  public E getItem() {
+    return (E)getSelectedItem();
+  }
+
+  public void setItem(E item) {
+    setSelectedItem(item);
   }
 
   @Override
@@ -207,6 +216,14 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     return UIUtil.getComboBoxPopup(this);
   }
 
+  /**
+   * The {@code false} parameter value enables JBPopup instead of
+   * the default ComboBox popup.
+   *
+   * @param swingPopup {@code false} to enable JBPopup
+   * @see ComboBoxPopupState
+   * @see com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
+   */
   public void setSwingPopup(boolean swingPopup) {
     putClientProperty("ComboBox.jbPopup", swingPopup ? null : true);
     super.setEditor(null);

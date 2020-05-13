@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.browsers.chrome;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
@@ -32,9 +33,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class ChromeSettingsConfigurable implements Configurable {
   private final ChromeSettings mySettings;
   private JPanel myMainPanel;
@@ -46,7 +44,8 @@ public class ChromeSettingsConfigurable implements Configurable {
 
   public ChromeSettingsConfigurable(@NotNull ChromeSettings settings) {
     mySettings = settings;
-    myUserDataDirField.addBrowseFolderListener("Select User Data Directory", "Specifies the directory that user data (your \"profile\") is kept in", null,
+    myUserDataDirField.addBrowseFolderListener(IdeBundle.message("chooser.title.select.user.data.directory"), IdeBundle
+                                                 .message("chooser.description.specifies.user.data.directory"), null,
                                                FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myUseCustomProfileCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -122,7 +121,7 @@ public class ChromeSettingsConfigurable implements Configurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Chrome Settings";
+    return IdeBundle.message("configurable.ChromeSettingsConfigurable.display.name");
   }
 
   @Override

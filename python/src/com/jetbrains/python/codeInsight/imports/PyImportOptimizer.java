@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
 import com.google.common.collect.Ordering;
@@ -36,6 +22,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesVisitor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.StreamEx;
@@ -72,9 +59,10 @@ public class PyImportOptimizer implements ImportOptimizer {
     final PyUnresolvedReferencesInspection.Visitor visitor = new PyUnresolvedReferencesInspection.Visitor(null,
                                                                                                           session,
                                                                                                           Collections.emptyList());
+    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, new PyUnresolvedReferencesInspection());
     file.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement node) {
+      public void visitElement(@NotNull PsiElement node) {
         super.visitElement(node);
         node.accept(visitor);
       }
@@ -120,8 +108,7 @@ public class PyImportOptimizer implements ImportOptimizer {
 
     @NotNull
     private Comparator<PyImportElement> getFromNamesComparator() {
-      final Comparator<String> stringComparator =
-        myPySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+      final Comparator<String> stringComparator = AddImportHelper.getImportTextComparator(myFile);
       final Comparator<QualifiedName> qNamesComparator = Comparator.comparing(QualifiedName::toString, stringComparator);
       return Comparator
         .comparing(PyImportElement::getImportedQName, Comparator.nullsFirst(qNamesComparator))
@@ -227,7 +214,7 @@ public class PyImportOptimizer implements ImportOptimizer {
         for (PyFromImportStatement sameSourceImport : sameSourceImports) {
           ContainerUtil.addAll(newFromImportNames, sameSourceImport.getImportElements());
         }
-        // Remember that we have checked imports with this source already 
+        // Remember that we have checked imports with this source already
         myOldFromImportBySources.remove(source);
       }
       else if (!shouldSplitImport && myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
@@ -239,14 +226,14 @@ public class PyImportOptimizer implements ImportOptimizer {
       final boolean shouldGenerateNewFromImport = !newFromImportNames.isEmpty();
       if (shouldGenerateNewFromImport) {
         if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
-          Collections.sort(newFromImportNames, fromNamesComparator);
+          newFromImportNames.sort(fromNamesComparator);
         }
         String importedNames = StringUtil.join(newFromImportNames, ImportSorter::getNormalizedImportElementText, ", ");
         if (forceParentheses) {
           importedNames = "(" + importedNames + ")";
         }
         final PyFromImportStatement combinedImport = myGenerator.createFromImportStatement(myLangLevel, source, importedNames, null);
-        final Set<PyImportStatementBase> oldImports = ContainerUtil.map2LinkedSet(newFromImportNames, 
+        final Set<PyImportStatementBase> oldImports = ContainerUtil.map2LinkedSet(newFromImportNames,
                                                                                   e -> (PyImportStatementBase)e.getParent());
         replaceSeveralImportsWithOne(result, oldImports, combinedImport);
       }
@@ -339,7 +326,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
         for (ImportPriority priority : myGroups.keySet()) {
           final List<PyImportStatementBase> imports = myGroups.get(priority);
-          Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile));
+          imports.sort(AddImportHelper.getSameGroupImportsComparator(myFile));
           myGroups.put(priority, imports);
         }
       }

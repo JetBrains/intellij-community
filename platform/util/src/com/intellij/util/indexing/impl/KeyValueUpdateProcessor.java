@@ -16,9 +16,7 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Experimental
 public interface KeyValueUpdateProcessor<Key, Value> {
   void process(Key key, Value value, int inputId) throws StorageException;
 }

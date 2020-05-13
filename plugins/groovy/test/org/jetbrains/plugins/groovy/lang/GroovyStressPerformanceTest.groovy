@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -22,6 +21,7 @@ import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 @Slow
 class GroovyStressPerformanceTest extends LightGroovyTestCase {
-
   final String basePath = TestUtils.testDataPath + 'highlighting/'
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3
@@ -48,7 +47,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   void testDontWalkLongInferenceChain() throws Exception {
-    //RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     Map<Integer, PsiClass> classes = [:]
     myFixture.addFileToProject "Foo0.groovy", """class Foo0 {
       def foo() { return 0 }
@@ -124,7 +123,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void measureHighlighting(String text, int time) {
-    IdeaTestUtil.startPerformanceTest(getTestName(false), time, configureAndHighlight(text)).usesAllCPUCores().assertTiming()
+    PlatformTestUtil.startPerformanceTest(getTestName(false), time, configureAndHighlight(text)).usesAllCPUCores().assertTiming()
   }
 
   void testDeeplyNestedClosures() {
@@ -261,7 +260,7 @@ class Cl {
     }
 }
 """
-    IdeaTestUtil.startPerformanceTest(getTestName(false), 750, configureAndHighlight(text))
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 750, configureAndHighlight(text))
       .attempts(20)
       .usesAllCPUCores()
       .assertTiming()
@@ -530,7 +529,7 @@ public class Yoo$i implements Serializable, Cloneable, Hoo$i<String> {}
 public class Doo$i {}
 """
     }
-    IdeaTestUtil.startPerformanceTest("testing dfa", 800, {
+    PlatformTestUtil.startPerformanceTest("testing dfa", 800, {
       myFixture.checkHighlighting true, false, false
     }).setup({
       myFixture.enableInspections GroovyAssignabilityCheckInspection, UnusedDefInspection, GrUnusedIncDecInspection
@@ -590,5 +589,29 @@ def a = new Node()
     def file = (GroovyFile)fixture.configureByText('_.groovy', text.toString())
     def last = (GrReferenceExpression)file.statements.last()
     assert last.resolve() instanceof GrBindingVariable
+  }
+
+  void 'test method processing does not depend on the number of other methods'() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+    StringBuilder builder = new StringBuilder()
+    def n = 1000
+    builder.append("def foo0 (a) { a }\n")
+    for (i in 1..n) {
+      builder.append("""
+def foo$i (a) {
+    a +  (foo${i - 1}(1))
+}
+
+""")
+    }
+    builder.append("""
+foo${n}(a) {
+    foo${n - 1}(1)
+}""")
+    def file = fixture.configureByText('_.groovy', builder.toString()) as GroovyFile
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 2000, {
+      myFixture.psiManager.dropPsiCaches()
+      (file.methods.last().block.statements.last() as GrExpression).type
+    }).attempts(5).assertTiming()
   }
 }

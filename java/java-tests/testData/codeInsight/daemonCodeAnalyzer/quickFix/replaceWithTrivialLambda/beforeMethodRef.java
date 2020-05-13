@@ -15,7 +15,7 @@ public class MethodReferenceConstantValue {
     Boolean aBoolean = opt.map(th<caret>is::strangeMethod)
       .map(Objects::nonNull)
       .map(Objects::isNull)
-      .orElse(false);
+      .orElse(new Random().nextBoolean());
     if (opt.isPresent()) {
       Stream.generate(opt::isPresent)
         .limit(10)

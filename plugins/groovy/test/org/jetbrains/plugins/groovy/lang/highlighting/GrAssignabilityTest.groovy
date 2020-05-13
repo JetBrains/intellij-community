@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -147,14 +147,10 @@ go('a', 'c', 1, 2, 3)
   }
 
   void testCallableProperty() {
-    doTest()
+    doTest(new GrUnresolvedAccessInspection())
   }
 
   void testEnumConstantConstructors() {
-    doTest()
-  }
-
-  void testLiteralConstructorUsages() {
     doTest()
   }
 
@@ -898,7 +894,7 @@ class E {
     }
 }
 
-new E() + a
+new E() <weak_warning descr="Cannot infer argument types">+</weak_warning> a
 '''
   }
 
@@ -921,6 +917,22 @@ class E {
 }
 
 new E() <weak_warning descr="Cannot infer argument types">+</weak_warning> a
+'''
+  }
+
+  void 'test inapplicable with unknown argument'() {
+    testHighlighting '''\
+def foo(String s, int x) {}
+def foo(String s, Object o) {}
+def foo(String s, String x) {}
+
+// second and third overloads are applicable;
+// first overload is inapplicable independently of the first arg type;
+foo<weak_warning descr="Cannot infer argument types">(unknown, "hi")</weak_warning>
+
+// only second overload is applicable;
+// because of that we don't highlight unknown args
+foo(unknown, new Object())  
 '''
   }
 }

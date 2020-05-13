@@ -29,16 +29,16 @@ public class VcsPushAction extends DumbAwareAction {
                                           : collectRepositories(manager, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     VirtualFile selectedFile = DvcsUtil.getSelectedFile(project);
     new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories),
-                      selectedFile != null ? manager.getRepositoryForFile(selectedFile) : null).show();
+                      selectedFile != null ? manager.getRepositoryForFileQuick(selectedFile) : null).show();
   }
 
   @NotNull
   private static Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager,
-                                                            @Nullable VirtualFile[] files) {
+                                                            VirtualFile @Nullable [] files) {
     if (files == null) return Collections.emptyList();
     Collection<Repository> repositories = new HashSet<>();
     for (VirtualFile file : files) {
-      Repository repo = vcsRepositoryManager.getRepositoryForFile(file);
+      Repository repo = vcsRepositoryManager.getRepositoryForFileQuick(file);
       if (repo != null) {
         repositories.add(repo);
       }

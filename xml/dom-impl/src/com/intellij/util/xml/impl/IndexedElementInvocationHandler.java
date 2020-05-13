@@ -35,7 +35,7 @@ import java.util.List;
  * @author peter
  */
 public class IndexedElementInvocationHandler extends DomInvocationHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
+  private static final Logger LOG = Logger.getInstance(IndexedElementInvocationHandler.class);
   private final int myIndex;
 
   public IndexedElementInvocationHandler(final EvaluatedXmlName tagName,

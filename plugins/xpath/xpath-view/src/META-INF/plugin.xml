@@ -5,6 +5,7 @@
   <!-- Plugin name -->
   <id>XPathView</id>
   <name>XPathView + XSLT</name>
+  <category>HTML and XML</category>
 
   <!-- Description -->
   <description><![CDATA[
@@ -19,7 +20,8 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.xml</depends>
-  
+  <resource-bundle>messages.XPathBundle</resource-bundle>
+
   <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->
   <!--<depends>XPathLanguage</depends>-->
 
@@ -37,8 +39,7 @@
     <colorSettingsPage implementation="org.intellij.lang.xpath.XPathColorSettingsPage" />
 
     <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
-    <programRunner implementation="org.intellij.lang.xpath.xslt.run.XsltRunner"/>
-    <configurationProducer implementation="org.intellij.lang.xpath.xslt.run.XsltConfigurationProducer" />
+    <runConfigurationProducer implementation="org.intellij.lang.xpath.xslt.run.XsltConfigurationProducer" />
 
     <applicationService
         serviceInterface="org.intellij.plugins.xpathView.support.XPathSupport"
@@ -50,7 +51,10 @@
         serviceInterface="org.intellij.lang.xpath.xslt.psi.XsltElementFactory"
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
 
-    <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations" displayName="XSLT File Associations" nonDefaultProject="true" />
+    <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations"
+                         bundle="messages.XPathBundle"
+                         key="configurable.FileAssociationsConfigurable.display.name"
+                         nonDefaultProject="true" />
 
     <projectService serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState" />
 
@@ -68,17 +72,16 @@
     <lang.commenter language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPath2Commenter" />
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
-<!--    <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />-->
 
-    <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check Node Test" groupName="XPath" enabledByDefault="true" level="WARNING"
+    <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check node test" groupName="XPath" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.xpath.validation.inspections.CheckNodeTest"/>
-    <localInspection language="XPath" shortName="ImplicitTypeConversion" displayName="Implicit Type Conversion" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="ImplicitTypeConversion" displayName="Implicit type conversion" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion"/>
-    <localInspection language="XPath" shortName="RedundantTypeConversion" displayName="Redundant Type Conversion" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="RedundantTypeConversion" displayName="Redundant type conversion" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion"/>
     <localInspection language="XPath" shortName="IndexZeroUsage" displayName="Use of index 0 in XPath predicates" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.IndexZeroPredicate"/>
-    <localInspection language="XPath" shortName="HardwiredNamespacePrefix" displayName="Hardwired Namespace Prefix" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="HardwiredNamespacePrefix" displayName="Hardwired namespace prefix" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.HardwiredNamespacePrefix"/>
 
     <quoteHandler fileType="XPath" className="org.intellij.lang.xpath.XPathQuoteHandler" />
@@ -95,7 +98,7 @@
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <include.provider implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeProvider"/>
-    
+
     <usageGroupingRuleProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
     <lang.refactoringSupport language="XPath" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XPathRefactoringSupportProvider" />
     <lang.refactoringSupport language="XML" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupportProvider" />
@@ -104,13 +107,13 @@
 
     <extendWordSelectionHandler implementation="org.intellij.lang.xpath.XPathStringLiteralSelectioner"/>
 
-    <localInspection shortName="XsltUnusedDeclaration" displayName="Unused Variable/Parameter" groupName="XSLT" enabledByDefault="true"
+    <localInspection language="XML" shortName="XsltUnusedDeclaration" displayName="Unused variable/parameter" groupName="XSLT" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection"/>
-    <localInspection shortName="XsltTemplateInvocation" displayName="Template Invocation Problems" groupName="XSLT" enabledByDefault="true"
+    <localInspection language="XML" shortName="XsltTemplateInvocation" displayName="Template invocation problems" groupName="XSLT" enabledByDefault="true"
                      level="ERROR" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection"/>
-    <localInspection shortName="XsltDeclarations" displayName="Declaration Problems" groupName="XSLT" enabledByDefault="true" level="ERROR"
+    <localInspection language="XML" shortName="XsltDeclarations" displayName="Declaration problems" groupName="XSLT" enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection"/>
-    <localInspection shortName="XsltVariableShadowing" displayName="Variable Shadowing" groupName="XSLT" enabledByDefault="true"
+    <localInspection language="XML" shortName="XsltVariableShadowing" displayName="Variable shadowing" groupName="XSLT" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection"/>
 
     <intentionAction>
@@ -130,9 +133,12 @@
       <category>XSLT</category>
     </intentionAction>
 
-    <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings" displayName="XPath Viewer" />
+    <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings"
+                             bundle="messages.XPathBundle"
+                             key="configurable.XPathConfigurable.display.name"/>
     <applicationConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" id="settings.xslt"
-                             displayName="XSLT"/>
+                             bundle="messages.XPathBundle"
+                             key="configurable.UIImpl.display.name"/>
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
     <gotoSymbolContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltChooseByNameContributor"/>
@@ -155,13 +161,16 @@
     <psi.referenceContributor language="XML" implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor$XML"/>
     <psi.referenceContributor language="XPath" implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor$XPath"/>
     <standardResourceProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltResourceProvider"/>
-    <defaultLiveTemplatesProvider implementation="org.intellij.plugins.xpathView.XPathAppComponent" />
+    <defaultLiveTemplates file="liveTemplates/xsl.xml"/>
 
     <implicitUsageProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider" />
 
     <renameInputValidator implementation="org.intellij.lang.xpath.xslt.impl.XsltRenameInputValidator"/>
     <lang.findUsagesProvider language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltFindUsagesProvider"/>
     <lang.refactoringSupport language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltRefactoringSupportProvider"/>
+
+    <projectService serviceInterface="org.intellij.lang.xpath.xslt.associations.FileAssociationsManager"
+                    serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
@@ -171,15 +180,6 @@
     <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.Xslt2ContextProviderExtension" />
 
   </extensions>
-
-  <!-- Plugin's project components -->
-  <project-components>
-    <!-- XSLT integration -->
-    <component>
-      <interface-class>org.intellij.lang.xpath.xslt.associations.FileAssociationsManager</interface-class>
-      <implementation-class>org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl</implementation-class>
-    </component>
-  </project-components>
 
   <!-- Component's actions -->
   <actions>

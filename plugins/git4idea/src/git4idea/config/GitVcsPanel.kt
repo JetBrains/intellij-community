@@ -1,10 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
+import com.intellij.application.options.editor.CheckboxDescriptor
+import com.intellij.application.options.editor.checkBox
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.ui.DvcsBundle.message
+import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
@@ -13,10 +18,10 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBLabel
@@ -35,53 +40,112 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
+import git4idea.update.getUpdateMethods
+import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
+import java.util.function.Consumer
 import javax.swing.JLabel
 
+private fun projectSettings(project: Project) = GitVcsSettings.getInstance(project)
+private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
+private val gitOptionGroupName get() = message("settings.git.option.group")
 
-internal class GitVcsPanel(private val project: Project,
-                           private val applicationSettings: GitVcsApplicationSettings,
-                           private val projectSettings: GitVcsSettings,
-                           private val sharedSettings: GitSharedSettings,
-                           private val executableManager: GitExecutableManager) :
+// @formatter:off
+private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(message("sync.setting"), PropertyBinding({ projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }), groupName = gitOptionGroupName)
+private val cdCommitOnCherryPick                                        get() = CheckboxDescriptor(message("settings.commit.automatically.on.cherry.pick"), PropertyBinding(applicationSettings::isAutoCommitOnCherryPick, applicationSettings::setAutoCommitOnCherryPick), groupName = gitOptionGroupName)
+private fun cdAddCherryPickSuffix(project: Project)                           = CheckboxDescriptor(message("settings.add.suffix"), PropertyBinding({ projectSettings(project).shouldAddSuffixToCherryPicksOfPublishedCommits() }, { projectSettings(project).setAddSuffixToCherryPicks(it) }), groupName = gitOptionGroupName)
+private fun cdWarnAboutCrlf(project: Project)                                 = CheckboxDescriptor(message("settings.crlf"), PropertyBinding({ projectSettings(project).warnAboutCrlf() }, { projectSettings(project).setWarnAboutCrlf(it) }), groupName = gitOptionGroupName)
+private fun cdWarnAboutDetachedHead(project: Project)                         = CheckboxDescriptor(message("settings.detached.head"), PropertyBinding({ projectSettings(project).warnAboutDetachedHead() }, { projectSettings(project).setWarnAboutDetachedHead(it) }), groupName = gitOptionGroupName)
+private fun cdAutoUpdateOnPush(project: Project)                              = CheckboxDescriptor(message("settings.auto.update.on.push.rejected"), PropertyBinding({ projectSettings(project).autoUpdateIfPushRejected() }, { projectSettings(project).setAutoUpdateIfPushRejected(it) }), groupName = gitOptionGroupName)
+private fun cdShowCommitAndPushDialog(project: Project)                       = CheckboxDescriptor(message("settings.push.dialog"), PropertyBinding({ projectSettings(project).shouldPreviewPushOnCommitAndPush() }, { projectSettings(project).setPreviewPushOnCommitAndPush(it) }), groupName = gitOptionGroupName)
+private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = CheckboxDescriptor(message("settings.push.dialog.for.protected.branches"), PropertyBinding({ projectSettings(project).isPreviewPushProtectedOnly }, { projectSettings(project).isPreviewPushProtectedOnly = it }), groupName = gitOptionGroupName)
+private val cdOverrideCredentialHelper                                  get() = CheckboxDescriptor(message("settings.credential.helper"), PropertyBinding({ applicationSettings.isUseCredentialHelper }, { applicationSettings.isUseCredentialHelper = it }), groupName = gitOptionGroupName)
+// @formatter:on
+
+internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
+  val list = mutableListOf(
+    cdCommitOnCherryPick,
+    cdAutoUpdateOnPush(project),
+    cdWarnAboutCrlf(project),
+    cdWarnAboutDetachedHead(project)
+  )
+  val manager = GitRepositoryManager.getInstance(project)
+  if (manager.moreThanOneRoot()) {
+    list += cdSyncBranches(project)
+  }
+  return list.map(CheckboxDescriptor::asOptionDescriptor)
+}
+
+internal class GitVcsPanel(private val project: Project) :
   BoundConfigurable(GitVcs.NAME, "project.propVCSSupport.VCSs.Git"),
   SearchableConfigurable {
+
+  private val projectSettings by lazy { GitVcsSettings.getInstance(project) }
 
   @Volatile
   private var versionCheckRequested = false
 
-  private val pathSelector: VcsExecutablePathSelector = createPathSelector()
   private val currentUpdateInfoFilterProperties = MyLogProperties(project.service<GitUpdateProjectInfoLogProperties>())
 
   private lateinit var branchUpdateInfoRow: Row
   private lateinit var branchUpdateInfoCommentRow: Row
   private lateinit var supportedBranchUpLabel: JLabel
 
-  private fun createPathSelector() = VcsExecutablePathSelector("Git") { path ->
-    val pathToGit = path ?: executableManager.detectedExecutable
-    object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
-      private lateinit var gitVersion: GitVersion
+  private val pathSelector: VcsExecutablePathSelector by lazy {
+    VcsExecutablePathSelector("Git", disposable!!, Consumer { path ->
+      val pathToGit = path ?: GitExecutableManager.getInstance().detectedExecutable
+      object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
+        private val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
+        val errorNotifier = InlineErrorNotifierFromSettings(
+          GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
+          modalityState, disposable!!
+        )
 
-      override fun run(indicator: ProgressIndicator) {
-        executableManager.dropVersionCache(pathToGit)
-        gitVersion = executableManager.identifyVersion(pathToGit)
-      }
+        private lateinit var gitVersion: GitVersion
 
-      override fun onThrowable(error: Throwable) {
-        GitExecutableProblemsNotifier.showExecutionErrorDialog(error, project)
-      }
-
-      override fun onSuccess() {
-        if (gitVersion.isSupported) {
-          Messages.showInfoMessage(pathSelector.mainPanel,
-                                   GitBundle.message("git.executable.version.is", gitVersion.presentation),
-                                   GitBundle.getString("git.executable.version.success.title"))
+        override fun run(indicator: ProgressIndicator) {
+          val executableManager = GitExecutableManager.getInstance()
+          executableManager.dropVersionCache(pathToGit)
+          gitVersion = executableManager.identifyVersion(pathToGit)
         }
-        else {
-          GitExecutableProblemsNotifier.showUnsupportedVersionDialog(gitVersion, project)
+
+        override fun onThrowable(error: Throwable) {
+          val problemHandler = findGitExecutableProblemHandler(project)
+          problemHandler.showError(error, errorNotifier)
         }
+
+        override fun onSuccess() {
+          if (gitVersion.isSupported) {
+            errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
+          }
+          else {
+            showUnsupportedVersionError(project, gitVersion, errorNotifier)
+          }
+        }
+      }.queue()
+    })
+  }
+
+  private inner class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
+                                                      private val modalityState: ModalityState,
+                                                      disposable: Disposable) :
+    InlineErrorNotifier(inlineComponent, modalityState, disposable) {
+    @CalledInAny
+    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
+      if (fixOption is ErrorNotifier.FixOption.Configure) {
+        showError(text)
       }
-    }.queue()
+      else {
+        super.showError(text, description, fixOption)
+      }
+    }
+
+    override fun resetGitExecutable() {
+      invokeAndWaitIfNeeded(modalityState) {
+        super.resetGitExecutable()
+        resetPathSelector()
+      }
+    }
   }
 
   private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
@@ -89,12 +153,7 @@ internal class GitVcsPanel(private val project: Project,
   private fun LayoutBuilder.gitExecutableRow() = row {
     pathSelector.mainPanel(growX)
       .onReset {
-        val projectSettingsPathToGit = projectSettings.pathToGit
-        pathSelector.reset(applicationSettings.savedPathToGit,
-                           projectSettingsPathToGit != null,
-                           projectSettingsPathToGit,
-                           executableManager.detectedExecutable)
-        updateBranchUpdateInfoRow()
+        resetPathSelector()
       }
       .onIsModified {
         val projectSettingsPathToGit = projectSettings.pathToGit
@@ -121,6 +180,15 @@ internal class GitVcsPanel(private val project: Project,
       }
   }
 
+  private fun resetPathSelector() {
+    val projectSettingsPathToGit = projectSettings.pathToGit
+    pathSelector.reset(applicationSettings.savedPathToGit,
+                       projectSettingsPathToGit != null,
+                       projectSettingsPathToGit,
+      GitExecutableManager.getInstance().detectedExecutable)
+    updateBranchUpdateInfoRow()
+  }
+
   /**
    * Special method to check executable after it has been changed through settings
    */
@@ -130,7 +198,7 @@ internal class GitVcsPanel(private val project: Project,
         {
           object : Task.Backgroundable(project, GitBundle.getString("git.executable.version.progress.title"), true) {
             override fun run(indicator: ProgressIndicator) {
-              executableManager.testGitExecutableVersionValid(project)
+              GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
             }
           }.queue()
           versionCheckRequested = false
@@ -154,9 +222,9 @@ internal class GitVcsPanel(private val project: Project,
 
   private fun LayoutBuilder.branchUpdateInfoRow() {
     branchUpdateInfoRow = row {
-      supportedBranchUpLabel = JBLabel("Supported for Git 2.9+")
+      supportedBranchUpLabel = JBLabel(message("settings.supported.for.2.9"))
       cell {
-        label("Explicitly check for incoming commits on remotes: ")
+        label(message("settings.explicitly.check"))
         comboBox(
           EnumComboBoxModel(GitIncomingCheckStrategy::class.java),
           {
@@ -182,38 +250,29 @@ internal class GitVcsPanel(private val project: Project,
     gitExecutableRow()
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
-        checkBox(message("sync.setting"),
-                 { projectSettings.syncSetting == DvcsSyncSettings.Value.SYNC },
-                 { projectSettings.syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC })
-          .component.toolTipText = message("sync.setting.description", "Git")
+        checkBox(cdSyncBranches(project)).applyToComponent {
+          toolTipText = message("sync.setting.description", "Git")
+        }
       }
     }
     row {
-      checkBox("Commit automatically on cherry-pick",
-               { applicationSettings.isAutoCommitOnCherryPick },
-               { applicationSettings.isAutoCommitOnCherryPick = it })
+      checkBox(cdCommitOnCherryPick)
     }
     row {
-      checkBox("Add the 'cherry-picked from <hash>' suffix when picking commits pushed to protected branches",
-               { projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits() },
-               { projectSettings.setAddSuffixToCherryPicks(it) })
+      checkBox(cdAddCherryPickSuffix(project))
     }
     row {
-      checkBox("Warn if CRLF line separators are about to be committed",
-               { projectSettings.warnAboutCrlf() },
-               { projectSettings.setWarnAboutCrlf(it) })
+      checkBox(cdWarnAboutCrlf(project))
     }
     row {
-      checkBox("Warn when committing in detached HEAD or during rebase",
-               { projectSettings.warnAboutDetachedHead() },
-               { projectSettings.setWarnAboutDetachedHead(it) })
+      checkBox(cdWarnAboutDetachedHead(project))
     }
     branchUpdateInfoRow()
     row {
       cell {
-        label("Update method:")
+        label(message("settings.update.method"))
         comboBox(
-          EnumComboBoxModel(UpdateMethod::class.java),
+          CollectionComboBoxModel(getUpdateMethods()),
           { projectSettings.updateMethod },
           { projectSettings.updateMethod = it!! },
           renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
@@ -222,34 +281,29 @@ internal class GitVcsPanel(private val project: Project,
     }
     row {
       cell {
-        label("Clean working tree using:")
-        buttonGroup({ projectSettings.updateChangesPolicy() }, { projectSettings.setUpdateChangesPolicy(it) }) {
-          GitVcsSettings.UpdateChangesPolicy.values().forEach { saveSetting ->
+        label(message("settings.clean.working.tree"))
+        buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
+          GitSaveChangesPolicy.values().forEach { saveSetting ->
             radioButton(saveSetting.name.toLowerCase().capitalize(), saveSetting)
           }
         }
       }
     }
     row {
-      checkBox("Auto-update if push of the current branch was rejected",
-               { projectSettings.autoUpdateIfPushRejected() },
-               { projectSettings.setAutoUpdateIfPushRejected(it) })
+      checkBox(cdAutoUpdateOnPush(project))
     }
     row {
-      val previewPushOnCommitAndPush = checkBox("Show Push dialog for Commit and Push",
-                                                { projectSettings.shouldPreviewPushOnCommitAndPush() },
-                                                { projectSettings.setPreviewPushOnCommitAndPush(it) })
+      val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
       row {
-        checkBox("Show Push dialog only when committing to protected branches",
-                 { projectSettings.isPreviewPushProtectedOnly },
-                 { projectSettings.isPreviewPushProtectedOnly = it })
+        checkBox(cdHidePushDialogForNonProtectedBranches(project))
           .enableIf(previewPushOnCommitAndPush.selected)
       }
     }
     row {
       cell {
-        label("Protected branches:")
+        label(message("settings.protected.branched"))
         val protectedBranchesField = ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
+        val sharedSettings = GitSharedSettings.getInstance(project)
         protectedBranchesField(growX)
           .withBinding<List<String>>(
             { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
@@ -261,9 +315,7 @@ internal class GitVcsPanel(private val project: Project,
       }
     }
     row {
-      checkBox("Use credential helper",
-               { applicationSettings.isUseCredentialHelper },
-               { applicationSettings.isUseCredentialHelper = it })
+      checkBox(cdOverrideCredentialHelper)
     }
 
     if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
@@ -283,7 +335,7 @@ internal class GitVcsPanel(private val project: Project,
           override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
         }.initUi()
 
-        label("Filter Update Project information by paths: ")
+        label(message("settings.filter.update.info"))
 
         component()
           .onIsModified {

@@ -4,6 +4,7 @@ package com.intellij.codeInspection.reflectiveAccess;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -55,9 +56,9 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     final JComponent panel = new JPanel(new GridBagLayout());
 
     final ListTable table = new ListTable(
-      new ListWrappingTableModel(ignoredClassNames, InspectionsBundle.message(
+      new ListWrappingTableModel(ignoredClassNames, JavaBundle.message(
         "inspection.reflection.member.access.check.exists.exclude")));
-    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionsBundle.message(
+    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, JavaBundle.message(
       "inspection.reflection.member.access.check.exists.exclude.chooser"));
 
     final GridBagConstraints constraints = new GridBagConstraints();
@@ -65,7 +66,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     constraints.gridy = 0;
     constraints.weightx = 1.0;
     constraints.fill = GridBagConstraints.HORIZONTAL;
-    final CheckBox checkBox = new CheckBox(InspectionsBundle.message("inspection.reflection.member.access.check.exists"),
+    final CheckBox checkBox = new CheckBox(JavaBundle.message("inspection.reflection.member.access.check.exists"),
                                            this, "checkMemberExistsInNonFinalClasses");
     panel.add(checkBox, constraints);
 
@@ -154,19 +155,19 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
           final PsiField field = ownerClass.getPsiClass().findFieldByName(fieldName, true);
           if (field == null) {
             if (reportUnresolvedMembersOf(ownerClass)) {
-              holder.registerProblem(nameExpression, InspectionsBundle.message(
+              holder.registerProblem(nameExpression, JavaBundle.message(
                 "inspection.reflection.member.access.cannot.resolve.field", fieldName));
             }
             return;
           }
           if (isDeclared && field.getContainingClass() != ownerClass.getPsiClass()) {
             LocalQuickFix fix = field.hasModifierProperty(PsiModifier.PUBLIC) ? new UseAppropriateMethodFix("getField") : null;
-            holder.registerProblem(nameExpression, InspectionsBundle.message(
+            holder.registerProblem(nameExpression, JavaBundle.message(
               "inspection.reflection.member.access.field.not.in.class", fieldName, ownerClass.getPsiClass().getQualifiedName()), fix);
             return;
           }
           if (!isDeclared && !field.hasModifierProperty(PsiModifier.PUBLIC)) {
-            holder.registerProblem(nameExpression, InspectionsBundle.message(
+            holder.registerProblem(nameExpression, JavaBundle.message(
               "inspection.reflection.member.access.field.not.public", fieldName), new UseAppropriateMethodFix("getDeclaredField"));
           }
         }
@@ -185,7 +186,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
           final PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(methodName, true);
           if (methods.length == 0) {
             if (reportUnresolvedMembersOf(ownerClass)) {
-              holder.registerProblem(nameExpression, InspectionsBundle.message(
+              holder.registerProblem(nameExpression, JavaBundle.message(
                 "inspection.reflection.member.access.cannot.resolve.method", methodName));
             }
             return;
@@ -193,19 +194,19 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
           final PsiMethod matchingMethod = matchMethod(methods, arguments, 1);
           if (matchingMethod == null) {
             if (reportUnresolvedMembersOf(ownerClass)) {
-              holder.registerProblem(nameExpression, InspectionsBundle.message(
+              holder.registerProblem(nameExpression, JavaBundle.message(
                 "inspection.reflection.member.access.cannot.resolve.method.arguments", methodName));
             }
             return;
           }
           if (isDeclared && matchingMethod.getContainingClass() != ownerClass.getPsiClass()) {
             LocalQuickFix fix = matchingMethod.hasModifierProperty(PsiModifier.PUBLIC) ? new UseAppropriateMethodFix("getMethod") : null;
-            holder.registerProblem(nameExpression, InspectionsBundle.message(
+            holder.registerProblem(nameExpression, JavaBundle.message(
               "inspection.reflection.member.access.method.not.in.class", methodName, ownerClass.getPsiClass().getQualifiedName()), fix);
             return;
           }
           if (!isDeclared && !matchingMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
-            holder.registerProblem(nameExpression, InspectionsBundle.message(
+            holder.registerProblem(nameExpression, JavaBundle.message(
               "inspection.reflection.member.access.method.not.public", methodName), new UseAppropriateMethodFix("getDeclaredMethod"));
           }
         }
@@ -230,13 +231,13 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
       }
       if (constructorOrClass == null) {
         if (reportUnresolvedMembersOf(ownerClass)) {
-          holder.registerProblem(callExpression.getArgumentList(), InspectionsBundle.message(
+          holder.registerProblem(callExpression.getArgumentList(), JavaBundle.message(
             "inspection.reflection.member.access.cannot.resolve.constructor.arguments"));
         }
         return;
       }
       if (!isDeclared && !constructorOrClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-        holder.registerProblem(callExpression.getArgumentList(), InspectionsBundle.message(
+        holder.registerProblem(callExpression.getArgumentList(), JavaBundle.message(
           "inspection.reflection.member.access.constructor.not.public"), new UseAppropriateMethodFix("getDeclaredConstructor"));
       }
     }
@@ -289,7 +290,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.reflection.member.access.fix.family.name");
+      return JavaBundle.message("inspection.reflection.member.access.fix.family.name");
     }
 
     @Override

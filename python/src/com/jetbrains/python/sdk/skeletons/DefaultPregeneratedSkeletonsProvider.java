@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
@@ -192,7 +193,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
 
     @Override
     public void unpackPreGeneratedSkeletons(String skeletonDir) {
-      ProgressManager.progress("Unpacking pre-generated skeletons...");
+      ProgressManager.progress(PyBundle.message("python.sdk.unpacking.pre.generated.skeletons"));
       try {
         final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(myArchiveRoot);
         if (jar != null) {

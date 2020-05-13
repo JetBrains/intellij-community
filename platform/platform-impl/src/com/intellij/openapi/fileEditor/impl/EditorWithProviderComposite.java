@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class EditorWithProviderComposite extends EditorComposite {
   EditorWithProviderComposite(@NotNull VirtualFile file,
-                              @NotNull FileEditor[] editors,
-                              @NotNull FileEditorProvider[] providers,
+                              @NotNull FileEditor @NotNull [] editors,
+                              @NotNull FileEditorProvider @NotNull [] providers,
                               @NotNull FileEditorManagerEx fileEditorManager) {
     super(file, editors, providers, fileEditorManager);
   }

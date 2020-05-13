@@ -71,6 +71,6 @@ public class PyCallHierarchyProvider implements HierarchyProvider {
 
   @Override
   public void browserActivated(@NotNull HierarchyBrowser hierarchyBrowser) {
-    ((PyCallHierarchyBrowser)hierarchyBrowser).changeView(CallHierarchyBrowserBase.CALLER_TYPE);
+    ((PyCallHierarchyBrowser)hierarchyBrowser).changeView(CallHierarchyBrowserBase.getCallerType());
   }
 }

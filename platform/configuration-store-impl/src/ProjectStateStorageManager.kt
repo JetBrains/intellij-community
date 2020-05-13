@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.serviceContainer.isWorkspaceComponent
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -28,10 +28,10 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
     override val isUseVfsForRead: Boolean
       get() = project is VirtualFileResolver
 
-    override fun resolveVirtualFile(path: String): VirtualFile? {
+    override fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation): VirtualFile? {
       return when (project) {
-        is VirtualFileResolver -> project.resolveVirtualFile(path)
-        else -> super.resolveVirtualFile(path)
+        is VirtualFileResolver -> project.resolveVirtualFile(path, reasonOperation)
+        else -> super.resolveVirtualFile(path, reasonOperation)
       }
     }
   }
@@ -59,7 +59,7 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
   }
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-    val workspace = (project as? ComponentManagerImpl)?.isWorkspaceComponent(component.javaClass) ?: false
+    val workspace = isWorkspaceComponent(project.picoContainer, component.javaClass)
     if (workspace && (operation != StateStorageOperation.READ || getOrCreateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).hasState(componentName, false))) {
       return StoragePathMacros.WORKSPACE_FILE
     }
@@ -74,7 +74,5 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
 @ApiStatus.Experimental
 interface VirtualFileResolver {
   @JvmDefault
-  fun resolveVirtualFile(path: String): VirtualFile? {
-    return defaultFileBasedStorageConfiguration.resolveVirtualFile(path)
-  }
+  fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation) = doResolveVirtualFile(path, reasonOperation)
 }

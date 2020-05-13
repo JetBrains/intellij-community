@@ -1,0 +1,27 @@
+{
+  "menu": {
+    "id": "file",
+    "value": "File",
+    "popup": {
+      "menu_item": [
+        {
+          "<TYPO descr="Typo: In word 'valuue'">valuue</TYPO>": "New",
+          "onclick": "CreateNewDoc()"
+        },
+        {
+          "value": "There is <warning descr="ARTICLE_MISSING">document</warning>.",
+          "onclick": "OpenDoc()"
+        },
+        {
+          "value": "Close",
+          "onclick": "CloseDoc()"
+        },
+        {
+          "value": "В моей коробке лежало <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.",
+          "onclick": "А <warning descr="grammar_vse_li_noun">все ли ошибка</warning> найдены?",
+          "de": "er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>"
+        }
+      ]
+    }
+  }
+}

@@ -31,11 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class EmptyFinallyBlockInspection extends BaseInspection {
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("empty.finally.block.display.name");
-  }
 
   @Override
   public boolean isEnabledByDefault() {

@@ -1,0 +1,29 @@
+<html>
+<body>
+Reports redundant constructors declared inside Java records. Examples:
+<pre><code>
+  record Point(int x, int y) {
+    public Point {} // could be removed
+  }
+  
+  record Point(int x, int y) {
+    public Point(int x, int y) { // could be removed
+      this.x = x;
+      this.y = y;
+    }
+  }
+  
+  // could be converted to compact constructor
+  record Range(int from, int to) {
+    public Range(int from, int to) {
+      if (from > to) throw new IllegalArgumentException();
+      this.from = from;
+      this.to = to;
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>This inspection only reports if the configured language level is 14 Preview.</p>
+<p><small>New in 2020.1</small></p>
+</body>
+</html>

@@ -14,20 +14,20 @@ import java.util.Collection;
 public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProjectsProcessorTask {
   private final Collection<MavenProject> myProjects;
   private final Collection<MavenArtifact> myArtifacts;
-  private final MavenProjectsTree myTree;
   private final boolean myDownloadSources;
   private final boolean myDownloadDocs;
   private final AsyncPromise<? super MavenArtifactDownloader.DownloadResult> myCallbackResult;
+  private final MavenProjectResolver myResolver;
 
   public MavenProjectsProcessorArtifactsDownloadingTask(Collection<MavenProject> projects,
                                                         Collection<MavenArtifact> artifacts,
-                                                        MavenProjectsTree tree,
+                                                        MavenProjectResolver resolver,
                                                         boolean downloadSources,
                                                         boolean downloadDocs,
                                                         AsyncPromise<? super MavenArtifactDownloader.DownloadResult> callbackResult) {
     myProjects = projects;
     myArtifacts = artifacts;
-    myTree = tree;
+    myResolver = resolver;
     myDownloadSources = downloadSources;
     myDownloadDocs = downloadDocs;
     myCallbackResult = callbackResult;
@@ -37,7 +37,7 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
   public void perform(final Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     MavenArtifactDownloader.DownloadResult result =
-      myTree.downloadSourcesAndJavadocs(project, myProjects, myArtifacts, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
+      myResolver.downloadSourcesAndJavadocs(project, myProjects, myArtifacts, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
     if (myCallbackResult != null) {
       myCallbackResult.setResult(result);
     }

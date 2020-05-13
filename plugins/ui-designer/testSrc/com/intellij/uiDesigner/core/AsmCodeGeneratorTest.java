@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
+import com.intellij.DynamicBundle;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,6 +11,7 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -33,13 +35,15 @@ import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 
@@ -69,13 +73,16 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
 
     List<URL> cp = new ArrayList<>();
     appendPath(cp, JBTabbedPane.class);
+    appendPath(cp, TitledSeparator.class);
     appendPath(cp, TIntObjectHashMap.class);
     appendPath(cp, UIUtil.class);
     appendPath(cp, UIUtilities.class);
     appendPath(cp, SystemInfo.class);
     appendPath(cp, ApplicationManager.class);
+    appendPath(cp, DynamicBundle.class);
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));
+    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/com/intellij/uiDesigner/core/TestProperties.properties"));
     appendPath(cp, GridLayoutManager.class); // intellij.java.guiForms.rt
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
@@ -129,7 +136,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertTrue(classFile.exists());
 
     final LwRootContainer rootContainer = loadFormData(formPath);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, true, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
     final FileInputStream classStream = new FileInputStream(classFile);
     try {
       codeGenerator.patchClass(classStream);
@@ -260,6 +267,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     return findMethod(parent, methodName, params);
   }
 
+  private static void setInternal(boolean value) {
+    System.getProperties().setProperty("idea.is.internal", Boolean.toString(value));
+  }
+
   public void testCardLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestCardLayout.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof CardLayout);
@@ -334,6 +345,38 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     TitledBorder border = (TitledBorder) panel.getBorder();
     assertEquals("BorderTitle", border.getTitle());
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
+  }
+
+  public void testTitledBorder() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
+    assertTrue(panel.getBorder() instanceof TitledBorder);
+    TitledBorder border = (TitledBorder) panel.getBorder();
+    assertEquals("Test Value", border.getTitle());
+    assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
+    assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
+    assertEquals(border.getClass().getName(), "javax.swing.border.TitledBorder");
+  }
+
+  public void testTitledBorderInternal() throws Exception {
+    setInternal(true);
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
+    setInternal(false);
+
+    assertTrue(panel.getBorder() instanceof TitledBorder);
+    TitledBorder border = (TitledBorder) panel.getBorder();
+    assertEquals("Test Value", border.getTitle());
+    assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
+    assertEquals(border.getClass().getName(), "com.intellij.ui.border.IdeaTitledBorder");
+  }
+  
+  public void testTitledSeparator() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledSeparator.form", "BindingTest");
+    assertEquals("Test Value", ((JLabel)((JPanel)panel.getComponent(2)).getComponent(0)).getText());
+  }  
+  
+  public void testGotItPanel() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("GotItPanel.form", "GotItPanel");
+    assertInstanceOf(panel.getComponent(2), JEditorPane.class);
   }
 
   public void testMnemonic() throws Exception {
@@ -449,9 +492,6 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   private static class MyClassFinder extends InstrumentationClassFinder {
-    private final byte[] myTestPropertiesBytes = Charset.defaultCharset().encode(TestProperties.TEST_PROPERTY_CONTENT).array();
-    private final String myTestPropertiesClassInternalName = TestProperties.class.getName().replace('.', '/');
-    private final String myTestPropertiesFileInternalName = myTestPropertiesClassInternalName + ".properties";
     private final Map<String, byte[]> myClassData = new HashMap<>();
 
     private MyClassFinder(URL[] platformUrls, URL[] classpathUrls) {
@@ -468,18 +508,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       if (bytes != null) {
         return new ByteArrayInputStream(bytes);
       }
-      if (myTestPropertiesClassInternalName.equals(internalClassName)) {
-        return TestProperties.class.getClassLoader().getResourceAsStream(myTestPropertiesClassInternalName + ".class");
-      }
       return null;
-    }
-
-    @Override
-    public InputStream getResourceAsStream(String name) throws IOException {
-      if (myTestPropertiesFileInternalName.equals(name)) {
-        return new ByteArrayInputStream(myTestPropertiesBytes, 0, TestProperties.TEST_PROPERTY_CONTENT.length());
-      }
-      return super.getResourceAsStream(name);
     }
   }
 

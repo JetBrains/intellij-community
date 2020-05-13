@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.CommonBundle;
@@ -9,7 +8,6 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
@@ -22,7 +20,8 @@ import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -36,7 +35,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
@@ -57,6 +58,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameWrapper {
   private static final int UPDATE_DIFFS = 1;
@@ -77,16 +79,23 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   protected HistoryDialog(@NotNull Project project, IdeaGateway gw, VirtualFile f, boolean doInit) {
     super(project);
+
     myProject = project;
     myGateway = gw;
     myFile = f;
 
-    setProject(project);
-    setDimensionKey(getPropertiesKey());
     setImages(DiffUtil.Lazy.DIFF_FRAME_ICONS);
     closeOnEsc();
 
-    if (doInit) init();
+    if (doInit) {
+      init();
+    }
+  }
+
+  @Nullable
+  @Override
+  protected String getDimensionKey() {
+    return getClass().getName();
   }
 
   protected void init() {
@@ -213,7 +222,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return result;
   }
 
-  private void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
+  private static void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
     comp.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component c, int x, int y) {
@@ -223,7 +232,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     });
   }
 
-  private ActionPopupMenu createPopupMenu(ActionGroup ag) {
+  private static ActionPopupMenu createPopupMenu(ActionGroup ag) {
     ActionManager m = ActionManager.getInstance();
     return m.createActionPopupMenu(ActionPlaces.UNKNOWN, ag);
   }
@@ -243,7 +252,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private void doScheduleUpdate(int id, final Computable<? extends Runnable> update) {
-    myUpdateQueue.queue(new Update(HistoryDialog.this, id) {
+    myUpdateQueue.queue(new Update(this, id) {
       @Override
       public boolean canEat(Update update1) {
         return getPriority() >= update1.getPriority();
@@ -321,23 +330,15 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private void saveSplitterProportion() {
-    SplitterProportionsData d = createSplitterData();
+    SplitterProportionsData d = new SplitterProportionsDataImpl();
     d.saveSplitterProportions(mySplitter);
-    d.externalizeToDimensionService(getPropertiesKey());
+    d.externalizeToDimensionService(getDimensionKey());
   }
 
   private void restoreSplitterProportion() {
-    SplitterProportionsData d = createSplitterData();
-    d.externalizeFromDimensionService(getPropertiesKey());
+    SplitterProportionsData d = new SplitterProportionsDataImpl();
+    d.externalizeFromDimensionService(getDimensionKey());
     d.restoreSplitterProportions(mySplitter);
-  }
-
-  private SplitterProportionsData createSplitterData() {
-    return new SplitterProportionsDataImpl();
-  }
-
-  protected String getPropertiesKey() {
-    return getClass().getName();
   }
 
   //todo
@@ -374,10 +375,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     if (questions.isEmpty()) return true;
 
     return Messages.showYesNoDialog(myProject, message("message.do.you.want.to.proceed", formatQuestions(questions)),
-                                    "Revert", Messages.getWarningIcon()) == Messages.YES;
+                                    message("dialog.title.revert"), Messages.getWarningIcon()) == Messages.YES;
   }
 
-  private String formatQuestions(List<String> questions) {
+  private static String formatQuestions(List<String> questions) {
     // format into something like this:
     // 1) message one
     // message one continued
@@ -387,9 +388,9 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     if (questions.size() == 1) return questions.get(0);
 
-    String result = "";
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < questions.size(); i++) {
-      result += (i + 1) + ") " + questions.get(i) + "\n";
+      result.append(i + 1).append(") ").append(questions.get(i)).append("\n");
     }
     return result.substring(0, result.length() - 1);
   }
@@ -408,14 +409,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     });
   }
 
-  private String formatErrors(List<String> errors) {
+  private static String formatErrors(List<String> errors) {
     if (errors.size() == 1) return errors.get(0);
 
-    String result = "";
+    StringBuilder result = new StringBuilder();
     for (String e : errors) {
-      result += "\n    -" + e;
+      result.append("\n    -").append(e);
     }
-    return result;
+    return result.toString();
   }
 
   private boolean isCreatePatchEnabled() {
@@ -433,10 +434,18 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       p.setFileName(getDefaultPatchFile());
       p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
-      myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch(), p.getEncoding());
 
-      showNotification(LocalHistoryBundle.message("message.patch.created"));
-      RevealFileAction.openFile(new File(p.getFileName()));
+      String base = p.getBaseDirName();
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch());
+      if (p.isToClipboard()) {
+        writeAsPatchToClipboard(myProject, patches, base, new CommitContext());
+        showNotification("Patch copied to clipboard");
+      }
+      else {
+        PatchWriter.writePatches(myProject, p.getFileName(), base, patches, null, p.getEncoding());
+        showNotification(message("message.patch.created"));
+        RevealFileAction.openFile(new File(p.getFileName()));
+      }
     }
     catch (VcsException | IOException e) {
       showError(message("message.error.during.create.patch", e));
@@ -458,10 +467,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   public void showError(String s) {
     Messages.showErrorDialog(myProject, s, CommonBundle.getErrorTitle());
-  }
-
-  protected void showHelp() {
-    HelpManager.getInstance().invokeHelp(getHelpId());
   }
 
   protected abstract class MyAction extends AnAction {

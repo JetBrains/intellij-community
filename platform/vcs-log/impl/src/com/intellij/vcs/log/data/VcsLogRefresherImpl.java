@@ -190,7 +190,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     @NotNull private final LogInfo myLoadedInfo = new LogInfo(myStorage);
 
     MyRefreshTask(@NotNull DataPack currentDataPack) {
-      super(VcsLogRefresherImpl.this.myProject, "Refreshing History...", false);
+      super(VcsLogRefresherImpl.this.myProject, VcsLogBundle.message("vcs.log.refreshing.process"), false);
       myCurrentDataPack = currentDataPack;
     }
 
@@ -236,9 +236,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
             loadLogAndRefs(roots, currentRefs, commitCount);
             List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
             Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
-            List<? extends GraphCommit<Integer>> joinedFullLog =
-              join(compoundLog, new ArrayList<>(permanentGraph.getAllCommits()),
-                   currentRefs, allNewRefs);
+            List<? extends GraphCommit<Integer>> joinedFullLog = join(compoundLog, new ArrayList<>(permanentGraph.getAllCommits()),
+                                                                      currentRefs, allNewRefs);
             if (joinedFullLog == null) {
               commitCount *= 5;
             }
@@ -362,7 +361,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.emptyList()) {
       @Override
       public String toString() {
-        return "RELOAD_ALL";
+        return "RELOAD_ALL"; // NON-NLS
       }
     };
     private final Collection<VirtualFile> rootsToRefresh;
@@ -401,8 +400,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
     @NotNull
     Map<VirtualFile, VcsLogProvider.Requirements> asMap(@NotNull Collection<VirtualFile> roots) {
-      return ContainerUtil
-        .map2Map(roots, root -> Pair.create(root, this));
+      return ContainerUtil.map2Map(roots, root -> Pair.create(root, this));
     }
   }
 

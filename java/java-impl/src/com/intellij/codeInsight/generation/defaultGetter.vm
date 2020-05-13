@@ -2,12 +2,17 @@
 static ##
 #end
 $field.type ##
+#if($field.recordComponent)
+  ${field.name}##
+#else
 #set($name = $StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($helper.getPropertyName($field, $project))))
 #if ($field.boolean && $field.primitive)
   is##
 #else
   get##
 #end
-${name}() {
+${name}##
+#end
+() {
   return $field.name;
 }

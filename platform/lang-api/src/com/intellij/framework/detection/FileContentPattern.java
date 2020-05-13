@@ -27,8 +27,6 @@ import java.io.IOException;
 
 /**
  * Provides filters for file content
- *
- * @author nik
  */
 public class FileContentPattern extends ObjectPattern<FileContent, FileContentPattern> {
   private FileContentPattern() {

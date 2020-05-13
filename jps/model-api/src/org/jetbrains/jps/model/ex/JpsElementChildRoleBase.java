@@ -18,9 +18,6 @@ package org.jetbrains.jps.model.ex;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 
-/**
- * @author nik
- */
 public class JpsElementChildRoleBase<E extends JpsElement> extends JpsElementChildRole<E> {
   private final String myDebugName;
 

@@ -15,8 +15,7 @@ public abstract class YamlReferenceType extends YamlScalarType {
     super(typeName);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesFromValue(@NotNull YAMLScalar valueScalar) {
+  public PsiReference @NotNull [] getReferencesFromValue(@NotNull YAMLScalar valueScalar) {
     return PsiReference.EMPTY_ARRAY;
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -27,9 +27,6 @@ import com.intellij.xml.util.XmlStringUtil;
 
 import java.util.List;
 
-/**
-* @author nik
-*/
 class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
   private final StructureConfigurableContext myContext;
 
@@ -54,7 +51,7 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
     if (name != null) {
       final List<String> invalidUrls = ((LibraryEx)library).getInvalidRootUrls(OrderRootType.CLASSES);
       if (!invalidUrls.isEmpty()) {
-        return ProjectBundle.message("project.roots.tooltip.library.has.broken.paths", name, invalidUrls.size());
+        return JavaUiBundle.message("project.roots.tooltip.library.has.broken.paths", name, invalidUrls.size());
       }
     }
 

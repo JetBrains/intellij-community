@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ReflectionUtil;
@@ -36,9 +37,9 @@ public class ConventionOptionsPanel extends JPanel {
                                 @NonNls final String regexProperty, @NonNls final String regexPatternProperty,
                                 JComponent... extraOptions) {
     super(new GridBagLayout());
-    final JLabel patternLabel = new JLabel("Pattern:");
-    final JLabel minLengthLabel = new JLabel("Min length:");
-    final JLabel maxLengthLabel = new JLabel("Max length:");
+    final JLabel patternLabel = new JLabel(InspectionsBundle.message("label.pattern"));
+    final JLabel minLengthLabel = new JLabel(InspectionsBundle.message("label.min.length"));
+    final JLabel maxLengthLabel = new JLabel(InspectionsBundle.message("label.max.length"));
 
     final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
     numberFormat.setParseIntegerOnly(true);

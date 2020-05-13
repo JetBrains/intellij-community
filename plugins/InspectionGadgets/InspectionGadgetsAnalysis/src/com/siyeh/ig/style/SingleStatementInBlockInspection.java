@@ -22,12 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SingleStatementInBlockInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("single.statement.in.block.name");
-  }
 
   @NotNull
   @Override

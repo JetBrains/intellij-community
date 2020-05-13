@@ -20,9 +20,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class JarApplicationDebuggerRunner extends GenericDebuggerRunner {
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {

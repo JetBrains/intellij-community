@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -25,14 +26,19 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
+  public boolean ignoreAnnotatedObject = true;
+
+  @Nullable
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "type.parameter.extends.object.display.name");
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("type.parameter.extends.object.ignore.annotated"),
+                                          this, "ignoreAnnotatedObject");
   }
 
   @Override
@@ -113,7 +119,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
     return new ExtendsObjectVisitor();
   }
 
-  private static class ExtendsObjectVisitor extends BaseInspectionVisitor {
+  private class ExtendsObjectVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitTypeParameter(PsiTypeParameter parameter) {
@@ -124,6 +130,9 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
       }
       final PsiClassType extendsType = extendsListTypes[0];
       if (!extendsType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        return;
+      }
+      if (ignoreAnnotatedObject && extendsType.getAnnotations().length > 0) {
         return;
       }
       final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
@@ -150,7 +159,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
         return;
       }
       final PsiTypeElement extendsBound = (PsiTypeElement)typeElement.getLastChild();
-      if (extendsBound.getAnnotations().length > 0 || !TypeUtils.isJavaLangObject(extendsBound.getType())) {
+      if ((ignoreAnnotatedObject && extendsBound.getAnnotations().length > 0) || !TypeUtils.isJavaLangObject(extendsBound.getType())) {
         return;
       }
       final PsiElement firstChild = typeElement.getFirstChild();

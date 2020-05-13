@@ -5,9 +5,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 
-/**
- * @author nik
- */
 public abstract class DeploymentConfiguration {
   public abstract PersistentStateComponent<?> getSerializer();
 

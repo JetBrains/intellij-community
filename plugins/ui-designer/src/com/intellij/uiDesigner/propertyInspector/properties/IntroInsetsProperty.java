@@ -42,8 +42,7 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   }
 
   @Override
-  @NotNull
-  public Property[] getChildren(final RadComponent component) {
+  public Property @NotNull [] getChildren(final RadComponent component) {
     return myChildren;
   }
 

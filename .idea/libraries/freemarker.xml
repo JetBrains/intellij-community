@@ -1,9 +1,12 @@
 <component name="libraryTable">
-  <library name="freemarker">
+  <library name="freemarker" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.freemarker:freemarker:2.3.30" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/freemarker-2.3.20.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.30/freemarker-2.3.30.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.30/freemarker-2.3.30-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

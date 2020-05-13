@@ -21,15 +21,17 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowRecentFilesAction extends DumbAwareAction {
+public class ShowRecentFilesAction extends DumbAwareAction implements LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
@@ -38,6 +40,8 @@ public class ShowRecentFilesAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getProject() != null);
+    Project project = e.getProject();
+    boolean enabled = project != null && Switcher.SWITCHER_KEY.get(project) == null;
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 }

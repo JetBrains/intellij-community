@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -85,7 +86,7 @@ public class FormsInstrumenter extends FormsBuilder {
       final InstrumentationClassFinder finder = ClassProcessingBuilder.createInstrumentationClassFinder(sdk, platformCp, classpath, outputConsumer);
 
       try {
-        final Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer);
+        final Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer, config.isUseDynamicBundles());
 
         final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
 
@@ -116,14 +117,20 @@ public class FormsInstrumenter extends FormsBuilder {
     return ExitCode.OK;
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.emptyList();
   }
 
   private Map<File, Collection<File>> instrumentForms(
-    CompileContext context, ModuleChunk chunk, final Map<File, String> chunkSourcePath, final InstrumentationClassFinder finder, Collection<File> forms, OutputConsumer outConsumer
-  ) throws ProjectBuildException {
+    CompileContext context,
+    ModuleChunk chunk,
+    final Map<File, String> chunkSourcePath,
+    final InstrumentationClassFinder finder,
+    Collection<File> forms,
+    OutputConsumer outConsumer,
+    boolean useDynamicBundles) throws ProjectBuildException {
 
     final Map<File, Collection<File>> instrumented = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
     final Map<String, File> class2form = new HashMap<>();
@@ -194,7 +201,7 @@ public class FormsInstrumenter extends FormsBuilder {
 
         final int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(classReader));
         final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(classReader, flags, finder);
-        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, nestedFormsLoader, false, classWriter);
+        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, nestedFormsLoader, false, useDynamicBundles, classWriter);
         final byte[] patchedBytes = codeGenerator.patchClass(classReader);
         if (patchedBytes != null) {
           compiled.setContent(new BinaryContent(patchedBytes));

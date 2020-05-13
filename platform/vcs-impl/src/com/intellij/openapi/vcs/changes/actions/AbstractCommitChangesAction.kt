@@ -18,8 +18,8 @@ abstract class AbstractCommitChangesAction : AbstractCommonCheckinAction() {
   override fun getRoots(dataContext: VcsContext): Array<FilePath> =
     ProjectLevelVcsManager.getInstance(dataContext.project!!).allVersionedRoots.map { getFilePath(it) }.toTypedArray()
 
-  override fun approximatelyHasRoots(dataContext: VcsContext): Boolean = ProjectLevelVcsManager.getInstance(
-    dataContext.project!!).hasAnyMappings()
+  override fun approximatelyHasRoots(dataContext: VcsContext): Boolean =
+    ProjectLevelVcsManager.getInstance(dataContext.project!!).hasActiveVcss()
 
   override fun update(vcsContext: VcsContext, presentation: Presentation) {
     super.update(vcsContext, presentation)

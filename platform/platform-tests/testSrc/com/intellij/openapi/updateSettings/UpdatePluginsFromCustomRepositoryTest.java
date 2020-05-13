@@ -1,22 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.InstalledPluginsState;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -32,7 +35,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     BuildNumber currentBuildNumber = BuildNumber.fromString("IU-142.100");
     for (IdeaPluginDescriptor descriptor : descriptors) {
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, currentBuildNumber);
-      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, new ArrayList<>(), null);
+      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, null);
     }
     assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());
 
@@ -41,11 +44,12 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     assertEquals("0.1", downloader.getPluginVersion());
   }
 
-  private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, IOException, JDOMException {
+  @NotNull
+  private IdeaPluginDescriptor loadDescriptor(String filePath) throws IOException, JDOMException {
     String path = PlatformTestUtil.getPlatformTestDataPath() + "updates/customRepositories/" + getTestName(true);
-    File descriptorFile = new File(path, filePath);
-    IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParentFile(), false);
-    descriptor.loadFromFile(descriptorFile, null, true, true);
+    Path descriptorFile = Paths.get(path, filePath);
+    IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParent(), descriptorFile.getParent(), false);
+    PluginManager.loadDescriptorFromFile(descriptor, descriptorFile, null, Collections.emptySet());
     return descriptor;
   }
 }

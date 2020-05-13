@@ -738,6 +738,9 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option name="JavaScript:INJECTED_LANGUAGE_FRAGMENT">
+      <value/>
+    </option>
     <option name="JSP_ATTRIBUTE_NAME">
       <value>
         <option name="FOREGROUND" value="DED772" />

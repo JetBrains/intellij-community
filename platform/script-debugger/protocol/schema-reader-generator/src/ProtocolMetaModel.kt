@@ -4,6 +4,7 @@ package org.jetbrains.jsonProtocol
 import org.jetbrains.io.JsonReaderEx
 
 const val STRING_TYPE: String = "string"
+const val BINARY_TYPE: String = "binary"
 const val INTEGER_TYPE: String = "integer"
 const val NUMBER_TYPE: String = "number"
 const val BOOLEAN_TYPE: String = "boolean"

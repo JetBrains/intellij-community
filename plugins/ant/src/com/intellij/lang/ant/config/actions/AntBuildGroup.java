@@ -20,8 +20,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
     Project project = e.getProject();
     if (project == null) return AnAction.EMPTY_ARRAY;
@@ -47,7 +46,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     if (model.getDefaultTargetName() != null) {
       DefaultActionGroup subgroup = new DefaultActionGroup();
       subgroup.add(getOrCreateAction(
-        buildFile, TargetAction.DEFAULT_TARGET_NAME, Collections.singletonList(TargetAction.DEFAULT_TARGET_NAME), null, model.getDefaultTargetActionId())
+        buildFile, TargetAction.getDefaultTargetName(), Collections.singletonList(TargetAction.getDefaultTargetName()), null, model.getDefaultTargetActionId())
       );
       group.add(subgroup);
     }

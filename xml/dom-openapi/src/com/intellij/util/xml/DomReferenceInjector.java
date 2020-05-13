@@ -23,5 +23,5 @@ import org.jetbrains.annotations.Nullable;
 public interface DomReferenceInjector {
   @Nullable String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context);
 
-  @NotNull PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context);
+  PsiReference @NotNull [] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context);
 }

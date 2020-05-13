@@ -1,11 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Document;
@@ -53,19 +57,17 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     return null;
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     Document document = getDocument(file);
 
     return document != null ? checkFile(file, document, manager, isOnTheFly) : null;
   }
 
-  @Nullable
-  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
-                                          @NotNull Document document,
-                                          @NotNull InspectionManager manager,
-                                          boolean isOnTheFly) {
+  protected ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file,
+                                                     @NotNull Document document,
+                                                     @NotNull InspectionManager manager,
+                                                     boolean isOnTheFly) {
     return null;
   }
 
@@ -77,7 +79,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
                                                int line,
                                                int rightMargin,
                                                @NotNull String problemText,
-                                               @NotNull LocalQuickFix... fixes) {
+                                               LocalQuickFix @NotNull ... fixes) {
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
 
@@ -113,11 +115,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     }
   }
 
-  protected static abstract class BaseCommitMessageQuickFix extends LocalQuickFixBase {
-    protected BaseCommitMessageQuickFix(@NotNull String name) {
-      super(name);
-    }
-
+  protected static abstract class BaseCommitMessageQuickFix implements LocalQuickFix {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       Document document = getDocument(descriptor.getPsiElement());
@@ -132,8 +130,10 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
 
   protected static class ReformatCommitMessageQuickFix extends BaseCommitMessageQuickFix
     implements LowPriorityAction, IntentionAction, ShortcutProvider {
-    protected ReformatCommitMessageQuickFix() {
-      super(ReformatCommitMessageAction.NAME);
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return ReformatCommitMessageAction.NAME;
     }
 
     @Override

@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.tree.TreeModel;
 
 public enum LeafState {
   /**
@@ -21,7 +24,7 @@ public enum LeafState {
    * Specifies that a tree should show the collapse/expand icon for the node, only if this node have some children.
    * By default, children are counted immediately that may cause performance problems.
    *
-   * @see javax.swing.tree.TreeModel#getChildCount(Object)
+   * @see TreeModel#getChildCount(Object)
    */
   DEFAULT,
   /**
@@ -33,9 +36,31 @@ public enum LeafState {
   public interface Supplier {
     /**
      * @return a leaf state for the tree node, that implements this interface
-     * @see javax.swing.tree.TreeModel#isLeaf(Object)
+     * @see TreeModel#isLeaf(Object)
      */
     @NotNull
     LeafState getLeafState();
+  }
+
+  /**
+   * @param node a tree node, which leaf state interested in
+   * @return a leaf state of the specified tree node, or {@link #DEFAULT} value
+   */
+  @ApiStatus.Internal
+  @NotNull
+  public static LeafState get(@NotNull Object node) {
+    return node instanceof Supplier ? ((Supplier)node).getLeafState() : DEFAULT;
+  }
+
+  /**
+   * @param node  a tree node, which leaf state interested in
+   * @param model a tree model used to resolve a leaf state of the specified tree node
+   * @return a resolved leaf state of the specified tree node according to the given model
+   */
+  @ApiStatus.Internal
+  @NotNull
+  public static LeafState get(@NotNull Object node, @NotNull TreeModel model) {
+    LeafState state = get(node);
+    return state != DEFAULT ? state : model.isLeaf(node) ? ALWAYS : NEVER;
   }
 }

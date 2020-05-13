@@ -3,8 +3,11 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -13,12 +16,16 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.ide.util.TipAndTrickBean.findByFileName;
 import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.ui.Gray.xD0;
@@ -27,10 +34,18 @@ public class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
+  private static final String LAST_SEEN_TIP_ID = "lastSeenTip";
+  private static final String SEEN_TIPS = "seenTips";
 
   private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;
-  private List<? extends TipAndTrickBean> myTips = Collections.emptyList();
+  final AbstractAction myPreviousTipAction;
+  final AbstractAction myNextTipAction;
+  private @NotNull String myAlgorithm = "unknown";
+  private @Nullable String myAlgorithmVersion = null;
+  private List<TipAndTrickBean> myTips = Collections.emptyList();
+  private final List<String> mySeenIds = new ArrayList<>();
+  private TipAndTrickBean myCurrentTip = null;
 
   public TipPanel() {
     setLayout(new BorderLayout());
@@ -48,10 +63,35 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     myPoweredByLabel.setForeground(SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.getFgColor());
 
     add(myPoweredByLabel, BorderLayout.SOUTH);
+
+    myPreviousTipAction = new PreviousTipAction();
+    myNextTipAction = new NextTipAction();
+
+    mySeenIds.addAll(StringUtil.split(PropertiesComponent.getInstance().getValue(SEEN_TIPS, ""), ","));
+    Collections.shuffle(mySeenIds);
+    setTips(TipAndTrickBean.EP_NAME.getExtensionList());
   }
 
-  public void setTips(@NotNull List<? extends TipAndTrickBean> list) {
-    myTips = list;
+  void setTips(@NotNull List<? extends TipAndTrickBean> list) {
+    TipsOrderUtil.RecommendationDescription recommendation = TipsOrderUtil.sort(list);
+    myTips = new ArrayList<>(recommendation.getTips());
+    myAlgorithm = recommendation.getAlgorithm();
+    myAlgorithmVersion = recommendation.getVersion();
+    for (String id : mySeenIds) {
+      TipAndTrickBean tip = findByFileName(id);
+      if (tip != null) {
+        if (myTips.remove(tip)) {
+          myTips.add(tip);   //move last seen to the end
+        }
+      }
+    }
+    if (TipDialog.wereTipsShownToday()) {
+      TipAndTrickBean lastSeenTip = findByFileName(PropertiesComponent.getInstance().getValue(LAST_SEEN_TIP_ID));
+      if (lastSeenTip != null && myTips.remove(lastSeenTip)) {
+        myTips.add(0, lastSeenTip);
+      }
+    }
+    showNext(true);
   }
 
   @Override
@@ -59,52 +99,42 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     return new JBDimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
   }
 
-  public void prevTip() {
+  private void showNext(boolean forward) {
     if (myTips.size() == 0) {
       myBrowser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
       return;
     }
-    final GeneralSettings settings = GeneralSettings.getInstance();
-    int lastTip = settings.getLastTip();
-
-    final TipAndTrickBean tip;
-    lastTip--;
-    if (lastTip <= 0) {
-      tip = myTips.get(myTips.size() - 1);
-      lastTip = myTips.size();
+    int index = myCurrentTip != null ? myTips.indexOf(myCurrentTip) : -1;
+    if (forward) {
+      if (index < myTips.size() - 1) {
+        setTip(myTips.get(index + 1));
+      }
+    } else {
+      if (index > 0) {
+        setTip(myTips.get(index - 1));
+      }
     }
-    else {
-      tip = myTips.get(lastTip - 1);
-    }
-
-    setTip(tip, lastTip, myBrowser, settings);
   }
 
-  private void setTip(TipAndTrickBean tip, int lastTip, TipUIUtil.Browser browser, GeneralSettings settings) {
-    TipUIUtil.openTipInBrowser(tip, browser);
-    myPoweredByLabel.setText(TipUIUtil.getPoweredByText(tip));
+  private void setTip(@NotNull TipAndTrickBean tip) {
+    myCurrentTip = tip;
+    PropertiesComponent.getInstance().setValue(LAST_SEEN_TIP_ID, myCurrentTip.fileName);
+
+    TipUIUtil.openTipInBrowser(myCurrentTip, myBrowser);
+    myPoweredByLabel.setText(TipUIUtil.getPoweredByText(myCurrentTip));
     myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));
-    settings.setLastTip(lastTip);
-  }
+    TipsOfTheDayUsagesCollector.triggerTipShown(tip, myAlgorithm, myAlgorithmVersion);
 
-  public void nextTip() {
-    if (myTips.size() == 0) {
-      myBrowser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
-      return;
-    }
-    GeneralSettings settings = GeneralSettings.getInstance();
-    int lastTip = settings.getLastTip();
-    TipAndTrickBean tip;
-    lastTip++;
-    if (lastTip - 1 >= myTips.size()) {
-      tip = myTips.get(0);
-      lastTip = 1;
-    }
-    else {
-      tip = myTips.get(lastTip - 1);
+    if (!mySeenIds.contains(myCurrentTip.fileName)) {
+      mySeenIds.add(myCurrentTip.fileName);
+      if (mySeenIds.size() >= myTips.size()) {
+        mySeenIds.clear();//It's useless to keep all possible IDs in 'last seen'
+      }
+      PropertiesComponent.getInstance().setValue(SEEN_TIPS, StringUtil.join(mySeenIds, ","));
     }
 
-    setTip(tip, lastTip, myBrowser, settings);
+    myPreviousTipAction.setEnabled(myTips.indexOf(myCurrentTip) > 0);
+    myNextTipAction.setEnabled(myTips.indexOf(myCurrentTip) < myTips.size() - 1);
   }
 
   @Override
@@ -119,17 +149,43 @@ public class TipPanel extends JPanel implements DoNotAskOption {
 
   @Override
   public boolean isToBeShown() {
-    return !GeneralSettings.getInstance().isShowTipsOnStartup();
+    return GeneralSettings.getInstance().isShowTipsOnStartup();
   }
 
   @Override
   public void setToBeShown(boolean toBeShown, int exitCode) {
-    GeneralSettings.getInstance().setShowTipsOnStartup(!toBeShown);
+    GeneralSettings.getInstance().setShowTipsOnStartup(toBeShown);
   }
 
   @NotNull
   @Override
   public String getDoNotShowMessage() {
     return IdeBundle.message("checkbox.show.tips.on.startup");
+  }
+
+  private class PreviousTipAction extends AbstractAction {
+    PreviousTipAction() {
+      super(IdeBundle.message("action.previous.tip"));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      TipsOfTheDayUsagesCollector.PREVIOUS_TIP.log();
+      showNext(false);
+    }
+  }
+
+  private class NextTipAction extends AbstractAction {
+    NextTipAction() {
+      super(IdeBundle.message("action.next.tip"));
+      putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
+      putValue(DialogWrapper.FOCUSED_ACTION, Boolean.TRUE); // myPreferredFocusedComponent
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      TipsOfTheDayUsagesCollector.NEXT_TIP.log();
+      showNext(true);
+    }
   }
 }

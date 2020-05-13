@@ -9,7 +9,7 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
-    <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.configure.branch.or.date.use.version"/>
+    <border type="etched" title-resource-bundle="messages/CvsBundle" title-key="border.title.configure.branch.or.date.use.version"/>
     <children>
       <component id="ca0af" class="javax.swing.JRadioButton" binding="myUseBranch">
         <constraints>
@@ -17,7 +17,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.select.tag.by.tag"/>
+          <text resource-bundle="messages/CvsBundle" key="radio.select.tag.by.tag"/>
         </properties>
       </component>
       <grid id="2e598" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="-1">
@@ -56,7 +56,7 @@
         </constraints>
         <properties>
           <margin top="8" left="2" bottom="2" right="2"/>
-          <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.select.tag.by.date"/>
+          <text resource-bundle="messages/CvsBundle" key="radio.select.tag.by.date"/>
         </properties>
       </component>
       <grid id="c8d29" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="-1">
@@ -92,7 +92,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.select.tag.head.revision"/>
+          <text resource-bundle="messages/CvsBundle" key="radio.select.tag.head.revision"/>
         </properties>
       </component>
     </children>

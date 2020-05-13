@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
-/**
- * @author nik
- */
 public class ConfigFileImpl extends SimpleModificationTracker implements ConfigFile {
   @NotNull private ConfigFileInfo myInfo;
   private final VirtualFilePointer myFilePointer;
@@ -50,7 +47,7 @@ public class ConfigFileImpl extends SimpleModificationTracker implements ConfigF
     final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
     myFilePointer = pointerManager.create(configuration.getUrl(), this, new VirtualFilePointerListener() {
       @Override
-      public void validityChanged(@NotNull final VirtualFilePointer[] pointers) {
+      public void validityChanged(final VirtualFilePointer @NotNull [] pointers) {
         myPsiFile = null;
         onChange();
       }

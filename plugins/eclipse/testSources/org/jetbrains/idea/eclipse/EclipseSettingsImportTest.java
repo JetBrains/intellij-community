@@ -1,5 +1,6 @@
 package org.jetbrains.idea.eclipse;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.SchemeImportException;
@@ -272,7 +273,7 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
 
   public void testImportCodeStyleProperties() throws IOException, SchemeImportException {
     File input = new File(getTestDataPath() + CORE_PREFS_FILE_NAME);
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
     CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
     JavaCodeStyleSettings javaCustomSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);

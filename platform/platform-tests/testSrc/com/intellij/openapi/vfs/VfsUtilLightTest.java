@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
@@ -17,6 +19,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class VfsUtilLightTest extends BareTestFixtureTestCase {
+  @Rule public TempDirectory tempDir = new TempDirectory();
+
   private static VirtualFile myRoot;
 
   @BeforeClass
@@ -59,7 +63,7 @@ public class VfsUtilLightTest extends BareTestFixtureTestCase {
 
   @Test
   public void testGetPathForVFileCreateEventForJarReturnsNormalizedPathSeparators() {
-    File jarFile = IoTestUtil.createTestJar();
+    File jarFile = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jarFile));
     VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl("jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/");
     assertNotNull(jarRoot);

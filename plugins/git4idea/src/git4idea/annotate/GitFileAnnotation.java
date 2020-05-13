@@ -19,10 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
@@ -118,9 +115,8 @@ public class GitFileAnnotation extends FileAnnotation {
     myLogSettings.removeChangeListener(myLogSettingChangeListener);
   }
 
-  @NotNull
   @Override
-  public LineAnnotationAspect[] getAspects() {
+  public LineAnnotationAspect @NotNull [] getAspects() {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
 
@@ -192,12 +188,12 @@ public class GitFileAnnotation extends FileAnnotation {
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
     atb.appendRevisionLine(revisionNumber, it -> GitCommitTooltipLinkHandler.createLink(it.asString(), it));
-    atb.appendLine("Author: " + lineInfo.getAuthor());
-    atb.appendLine("Date: " + DateFormatUtil.formatDateTime(getDate(lineInfo)));
+    atb.appendLine(VcsBundle.message("commit.description.tooltip.author", lineInfo.getAuthor()));
+    atb.appendLine(VcsBundle.message("commit.description.tooltip.date", DateFormatUtil.formatDateTime(getDate(lineInfo))));
 
-    if (!myFilePath.equals(lineInfo.myFilePath)) {
-      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
-      atb.appendLine("Path: " + path);
+    if (!myFilePath.equals(lineInfo.getFilePath())) {
+      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.getFilePath().getPresentableUrl());
+      atb.appendLine(VcsBundle.message("commit.description.tooltip.path", path));
     }
 
     String commitMessage = getCommitMessage(revisionNumber);
@@ -270,7 +266,7 @@ public class GitFileAnnotation extends FileAnnotation {
     }
   }
 
-  static class LineInfo {
+  static class CommitInfo {
     @NotNull private final Project myProject;
     @NotNull private final GitRevisionNumber myRevision;
     @NotNull private final FilePath myFilePath;
@@ -281,15 +277,15 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull private final VcsUser myAuthor;
     @NotNull private final String mySubject;
 
-    LineInfo(@NotNull Project project,
-                    @NotNull GitRevisionNumber revision,
-                    @NotNull FilePath path,
-                    @NotNull Date committerDate,
-                    @NotNull Date authorDate,
-                    @NotNull VcsUser author,
-                    @NotNull String subject,
-                    @Nullable GitRevisionNumber previousRevision,
-                    @Nullable FilePath previousPath) {
+    CommitInfo(@NotNull Project project,
+             @NotNull GitRevisionNumber revision,
+             @NotNull FilePath path,
+             @NotNull Date committerDate,
+             @NotNull Date authorDate,
+             @NotNull VcsUser author,
+             @NotNull String subject,
+             @Nullable GitRevisionNumber previousRevision,
+             @Nullable FilePath previousPath) {
       myProject = project;
       myRevision = revision;
       myFilePath = path;
@@ -340,6 +336,66 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull
     public String getSubject() {
       return mySubject;
+    }
+  }
+
+  public static class LineInfo {
+    @NotNull private final CommitInfo myCommitInfo;
+    private final int myLineNumber;
+    private final int myOriginalLineNumber;
+
+    LineInfo(@NotNull CommitInfo commitInfo, int lineNumber, int originalLineNumber) {
+      this.myCommitInfo = commitInfo;
+      this.myLineNumber = lineNumber;
+      this.myOriginalLineNumber = originalLineNumber;
+    }
+
+    public int getLineNumber() {
+      return myLineNumber;
+    }
+
+    public int getOriginalLineNumber() {
+      return myOriginalLineNumber;
+    }
+
+    @NotNull
+    public GitRevisionNumber getRevisionNumber() {
+      return myCommitInfo.getRevisionNumber();
+    }
+
+    @NotNull
+    public FilePath getFilePath() {
+      return myCommitInfo.getFilePath();
+    }
+
+    @NotNull
+    public VcsFileRevision getFileRevision() {
+      return myCommitInfo.getFileRevision();
+    }
+
+    @Nullable
+    public VcsFileRevision getPreviousFileRevision() {
+      return myCommitInfo.getPreviousFileRevision();
+    }
+
+    @NotNull
+    public Date getCommitterDate() {
+      return myCommitInfo.getCommitterDate();
+    }
+
+    @NotNull
+    public Date getAuthorDate() {
+      return myCommitInfo.getAuthorDate();
+    }
+
+    @NotNull
+    public String getAuthor() {
+      return myCommitInfo.getAuthor();
+    }
+
+    @NotNull
+    public String getSubject() {
+      return myCommitInfo.getSubject();
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -15,10 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -28,6 +25,7 @@ import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +53,7 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
 
     logData.getProject().getMessageBus().connect(this).subscribe(CommitMessageInspectionProfile.TOPIC, () -> update());
 
-    setStatusText("Commit details");
+    setStatusText(VcsLogBundle.message("vcs.log.commit.details.status"));
     Disposer.register(parent, this);
   }
 
@@ -160,9 +158,8 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
     }
 
     @Override
-    protected void onSelection(@NotNull int[] selection) {
+    protected void onSelection(int @NotNull [] selection) {
       cancelResolve();
-      setStatusText("");
 
       int shownPanelsCount = rebuildPanel(selection.length);
       mySelection = Ints.asList(Arrays.copyOf(selection, shownPanelsCount));
@@ -187,7 +184,7 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
     @Override
     protected void onEmptySelection() {
       cancelResolve();
-      setEmpty("No commits selected");
+      setEmpty(VcsLogBundle.message("vcs.log.changes.details.no.commits.selected.status"));
     }
 
     @NotNull
@@ -208,12 +205,13 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      setEmpty("Error loading commits");
+      setEmpty(VcsLogBundle.message("vcs.log.error.loading.status"));
     }
 
-    private void setEmpty(@NotNull String text) {
+    private void setEmpty(@Nls @NotNull String text) {
       setStatusText(text);
       mySelection = ContainerUtil.emptyList();
+      setCommits(ContainerUtil.emptyList());
     }
   }
 }

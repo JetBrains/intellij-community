@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Key;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.ParameterizedTypeImpl;
@@ -14,9 +16,8 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class DomExtensionsTest extends DomTestCase {
   private static final Key<Boolean> BOOL_KEY = Key.create("aaa");
 
@@ -125,24 +126,30 @@ public class DomExtensionsTest extends DomTestCase {
 
   public void testCollectionAdders() {
     registerDomExtender(CollectionDomExtender.class);
-    final MyElement myElement = createElement("<a attr=\"xxx\"></a>", MyElement.class);
-    final DomCollectionChildDescription description = myElement.getGenericInfo().getCollectionChildDescription("xxx");
-    final DomElement element2 = description.addValue(myElement);
-    final DomElement element0 = description.addValue(myElement, 0);
-    final DomElement element3 = description.addValue(myElement, MyConcreteElement.class);
-    final DomElement element1 = description.addValue(myElement, MyConcreteElement.class, 1);
+    MyElement myElement = createElement("<a attr=\"xxx\"></a>", MyElement.class);
+    DomCollectionChildDescription description = myElement.getGenericInfo().getCollectionChildDescription("xxx");
+    assertThat(description).isNotNull();
+    DomElement element2 = description.addValue(myElement);
+    DomElement element0 = description.addValue(myElement, 0);
+    DomElement element3 = description.addValue(myElement, MyConcreteElement.class);
+    DomElement element1 = description.addValue(myElement, MyConcreteElement.class, 1);
     assertSameElements(getCustomChildren(myElement), element0, element1, element2, element3);
   }
 
   public void testCustomChildrenAccessFromExtender() {
     registerDomExtender(MyCustomChildrenElement.class, CustomDomExtender.class);
-    final MyCustomChildrenElement myElement = createElement("<a><xx/><yy/><concrete-child/><some-concrete-child/></a>", MyCustomChildrenElement.class);
-    final DomCollectionChildDescription description = myElement.getGenericInfo().getCollectionChildDescription("xx");
-    assertNotNull(description);
+    MyCustomChildrenElement myElement = createElement("<a><xx/><yy/><concrete-child/><some-concrete-child/></a>", MyCustomChildrenElement.class);
+    DomCollectionChildDescription description = myElement.getGenericInfo().getCollectionChildDescription("xx");
+    assertThat(description).isNotNull();
     assertInstanceOf(assertOneElement(description.getValues(myElement)), MyDynamicElement.class);
     assertInstanceOf(assertOneElement(myElement.getCustomChidren()), MyCustomElement.class);
     assertInstanceOf(assertOneElement(myElement.getConcreteChildren()), MyConcreteElement.class);
     assertNotNull(assertInstanceOf(myElement.getSomeConcreteChild(), MyConcreteElement.class).getXmlTag());
+  }
+
+  public void testTolerateMalformedTags() {
+    MyCustomChildrenElement myElement = createElement("<a><xx/><concrete-child/><prefix:/></a>", MyCustomChildrenElement.class);
+    assertEquals("xx", assertOneElement(myElement.getCustomChidren()).getXmlTag().getName());
   }
 
   public void testFirstChildRedefinitionOnExtending() {
@@ -173,12 +180,10 @@ public class DomExtensionsTest extends DomTestCase {
   }
 
   public <T extends DomElement> void registerDomExtender(final Class<T> domClass, final Class<? extends DomExtender<T>> extenderClass) {
-    final DomExtenderEP extenderEP = new DomExtenderEP();
-    extenderEP.domClassName = domClass.getName();
+    DomExtenderEP extenderEP = new DomExtenderEP(domClass.getName(), new DefaultPluginDescriptor(PluginId.getId("registerDomExtender"), getClass().getClassLoader()));
     extenderEP.extenderClassName = extenderClass.getName();
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), DomExtenderEP.EP_NAME, extenderEP, getTestRootDisposable());
   }
-
 
   public interface MyElement extends DomElement {
     GenericAttributeValue<String> getAttr();
@@ -277,10 +282,11 @@ public class DomExtensionsTest extends DomTestCase {
     }
   }
 
-  public static class MyStringBufferConverter extends StringBufferConverter {
+  public static final class MyStringBufferConverter extends StringBufferConverter {
     public MyStringBufferConverter(boolean b) {
     }
   }
+
   public interface MyAttribute extends GenericAttributeValue<Boolean> {}
 }
 

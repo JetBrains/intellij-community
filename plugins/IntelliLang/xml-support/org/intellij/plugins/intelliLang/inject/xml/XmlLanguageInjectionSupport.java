@@ -5,6 +5,7 @@ package org.intellij.plugins.intelliLang.inject.xml;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
@@ -19,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.*;
@@ -63,8 +65,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   @Override
-  @NotNull
-  public Class[] getPatternClasses() {
+  public Class @NotNull [] getPatternClasses() {
     return new Class[] {XmlPatterns.class};
   }
 
@@ -324,14 +325,15 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   @Override
   public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
-      new AnAction("XML Tag Injection", null, PlatformIcons.XML_TAG_ICON) {
+      new AnAction(IntelliLangBundle.messagePointer("action.XmlLanguageInjectionSupport.Anonymous.xml.tag.injection"),
+                   Presentation.NULL_STRING, PlatformIcons.XML_TAG_ICON) {
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection newInjection = showInjectionUI(project, new XmlTagInjection());
           if (newInjection != null) consumer.consume(newInjection);
         }
       },
-      new AnAction("XML Attribute Injection", null, PlatformIcons.ANNOTATION_TYPE_ICON) {
+      new AnAction(IntelliLangBundle.messagePointer("action.XmlLanguageInjectionSupport.Anonymous.xml.attribute.injection"), Presentation.NULL_STRING, PlatformIcons.ANNOTATION_TYPE_ICON) {
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new XmlAttributeInjection());

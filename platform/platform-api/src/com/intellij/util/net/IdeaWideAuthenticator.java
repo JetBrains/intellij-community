@@ -12,7 +12,7 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 
 public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideAuthenticator");
+  private final static Logger LOG = Logger.getInstance(IdeaWideAuthenticator.class);
   private final HttpConfigurable myHttpConfigurable;
 
   public IdeaWideAuthenticator(@NotNull HttpConfigurable configurable) {
@@ -40,8 +40,7 @@ public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
           return password;
         }
         // do not try to show any dialogs if application is exiting
-        if (application == null || application.isDisposeInProgress() ||
-            application.isDisposed()) {
+        if (application == null || application.isDisposed()) {
           return null;
         }
 
@@ -50,7 +49,7 @@ public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
     }
 
     // do not try to show any dialogs if application is exiting
-    if (application == null || application.isDisposeInProgress() || application.isDisposed()) {
+    if (application == null || application.isDisposed()) {
       return null;
     }
 

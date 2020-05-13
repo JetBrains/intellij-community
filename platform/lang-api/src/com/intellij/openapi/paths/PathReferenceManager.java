@@ -43,45 +43,41 @@ public abstract class PathReferenceManager {
 
   /**
    * Create web path references for given PsiElement.
-   * The same as {@link #createReferences(com.intellij.psi.PsiElement, boolean, boolean, boolean, PathReferenceProvider[])} with
+   * The same as {@link #createReferences(PsiElement, boolean, boolean, boolean, PathReferenceProvider[])} with
    * endingSlashNotAllowed = true and relativePathsAllowed = true.
    *
    * @param psiElement the underlying PSI element.
-   * @param soft set this to true to create soft references (see {@link com.intellij.psi.PsiReference#isSoft()}).
+   * @param soft set this to true to create soft references (see {@link PsiReference#isSoft()}).
    * @param additionalProviders additional providers to process.
    * @return created references or an empty array.
    */
-  @NotNull
-  public abstract PsiReference[] createReferences(@NotNull PsiElement psiElement,
-                                                  boolean soft,
-                                                  PathReferenceProvider... additionalProviders);
+  public abstract PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement,
+                                                            boolean soft,
+                                                            PathReferenceProvider... additionalProviders);
 
   /**
    * Create web path references for given PsiElement.
    *
    * @param psiElement the underlying PSI element.
-   * @param soft set this to true to create soft references (see {@link com.intellij.psi.PsiReference#isSoft()}).
+   * @param soft set this to true to create soft references (see {@link PsiReference#isSoft()}).
    * @param endingSlashNotAllowed true if paths like "/foo/" should not be resolved.
    * @param relativePathsAllowed true if the folder of the file containing the PsiElement should be used as "root".
    *        Otherwise, web application root will be used.
    *@param additionalProviders additional providers to process.  @return created references or an empty array.
    */
-  @NotNull
-  public abstract PsiReference[] createReferences(@NotNull PsiElement psiElement,
-                                                  boolean soft,
-                                                  boolean endingSlashNotAllowed,
-                                                  boolean relativePathsAllowed, PathReferenceProvider... additionalProviders);
+  public abstract PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement,
+                                                            boolean soft,
+                                                            boolean endingSlashNotAllowed,
+                                                            boolean relativePathsAllowed, PathReferenceProvider... additionalProviders);
 
   public abstract PsiReference[] createReferences(@NotNull PsiElement psiElement,
                                                   boolean soft,
                                                   boolean endingSlashNotAllowed,
                                                   boolean relativePathsAllowed, FileType[] suitableFileTypes, PathReferenceProvider... additionalProviders);
 
-  @NotNull
-  public abstract PsiReference[] createCustomReferences(@NotNull PsiElement psiElement, 
-                                                        boolean soft,
-                                                        PathReferenceProvider... providers);
-
+  public abstract PsiReference @NotNull [] createCustomReferences(@NotNull PsiElement psiElement,
+                                                                  boolean soft,
+                                                                  PathReferenceProvider... providers);
 
   @Nullable
   public abstract PathReference getPathReference(@NotNull String path,

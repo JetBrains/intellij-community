@@ -15,7 +15,7 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NID;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public class GrBinaryExpressionTypeCalculators {
   private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = new LinkedHashMap<>();

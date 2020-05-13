@@ -7,15 +7,16 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
-  public static int DO_NOT_ALIGN_PROPERTY = PropertyAlignment.DO_NOT_ALIGN.getId();
-  public static int ALIGN_PROPERTY_ON_VALUE = PropertyAlignment.ALIGN_ON_VALUE.getId();
-  public static int ALIGN_PROPERTY_ON_COLON = PropertyAlignment.ALIGN_ON_COLON.getId();
+  public static final int DO_NOT_ALIGN_PROPERTY = PropertyAlignment.DO_NOT_ALIGN.getId();
+  public static final int ALIGN_PROPERTY_ON_VALUE = PropertyAlignment.ALIGN_ON_VALUE.getId();
+  public static final int ALIGN_PROPERTY_ON_COLON = PropertyAlignment.ALIGN_ON_COLON.getId();
 
   public boolean SPACE_AFTER_COLON = true;
   public boolean SPACE_BEFORE_COLON = false;
@@ -23,7 +24,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
   // TODO: check whether it's possible to migrate CustomCodeStyleSettings to newer com.intellij.util.xmlb.XmlSerializer
   /**
-   * Contains value of {@link com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment#getId()}
+   * Contains value of {@link JsonCodeStyleSettings.PropertyAlignment#getId()}
    *
    * @see #DO_NOT_ALIGN_PROPERTY
    * @see #ALIGN_PROPERTY_ON_VALUE
@@ -54,21 +55,21 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   }
 
   public enum PropertyAlignment {
-    DO_NOT_ALIGN(JsonBundle.message("formatter.align.properties.none"), 0),
-    ALIGN_ON_VALUE(JsonBundle.message("formatter.align.properties.on.value"), 1),
-    ALIGN_ON_COLON(JsonBundle.message("formatter.align.properties.on.colon"), 2);
-
-    private final String myDescription;
+    DO_NOT_ALIGN(0, "formatter.align.properties.none"),
+    ALIGN_ON_VALUE(1, "formatter.align.properties.on.value"),
+    ALIGN_ON_COLON(2, "formatter.align.properties.on.colon");
+    @PropertyKey(resourceBundle = JsonBundle.BUNDLE)
+    private final String myKey;
     private final int myId;
 
-    PropertyAlignment(@NotNull String description, int id) {
-      myDescription = description;
+    PropertyAlignment(int id, @NotNull @PropertyKey(resourceBundle = JsonBundle.BUNDLE) String key) {
+      myKey = key;
       myId = id;
     }
 
     @NotNull
     public String getDescription() {
-      return myDescription;
+      return JsonBundle.message(myKey);
     }
 
     public int getId() {

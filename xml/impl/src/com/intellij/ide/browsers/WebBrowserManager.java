@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"))
+@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"), reportStatistic = true)
 public class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
@@ -60,6 +61,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   private List<ConfigurableWebBrowser> browsers;
   private boolean myShowBrowserHover = true;
+  private boolean myShowBrowserHoverXml = false;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
 
   public WebBrowserManager() {
@@ -91,8 +93,15 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     }
     String path = browser.getPath();
     if (path != null) {
-      int index = path.lastIndexOf('/');
-      return index > 0 ? path.indexOf(what, index + 1) != -1 : path.contains(what);
+      String fileName = PathUtil.getFileName(path);
+      if (StringUtil.containsIgnoreCase(fileName, what)) return true;
+      String parentPath = PathUtil.getParentPath(path);
+      String parentPathName = PathUtil.getFileName(parentPath);
+      if ("bin".equals(parentPathName)) {
+        parentPath = PathUtil.getParentPath(parentPath);
+        parentPathName = PathUtil.getFileName(parentPath);
+      }
+      return StringUtil.containsIgnoreCase(parentPathName, what);
     }
     return false;
   }
@@ -120,6 +129,9 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
+    }
+    if (myShowBrowserHoverXml) {
+      state.setAttribute("showHoverXml", "true");
     }
 
     if (!browsers.equals(getPredefinedBrowsers())) {
@@ -430,7 +442,15 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     myShowBrowserHover = showBrowserHover;
   }
 
+  public void setShowBrowserHoverXml(boolean showBrowserHover) {
+    myShowBrowserHoverXml = showBrowserHover;
+  }
+
   public boolean isShowBrowserHover() {
     return myShowBrowserHover;
+  }
+
+  public boolean isShowBrowserHoverXml() {
+    return myShowBrowserHoverXml;
   }
 }

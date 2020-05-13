@@ -1,23 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.util.ProjectIconsAccessor;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -29,9 +22,6 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UField;
-import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.util.List;
@@ -93,7 +83,10 @@ public class PluginDescriptorStructureUtil {
         return toShortName(epQualifiedName);
       }
     }
-
+    else if (element instanceof Separator) {
+      return "----------";
+    }
+    
     return toDisplayName(element.getXmlElementName()); // default
   }
 
@@ -109,35 +102,7 @@ public class PluginDescriptorStructureUtil {
       return tag != null ? DEFAULT_ICON : null;
     }
 
-    if (element instanceof Action) {
-      XmlAttributeValue iconAttrValue = ((Action)element).getIcon().getXmlAttributeValue();
-      if (iconAttrValue != null) {
-        boolean referenceFound = false;
-        for (PsiReference reference : iconAttrValue.getReferences()) {
-          referenceFound = true;
-          Icon icon = getIconFromReference(reference);
-          if (icon != null) {
-            return icon;
-          }
-        }
-
-        // icon field initializer may not be available if there're no attached sources for containing class
-        if (referenceFound) {
-          String value = iconAttrValue.getValue();
-          if (value != null) {
-            Icon icon = IconLoader.findIcon(value, false);
-            if (icon != null) {
-              return icon;
-            }
-          }
-        }
-      }
-    }
-    else if (element instanceof Group) {
-      return AllIcons.Actions.GroupByPackage;
-    }
-
-    return DEFAULT_ICON;
+    return ObjectUtils.notNull(ElementPresentationManager.getIcon(element), DEFAULT_ICON);
   }
 
   @Nullable
@@ -147,6 +112,9 @@ public class PluginDescriptorStructureUtil {
       return null;
     }
 
+    if (element instanceof PluginModule) {
+      return getPluginModuleLocation((PluginModule)element);
+    }
     if (element instanceof IdeaVersion) {
       return getIdeaVersionLocation((IdeaVersion)element);
     }
@@ -187,6 +155,9 @@ public class PluginDescriptorStructureUtil {
     return guessTagLocation(element);
   }
 
+  private static String getPluginModuleLocation(PluginModule pluginModule) {
+    return pluginModule.getValue().getStringValue();
+  }
 
   @Nullable
   private static String getIdeaVersionLocation(IdeaVersion element) {
@@ -438,23 +409,5 @@ public class PluginDescriptorStructureUtil {
     }
     Project project = tag.getProject();
     return DomManager.getDomManager(project).getDomElement(tag);
-  }
-
-  @Nullable
-  private static Icon getIconFromReference(@NotNull PsiReference reference) {
-    PsiElement resolved = reference.resolve();
-    if (!(resolved instanceof PsiField)) {
-      return null;
-    }
-    UField field = UastContextKt.toUElement(resolved, UField.class);
-    assert field != null;
-    UExpression expression = field.getUastInitializer();
-    if (expression == null) {
-      return null;
-    }
-
-    ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(resolved.getProject());
-    VirtualFile iconFile = iconsAccessor.resolveIconFile(expression.getPsi());
-    return iconFile == null ? null : iconsAccessor.getIcon(iconFile);
   }
 }

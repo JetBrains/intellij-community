@@ -173,7 +173,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
                                           isAlwaysInvokedConstructor((PsiMethod)container, clazz);
     hasLHSUsages = hasLhsUsages(myContext);
 
-    setTitle(IntroduceFieldHandler.REFACTORING_NAME);
+    setTitle(IntroduceFieldHandler.getRefactoringNameText());
     init();
     checkErrors();
   }
@@ -244,7 +244,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return true;
   }
 
-  private static boolean allOccurrencesInOneMethod(@NotNull PsiElement[] occurrences, PsiElement scope) {
+  private static boolean allOccurrencesInOneMethod(PsiElement @NotNull [] occurrences, PsiElement scope) {
     if (occurrences.length == 0) return true;
     GrMember container = GrIntroduceFieldHandler.getContainer(occurrences[0], scope);
     if (container == null) return false;
@@ -440,7 +440,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     final String name = getName();
     String message = RefactoringBundle.message("field.exists", name, clazz.getQualifiedName());
     if (clazz.findFieldByName(name, true) != null &&
-        Messages.showYesNoDialog(myContext.getProject(), message, IntroduceFieldHandler.REFACTORING_NAME, Messages.getWarningIcon()) != Messages.YES) {
+        Messages.showYesNoDialog(myContext.getProject(), message, IntroduceFieldHandler.getRefactoringNameText(), Messages.getWarningIcon()) != Messages.YES) {
       return;
     }
     super.doOKAction();

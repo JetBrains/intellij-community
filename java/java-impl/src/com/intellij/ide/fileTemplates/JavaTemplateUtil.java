@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.psi.*;
@@ -22,10 +8,7 @@ import java.util.Properties;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-/**
- * @author yole
- */
-public class JavaTemplateUtil {
+public final class JavaTemplateUtil {
   public static final String TEMPLATE_CATCH_BODY = "Catch Statement Body.java";
   public static final String TEMPLATE_CATCH_DECLARATION = "Catch Statement Declaration.java";
   public static final String TEMPLATE_SWITCH_DEFAULT_BRANCH = "Switch Default Branch.java";
@@ -40,9 +23,11 @@ public class JavaTemplateUtil {
   public static final String INTERNAL_INTERFACE_TEMPLATE_NAME = "Interface";
   public static final String INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME = "AnnotationType";
   public static final String INTERNAL_ENUM_TEMPLATE_NAME = "Enum";
+  public static final String INTERNAL_RECORD_TEMPLATE_NAME = "Record";
 
   public static final String[] INTERNAL_CLASS_TEMPLATES = {
-    INTERNAL_CLASS_TEMPLATE_NAME, INTERNAL_INTERFACE_TEMPLATE_NAME, INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, INTERNAL_ENUM_TEMPLATE_NAME};
+    INTERNAL_CLASS_TEMPLATE_NAME, INTERNAL_INTERFACE_TEMPLATE_NAME, INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, INTERNAL_ENUM_TEMPLATE_NAME,
+    INTERNAL_RECORD_TEMPLATE_NAME};
 
   public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
   public static final String INTERNAL_MODULE_INFO_TEMPLATE_NAME = "module-info";
@@ -57,8 +42,7 @@ public class JavaTemplateUtil {
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, method.getName());
   }
 
-  @NotNull
-  public static String getPackageName(@NotNull PsiDirectory directory) {
+  public static @NotNull String getPackageName(@NotNull PsiDirectory directory) {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     return aPackage != null ? aPackage.getQualifiedName() : "";
   }

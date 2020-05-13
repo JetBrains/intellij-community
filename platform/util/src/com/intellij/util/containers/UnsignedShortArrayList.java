@@ -111,13 +111,11 @@ public class UnsignedShortArrayList implements Cloneable {
     }
   }
 
-  @NotNull
-  public int[] toArray() {
+  public int @NotNull [] toArray() {
     return toArray(0,mySize);
   }
 
-  @NotNull
-  public int[] toArray(@NotNull int[] a) {
+  public int @NotNull [] toArray(int @NotNull [] a) {
     if (a.length < mySize){
       a = new int[mySize];
     }
@@ -129,8 +127,7 @@ public class UnsignedShortArrayList implements Cloneable {
     return a;
   }
 
-  @NotNull
-  public int[] toArray(int startIndex, int length) {
+  public int @NotNull [] toArray(int startIndex, int length) {
     int[] result = new int[length];
     for (int i = startIndex; i < length; i++) {
       char c = myData[i];

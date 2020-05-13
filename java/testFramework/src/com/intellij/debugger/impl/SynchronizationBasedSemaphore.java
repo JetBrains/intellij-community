@@ -21,7 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * @author Eugene Zhuravlev
  */
 public class SynchronizationBasedSemaphore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.Semaphore");
+  private static final Logger LOG = Logger.getInstance(SynchronizationBasedSemaphore.class);
   private int mySemaphore = 0;
 
   public synchronized void down() {

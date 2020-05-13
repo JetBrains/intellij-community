@@ -38,7 +38,7 @@ import java.util.Date;
 import java.util.List;
 
 public class ShelvedChangeList implements JDOMExternalizable, ExternalizableScheme {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList");
+  private static final Logger LOG = Logger.getInstance(ShelvedChangeList.class);
 
   @NonNls private static final String NAME_ATTRIBUTE = "name";
   @NonNls private static final String ATTRIBUTE_DATE = "date";

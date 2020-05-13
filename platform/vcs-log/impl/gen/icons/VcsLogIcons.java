@@ -1,39 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.ui.IconManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class VcsLogIcons {
-  private static Icon load(String path) {
+  private static @NotNull Icon load(@NotNull String path) {
     return IconManager.getInstance().getIcon(path, VcsLogIcons.class);
   }
 
-  private static Icon load(String path, Class<?> clazz) {
-    return IconManager.getInstance().getIcon(path, clazz);
-  }
-
-  /** 16x16 */ public static final Icon IntelliSort = load("/icons/IntelliSort.svg");
+  /** 16x16 */ public static final @NotNull Icon IntelliSort = load("/icons/IntelliSort.svg");
 
   public final static class Process {
-    /** 16x16 */ public static final Icon Dots_1 = load("/icons/process/dots_1.svg");
-    /** 16x16 */ public static final Icon Dots_2 = load("/icons/process/dots_2.svg");
-    /** 16x16 */ public static final Icon Dots_3 = load("/icons/process/dots_3.svg");
-    /** 16x16 */ public static final Icon Dots_4 = load("/icons/process/dots_4.svg");
-    /** 16x16 */ public static final Icon Dots_5 = load("/icons/process/dots_5.svg");
+    /** 16x16 */ public static final @NotNull Icon Dots_1 = load("/icons/process/dots_1.svg");
+    /** 16x16 */ public static final @NotNull Icon Dots_2 = load("/icons/process/dots_2.svg");
+    /** 16x16 */ public static final @NotNull Icon Dots_3 = load("/icons/process/dots_3.svg");
+    /** 16x16 */ public static final @NotNull Icon Dots_4 = load("/icons/process/dots_4.svg");
+    /** 16x16 */ public static final @NotNull Icon Dots_5 = load("/icons/process/dots_5.svg");
 
   }
-
-  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Branch */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon ShowOtherBranches = load("/vcs/branch.svg", com.intellij.icons.AllIcons.class);
 }

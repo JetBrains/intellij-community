@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -7,8 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -40,7 +39,6 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 
 public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.MemberChooser");
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
   protected JComponent[] myOptionControls;
@@ -110,7 +108,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                           @NotNull Project project,
                           boolean isInsertOverrideVisible,
                           @Nullable JComponent headerPanel,
-                          @Nullable JComponent[] optionControls) {
+                          JComponent @Nullable [] optionControls) {
     super(project, true);
     myAllowEmptySelection = allowEmptySelection;
     myAllowMultiSelection = allowMultiSelection;
@@ -252,8 +250,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     final List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     if (myAllowEmptySelection) {
@@ -368,7 +365,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (tree.getPathForLocation(e.getX(), e.getY()) != null) {
           doOKAction();
           return true;
@@ -465,8 +462,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return list == null ? null : new ArrayList<>(list);
   }
 
-  @Nullable
-  public T[] getSelectedElements(T[] a) {
+  public T @Nullable [] getSelectedElements(T[] a) {
     LinkedHashSet<T> list = getSelectedElementsList();
     if (list == null) return null;
     return list.toArray(a);
@@ -525,7 +521,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       arrayList.add((ElementNode)children.nextElement());
     }
 
-    Collections.sort(arrayList, sortComparator);
+    arrayList.sort(sortComparator);
 
     replaceChildren(node, arrayList);
   }
@@ -575,7 +571,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         while (memberNodes.hasMoreElements()) {
           arrayList.add((MemberNode)memberNodes.nextElement());
         }
-        Collections.sort(arrayList, myComparator);
+        arrayList.sort(myComparator);
         for (MemberNode memberNode : arrayList) {
           myNodeToParentMap.get(memberNode).add(memberNode);
         }
@@ -640,12 +636,6 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     if (leadNode != null) {
       myTree.setLeadSelectionPath(new TreePath(((DefaultMutableTreeNode)leadNode).getPath()));
     }
-  }
-
-  @Override
-  public void show() {
-    LOG.assertTrue(TransactionGuard.getInstance().getContextTransaction() != null, "Member Chooser should be shown in a transaction, see AnAction#startInTransaction");
-    super.show();
   }
 
   @Override
@@ -806,8 +796,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class SortEmAction extends ToggleAction {
     SortEmAction() {
-      super(IdeBundle.message("action.sort.alphabetically"),
-            IdeBundle.message("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
+      super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), PlatformEditorBundle.messagePointer("action.sort.alphabetically"),
+            AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override
@@ -854,8 +844,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class ExpandAllAction extends AnAction {
     ExpandAllAction() {
-      super(IdeBundle.message("action.expand.all"), IdeBundle.message("action.expand.all"),
-            AllIcons.Actions.Expandall);
+      super(IdeBundle.messagePointer("action.expand.all"), IdeBundle.messagePointer("action.expand.all"), AllIcons.Actions.Expandall);
     }
 
     @Override
@@ -866,8 +855,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class CollapseAllAction extends AnAction {
     CollapseAllAction() {
-      super(IdeBundle.message("action.collapse.all"), IdeBundle.message("action.collapse.all"),
-            AllIcons.Actions.Collapseall);
+      super(IdeBundle.messagePointer("action.collapse.all"), IdeBundle.messagePointer("action.collapse.all"), AllIcons.Actions.Collapseall);
     }
 
     @Override

@@ -24,9 +24,9 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -66,9 +66,10 @@ public class FixAllAnnotatorQuickfixTest extends LightQuickFixTestCase {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiMethod) {
-        Annotation annotation = holder.createErrorAnnotation(((PsiMethod)element).getNameIdentifier(), null);
-        annotation.registerUniversalFix(new MyFix(), null, null);
-        annotation.setTextAttributes(JavaHighlightingColors.DOC_COMMENT_TAG_VALUE);
+        holder.newSilentAnnotation(HighlightSeverity.ERROR).range(((PsiMethod)element).getNameIdentifier())
+        .withFix(new MyFix())
+          .newFix(new MyFix()).batch().registerFix()
+        .textAttributes(JavaHighlightingColors.DOC_COMMENT_TAG_VALUE).create();
       }
     }
 

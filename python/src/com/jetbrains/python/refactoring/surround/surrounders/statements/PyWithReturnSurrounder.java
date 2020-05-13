@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyWithReturnSurrounder extends PyStatementSurrounder {
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     return (elements.length == 1) &&
            (elements[0] instanceof PyExpressionStatement) &&
            (PsiTreeUtil.getParentOfType(elements[0], PyFunction.class) != null);
@@ -23,7 +23,7 @@ public class PyWithReturnSurrounder extends PyStatementSurrounder {
 
   @Override
   @Nullable
-  protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
+  protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
     throws IncorrectOperationException {
     PyReturnStatement returnStatement =
       PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyReturnStatement.class, "return a");

@@ -10,19 +10,13 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author peter
  */
 public class PsiTypeCanonicalLookupElement extends LookupElement {
-  private static final Icon EMPTY_ICON = EmptyIcon.create(PlatformIcons.CLASS_ICON.getIconWidth() * 2, PlatformIcons.CLASS_ICON.getIconHeight());
-
   private final PsiType myType;
   private final String myPresentableText;
 
@@ -87,7 +81,7 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
   public void renderElement(LookupElementPresentation presentation) {
     final PsiClass psiClass = getPsiClass();
     if (psiClass != null) {
-      presentation.setIcon(presentation.isReal() ? psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY) : EMPTY_ICON);
+      presentation.setIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));
       presentation.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true);
     }
     final PsiType type = getPsiType();

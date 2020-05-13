@@ -25,13 +25,13 @@ public final class HgCommandResult {
   public static final HgCommandResult CANCELLED = new HgCommandResult(new ProcessOutput(1));
 
   @NotNull private final ProcessOutput myProcessOutput;
-  @NotNull private final byte[] myByteArrayOutput;
+  private final byte @NotNull [] myByteArrayOutput;
 
   public HgCommandResult(@NotNull ProcessOutput processOutput) {
     this(processOutput, ArrayUtilRt.EMPTY_BYTE_ARRAY);
   }
 
-  public HgCommandResult(@NotNull ProcessOutput processOutput, @NotNull byte[] byteArrayOutput) {
+  public HgCommandResult(@NotNull ProcessOutput processOutput, byte @NotNull [] byteArrayOutput) {
     myProcessOutput = processOutput;
     myByteArrayOutput = byteArrayOutput;
   }
@@ -56,8 +56,7 @@ public final class HgCommandResult {
     return myProcessOutput.getStderr();
   }
 
-  @NotNull
-  public byte[] getBytesOutput() {
+  public byte @NotNull [] getBytesOutput() {
     return myByteArrayOutput;
   }
 

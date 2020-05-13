@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.*;
@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListActions;
@@ -19,7 +18,6 @@ import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicListUI;
@@ -29,7 +27,7 @@ import java.awt.event.*;
 /**
  * @author yole
  */
-public class PaletteComponentList extends JBList {
+public final class PaletteComponentList extends JBList {
   private final Project myProject;
   private final PaletteWindow myPalette;
   private final PaletteGroup myGroup;
@@ -372,10 +370,6 @@ public class PaletteComponentList extends JBList {
       Rectangle rc = getCellBounds(row, row);
       return location.y < rc.getCenterY() ? row : row + 1;
     }
-
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-    }
   }
 
   private class MyDnDSource implements DnDSource {
@@ -390,16 +384,6 @@ public class PaletteComponentList extends JBList {
       int index = locationToIndex(dragOrigin);
       if (index < 0) return null;
       return myGroup.getItems() [index].startDragging();
-    }
-
-    @Override
-    @Nullable
-    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-      return null;
-    }
-
-    @Override
-    public void dragDropEnd() {
     }
 
     @Override

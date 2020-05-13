@@ -32,14 +32,13 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
    * @deprecated use CalleeMethodsTreeStructure#CalleeMethodsTreeStructure(Project, PsiMember, String)
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public CalleeMethodsTreeStructure(@NotNull Project project, @NotNull PsiMethod method, final String scopeType) {
     this(project, ((PsiMember)method), scopeType);
   }
 
   @Override
-  @NotNull
-  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
+  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (!(enclosingElement instanceof PsiMethod)) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;

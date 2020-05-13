@@ -1,0 +1,1 @@
+print(f'{<error descr="Unresolved reference 'lib'">l<caret>ib</error>}')

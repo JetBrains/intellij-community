@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +64,11 @@ public interface VariableDescriptor {
     }
     PsiType type = getType(null);
     LongRangeSet range = LongRangeSet.fromPsiElement(getPsiElement());
-    return factory.withFact(factory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, getPsiElement())),
-                            DfaFactType.RANGE, range);
+    DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, getPsiElement()));
+    if (dfType instanceof DfIntegralType) {
+      dfType = ((DfIntegralType)dfType).meetRange(range);
+    }
+    return factory.fromDfType(dfType);
   }
 
   /**

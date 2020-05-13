@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public abstract class ThreeStateCheckboxAction extends AnAction implements CustomComponentAction {
   @NonNls public static final String STATE_PROPERTY = "three_state_selected";
@@ -22,9 +23,17 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
     super(text);
   }
 
+  protected ThreeStateCheckboxAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
+  }
+
   protected ThreeStateCheckboxAction(final @Nls(capitalization = Nls.Capitalization.Title) String text,
                                      final @Nls(capitalization = Nls.Capitalization.Sentence) String description, final Icon icon) {
     super(text, description, icon);
+  }
+
+  protected ThreeStateCheckboxAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @NotNull

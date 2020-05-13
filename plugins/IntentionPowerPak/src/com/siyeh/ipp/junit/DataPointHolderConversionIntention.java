@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -139,6 +140,6 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert @DataPoint(s) annotation holder";
+    return IntentionPowerPackBundle.message("convert.datapoints.fix.family.name");
   }
 }

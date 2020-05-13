@@ -19,7 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.impl.PluginFieldNameConverter;
+import org.jetbrains.idea.devkit.dom.impl.ExtensionPointPropertyNameConverter;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 public interface With extends DomElement {
@@ -27,12 +27,12 @@ public interface With extends DomElement {
   @NotNull
   @Stubbed
   @Attribute("attribute")
-  @Convert(PluginFieldNameConverter.class)
+  @Convert(ExtensionPointPropertyNameConverter.class)
   GenericAttributeValue<PsiField> getAttribute();
 
   @NotNull
   @Attribute("tag")
-  @Convert(PluginFieldNameConverter.class)
+  @Convert(ExtensionPointPropertyNameConverter.ForTag.class)
   GenericAttributeValue<PsiField> getTag();
 
   @NotNull

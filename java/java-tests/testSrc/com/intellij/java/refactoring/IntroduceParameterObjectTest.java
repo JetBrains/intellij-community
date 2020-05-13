@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.java.refactoring;
 
@@ -76,7 +62,7 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
     final ParameterInfoImpl[] datas = new ParameterInfoImpl[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      datas[i] = new ParameterInfoImpl(i, parameter.getName(), parameter.getType());
+      datas[i] = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(parameter.getType());
     }
     return datas;
   }
@@ -144,7 +130,7 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
       final ParameterInfoImpl[] datas = new ParameterInfoImpl[parameters.length - 1];
       for (int i = 0; i < parameters.length - 1; i++) {
         PsiParameter parameter = parameters[i];
-        datas[i] = new ParameterInfoImpl(i, parameter.getName(), parameter.getType());
+        datas[i] = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(parameter.getType());
       }
       return datas;
     });
@@ -157,7 +143,7 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
       final ParameterInfoImpl[] datas = new ParameterInfoImpl[parameters.length - 1];
       for (int i = 0; i < parameters.length - 1; i++) {
         PsiParameter parameter = parameters[i];
-        datas[i] = new ParameterInfoImpl(i, parameter.getName(), parameter.getType());
+        datas[i] = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(parameter.getType());
       }
       return datas;
     });
@@ -167,7 +153,7 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
     doTestExistingClass("Param", "", false, "public", method -> {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       PsiParameter parameter = parameters[1];
-      return new ParameterInfoImpl[]{new ParameterInfoImpl(1, parameter.getName(), parameter.getType())};
+      return new ParameterInfoImpl[]{ParameterInfoImpl.create(1).withName(parameter.getName()).withType(parameter.getType())};
     });
   }
 
@@ -175,8 +161,9 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
     doTest(false, true, psiMethod -> {
       final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
       final PsiClass collectionClass = myFixture.findClass(CommonClassNames.JAVA_UTIL_COLLECTION);
-      final ParameterInfoImpl variableData =
-        new ParameterInfoImpl(0, parameter.getName(), JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
+      final ParameterInfoImpl variableData = ParameterInfoImpl.create(0)
+        .withName(parameter.getName())
+        .withType(JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
       return new ParameterInfoImpl[]{variableData};
     });
   }

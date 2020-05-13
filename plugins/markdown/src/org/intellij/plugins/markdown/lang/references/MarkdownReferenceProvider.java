@@ -21,9 +21,8 @@ public class MarkdownReferenceProvider extends PsiReferenceContributor {
   }
 
   private static class LinkDestinationReferenceProvider extends PsiReferenceProvider {
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
       return PathReferenceManager.getInstance().createReferences(element, false, true, true);
     }
   }

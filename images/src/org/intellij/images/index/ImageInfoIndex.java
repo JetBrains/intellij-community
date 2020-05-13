@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.index;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.*;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
@@ -13,18 +15,22 @@ import org.intellij.images.fileTypes.impl.SvgFileType;
 import org.intellij.images.util.ImageInfo;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Map;
 
-public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo> {
+
+public class ImageInfoIndex {
+  @Nullable
+  public static ImageInfo getInfo(@NotNull VirtualFile file, @NotNull Project project) {
+    return ourGist.getFileData(project, file);
+  }
+
   private static final long ourMaxImageSize = (long)(Registry.get("ide.index.image.max.size").asDouble() * 1024 * 1024);
 
-  public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
-
-  private final DataExternalizer<ImageInfo> myValueExternalizer = new DataExternalizer<ImageInfo>() {
+  private static final DataExternalizer<ImageInfo> ourValueExternalizer = new DataExternalizer<ImageInfo>() {
     @Override
     public void save(@NotNull final DataOutput out, final ImageInfo info) throws IOException {
       DataInputOutputUtil.writeINT(out, info.width);
@@ -34,56 +40,32 @@ public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<Ima
 
     @Override
     public ImageInfo read(@NotNull final DataInput in) throws IOException {
-      return new ImageInfo(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
+      return new ImageInfo(DataInputOutputUtil.readINT(in),
+                           DataInputOutputUtil.readINT(in),
+                           DataInputOutputUtil.readINT(in));
     }
   };
 
-  private final SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
-    @Override
-    protected ImageInfo computeValue(@NotNull FileContent inputData) {
-      ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent(), inputData.getFileName());
-      return info != null? new ImageInfo(info.width, info.height, info.bpp) : null;
-    }
-  };
-
-  @Override
-  @NotNull
-  public ID<Integer, ImageInfo> getName() {
-    return INDEX_ID;
-  }
-
-  @Override
-  @NotNull
-  public SingleEntryIndexer<ImageInfo> getIndexer() {
-    return myDataIndexer;
-  }
-
-  public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<? super ImageInfo> processor, Project project) {
-    Map<Integer, ImageInfo> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, virtualFile, project);
-    if (!data.isEmpty()) {
-      processor.process(virtualFile, data.values().iterator().next());
-    }
-  }
-
-  @NotNull
-  @Override
-  public DataExternalizer<ImageInfo> getValueExternalizer() {
-    return myValueExternalizer;
-  }
-
-  @NotNull
-  @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(ImageFileTypeManager.getInstance().getImageFileType(), SvgFileType.INSTANCE) {
-      @Override
-      public boolean acceptInput(@NotNull VirtualFile file) {
-        return file.isInLocalFileSystem() && file.getLength() < ourMaxImageSize;
+  private static final VirtualFileGist<ImageInfo> ourGist =
+    GistManager.getInstance().newVirtualFileGist("ImageInfo", 1, ourValueExternalizer, (project, file) -> {
+      if (!file.isInLocalFileSystem() || file.getLength() > ourMaxImageSize) {
+        return null;
       }
-    };
-  }
 
-  @Override
-  public int getVersion() {
-    return 8;
-  }
+      FileType fileType = file.getFileType();
+      if (fileType != SvgFileType.INSTANCE && fileType != ImageFileTypeManager.getInstance().getImageFileType()) {
+        return null;
+      }
+
+      byte[] content;
+      try {
+        content = file.contentsToByteArray();
+      }
+      catch (IOException e) {
+        Logger.getInstance(ImageInfoIndex.class).error(e);
+        return null;
+      }
+      ImageInfoReader.Info info = ImageInfoReader.getInfo(content);
+      return info == null ? null : new ImageInfo(info.width, info.height, info.bpp);
+    });
 }

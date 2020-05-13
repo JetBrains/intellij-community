@@ -25,9 +25,6 @@ import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 
-/**
- * @author nik
- */
 class ConvertModuleLibraryToRepositoryLibraryAction(private val classpathPanel: ClasspathPanel,
                                                     context: StructureConfigurableContext)
   : ConvertToRepositoryLibraryActionBase(context) {

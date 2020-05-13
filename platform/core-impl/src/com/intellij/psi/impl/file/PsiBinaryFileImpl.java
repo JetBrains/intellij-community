@@ -107,8 +107,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -153,8 +152,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return ArrayUtilRt.EMPTY_CHAR_ARRAY; // TODO[max] throw new UnsupportedOperationException()
   }
 
@@ -274,8 +272,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public PsiFile[] getPsiRoots() {
+  public PsiFile @NotNull [] getPsiRoots() {
     return new PsiFile[]{this};
   }
 

@@ -19,8 +19,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -42,13 +42,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
+  private static final Logger LOG = Logger.getInstance(AddSingleMemberStaticImportAction.class);
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<>("TEMP_REFERENT_USER_DATA");
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.add.single.member.static.import.family");
+    return JavaBundle.message("intention.add.single.member.static.import.family");
   }
 
   public static class ImportAvailability {
@@ -182,17 +182,17 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
     ImportAvailability availability = getStaticImportClass(element);
     if (availability != null) {
       if (availability.resolved instanceof PsiClass) {
-        setText(CodeInsightBundle.message("intention.add.single.member.import.text", availability.qName));
+        setText(JavaBundle.message("intention.add.single.member.import.text", availability.qName));
       } else {
         PsiFile file = element.getContainingFile();
         if (!(file instanceof PsiJavaFile)) return false;
         PsiImportStatementBase existingImport =
           findExistingImport(file, availability.resolved.getContainingClass(), StringUtil.getShortName(availability.qName));
         if (existingImport != null && !existingImport.isOnDemand()) {
-          setText(CodeInsightBundle.message("intention.use.single.member.static.import.text" , availability.qName));
+          setText(JavaBundle.message("intention.use.single.member.static.import.text" , availability.qName));
         }
         else {
-          setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", availability.qName));
+          setText(JavaBundle.message("intention.add.single.member.static.import.text", availability.qName));
         }
       }
     }

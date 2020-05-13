@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Iterators;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
@@ -43,8 +44,8 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
   @NotNull
   public static PyChangeSignatureQuickFix forMismatchedCall(@NotNull PyArgumentsMapping mapping) {
-    assert mapping.getMarkedCallee() != null;
-    final PyFunction function = as(mapping.getMarkedCallee().getElement(), PyFunction.class);
+    assert mapping.getCallableType() != null;
+    final PyFunction function = as(mapping.getCallableType().getCallable(), PyFunction.class);
     assert function != null;
     final PyCallSiteExpression callSiteExpression = mapping.getCallSiteExpression();
     int positionalParamAnchor = -1;
@@ -65,11 +66,11 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
         final PyExpression value = ((PyKeywordArgument)arg).getValueExpression();
         final String valueText = value != null ? value.getText() : "";
         newParameters.add(Pair.create(parameters.length - 1,
-                                      new PyParameterInfo(-1, ((PyKeywordArgument)arg).getKeyword(), valueText, true)));
+                                      new PyParameterInfo(NEW_PARAMETER, ((PyKeywordArgument)arg).getKeyword(), valueText, true)));
       }
       else {
         final String paramName = generateParameterName(arg, function, usedParamNames, context);
-        newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(-1, paramName, arg.getText(), false)));
+        newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(NEW_PARAMETER, paramName, arg.getText(), false)));
         usedParamNames.add(paramName);
       }
     }
@@ -82,7 +83,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     final int complementaryParamLength = complementary.getParameterList().getParameters().length;
     final List<Pair<Integer, PyParameterInfo>> extraParams;
     if (complementaryParamLength > paramLength) {
-      extraParams = Collections.singletonList(Pair.create(paramLength - 1, new PyParameterInfo(-1, "**kwargs", "", false)));
+      extraParams = Collections.singletonList(Pair.create(paramLength - 1, new PyParameterInfo(NEW_PARAMETER, "**kwargs", "", false)));
     }
     else {
       extraParams = Collections.emptyList();
@@ -124,7 +125,8 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     if (function == null) {
       return getFamilyName();
     }
-    final String params = StringUtil.join(createMethodDescriptor(function).getParameters(), info -> info.getOldIndex() == -1 ? "<b>" + info.getName() + "</b>" : info.getName(), ", ");
+    final String params = StringUtil.join(createMethodDescriptor(function).getParameters(), info -> info.isNew() ? PyBundle
+      .message("QFIX.bold.html.text", info.getName()) : info.getName(), ", ");
 
     final String message = PyBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")");
     return XmlStringUtil.wrapInHtml(message);
@@ -206,7 +208,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   private PyMethodDescriptor createMethodDescriptor(final PyFunction function) {
     return new PyMethodDescriptor(function) {
       @Override
-      public List<PyParameterInfo> getParameters() {
+      public @NotNull List<PyParameterInfo> getParameters() {
         final List<PyParameterInfo> result = new ArrayList<>();
         final List<PyParameterInfo> originalParams = super.getParameters();
         final PeekingIterator<Pair<Integer, PyParameterInfo>> extra = Iterators.peekingIterator(myExtraParameters.iterator());

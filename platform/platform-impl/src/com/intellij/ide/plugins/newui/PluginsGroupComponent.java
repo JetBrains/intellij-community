@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -28,20 +27,14 @@ import java.util.function.Consumer;
  */
 public class PluginsGroupComponent extends JBPanelWithEmptyText {
   private final EventHandler myEventHandler;
-  private final LinkListener<IdeaPluginDescriptor> myListener;
-  private final LinkListener<String> mySearchListener;
   private final Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> myFunction;
   private final List<UIPluginGroup> myGroups = new ArrayList<>();
 
   public PluginsGroupComponent(@NotNull LayoutManager layout,
                                @NotNull EventHandler eventHandler,
-                               @NotNull LinkListener<IdeaPluginDescriptor> listener,
-                               @NotNull LinkListener<String> searchListener,
                                @NotNull Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> function) {
     super(layout);
     myEventHandler = eventHandler;
-    myListener = listener;
-    mySearchListener = searchListener;
     myFunction = function;
 
     myEventHandler.connect(this);
@@ -195,13 +188,16 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     return -1;
   }
 
-  private void addToGroup(@NotNull PluginsGroup group, @NotNull List<? extends IdeaPluginDescriptor> descriptors, int index, int eventIndex) {
+  private void addToGroup(@NotNull PluginsGroup group,
+                          @NotNull List<? extends IdeaPluginDescriptor> descriptors,
+                          int index,
+                          int eventIndex) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ListPluginComponent pluginComponent = myFunction.fun(descriptor);
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, eventIndex);
-      pluginComponent.setListeners(myListener, mySearchListener, myEventHandler);
+      pluginComponent.setListeners(myEventHandler);
       if (index != -1) {
         index++;
       }
@@ -233,7 +229,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     group.ui.plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);
-    pluginComponent.setListeners(myListener, mySearchListener, myEventHandler);
+    pluginComponent.setListeners(myEventHandler);
   }
 
   public void removeGroup(@NotNull PluginsGroup group) {

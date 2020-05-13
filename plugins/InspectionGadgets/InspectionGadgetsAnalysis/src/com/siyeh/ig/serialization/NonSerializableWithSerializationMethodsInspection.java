@@ -34,12 +34,6 @@ public class NonSerializableWithSerializationMethodsInspection extends BaseInspe
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.display.name");
-  }
-
-  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[2];
     return DelegatingFixFactory.createMakeSerializableFix(aClass);

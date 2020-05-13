@@ -10,9 +10,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author nik
- */
 public abstract class JdkVersionDetector {
   public static JdkVersionDetector getInstance() {
     return JpsServiceManager.getInstance().getService(JdkVersionDetector.class);
@@ -39,6 +36,7 @@ public abstract class JdkVersionDetector {
     }
   }
 
+  @NotNull
   public static String formatVersionString(@NotNull JavaVersion version) {
     return "java version \"" + version + '"';
   }

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json;
 
 import com.intellij.icons.AllIcons;
@@ -148,7 +149,7 @@ public class JsonStructureViewTest extends JsonTestCase {
       assertEquals("aaa", children[0].getPresentation().getPresentableText());
       assertEquals(PlatformIcons.PROPERTY_ICON, children[0].getPresentation().getIcon(false));
       assertEquals("bbb", children[1].getPresentation().getPresentableText());
-      assertEquals(AllIcons.Json.Property_braces, children[1].getPresentation().getIcon(false));
+      assertEquals(AllIcons.Json.Object, children[1].getPresentation().getIcon(false));
 
       children = children[1].getChildren();
       assertEquals(1, children.length);

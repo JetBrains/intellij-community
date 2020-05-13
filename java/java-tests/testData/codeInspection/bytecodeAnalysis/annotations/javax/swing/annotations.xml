@@ -80,6 +80,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='javax.swing.AbstractButton java.awt.event.ActionListener createActionListener()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='javax.swing.AbstractButton java.lang.Object[] getSelectedObjects()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -90,6 +95,11 @@
     </item>
     <item name='javax.swing.AbstractButton java.lang.String paramString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.AbstractButton javax.swing.AbstractButton.Handler getHandler()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='javax.swing.AbstractButton javax.swing.Icon getIcon()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -135,6 +145,11 @@
     </item>
     <item name='javax.swing.AbstractButton void init(java.lang.String, javax.swing.Icon) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton void setMultiClickThreshhold(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='javax.swing.AbstractButton void setUIProperty(java.lang.String, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -391,8 +406,48 @@
     <item name='javax.swing.JComponent void registerNextFocusableComponent(java.awt.Component) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='javax.swing.JComponent void setAlignmentX(float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent void setAlignmentY(float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent void setCreatedDoubleBuffer(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent void setDoubleBuffered(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent void setFlag(int, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent void setPaintingChild(java.awt.Component)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent void setRequestFocusEnabled(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='javax.swing.JComponent void setUIProperty(java.lang.String, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JComponent void setWriteObjCounter(javax.swing.JComponent, byte)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='javax.swing.JComponent void setWriteObjCounter(javax.swing.JComponent, byte) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -493,6 +548,11 @@
     <item name='javax.swing.JDialog java.lang.String paramString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='javax.swing.JDialog void setRootPaneCheckingEnabled(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='javax.swing.JFrame boolean isRootPaneCheckingEnabled()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -505,6 +565,11 @@
     </item>
     <item name='javax.swing.JFrame java.lang.String paramString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JFrame void setRootPaneCheckingEnabled(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='javax.swing.JLabel int checkHorizontalKey(int, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -845,6 +910,16 @@
     <item name='javax.swing.JTable void restoreSortingSelection(int[], int, javax.swing.JTable.ModelChange) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='javax.swing.JTable void setEditingColumn(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable void setEditingRow(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='javax.swing.JTable void setIntercellSpacing(java.awt.Dimension) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -853,6 +928,16 @@
     </item>
     <item name='javax.swing.JTable void setModel(javax.swing.table.TableModel) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable void setPreferredScrollableViewportSize(java.awt.Dimension)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable void setSurrendersFocusOnKeystroke(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='javax.swing.JTable void setUIProperty(java.lang.String, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1031,6 +1116,11 @@
     </item>
     <item name='javax.swing.JTable.IconRenderer void setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.SortManager void allChanged()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='javax.swing.JTable.SortManager void restoreSelection(javax.swing.JTable.ModelChange) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>

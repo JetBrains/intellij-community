@@ -6,7 +6,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -20,12 +23,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CopyHandler extends EditorActionHandler {
+public class CopyHandler extends EditorActionHandler implements CopyAction.TransferableProvider {
   private static final Logger LOG = Logger.getInstance(CopyHandler.class);
 
   private final EditorActionHandler myOriginalAction;
@@ -62,17 +66,39 @@ public class CopyHandler extends EditorActionHandler {
       editor.getCaretModel().runForEachCaret(__ -> EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor));
     }
 
+    Transferable transferable = getSelection(editor, project, file);
+
+    CopyPasteManager.getInstance().setContents(transferable);
+    if (editor instanceof EditorEx) {
+      EditorEx ex = (EditorEx)editor;
+      if (ex.isStickySelection()) {
+        ex.setStickySelection(false);
+      }
+    }
+  }
+
+  @Override
+  public @Nullable Transferable getSelection(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    if (project == null) return null;
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return null;
+    return getSelection(editor, project, file);
+  }
+
+  private static @NotNull Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
+    SelectionModel selectionModel = editor.getSelectionModel();
     final int[] startOffsets = selectionModel.getBlockSelectionStarts();
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
-    final List<TextBlockTransferableData> transferableDatas = new ArrayList<>();
+    final List<TextBlockTransferableData> transferableDataList = new ArrayList<>();
 
     DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
       for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
         try {
-          transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+          transferableDataList.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
         }
         catch (IndexNotReadyException e) {
           LOG.debug(e);
@@ -84,9 +110,9 @@ public class CopyHandler extends EditorActionHandler {
     });
 
     String text = editor.getCaretModel().supportsMultipleCarets()
-                  ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, transferableDatas)
+                  ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, transferableDataList)
                   : selectionModel.getSelectedText();
-    String rawText = TextBlockTransferable.convertLineSeparators(text, "\n", transferableDatas);
+    String rawText = TextBlockTransferable.convertLineSeparators(text, "\n", transferableDataList);
     String escapedText = null;
     for (CopyPastePreProcessor processor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
       try {
@@ -99,15 +125,8 @@ public class CopyHandler extends EditorActionHandler {
         break;
       }
     }
-    final Transferable transferable = new TextBlockTransferable(escapedText != null ? escapedText : rawText,
-                                                                transferableDatas,
-                                                                escapedText != null ? new RawText(rawText) : null);
-    CopyPasteManager.getInstance().setContents(transferable);
-    if (editor instanceof EditorEx) {
-      EditorEx ex = (EditorEx)editor;
-      if (ex.isStickySelection()) {
-        ex.setStickySelection(false);
-      }
-    }
+    return new TextBlockTransferable(escapedText != null ? escapedText : rawText,
+                                     transferableDataList,
+                                     escapedText != null ? new RawText(rawText) : null);
   }
 }

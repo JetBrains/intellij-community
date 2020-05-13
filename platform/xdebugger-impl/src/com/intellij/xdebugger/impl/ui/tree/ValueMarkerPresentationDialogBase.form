@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="bb2f4"/>
-          <text value="&amp;Label:"/>
+          <text resource-bundle="messages/XDebuggerBundle" key="value.marker.dialog.label.text"/>
         </properties>
       </component>
       <vspacer id="37c9">
@@ -37,7 +37,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Preview: "/>
+          <text resource-bundle="messages/XDebuggerBundle" key="value.marker.dialog.preview.label"/>
         </properties>
       </component>
       <grid id="85841" binding="mySamplePanel" custom-create="true" layout-manager="BorderLayout" hgap="0" vgap="0">

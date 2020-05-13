@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
-import com.intellij.ide.ui.search.ComponentHighligtingListener;
+import com.intellij.ide.ui.search.ComponentHighlightingListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -56,11 +56,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighligtingListener {
+public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighlightingListener {
 
   private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
+  private static final Logger LOG = Logger.getInstance(CodeStyleAbstractPanel.class);
 
   private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<>();
 
@@ -101,7 +101,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
     myUserActivityWatcher.addUserActivityListener(() -> somethingChanged());
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighligtingListener.TOPIC, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighlightingListener.TOPIC, this);
 
     updatePreview(true);
   }
@@ -216,11 +216,15 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         prepareForReformat(psiFile);
 
         applySettingsToModel();
-        CodeStyleSettings clone = mySettings.clone();
-        clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
         final Ref<PsiFile> formatted = Ref.create();
-        CodeStyle.doWithTemporarySettings(project, clone, () -> formatted.set(doReformat(project, psiFile)));
-        myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
+        CodeStyle.doWithTemporarySettings(
+          project,
+          mySettings,
+          settings -> {
+            settings.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
+            myEditor.getSettings().setTabSize(settings.getTabSize(getFileType()));
+            formatted.set(doReformat(project, psiFile));
+          });
         Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), formatted.get().getText());
         if (beforeReformat != null) {
@@ -258,9 +262,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     @SuppressWarnings("deprecation")
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
-    CodeStyleSettings clone = mySettings.clone();
-    clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
-    CodeStyle.doWithTemporarySettings(project, clone, () -> CodeStyleManager.getInstance(project).reformat(psiFile));
+    CodeStyle.doWithTemporarySettings(
+      project,
+      mySettings,
+      settings -> {
+        settings.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
+        CodeStyleManager.getInstance(project).reformat(psiFile);
+      });
     return getDocumentBeforeChanges(project, psiFile);
   }
 

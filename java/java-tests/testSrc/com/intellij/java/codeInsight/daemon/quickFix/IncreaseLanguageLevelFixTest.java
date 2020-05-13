@@ -23,9 +23,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
-/**
- * @author nik
- */
 public class IncreaseLanguageLevelFixTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {

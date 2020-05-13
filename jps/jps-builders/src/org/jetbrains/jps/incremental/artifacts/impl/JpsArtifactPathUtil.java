@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class JpsArtifactPathUtil {
   //todo[nik] copied from DeploymentUtil
   public static String trimForwardSlashes(@NotNull String path) {

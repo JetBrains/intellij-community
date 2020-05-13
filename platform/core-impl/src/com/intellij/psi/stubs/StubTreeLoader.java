@@ -138,11 +138,10 @@ public abstract class StubTreeLoader {
     return new ManyProjectsStubIndexMismatch(message, cause, attachments);
   }
 
-  @NotNull
-  private static Attachment[] createAttachments(@Nullable ObjectStubTree stubTree,
-                                                @NotNull PsiFileWithStubSupport psiFile,
-                                                VirtualFile file,
-                                                @Nullable StubTree stubTreeFromIndex) {
+  private static Attachment @NotNull [] createAttachments(@Nullable ObjectStubTree stubTree,
+                                                          @NotNull PsiFileWithStubSupport psiFile,
+                                                          VirtualFile file,
+                                                          @Nullable StubTree stubTreeFromIndex) {
     List<Attachment> attachments = new ArrayList<>();
     attachments.add(new Attachment(file.getPath() + "_file.txt", psiFile instanceof PsiCompiledElement ? "compiled" : psiFile.getText()));
     if (stubTree != null) {

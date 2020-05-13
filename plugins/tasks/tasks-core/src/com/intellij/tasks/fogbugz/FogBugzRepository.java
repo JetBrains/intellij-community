@@ -1,31 +1,26 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.fogbugz;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositoryType;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import icons.TasksCoreIcons;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import javax.swing.Icon;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -34,18 +29,12 @@ import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import java.util.Date;
-import java.util.List;
-
 /**
  * @author mkennedy
  */
 @Tag("FogBugz")
 public class FogBugzRepository extends BaseRepositoryImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.fogbugz.FogBugzRepository");
+  private static final Logger LOG = Logger.getInstance(FogBugzRepository.class);
 
   private String myToken;
 
@@ -61,7 +50,7 @@ public class FogBugzRepository extends BaseRepositoryImpl {
 
   @Override
   public boolean equals(Object o) {
-    return super.equals(o) && Comparing.equal(myToken, ((FogBugzRepository)o).myToken);
+    return super.equals(o) && Objects.equals(myToken, ((FogBugzRepository)o).myToken);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -132,10 +121,9 @@ public class FogBugzRepository extends BaseRepositoryImpl {
         return null;
       }
 
-      @NotNull
       @Override
       @SuppressWarnings("unchecked")
-      public Comment[] getComments() {
+      public Comment @NotNull [] getComments() {
         List<Element> nodes;
         try {
           nodes = commentPath.selectNodes(element);

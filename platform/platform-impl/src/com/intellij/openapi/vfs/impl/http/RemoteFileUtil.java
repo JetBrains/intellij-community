@@ -19,9 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class RemoteFileUtil {
   private RemoteFileUtil() {
   }

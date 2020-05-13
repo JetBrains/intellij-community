@@ -1,14 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -18,6 +24,7 @@ import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.io.File;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -26,6 +33,11 @@ import java.util.function.Supplier;
  */
 @SkipSlowTestLocally
 public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+  }
 
   @Override
   protected void tearDown() throws Exception {
@@ -41,16 +53,15 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     }
   }
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
   }
 
   public void testRandomActivity() {
     enableInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
-      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaIntentionPolicy()),
+      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaPreviewIntentionPolicy()),
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
                                     new StripTestDataMarkup(file),
                                     new DeleteRange(file));
@@ -59,7 +70,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    MadTestingUtil.enableAllInspections(getProject());
   }
 
   public void testPreserveComments() {
@@ -83,6 +94,20 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE).getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
 
+  public void testRemoveRedundantCast() {
+    enableInspections();
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+      file -> Generator.sampledFrom(new InvokeIntentionAtElement(file, new JavaIntentionPolicy() {
+                                      @Override
+                                      protected boolean shouldSkipIntention(@NotNull String actionText) {
+                                        return !actionText.equals(JavaAnalysisBundle.message("inspection.redundant.cast.remove.quickfix"));
+                                      }
+                                    }, PsiTypeCastExpression.class, Function.identity()),
+                                    new InsertTypeCastCommand(file));
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(fileActions));
+  }
+
   public void testParenthesesDontChangeIntention() {
     enableInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
@@ -91,8 +116,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
-  @NotNull
-  private Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+  private @NotNull Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
   }
 
@@ -118,5 +142,33 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
           method.getName().equals("getOrCreateInitializingClass") && method.getDeclaringClass().equals(PsiEnumConstantImpl.class)
       )
     ));
+  }
+
+  private static class InsertTypeCastCommand extends ActionOnFile {
+    private InsertTypeCastCommand(PsiFile file) {
+      super(file);
+    }
+
+    @Override
+    public void performCommand(@NotNull Environment env) {
+      PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
+
+      int randomOffset = generatePsiOffset(env, null);
+      PsiElement leaf = getFile().findElementAt(randomOffset);
+
+      if (leaf != null) {
+        List<PsiElement> elementsToWrap = new JavaParenthesesPolicy().getElementsToWrap(leaf);
+        if (elementsToWrap.isEmpty()) return;
+        PsiElement expr = env.generateValue(Generator.sampledFrom(elementsToWrap).noShrink(), null);
+        if (!(expr instanceof PsiExpression)) return;
+        PsiType type = ((PsiExpression)expr).getType();
+        if (type == null || !PsiTypesUtil.isDenotableType(type, expr)) return; //accept cast in expression statement
+        env.logMessage("Inserting cast '" +
+                       StringUtil.escapeStringCharacters("(" + type.getCanonicalText() + ")") +
+                       "' at " +
+                       MadTestingUtil.getPositionDescription(expr.getTextOffset(), getDocument()));
+        WriteCommandAction.runWriteCommandAction(getProject(), () -> AddTypeCastFix.addTypeCast(getProject(), (PsiExpression)expr, type));
+      }
+    }
   }
 }

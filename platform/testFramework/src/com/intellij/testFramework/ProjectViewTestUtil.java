@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -13,10 +13,10 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
@@ -31,8 +31,8 @@ import javax.swing.tree.TreePath;
 import java.util.Collection;
 import java.util.Comparator;
 
-public class ProjectViewTestUtil {
-  public static VirtualFile[] getFiles(AbstractTreeNode kid, Function<? super AbstractTreeNode, VirtualFile[]> converterFunction) {
+public final class ProjectViewTestUtil {
+  public static VirtualFile[] getFiles(AbstractTreeNode<?> kid, Function<? super AbstractTreeNode<?>, VirtualFile[]> converterFunction) {
     if (kid instanceof BasePsiNode) {
       Object value = kid.getValue();
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)value);
@@ -48,9 +48,9 @@ public class ProjectViewTestUtil {
   }
 
   public static void collect(AbstractTreeNode node,
-                             MultiValuesMap<VirtualFile, AbstractTreeNode> map,
-                             final AbstractTreeStructure structure,
-                             Function<? super AbstractTreeNode, VirtualFile[]> converterFunction) {
+                             MultiValuesMap<VirtualFile, AbstractTreeNode<?>> map,
+                             AbstractTreeStructure structure,
+                             Function<? super AbstractTreeNode<?>, VirtualFile[]> converterFunction) {
     Object[] kids = structure.getChildElements(node);
     for (Object kid1 : kids) {
       ProjectViewNode kid = (ProjectViewNode)kid1;
@@ -70,18 +70,18 @@ public class ProjectViewTestUtil {
 
   public static void checkContainsMethod(final Object rootElement,
                                          final AbstractTreeStructure structure,
-                                         Function<? super AbstractTreeNode, VirtualFile[]> converterFunction) {
-    MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<>();
+                                         Function<? super AbstractTreeNode<?>, VirtualFile[]> converterFunction) {
+    MultiValuesMap<VirtualFile, AbstractTreeNode<?>> map = new MultiValuesMap<>();
     collect((AbstractTreeNode)rootElement, map, structure, converterFunction);
 
     for (VirtualFile eachFile : map.keySet()) {
-      Collection<AbstractTreeNode> nodes = map.values();
+      Collection<AbstractTreeNode<?>> nodes = map.values();
       for (final AbstractTreeNode node : nodes) {
         ProjectViewNode eachNode = (ProjectViewNode)node;
         boolean actual = eachNode.contains(eachFile);
         boolean expected = map.get(eachFile).contains(eachNode);
         if (actual != expected) {
-          Assert.assertTrue("file=" + eachFile + "\n node=" + eachNode.getTestPresentation() + " expected:" + expected, false);
+          Assert.fail("file=" + eachFile + "\n node=" + eachNode.getTestPresentation() + " expected:" + expected);
         }
       }
     }
@@ -145,19 +145,19 @@ public class ProjectViewTestUtil {
   }
 
   public static void setupImpl(@NotNull Project project, boolean loadPaneExtensions) {
-    ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
+    ToolWindowHeadlessManagerImpl toolWindowManager = (ToolWindowHeadlessManagerImpl)ToolWindowManager.getInstance(project);
     ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
 
     if (toolWindow == null) {
-      for (final ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
+      for (ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
         if (bean.id.equals(ToolWindowId.PROJECT_VIEW)) {
-          toolWindow = toolWindowManager.registerToolWindow(bean.id, new JLabel(), ToolWindowAnchor.fromText(bean.anchor), project,
-                                                            false, bean.canCloseContents);
+          toolWindow = toolWindowManager.doRegisterToolWindow(bean.id);
           break;
         }
       }
     }
 
+    assert toolWindow != null;
     ((ProjectViewImpl)ProjectView.getInstance(project)).setupImpl(toolWindow, loadPaneExtensions);
   }
 }

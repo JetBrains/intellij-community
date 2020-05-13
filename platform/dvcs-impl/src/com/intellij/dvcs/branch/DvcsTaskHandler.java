@@ -17,6 +17,7 @@ package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -57,10 +58,10 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     if (!problems.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
           Messages.showDialog(myProject,
-                              "<html>The following repositories already have specified " + myBranchType + "<b>" + taskName + "</b>:<br>" +
-                              StringUtil.join(problems, "<br>") + ".<br>" +
-                              "Do you want to checkout existing " + myBranchType + "?", StringUtil.capitalize(myBranchType) + " Already Exists",
-                              new String[]{Messages.YES_BUTTON, Messages.NO_BUTTON}, 0,
+                              DvcsBundle.message("dialog.message.following.repositories.already.have.specified", myBranchType, taskName,
+                                                 StringUtil.join(problems, "<br>"), myBranchType),
+                              DvcsBundle.message("dialog.title.already.exists", StringUtil.capitalize(myBranchType)),
+                              new String[]{Messages.getYesButton(), Messages.getNoButton()}, 0,
                               Messages.getWarningIcon()) == 0) {
         checkout(taskName, problems, null);
         map.addAll(problems);
@@ -102,9 +103,8 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     return myRepositoryManager.isSyncEnabled();
   }
 
-  @NotNull
   @Override
-  public TaskInfo[] getCurrentTasks() {
+  public TaskInfo @NotNull [] getCurrentTasks() {
     List<R> repositories = myRepositoryManager.getRepositories();
     Map<String, TaskInfo> tasks = FactoryMap.create(key -> new TaskInfo(key, new ArrayList<>()));
     for (R repository : repositories) {

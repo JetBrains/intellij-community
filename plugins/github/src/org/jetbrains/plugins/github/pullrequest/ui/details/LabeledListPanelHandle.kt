@@ -1,62 +1,66 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.ui.popup.IconButton
-import com.intellij.ui.InplaceButton
+import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
+import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.WrapLayout
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
-import java.awt.Cursor
+import org.jetbrains.plugins.github.util.getEDTExecutor
+import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import javax.swing.Icon
+import java.util.concurrent.CompletableFuture
+import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JPanel
+import kotlin.properties.Delegates
 
-internal abstract class LabeledListPanelHandle<T>(private val model: SingleValueModel<GHPullRequest?>,
-                                                  private val securityService: GithubPullRequestsSecurityService,
-                                                  private val busyStateTracker: GithubPullRequestsBusyStateTracker,
-                                                  emptyText: String, notEmptyText: String)
-  : Disposable {
+internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetailsModel,
+                                                  emptyText: String, notEmptyText: String) {
+
+  private var isBusy by Delegates.observable(false) { _, _, _ ->
+    updateControls()
+  }
+  private var adjustmentError by Delegates.observable<Throwable?>(null) { _, _, _ ->
+    updateControls()
+  }
 
   val label = JLabel().apply {
     foreground = UIUtil.getContextHelpForeground()
-    border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP + 2, 0, UIUtil.DEFAULT_VGAP + 2, UIUtil.DEFAULT_HGAP / 2)
+    border = JBUI.Borders.empty(6, 0, 6, 5)
   }
   val panel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
 
-  protected val editButton = InplaceButton(IconButton(null,
-                                                      resizeSquareIcon(AllIcons.General.Inline_edit),
-                                                      resizeSquareIcon(AllIcons.General.Inline_edit_hovered)),
-                                           ActionListener { (::editList)() }).apply {
-    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    isVisible = securityService.currentUserCanEditPullRequestsMetadata()
-    isFocusable = true
-    addKeyListener(object : KeyAdapter() {
-      override fun keyPressed(e: KeyEvent) {
-        if (e.keyCode == KeyEvent.VK_ENTER || e.keyCode == KeyEvent.VK_SPACE) {
-          doClick()
-          e.consume()
-        }
-      }
-    })
+  private val editButton = InlineIconButton(AllIcons.General.Inline_edit,
+                                            AllIcons.General.Inline_edit_hovered).apply {
+    border = JBUI.Borders.empty(6, 0)
+    actionListener = ActionListener { editList() }
+  }
+  private val progressLabel = JLabel(AnimatedIcon.Default()).apply {
+    border = JBUI.Borders.empty(6, 0)
+  }
+  private val errorIcon = JLabel(AllIcons.General.Error).apply {
+    border = JBUI.Borders.empty(6, 0)
   }
 
-  private fun resizeSquareIcon(icon: Icon): Icon {
-    val scale = 20f / icon.iconHeight
-    return IconUtil.scale(icon, editButton, scale)
+  private val controlsPanel = JPanel(HorizontalLayout(4)).apply {
+    isOpaque = false
+
+    add(editButton)
+    add(progressLabel)
+    add(errorIcon)
   }
 
   private var list: List<T>? by equalVetoingObservable<List<T>?>(null) { newList ->
@@ -67,7 +71,7 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
     panel.isVisible = newList != null
     if (newList != null) {
       if (newList.isEmpty()) {
-        panel.add(editButton)
+        panel.add(controlsPanel)
       }
       else {
         for (item in newList.dropLast(1)) {
@@ -76,38 +80,59 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
         panel.add(getListItemComponent(newList.last(), true))
       }
     }
+    panel.validate()
+    panel.repaint()
   }
 
   init {
-    fun update() {
-      list = model.value?.let(::extractItems)
-      updateButton()
-    }
-
-    model.addValueChangedListener(this) {
-      update()
-    }
-    busyStateTracker.addPullRequestBusyStateListener(this) {
-      updateButton()
-    }
-    update()
+    model.addAndInvokeDetailsChangedListener(::updateList)
+    updateControls()
   }
 
-  private fun updateButton() {
-    editButton.isEnabled = !(model.value?.number?.let(busyStateTracker::isBusy) ?: true)
+  private fun updateList() {
+    list = getItems()
+  }
+
+  private fun updateControls() {
+    editButton.isVisible = !isBusy && model.isMetadataEditingAllowed
+    progressLabel.isVisible = isBusy
+    errorIcon.isVisible = adjustmentError != null
+    //language=html
+    errorIcon.toolTipText = "<html><body>${GithubBundle.message(
+      "pull.request.adjustment.failed")}<br/>${adjustmentError?.message.orEmpty()}</body></html> "
   }
 
   private fun getListItemComponent(item: T, last: Boolean = false) =
     if (!last) getItemComponent(item)
-    else simplePanel(getItemComponent(item)).addToRight(editButton).apply {
+    else simplePanel(getItemComponent(item)).addToRight(controlsPanel).apply {
       isOpaque = false
     }
 
-  abstract fun extractItems(details: GHPullRequest): List<T>?
+  abstract fun getItems(): List<T>?
 
   abstract fun getItemComponent(item: T): JComponent
 
-  abstract fun editList()
+  private fun editList() {
+    showEditPopup(editButton)
+      ?.thenComposeAsync(Function<CollectionDelta<T>, CompletableFuture<Unit>> { delta ->
+        if (delta == null || delta.isEmpty) {
+          CompletableFuture.completedFuture(Unit)
+        }
+        else {
+          adjustmentError = null
+          isBusy = true
+          adjust(EmptyProgressIndicator(), delta)
+        }
+      }, getEDTExecutor())
+      ?.handleOnEdt { _, error ->
+        adjustmentError = error
+        isBusy = false
+      }
+  }
 
-  override fun dispose() {}
+  @CalledInAwt
+  abstract fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<T>>?
+
+  @CalledInAwt
+  abstract fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<T>): CompletableFuture<Unit>
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.memberPullUp;
 
@@ -57,13 +57,12 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new PullUpUsageViewDescriptor();
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<UsageInfo> result = new ArrayList<>();
     for (MemberInfo memberInfo : myMembersToMove) {
       final PsiMember member = memberInfo.getMember();
@@ -93,14 +92,14 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
 
   @Nullable
   @Override
-  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(myTargetSuperClass);
     return data;
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     moveMembersToBase();
     moveFieldInitializations();
     for (UsageInfo usage : usages) {
@@ -137,7 +136,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       }
 
       MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
-    }), MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
+    }), MethodDuplicatesHandler.getRefactoringName(), true, myProject);
   }
 
   @NotNull
@@ -299,8 +298,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     }
 
     @Override
-    @NotNull
-    public PsiElement[] getElements() {
+    public PsiElement @NotNull [] getElements() {
       return ContainerUtil.map(myMembersToMove, info -> info.getMember(), PsiElement.EMPTY_ARRAY);
     }
 
@@ -308,11 +306,6 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     @Override
     public String getCodeReferencesText(int usagesCount, int filesCount) {
       return "Class to pull up members to \"" + RefactoringUIUtil.getDescription(myTargetSuperClass, true) + "\"";
-    }
-
-    @Override
-    public String getCommentReferencesText(int usagesCount, int filesCount) {
-      return null;
     }
   }
 }

@@ -19,9 +19,6 @@ import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 
-/**
- * @author nik
- */
 public class MasterDetailsState {
   private SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
   private String lastEditedConfigurable;

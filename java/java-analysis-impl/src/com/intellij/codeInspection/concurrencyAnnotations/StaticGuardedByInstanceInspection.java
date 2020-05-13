@@ -1,13 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticGuardedByInstanceInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -15,14 +15,7 @@ public class StaticGuardedByInstanceInspection extends AbstractBaseJavaLocalInsp
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CONCURRENCY_ANNOTATION_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Static member guarded by instance field or this";
+    return InspectionsBundle.message("group.names.concurrency.annotation.issues");
   }
 
   @Override
@@ -112,11 +105,11 @@ public class StaticGuardedByInstanceInspection extends AbstractBaseJavaLocalInsp
       if (guardField.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      myHolder.registerProblem(psiDocTag, "Static member guarded by instance \"" + guardValue + "\" #loc");
+      myHolder.registerProblem(psiDocTag, JavaAnalysisBundle.message("static.member.guarded.by.instance.0.loc", guardValue));
     }
 
     private void registerError(PsiElement element) {
-      myHolder.registerProblem(element, "Static member guarded by instance #ref #loc");
+      myHolder.registerProblem(element, JavaAnalysisBundle.message("static.member.guarded.by.instance.ref.loc"));
     }
   }
 }

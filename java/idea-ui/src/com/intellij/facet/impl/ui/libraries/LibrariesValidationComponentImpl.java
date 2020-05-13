@@ -25,9 +25,6 @@ import com.intellij.util.EventDispatcher;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class LibrariesValidationComponentImpl implements LibrariesValidationComponent {
   private final EventDispatcher<ValidityListener> myDispatcher = EventDispatcher.create(ValidityListener.class);
   private final FacetErrorPanel myErrorPanel;

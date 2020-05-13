@@ -63,7 +63,7 @@ msg="Entering $funcname($args)${envstr:+ with environment $envstr${3:+; }}$3"
 
 NEW_USERNAME=${NEW_USERNAME:-builduser}
 
-REPOSITORY="http://repo.labs.intellij.net/cache/${REPOSITORY/https:\//https}"
+REPOSITORY="https://repo.labs.intellij.net/cache/${REPOSITORY/https:\//https}"
 
 local wait_seconds="${2:-10}" # 10 seconds as default timeout
 
@@ -79,12 +79,12 @@ do
 	/usr/local/bin/brew install $PKG
 done
 
-local URL="${3:-http://repo.labs.intellij.net/download/oracle/$FILE}"
+local URL="${3:-https://repo.labs.intellij.net/download/oracle/$FILE}"
 
 
 for component in ${distrs[*]}
 do
-    wget -nv "http://repo.labs.intellij.net/download/oracle/${component}"
+    wget -nv "https://repo.labs.intellij.net/download/oracle/${component}"
 done
 
 ARGS="--install /usr/bin/java java $JAVA_HOME/bin/java 100"
@@ -144,3 +144,18 @@ function addConf {
     reportInfo "Successfully added entry $*"
     return 0
 }
+
+type="${entry%[[:space:]]*}"
+
+${parameter-word}
+${parameter=word}
+${parameter?word}
+${parameter+word}
+${@}
+
+line="${line%$'\r'}"
+${parameter:-abc}
+
+line="${line%'\r'}"
+line="${line%$'\r'}"
+line="${line%"\r"}"

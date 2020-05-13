@@ -9,7 +9,9 @@ import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
@@ -18,6 +20,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
+import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import javax.swing.JComponent
 
 class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTypeRegistry,
@@ -44,7 +47,7 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
 
   private fun createDiff(filePath: String, diffHunk: String): JComponent {
     try {
-      val patchReader = PatchReader(createPatchFromHunk(filePath, diffHunk))
+      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(filePath, diffHunk))
       val patchHunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull()?.let { truncateHunk(it) }
                       ?: throw IllegalStateException("Could not parse diff hunk")
 
@@ -61,9 +64,9 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
 
         return EditorHandlerPanel.create(editorFactory) {
           val editor = createEditor(document)
-          editor.gutterComponentEx.apply {
-            setLineNumberConvertor(builder.lineConvertor1.createConvertor(),
-                                   builder.lineConvertor2.createConvertor())
+          editor.gutter.apply {
+            setLineNumberConverter(LineNumberConverterAdapter(builder.lineConvertor1.createConvertor()),
+                                   LineNumberConverterAdapter(builder.lineConvertor2.createConvertor()))
           }
 
           val hunk = builder.hunks.first()
@@ -80,8 +83,11 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
 
         return EditorHandlerPanel.create(editorFactory) {
           val editor = createEditor(document)
-          editor.gutterComponentEx.apply {
-            setLineNumberConvertor({ it + patchHunk.startLineBefore }, { it + patchHunk.startLineAfter })
+          editor.gutter.apply {
+            setLineNumberConverter(
+              LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineBefore },
+              LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineAfter }
+            )
           }
           editor
         }
@@ -101,7 +107,7 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
     val toRemoveIdx = hunk.lines.lastIndex - DIFF_SIZE
     for (i in 0..toRemoveIdx) {
       val line = hunk.lines[i]
-      when (line.type!!) {
+      when (line.type) {
         PatchLine.Type.CONTEXT -> {
           startLineBefore++
           startLineAfter++
@@ -144,11 +150,5 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
 
   companion object {
     private const val DIFF_SIZE = 3
-
-    private fun createPatchFromHunk(filePath: String, diffHunk: String): String {
-      return """--- a/$filePath
-+++ b/$filePath
-""" + diffHunk
-    }
   }
 }

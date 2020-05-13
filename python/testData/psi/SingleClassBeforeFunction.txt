@@ -5,7 +5,7 @@ PyFile:SingleClassBeforeFunction.py
       <empty list>
     PyArgumentList
       <empty list>
-    PsiErrorElement:Colon expected
+    PsiErrorElement:':' expected
       <empty list>
     PsiWhiteSpace('\n\n\n')
     PyStatementList

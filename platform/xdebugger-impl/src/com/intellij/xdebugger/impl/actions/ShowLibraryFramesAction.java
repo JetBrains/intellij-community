@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.icons.AllIcons;
@@ -7,21 +7,17 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author egor
- */
 final class ShowLibraryFramesAction extends ToggleAction {
   // we should remember initial answer "isLibraryFrameFilterSupported" because on stop no debugger process, but UI is still shown
   // - we should avoid "jumping" (visible (start) - invisible (stop) - visible (start again))
   private static final String IS_LIBRARY_FRAME_FILTER_SUPPORTED = "isLibraryFrameFilterSupported";
 
   private volatile boolean myShouldShow;
-  private static final String ourTextWhenShowIsOn = "Hide Frames from Libraries";
-  private static final String ourTextWhenShowIsOff = "Show All Frames";
 
   ShowLibraryFramesAction() {
     super("", "", AllIcons.General.Filter);
@@ -50,7 +46,7 @@ final class ShowLibraryFramesAction extends ToggleAction {
     if (Boolean.TRUE.equals(isSupported)) {
       presentation.setVisible(true);
       final boolean shouldShow = !Toggleable.isSelected(presentation);
-      presentation.setText(shouldShow ? ourTextWhenShowIsOn : ourTextWhenShowIsOff);
+      presentation.setText(XDebuggerBundle.message(shouldShow ? "hide.library.frames.tooltip" : "show.all.frames.tooltip"));
     }
     else {
       presentation.setVisible(false);

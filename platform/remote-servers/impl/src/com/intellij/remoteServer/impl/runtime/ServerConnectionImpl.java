@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.execution.ExecutionException;
@@ -24,17 +24,14 @@ import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionData;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionDataNotAvailableException;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-/**
- * @author nik
- */
 public class ServerConnectionImpl<D extends DeploymentConfiguration> implements ServerConnection<D> {
   private static final Logger LOG = Logger.getInstance(ServerConnectionImpl.class);
   private final RemoteServer<?> myServer;
@@ -46,7 +43,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private volatile ConnectionStatus myStatus = ConnectionStatus.DISCONNECTED;
   private volatile String myStatusText;
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
-  private final Map<Project, LogManagersForProject> myPerProjectLogManagers = ContainerUtil.newConcurrentMap();
+  private final Map<Project, LogManagersForProject> myPerProjectLogManagers = new ConcurrentHashMap<>();
   private final MyDeployments myAllDeployments;
 
   public ServerConnectionImpl(RemoteServer<?> server,
@@ -60,26 +57,23 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     myAllDeployments = new MyDeployments(server.getType().getDeploymentComparator());
   }
 
-  @NotNull
   @Override
-  public RemoteServer<?> getServer() {
+  public @NotNull RemoteServer<?> getServer() {
     return myServer;
   }
 
-  @NotNull
   @Override
-  public ConnectionStatus getStatus() {
+  public @NotNull ConnectionStatus getStatus() {
     return myStatus;
   }
 
-  @NotNull
   @Override
-  public String getStatusText() {
+  public @NotNull String getStatusText() {
     return myStatusText != null ? myStatusText : myStatus.getPresentableText();
   }
 
   @Override
-  public void connect(@NotNull final Runnable onFinished) {
+  public void connect(final @NotNull Runnable onFinished) {
     doDisconnect();
     connectIfNeeded(new ServerConnector.ConnectionCallback<D>() {
       @Override
@@ -120,7 +114,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   @Override
-  public void deploy(@NotNull final DeploymentTask<D> task, @NotNull final java.util.function.Consumer<String> onDeploymentStarted) {
+  public void deploy(final @NotNull DeploymentTask<D> task, final @NotNull java.util.function.Consumer<String> onDeploymentStarted) {
     connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
@@ -146,21 +140,19 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     });
   }
 
-  @Nullable
   @Override
-  public DeploymentLogManager getLogManager(@NotNull Project project, @NotNull Deployment deployment) {
+  public @Nullable DeploymentLogManager getLogManager(@NotNull Project project, @NotNull Deployment deployment) {
     LogManagersForProject forProject = myPerProjectLogManagers.get(project);
     return forProject == null ? null : forProject.findManager(deployment);
   }
 
-  @NotNull
-  public DeploymentLogManager getOrCreateLogManager(@NotNull Project project, @NotNull Deployment deployment) {
+  public @NotNull DeploymentLogManager getOrCreateLogManager(@NotNull Project project, @NotNull Deployment deployment) {
     LogManagersForProject forProject = myPerProjectLogManagers.computeIfAbsent(project, LogManagersForProject::new);
     return forProject.findOrCreateManager(deployment);
   }
 
   @Override
-  public void computeDeployments(@NotNull final Runnable onFinished) {
+  public void computeDeployments(final @NotNull Runnable onFinished) {
     connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
@@ -227,7 +219,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   @Override
-  public void undeploy(@NotNull Deployment deployment, @NotNull final DeploymentRuntime runtime) {
+  public void undeploy(@NotNull Deployment deployment, final @NotNull DeploymentRuntime runtime) {
     String deploymentName = deployment.getName();
     final MyDeployments.UndeployTransition undeployInProgress = myAllDeployments.startUndeploy(deploymentName);
 
@@ -285,13 +277,12 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     disposeAllLogs(deployment.getName());
   }
 
-  private void disposeAllLogs(@NotNull String deploymentName) {
+  public void disposeAllLogs(@NotNull String deploymentName) {
     myPerProjectLogManagers.values().forEach(nextForProject -> nextForProject.disposeManager(deploymentName));
   }
 
-  @NotNull
   @Override
-  public Collection<Deployment> getDeployments() {
+  public @NotNull Collection<Deployment> getDeployments() {
     return myAllDeployments.listDeployments();
   }
 
@@ -364,14 +355,13 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   private class LogManagersForProject {
     private final Project myProject;
-    private final Map<String, DeploymentLogManagerImpl> myLogManagers = ContainerUtil.newConcurrentMap();
+    private final Map<String, DeploymentLogManagerImpl> myLogManagers = new ConcurrentHashMap<>();
 
     LogManagersForProject(@NotNull Project project) {
       myProject = project;
     }
 
-    @Nullable
-    public DeploymentLogManagerImpl findManager(@NotNull Deployment deployment) {
+    public @Nullable DeploymentLogManagerImpl findManager(@NotNull Deployment deployment) {
       return myLogManagers.get(deployment.getName());
     }
 
@@ -397,7 +387,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     }
   }
 
-  private static abstract class ConnectionCallbackBase<D extends DeploymentConfiguration> implements ServerConnector.ConnectionCallback<D> {
+  private abstract static class ConnectionCallbackBase<D extends DeploymentConfiguration> implements ServerConnector.ConnectionCallback<D> {
     @Override
     public void errorOccurred(@NotNull String errorMessage) {
     }
@@ -431,7 +421,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       return myDeployment;
     }
 
-    private <D extends DebugConnectionData, R extends DeploymentRuntime> void launchDebugger(@NotNull final DebugConnector<D, R> debugConnector,
+    private <D extends DebugConnectionData, R extends DeploymentRuntime> void launchDebugger(final @NotNull DebugConnector<D, R> debugConnector,
                                                                                              @NotNull DeploymentRuntime runtime) {
       try {
         final D debugInfo = debugConnector.getConnectionData((R)runtime);
@@ -497,11 +487,10 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       }
     }
 
-    @Nullable
-    public DeploymentImpl updateRemoteState(@NotNull String deploymentName,
-                                            @Nullable DeploymentRuntime deploymentRuntime,
-                                            @NotNull DeploymentStatus deploymentStatus,
-                                            @Nullable String deploymentStatusText) {
+    public @Nullable DeploymentImpl updateRemoteState(@NotNull String deploymentName,
+                                                      @Nullable DeploymentRuntime deploymentRuntime,
+                                                      @NotNull DeploymentStatus deploymentStatus,
+                                                      @Nullable String deploymentStatusText) {
 
       synchronized (myLock) {
         DeploymentImpl result = myRemoteDeployments.get(deploymentName);
@@ -523,8 +512,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       }
     }
 
-    @NotNull
-    public Collection<Deployment> listDeployments() {
+    public @NotNull Collection<Deployment> listDeployments() {
       synchronized (myLock) {
         if (myCachedAllDeployments == null) {
           Collection<Deployment> result = doListDeployments();
@@ -589,8 +577,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       }
     }
 
-    @Nullable
-    public UndeployTransition startUndeploy(@NotNull String deploymentName) {
+    public @Nullable UndeployTransition startUndeploy(@NotNull String deploymentName) {
       synchronized (myLock) {
         DeploymentImpl deployment = myLocalDeployments.get(deploymentName);
         if (deployment == null) {
@@ -600,8 +587,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       }
     }
 
-    @NotNull
-    private List<Deployment> collectDeepChildren(@NotNull Deployment root) {
+    private @NotNull List<Deployment> collectDeepChildren(@NotNull Deployment root) {
       DeepChildrenCollector collector = new DeepChildrenCollector(root.getRuntime());
       synchronized (myLock) {
         for (LocalDeploymentImpl nextLocal : myLocalDeployments.values()) {
@@ -647,8 +633,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         }
       }
 
-      @NotNull
-      public Iterable<Deployment> getSubDeployments() {
+      public @NotNull Iterable<Deployment> getSubDeployments() {
         return mySubDeployments;
       }
 

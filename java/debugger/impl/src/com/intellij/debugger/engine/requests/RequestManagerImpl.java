@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.requests;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -30,7 +30,7 @@ import java.util.*;
  * @author lex
  */
 public class RequestManagerImpl extends DebugProcessAdapterImpl implements RequestManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.RequestManagerImpl");
+  private static final Logger LOG = Logger.getInstance(RequestManagerImpl.class);
 
   private static final Key CLASS_NAME = Key.create("ClassName");
   private static final Key<Requestor> REQUESTOR = Key.create("Requestor");
@@ -286,7 +286,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
     List<ClassPrepareRequest> prepareRequests = myDebugProcess.getPositionManager().createPrepareRequests(requestor, classPosition);
     if(prepareRequests.isEmpty()) {
-      setInvalid(requestor, DebuggerBundle.message("status.invalid.breakpoint.out.of.class"));
+      setInvalid(requestor, JavaDebuggerBundle.message("status.invalid.breakpoint.out.of.class"));
       return;
     }
 

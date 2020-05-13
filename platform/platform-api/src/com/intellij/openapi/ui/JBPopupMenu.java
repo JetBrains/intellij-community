@@ -3,11 +3,11 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -133,11 +133,6 @@ public class JBPopupMenu extends JPopupMenu {
         myScrollDirection = -1;
       }
       else {
-        myScrollDirection = 0;
-      }
-      if (myScrollDirection == 0) {
-        myTarget.revalidate();
-        myTarget.repaint();
         return;
       }
 
@@ -155,7 +150,7 @@ public class JBPopupMenu extends JPopupMenu {
         myShift = newShift;
         myTarget.revalidate();
         myTarget.repaint();
-        Window w = UIUtil.getWindow(myTarget.getComponent());
+        Window w = ComponentUtil.getWindow(myTarget.getComponent());
         if (w != null) {
           for (Window window : w.getOwnedWindows()) {
             window.dispose();
@@ -223,7 +218,9 @@ public class JBPopupMenu extends JPopupMenu {
     @Override
     public Dimension preferredLayoutSize(Container target) {
       Dimension dimension = super.preferredLayoutSize(target);
-      dimension.height = Math.min(getMaxHeight(), dimension.height);
+      int maxHeight = getMaxHeight();
+      switchTimer(dimension.height > maxHeight);
+      dimension.height = Math.min(maxHeight, dimension.height);
       return dimension;
     }
   }

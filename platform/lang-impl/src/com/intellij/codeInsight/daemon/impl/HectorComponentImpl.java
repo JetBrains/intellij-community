@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -68,7 +68,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
       !fileIndex.isInLibrary(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = myFile.getViewProvider();
     List<Language> languages = new ArrayList<>(viewProvider.getLanguages());
-    Collections.sort(languages, PsiUtilBase.LANGUAGE_COMPARATOR);
+    languages.sort(PsiUtilBase.LANGUAGE_COMPARATOR);
     for (Language language : languages) {
       @SuppressWarnings("UseOfObsoleteCollectionType")
       final Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
@@ -99,7 +99,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
     }
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                   GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0);
+                                                   GridBagConstraints.NONE, JBUI.insetsLeft(5), 0, 0);
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(EditorBundle.message("hector.highlighting.level.title"), false));
@@ -119,7 +119,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
     gc.gridy = GridBagConstraints.RELATIVE;
     gc.weighty = 0;
 
-    final HyperlinkLabel configurator = new HyperlinkLabel("Configure inspections");
+    final HyperlinkLabel configurator = new HyperlinkLabel(EditorBundle.message("iw.configure.inspections"));
     gc.insets.right = 5;
     gc.insets.bottom = 10;
     gc.weightx = 0;
@@ -167,7 +167,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
       slider.setOrientation(SwingConstants.HORIZONTAL);
       slider.setPreferredSize(JBUI.size(200, 40));
       panel.add(slider, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                               new Insets(5, 0, 5, 0), 0, 0));
+                                               JBUI.insets(5, 0), 0, 0));
     }
   }
 
@@ -179,7 +179,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
       borderPanel.add(new JLabel(language.getID()), BorderLayout.NORTH);
       borderPanel.add(slider, BorderLayout.CENTER);
       panel.add(borderPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL,
-                                                    new Insets(0, 5, 0, 5), 0, 0));
+                                                    JBUI.insets(0, 5), 0, 0));
     }
   }
 

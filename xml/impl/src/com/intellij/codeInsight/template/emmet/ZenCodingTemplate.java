@@ -118,7 +118,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       expand(key, callback, defaultGenerator, Collections.emptyList(), true, Registry.intValue("emmet.segments.limit"));
     }
     catch (EmmetException e) {
-      CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
+      CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), XmlBundle.message("emmet.error"), "");
     }
   }
 
@@ -319,7 +319,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
             expand(node, generator, filters, selectedText, callback, true, Registry.intValue("emmet.segments.limit"));
           }
           catch (EmmetException e) {
-            CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
+            CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(),
+                                                XmlBundle.message("emmet.error"), "");
           }
         }
       }), CodeInsightBundle.message("insert.code.template.command"), null));

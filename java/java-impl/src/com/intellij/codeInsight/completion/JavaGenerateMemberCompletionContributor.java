@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -19,12 +19,12 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.intellij.util.text.CharArrayUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl;
@@ -58,7 +58,7 @@ public class JavaGenerateMemberCompletionContributor {
       }
       suggestGeneratedMethods(result, position, modifierList);
     } else if (isTypingAnnotationForNewMember(position)) {
-      PsiAnnotation annotation = ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class));
+      PsiAnnotation annotation = Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class));
       int annoStart = annotation.getTextRange().getStartOffset();
 
       result.addElement(itemWithOverrideImplementDialog(annoStart));
@@ -106,7 +106,7 @@ public class JavaGenerateMemberCompletionContributor {
   }
 
   private static void suggestGeneratedMethods(CompletionResultSet result, PsiElement position, @Nullable PsiModifierList modifierList) {
-    PsiClass parent = CompletionUtil.getOriginalElement(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiClass.class)));
+    PsiClass parent = CompletionUtil.getOriginalElement(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiClass.class)));
     if (parent != null) {
       Set<MethodSignature> addedSignatures = new HashSet<>();
       addGetterSetterElements(result, parent, addedSignatures);
@@ -121,7 +121,7 @@ public class JavaGenerateMemberCompletionContributor {
     for (PsiField field : parent.getFields()) {
       if (isConstant(field)) continue;
 
-      List<PsiMethod> prototypes = ContainerUtil.newSmartList();
+      List<PsiMethod> prototypes = new SmartList<>();
       try {
         Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true, false));
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
@@ -130,7 +130,9 @@ public class JavaGenerateMemberCompletionContributor {
       }
       catch (GenerateCodeException ignore) { }
       for (final PsiMethod prototype : prototypes) {
-        if (parent.findMethodBySignature(prototype, false) == null && addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
+        PsiMethod existingMethod = parent.findMethodBySignature(prototype, false);
+        if ((existingMethod == null || existingMethod instanceof SyntheticElement) &&
+            addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
           Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);
           result.addElement(createGenerateMethodElement(prototype, PsiSubstitutor.EMPTY, icon, "", new InsertHandler<LookupElement>() {
             @Override

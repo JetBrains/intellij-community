@@ -67,7 +67,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     final CheckBox checkBox1 =
       new CheckBox(InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion");
     final CheckBox checkBox2 =
-      new CheckBox("Ignore test methods which declare exceptions", this, "ignoreIfExceptionThrown");
+      new CheckBox(InspectionGadgetsBundle.message("inspection.test.method.without.assertions.exceptions.option"), this, "ignoreIfExceptionThrown");
     return new FormBuilder()
       .addComponentFillVertically(UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose assertion class"), 0)
       .addComponent(checkBox1)
@@ -80,12 +80,6 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
   @NotNull
   public String getID() {
     return "JUnitTestMethodWithNoAssertions";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("test.method.without.assertion.display.name");
   }
 
   @Override

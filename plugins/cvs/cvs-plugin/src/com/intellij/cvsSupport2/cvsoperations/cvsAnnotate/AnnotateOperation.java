@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class AnnotateOperation extends LocalPathIndifferentOperation {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation");
+  private static final Logger LOG = Logger.getInstance(AnnotateOperation.class);
 
   private final String myRevision;
   private final List<Annotation> myAnnotations = new ArrayList<>();

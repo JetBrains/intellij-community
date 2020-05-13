@@ -43,7 +43,7 @@ public class TroveUtil {
   }
 
   @Nullable
-  public static TIntHashSet intersect(@NotNull TIntHashSet... sets) {
+  public static TIntHashSet intersect(TIntHashSet @NotNull ... sets) {
 
     Arrays.sort(sets, (set1, set2) -> {
       if (set1 == null) return -1;

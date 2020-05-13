@@ -63,4 +63,10 @@
     <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
     <description>String literal 'invalid' doesn't appear to be valid property key</description>
   </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>47</line>
+    <problem_class id="UnresolvedPropertyKey" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Invalid property key</problem_class>
+    <description>Property 'with.nested.choice' expected 4 parameters, passed 3</description>
+  </problem>
 </problems>

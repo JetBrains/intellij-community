@@ -43,16 +43,19 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     scrollOffset = layout.getScrollOffset();
   }
 
+  @Deprecated
   @Override
   public int getRowCount() {
     return 1;
   }
 
+  @Deprecated
   @Override
   public int getColumnCount(final int row) {
     return myVisibleInfos.size();
   }
 
+  @Deprecated
   @Override
   public TabInfo getTabAt(final int row, final int column) {
     return myVisibleInfos.get(column);

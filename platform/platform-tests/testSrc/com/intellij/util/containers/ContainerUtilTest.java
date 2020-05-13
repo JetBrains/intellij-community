@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UnfairTextRange;
@@ -16,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ContainerUtilTest extends TestCase {
+  private static final Logger LOG = Logger.getInstance(ContainerUtilTest.class);
   public void testFindInstanceOf() {
     Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList<>(), "1").iterator();
     String string = ContainerUtil.findInstance(iterator, String.class);
@@ -128,7 +130,7 @@ public class ContainerUtilTest extends TestCase {
       long stockElapsed = measure(stock);
       long myElapsed = measure(my);
 
-      System.out.println("LockFree my: " + myElapsed + "; stock: " + stockElapsed);
+      LOG.debug("LockFree my: " + myElapsed + "; stock: " + stockElapsed);
       assertTrue("lockFree: " + myElapsed + "; stock: " + stockElapsed, (myElapsed - stockElapsed + 0.0) / myElapsed < 0.1);
     }
   }
@@ -176,7 +178,7 @@ public class ContainerUtilTest extends TestCase {
           list.add(ints.get(i));
         }
       }
-    }).attempts(10).assertTiming();
+    }).reattemptUntilJitSettlesDown().assertTiming();
     for (int i = 0; i < list.size(); i++) {
       assertEquals(i, list.get(i));
     }

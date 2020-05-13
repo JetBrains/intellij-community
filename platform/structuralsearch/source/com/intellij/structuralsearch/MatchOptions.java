@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
@@ -160,6 +160,8 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public void setScope(SearchScope scope) {
+    scopeType = null;
+    scopeDescriptor = null;
     this.scope = scope;
   }
 
@@ -246,7 +248,7 @@ public class MatchOptions implements JDOMExternalizable {
     if (!pattern.equals(matchOptions.pattern)) return false;
     if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
     if (myFileType != matchOptions.myFileType) return false;
-    if (!Objects.equals(myDialect, matchOptions.myDialect)) return false;
+    if (!Objects.equals(getDialect(), matchOptions.getDialect())) return false;
     if (!Objects.equals(myPatternContextId, matchOptions.myPatternContextId)) return false;
 
     return true;
@@ -258,8 +260,7 @@ public class MatchOptions implements JDOMExternalizable {
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     result = 29 * result + pattern.hashCode();
     result = 29 * result + variableConstraints.hashCode();
-    if (scope != null) //noinspection deprecation
-      result = 29 * result + scope.hashCode();
+    if (scope != null) result = 29 * result + scope.hashCode();
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
     if (myDialect != null) result = 29 * result + myDialect.hashCode();
     if (myPatternContextId != null) result = 29 * result + myPatternContextId.hashCode();
@@ -291,7 +292,6 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public PatternContext getPatternContext() {
-    if (myPatternContextId == null) return null;
     return StructuralSearchUtil.findPatternContextByID(myPatternContextId, getDialect());
   }
 

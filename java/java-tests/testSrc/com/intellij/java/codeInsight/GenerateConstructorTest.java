@@ -19,19 +19,24 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
+import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.java.codeInspection.DataFlowInspectionTest;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
  * @author ven
@@ -40,7 +45,7 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_14;
   }
 
   @Override
@@ -105,8 +110,40 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
 
   public void testNullableField() { doTest(); }
 
+  public void testRecordCompactConstructor() {
+    doTestRecordConstructor((aClass, m) -> new ClassMember[]{new RecordConstructorMember(aClass, true)});
+  }
+
+  public void testRecordCanonicalConstructor() {
+    doTestRecordConstructor((aClass, m) -> new ClassMember[]{new RecordConstructorMember(aClass, false)});
+  }
+
+  public void testRecordCustomConstructor() {
+    doTestRecordConstructor((aClass, m) -> m);
+  }
+
+  public void testRecordCustomConstructor2() {
+    doTestRecordConstructor((aClass, m) -> Arrays.copyOf(m, 2));
+  }
+  
+  public void testRecordCustomConstructor3() {
+    doTestRecordConstructor((aClass, m) -> Arrays.copyOf(m, 2));
+  }
+
   private void doTest() {
     doTest(false);
+  }
+
+  private void doTestRecordConstructor(BiFunction<PsiClass, ClassMember[], ClassMember[]> chooser) {
+    String name = getTestName(false);
+    myFixture.configureByFile("before" + name + ".java");
+    new GenerateConstructorHandler() {
+      @Override
+      protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
+        return chooser.apply(aClass, getAllOriginalMembers(aClass));
+      }
+    }.invoke(getProject(), getEditor(), getFile());
+    myFixture.checkResultByFile("after" + name + ".java");
   }
 
   private void doTest(boolean preSelect) {

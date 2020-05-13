@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.GeneralSettings;
@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -49,18 +50,20 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     SplashManager.hideBeforeShow(this);
 
     JRootPane rootPane = getRootPane();
-    final WelcomeScreen screen = createScreen(rootPane);
+    WelcomeScreen screen = createScreen(rootPane);
 
-    final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
+    IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
     setGlassPane(glassPane);
     glassPane.setVisible(false);
     setContentPane(screen.getWelcomePanel());
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    Disposable listenerDisposable = Disposer.newDisposable();
+    ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
+        Disposer.dispose(listenerDisposable);
         dispose();
       }
     });
@@ -155,6 +158,9 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     if (ourInstance != null) {
       return null;
     }
+
+    // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
+    ApplicationManager.getApplication().executeOnPooledThread(() -> ActionManager.getInstance());
 
     IdeFrame frame = createWelcomeFrame();
     return () -> {

@@ -2,12 +2,29 @@
 package com.jetbrains.jsonSchema.impl;
 
 public class JsonComplianceCheckerOptions {
-  public static final JsonComplianceCheckerOptions RELAX_ENUM_CHECK = new JsonComplianceCheckerOptions(true);
+  public static final JsonComplianceCheckerOptions RELAX_ENUM_CHECK = new JsonComplianceCheckerOptions(true, false);
 
   private final boolean isCaseInsensitiveEnumCheck;
-  public JsonComplianceCheckerOptions(boolean caseInsensitiveEnumCheck) {isCaseInsensitiveEnumCheck = caseInsensitiveEnumCheck;}
+  private final boolean isForceStrict;
+
+  public JsonComplianceCheckerOptions(boolean caseInsensitiveEnumCheck) {
+    this(caseInsensitiveEnumCheck, false);
+  }
+
+  private JsonComplianceCheckerOptions(boolean caseInsensitiveEnumCheck, boolean forceStrict) {
+    isCaseInsensitiveEnumCheck = caseInsensitiveEnumCheck;
+    isForceStrict = forceStrict;
+  }
+
+  public JsonComplianceCheckerOptions withForcedStrict() {
+    return new JsonComplianceCheckerOptions(isCaseInsensitiveEnumCheck, true);
+  }
 
   public boolean isCaseInsensitiveEnumCheck() {
     return isCaseInsensitiveEnumCheck;
+  }
+
+  public boolean isForceStrict() {
+    return isForceStrict;
   }
 }

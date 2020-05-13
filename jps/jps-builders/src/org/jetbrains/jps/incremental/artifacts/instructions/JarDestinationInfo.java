@@ -19,11 +19,8 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 
-/**
- * @author nik
- */
 public class JarDestinationInfo extends DestinationInfo {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.artifacts.instructions.JarDestinationInfo");
+  private static final Logger LOG = Logger.getInstance(JarDestinationInfo.class);
   private final String myPathInJar;
   private final JarInfo myJarInfo;
 

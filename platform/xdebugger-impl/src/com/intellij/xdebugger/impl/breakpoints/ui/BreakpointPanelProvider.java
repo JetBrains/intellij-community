@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public abstract class BreakpointPanelProvider<B> {
 
   public abstract void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules);

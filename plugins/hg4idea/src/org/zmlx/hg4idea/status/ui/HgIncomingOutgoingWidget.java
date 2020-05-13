@@ -1,76 +1,77 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.status.ui;
 
+import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgProjectSettings;
-import org.zmlx.hg4idea.HgUpdater;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.status.HgChangesetStatus;
+import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.Objects;
 
-public class HgIncomingOutgoingWidget extends EditorBasedWidget
-  implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgHideableWidget {
+final class HgIncomingOutgoingWidget extends EditorBasedWidget implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe {
+  private static final String INCOMING_WIDGET_ID = "InHgIncomingOutgoingWidget";
+  private static final String OUTGOING_WIDGET_ID = "OutHgIncomingOutgoingWidget";
 
   @NotNull private final HgVcs myVcs;
-  @NotNull final Project myProject;
-  @NotNull private final HgProjectSettings myProjectSettings;
-  @NotNull private final HgChangesetStatus myChangesStatus;
   private final boolean myIsIncoming;
-  private boolean isAlreadyShown;
   @NotNull private final Icon myEnabledIcon;
   @NotNull private final Icon myDisabledIcon;
 
   private volatile String myTooltip = "";
   private Icon myCurrentIcon;
 
-  public HgIncomingOutgoingWidget(@NotNull HgVcs vcs,
-                                  @NotNull Project project,
-                                  @NotNull HgProjectSettings projectSettings,
-                                  boolean isIncoming) {
-    super(project);
-    this.myProject = project;
-    this.myIsIncoming = isIncoming;
+  public HgIncomingOutgoingWidget(@NotNull HgVcs vcs, boolean isIncoming) {
+    super(vcs.getProject());
+    myIsIncoming = isIncoming;
     myVcs = vcs;
-    myProjectSettings = projectSettings;
-    myChangesStatus = new HgChangesetStatus(isIncoming ? "In" : "Out");
-    isAlreadyShown = false;
     myEnabledIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
     myDisabledIcon = IconLoader.getDisabledIcon(myEnabledIcon);
     myCurrentIcon = myDisabledIcon;
-    Disposer.register(project, this);
+
+    MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    busConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, () -> updateLater());
+    busConnection.subscribe(HgVcs.STATUS_TOPIC, (project, root) -> updateLater());
+    busConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateLater());
+    busConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
+      @Override
+      public void update() {
+        updateLater();
+      }
+    });
+    updateLater();
   }
 
   @Override
   public StatusBarWidget copy() {
-    return new HgIncomingOutgoingWidget(myVcs, myProject, myProjectSettings, myIsIncoming);
+    return new HgIncomingOutgoingWidget(myVcs, myIsIncoming);
   }
 
   @NotNull
   @Override
   public String ID() {
-    String name = HgIncomingOutgoingWidget.class.getName();
-    return myIsIncoming ? "In" + name : "Out" + name;
+    return myIsIncoming ? INCOMING_WIDGET_ID : OUTGOING_WIDGET_ID;
   }
 
   @Override
@@ -80,17 +81,17 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
 
   @Override
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    update();
+    updateLater();
   }
 
   @Override
   public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    update();
+    updateLater();
   }
 
   @Override
   public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    update();
+    updateLater();
   }
 
   @Override
@@ -101,92 +102,28 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   @Override
   // Updates branch information on click
   public Consumer<MouseEvent> getClickConsumer() {
-    return mouseEvent -> update();
+    return mouseEvent -> updateLater();
   }
 
-
-  public boolean isVisible() {
-    return myProjectSettings.isCheckIncomingOutgoing();
-  }
-
-  @Override
-  public void update(final Project project, @Nullable VirtualFile root) {
-    if (!isVisible()) return;
+  @CalledInAny
+  public void updateLater() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      if ((project == null) || project.isDisposed()) {
-        emptyTooltip();
-        return;
-      }
+      if (Disposer.isDisposed(this)) return;
 
-      boolean changesAvailable = myChangesStatus.getNumChanges() > 0;
+      HgRemoteStatusUpdater statusUpdater = myVcs.getRemoteStatusUpdater();
+      if (statusUpdater == null) return;
+      HgChangesetStatus status = statusUpdater.getStatus(myIsIncoming);
+      boolean changesAvailable = status.getNumChanges() > 0;
       myCurrentIcon = changesAvailable ? myEnabledIcon : myDisabledIcon;
-      myTooltip = changesAvailable ? "\n" + myChangesStatus.getToolTip() : "No changes available";
-      if (!isVisible() || !isAlreadyShown) return;
+      myTooltip = changesAvailable ? "\n" + status.getToolTip() : HgBundle.message("no.changes.available");
       if (myStatusBar != null) myStatusBar.updateWidget(ID());
     });
-  }
-
-  @CalledInAwt
-  public void activate() {
-    MessageBusConnection busConnection = myProject.getMessageBus().connect();
-    busConnection.subscribe(HgVcs.STATUS_TOPIC, this);
-    busConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, this);
-
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (null != statusBar && isVisible()) {
-      statusBar.addWidget(this, myProject);
-      isAlreadyShown = true;
-    }
-  }
-
-  @CalledInAwt
-  public void deactivate() {
-    if (!isAlreadyShown) return;
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (null != statusBar) {
-      statusBar.removeWidget(ID());
-      isAlreadyShown = false;
-    }
-  }
-
-  @Override
-  public void show() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (isAlreadyShown) {
-        return;
-      }
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-      if (null != statusBar && isVisible()) {
-        statusBar.addWidget(this, myProject);
-        isAlreadyShown = true;
-        BackgroundTaskUtil.syncPublisher(myProject, HgVcs.REMOTE_TOPIC).update(myProject, null);
-      }
-    }, ModalityState.any());
-  }
-
-  @Override
-  public void hide() {
-    ApplicationManager.getApplication().invokeLater(() -> deactivate(), ModalityState.any());
-  }
-
-  @Override
-  @CalledInAny
-  public void update() {
-    update(myProject, null);
-  }
-
-  private void emptyTooltip() {
-    myTooltip = "";
   }
 
   @NotNull
   @Override
   public Icon getIcon() {
     return myCurrentIcon;
-  }
-
-  public HgChangesetStatus getChangesetStatus() {
-    return myChangesStatus;
   }
 
   //if smb call hide widget then it removed from status bar ans dispose method called.
@@ -196,6 +133,77 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   public void dispose() {
     if (!isDisposed()) {
       super.dispose();
+    }
+  }
+  public static class Listener implements VcsRepositoryMappingListener, HgWidgetUpdater {
+    private final Project myProject;
+
+    public Listener(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void mappingChanged() {
+      updateVisibility();
+    }
+
+    @Override
+    public void updateVisibility() {
+      StatusBarWidgetsManager widgetsManager = myProject.getService(StatusBarWidgetsManager.class);
+      widgetsManager.updateWidget(HgIncomingOutgoingWidget.IncomingFactory.class);
+      widgetsManager.updateWidget(HgIncomingOutgoingWidget.OutgoingFactory.class);
+    }
+  }
+
+  public static class IncomingFactory extends MyWidgetFactory {
+    public IncomingFactory() {
+      super(true);
+    }
+  }
+
+  public static class OutgoingFactory extends MyWidgetFactory {
+    public OutgoingFactory() {
+      super(false);
+    }
+  }
+
+  private static abstract class MyWidgetFactory implements StatusBarWidgetFactory {
+    private final boolean myIsIncoming;
+
+    protected MyWidgetFactory(boolean isIncoming) {
+      myIsIncoming = isIncoming;
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project) {
+      return HgRemoteStatusUpdater.isCheckingEnabled(project);
+    }
+
+    @Override
+    public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+      HgVcs hgVcs = Objects.requireNonNull(HgVcs.getInstance(project));
+      return new HgIncomingOutgoingWidget(hgVcs, myIsIncoming);
+    }
+
+    @Override
+    public void disposeWidget(@NotNull StatusBarWidget widget) {
+      Disposer.dispose(widget);
+    }
+
+    @Override
+    public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
+      return true;
+    }
+
+    @Override
+    public @NotNull String getId() {
+      return myIsIncoming ? INCOMING_WIDGET_ID : OUTGOING_WIDGET_ID;
+    }
+
+    @Override
+    public @Nls @NotNull String getDisplayName() {
+      return myIsIncoming ? HgBundle.message("hg4idea.status.bar.incoming.widget.name")
+                          : HgBundle.message("hg4idea.status.bar.outgoing.widget.name");
     }
   }
 }

@@ -32,7 +32,7 @@ import java.util.function.BiConsumer;
  * Defines the visual representation (colors and effects) of text.
  */
 public class TextAttributes implements Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.markup.TextAttributes");
+  private static final Logger LOG = Logger.getInstance(TextAttributes.class);
   private static final AttributesFlyweight DEFAULT_FLYWEIGHT = AttributesFlyweight
     .create(null, null, Font.PLAIN, null, EffectType.BOXED, Collections.emptyMap(), null);
 

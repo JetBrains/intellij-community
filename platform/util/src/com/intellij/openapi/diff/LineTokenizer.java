@@ -16,8 +16,7 @@ public class LineTokenizer extends LineTokenizerBase<String> {
     myText = text;
   }
 
-  @NotNull
-  public String[] execute() {
+  public String @NotNull [] execute() {
     ArrayList<String> lines = new ArrayList<>();
     doExecute(lines);
     return ArrayUtilRt.toStringArray(lines);
@@ -50,7 +49,7 @@ public class LineTokenizer extends LineTokenizerBase<String> {
   }
 
   @NotNull
-  public static String concatLines(@NotNull String[] lines) {
+  public static String concatLines(String @NotNull [] lines) {
     StringBuilder buffer = new StringBuilder();
     for (String line : lines) {
       buffer.append(line);

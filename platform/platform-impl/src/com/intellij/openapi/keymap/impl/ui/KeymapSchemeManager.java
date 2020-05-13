@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
@@ -21,8 +21,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
 /**
  * This class operates with the KeymapManager.
- *
- * @author Sergey.Malenkov
  */
 public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> implements SchemesModel<KeymapScheme> {
   public static final Predicate<Keymap> FILTER = keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
@@ -173,6 +171,21 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
     list.clear();
     getKeymaps().forEach(keymap -> list.add(new KeymapScheme(keymap)));
     selector.selectKeymap(getSchemeToSelect(null), true);
+  }
+
+  void handleKeymapAdded(Keymap keymap) {
+    list.add(new KeymapScheme(keymap));
+  }
+
+  void handleKeymapRemoved(Keymap keymap) {
+    list.removeIf(scheme -> scheme.contains(keymap));
+  }
+
+  void handleActiveKeymapChanged(Keymap keymap) {
+    final KeymapScheme scheme = find(keymap);
+    if (scheme != null) {
+      selector.selectKeymap(scheme, false);
+    }
   }
 
   /**

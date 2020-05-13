@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Objects;
 
 public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
+  private static final Logger LOG = Logger.getInstance(GenerateMembersHandlerBase.class);
 
   private final String myChooserTitle;
   protected boolean myToCopyJavaDoc;
@@ -197,23 +197,20 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   }
 
 
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     ClassMember[] allMembers = getAllOriginalMembers(aClass);
     return chooseMembers(allMembers, false, false, project, null);
   }
 
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
     return chooseOriginalMembers(aClass, project);
   }
 
-  @Nullable
-  protected ClassMember[] chooseMembers(ClassMember[] members,
-                                        boolean allowEmptySelection,
-                                        boolean copyJavadocCheckbox,
-                                        Project project,
-                                        @Nullable Editor editor) {
+  protected ClassMember @Nullable [] chooseMembers(ClassMember[] members,
+                                                   boolean allowEmptySelection,
+                                                   boolean copyJavadocCheckbox,
+                                                   Project project,
+                                                   @Nullable Editor editor) {
     MemberChooser<ClassMember> chooser = createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project);
     if (editor != null) {
       final int offset = editor.getCaretModel().getOffset();
@@ -221,13 +218,11 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       ClassMember preselection = null;
       for (ClassMember member : members) {
         if (member instanceof PsiElementClassMember) {
-          final PsiDocCommentOwner owner = ((PsiElementClassMember)member).getElement();
-          if (owner != null) {
-            final TextRange textRange = owner.getTextRange();
-            if (textRange != null && textRange.contains(offset)) {
-              preselection = member;
-              break;
-            }
+          final PsiDocCommentOwner owner = ((PsiElementClassMember<?>)member).getElement();
+          final TextRange textRange = owner.getTextRange();
+          if (textRange != null && textRange.contains(offset)) {
+            preselection = member;
+            break;
           }
         }
       }
@@ -263,8 +258,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return null;
   }
 
-  @Nullable
-  protected JComponent[] getOptionControls() {
+  protected JComponent @Nullable [] getOptionControls() {
     return null;
   }
 

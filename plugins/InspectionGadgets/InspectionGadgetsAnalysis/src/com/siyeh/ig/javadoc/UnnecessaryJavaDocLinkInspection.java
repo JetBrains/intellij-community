@@ -30,7 +30,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,14 +43,6 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreInlineLinkToSuper = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.javadoc.link.display.name");
-  }
 
   @NotNull
   @Override
@@ -101,7 +92,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove redundant tag";
+      return InspectionGadgetsBundle.message("unnecessary.java.doc.link.fix.family.name");
     }
 
     @Override

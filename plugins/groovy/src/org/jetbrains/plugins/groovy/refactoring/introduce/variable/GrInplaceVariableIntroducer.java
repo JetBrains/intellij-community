@@ -18,8 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -37,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -61,28 +60,26 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
 
   @Nullable
   private static String getAdvertisementText() {
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    final Shortcut[] shortcuts = keymap.getShortcuts("PreviousTemplateVariable");
-    if  (shortcuts.length > 0) {
-      return "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to change type";
+    final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("PreviousTemplateVariable");
+    if  (shortcut != null) {
+      return "Press " + KeymapUtil.getShortcutText(shortcut) + " to change type";
     }
     return null;
   }
 
   @Override
   protected String getActionName() {
-    return GrIntroduceVariableHandler.REFACTORING_NAME;
+    return GrIntroduceVariableHandler.getRefactoringNameText();
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return GroovyNameSuggestionUtil.suggestVariableNames(getContext().getExpression(), new GroovyVariableValidator(getContext()));
   }
 
   @Override
   protected JComponent getComponent() {
-    myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
+    myCanBeFinalCb = new NonFocusableCheckBox(GroovyRefactoringBundle.message("declare.final"));
     myCanBeFinalCb.setSelected(false);
     myCanBeFinalCb.setMnemonic('f');
     final GrFinalListener finalListener = new GrFinalListener(myEditor);

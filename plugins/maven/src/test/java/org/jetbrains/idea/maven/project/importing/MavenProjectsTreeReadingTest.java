@@ -23,10 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectChanges;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -632,11 +629,12 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
           nativeProject.add(nativeMavenProject);
         }
       });
-      myTree.resolve(myProject, project,
-                     getMavenGeneralSettings(),
-                     embeddersManager,
-                     NULL_MAVEN_CONSOLE,
-                     EMPTY_MAVEN_PROCESS
+      myProjectResolver = new MavenProjectResolver(myTree);
+      myProjectResolver.resolve(myProject, project,
+                                getMavenGeneralSettings(),
+                                embeddersManager,
+                                NULL_MAVEN_CONSOLE,
+                                EMPTY_MAVEN_PROCESS
       );
     }
     finally {
@@ -682,14 +680,16 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
           nativeProject[0] = nativeMavenProject;
         }
       });
-      myTree.resolve(myProject, parentProject,
-                     getMavenGeneralSettings(),
-                     embeddersManager,
-                     NULL_MAVEN_CONSOLE,
-                     EMPTY_MAVEN_PROCESS
+      myProjectResolver = new MavenProjectResolver(myTree);
+      myProjectResolver.resolve(myProject, parentProject,
+                                getMavenGeneralSettings(),
+                                embeddersManager,
+                                NULL_MAVEN_CONSOLE,
+                                EMPTY_MAVEN_PROCESS
       );
-      myTree.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
-      myTree.resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myProjectResolver.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myProjectResolver
+        .resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
     }
     finally {
       embeddersManager.releaseInTests();
@@ -1801,7 +1801,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom);
 
     MyLoggingListener l = new MyLoggingListener();
-    myTree.addListener(l);
 
     createProfilesXmlOldStyle("<profile>" +
                               "  <id>one</id>" +
@@ -1818,6 +1817,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   }
 
   public void testSaveLoad() throws Exception {
+    //todo: move to resolver test
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1862,7 +1862,9 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myTree.resolve(myProject, parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myProjectResolver = new MavenProjectResolver(myTree);
+      myProjectResolver
+        .resolve(myProject, parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
     }
     finally {
       embeddersManager.releaseInTests();
@@ -1935,11 +1937,12 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myTree.resolve(myProject, myTree.getRootProjects().get(0),
-                     getMavenGeneralSettings(),
-                     embeddersManager,
-                     NULL_MAVEN_CONSOLE,
-                     EMPTY_MAVEN_PROCESS
+      myProjectResolver = new MavenProjectResolver(myTree);
+      myProjectResolver.resolve(myProject, myTree.getRootProjects().get(0),
+                                getMavenGeneralSettings(),
+                                embeddersManager,
+                                NULL_MAVEN_CONSOLE,
+                                EMPTY_MAVEN_PROCESS
       );
     }
     finally {
@@ -1950,8 +1953,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   }
 
   public void testCollectingProfilesFromParentsAfterResolve() throws Exception {
-    MavenServerManager.getInstance().setUseMaven2();
 
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
     createModulePom("parent1",
                     "<groupId>test</groupId>" +
                     "<artifactId>parent1</artifactId>" +
@@ -2030,6 +2033,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                             "xxx"),
               myProjectPom);
 
+    myProjectResolver = new MavenProjectResolver(myTree);
     MavenProject project = myTree.findProject(myProjectPom);
     assertUnorderedElementsAreEqual(project.getActivatedProfilesIds().getEnabledProfiles(),
                                     "projectProfileXml",
@@ -2042,11 +2046,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myTree.resolve(myProject, project,
-                     getMavenGeneralSettings(),
-                     embeddersManager,
-                     NULL_MAVEN_CONSOLE,
-                     EMPTY_MAVEN_PROCESS
+      myProjectResolver.resolve(myProject, project,
+                                getMavenGeneralSettings(),
+                                embeddersManager,
+                                NULL_MAVEN_CONSOLE,
+                                EMPTY_MAVEN_PROCESS
       );
     }
     finally {
@@ -2226,7 +2230,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myTree.resolve(myProject, project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myProjectResolver = new MavenProjectResolver(myTree);
+      myProjectResolver.resolve(myProject, project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
     }
     finally {
       embeddersManager.releaseInTests();

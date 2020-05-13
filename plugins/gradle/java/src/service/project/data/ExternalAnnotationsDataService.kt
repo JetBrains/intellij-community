@@ -23,13 +23,11 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 
 @Order(value = ExternalSystemConstants.UNORDERED)
 class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Library>() {
   override fun getTargetDataKey(): Key<LibraryData> = ProjectKeys.LIBRARY
-
-  private val resolvers: Collection<ExternalAnnotationsArtifactsResolver>
-    get() = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
 
   override fun onSuccessImport(imported: MutableCollection<DataNode<LibraryData>>,
                                projectData: ProjectData?,
@@ -42,10 +40,10 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
     val providedAnnotations = imported.mapNotNull {
       val libData = it.data
       val lib = modelsProvider.getLibraryByName(libData.internalName) ?: return@mapNotNull null
-      lookForLocations(lib, libData)
+      lookForLocations(project, lib, libData)
     }.toMap()
 
-    resolveProvidedAnnotations(providedAnnotations, resolvers, project)
+    resolveProvidedAnnotations(providedAnnotations, project)
   }
   companion object {
     val LOG = Logger.getInstance(ExternalAnnotationsDataService::class.java)
@@ -55,9 +53,6 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
 
 class ExternalAnnotationsModuleLibrariesService: AbstractProjectDataService<ModuleData, Library>() {
   override fun getTargetDataKey(): Key<ModuleData> = ProjectKeys.MODULE
-
-  private val resolvers: Collection<ExternalAnnotationsArtifactsResolver>
-    get() = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
 
   override fun onSuccessImport(imported: MutableCollection<DataNode<ModuleData>>,
                                projectData: ProjectData?,
@@ -75,11 +70,11 @@ class ExternalAnnotationsModuleLibrariesService: AbstractProjectDataService<Modu
         .mapNotNull {
           val libData = it.data.target
           val lib = (modelsProvider.findIdeModuleOrderEntry(it.data) as? LibraryOrderEntry)?.library ?: return@mapNotNull null
-          lookForLocations(lib, libData)
+          lookForLocations(project, lib, libData)
         }
     }.toMap()
 
-    resolveProvidedAnnotations(providedAnnotations, resolvers, project)
+    resolveProvidedAnnotations(providedAnnotations, project)
   }
 }
 
@@ -100,8 +95,8 @@ fun shouldImportExternalAnnotations(projectData: ProjectData?, project: Project)
            ?.isResolveExternalAnnotations ?: false
 }
 
-fun lookForLocations(lib: Library, libData: LibraryData): Pair<Library, Collection<AnnotationsLocation>>? {
-  val locations = AnnotationsLocationSearcher.findAnnotationsLocation(lib, libData.artifactId, libData.groupId, libData.version)
+fun lookForLocations(project: Project, lib: Library, libData: LibraryData): Pair<Library, Collection<AnnotationsLocation>>? {
+  val locations = AnnotationsLocationSearcher.findAnnotationsLocation(project, lib, libData.artifactId, libData.groupId, libData.version)
   return if (locations.isEmpty()) {
     null
   }
@@ -111,17 +106,17 @@ fun lookForLocations(lib: Library, libData: LibraryData): Pair<Library, Collecti
 }
 
 fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<AnnotationsLocation>>,
-                               resolvers: Collection<ExternalAnnotationsArtifactsResolver>,
                                project: Project) {
-  val locationsToSkip = mutableSetOf<AnnotationsLocation>();
+  val locationsToSkip = mutableSetOf<AnnotationsLocation>()
 
   if (providedAnnotations.isNotEmpty()) {
     val total = providedAnnotations.map { it.value.size }.sum().toDouble()
-    runBackgroundableTask("Resolving known external annotations") { indicator ->
+    runBackgroundableTask(GradleBundle.message("gradle.tasks.annotations.title")) { indicator ->
       indicator.isIndeterminate = false
+      val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
       var index = 0
       providedAnnotations.forEach { (lib, locations) ->
-        indicator.text = "Looking for annotations for '${lib.name}'"
+        indicator.text = GradleBundle.message("gradle.tasks.annotations.looking.for", lib.name)
         locations.forEach locations@ { location ->
           if (locationsToSkip.contains(location)) return@locations
           if (!resolvers.fold(false) { acc, res -> acc || res.resolve(project, lib, location) } ) {

@@ -40,11 +40,13 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
   private static class MyThreadFactory extends CountingThreadFactory {
     private Consumer<? super Thread> newThreadListener;
+    private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
 
     @NotNull
     @Override
     public Thread newThread(@NotNull final Runnable r) {
-      Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
+      Thread thread = myThreadFactory.newThread(r);
+      thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
       thread.setPriority(Thread.NORM_PRIORITY - 1);
 
@@ -134,7 +136,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
       if (t != null) {
-        Logger.getInstance("#com.intellij.util.concurrency.SchedulingWrapper").error("Worker exited due to exception", t);
+        Logger.getInstance(SchedulingWrapper.class).error("Worker exited due to exception", t);
       }
     }
 
@@ -209,7 +211,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     mainLock.lock();
     Set workers;
     try {
-      HashSet workersField = ReflectionUtil.getField(executor.getClass(), executor, HashSet.class, "workers");
+      Set workersField = ReflectionUtil.getField(executor.getClass(), executor, HashSet.class, "workers");
       workers = new HashSet(workersField); // to be able to iterate thread-safely outside the lock
     }
     finally {

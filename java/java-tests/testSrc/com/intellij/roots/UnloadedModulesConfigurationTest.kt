@@ -15,9 +15,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.JavaModuleTestCase
 import java.io.File
 
-/**
- * @author nik
- */
 class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
   fun `test load project`() {
     val projectPath = FileUtilRt.toSystemIndependentName(File(PathManagerEx.getTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
@@ -37,7 +34,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
       assertEquals("util", assertOneElement(dep.dependencyModuleNames))
     }
     finally {
-      getProjectManager().forceCloseProject(project, true)
+      getProjectManager().forceCloseProject(project)
     }
   }
 

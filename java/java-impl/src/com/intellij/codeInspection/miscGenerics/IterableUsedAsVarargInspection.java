@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -52,6 +53,10 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
         if (argCopy == null) return;
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(holder.getProject());
         String className = elementClass.getQualifiedName();
+        if (className == null) {
+          className = elementClass.getName();
+          if (className == null) return;
+        }
         String replacement = "new " + className + "[0]";
         argCopy.replace(factory.createExpressionFromText(replacement, argCopy));
         JavaResolveResult copyResult = callCopy.getMethodExpression().advancedResolve(false);
@@ -66,7 +71,7 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
         if (InheritanceUtil.isInheritor(varArgExpression.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) {
           fix = new AddToArrayFix(className);
         }
-        holder.registerProblem(varArgExpression, InspectionsBundle.message("inspection.collection.used.as.vararg.message"), fix);
+        holder.registerProblem(varArgExpression, JavaBundle.message("inspection.collection.used.as.vararg.message"), fix);
       }
     };
   }

@@ -30,7 +30,14 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   private JythonSdkFlavor() {
   }
 
-  public static JythonSdkFlavor INSTANCE = new JythonSdkFlavor();
+  public static JythonSdkFlavor getInstance() {
+    return PythonSdkFlavor.EP_NAME.findExtension(JythonSdkFlavor.class);
+  }
+
+  @Override
+  public boolean isPlatformIndependent() {
+    return true;
+  }
 
   @Override
   public boolean isValidSdkPath(@NotNull File file) {

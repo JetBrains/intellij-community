@@ -12,7 +12,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author yole
  * @see TemplateContextType
+ * @deprecated Use {@link DefaultLiveTemplateEP} instead
  */
+@Deprecated
 public interface DefaultLiveTemplatesProvider {
 
   ExtensionPointName<DefaultLiveTemplatesProvider> EP_NAME = ExtensionPointName.create("com.intellij.defaultLiveTemplatesProvider");
@@ -29,6 +31,5 @@ public interface DefaultLiveTemplatesProvider {
    *
    * @return paths to resources, without {@code .xml} extension (e.g. {@code /templates/foo})
    */
-  @Nullable
-  String[] getHiddenLiveTemplateFiles();
+  String @Nullable [] getHiddenLiveTemplateFiles();
 }

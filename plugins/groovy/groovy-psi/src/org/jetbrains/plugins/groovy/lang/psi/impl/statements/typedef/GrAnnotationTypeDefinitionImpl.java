@@ -40,8 +40,7 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
     return new PsiClassType[]{createAnnotationType()};
   }
 

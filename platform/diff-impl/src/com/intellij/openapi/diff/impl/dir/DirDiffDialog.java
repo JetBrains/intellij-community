@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -34,7 +35,7 @@ public class DirDiffDialog extends DialogWrapper {
     super(project);
     setModal(false);
     myModel = model;
-    setTitle("Directory Diff");
+    setTitle(DiffBundle.message("directory.diff"));
     init();
     final JBTable table = myDiffPanel.getTable();
     table.setColumnSelectionAllowed(false);
@@ -63,9 +64,8 @@ public class DirDiffDialog extends DialogWrapper {
     return myDiffPanel.getTable();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{};
   }
 

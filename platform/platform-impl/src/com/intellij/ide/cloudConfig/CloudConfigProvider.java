@@ -2,6 +2,7 @@
 package com.intellij.ide.cloudConfig;
 
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,11 @@ public abstract class CloudConfigProvider {
   public abstract String getLafClassName();
 
   @NotNull
-  public abstract List<String> getInstalledPlugins();
+  public abstract List<PluginId> getInstalledPlugins();
 
   public abstract int initSteps(@NotNull List<AbstractCustomizeWizardStep> steps);
 
   public abstract void startupWizardFinished();
+
+  public abstract boolean importSettingsSilently(@NotNull Path newConfigDir);
 }

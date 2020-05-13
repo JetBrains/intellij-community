@@ -35,7 +35,7 @@ import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueC
  */
 public class JavaSourceInference {
   public static final int MAX_CONTRACT_COUNT = 10;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.inference.JavaSourceInference");
+  private static final Logger LOG = Logger.getInstance(JavaSourceInference.class);
 
   enum InferenceMode {
     DISABLED, ENABLED, PARAMETERS

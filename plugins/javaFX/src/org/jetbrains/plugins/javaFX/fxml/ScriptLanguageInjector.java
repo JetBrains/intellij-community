@@ -18,13 +18,14 @@ import java.util.Collections;
 import java.util.List;
 
 public class ScriptLanguageInjector implements MultiHostInjector {
-
-  private static final XmlElementPattern.XmlTextPattern SCRIPT_PATTERN = XmlPatterns.xmlText().withParent(
-    XmlPatterns.xmlTag().withName(FxmlConstants.FX_SCRIPT));
+  private static class Holder {
+    private static final XmlElementPattern.XmlTextPattern SCRIPT_PATTERN = XmlPatterns.xmlText().withParent(
+      XmlPatterns.xmlTag().withName(FxmlConstants.FX_SCRIPT));
+  }
 
   @Override
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
-    if (SCRIPT_PATTERN.accepts(host)) {
+    if (Holder.SCRIPT_PATTERN.accepts(host)) {
       final List<String> registeredLanguages = JavaFxPsiUtil.parseInjectedLanguages((XmlFile)host.getContainingFile());
       for (Language language : Language.getRegisteredLanguages()) {
         for (String registeredLanguage : registeredLanguages) {

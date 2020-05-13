@@ -4,8 +4,8 @@
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
       <action id="ValidateXml" class="com.intellij.xml.actions.validate.ValidateXmlAction"/>
       <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
-      <action id="XSD2Document" class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentAction" text="Generate XSD Schema from XML File..."/>
-      <action id="Document2XSD" class="com.intellij.xml.actions.xmlbeans.GenerateInstanceDocumentFromSchemaAction" text="Generate XML Document from XSD Schema..."/>
+      <action id="XSD2Document" class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentAction"/>
+      <action id="Document2XSD" class="com.intellij.xml.actions.xmlbeans.GenerateInstanceDocumentFromSchemaAction"/>
       <separator/>
 
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
@@ -27,28 +27,15 @@
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
     </reference>
 
-    <action id="EditorToggleShowBreadcrumbs" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsAction$ShowHide">
-      <add-to-group group-id="EditorToggleActions" relative-to-action="EditorToggleShowIndentLines" anchor="after"/>
-    </action>
-
-    <group id="EditorBreadcrumbsSettings" text="Breadcrumbs" popup="true">
-      <add-to-group group-id="EditorGutterPopupMenu" relative-to-action="EditorGutterToggleGlobalIndentLines" anchor="after"/>
-      <action id="EditorBreadcrumbsShowAbove" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowAbove"/>
-      <action id="EditorBreadcrumbsShowBelow" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowBelow"/>
-      <action id="EditorBreadcrumbsHideBoth" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$HideBoth"/>
-    </group>
-
     <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
             class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
-            text="Goto Element"
             use-shortcut-of="EditSource"/>
 
-    <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction"
-            text="Insert element">
+    <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction">
       <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
     </action>
     <action id="DomElementsTreeView.DeleteElement" class="com.intellij.util.xml.tree.actions.DeleteDomElement"
-            text="Delete element" use-shortcut-of="$Delete"/>
+            use-shortcut-of="$Delete"/>
 
     <group id="DomElementsTreeView.AddElementGroup" class="com.intellij.util.xml.tree.actions.AddDomElementActionGroup"/>
 
@@ -61,37 +48,32 @@
     </group>
 
     <group id="DomCollectionControl">
-      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction" text="Add">
+      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
         <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
       </action>
-      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" text="Edit" use-shortcut-of="EditSource"/>
-      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" text="Remove" use-shortcut-of="$Delete"/>
+      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" use-shortcut-of="EditSource"/>
+      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" use-shortcut-of="$Delete"/>
     </group>
 
-    <group id="NewXml" text="XML">
+    <group id="NewXml">
       <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction"/>
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
 
-    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonTrivialActionGroup" text="XML Configuration File" popup="true" icon="AllIcons.FileTypes.Xml">
+    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonTrivialActionGroup" popup="true" icon="AllIcons.FileTypes.Xml">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
-    <action id="GenerateXmlTag" class="com.intellij.xml.actions.GenerateXmlTagAction"
-            text="XML Tag..."
-            description="Generate a new XML tag according to schema information">
+    <action id="GenerateXmlTag" class="com.intellij.xml.actions.GenerateXmlTagAction">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
-    <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction"
-            text="Encode XML/HTML Special Characters"
-            description="Escape XML/HTML special characters with entities">
+    <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction">
       <add-to-group group-id="EditMenu" anchor="last"/>
     </action>
 
     <!-- id should be "OpenInDefaultBrowser", but existing name preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction"
-            text="Open in default _browser" description="Open selected file in default browser"
             icon="AllIcons.Nodes.PpWeb">
     </action>
 
@@ -100,18 +82,14 @@
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </group>
     <group id="OpenInBrowserEditorContextBarGroupAction"
-           class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction"
-           description="Open In...">
+           class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction">
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </group>
 
-    <group id="Emmet" text="Emmet">
-      <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
-              text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
-      <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction" 
-              text="Emmet Preview" description="Show preview for emmet abbreviation"/>
-      <action id="EmmetUpdateTag" class="com.intellij.codeInsight.template.emmet.EmmetUpdateTagAction" 
-              text="Update tag with Emmet" description="Update existing HTML tag with Emmet abbreviation">
+    <group id="Emmet">
+      <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction"/>
+      <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction"/>
+      <action id="EmmetUpdateTag" class="com.intellij.codeInsight.template.emmet.EmmetUpdateTagAction">
         <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
       </action>
 
@@ -119,15 +97,13 @@
         <separator/>
         <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToErrorGroup"/>
 
-        <action id="EmmetNextEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Forward"
-                text="Next Emmet Edit Point" description="Go to next Emmet edit point">
+        <action id="EmmetNextEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Forward">
           <keyboard-shortcut first-keystroke="alt shift CLOSE_BRACKET" keymap="$default"/>
           <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X" replace-all="true"/>
           <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X 10.5+" replace-all="true"/>
         </action>
 
-        <action id="EmmetPreviousEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Backward"
-                text="Previous Emmet Edit Point" description="Go to previous Emmet edit point">
+        <action id="EmmetPreviousEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Backward">
           <keyboard-shortcut first-keystroke="alt shift OPEN_BRACKET" keymap="$default"/>
           <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X" replace-all="true"/>
           <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X 10.5+" replace-all="true"/>

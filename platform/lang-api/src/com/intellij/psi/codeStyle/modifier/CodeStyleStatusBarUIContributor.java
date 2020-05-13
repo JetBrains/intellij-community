@@ -24,8 +24,7 @@ public interface CodeStyleStatusBarUIContributor {
    * @param file The current PSI file
    * @return An array of actions available for the given PSI file or {@code null} if no actions are available.
    */
-  @Nullable
-  AnAction[] getActions(@NotNull PsiFile file);
+  AnAction @Nullable [] getActions(@NotNull PsiFile file);
 
   /**
    * @return A title used for a group of actions opened from the status bar or {@code null} if no title is shown.

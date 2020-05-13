@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifactType;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsArtifactDummyPropertiesSerializer extends JpsArtifactPropertiesSerializer<JpsDummyElement> {
   public JpsArtifactDummyPropertiesSerializer(String typeId, JpsArtifactType<JpsDummyElement> type) {
     super(typeId, type);

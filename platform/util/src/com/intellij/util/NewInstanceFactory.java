@@ -8,12 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Constructor;
 
 public class NewInstanceFactory<T> implements Factory<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.NewInstanceFactory");
+  private static final Logger LOG = Logger.getInstance(NewInstanceFactory.class);
 
   private final Constructor<? extends T> myConstructor;
   private final Object[] myArgs;
 
-  private NewInstanceFactory(@NotNull Constructor<? extends T> constructor, @NotNull Object[] args) {
+  private NewInstanceFactory(@NotNull Constructor<? extends T> constructor, Object @NotNull [] args) {
     myConstructor = constructor;
     myArgs = args;
   }

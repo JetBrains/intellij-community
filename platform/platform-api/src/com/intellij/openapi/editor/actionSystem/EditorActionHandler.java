@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -27,14 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Interface for actions activated by keystrokes in the editor.
- * Implementations should override
- * {@link #execute(Editor, Caret, DataContext)}
- * .
+ * Interface for actions invoked in the editor.
+ * Implementations should override {@link #doExecute(Editor, Caret, DataContext)}.
  * <p>
  * Two types of handlers are supported: the ones which are executed once, and the ones which are executed for each caret. The latter can be
  * created using {@link EditorActionHandler#EditorActionHandler(boolean)} constructor.
  *
+ * @see EditorWriteActionHandler
  * @see EditorActionManager#setActionHandler(String, EditorActionHandler)
  */
 public abstract class EditorActionHandler {
@@ -124,7 +109,6 @@ public abstract class EditorActionHandler {
     }
     inCheck = true;
     try {
-      //noinspection deprecation
       return isEnabled(editor, dataContext);
     }
     finally {
@@ -137,7 +121,6 @@ public abstract class EditorActionHandler {
    * if {@code caret} is not {@code null}, checks whether it's enabled for specified caret.
    */
   public final boolean isEnabled(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    //noinspection deprecation
     return caret == null ? isEnabled(editor, dataContext) : isEnabledForCaret(editor, caret, dataContext);
   }
   /**
@@ -174,7 +157,6 @@ public abstract class EditorActionHandler {
     }
     try {
       inExecution = true;
-      //noinspection deprecation
       execute(editor, dataContext);
     }
     finally {
@@ -228,6 +210,10 @@ public abstract class EditorActionHandler {
   public DocCommandGroupId getCommandGroupId(@NotNull Editor editor) {
     // by default avoid merging two consequential commands, and, in the same time, pass along the Document
     return DocCommandGroupId.noneGroupId(editor.getDocument());
+  }
+
+  <T> @Nullable T getHandlerOfType(@NotNull Class<T> type) {
+    return type.isInstance(this) ? type.cast(this) : null;
   }
 
   @FunctionalInterface

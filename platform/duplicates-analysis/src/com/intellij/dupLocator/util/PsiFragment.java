@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class PsiFragment {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.PsiFragment");
+  private static final Logger LOG = Logger.getInstance(PsiFragment.class);
 
   protected final PsiAnchor[] myElementAnchors;
   private final Language myLanguage;

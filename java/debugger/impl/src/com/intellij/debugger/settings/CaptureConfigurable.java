@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationsPanel;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
@@ -35,8 +36,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
@@ -62,11 +61,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
-/**
- * @author egor
- */
 public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
   private final Project myProject;
@@ -144,7 +139,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.duplicate"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.duplicate"),
+                                                       PlatformIcons.COPY_ICON) {
       @Override
       public boolean isEnabled() {
         return table.getSelectedRowCount() == 1;
@@ -164,7 +161,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton("Enable Selected", "Enable Selected", PlatformIcons.SELECT_ALL_ICON) {
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.enable.selected"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.enable.selected"),
+                                                       PlatformIcons.SELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
         return table.getSelectedRowCount() > 0;
@@ -176,7 +175,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         table.repaint();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Disable Selected", "Disable Selected", PlatformIcons.UNSELECT_ALL_ICON) {
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.disable.selected"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.disable.selected"),
+                                                       PlatformIcons.UNSELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
         return table.getSelectedRowCount() > 0;
@@ -189,7 +190,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    new DumbAwareAction("Toggle") {
+    new DumbAwareAction(CommonBundle.message("action.text.toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(table.getSelectedRowCount() == 1 && !table.isEditing());
@@ -202,7 +203,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
 
-    decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.import"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.import"),
+                                                       AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
@@ -217,8 +220,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
             return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
-        descriptor.setDescription("Please select a file to import.");
-        descriptor.setTitle("Import Capture Points");
+        descriptor.setDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));
+        descriptor.setTitle(JavaDebuggerBundle.message("import.capture.points"));
 
         VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
         if (ArrayUtil.isEmpty(files)) return;
@@ -234,16 +237,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
-            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+                                     JavaDebuggerBundle.message("export.failed"));
           }
         }
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.ToolbarDecorator.Export) {
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.export"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
+                                                       AllIcons.ToolbarDecorator.Export) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
-          .createSaveFileDialog(new FileSaverDescriptor("Export Selected Capture Points to File...", "", "xml"), e.getProject())
+          .createSaveFileDialog(new FileSaverDescriptor(JavaDebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"), e.getProject())
           .save(null, null);
         if (wrapper == null) return;
 
@@ -263,7 +269,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+                                   JavaDebuggerBundle.message("export.failed"));
         }
       }
 
@@ -275,7 +282,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
 
-    myCapturePanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myCapturePanel.setBorder(
+      IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("settings.breakpoints.based"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
     myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
     return myPanel;
@@ -294,8 +303,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     public static final int INSERT_METHOD_COLUMN = 5;
     public static final int INSERT_KEY_EXPR = 6;
 
-    static final String[] COLUMN_NAMES =
-      new String[]{"", "Capture class name", "Capture method name", "Capture key expression", "Insert class name", "Insert method name", "Insert key expression"};
+    static final String[] COLUMN_NAMES = getColumns();
+
+    @NotNull
+    private static String[] getColumns() {
+      return new String[]{"",
+        JavaDebuggerBundle.message("settings.capture.column.capture.class.name"),
+        JavaDebuggerBundle.message("settings.capture.column.capture.method.name"),
+        JavaDebuggerBundle.message("settings.capture.column.capture.key.expression"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.class.name"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.method.name"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.key.expression")};
+    }
+
     List<CapturePoint> myCapturePoints;
 
     private MyTableModel() {
@@ -306,7 +326,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     private void scanPoints() {
       if (Registry.is("debugger.capture.points.annotations")) {
         List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
-        processCaptureAnnotations((capture, e) -> {
+        processCaptureAnnotations((capture, e, annotation) -> {
           if (e instanceof PsiMethod) {
             addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
           }
@@ -517,10 +537,14 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   @Nls
   @Override
   public String getDisplayName() {
-    return DebuggerBundle.message("async.stacktraces.configurable.display.name");
+    return JavaDebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
-  static void processCaptureAnnotations(BiConsumer<? super Boolean, ? super PsiModifierListOwner> consumer) {
+  interface CapturePointConsumer {
+    void accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
+  }
+
+  static void processCaptureAnnotations(CapturePointConsumer consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
@@ -531,19 +555,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static void scanPointsInt(Project project,
                                     DebuggerProjectSettings debuggerProjectSettings,
                                     boolean capture,
-                                    BiConsumer<? super Boolean, ? super PsiModifierListOwner> consumer) {
+                                    CapturePointConsumer consumer) {
     try {
-      GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      for (String annotationName : getAsyncAnnotations(debuggerProjectSettings, capture)) {
-        PsiClass annotationClass = psiFacade.findClass(annotationName, allScope);
-        if (annotationClass != null) {
-          AnnotatedElementsSearch.<PsiModifierListOwner>searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
-            .forEach(e -> {
-              consumer.accept(capture, e);
-            });
-        }
-      }
+      getAsyncAnnotations(debuggerProjectSettings, capture)
+        .forEach(annotationName -> NodeRendererSettings.visitAnnotatedElements(annotationName, project,
+                                                                               (e, annotation) -> consumer.accept(capture, e, annotation)));
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
     }
@@ -571,19 +587,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       super(project, true);
       mySettings = DebuggerProjectSettings.getInstance(myProject);
       myAsyncSchedulePanel = new AnnotationsPanel(project,
-                                                  "Async Schedule",
+                                                  JavaDebuggerBundle.message("settings.async.schedule"),
                                                   "",
                                                   getAsyncAnnotations(mySettings, true),
                                                   Collections.singletonList(getAnnotationName(true)),
                                                   Collections.emptySet(), false, false);
       myAsyncExecutePanel = new AnnotationsPanel(project,
-                                                 "Async Execute",
+                                                 JavaDebuggerBundle.message("settings.async.execute"),
                                                  "",
                                                  getAsyncAnnotations(mySettings, false),
                                                  Collections.singletonList(getAnnotationName(false)),
                                                  Collections.emptySet(), false, false);
       init();
-      setTitle("Async Annotations Configuration");
+      setTitle(JavaDebuggerBundle.message("settings.async.annotations.configuration"));
     }
 
     @Override

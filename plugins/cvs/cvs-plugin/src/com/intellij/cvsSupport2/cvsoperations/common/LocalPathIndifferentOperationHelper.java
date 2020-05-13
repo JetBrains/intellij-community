@@ -32,7 +32,7 @@ import java.util.*;
  * @author lesya
  */
 public class LocalPathIndifferentOperationHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper");
+  private static final Logger LOG = Logger.getInstance(LocalPathIndifferentOperationHelper.class);
   private final Map<File, Entry> myFileToEntryMap = new HashMap<>();
   private final IAdminReader myAdminReader = new AdminReaderForLightFiles(myFileToEntryMap);
   private final String myRevision;

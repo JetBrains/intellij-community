@@ -38,7 +38,7 @@ public final class PyTestCreatorTest extends PyTestCase {
   public void testCreateUnitTest() {
     final PyTestCreationModel model = prepareAndCreateModel();
     TestRunnerService testRunnerService = TestRunnerService.getInstance(myFixture.getModule());
-    testRunnerService.setProjectConfiguration(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
+    testRunnerService.setProjectConfiguration(PythonTestConfigurationsModel.getPythonsUnittestName());
     checkResult(model, "create_tst_class.expected_unittest.py");
   }
 

@@ -16,16 +16,16 @@
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class GroupByNullnessActionBase extends AnAction {
   protected final SliceTreeBuilder myTreeBuilder;
-  private static final String TEXT = "Group by leaf expression nullness";
 
   protected GroupByNullnessActionBase(@NotNull SliceTreeBuilder treeBuilder) {
-    super(TEXT, "Determine whether null can flow into this expression", AllIcons.Debugger.Db_disabled_breakpoint_process);
+    super(JavaRefactoringBundle.message("dataflow.to.here.group.by.leaf.action.text", 1), JavaRefactoringBundle.message("dataflow.to.here.group.by.leaf.action.description"), AllIcons.Debugger.Db_disabled_breakpoint_process);
     myTreeBuilder = treeBuilder;
   }
 
@@ -33,7 +33,7 @@ public abstract class GroupByNullnessActionBase extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setText(TEXT + (myTreeBuilder.analysisInProgress ? " (Analysis in progress)" : ""));
+    e.getPresentation().setText(JavaRefactoringBundle.message("dataflow.to.here.group.by.leaf.action.text", !myTreeBuilder.analysisInProgress ? 1 : 2));
     e.getPresentation().setEnabled(
       !myTreeBuilder.analysisInProgress && myTreeBuilder.dataFlowToThis && !myTreeBuilder.splitByLeafExpressions && isAvailable()
     );

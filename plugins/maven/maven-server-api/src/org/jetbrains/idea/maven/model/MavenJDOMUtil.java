@@ -17,8 +17,6 @@ import java.util.List;
 /**
  * Methods in this class are copied from {@link com.intellij.openapi.util.JDOMUtil} to avoid dependency on 'intellij.platform.util' module
  * in Maven server classes.
- *
- * @author nik
  */
 class MavenJDOMUtil {
   public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {

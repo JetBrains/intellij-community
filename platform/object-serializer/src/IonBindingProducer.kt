@@ -25,10 +25,9 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       classToRootBindingFactory.put(Date::class.java) { DateBinding() }
       classToRootBindingFactory.put(ByteArray::class.java) { ByteArrayBinding() }
 
-      val numberFactory = ::NumberAsObjectBinding
-      classToRootBindingFactory.put(java.lang.Short::class.java, numberFactory)
-      classToRootBindingFactory.put(java.lang.Integer::class.java, numberFactory)
-      classToRootBindingFactory.put(java.lang.Long::class.java, numberFactory)
+      classToRootBindingFactory.put(java.lang.Short::class.java) { ShortNumberAsObjectBinding() }
+      classToRootBindingFactory.put(java.lang.Integer::class.java) { IntNumberAsObjectBinding() }
+      classToRootBindingFactory.put(java.lang.Long::class.java) { LongNumberAsObjectBinding() }
 
       registerPrimitiveBindings(classToRootBindingFactory, classToNestedBindingFactory)
 
@@ -69,7 +68,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       aClass.isInterface || Modifier.isAbstract(aClass.modifiers) || aClass == Object::class.java -> {
         PolymorphicBinding(aClass)
       }
-      java.lang.Number::class.java.isAssignableFrom(aClass) -> NumberAsObjectBinding()
+      java.lang.Number::class.java.isAssignableFrom(aClass) -> IntNumberAsObjectBinding()
       aClass is Proxy -> {
         throw SerializationException("$aClass class is not supported")
       }

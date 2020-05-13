@@ -37,11 +37,8 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/**
- * @author nik
- */
 public class JarsBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.JarsBuilder");
+  private static final Logger LOG = Logger.getInstance(JarsBuilder.class);
   private final Set<JarInfo> myJarsToBuild;
   private final CompileContext myContext;
   private Map<JarInfo, File> myBuiltJars;
@@ -104,8 +101,7 @@ public class JarsBuilder {
     }
   }
 
-  @Nullable
-  private JarInfo[] sortJars() {
+  private JarInfo @Nullable [] sortJars() {
     final DFSTBuilder<JarInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new JarsGraph())));
     if (!builder.isAcyclic()) {
       final Pair<JarInfo, JarInfo> dependency = builder.getCircularDependency();

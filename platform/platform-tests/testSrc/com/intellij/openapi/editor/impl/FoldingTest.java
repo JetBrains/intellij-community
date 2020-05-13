@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
@@ -18,9 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author max
- */
 public class FoldingTest extends AbstractEditorTest {
   private FoldingModelEx myModel;
 
@@ -169,14 +167,14 @@ public class FoldingTest extends AbstractEditorTest {
     assertEquals(1, myModel.getLastCollapsedRegionBefore(6));
     assertEquals(1, myModel.getLastCollapsedRegionBefore(7));
   }
-  
+
   public void testSelectionIsRemovedWhenInterruptedByFolding() {
     getEditor().getSelectionModel().setSelection(0, 5);
     addCollapsedFoldRegion(3, 6, "...");
-    
+
     assertFalse(getEditor().getSelectionModel().hasSelection());
   }
-  
+
   public void testModelRemainsConsistentOnTextRemoval() {
     addCollapsedFoldRegion(0, 10, "...");
     addCollapsedFoldRegion(1, 9, "...");
@@ -184,10 +182,10 @@ public class FoldingTest extends AbstractEditorTest {
     runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
 
     addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
-    
+
     assertTrue(myModel.isOffsetCollapsed(5));
   }
-  
+
   public void testAmongIdenticalRegionsExpandedOnesShouldBeKilledFirst() {
     FoldRegion c = addCollapsedFoldRegion(0, 10, "...");
     FoldRegion e = addFoldRegion(1, 10, "...");
@@ -229,7 +227,7 @@ public class FoldingTest extends AbstractEditorTest {
       FoldRegion region = myModel.createFoldRegion(0, 1, "...", null, true);
       assertNotNull(region);
       assertTrue(region.isValid());
-      region.setExpanded(false);
+      assertFalse(region.isExpanded());
       regionRef.set(region);
     });
     List<FoldRegion> notifications = new ArrayList<>();
@@ -302,7 +300,7 @@ public class FoldingTest extends AbstractEditorTest {
     myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
     assertSame(outer, myModel.getCollapsedRegionAtOffset(10));
   }
-  
+
   public void testNoIdenticalRegionsSpecialCase() {
     addFoldRegion(10, 20, "1");
     addFoldRegion(15, 20, "2");
@@ -345,7 +343,7 @@ public class FoldingTest extends AbstractEditorTest {
     runWriteCommand(() -> getEditor().getDocument().deleteString(15, 20));
     Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
   }
-  
+
   public void testClearingInvalidatesFoldRegions() {
     FoldRegion region = addCollapsedFoldRegion(5, 10, "...");
     myModel.runBatchFoldingOperation(() -> myModel.clearFoldRegions());
@@ -430,5 +428,31 @@ public class FoldingTest extends AbstractEditorTest {
     addCollapsedFoldRegion(0, getEditor().getDocument().getTextLength(), "...");
     mouse().clickAt(0, 1);
     assertEquals(new VisualPosition(0, 0), getEditor().getCaretModel().getVisualPosition());
+  }
+
+  public void testExpandRegionDoesNotImpactOutsideCaret() {
+    initText("(\n" +
+             "  foo [\n" +
+             "    bar<caret>\n" +
+             "  ]\n" +
+             ")");
+    foldOccurrences("(?s)\\(.*\\)", "...");
+    foldOccurrences("(?s)\\[.*\\]", "...");
+    checkResultByText("<caret>(\n" +
+                      "  foo [\n" +
+                      "    bar\n" +
+                      "  ]\n" +
+                      ")");
+
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("foo"));
+    verifyFoldingState("[FoldRegion -(0:23), placeholder='...', FoldRegion +(8:21), placeholder='...']");
+
+    executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
+
+    checkResultByText("(\n" +
+                      "  <caret>foo [\n" +
+                      "    bar\n" +
+                      "  ]\n" +
+                      ")");
   }
 }

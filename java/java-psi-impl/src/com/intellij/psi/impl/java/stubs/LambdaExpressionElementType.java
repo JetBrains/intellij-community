@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -10,10 +10,10 @@ import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiLambdaExpressionImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public class LambdaExpressionElementType extends FunctionalExpressionElementType<PsiLambdaExpression> {
   public LambdaExpressionElementType() {
@@ -53,7 +53,8 @@ public class LambdaExpressionElementType extends FunctionalExpressionElementType
   @NotNull
   @Override
   protected String getPresentableText(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr) {
-    LighterASTNode parameterList = ObjectUtils.notNull(LightTreeUtil.firstChildOfType(tree, funExpr, JavaStubElementTypes.PARAMETER_LIST));
+    LighterASTNode parameterList =
+      Objects.requireNonNull(LightTreeUtil.firstChildOfType(tree, funExpr, JavaStubElementTypes.PARAMETER_LIST));
     return getLambdaPresentableText(tree, parameterList);
   }
 

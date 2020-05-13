@@ -1,11 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.completion;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionProvider;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
-import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Template;
@@ -17,6 +13,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,17 +22,16 @@ import static com.intellij.sh.completion.ShCompletionUtil.endsWithDot;
 class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
   private static final int PRIORITY = 10;
 
-  @NotNull
-  private final String[] myKeywords;
+  private final String @NotNull [] myKeywords;
   @NotNull
   private final String myFeatureActionId;
   private final boolean myWithDescription;
 
-  ShKeywordCompletionProvider(@NotNull String featureActionId, @NotNull String... keywords) {
+  ShKeywordCompletionProvider(@NotNull String featureActionId, @NonNls String @NotNull ... keywords) {
     this(featureActionId, false, keywords);
   }
 
-  ShKeywordCompletionProvider(@NotNull String featureActionId, boolean withDescription, @NotNull String... keywords) {
+  ShKeywordCompletionProvider(@NotNull String featureActionId, boolean withDescription, @NonNls String @NotNull ... keywords) {
     myKeywords = keywords;
     myFeatureActionId = featureActionId;
     myWithDescription = withDescription;

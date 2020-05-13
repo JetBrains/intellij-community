@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github;
 
 import com.intellij.icons.AllIcons;
@@ -28,6 +28,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
+import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper;
 import org.jetbrains.plugins.github.util.GithubNotifications;
@@ -46,10 +47,11 @@ import java.util.List;
  */
 public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;
-  private static final String FAILED_TO_CREATE_GIST = "Can't create Gist";
 
   protected GithubCreateGistAction() {
-    super("Create Gist...", "Create GitHub Gist", AllIcons.Vcs.Vendors.Github);
+    super(GithubBundle.messagePointer("create.gist.action.title"),
+          GithubBundle.messagePointer("create.gist.action.description"),
+          AllIcons.Vcs.Vendors.Github);
   }
 
   @Override
@@ -90,7 +92,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static void createGistAction(@NotNull final Project project,
                                        @Nullable final Editor editor,
                                        @Nullable final VirtualFile file,
-                                       @Nullable final VirtualFile[] files) {
+                                       final VirtualFile @Nullable [] files) {
     if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return;
     GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
     if (!authManager.ensureHasAccounts(project)) return;
@@ -116,7 +118,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     GithubServerPath server = dialog.getAccount().getServer();
 
     final Ref<String> url = new Ref<>();
-    new Task.Backgroundable(project, "Creating Gist...") {
+    new Task.Backgroundable(project, GithubBundle.message("create.gist.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<FileContent> contents = collectContents(project, editor, file, files);
@@ -140,14 +142,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
           BrowserUtil.browse(url.get());
         }
         else {
-          GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url.get());
+          GithubNotifications
+            .showInfoURL(project, GithubBundle.message("create.gist.success"), GithubBundle.message("create.gist.url"), url.get());
         }
       }
     }.queue();
   }
 
   @Nullable
-  private static String getFileName(@Nullable Editor editor, @Nullable VirtualFile[] files) {
+  private static String getFileName(@Nullable Editor editor, VirtualFile @Nullable [] files) {
     if (files != null && files.length == 1 && !files[0].isDirectory()) {
       return files[0].getName();
     }
@@ -161,7 +164,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   static List<FileContent> collectContents(@NotNull Project project,
                                            @Nullable Editor editor,
                                            @Nullable VirtualFile file,
-                                           @Nullable VirtualFile[] files) {
+                                           VirtualFile @Nullable [] files) {
     if (editor != null) {
       String content = getContentFromEditor(editor);
       if (content == null) {
@@ -200,7 +203,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                            @NotNull final String description,
                            @Nullable String filename) {
     if (contents.isEmpty()) {
-      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't create empty gist");
+      GithubNotifications.showWarning(project, GithubBundle.message("cannot.create.gist"), GithubBundle.message("create.gist.error.empty"));
       return null;
     }
     if (contents.size() == 1 && filename != null) {
@@ -211,7 +214,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return executor.execute(indicator, GithubApiRequests.Gists.create(server, contents, description, !isSecret)).getHtmlUrl();
     }
     catch (IOException e) {
-      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, e);
+      GithubNotifications.showError(project, GithubBundle.message("cannot.create.gist"), e);
       return null;
     }
   }
@@ -235,7 +238,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return getContentFromDirectory(file, project, prefix);
     }
     if (file.getFileType().isBinary()) {
-      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't upload binary file: " + file);
+      GithubNotifications
+        .showWarning(project, GithubBundle.message("cannot.create.gist"),
+                     GithubBundle.message("create.gist.error.binary.file", file.getName()));
       return Collections.emptyList();
     }
     String content = ReadAction.compute(() -> {
@@ -254,7 +259,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
       }
     });
     if (content == null) {
-      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file);
+      GithubNotifications
+        .showWarning(project, GithubBundle.message("cannot.create.gist"),
+                     GithubBundle.message("create.gist.error.content.read", file.getName()));
       return Collections.emptyList();
     }
     if (StringUtil.isEmptyOrSpaces(content)) {

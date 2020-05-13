@@ -31,8 +31,6 @@ import java.util.List;
 
 /**
  * Stores source paths for each output path. If a source file or an output file is located in a jar file the path to the jar file is stored.
- *
- * @author nik
  */
 public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>> {
   private final PathRelativizerService myRelativizer;

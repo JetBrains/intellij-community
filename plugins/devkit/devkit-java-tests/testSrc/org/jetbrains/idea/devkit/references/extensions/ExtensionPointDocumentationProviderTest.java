@@ -3,9 +3,11 @@ package org.jetbrains.idea.devkit.references.extensions;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
+@TestDataPath("$CONTENT_ROOT/testData/references/extensions")
 public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
@@ -17,61 +19,64 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
     return myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
   }
 
-  public void testExtensionPointDocumentation() {
-    myFixture.configureByFiles("extensionPointDocumentation.xml", "bar/MyExtensionPoint.java");
-
-    final PsiElement docElement =
-      DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(),
-                                                                       myFixture.getFile());
-    DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
-
-    String epDefinition = "[" + getModule().getName() + "] foo<br/>" +
-                          "<b>bar</b> (extensionPointDocumentation.xml)<br/>" +
-                          "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>";
-
-    assertEquals(epDefinition,
-                 provider.getQuickNavigateInfo(docElement, getOriginalElement()));
-
-    assertEquals("<div class='definition'><pre><b>bar</b> [foo]<br>" +
-                 "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br>" +
-                 "extensionPointDocumentation.xml" +
-                 "<table class='sections'>" +
-                 "<tr><td valign='top' class='section'><p>attributeName:</td><td valign='top'><a href=\"psi_element://java.lang.String\"><code>String</code></a></td>" +
-                 "<tr><td valign='top' class='section'><p>&lt;tagName&gt;:</td><td valign='top'><a href=\"psi_element://java.lang.Integer\"><code>Integer</code></a></td></table>" +
-                 "</pre></div>" +
-                 "<div class='content'>" +
-                 "<em>Extension Point Implementation Class</em>" +
-                 "<div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div>" +
-                 "<div class='content'>\n   MyExtensionPoint JavaDoc.\n </div><table class='sections'><p></table></div>",
-                 provider.generateDoc(docElement, getOriginalElement()));
+  public void testBeanClassExtensionPointDocumentation() {
+    doBeanClassExtensionPointTest("beanClassExtensionPointDocumentation.xml");
   }
 
-  public void testExtensionPointDocumentationQualifiedName() {
-    myFixture.configureByFiles("extensionPointDocumentationQualifiedName.xml", "bar/MyExtensionPoint.java");
+  public void testBeanClassExtensionPointQualifiedNameDocumentation() {
+    doBeanClassExtensionPointTest("beanClassExtensionPointQualifiedNameDocumentation.xml");
+  }
+
+  private void doBeanClassExtensionPointTest(String pluginXml) {
+    myFixture.configureByFiles(pluginXml,
+                               "bar/MyExtensionPoint.java", "bar/MyExtension.java");
+    myFixture.addClass("package com.intellij.openapi.extensions; public @interface RequiredElement {}");
+    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute {}");
+    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Tag {}");
 
     final PsiElement docElement =
       DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(),
                                                                        myFixture.getFile());
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
-    String epDefinition = "[" + getModule().getName() + "]<br/>" +
-                          "<b>com.my.bar</b> (extensionPointDocumentationQualifiedName.xml)<br/>" +
-                          "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>";
-
+    String epDefinition = "[" + getModule().getName() + "]" +
+                          "<br/><b>foo.bar</b> (" + pluginXml + ")<br/>" +
+                          "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br/>" +
+                          "<a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a>";
     assertEquals(epDefinition,
                  provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
-    assertEquals("<div class='definition'><pre><b>com.my.bar</b><br>" +
-                 "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br>" +
-                 "extensionPointDocumentationQualifiedName.xml" +
-                 "<table class='sections'>" +
-                 "<tr><td valign='top' class='section'><p>attributeName:</td><td valign='top'><a href=\"psi_element://java.lang.String\"><code>String</code></a></td>" +
-                 "<tr><td valign='top' class='section'><p>&lt;tagName&gt;:</td><td valign='top'><a href=\"psi_element://java.lang.Integer\"><code>Integer</code></a></td></table>" +
-                 "</pre></div>" +
-                 "<div class='content'>" +
-                 "<em>Extension Point Implementation Class</em>" +
-                 "<div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div>" +
-                 "<div class='content'>\n   MyExtensionPoint JavaDoc.\n </div><table class='sections'><p></table></div>",
-                 provider.generateDoc(docElement, getOriginalElement()));
+    assertEquals(
+      "<div class='definition'><pre><b>foo.bar</b><br>" +
+      pluginXml +
+      "<div class='definition'><pre>bar<br>public class <b>MyExtensionPoint</b>\n" +
+      "extends <a href=\"psi_element://java.lang.Object\"><code>Object</code></a></pre></div><div class='content'>\n" +
+      "   MyExtensionPoint JavaDoc.\n" +
+      " </div><table class='sections'><p></table><table class='sections'><tr><td valign='top' class='section'><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></td><td valign='top'>String (required)</td><tr><td valign='top' class='section'><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue></code></a></td><td valign='top'>Integer</td><br/></table></pre></div><div class='content'><h2>Extension Point Implementation</h2><div class='definition'><pre>bar<br>public interface <b>MyExtension</b></pre></div><div class='content'>\n" +
+      "   My Extension Javadoc.\n" +
+      " </div><table class='sections'><p></table></div>",
+      provider.generateDoc(docElement, getOriginalElement()));
+  }
+
+  public void testInterfaceExtensionPointDocumentation() {
+    myFixture.configureByFiles("interfaceExtensionPointDocumentation.xml",
+                               "bar/MyExtension.java");
+
+    final PsiElement docElement =
+      DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(),
+                                                                       myFixture.getFile());
+    DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
+
+    String epDefinition = "[" + getModule().getName() + "]" +
+                          "<br/><b>foo.bar</b> (interfaceExtensionPointDocumentation.xml)<br/>" +
+                          "<a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a>";
+    assertEquals(epDefinition,
+                 provider.getQuickNavigateInfo(docElement, getOriginalElement()));
+
+    assertEquals(
+      "<div class='definition'><pre><b>foo.bar</b><br>interfaceExtensionPointDocumentation.xml</pre></div><div class='content'><h2>Extension Point Implementation</h2><div class='definition'><pre>bar<br>public interface <b>MyExtension</b></pre></div><div class='content'>\n" +
+      "   My Extension Javadoc.\n" +
+      " </div><table class='sections'><p></table></div>",
+      provider.generateDoc(docElement, getOriginalElement()));
   }
 }

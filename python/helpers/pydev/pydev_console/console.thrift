@@ -107,7 +107,7 @@ struct CompletionOption {
   4: CompletionOptionType type,
 }
 
-typedef list<CompletionOption> GetCompletionsReponse
+typedef list<CompletionOption> GetCompletionsResponse
 
 typedef string AttributeDescription
 
@@ -115,6 +115,10 @@ typedef list<DebugValue> DebugValues
 
 exception UnsupportedArrayTypeException {
   1: string type,
+}
+
+exception PythonUnhandledException {
+  1: string traceback,
 }
 
 /**
@@ -136,7 +140,7 @@ service PythonConsoleBackendService {
    */
   bool execMultipleLines(1: string lines),
 
-  GetCompletionsReponse getCompletions(1: string text, 2: string actTok),
+  GetCompletionsResponse getCompletions(1: string text, 2: string actTok) throws (1: PythonUnhandledException unhandledException),
 
   /**
    * The description of the given attribute in the shell.
@@ -172,7 +176,7 @@ service PythonConsoleBackendService {
    */
   oneway void close(),
 
-  DebugValues evaluate(1: string expression),
+  DebugValues evaluate(1: string expression, 2: bool doTrunc),
 
   GetArrayResponse getArray(1: string vars, 2: i32 rowOffset, 3: i32 colOffset, 4: i32 rows, 5: i32 cols, 6: string format)
     throws (1: UnsupportedArrayTypeException unsupported, 2: ExceedingArrayDimensionsException exceedingDimensions),

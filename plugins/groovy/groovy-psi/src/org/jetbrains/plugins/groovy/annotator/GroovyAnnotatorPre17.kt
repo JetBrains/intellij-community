@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
@@ -10,7 +11,7 @@ class GroovyAnnotatorPre17(private val holder: AnnotationHolder, private val ver
 
   private fun highlightInnerClass(typeDefinition: GrTypeDefinition) {
     if (typeDefinition.containingClass == null) return
-    holder.createErrorAnnotation(typeDefinition.nameIdentifierGroovy, message("unsupported.inner.class.0", version))
+    holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.inner.class.0", version)).range(typeDefinition.nameIdentifierGroovy).create()
   }
 
   override fun visitClassDefinition(classDefinition: GrClassDefinition) {
@@ -26,6 +27,6 @@ class GroovyAnnotatorPre17(private val holder: AnnotationHolder, private val ver
   }
 
   override fun visitAnonymousClassDefinition(anonymousClassDefinition: GrAnonymousClassDefinition) {
-    holder.createErrorAnnotation(anonymousClassDefinition.nameIdentifierGroovy, message("unsupported.anonymous.class.0", version))
+    holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.anonymous.class.0", version)).range(anonymousClassDefinition.nameIdentifierGroovy).create()
   }
 }

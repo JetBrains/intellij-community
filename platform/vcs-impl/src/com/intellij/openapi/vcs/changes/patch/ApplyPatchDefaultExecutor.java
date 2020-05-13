@@ -89,7 +89,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     }
     catch (PatchSyntaxException e) {
       VcsBalloonProblemNotifier
-        .showOverChangesView(project, "Can not apply additional patch info: " + e.getMessage(), MessageType.ERROR);
+        .showOverChangesView(project, VcsBundle.message("patch.apply.can.not.apply.additional.info.error", e.getMessage()), MessageType.ERROR);
     }
   }
 

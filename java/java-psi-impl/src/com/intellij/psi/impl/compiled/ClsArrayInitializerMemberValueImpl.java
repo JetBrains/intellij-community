@@ -27,7 +27,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   private final ClsElementImpl myParent;
   private final PsiAnnotationMemberValue[] myInitializers;
 
-  public ClsArrayInitializerMemberValueImpl(@NotNull ClsElementImpl parent, @NotNull PsiAnnotationMemberValue[] initializers) {
+  public ClsArrayInitializerMemberValueImpl(@NotNull ClsElementImpl parent, PsiAnnotationMemberValue @NotNull [] initializers) {
     myParent = parent;
     myInitializers = initializers;
   }
@@ -56,8 +56,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return myInitializers;
   }
 
@@ -77,8 +76,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   @Override
-  @NotNull
-  public PsiAnnotationMemberValue[] getInitializers() {
+  public PsiAnnotationMemberValue @NotNull [] getInitializers() {
     return myInitializers;
   }
 }

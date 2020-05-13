@@ -1,7 +1,5 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('echo')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('echo')

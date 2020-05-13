@@ -20,28 +20,31 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 class GitBrancherImpl implements GitBrancher {
 
   @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
 
-  GitBrancherImpl(@NotNull Project project, @NotNull Git git) {
+  GitBrancherImpl(@NotNull Project project) {
     myProject = project;
-    myGit = git;
   }
 
   @Override
   public void checkoutNewBranch(@NotNull String name, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Checking out new branch " + name, null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.checking.out.new.branch.process", name), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).checkoutNewBranch(name, repositories);
@@ -51,7 +54,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @NotNull
   private GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
-    return new GitBranchWorker(myProject, myGit, new GitBranchUiHandlerImpl(myProject, myGit, indicator));
+    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, Git.getInstance(), indicator));
   }
 
   @Override
@@ -61,7 +64,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force) {
-    new CommonBackgroundTask(myProject, "Creating branch " + name, null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.creating.branch.process", name), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).createBranch(name, startPoints, force);
@@ -73,7 +76,7 @@ class GitBrancherImpl implements GitBrancher {
   public void createNewTag(@NotNull String name, @NotNull String reference,
                             @NotNull List<? extends GitRepository> repositories,
                             @Nullable Runnable callInAwtLater) {
-    new CommonBackgroundTask(myProject, "Checking out new branch " + name, callInAwtLater) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.checking.out.new.branch.process", name), callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).createNewTag(name, reference, repositories);
@@ -86,7 +89,7 @@ class GitBrancherImpl implements GitBrancher {
                        boolean detach,
                        @NotNull List<? extends GitRepository> repositories,
                        @Nullable Runnable callInAwtLater) {
-    new CommonBackgroundTask(myProject, "Checking out " + reference, callInAwtLater) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.checking.out.process", reference), callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).checkout(reference, detach, repositories);
@@ -107,7 +110,7 @@ class GitBrancherImpl implements GitBrancher {
                                             @NotNull String startPoint, boolean overwriteIfNeeded,
                                             @NotNull List<? extends GitRepository> repositories,
                                             @Nullable Runnable callInAwtLater) {
-    new CommonBackgroundTask(myProject, String.format("Checking out %s from %s", newBranchName, startPoint), callInAwtLater) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.checking.out.branch.from.process", newBranchName, startPoint), callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).checkoutNewBranchStartingFrom(newBranchName, startPoint, overwriteIfNeeded, repositories);
@@ -117,27 +120,45 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Deleting " + branchName, null) {
+    deleteBranches(Collections.singletonMap(branchName, repositories), null);
+  }
+
+  @Override
+  public void deleteBranches(@NotNull Map<String, List<? extends GitRepository>> branchesToContainingRepositories,
+                             @Nullable Runnable callInAwtAfterExecution) {
+    if (branchesToContainingRepositories.isEmpty()) return;
+    Set<String> branchNames = branchesToContainingRepositories.keySet();
+    String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.branch.process", branchMsg), callInAwtAfterExecution) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).deleteBranch(branchName, repositories);
+        GitBranchWorker worker = newWorker(indicator);
+        for (String branchName : branchNames) {
+          worker.deleteBranch(branchName, branchesToContainingRepositories.getOrDefault(branchName, Collections.emptyList()));
+        }
       }
     }.runInBackground();
   }
 
   @Override
   public void deleteRemoteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Deleting " + branchName, null) {
+    deleteRemoteBranches(Collections.singletonList(branchName), repositories);
+  }
+
+  @Override
+  public void deleteRemoteBranches(@NotNull List<String> branchNames, @NotNull List<? extends GitRepository> repositories) {
+    if (branchNames.isEmpty()) return;
+    String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.remote.branch", branchMsg), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).deleteRemoteBranch(branchName, repositories);
+        newWorker(indicator).deleteRemoteBranches(branchNames, repositories);
       }
     }.runInBackground();
   }
 
   @Override
-  public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories,
-                      @NotNull GitRepository selectedRepository) {
+  public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
     new GitCompareBranchesUi(myProject, repositories, branchName).create();
   }
 
@@ -148,7 +169,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Merging " + branchName, null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", branchName), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).merge(branchName, deleteOnMerge, repositories);
@@ -158,7 +179,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-    new CommonBackgroundTask(myProject, "Rebasing onto " + branchName, null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.rebasing.onto.process", branchName), null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).rebase(repositories, branchName);
@@ -168,12 +189,12 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void rebaseOnCurrent(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-    rebase(repositories, "HEAD", branchName);
+    rebase(repositories, "HEAD", branchName); //NON-NLS
   }
 
   @Override
   public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String upstream, @NotNull String branchName) {
-    new CommonBackgroundTask(myProject, "Rebasing " + branchName + "...", null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.rebasing.process", branchName), null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).rebase(repositories, upstream, branchName);
@@ -184,7 +205,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Renaming " + currentName + " to " + newName + "...", null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.renaming.branch.process", currentName, newName), null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).renameBranch(currentName, newName, repositories);
@@ -194,7 +215,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteTag(@NotNull String name, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Deleting tag " + name, null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.tag.process", name), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).deleteTag(name, repositories);
@@ -204,7 +225,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteRemoteTag(@NotNull String name, @NotNull Map<GitRepository, String> repositories) {
-    new CommonBackgroundTask(myProject, "Deleting tag " + name + " on remote", null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.tag.on.remote.process", name), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).deleteRemoteTag(name, repositories);
@@ -219,7 +240,7 @@ class GitBrancherImpl implements GitBrancher {
 
     @Nullable private final Runnable myCallInAwtAfterExecution;
 
-    private CommonBackgroundTask(@Nullable Project project, @NotNull String title, @Nullable Runnable callInAwtAfterExecution) {
+    private CommonBackgroundTask(@Nullable Project project, @Nls @NotNull String title, @Nullable Runnable callInAwtAfterExecution) {
       super(project, title);
       myCallInAwtAfterExecution = callInAwtAfterExecution;
     }
@@ -229,7 +250,7 @@ class GitBrancherImpl implements GitBrancher {
       execute(indicator);
       if (myCallInAwtAfterExecution != null) {
         Application application = ApplicationManager.getApplication();
-        application.invokeLater(myCallInAwtAfterExecution, application.getDefaultModalityState());
+        application.invokeAndWait(myCallInAwtAfterExecution, application.getDefaultModalityState());
       }
     }
 

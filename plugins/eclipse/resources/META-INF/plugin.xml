@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>Eclipse Interoperability</name>
   <id>org.jetbrains.idea.eclipse</id>
+  <category>Other Tools</category>
   <description>
       <![CDATA[
         Enables interoperability with Eclipse and provides the following features:
@@ -35,13 +36,15 @@
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
+    <notificationWhitelist groupIds="Unknown Natures Detected"/>
   </extensions>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export Project to Eclipse...">
-      <add-to-group group-id="ExportImportGroup" anchor="last"/>
+      <override-text place="MainMenu" text="Project to Eclipse..."/>
+      <add-to-group group-id="FileExportGroup" anchor="last"/>
     </action>
   </actions>
   <extensionPoints>
-    <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter"/>
+    <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

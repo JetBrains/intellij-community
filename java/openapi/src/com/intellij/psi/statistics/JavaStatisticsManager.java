@@ -17,7 +17,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class JavaStatisticsManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.statistics.JavaStatisticsManager");
+  private static final Logger LOG = Logger.getInstance(JavaStatisticsManager.class);
   @NonNls public static final String CLASS_PREFIX = "class#";
 
   @NotNull
@@ -108,6 +108,9 @@ public abstract class JavaStatisticsManager {
       return "field#" + member.getName();
     }
 
+    if (member instanceof PsiRecordComponent) {
+      return "record#" + member.getName();
+    }
     return CLASS_PREFIX + ((PsiClass)member).getQualifiedName();
   }
 
@@ -116,8 +119,7 @@ public abstract class JavaStatisticsManager {
     return new StatisticsInfo(getMemberUseKey1(qualifierType), getMemberUseKey2(member));
   }
 
-  @NotNull
-  public static String[] getAllVariableNamesUsed(VariableKind variableKind, String propertyName, PsiType type) {
+  public static String @NotNull [] getAllVariableNamesUsed(VariableKind variableKind, String propertyName, PsiType type) {
     StatisticsInfo[] keys2 = StatisticsManager.getInstance().getAllValues(getVariableNameUseKey1(propertyName, type));
 
     List<String> list = new ArrayList<>();

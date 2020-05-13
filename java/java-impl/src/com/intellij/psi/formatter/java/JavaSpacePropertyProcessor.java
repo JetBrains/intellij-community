@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -9,7 +9,6 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,19 +33,20 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
 
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.JavaSpacePropertyProcessor");
+  private static final Logger LOG = Logger.getInstance(JavaSpacePropertyProcessor.class);
 
   private static final TokenSet REF_LIST_KEYWORDS = TokenSet.create(
     JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD, JavaTokenType.THROWS_KEYWORD, JavaTokenType.WITH_KEYWORD);
@@ -57,7 +57,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     JavaTokenType.AND, JavaTokenType.ANDAND, JavaTokenType.ANDEQ,
     JavaTokenType.STRING_LITERAL);
 
-  private static final Map<Pair<IElementType, IElementType>, Boolean> ourTokenStickingMatrix = ContainerUtil.newConcurrentMap();
+  private static final Map<Pair<IElementType, IElementType>, Boolean> ourTokenStickingMatrix = new ConcurrentHashMap<>();
 
   private Spacing myResult;
   private PsiElement myParent;
@@ -294,8 +294,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     return true;
   }
 
-  @NotNull
-  private Spacing getSpaceBeforeMethodLBrace(@NotNull PsiMethod method) {
+  private @NotNull Spacing getSpaceBeforeMethodLBrace(@NotNull PsiMethod method) {
     int space = mySettings.SPACE_BEFORE_METHOD_LBRACE ? 1 : 0;
     int methodBraceStyle = mySettings.METHOD_BRACE_STYLE;
 
@@ -322,8 +321,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     return method.getTextRange().getEndOffset();
   }
 
-  @NotNull
-  private Spacing getSpaceBeforeClassLBrace(@NotNull PsiClass aClass) {
+  private @NotNull Spacing getSpaceBeforeClassLBrace(@NotNull PsiClass aClass) {
     int space = mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0;
     int classBraceStyle = mySettings.CLASS_BRACE_STYLE;
 
@@ -665,6 +663,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitPatternVariable(PsiPatternVariable variable) {
+    super.visitPatternVariable(variable);
+    if (myType1 == JavaElementType.TYPE && myType2 == JavaTokenType.IDENTIFIER) {
+      createSpaceInCode(true);
+    }
+  }
+
+  @Override
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
@@ -680,7 +686,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitFile(PsiFile file) {
+  public void visitFile(@NotNull PsiFile file) {
     if (myType1 == JavaElementType.PACKAGE_STATEMENT) {
       int lf = mySettings.BLANK_LINES_AFTER_PACKAGE + 1;
       myResult = Spacing.createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
@@ -1040,8 +1046,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  @Nullable
-  private static ASTNode getPrevElementType(ASTNode child) {
+  private static @Nullable ASTNode getPrevElementType(ASTNode child) {
     return FormatterUtil.getPreviousNonWhitespaceLeaf(child);
   }
 
@@ -1220,6 +1225,22 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitRecordHeader(PsiRecordHeader recordHeader) {
+    if (myType2 == JavaTokenType.RPARENTH) {
+      createParenthSpace(myJavaSettings.RPAREN_ON_NEW_LINE_IN_RECORD_HEADER, false);
+    }
+    else if (myType1 == JavaTokenType.LPARENTH) {
+      createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER, false);
+    }
+    else if (myChild1.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+    else if (myChild2.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
+    }
+  }
+
   private void createParenthSpace(boolean onNewLine, boolean space) {
     createParenthSpace(onNewLine, space, myParent.getTextRange());
   }
@@ -1236,7 +1257,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     if (myRole1 == ChildRole.MODIFIER_LIST) {
       processModifierList();
     }
@@ -1469,8 +1490,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  @Nullable
-  private static ASTNode findFrom(ASTNode current, IElementType expected, boolean forward) {
+  private static @Nullable ASTNode findFrom(ASTNode current, IElementType expected, boolean forward) {
     for (ASTNode node = current; node != null; node = forward ? node.getTreeNext() : node.getTreePrev()) {
       if (node.getElementType() == expected) return node;
     }
@@ -1864,6 +1884,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private static boolean sameTokens(IElementType type, String text, IElementType reparsedType, String reparsedText) {
     return reparsedType == type ||
-           reparsedType == JavaTokenType.IDENTIFIER && ElementType.KEYWORD_BIT_SET.contains(type) && Comparing.equal(text, reparsedText);
+           reparsedType == JavaTokenType.IDENTIFIER && ElementType.KEYWORD_BIT_SET.contains(type) && Objects.equals(text, reparsedText);
   }
 }

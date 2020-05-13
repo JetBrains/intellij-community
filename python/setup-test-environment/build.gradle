@@ -32,8 +32,8 @@ plugins {
 envs {
   String python27version = "2.7.16"
   String python36version = "3.6.8"
-  String python37version = "3.7.5"
-  String python38version = "3.8.0"
+  String python37version = "3.7.6"
+  String python38version = "3.8.1"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -94,25 +94,22 @@ envs {
      return
    }
 
-  createPython("py2_django11_full",
+  createPython("py27_django11_full",
                python27version,
-               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "unittest2", "teamcity-messages", "django-nose", "untangle"]
-                + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\ndjango\nnose\npytest\nbehave\nnpackaging\ntox\nunittest2\ntwisted\ndjango-nose\nuntangle\nmessages",
+               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages", "django-nose",
+                "untangle"] + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
+               "python2.7\ndjango\nnose\npytest\nbehave\nnpackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
-  createPython("py36_django22_full",
-               python36version,
-               ["ipython==2.1", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django", "pytest-xdist", "untangle"],
-               "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\n" +
-               "xdist\nuntangle",
+  createPython("py38_django22_full",
+               python38version,
+               // The version of Jinja2 is fixes due to a bug in recent versions which breaks the debugging.
+               // See: https://github.com/pallets/jinja/pull/1178.
+               ["ipython==7.8", "django==2.2", "behave", "jinja2==2.10.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
+                "pytest-xdist", "untangle", "pandas"],
+               "python3.8\npython3\nipython\nipython780\nskeletons\ndjango\nbehave\nbehave-django\ntox\njinja2\npackaging" +
+               "\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\nxdist\nuntangle\npandas",
                true)
-
-  createPython("py36_django2_1",
-               python36version,
-               ["django==2.1", "jinja2", "pandas", "pytest", "untangle"],
-               "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas\npytest\nuntangle",
-                true)
 
   // For tox
   createPython("py36",
@@ -151,21 +148,6 @@ envs {
 
   if (Os.isFamily(Os.FAMILY_UNIX)) {
     createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
-  }
-
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
-
-    ironpython "ironpython"
-
-    project.tasks.create("Misc for ironpython") { //"Misc" will be launched by "build"
-      shouldRunAfter 'build_envs'
-
-      doLast {
-        def file = Paths.get(bootstrapDirectory.toString(), "ironpython", "tags.txt").toFile()
-        file.createNewFile()
-        file.write("iron")
-      }
-    }
   }
 }
 

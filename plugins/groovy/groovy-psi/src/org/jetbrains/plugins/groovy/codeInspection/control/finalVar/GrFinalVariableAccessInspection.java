@@ -183,7 +183,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         }
       }
 
-      private void highlightInvalidWriteAccess(@NotNull Instruction[] flow,
+      private void highlightInvalidWriteAccess(Instruction @NotNull [] flow,
                                                @NotNull Set<GrVariable> variables,
                                                @NotNull Set<GrVariable> initializedVariables) {
         final List<ReadWriteVariableInstruction> result =
@@ -238,7 +238,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     }
   }
 
-  private static void appendFieldsInitializedInClassInitializer(@NotNull GrClassInitializer[] initializers,
+  private static void appendFieldsInitializedInClassInitializer(GrClassInitializer @NotNull [] initializers,
                                                                 @Nullable GrClassInitializer initializerToStop,
                                                                 boolean isStatic,
                                                                 @NotNull List<? extends GrField> fields,
@@ -385,9 +385,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     }
   }
 
-  @NotNull
-  private static Instruction[] buildFlowForField(@NotNull GrOpenBlock block) {
-    return new ControlFlowBuilder(block.getProject(), GrFieldControlFlowPolicy.getInstance()).buildControlFlow(block);
+  private static Instruction @NotNull [] buildFlowForField(@NotNull GrOpenBlock block) {
+    return new ControlFlowBuilder(GrFieldControlFlowPolicy.getInstance()).buildControlFlow(block);
   }
 
 
@@ -412,11 +411,10 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     return scopes;
   }
 
-  @NotNull
-  private static Instruction[] getFlow(@NotNull PsiElement element) {
+  private static Instruction @NotNull [] getFlow(@NotNull PsiElement element) {
     return element instanceof GrControlFlowOwner
            ? ((GrControlFlowOwner)element).getControlFlow()
-           : new ControlFlowBuilder(element.getProject()).buildControlFlow((GroovyPsiElement)element);
+           : new ControlFlowBuilder().buildControlFlow((GroovyPsiElement)element);
   }
 
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 
 /**
  * @author Dmitry Avdeev
@@ -33,7 +34,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
   public void testUnusedNamespaces() {
     doUnusedDeclarationTest(
       "<all xmlns=\"http://www.w3.org/2001/XMLSchema\" <warning descr=\"Namespace declaration is never used\">xmlns:xsi=\"http://www.w3.org/2001/XMLSc<caret>hema-instance\"</warning>/>",
-      "<all xmlns=\"http://www.w3.org/2001/XMLSchema\"/>", XmlBundle.message("xml.inspections.unused.schema.remove"));
+      "<all xmlns=\"http://www.w3.org/2001/XMLSchema\"/>", XmlAnalysisBundle.message("xml.inspections.unused.schema.remove"));
   }
 
   public void testUnusedDefaultNamespace() {
@@ -53,7 +54,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             "        xmlns:schema=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                             ">\n" +
-                            "</schema:schema>", XmlBundle.message("xml.inspections.unused.schema.remove"), false);
+                            "</schema:schema>", XmlAnalysisBundle.message("xml.inspections.unused.schema.remove"), false);
 
     doOptimizeImportsTest("<schema:schema \n" +
                           "            xmlns:schema=\"http://www.w3.org/2001/XMLSchema\"\n" +
@@ -71,7 +72,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
       "<x:all\n" +
       "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
       "        xmlns:y=\"http://www.w3.org/2001/XMLSchema\"/>",
-      XmlBundle.message("xml.inspections.unused.schema.remove"), false);
+      XmlAnalysisBundle.message("xml.inspections.unused.schema.remove"), false);
 
     doOptimizeImportsTest("<x:all\n" +
                           "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
@@ -102,7 +103,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                             "        xsi:schemaLocation=\"http://www.w3.org/2001/XMLSchema http://www.w3.org/2001/XMLSchema.xsd\"/>",
-                            XmlBundle.message("xml.inspections.unused.schema.remove"));
+                            XmlAnalysisBundle.message("xml.inspections.unused.schema.remove"));
   }
 
   public void testUnusedDefaultLocation() {
@@ -137,7 +138,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             "\n" +
                             "  </xs:complexType>\n" +
                             "</xs:schema>",
-                            XmlBundle.message("xml.inspections.unused.schema.remove"));
+                            XmlAnalysisBundle.message("xml.inspections.unused.schema.remove"));
   }
 
   public void testImplicitPrefixUsage() {
@@ -225,7 +226,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testUsedInXmlns() {
     myFixture.testHighlighting("spring.xml", "spring-beans-2.5.xsd", "spring-batch-2.1.xsd");
-    IntentionAction action = myFixture.getAvailableIntention(XmlBundle.message("xml.inspections.unused.schema.remove"));
+    IntentionAction action = myFixture.getAvailableIntention(XmlAnalysisBundle.message("xml.inspections.unused.schema.remove"));
     assertNotNull(action);
     myFixture.launchAction(action);
     myFixture.checkResultByFile("spring_after.xml");
@@ -265,6 +266,19 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                                                     "    <body about=\"wsdl:definitions/wsdl:types/xs:schema[@targetNamespace='http://www.w3schools.com/webservices/']\">\n" +
                                                     "    </body>\n" +
                                                     "</html>");
+    myFixture.testHighlighting();
+  }
+
+  public void testHtml5Namespace() {
+    myFixture.configureByText("test.xslt",
+                              "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                              "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns=\"http://www.w3.org/1999/xhtml\">\n" +
+                              "  <xsl:template match=\"foo\">\n" +
+                              "    <div data-foo=\"bar\"\n" +
+                              "         <error>dta-foo</error>=\"bar\">\n" +
+                              "    </div>\n" +
+                              "  </xsl:template>\n" +
+                              "</xsl:stylesheet>\n");
     myFixture.testHighlighting();
   }
 

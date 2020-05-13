@@ -5,6 +5,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShTypes;
 import com.intellij.sh.lexer.ShTokenTypes;
 import gnu.trove.TObjectLongHashMap;
@@ -47,7 +48,7 @@ public class ShParserUtil extends GeneratedParserUtilBase {
   }
 
   static boolean differentBracketsWarning(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
-    b.error("Expected similar close bracket");
+    b.error(ShBundle.message("sh.parser.expected.similar.close.bracket"));
     return true;
   }
 
@@ -68,6 +69,16 @@ public class ShParserUtil extends GeneratedParserUtilBase {
       b.remapCurrentToken(ShTypes.WORD);
       b.advanceLexer();
       mark.done(ShTypes.SIMPLE_COMMAND_ELEMENT);
+      return true;
+    }
+    return false;
+  }
+
+  static boolean functionNameKeywordsRemapped(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    IElementType type = b.getTokenType();
+    if (ShTokenTypes.identifierKeywords.contains(type)) {
+      b.remapCurrentToken(ShTypes.WORD);
+      b.advanceLexer();
       return true;
     }
     return false;

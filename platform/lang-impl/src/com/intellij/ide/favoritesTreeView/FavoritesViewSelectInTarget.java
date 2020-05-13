@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * @author anna
  * @author Konstantin Bulenkov
  */
-public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
-  public FavoritesViewSelectInTarget(final Project project) {
+final class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
+  FavoritesViewSelectInTarget(final Project project) {
     super(project);
 
     if (PlatformUtils.isPyCharmEducational()) {
@@ -33,12 +33,12 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public String toString() {
-    return SelectInManager.FAVORITES;
+    return SelectInManager.getFavorites();
   }
 
   @Override
   public String getToolWindowId() {
-    return SelectInManager.FAVORITES;
+    return SelectInManager.getFavorites();
   }
 
   @Override
@@ -88,12 +88,13 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public static String findSuitableFavoritesList(VirtualFile file, Project project, final String currentSubId) {
-    return FavoritesManager.getInstance(project).getFavoriteListName(currentSubId, file);
+    FavoritesManager manager = FavoritesManager.getInstance(project);
+    return manager != null ? manager.getFavoriteListName(currentSubId, file) : null;
   }
 
   @Override
   public String getMinorViewId() {
-    return FavoritesProjectViewPane.ID;
+    return FavoritesViewTreeBuilder.ID;
   }
 
   @Override

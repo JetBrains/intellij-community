@@ -1,24 +1,32 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceContext
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
-class TypeUsageInformationBuilder(method: GrMethod) {
+class TypeUsageInformationBuilder(method: GrMethod, val signatureInferenceContext: SignatureInferenceContext) {
   private val requiredClassTypes: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>> = mutableMapOf()
   private val constraints: MutableList<ConstraintFormula> = mutableListOf()
   private val dependentTypes: MutableSet<PsiTypeParameter> = mutableSetOf()
   private val variableTypeParameters = method.typeParameters
   private val javaLangObject = getJavaLangObject(method)
+  private val expressions: MutableList<GrExpression> = mutableListOf()
 
   fun generateRequiredTypes(typeParameter: PsiTypeParameter, type: PsiType, marker: BoundConstraint.ContainMarker) {
-    val boxedType = if (type is PsiPrimitiveType) type.getBoxedType(typeParameter) ?: type else type
-    if (boxedType == javaLangObject && marker == BoundConstraint.ContainMarker.UPPER) return
-    val bindingTypes = expandWildcards(boxedType, typeParameter)
+    val filteredType = signatureInferenceContext.filterType(type, typeParameter)
+    if (filteredType == javaLangObject && marker == BoundConstraint.ContainMarker.UPPER) return
+    val bindingTypes = expandWildcards(filteredType, typeParameter)
     bindingTypes.forEach { addRequiredType(typeParameter, BoundConstraint(it, marker)) }
   }
 
@@ -26,11 +34,15 @@ class TypeUsageInformationBuilder(method: GrMethod) {
     constraints.add(constraintFormula)
   }
 
+  fun addConstrainingExpression(expression: GrExpression) {
+    expressions.add(expression)
+  }
+
   fun addDependentType(typeParameter: PsiTypeParameter) {
     dependentTypes.add(typeParameter)
   }
 
-  fun build(): TypeUsageInformation = TypeUsageInformation(requiredClassTypes, constraints, dependentTypes)
+  fun build(): TypeUsageInformation = TypeUsageInformation(requiredClassTypes, constraints, dependentTypes, expressions)
 
 
   private fun addRequiredType(typeParameter: PsiTypeParameter, constraint: BoundConstraint) {
@@ -63,9 +75,16 @@ class TypeUsageInformationBuilder(method: GrMethod) {
 
 data class TypeUsageInformation(val requiredClassTypes: Map<PsiTypeParameter, List<BoundConstraint>>,
                                 val constraints: Collection<ConstraintFormula>,
-                                val dependentTypes: Set<PsiTypeParameter> = emptySet()) {
+                                val dependentTypes: Set<PsiTypeParameter> = emptySet(),
+                                val constrainingExpressions: List<GrExpression>) {
+
   operator fun plus(typeUsageInformation: TypeUsageInformation): TypeUsageInformation {
     return merge(listOf(this, typeUsageInformation))
+  }
+
+  fun fillSession(inferenceSession: GroovyInferenceSession) {
+    constrainingExpressions.forEach { buildTopLevelSession(it, inferenceSession) }
+    constraints.forEach { inferenceSession.addConstraint(it) }
   }
 
   val contravariantTypes: List<PsiType> by lazy(LazyThreadSafetyMode.NONE) {
@@ -99,6 +118,8 @@ data class TypeUsageInformation(val requiredClassTypes: Map<PsiTypeParameter, Li
 
   companion object {
 
+    val EMPTY = TypeUsageInformation(emptyMap(), emptyList(), emptySet(), emptyList())
+
     private fun <K, V> flattenMap(data: Iterable<Map<out K, List<V>>>): Map<K, List<V>> =
       data
         .flatMap { it.entries }
@@ -111,7 +132,8 @@ data class TypeUsageInformation(val requiredClassTypes: Map<PsiTypeParameter, Li
       val requiredClassTypes = flattenMap(data.map { it.requiredClassTypes })
       val constraints = data.flatMap { it.constraints }
       val dependentTypes = data.flatMap { it.dependentTypes }.toSet()
-      return TypeUsageInformation(requiredClassTypes, constraints, dependentTypes)
+      val constrainingExpressions = data.flatMap { it.constrainingExpressions }
+      return TypeUsageInformation(requiredClassTypes, constraints, dependentTypes, constrainingExpressions)
     }
   }
 }

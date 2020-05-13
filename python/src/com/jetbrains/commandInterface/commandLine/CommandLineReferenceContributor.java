@@ -36,10 +36,9 @@ public final class CommandLineReferenceContributor extends PsiReferenceContribut
 
 
   private static class ReferenceProvider extends PsiReferenceProvider {
-    @NotNull
     @Override
-    public final PsiReference[] getReferencesByElement(@NotNull final PsiElement element,
-                                                       @NotNull final ProcessingContext context) {
+    public final PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element,
+                                                                 @NotNull final ProcessingContext context) {
       if (element instanceof CommandLineCommand) {
         return new PsiReference[]{new CommandLineCommandReference((CommandLineCommand)element)};
       }

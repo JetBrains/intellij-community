@@ -19,7 +19,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="etched" title-resource-bundle="messages/CodeInsightBundle" title-key="i18n.quickfix.property.panel.title"/>
+        <border type="etched" title-resource-bundle="messages/PropertiesBundle" title-key="i18n.quickfix.property.panel.title"/>
         <children>
           <component id="34a90" class="javax.swing.JLabel">
             <constraints>
@@ -27,7 +27,7 @@
             </constraints>
             <properties>
               <labelFor value="31dec"/>
-              <text resource-bundle="messages/CodeInsightBundle" key="i18n.quickfix.property.panel.property.key.label"/>
+              <text resource-bundle="messages/PropertiesBundle" key="i18n.quickfix.property.panel.property.key.label"/>
             </properties>
           </component>
           <component id="dc7e5" class="javax.swing.JLabel">
@@ -36,7 +36,7 @@
             </constraints>
             <properties>
               <labelFor value="52f32"/>
-              <text resource-bundle="messages/CodeInsightBundle" key="i18n.quickfix.property.panel.property.value.label"/>
+              <text resource-bundle="messages/PropertiesBundle" key="i18n.quickfix.property.panel.property.value.label"/>
             </properties>
           </component>
           <component id="52f32" class="javax.swing.JTextField" binding="myValue">
@@ -53,7 +53,7 @@
             </constraints>
             <properties>
               <labelFor value="57b5c"/>
-              <text resource-bundle="messages/CodeInsightBundle" key="i18n.quickfix.property.panel.properties.file.label"/>
+              <text resource-bundle="messages/PropertiesBundle" key="i18n.quickfix.property.panel.properties.file.label"/>
             </properties>
           </component>
           <grid id="57b5c" binding="myPropertiesFilePanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -69,7 +69,7 @@
               <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/CodeInsightBundle" key="i18n.quickfix.property.panel.update.all.files.in.bundle.checkbox"/>
+              <text resource-bundle="messages/PropertiesBundle" key="i18n.quickfix.property.panel.update.all.files.in.bundle.checkbox"/>
             </properties>
           </component>
           <component id="31dec" class="javax.swing.JComboBox" binding="myKey">

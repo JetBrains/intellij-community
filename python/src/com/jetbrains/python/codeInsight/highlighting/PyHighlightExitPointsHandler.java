@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -14,6 +14,7 @@ import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -21,9 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author oleg
- */
 public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
   private final PsiElement myTarget;
 
@@ -33,17 +31,17 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
   }
 
   @Override
-  public List<PsiElement> getTargets() {
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
   @Override
-  protected void selectTargets(final List<PsiElement> targets, final Consumer<List<PsiElement>> selectionConsumer) {
+  protected void selectTargets(final @NotNull List<? extends PsiElement> targets, final @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
   @Override
-  public void computeUsages(final List<PsiElement> targets) {
+  public void computeUsages(final @NotNull List<? extends PsiElement> targets) {
     final PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PyReturnStatement)) {
       return;

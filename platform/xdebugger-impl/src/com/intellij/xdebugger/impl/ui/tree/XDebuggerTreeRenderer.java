@@ -23,9 +23,6 @@ import java.awt.event.MouseEvent;
 
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
-/**
- * @author nik
- */
 class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
   private boolean myHaveLink;
@@ -85,7 +82,9 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private void updateIcon(XDebuggerTreeNode node) {
-    Icon icon = node instanceof XValueNodeImpl && node.getTree().getPinToTopManager().isItemPinned((XValueNodeImpl)node) ?
+    Icon icon = node instanceof XValueNodeImpl &&
+                node.getTree().getPinToTopManager().isEnabled() &&
+                node.getTree().getPinToTopManager().isItemPinned((XValueNodeImpl)node) ?
                 PlatformDebuggerImplIcons.PinToTop.PinnedItem : node.getIcon();
     setIcon(icon);
   }

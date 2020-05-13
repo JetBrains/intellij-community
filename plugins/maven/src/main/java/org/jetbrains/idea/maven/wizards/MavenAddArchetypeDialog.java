@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -22,7 +23,7 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
 
   public MavenAddArchetypeDialog(Component parent) {
     super(parent, false);
-    setTitle("Add Archetype");
+    setTitle(MavenConfigurableBundle.message("maven.settings.archetype.add.title"));
 
     init();
 

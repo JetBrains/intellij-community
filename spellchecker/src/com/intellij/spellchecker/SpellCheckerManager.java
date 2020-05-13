@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker;
 
 import com.google.common.collect.Maps;
@@ -46,7 +46,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
 import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
 
 public class SpellCheckerManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
+  private static final Logger LOG = Logger.getInstance(SpellCheckerManager.class);
 
   private static final int MAX_METRICS = 1;
   public static final String PROJECT = "project";
@@ -81,6 +81,9 @@ public class SpellCheckerManager implements Disposable {
     myAppDictionaryPath = getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE;
     myCustomDictFileListener = new CustomDictFileListener(settings);
     LocalFileSystem.getInstance().addVirtualFileListener(myCustomDictFileListener);
+    BundledDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
+    RuntimeDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
+    CustomDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
   }
 
   @SuppressWarnings("unused")  // used in Rider
@@ -89,7 +92,7 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void fullConfigurationReload() {
-    spellChecker = SpellCheckerFactory.create(project);
+    spellChecker = SpellCheckerFactory.create(project, this);
     fillEngineDictionary();
   }
 

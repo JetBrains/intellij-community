@@ -16,6 +16,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +25,6 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -32,6 +32,7 @@ import org.junit.Assert;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -103,8 +104,7 @@ public class BackgroundTaskQueueTest extends HeavyPlatformTestCase {
     }
   }
 
-  @NotNull
-  private static TestTask[] createSeveralTasks(@NotNull Project project) {
+  private static TestTask @NotNull [] createSeveralTasks(@NotNull Project project) {
     final TestTask[] tasks = new TestTask[10];
     for (int i = 0; i < tasks.length; i++) {
       tasks[i] = new TestTask(project);
@@ -205,24 +205,24 @@ public class BackgroundTaskQueueTest extends HeavyPlatformTestCase {
   }
 
   private static class ThreadRunner {
-    private final List<Thread> myThreads = new ArrayList<>();
+    private final List<Future<?>> myThreads = new ArrayList<>();
 
     public void run(int count, IntConsumer task) {
       for (int i = 0; i < count; i++) {
         int threadIndex = i;
-        Thread thread = new Thread("BTQ-" + threadIndex) {
-          @Override
-          public void run() {
-            task.accept(threadIndex);
-          }
-        };
-        thread.start();
-        myThreads.add(thread);
+        myThreads.add(ApplicationManager.getApplication().executeOnPooledThread(() -> task.accept(threadIndex)));
       }
     }
 
     public void finish() {
-      ConcurrencyUtil.joinAll(myThreads);
+      try {
+        for (Future<?> thread : myThreads) {
+          thread.get();
+        }
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 

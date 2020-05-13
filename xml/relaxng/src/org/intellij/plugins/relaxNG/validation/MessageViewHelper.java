@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.MessageCategory;
 import gnu.trove.THashSet;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -41,7 +42,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class MessageViewHelper {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.MessageViewHelper");
+  private static final Logger LOG = Logger.getInstance(MessageViewHelper.class);
 
   private final Project myProject;
 
@@ -121,7 +122,7 @@ public class MessageViewHelper {
       messageView.getContentManager().addContentManagerListener(new CloseListener(content, myContentName, myErrorsView));
       ContentManagerUtil.cleanupContents(content, myProject, myContentName);
       messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView, myKey));
-    }, "Open Message View", null);
+    }, RelaxngBundle.message("open.message.view"), null);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
   }
@@ -139,7 +140,7 @@ public class MessageViewHelper {
     }
   }
 
-  private static class CloseListener extends ContentManagerAdapter {
+  private static class CloseListener implements ContentManagerListener {
     private final String myContentName;
 
     private NewErrorTreeViewPanel myErrorsView;
@@ -170,8 +171,8 @@ public class MessageViewHelper {
       if (event.getContent() == myContent) {
         if (myErrorsView != null && myErrorsView.canControlProcess() && !myErrorsView.isProcessStopped()) {
           int result = Messages.showYesNoDialog(
-            myContentName + " Running",
-            myContentName + " is still running. Close anyway?",
+            RelaxngBundle.message("0.running", myContentName),
+            RelaxngBundle.message("0.is.still.running.close.anyway", myContentName),
               Messages.getQuestionIcon()
           );
           if (result != Messages.YES) {
@@ -182,7 +183,7 @@ public class MessageViewHelper {
     }
   }
 
-  private static class MyContentDisposer extends ContentManagerAdapter {
+  private static class MyContentDisposer implements ContentManagerListener {
     private final Content myContent;
     private final MessageView myMessageView;
     private final Key<NewErrorTreeViewPanel> myKey;

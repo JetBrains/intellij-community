@@ -367,7 +367,7 @@ public class MavenIndex implements MavenSearchIndex {
     if (myFailureMessage != null &&
         myFailureMessage.contains("nexus-maven-repository-index.properties") &&
         myFailureMessage.contains("FileNotFoundException")) {
-      myFailureMessage = "Repository is non-nexus repo, or does not indexed";
+      myFailureMessage = "Repository is non-nexus repo, or is not indexed";
       MavenLog.LOG.debug("Failed to update Maven indices for: [" + myId.getValue() + "] " + myRepositoryPathOrUrl, e);
     }
     else {
@@ -680,7 +680,7 @@ public class MavenIndex implements MavenSearchIndex {
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
-      return new PersistentHashMap<>(f, EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
+      return new PersistentHashMap<>(f.toPath(), EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
     }
 
     public void close(boolean releaseIndexContext) throws MavenIndexException {

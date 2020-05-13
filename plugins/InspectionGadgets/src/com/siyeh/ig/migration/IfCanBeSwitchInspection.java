@@ -1,22 +1,8 @@
-/*
- * Copyright 2011-2019 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -39,7 +25,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,13 +57,6 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("if.can.be.switch.display.name");
   }
 
   @NotNull
@@ -242,7 +220,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
     final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
     final PsiSwitchStatement replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
-    if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(replacement)) {
+    if (HighlightingFeature.ENHANCED_SWITCH.isAvailable(replacement)) {
       final EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {
         replacer.replace(replacement);
@@ -260,7 +238,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @SafeVarargs
   @Nullable
   public static <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement element, @NotNull Class<T> aClass,
-                                                              @NotNull Class<? extends PsiElement>... stopAt) {
+                                                              Class<? extends PsiElement> @NotNull ... stopAt) {
     if (element == null) {
       return null;
     }
@@ -413,7 +391,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         appendElement(child, renameBreaks, breakLabelName, switchStatementText);
       }
     }
-    else {
+    else if (bodyStatement != null) {
       appendElement(bodyStatement, renameBreaks, breakLabelName, switchStatementText);
     }
     if (ControlFlowUtils.statementMayCompleteNormally(bodyStatement)) {

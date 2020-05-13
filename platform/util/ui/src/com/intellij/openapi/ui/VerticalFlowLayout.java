@@ -164,4 +164,19 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
     dimension.width += hGap + hGap;
     dimension.height += vGap + vGap;
   }
+
+  public String toString() {
+    String str = "";
+    switch (getAlignment()) {
+      case TOP:        str = ",align=top"; break;
+      case MIDDLE:     str = ",align=middle"; break;
+      case BOTTOM:     str = ",align=bottom"; break;
+    }
+    return getClass().getSimpleName() +
+           "[hgap=" + hGap +
+           ",vgap=" + vGap +
+           ",myVerticalFill=" + myVerticalFill +
+           ",myHorizontalFill=" + myHorizontalFill +
+           str + "]";
+  }
 }

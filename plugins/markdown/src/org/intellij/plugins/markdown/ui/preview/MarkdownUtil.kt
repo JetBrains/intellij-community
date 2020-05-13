@@ -12,13 +12,12 @@ import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.math.BigInteger
-import java.security.MessageDigest
 import java.util.*
 
 object MarkdownUtil {
   fun md5(buffer: String?, @NonNls key: String): String {
     val md5 = DigestUtil.md5()
-    Objects.requireNonNull<MessageDigest>(md5).update(buffer?.toByteArray(Charsets.UTF_8))
+    Objects.requireNonNull(md5).update(buffer?.toByteArray(Charsets.UTF_8))
     val code = md5.digest(key.toByteArray(Charsets.UTF_8))
     val bi = BigInteger(code).abs()
     return bi.abs().toString(16)
@@ -35,7 +34,7 @@ object MarkdownUtil {
     val map = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
     map.putAll(MarkdownParserManager.CODE_FENCE_PLUGIN_FLAVOUR.createHtmlGeneratingProviders(cacheCollector))
     if (project != null) {
-      map[MarkdownElementTypes.IMAGE] = IntelliJImageGeneratingProvider(linkMap, baseUri, project)
+      map[MarkdownElementTypes.IMAGE] = IntelliJImageGeneratingProvider(linkMap, baseUri)
     }
 
     val html = HtmlGenerator(text, parsedTree, map, true).generateHtml()

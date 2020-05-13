@@ -29,8 +29,7 @@ public class InlineSuperClassUsageViewDescriptor extends UsageViewDescriptorAdap
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return new PsiElement[] {myClass};
   }
 

@@ -2,7 +2,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
@@ -31,7 +31,7 @@ public class FileParser {
   }
 
   public void parse(@NotNull PsiBuilder builder) {
-    parseFile(builder, FileParser::stopImportListParsing, JavaErrorMessages.INSTANCE, "expected.class.or.interface");
+    parseFile(builder, FileParser::stopImportListParsing, JavaPsiBundle.INSTANCE, "expected.class.or.interface");
   }
 
   public void parseFile(@NotNull PsiBuilder builder,
@@ -86,7 +86,7 @@ public class FileParser {
 
   private static boolean stopImportListParsing(PsiBuilder b) {
     IElementType type = b.getTokenType();
-    if (IMPORT_LIST_STOPPER_SET.contains(type)) return true;
+    if (IMPORT_LIST_STOPPER_SET.contains(type) || DeclarationParser.isRecordToken(b, type)) return true;
     if (type == JavaTokenType.IDENTIFIER) {
       String text = b.getTokenText();
       if (PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text)) return true;
@@ -114,7 +114,7 @@ public class FileParser {
 
     PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
     if (ref == null) {
-      statement.error(JavaErrorMessages.message("expected.class.or.interface"));
+      statement.error(JavaPsiBundle.message("expected.class.or.interface"));
       return;
     }
 
@@ -142,7 +142,7 @@ public class FileParser {
       if (statement != null) {
         isEmpty = false;
         if (invalidElements != null) {
-          invalidElements.errorBefore(JavaErrorMessages.message("unexpected.token"), statement);
+          invalidElements.errorBefore(JavaPsiBundle.message("unexpected.token"), statement);
           invalidElements = null;
         }
         continue;

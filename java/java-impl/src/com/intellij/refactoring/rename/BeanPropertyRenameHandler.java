@@ -53,7 +53,7 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     performInvoke(null, dataContext);
   }
 

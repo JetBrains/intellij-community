@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 
-/**
- * @author nik
- */
 public interface JpsSdkReferencesTable extends JpsCompositeElement {
   @Nullable
   <P extends JpsElement>

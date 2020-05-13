@@ -36,7 +36,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Copy From"/>
+        <border type="none" title-resource-bundle="messages/SvnBundle" title-key="label.copy.from"/>
         <children>
           <component id="15c1b" class="javax.swing.JRadioButton" binding="myWorkingCopyRadioButton" default-binding="true">
             <constraints>
@@ -44,7 +44,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="&amp;Working Copy"/>
+              <text resource-bundle="messages/SvnBundle" key="radio.copy.working.copy"/>
             </properties>
           </component>
           <component id="643a9" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myWorkingCopyField">
@@ -58,7 +58,7 @@
               <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Repository Location:"/>
+              <text resource-bundle="messages/SvnBundle" key="radio.copy.repository.location"/>
             </properties>
           </component>
           <component id="d7ae0" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRepositoryField">
@@ -72,7 +72,7 @@
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Re&amp;vision:"/>
+              <text resource-bundle="messages/SvnBundle" key="label.copy.from.revision"/>
             </properties>
           </component>
           <nested-form id="23004" form-file="org/jetbrains/idea/svn/update/SvnRevisionPanel.form" binding="myRevisionPanel">
@@ -91,8 +91,7 @@
             </constraints>
             <properties>
               <margin top="2" left="2" bottom="2" right="2"/>
-              <text value=""/>
-              <toolTipText value="Use project location"/>
+              <toolTipText resource-bundle="messages/SvnBundle" key="tooltip.use.project.location"/>
             </properties>
           </component>
           <component id="658a" class="javax.swing.JLabel" binding="myUseThisVariantToLabel">
@@ -100,7 +99,7 @@
               <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="dialog.create.branch.or.tag.from.working.copy.warning"/>
+              <text resource-bundle="messages/SvnBundle" key="dialog.create.branch.or.tag.from.working.copy.warning"/>
             </properties>
           </component>
         </children>
@@ -115,7 +114,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Copy To"/>
+        <border type="none" title-resource-bundle="messages/SvnBundle" title-key="label.copy.to"/>
         <children>
           <component id="f1672" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myToURLText">
             <constraints>
@@ -129,7 +128,7 @@
             </constraints>
             <properties>
               <labelFor value="6108c"/>
-              <text value="Base URL:"/>
+              <text resource-bundle="messages/SvnBundle" key="label.branch.base.url"/>
             </properties>
           </component>
           <component id="6108c" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myBranchTagBaseComboBox" default-binding="true">
@@ -144,7 +143,7 @@
             </constraints>
             <properties>
               <labelFor value="d3a1"/>
-              <text value="Name:"/>
+              <text resource-bundle="messages/SvnBundle" key="label.branch.name"/>
             </properties>
           </component>
           <component id="d3a1" class="javax.swing.JTextField" binding="myBranchTextField">
@@ -155,7 +154,7 @@
             </constraints>
             <properties>
               <columns value="25"/>
-              <text value="new_branch"/>
+              <text resource-bundle="messages/SvnBundle" key="value.new.branch.name"/>
             </properties>
           </component>
           <component id="f3aad" class="javax.swing.JRadioButton" binding="myBranchOrTagRadioButton" default-binding="true">
@@ -164,7 +163,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="Branch or Tag"/>
+              <text resource-bundle="messages/SvnBundle" key="radio.copy.to.branch.or.tag"/>
             </properties>
           </component>
           <component id="2c5d3" class="javax.swing.JRadioButton" binding="myAnyLocationRadioButton" default-binding="true">
@@ -172,7 +171,7 @@
               <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Any Location"/>
+              <text resource-bundle="messages/SvnBundle" key="radio.copy.to.any.location"/>
             </properties>
           </component>
         </children>
@@ -184,7 +183,7 @@
         </constraints>
         <properties>
           <labelFor value="cdd55"/>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.copy.comment"/>
+          <text resource-bundle="messages/SvnBundle" key="label.copy.comment"/>
         </properties>
       </component>
       <component id="d0494" class="com.intellij.ui.components.JBCheckBox" binding="mySwitchOnCreate">

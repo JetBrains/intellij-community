@@ -18,9 +18,6 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 
-/**
- * @author nik
- */
 @CompileStatic
 abstract class CompilationTasks {
   abstract void compileAllModulesAndTests()
@@ -30,6 +27,8 @@ abstract class CompilationTasks {
   abstract void buildProjectArtifacts(Collection<String> artifactNames)
 
   abstract void resolveProjectDependencies()
+
+  abstract void resolveProjectDependenciesAndCompileAll()
 
   static CompilationTasks create(CompilationContext context) {
     return new CompilationTasksImpl(context)

@@ -18,7 +18,6 @@ package com.siyeh.ig.resources;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,12 +62,6 @@ public class JDBCResourceInspection extends ResourceInspection {
   @NotNull
   public String getID() {
     return "JDBCResourceOpenedButNotSafelyClosed";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("jdbc.resource.opened.not.closed.display.name");
   }
 
   @Override

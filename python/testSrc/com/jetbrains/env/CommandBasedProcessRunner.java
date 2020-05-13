@@ -47,7 +47,7 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
    */
   public CommandBasedProcessRunner(@NotNull final SimpleCommand command,
                                    @NotNull final Module module,
-                                   @NotNull final String... parameters) {
+                                   final String @NotNull ... parameters) {
     myCommand = command;
     myModule = module;
     myParameters = Arrays.asList(parameters);

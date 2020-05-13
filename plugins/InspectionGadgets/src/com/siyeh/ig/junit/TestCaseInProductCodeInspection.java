@@ -33,13 +33,6 @@ public class TestCaseInProductCodeInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "test.case.in.product.code.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "JUnitTestCaseInProductSource";
   }

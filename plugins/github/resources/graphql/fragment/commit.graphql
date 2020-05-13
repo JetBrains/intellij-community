@@ -10,6 +10,16 @@ fragment commit on Commit {
             url
         }
     }
+    committer {
+        name
+        email
+        avatarUrl
+        date
+        user {
+            url
+        }
+    }
+    messageHeadline
     messageHeadlineHTML
     messageBodyHTML
 }

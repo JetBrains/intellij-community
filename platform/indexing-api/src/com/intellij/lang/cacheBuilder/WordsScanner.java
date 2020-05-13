@@ -31,9 +31,8 @@ public interface WordsScanner {
   /**
    * Processes the specified text fragment and passes every word in the text to the
    * specified processor.
-   *
-   * @param fileText  the text to break into words.
+   *  @param fileText  the text to break into words.
    * @param processor the processor which accepts the words in the text.
    */
-  void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor);
+  void processWords(@NotNull CharSequence fileText, @NotNull Processor<? super WordOccurrence> processor);
 }

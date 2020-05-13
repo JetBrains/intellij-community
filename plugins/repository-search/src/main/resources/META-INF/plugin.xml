@@ -1,0 +1,41 @@
+<idea-plugin implementation-detail="true">
+  <id>org.jetbrains.idea.reposearch</id>
+  <name>JetBrains Repository Search</name>
+  <vendor>JetBrains</vendor>
+  <description>
+    <![CDATA[
+    Technical plugin, provides API for artifacts search
+    ]]>
+  </description>
+  <depends>org.jetbrains.idea.maven.model</depends>
+  <extensionPoints>
+    <extensionPoint name="provider"
+                    interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.idea.reposearch.DependencySearchService"/>
+
+    <registryKey key="maven.packagesearch.enabled" defaultValue="true"
+                 description="Enable package search dependency via https://package-search.services.jetbrains.com" restartRequired="false"/>
+
+    <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
+                 description="package search service config url" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.multiplier" defaultValue="1.2"
+                 description="Exponential backoff multiplyer when package search service request failed" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
+                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
+                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.max" defaultValue="86400000"
+                 description="maximum backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
+    <provider implementation="org.jetbrains.idea.kpmsearch.KpmSearchFactoryProvider"/>
+  </extensions>
+</idea-plugin>

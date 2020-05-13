@@ -41,8 +41,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
   );
 
   @Override
-  @NotNull
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final Boolean onTheFly = (Boolean)infos[0];
     final Boolean canBeConvertedToConstructor = (Boolean)infos[1];
     List<InspectionGadgetsFix> fixes = new ArrayList<>();
@@ -53,13 +52,6 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
       fixes.add(new MethodNameSameAsClassNameFix());
     }
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.name.same.as.class.name.display.name");
   }
 
   @Override

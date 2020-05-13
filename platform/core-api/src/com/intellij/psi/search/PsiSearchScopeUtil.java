@@ -55,7 +55,7 @@ public class PsiSearchScopeUtil {
 
   @NotNull
   @Contract(pure=true)
-  public static SearchScope restrictScopeTo(@NotNull SearchScope originalScope, @NotNull FileType... fileTypes) {
+  public static SearchScope restrictScopeTo(@NotNull SearchScope originalScope, FileType @NotNull ... fileTypes) {
     if (originalScope instanceof GlobalSearchScope) {
       return GlobalSearchScope.getScopeRestrictedByFileTypes(
         (GlobalSearchScope)originalScope,

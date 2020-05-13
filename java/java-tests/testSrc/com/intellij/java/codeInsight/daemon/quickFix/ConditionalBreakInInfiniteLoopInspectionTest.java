@@ -8,9 +8,8 @@ import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class ConditionalBreakInInfiniteLoopInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ConditionalBreakInInfiniteLoopInspection()};
   }
 

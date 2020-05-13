@@ -19,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XPathFunctionCall extends XPathExpression, QNameElement {
-    @NotNull
-    XPathExpression[] getArgumentList();
+    XPathExpression @NotNull [] getArgumentList();
 
     @NotNull
     String getFunctionName();

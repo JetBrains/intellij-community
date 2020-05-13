@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -12,13 +12,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
  * @author peter
  */
 class TypeCorrector extends PsiTypeMapper {
-  private final Map<PsiClassType, PsiClassType> myResultMap = ContainerUtil.newIdentityHashMap();
+  private final Map<PsiClassType, PsiClassType> myResultMap = new IdentityHashMap<>();
   private final GlobalSearchScope myResolveScope;
 
   TypeCorrector(GlobalSearchScope resolveScope) {
@@ -26,7 +27,7 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @Override
-  public PsiType visitType(PsiType type) {
+  public PsiType visitType(@NotNull PsiType type) {
     if (LambdaUtil.notInferredType(type)) {
       return type;
     }
@@ -52,12 +53,12 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @Override
-  public PsiType visitClassType(PsiClassType classType) {
+  public PsiType visitClassType(@NotNull PsiClassType classType) {
     if (classType instanceof PsiCorrectedClassType) {
       return myResolveScope.equals(classType.getResolveScope()) ? classType :
              visitClassType(((PsiCorrectedClassType)classType).myDelegate);
     }
-    
+
     PsiClassType alreadyComputed = myResultMap.get(classType);
     if (alreadyComputed != null) {
       return alreadyComputed;
@@ -153,9 +154,13 @@ class TypeCorrector extends PsiTypeMapper {
       return myDelegate.getClassName();
     }
 
-    @NotNull
     @Override
-    public PsiType[] getParameters() {
+    public @Nullable PsiElement getPsiContext() {
+      return myDelegate.getPsiContext();
+    }
+
+    @Override
+    public PsiType @NotNull [] getParameters() {
       return ContainerUtil.map2Array(myDelegate.getParameters(), PsiType.class, type -> {
         if (type == null) {
           LOG.error(myDelegate + " of " + myDelegate.getClass() + "; substitutor=" + myDelegate.resolveGenerics().getSubstitutor());

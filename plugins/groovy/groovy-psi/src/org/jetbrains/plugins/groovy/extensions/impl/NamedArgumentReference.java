@@ -70,9 +70,8 @@ public class NamedArgumentReference extends PsiPolyVariantReferenceBase<GrArgume
     return super.handleElementRename(newElementName);
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return new GroovyResolveResult[]{new GroovyResolveResultImpl(myNavigationElement, null, null, mySubstitutor, true, true)};
   }
 }

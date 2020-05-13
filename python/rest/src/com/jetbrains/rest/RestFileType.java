@@ -31,7 +31,7 @@ public class RestFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return "reStructuredText";
+    return RestBundle.message("restructured.text");
   }
 
   @Override

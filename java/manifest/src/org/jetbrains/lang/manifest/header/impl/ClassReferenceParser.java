@@ -15,10 +15,10 @@
  */
 package org.jetbrains.lang.manifest.header.impl;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -43,9 +43,8 @@ public class ClassReferenceParser extends StandardHeaderParser {
 
   public static final HeaderParser INSTANCE = new ClassReferenceParser();
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart) {
+  public PsiReference @NotNull [] getReferences(@NotNull HeaderValuePart headerValuePart) {
     Module module = ModuleUtilCore.findModuleForPsiElement(headerValuePart);
     JavaClassReferenceProvider provider;
     if (module != null) {
@@ -70,7 +69,7 @@ public class ClassReferenceParser extends StandardHeaderParser {
 
     String className = valuePart.getUnwrappedText();
     if (StringUtil.isEmptyOrSpaces(className)) {
-      holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.reference.invalid"));
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("header.reference.invalid")).range(valuePart.getHighlightingRange()).create();
       return true;
     }
 
@@ -79,9 +78,9 @@ public class ClassReferenceParser extends StandardHeaderParser {
     GlobalSearchScope scope = module != null ? module.getModuleWithDependenciesAndLibrariesScope(false) : ProjectScope.getAllScope(project);
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
     if (aClass == null) {
-      String message = JavaErrorMessages.message("error.cannot.resolve.class", className);
-      Annotation anno = holder.createErrorAnnotation(valuePart.getHighlightingRange(), message);
-      anno.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      String message = JavaErrorBundle.message("error.cannot.resolve.class", className);
+      holder.newAnnotation(HighlightSeverity.ERROR, message).range(valuePart.getHighlightingRange())
+      .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
       return true;
     }
 
@@ -92,17 +91,17 @@ public class ClassReferenceParser extends StandardHeaderParser {
     String header = ((Header)valuePart.getParent()).getName();
 
     if (MAIN_CLASS.equals(header) && !PsiMethodUtil.hasMainMethod(aClass)) {
-      holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.main.class.invalid"));
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("header.main.class.invalid")).range(valuePart.getHighlightingRange()).create();
       return true;
     }
 
     if (PREMAIN_CLASS.equals(header) && !hasInstrumenterMethod(aClass, "premain")) {
-      holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.pre-main.class.invalid"));
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("header.pre-main.class.invalid")).range(valuePart.getHighlightingRange()).create();
       return true;
     }
 
     if ((AGENT_CLASS.equals(header) || LAUNCHER_AGENT_CLASS.equals(header)) && !hasInstrumenterMethod(aClass, "agentmain")) {
-      holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.agent.class.invalid"));
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("header.agent.class.invalid")).range(valuePart.getHighlightingRange()).create();
       return true;
     }
 

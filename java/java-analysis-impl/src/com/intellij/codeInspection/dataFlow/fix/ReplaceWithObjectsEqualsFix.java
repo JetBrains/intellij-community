@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.fix;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -45,14 +46,14 @@ public class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return "Replace '" + myQualifierText + ".equals(...)' with 'Objects.equals(" + myReplacementText + ", ...)'";
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", myQualifierText + ".equals(...)", "Objects.equals(" + myReplacementText + ", ...)");
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace '.equals()' with 'Objects.equals()'";
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", ".equals()", "Objects.equals()");
   }
 
   @Override

@@ -25,9 +25,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class WhileLoopSpinsOnFieldInspectionFixTest extends LightQuickFixParameterizedTestCase {
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     WhileLoopSpinsOnFieldInspection inspection = new WhileLoopSpinsOnFieldInspection();
     inspection.ignoreNonEmtpyLoops = true;
     return new LocalInspectionTool[]{inspection};

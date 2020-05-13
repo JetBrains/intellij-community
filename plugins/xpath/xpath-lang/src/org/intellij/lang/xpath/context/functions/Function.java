@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public interface Function {
   String getName();
 
-  @NotNull
-  Parameter[] getParameters();
+  Parameter @NotNull [] getParameters();
 
   @NotNull
   XPathType getReturnType();

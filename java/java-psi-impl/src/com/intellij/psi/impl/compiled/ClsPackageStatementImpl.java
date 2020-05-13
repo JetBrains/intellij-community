@@ -52,8 +52,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     throw new UnsupportedOperationException("Method not implemented");
   }
 

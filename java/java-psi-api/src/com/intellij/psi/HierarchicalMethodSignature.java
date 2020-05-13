@@ -32,8 +32,7 @@ public abstract class HierarchicalMethodSignature extends MethodSignatureBackedB
           getParameterTypes(signature.getMethod()), signature.getTypeParameters());
   }
 
-  @NotNull
-  private static PsiType[] getParameterTypes(PsiMethod method) {
+  private static PsiType @NotNull [] getParameterTypes(PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiType[] paramTypes = PsiType.createArray(parameters.length);
     for (int i = 0; i < paramTypes.length; i++) {

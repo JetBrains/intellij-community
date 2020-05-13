@@ -38,12 +38,12 @@ import java.util.Set;
  * @author ven
  */
 public abstract class ArgumentFixerActionFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ArgumentFixerActionFactory");
+  private static final Logger LOG = Logger.getInstance(ArgumentFixerActionFactory.class);
 
   @Nullable
   protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
-  public void registerCastActions(@NotNull CandidateInfo[] candidates, @NotNull PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
+  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();

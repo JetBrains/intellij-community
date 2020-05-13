@@ -524,6 +524,9 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false): GitPushResult {
     updateRepositories()
+    refresh()
+    updateChangeListManager()
+
     val spec = makePushSpec(repository, from, to)
     return GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, force, skipHook).execute()
   }

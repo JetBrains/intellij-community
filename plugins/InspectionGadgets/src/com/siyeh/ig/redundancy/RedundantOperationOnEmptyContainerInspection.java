@@ -3,19 +3,18 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.SpecialFieldValue;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +68,7 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
           if (msg == null) return;
           LocalQuickFix fix = null;
           if (ExpressionUtils.isVoidContext(call)) {
-            fix = new DeleteElementFix(call, "Remove call");
+            fix = new DeleteElementFix(call, InspectionGadgetsBundle.message("remove.call.fix.family.name"));
           }
           holder.registerProblem(container, msg, fix);
         }
@@ -81,7 +80,7 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
         if (value == null) return;
         String msg = getProblemMessage(value);
         if (msg == null) return;
-        holder.registerProblem(value, msg, new DeleteElementFix(statement, "Remove loop"));
+        holder.registerProblem(value, msg, new DeleteElementFix(statement, InspectionGadgetsBundle.message("remove.loop.fix.family.name")));
       }
 
       @Nullable
@@ -91,19 +90,20 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
         String message;
         if (type instanceof PsiArrayType) {
           lengthField = SpecialField.ARRAY_LENGTH;
-          message = InspectionsBundle.message("inspection.redundant.operation.on.empty.array.message");
+          message = JavaBundle.message("inspection.redundant.operation.on.empty.array.message");
         } else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
           lengthField = SpecialField.COLLECTION_SIZE;
-          message = InspectionsBundle.message("inspection.redundant.operation.on.empty.collection.message");
+          message = JavaBundle.message("inspection.redundant.operation.on.empty.collection.message");
         } else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
           lengthField = SpecialField.COLLECTION_SIZE;
-          message = InspectionsBundle.message("inspection.redundant.operation.on.empty.map.message");
+          message = JavaBundle.message("inspection.redundant.operation.on.empty.map.message");
         } else {
           return null;
         }
-        SpecialFieldValue fact = CommonDataflow.getExpressionFact(value, DfaFactType.SPECIAL_FIELD_VALUE);
-        DfaValue length = lengthField.extract(fact);
-        if (length instanceof DfaConstValue && Long.valueOf(0).equals(((DfaConstValue)length).getValue())) {
+        DfType dfType = CommonDataflow.getDfType(value);
+        DfType length = lengthField.getFromQualifier(dfType);
+        // TODO: remove 0L when refactoring is complete
+        if (DfConstantType.isConst(length, 0) || DfConstantType.isConst(length, 0L)) {
           return message;
         }
         return null;

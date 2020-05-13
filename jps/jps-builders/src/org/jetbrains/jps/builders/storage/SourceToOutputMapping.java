@@ -22,9 +22,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-/**
- * @author nik
- */
 public interface SourceToOutputMapping {
   void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException;
 

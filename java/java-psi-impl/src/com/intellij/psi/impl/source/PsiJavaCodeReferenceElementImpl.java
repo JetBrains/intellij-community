@@ -42,7 +42,7 @@ import java.util.List;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiAnnotatedJavaCodeReferenceElement, SourceJavaCodeReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiJavaCodeReferenceElementImpl.class);
 
   private volatile String myCachedQName;
   private volatile String myCachedNormalizedText;
@@ -283,12 +283,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @NotNull
   @Override
-  public String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations) {
+  public String getCanonicalText(boolean annotated, PsiAnnotation @Nullable [] annotations) {
     return getCanonicalText(annotated, annotations, getContainingFile());
   }
 
   @NotNull
-  private String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations, @NotNull PsiFile containingFile) {
+  private String getCanonicalText(boolean annotated, PsiAnnotation @Nullable [] annotations, @NotNull PsiFile containingFile) {
     Kind kind = getKindEnum(containingFile);
     switch (kind) {
       case CLASS_NAME_KIND:
@@ -375,9 +375,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantContextResolver<PsiJavaReference> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull PsiJavaReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull PsiJavaReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
       PsiJavaCodeReferenceElementImpl referenceElement = (PsiJavaCodeReferenceElementImpl)ref;
       Kind kind = referenceElement.getKindEnum(containingFile);
       JavaResolveResult[] result = referenceElement.resolve(kind, containingFile);
@@ -429,8 +428,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return PsiImplUtil.multiResolveImpl(this, incompleteCode, OurGenericsResolver.INSTANCE);
   }
 
@@ -442,8 +440,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return subst;
   }
 
-  @NotNull
-  private JavaResolveResult[] resolve(@NotNull Kind kind, @NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolve(@NotNull Kind kind, @NotNull PsiFile containingFile) {
     ProgressManager.checkCanceled();
     switch (kind) {
       case CLASS_FQ_NAME_KIND:
@@ -842,8 +839,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final ElementFilter filter;
     switch (getKindEnum(getContainingFile())) {
       case CLASS_OR_PACKAGE_NAME_KIND:
@@ -1034,8 +1030,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  @NotNull
-  public PsiType[] getTypeParameters() {
+  public PsiType @NotNull [] getTypeParameters() {
     final PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList == null) return PsiType.EMPTY_ARRAY;
     return parameterList.getTypeArguments();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,7 +26,7 @@ import java.util.*;
  * @author dsl
  */
 public class GenerateEqualsHelper implements Runnable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHelper");
+  private static final Logger LOG = Logger.getInstance(GenerateEqualsHelper.class);
 
   @NonNls private static final String INSTANCE_NAME = "instanceBaseName";
   @NonNls private static final String BASE_PARAM_NAME = "baseParamName";
@@ -169,12 +155,12 @@ public class GenerateEqualsHelper implements Runnable {
     map.put(SUPER_HAS_HASH_CODE, PsiType.BOOLEAN);
     return map;
   }
-  
+
   private PsiMethod createEquals() throws IncorrectOperationException {
     JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(myClass.getContainingFile());
     ArrayList<PsiField> equalsFields = new ArrayList<>();
     ContainerUtil.addAll(equalsFields, myEqualsFields);
-    Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
+    equalsFields.sort(EqualsFieldsComparator.INSTANCE);
 
     final HashMap<String, Object> contextMap = new HashMap<>();
 
@@ -195,7 +181,7 @@ public class GenerateEqualsHelper implements Runnable {
     if (superEquals != null) {
       contextMap.put(SUPER_PARAM_NAME, superEquals.getParameterList().getParameters()[0].getName());
     }
-    
+
     contextMap.put(SUPER_HAS_EQUALS, superMethodExists(equalsSignature));
     contextMap.put(CHECK_PARAMETER_WITH_INSTANCEOF, myCheckParameterWithInstanceof);
 

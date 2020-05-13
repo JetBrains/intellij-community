@@ -1,15 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindManager;
-import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -47,23 +44,6 @@ public class SearchCommand {
     myProcessPresentation.setShowNotFoundMessage(true);
     myProcessPresentation.setShowPanelIfOnlyOneUsage(true);
 
-    myProcessPresentation.setProgressIndicatorFactory(
-      new Factory<ProgressIndicator>() {
-        @Override
-        public ProgressIndicator create() {
-          FindProgressIndicator indicator = new FindProgressIndicator(mySearchContext.getProject(), presentation.getScopeText());
-          indicator.addStateDelegate(new AbstractProgressIndicatorExBase(){
-            @Override
-            public void cancel() {
-              super.cancel();
-              stopAsyncSearch();
-            }
-          });
-          return indicator;
-        }
-      }
-    );
-
     PsiDocumentManager.getInstance(mySearchContext.getProject()).commitAllDocuments();
     final ConfigurableUsageTarget target = context.getTarget();
     ((FindManagerImpl)FindManager.getInstance(mySearchContext.getProject())).getFindUsagesManager().addToHistory(target);
@@ -71,7 +51,7 @@ public class SearchCommand {
       new UsageTarget[]{target},
       () -> new UsageSearcher() {
         @Override
-        public void generate(@NotNull final Processor<Usage> processor) {
+        public void generate(@NotNull final Processor<? super Usage> processor) {
           findUsages(processor);
         }
       },
@@ -166,7 +146,7 @@ public class SearchCommand {
     };
 
     try {
-      new Matcher(mySearchContext.getProject()).findMatches(sink, myConfiguration.getMatchOptions());
+      new Matcher(mySearchContext.getProject(), myConfiguration.getMatchOptions()).findMatches(sink);
     }
     catch (StructuralSearchException e) {
       myProcessPresentation.setShowNotFoundMessage(false);
@@ -178,10 +158,6 @@ public class SearchCommand {
                                    .setImportant(true)
                                    .notify(mySearchContext.getProject());
     }
-  }
-
-  public void stopAsyncSearch() {
-    if (process != null) process.stop();
   }
 
   protected void findStarted() {

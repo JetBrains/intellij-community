@@ -21,7 +21,7 @@
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/jetbrains/rest/RestBundle" key="runcfg.docutils.input"/>
+          <text resource-bundle="messages/RestBundle" key="runcfg.docutils.input"/>
         </properties>
       </component>
       <component id="a5967" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myInputFileField">
@@ -36,7 +36,7 @@
         </constraints>
         <properties>
           <labelFor value=""/>
-          <text resource-bundle="com/jetbrains/rest/RestBundle" key="runcfg.docutils.options"/>
+          <text resource-bundle="messages/RestBundle" key="runcfg.docutils.options"/>
         </properties>
       </component>
       <component id="32bc2" class="javax.swing.JTextField" binding="myParamsTextField">
@@ -52,7 +52,7 @@
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/jetbrains/rest/RestBundle" key="runcfg.docutils.output"/>
+          <text resource-bundle="messages/RestBundle" key="runcfg.docutils.output"/>
         </properties>
       </component>
       <component id="277a" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myOutputFileField">
@@ -66,7 +66,7 @@
           <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Open output file in browser"/>
+          <text resource-bundle="messages/PyBundle" key="rest.configuration.editor.open.output.file.in.browser.label.text"/>
         </properties>
       </component>
       <component id="eee9" class="javax.swing.JComboBox" binding="myTasks">
@@ -80,7 +80,7 @@
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/jetbrains/rest/RestBundle" key="runcfg.docutils.command"/>
+          <text resource-bundle="messages/RestBundle" key="runcfg.docutils.command"/>
         </properties>
       </component>
       <hspacer id="93e6">

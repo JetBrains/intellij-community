@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.intellij.plugins.markdown.MarkdownBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,8 +29,6 @@ public abstract class MarkdownHtmlPanelProvider {
   public static final ExtensionPointName<MarkdownHtmlPanelProvider> EP_NAME =
     ExtensionPointName.create("org.intellij.markdown.html.panel.provider");
 
-  private static MarkdownHtmlPanelProvider[] ourProviders = null;
-
   @NotNull
   public abstract MarkdownHtmlPanel createHtmlPanel();
 
@@ -39,12 +38,8 @@ public abstract class MarkdownHtmlPanelProvider {
   @NotNull
   public abstract ProviderInfo getProviderInfo();
 
-  @NotNull
-  public static MarkdownHtmlPanelProvider[] getProviders() {
-    if (ourProviders == null) {
-      ourProviders = EP_NAME.getExtensions();
-    }
-    return ourProviders;
+  public static MarkdownHtmlPanelProvider @NotNull [] getProviders() {
+    return EP_NAME.getExtensions();
   }
 
   @NotNull
@@ -54,7 +49,7 @@ public abstract class MarkdownHtmlPanelProvider {
     }
     catch (Exception e) {
       Messages.showMessageDialog(
-        "Cannot set preview panel provider (" + providerInfo.getName() + "):\n" + e.getMessage(),
+        MarkdownBundle.message("dialog.message.cannot.set.preview.panel.provider", providerInfo.getName(), e.getMessage()),
         CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );

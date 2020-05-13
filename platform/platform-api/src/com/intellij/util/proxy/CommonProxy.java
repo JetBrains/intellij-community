@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.proxy;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -11,18 +11,29 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
-import java.net.*;
-import java.util.*;
+import java.net.Authenticator;
+import java.net.InetAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class CommonProxy extends ProxySelector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.proxy.CommonProxy");
+  private static final Logger LOG = Logger.getInstance(CommonProxy.class);
 
   private final static CommonProxy ourInstance = new CommonProxy();
   private final CommonAuthenticator myAuthenticator = new CommonAuthenticator();
@@ -356,7 +367,7 @@ public final class CommonProxy extends ProxySelector {
       }
 
       HostInfo info = (HostInfo)o;
-      return myPort == info.myPort && myHost.equals(info.myHost) && Comparing.equal(myProtocol, info.myProtocol);
+      return myPort == info.myPort && myHost.equals(info.myHost) && Objects.equals(myProtocol, info.myProtocol);
     }
 
     @Override

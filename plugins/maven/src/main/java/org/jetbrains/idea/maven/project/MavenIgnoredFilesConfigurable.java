@@ -51,15 +51,15 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   public MavenIgnoredFilesConfigurable(Project project) {
     myManager = MavenProjectsManager.getInstance(project);
     myIgnoredFilesPatternsPanel.setBorder(
-      IdeBorderFactory.createTitledBorder("Path patterns (comma-separated, '*' and '?' wildcards allowed):", false, JBUI.insetsTop(8)).setShowLine(false));
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.ignored.tooltip"), false, JBUI.insetsTop(8)).setShowLine(false));
 
     myIgnoredFilesPanel.setBorder(
-      IdeBorderFactory.createTitledBorder("Ignored files:", false, JBUI.insetsTop(8)).setShowLine(false));
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.ignored.title"), false, JBUI.insetsTop(8)).setShowLine(false));
   }
 
   private void createUIComponents() {
     myIgnoredFilesPathsChooser = new ElementsChooser<>(true);
-    myIgnoredFilesPathsChooser.getEmptyText().setText(ProjectBundle.message("maven.ingored.no.file"));
+    myIgnoredFilesPathsChooser.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.ignored.no.file"));
   }
 
   @Override
@@ -98,7 +98,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   @Override
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.tab.ignored.files");
+    return MavenConfigurableBundle.message("maven.settings.ignored.title");
   }
 
   @Override

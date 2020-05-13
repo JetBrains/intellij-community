@@ -102,7 +102,7 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "class X {\n" +
            "  void m(E e) {\n" +
            "    if(e == E.C) return;\n" +
-           "    switch (e) {\n" +
+           "    switch ((e)) {\n" +
            "      case A:\n" +
            "      case B:\n" +
            "    }\n" +

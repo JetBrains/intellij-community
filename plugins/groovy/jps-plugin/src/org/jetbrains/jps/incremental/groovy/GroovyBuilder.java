@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class GroovyBuilder extends ModuleLevelBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
+  private static final Logger LOG = Logger.getInstance(GroovyBuilder.class);
   static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
   private static final Key<Boolean> FILES_MARKED_DIRTY_FOR_NEXT_ROUND = Key.create("SRC_MARKED_DIRTY");
   private static final String GROOVY_EXTENSION = "groovy";
@@ -168,6 +168,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return path.endsWith("." + GROOVY_EXTENSION);
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.singletonList(GROOVY_EXTENSION);

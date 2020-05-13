@@ -57,9 +57,8 @@ public class PsiDelegateReference implements PsiReference {
     return myDelegate.isReferenceTo(element);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     return myDelegate.getVariants();
   }
 

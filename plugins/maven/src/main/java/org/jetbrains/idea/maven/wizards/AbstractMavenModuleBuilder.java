@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -34,6 +33,9 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
+import static org.jetbrains.idea.maven.utils.MavenUtil.MAVEN_NAME;
 
 public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private MavenProject myAggregatorProject;
@@ -80,7 +82,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public String getPresentableName() {
-    return "Maven";
+    return MAVEN_NAME;
   }
 
   @Override
@@ -95,13 +97,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public String getDescription() {
-    return "Maven modules are used for developing <b>JVM-based</b> applications with dependencies managed by <b>Maven</b>. " +
-           "You can create either a blank Maven module or a module based on a <b>Maven archetype</b>.";
+    return MavenWizardBundle.message("maven.builder.module.builder.description");
   }
 
   @Override
   public Icon getNodeIcon() {
-    return MavenIcons.MavenLogo;
+    return RepositoryLibraryLogo;
   }
 
   @Override

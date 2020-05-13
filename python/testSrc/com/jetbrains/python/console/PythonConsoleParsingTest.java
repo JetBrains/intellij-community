@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.mock.MockApplication;
@@ -12,13 +12,11 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.*;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 
-/**
- * @author traff
- */
 @TestDataPath("$CONTENT_ROOT/../testData/ipython/")
 public class PythonConsoleParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
@@ -45,8 +43,6 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     } else {
       myServiceDisposable = null;
     }
-
-    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override
@@ -117,7 +113,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     virtualFile.setOriginalFile(originalFile);
 
     originalFile.setCharset(StandardCharsets.UTF_8);
-    originalFile.putUserData(LanguageLevel.KEY, myLanguageLevel);
+    PythonLanguageLevelPusher.specifyFileLanguageLevel(originalFile, myLanguageLevel);
     PyConsoleUtil.markIPython(originalFile);
     return createFile(virtualFile);
   }

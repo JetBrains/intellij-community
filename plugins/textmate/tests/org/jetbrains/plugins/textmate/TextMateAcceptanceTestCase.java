@@ -42,7 +42,7 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
       }
       state.setBundles(bundles);
       TextMateSettings.getInstance().loadState(state);
-      TextMateServiceImpl.disableBuiltinBundles(getTestRootDisposable());
+      ((TextMateServiceImpl)TextMateService.getInstance()).disableBuiltinBundles(getTestRootDisposable());
       UIUtil.dispatchAllInvocationEvents();
     }
   }

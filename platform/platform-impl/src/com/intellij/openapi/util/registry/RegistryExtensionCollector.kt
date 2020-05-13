@@ -1,11 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry
 
-import com.intellij.internal.statistic.utils.getPluginInfoById
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.PluginAware
-import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
@@ -19,6 +15,9 @@ private val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
 
 private fun String.unescapeString() = StringUtil.unescapeStringCharacters(replace(CONSECUTIVE_SPACES_REGEX, " "))
 
+/**
+ * Registers custom key for [Registry].
+ */
 class RegistryKeyBean : PluginAware {
   companion object {
     @JvmStatic
@@ -37,16 +36,31 @@ class RegistryKeyBean : PluginAware {
     }
 
     private fun createRegistryKeyDescriptor(extension: RegistryKeyBean): RegistryKeyDescriptor {
-      val contributedByThirdParty = extension.descriptor?.let { !getPluginInfoById(it.pluginId).isSafeToReport() } ?: false
+      val pluginId = extension.descriptor?.pluginId?.idString
       return RegistryKeyDescriptor(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
-                                   contributedByThirdParty)
+                                   pluginId)
     }
   }
 
-  @JvmField @Attribute("key") val key = ""
-  @JvmField @Attribute("description") @Nls(capitalization = Nls.Capitalization.Sentence) val description = ""
-  @JvmField @Attribute("defaultValue") val defaultValue = ""
-  @JvmField @Attribute("restartRequired") val restartRequired = false
+  @JvmField
+  @Attribute("key")
+  @RequiredElement
+  val key = ""
+
+  @JvmField
+  @Attribute("description")
+  @RequiredElement
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  val description = ""
+
+  @JvmField
+  @Attribute("defaultValue")
+  @RequiredElement
+  val defaultValue = ""
+
+  @JvmField
+  @Attribute("restartRequired")
+  val restartRequired = false
 
   @Transient
   private var descriptor: PluginDescriptor? = null

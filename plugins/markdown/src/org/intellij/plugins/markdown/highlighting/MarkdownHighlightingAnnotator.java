@@ -15,9 +15,9 @@
  */
 package org.intellij.plugins.markdown.highlighting;
 
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.PsiElement;
@@ -43,10 +43,9 @@ public class MarkdownHighlightingAnnotator implements Annotator {
 
       final IElementType parentType = parent.getNode().getElementType();
       if (parentType == MarkdownElementTypes.EMPH || parentType == MarkdownElementTypes.STRONG) {
-        final Annotation annotation = holder.createInfoAnnotation(element, null);
-        annotation.setTextAttributes(parentType == MarkdownElementTypes.EMPH
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(parentType == MarkdownElementTypes.EMPH
                                      ? MarkdownHighlighterColors.ITALIC_MARKER_ATTR_KEY
-                                     : MarkdownHighlighterColors.BOLD_MARKER_ATTR_KEY);
+                                     : MarkdownHighlighterColors.BOLD_MARKER_ATTR_KEY).create();
       }
       return;
     }
@@ -58,8 +57,7 @@ public class MarkdownHighlightingAnnotator implements Annotator {
     final TextAttributesKey[] tokenHighlights = SYNTAX_HIGHLIGHTER.getTokenHighlights(type);
 
     if (tokenHighlights.length > 0 && !MarkdownHighlighterColors.TEXT_ATTR_KEY.equals(tokenHighlights[0])) {
-      final Annotation annotation = holder.createInfoAnnotation(element, null);
-      annotation.setTextAttributes(tokenHighlights[0]);
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(tokenHighlights[0]).create();
     }
   }
 }

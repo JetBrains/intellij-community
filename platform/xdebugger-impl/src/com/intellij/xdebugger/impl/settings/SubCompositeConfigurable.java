@@ -26,9 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
-abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent {
+abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent, SearchableConfigurable.Merged {
   protected DataViewsConfigurableUi root;
   protected Configurable[] children;
   protected JComponent rootComponent;
@@ -41,7 +42,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   @Nullable
   @Override
   public String getHelpTopic() {
-    getConfigurables();
+    buildConfigurables();
     return children != null && children.length == 1 ? children[0].getHelpTopic() : null;
   }
 
@@ -72,15 +73,27 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     return children != null && children.length == 1;
   }
 
-  @NotNull
   @Override
-  public final Configurable[] getConfigurables() {
-    if (children == null) {
-      List<Configurable> configurables = DebuggerConfigurable.getConfigurables(getCategory());
-      children = configurables.toArray(new Configurable[0]);
-    }
+  public final Configurable @NotNull [] getConfigurables() {
+    buildConfigurables();
     return isChildrenMerged() ? DebuggerConfigurable.EMPTY_CONFIGURABLES : children;
   }
+
+  @NotNull
+  @Override
+  public final List<Configurable> getMergedConfigurables() {
+    buildConfigurables();
+    return isChildrenMerged()
+           ? Arrays.asList(children)
+           : Arrays.asList(DebuggerConfigurable.EMPTY_CONFIGURABLES);
+  }
+
+  private void buildConfigurables() {
+    if (children != null) return;
+    List<Configurable> configurables = DebuggerConfigurable.getConfigurables(getCategory());
+    children = configurables.toArray(new Configurable[0]);
+  }
+
 
   @Nullable
   @Override
@@ -90,7 +103,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
         root = createRootUi();
       }
 
-      getConfigurables();
+      buildConfigurables();
       if (isChildrenMerged()) {
         if (children.length == 0) {
           rootComponent = root == null ? null : root.getComponent();

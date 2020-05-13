@@ -16,9 +16,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -72,8 +72,7 @@ public class TextDiffViewerUtil {
     return settings;
   }
 
-  @NotNull
-  public static boolean[] checkForceReadOnly(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
+  public static boolean @NotNull [] checkForceReadOnly(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     List<DiffContent> contents = request.getContents();
     int contentCount = contents.size();
     boolean[] result = new boolean[contentCount];
@@ -207,9 +206,9 @@ public class TextDiffViewerUtil {
   }
 
   private static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
-    @NotNull private final T[] myPolicies;
+    private final T @NotNull [] myPolicies;
 
-    EnumPolicySettingAction(@NotNull T[] policies) {
+    EnumPolicySettingAction(T @NotNull [] policies) {
       assert policies.length > 0;
       myPolicies = policies;
     }
@@ -252,7 +251,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public HighlightPolicySettingAction(@NotNull TextDiffSettings settings,
-                                        @NotNull HighlightPolicy... policies) {
+                                        HighlightPolicy @NotNull ... policies) {
       super(policies);
       mySettings = settings;
     }
@@ -293,7 +292,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public IgnorePolicySettingAction(@NotNull TextDiffSettings settings,
-                                     @NotNull IgnorePolicy... policies) {
+                                     IgnorePolicy @NotNull ... policies) {
       super(policies);
       mySettings = settings;
     }
@@ -334,7 +333,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ToggleAutoScrollAction(@NotNull TextDiffSettings settings) {
-      super("Synchronize Scrolling", AllIcons.Actions.SynchronizeScrolling);
+      super(DiffBundle.message("synchronize.scrolling"), AllIcons.Actions.SynchronizeScrolling);
       mySettings = settings;
     }
 
@@ -353,7 +352,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings) {
-      super("Collapse Unchanged Fragments", AllIcons.Actions.Collapseall);
+      super(DiffBundle.message("collapse.unchanged.fragments"), AllIcons.Actions.Collapseall);
       mySettings = settings;
     }
 
@@ -383,7 +382,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ReadOnlyLockAction(@NotNull DiffContext context) {
-      super("Disable Editing", null, AllIcons.Diff.Lock);
+      super(DiffBundle.message("disable.editing"), null, AllIcons.Diff.Lock);
       myContext = context;
       mySettings = getTextSettings(context);
     }
@@ -433,7 +432,7 @@ public class TextDiffViewerUtil {
 
     protected void putEditorHint(@NotNull EditorEx editor, boolean readOnly) {
       if (readOnly) {
-        EditorModificationUtil.setReadOnlyHint(editor, EditorBundle.message("editing.viewer.hint") + ". <a href=\"\">Enable editing</a>",
+        EditorModificationUtil.setReadOnlyHint(editor, DiffBundle.message("editing.viewer.hint.enable.editing.text"),
                                                (e) -> {
                                                  if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                                                    setSelected(false);

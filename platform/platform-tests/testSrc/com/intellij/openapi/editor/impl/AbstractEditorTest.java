@@ -172,6 +172,10 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     assertArrayEquals(positions, softWrapPositions.toArray());
   }
 
+  public void verifyFoldingState(String state) {
+    assertEquals(state, Arrays.toString(getEditor().getFoldingModel().getAllFoldRegions()));
+  }
+
   protected void configureSoftWraps(int charCountToWrapAt) {
     EditorTestUtil.configureSoftWraps(getEditor(), charCountToWrapAt);
   }
@@ -193,7 +197,19 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   public Inlay addBlockInlay(int offset, boolean showAbove) {
-    return EditorTestUtil.addBlockInlay(getEditor(), offset, showAbove);
+    return addBlockInlay(offset, showAbove, 0);
+  }
+
+  public Inlay addBlockInlay(int offset, boolean showAbove, int widthInPixels) {
+    return EditorTestUtil.addBlockInlay(getEditor(), offset, false, showAbove, widthInPixels, null);
+  }
+
+  public Inlay addBlockInlay(int offset, boolean showAbove, int widthInPixels, int heightInPixels) {
+    return EditorTestUtil.addBlockInlay(getEditor(), offset, false, showAbove, widthInPixels, heightInPixels);
+  }
+
+  public Inlay addAfterLineEndInlay(int offset, int widthInPixels) {
+    return EditorTestUtil.addAfterLineEndInlay(getEditor(), offset, widthInPixels);
   }
 
   protected void runWriteCommand(ThrowableRunnable r) {

@@ -11,7 +11,7 @@ import org.zmlx.hg4idea.log.HgRefManager;
 
 public final class HgBranchManager extends DvcsBranchManager {
   public HgBranchManager(@NotNull Project project) {
-    super(HgProjectSettings.getInstance(project).getFavoriteBranchSettings(), HgBranchType.values());
+    super(project, HgProjectSettings.getInstance(project).getBranchSettings(), HgBranchType.values());
   }
 
   @Nullable

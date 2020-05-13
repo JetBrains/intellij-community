@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -19,6 +20,8 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,26 +49,25 @@ public class EditorEmptyTextPainter {
 
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
     appendSearchEverywhere(painter);
-    appendToolWindow(painter, "Project View", ToolWindowId.PROJECT_VIEW, splitters);
-    appendAction(painter, "Go to File", getActionShortcutText("GotoFile"));
-    appendAction(painter, "Recent Files", getActionShortcutText(IdeActions.ACTION_RECENT_FILES));
-    appendAction(painter, "Navigation Bar", getActionShortcutText("ShowNavBar"));
+    appendToolWindow(painter, IdeBundle.message("empty.text.project.view"), ToolWindowId.PROJECT_VIEW, splitters);
+    appendAction(painter, IdeBundle.message("empty.text.go.to.file"), getActionShortcutText("GotoFile"));
+    appendAction(painter, IdeBundle.message("empty.text.recent.files"), getActionShortcutText(IdeActions.ACTION_RECENT_FILES));
+    appendAction(painter, IdeBundle.message("empty.text.navigation.bar"), getActionShortcutText("ShowNavBar"));
     appendDnd(painter);
   }
 
   protected void appendDnd(@NotNull UIUtil.TextPainter painter) {
-    appendLine(painter, "Drop files here to open");
+    appendLine(painter, IdeBundle.message("empty.text.drop.files.to.open"));
   }
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
     Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
-    appendAction(painter, "Search Everywhere", shortcuts.length == 0 ?
-                                               "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift") :
-                                               KeymapUtil.getShortcutsText(shortcuts));
+    String message = IdeBundle.message("double.ctrl.or.shift.shortcut", SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
+    appendAction(painter, IdeBundle.message("empty.text.search.everywhere"), shortcuts.length == 0 ? message : KeymapUtil.getShortcutsText(shortcuts));
   }
 
   protected void appendToolWindow(@NotNull UIUtil.TextPainter painter,
-                                  @NotNull String action,
+                                  @NotNull @Nls String action,
                                   @NotNull String toolWindowId,
                                   @NotNull JComponent splitters) {
     if (!isToolwindowVisible(splitters, toolWindowId)) {
@@ -74,17 +76,17 @@ public class EditorEmptyTextPainter {
     }
   }
 
-  protected void appendAction(@NotNull UIUtil.TextPainter painter, @NotNull String action, @Nullable String shortcut) {
+  protected void appendAction(@NotNull UIUtil.TextPainter painter, @NotNull @Nls String action, @Nullable String shortcut) {
     if (StringUtil.isEmpty(shortcut)) return;
     appendLine(painter, action + " " + "<shortcut>" + shortcut + "</shortcut>");
   }
 
-  protected void appendLine(@NotNull UIUtil.TextPainter painter, String line) {
+  protected void appendLine(@NotNull UIUtil.TextPainter painter, @NotNull String line) {
     painter.appendLine(line);
   }
 
   @NotNull
-  protected String getActionShortcutText(@NotNull String actionId) {
+  protected String getActionShortcutText(@NonNls @NotNull String actionId) {
     return KeymapUtil.getFirstKeyboardShortcutText(actionId);
   }
 

@@ -37,12 +37,6 @@ public class ClassInheritanceDepthInspection
   private static final int CLASS_INHERITANCE_LIMIT = 2;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("class.too.deep.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return CLASS_INHERITANCE_LIMIT;
   }

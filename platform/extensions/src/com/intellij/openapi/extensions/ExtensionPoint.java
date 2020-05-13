@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,15 +17,14 @@ import java.util.stream.Stream;
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
-public interface ExtensionPoint<T> {
-  @NotNull
-  String getName();
-
+public interface ExtensionPoint<@NotNull T> {
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
    */
   @Deprecated
-  void registerExtension(@NotNull T extension);
+  default void registerExtension(@NotNull T extension) {
+    registerExtension(extension, LoadingOrder.ANY);
+  }
 
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, LoadingOrder, Disposable)}.
@@ -36,7 +36,7 @@ public interface ExtensionPoint<T> {
   void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
 
   /**
-   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)}
+   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
    * to register extension as first or to completely replace existing extensions in tests.
    */
   @TestOnly
@@ -45,8 +45,7 @@ public interface ExtensionPoint<T> {
   /**
    * Prefer to use {@link #getExtensionList()}.
    */
-  @NotNull
-  T[] getExtensions();
+  T @NotNull [] getExtensions();
 
   @NotNull
   List<T> getExtensionList();
@@ -54,14 +53,13 @@ public interface ExtensionPoint<T> {
   @NotNull
   Stream<T> extensions();
 
-  boolean hasAnyExtensions();
+  int size();
 
   /**
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
-  @Nullable
   @Deprecated
-  default T getExtension() {
+  default @Nullable T getExtension() {
     // method is deprecated and not used, ignore not efficient implementation
     return ContainerUtil.getFirstItem(getExtensionList());
   }
@@ -112,9 +110,19 @@ public interface ExtensionPoint<T> {
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
-  void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
+  /**
+   * @deprecated Use {@link ExtensionPointName#addChangeListener(Runnable, Disposable)}
+   */
+  @Deprecated
+  void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
-  void reset();
+  /**
+   * Consider using {@link ExtensionPointName#addChangeListener}
+   */
+  void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable);
+
+  @ApiStatus.Internal
+  void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
   @NotNull
   String getClassName();
@@ -123,6 +131,9 @@ public interface ExtensionPoint<T> {
    * @return true if the EP allows adding/removing extensions at runtime
    */
   boolean isDynamic();
+
+  @NotNull
+  PluginDescriptor getPluginDescriptor();
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

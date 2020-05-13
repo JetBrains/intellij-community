@@ -20,7 +20,7 @@ public class CompletionResult {
   }
 
   @Nullable
-  public static CompletionResult wrap(LookupElement lookupElement, PrefixMatcher matcher, CompletionSorter sorter) {
+  public static CompletionResult wrap(@NotNull LookupElement lookupElement, @NotNull PrefixMatcher matcher, @NotNull CompletionSorter sorter) {
     if (matcher.prefixMatches(lookupElement)) {
       return new CompletionResult(lookupElement, matcher, sorter);
     }

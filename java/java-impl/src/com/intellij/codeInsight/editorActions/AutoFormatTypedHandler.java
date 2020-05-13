@@ -16,17 +16,14 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaTokenType;
@@ -39,12 +36,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
-public class AutoFormatTypedHandler extends TypedActionHandlerBase {
+public class AutoFormatTypedHandler extends TypedHandlerDelegate {
   private static boolean myIsEnabledInTests;
   
   private static final char[] NO_SPACE_AFTER = {
@@ -58,10 +54,6 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     JavaTokenType.ANDEQ, JavaTokenType.XOREQ, JavaTokenType.OREQ,
     JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ
   );
-  
-  public AutoFormatTypedHandler(@Nullable TypedActionHandler originalHandler) {
-    super(originalHandler);
-  }
 
   private static boolean isEnabled(Editor editor) {
     boolean isEnabled = myIsEnabledInTests && ApplicationManager.getApplication().isUnitTestMode() 
@@ -87,23 +79,25 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   public static void setEnabledInTests(boolean value) {
     myIsEnabledInTests = value;
   }
-  
+
   @Override
-  public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+  public @NotNull Result beforeCharTyped(char c,
+                                         @NotNull Project project,
+                                         @NotNull Editor editor,
+                                         @NotNull PsiFile file,
+                                         @NotNull FileType fileType) {
     if (!isEnabled(editor)) {
-      executeOriginalHandler(editor, charTyped, dataContext);
-      return;
+      return Result.CONTINUE;
     }
-    
-    if (isInsertSpaceAtCaret(editor, charTyped, dataContext)) {
+    if (isInsertSpaceAtCaret(editor, c, project)) {
       EditorModificationUtil.insertStringAtCaret(editor, " ");
     }
-    
-    executeOriginalHandler(editor, charTyped, dataContext);
+
+    return Result.CONTINUE;
   }
 
-  private static boolean isInsertSpaceAtCaret(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-    if (!isSpaceAroundAssignment(editor, dataContext)) {
+  private static boolean isInsertSpaceAtCaret(@NotNull Editor editor, char charTyped, @NotNull Project project) {
+    if (!isSpaceAroundAssignment(editor, project)) {
       return false;
     }
     
@@ -129,7 +123,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
       type = iterator.getTokenType();
     }
 
-    if (COMPLEX_ASSIGNMENTS.indexOf(type) >= 0) {
+    if (COMPLEX_ASSIGNMENTS.contains(type)) {
       return true;
     }
 
@@ -163,10 +157,6 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
            : null;
   }
 
-  private void executeOriginalHandler(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-    if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
-  }
-  
   private static boolean isInsertSpaceBeforeEq(int caretOffset, CharSequence text) {
     if (caretOffset == 0) return false;
     char charBefore = text.charAt(caretOffset - 1);
@@ -180,8 +170,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     return true;
   }
 
-  private static boolean isSpaceAroundAssignment(Editor editor, DataContext dataContext) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+  private static boolean isSpaceAroundAssignment(Editor editor, Project project) {
     PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
     if (file != null) {
       Language language = file.getLanguage();

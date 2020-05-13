@@ -68,8 +68,7 @@ public class VcsException extends Exception {
     return myVirtualFile;
   }
 
-  @NotNull
-  public String[] getMessages() {
+  public String @NotNull [] getMessages() {
     return ArrayUtilRt.toStringArray(myMessages);
   }
 

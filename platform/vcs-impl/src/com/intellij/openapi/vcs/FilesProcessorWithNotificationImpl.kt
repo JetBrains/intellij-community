@@ -8,15 +8,11 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 
 abstract class FilesProcessorWithNotificationImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
-
-  private val vcsNotifier = VcsNotifier.getInstance(project)
-
-  protected val projectProperties = PropertiesComponent.getInstance(project)
-
   private val files = mutableSetOf<VirtualFile>()
 
   private val NOTIFICATION_LOCK = Object()
@@ -26,6 +22,8 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   abstract val askedBeforeProperty: String
 
   abstract val doForCurrentProjectProperty: String?
+
+  abstract val notificationDisplayId: String
 
   abstract val showActionText: String
   abstract val forCurrentProjectActionText: String
@@ -41,9 +39,9 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   abstract fun rememberForAllProjects()
 
-  protected open val viewFilesDialogTitle: String? = null
-  protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
-  protected open val viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
+  protected open val viewFilesDialogTitle: @NlsContexts.DialogTitle String? = null
+  protected open val viewFilesDialogOkActionName: @NlsContexts.Button String = CommonBundle.getAddButtonText()
+  protected open val viewFilesDialogCancelActionName: @NlsContexts.Button String = CommonBundle.getCancelButtonText()
 
   protected open fun rememberForCurrentProject() {
     setForCurrentProject(true)
@@ -81,7 +79,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
           }
           add(muteAction())
         }
-        notification = vcsNotifier.notifyMinorInfo(true, notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
+        notification = VcsNotifier.getInstance(project).notifyMinorInfo(true, notificationDisplayId, notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
       }
     }
   }
@@ -136,7 +134,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   private fun addForCurrentProjectAction() = NotificationAction.create(forCurrentProjectActionText) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
     rememberForCurrentProject()
-    projectProperties.setValue(askedBeforeProperty, true)
+    PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     expireNotification()
     clearFiles()
   }
@@ -144,7 +142,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   private fun forAllProjectsAction() = NotificationAction.create(forAllProjectsActionText!!) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
     rememberForCurrentProject()
-    projectProperties.setValue(askedBeforeProperty, true)
+    PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     rememberForAllProjects()
     expireNotification()
     clearFiles()
@@ -152,7 +150,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   private fun muteAction() = NotificationAction.create(muteActionText) { _, notification ->
     setForCurrentProject(false)
-    projectProperties.setValue(askedBeforeProperty, true)
+    PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     notification.expire()
   }
 
@@ -166,15 +164,19 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
       notification?.expire()
     }
 
-  private fun setForCurrentProject(value: Boolean) =
-    doForCurrentProjectProperty?.let { projectProperties.setValue(it, value) }
+  private fun setForCurrentProject(value: Boolean) {
+    doForCurrentProjectProperty?.let {
+      PropertiesComponent.getInstance(project).setValue(it, value)
+    }
+  }
 
-  private fun getForCurrentProject() =
-    doForCurrentProjectProperty?.let { projectProperties.getBoolean(it, false) } ?: false
+  private fun getForCurrentProject(): Boolean {
+    return doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).getBoolean(it, false) } ?: false
+  }
 
   private fun notAskedBefore() = !wasAskedBefore()
 
-  protected fun wasAskedBefore() = projectProperties.getBoolean(askedBeforeProperty, false)
+  protected fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
 
   protected open fun needDoForCurrentProject() = getForCurrentProject()
 }

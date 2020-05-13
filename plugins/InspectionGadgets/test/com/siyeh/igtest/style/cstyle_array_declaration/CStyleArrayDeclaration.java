@@ -35,4 +35,7 @@ public class CStyleArrayDeclaration
     String <warning descr="C-style array declaration of the return type of method 'ohGod()'">ohGod</warning>(String[] a)[] {
         return a;
     }
+
+    record Record(int <warning descr="C-style array declaration of record component 'x'">x</warning>[]) {
+    }
 }

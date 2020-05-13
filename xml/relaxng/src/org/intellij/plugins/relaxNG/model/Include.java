@@ -25,6 +25,5 @@ public interface Include<E extends PsiElement, D extends Define> extends CommonE
   @Nullable
   PsiFile getInclude();
 
-  @NotNull
-  D[] getOverrides();
+  D @NotNull [] getOverrides();
 }

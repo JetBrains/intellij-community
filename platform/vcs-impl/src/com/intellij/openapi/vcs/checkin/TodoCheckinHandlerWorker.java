@@ -48,7 +48,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  * @author irengrig
  */
 public class TodoCheckinHandlerWorker {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.checkin.TodoCheckinHandler");
+  private final static Logger LOG = Logger.getInstance(TodoCheckinHandler.class);
 
   private final Project myProject;
   private final Collection<? extends Change> myChanges;

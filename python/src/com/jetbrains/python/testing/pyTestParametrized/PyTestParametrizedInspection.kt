@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.psi.PyFunction
@@ -21,7 +22,7 @@ class PyTestParametrizedInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = object : PyInspectionVisitor(holder, session) {
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
       if (element is PyFunction) {
         val requiredParameters = element
           .getParametersOfParametrized(myTypeEvalContext)
@@ -35,7 +36,7 @@ class PyTestParametrizedInspection : PyInspection() {
             if (problemSource is PsiErrorElement || problemSource !is LeafPsiElement) {
               return // Error element can't be passed to registerProblem
             }
-            holder.registerProblem(problemSource, "Following arguments are not declared but provided by decorator: $diff",
+            holder.registerProblem(problemSource, PyPsiBundle.message("INSP.arguments.not.declared.but.provided.by.decorator", diff),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           }
         }
@@ -44,7 +45,4 @@ class PyTestParametrizedInspection : PyInspection() {
     }
   }
 
-  override fun getDisplayName(): String {
-    return PyBundle.message("INSP.NAME.pytest-parametrized")
-  }
 }

@@ -23,14 +23,17 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.NlsContexts.Label;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
+
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
   public TextFieldWithHistoryWithBrowseButton() {
     super(new TextFieldWithHistory(), null);
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable String title,
-                                      @Nullable String description,
+  public void addBrowseFolderListener(@Nullable @DialogTitle String title,
+                                      @Nullable @Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor) {
@@ -39,8 +42,8 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable String title,
-                                      @Nullable String description,
+  public void addBrowseFolderListener(@Nullable @DialogTitle String title,
+                                      @Nullable @Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor,

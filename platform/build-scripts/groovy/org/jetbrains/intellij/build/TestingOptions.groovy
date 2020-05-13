@@ -4,9 +4,6 @@ package org.jetbrains.intellij.build
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 
-/**
- * @author nik
- */
 @CompileStatic
 class TestingOptions {
   /**
@@ -91,7 +88,7 @@ class TestingOptions {
   private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", ALL_EXCLUDE_DEFINED_GROUP)
   private static final String OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
   private static final String OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
-  private static final int OLD_DEBUG_PORT = SystemProperties.getIntProperty("debug.port", -1)
+  private static final int OLD_DEBUG_PORT = SystemProperties.getIntProperty("debug.port", 0) // 0 means any random port, same as in case of missing 'address' parameter
   private static final boolean OLD_SUSPEND_DEBUG_PROCESS = System.getProperty("debug.suspend", "n") == "y"
   private static final String OLD_JVM_MEMORY_OPTIONS = System.getProperty("test.jvm.memory")
   private static final String OLD_MAIN_MODULE = System.getProperty("module.to.make")

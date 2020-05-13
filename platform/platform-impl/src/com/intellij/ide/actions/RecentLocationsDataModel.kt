@@ -1,15 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-import com.intellij.ide.actions.RecentLocationsAction.EMPTY_FILE_TEXT
+import com.intellij.ide.actions.RecentLocationsAction.getEmptyFileText
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
@@ -27,12 +24,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.stream.Collectors
 import javax.swing.ScrollPaneConstants
+import kotlin.math.max
+import kotlin.math.min
 
-data class RecentLocationsDataModel(val project: Project, val editorsToRelease: ArrayList<Editor> = arrayListOf()) {
-  val projectConnection = project.messageBus.connect()
+@ApiStatus.Internal
+internal data class RecentLocationsDataModel(val project: Project, val editorsToRelease: ArrayList<Editor> = arrayListOf()) {
+  val projectConnection = project.messageBus.simpleConnect()
 
   init {
     projectConnection.subscribe(RecentPlacesListener.TOPIC, object : RecentPlacesListener {
@@ -89,9 +90,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
       return fileName
     }
 
-    val breadcrumbsText = crumbs.joinToString(" > ") { it.text }
-
-    return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0)
+    return crumbs.joinToString(" > ") { it.text }
   }
 
   private fun calculateItems(project: Project, changed: Boolean): SynchronizedClearableLazy<List<RecentLocationItem>> {
@@ -134,7 +133,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
     val actualTextRange = getTrimmedRange(fileDocument, lineNumber)
     var documentText = fileDocument.getText(actualTextRange)
     if (actualTextRange.isEmpty) {
-      documentText = EMPTY_FILE_TEXT
+      documentText = getEmptyFileText()
     }
 
     val editorFactory = EditorFactory.getInstance()
@@ -143,7 +142,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
 
     val gutterComponentEx = editor.gutterComponentEx
     val linesShift = fileDocument.getLineNumber(actualTextRange.startOffset)
-    gutterComponentEx.setLineNumberConvertor { index -> index + linesShift }
+    gutterComponentEx.setLineNumberConverter(LineNumberConverter.Increasing { _, line -> line + linesShift })
     gutterComponentEx.setPaintBackground(false)
     val scrollPane = editor.scrollPane
     scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -264,14 +263,14 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
 
     val beforeAfterLinesCount = Registry.intValue("recent.locations.lines.before.and.after", 2)
 
-    val before = Math.min(beforeAfterLinesCount, line)
-    val after = Math.min(beforeAfterLinesCount, lineCount - line)
+    val before = min(beforeAfterLinesCount, line)
+    val after = min(beforeAfterLinesCount, lineCount - line)
 
     val linesBefore = before + beforeAfterLinesCount - after
     val linesAfter = after + beforeAfterLinesCount - before
 
-    val startLine = Math.max(line - linesBefore, 0)
-    val endLine = Math.min(line + linesAfter, lineCount - 1)
+    val startLine = max(line - linesBefore, 0)
+    val endLine = min(line + linesAfter, lineCount - 1)
 
     val startOffset = document.getLineStartOffset(startLine)
     val endOffset = document.getLineEndOffset(endLine)

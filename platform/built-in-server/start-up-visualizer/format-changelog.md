@@ -1,3 +1,36 @@
+# 21
+
+* `tasks waiting` removed. No such activity anymore.
+
+# 20
+
+* new compact format for service events.
+
+# 19
+
+* add `eua showing` (to separate `showUserAgreementAndConsentsIfNeeded` from `config importing`).
+
+# 18
+
+* rename `plugin descriptors loading` in application loader to `plugin descriptor init waiting`.
+* change `cds` field type from `string` to `boolean`.
+
+# 17
+
+* add `plugin descriptor loading`.
+
+# 16
+
+* add `RunManager initialization`.
+* add `projectComponentCreated event handling`.
+* add `projectComponentCreated`.
+
+## 15
+
+* add `project frame assigning` (`APP_INIT`).
+* add `placing calling projectOpened on event queue` (main category).
+* more correct measurement of project start-up activities (logic how do we execute start-up activities was fully reworked).
+
 ## 14
 
 * add `project` name. Encoded using Argon to ensure that project name is not exposed.

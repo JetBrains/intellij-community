@@ -60,7 +60,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return entry;
   }
 
-  private static int index(@NotNull String relativePath, @NotNull ArchiveHandler.EntryInfo[] entries) {
+  private static int index(@NotNull String relativePath, ArchiveHandler.EntryInfo @NotNull [] entries) {
     return (relativePath.hashCode() & 0x7fffffff) % entries.length;
   }
 
@@ -80,7 +80,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   @Nullable
   private static ArchiveHandler.EntryInfo put(@NotNull String relativePath,
                                               @NotNull ArchiveHandler.EntryInfo value,
-                                              @NotNull ArchiveHandler.EntryInfo[] entries) {
+                                              ArchiveHandler.EntryInfo @NotNull [] entries) {
     int index = index(relativePath, entries);
     ArchiveHandler.EntryInfo entry;
     int i = index;
@@ -120,8 +120,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return endIndex==0;
   }
 
-  @NotNull
-  private ArchiveHandler.EntryInfo[] rehash() {
+  private ArchiveHandler.EntryInfo @NotNull [] rehash() {
     ArchiveHandler.EntryInfo[] newEntries = new ArchiveHandler.EntryInfo[entries.length < 1000 ? entries.length  * 2 : entries.length * 3/2];
     for (ArchiveHandler.EntryInfo entry : entries) {
       if (entry != null) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.notification.Notification;
@@ -27,12 +13,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsNotifier;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 
 import java.awt.*;
 
+import static com.intellij.openapi.util.NlsContexts.NotificationContent;
+import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromException;
 
 public class GithubNotifications {
@@ -43,23 +32,32 @@ public class GithubNotifications {
            e instanceof ProcessCanceledException;
   }
 
-  public static void showInfo(@NotNull Project project, @NotNull String title, @NotNull String message) {
+  public static void showInfo(@NotNull Project project,
+                              @NotificationTitle @NotNull String title,
+                              @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyImportantInfo(title, message);
   }
 
-  public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message) {
+  public static void showWarning(@NotNull Project project,
+                                 @NotificationTitle @NotNull String title,
+                                 @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyImportantWarning(title, message);
   }
 
-  public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
+  public static void showWarning(@NotNull Project project,
+                                 @NotificationTitle @NotNull String title,
+                                 @NotNull Exception e) {
     LOG.info(title + "; ", e);
     if (isOperationCanceled(e)) return;
     VcsNotifier.getInstance(project).notifyImportantWarning(title, getErrorTextFromException(e));
   }
 
-  public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message, @Nullable AnAction... actions) {
+  public static void showWarning(@NotNull Project project,
+                                 @NotificationTitle @NotNull String title,
+                                 @NotificationContent @NotNull String message,
+                                 AnAction @Nullable ... actions) {
     LOG.info(title + "; " + message);
     Notification notification =
       new Notification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, message, NotificationType.WARNING);
@@ -71,108 +69,142 @@ public class GithubNotifications {
     notification.notify(project);
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message) {
+  public static void showError(@NotNull Project project,
+                               @NotificationTitle @NotNull String title,
+                               @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyError(title, message);
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String logDetails) {
+  public static void showError(@NotNull Project project,
+                               @NotificationTitle @NotNull String title,
+                               @NotificationContent @NotNull String message,
+                               @NotNull String logDetails) {
     LOG.warn(title + "; " + message + "; " + logDetails);
     VcsNotifier.getInstance(project).notifyError(title, message);
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull Throwable e) {
+  public static void showError(@NotNull Project project,
+                               @NotificationTitle @NotNull String title,
+                               @NotNull Throwable e) {
     LOG.warn(title + "; ", e);
     if (isOperationCanceled(e)) return;
     VcsNotifier.getInstance(project).notifyError(title, getErrorTextFromException(e));
   }
 
-  public static void showInfoURL(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String url) {
+  public static void showInfoURL(@NotNull Project project,
+                                 @NotificationTitle @NotNull String title,
+                                 @NotificationContent @NotNull String message,
+                                 @NotNull String url) {
     LOG.info(title + "; " + message + "; " + url);
+    //noinspection HardCodedStringLiteral
     VcsNotifier.getInstance(project)
-               .notifyImportantInfo(title, "<a href='" + url + "'>" + message + "</a>", NotificationListener.URL_OPENING_LISTENER);
+      .notifyImportantInfo(title, "<a href='" + url + "'>" + message + "</a>", NotificationListener.URL_OPENING_LISTENER);
   }
 
   public static void showWarningURL(@NotNull Project project,
-                                    @NotNull String title,
+                                    @NotificationTitle @NotNull String title,
                                     @NotNull String prefix,
                                     @NotNull String highlight,
                                     @NotNull String postfix,
                                     @NotNull String url) {
     LOG.info(title + "; " + prefix + highlight + postfix + "; " + url);
+    //noinspection HardCodedStringLiteral
     VcsNotifier.getInstance(project).notifyImportantWarning(title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
                                                             NotificationListener.URL_OPENING_LISTENER);
   }
 
   public static void showErrorURL(@NotNull Project project,
-                                  @NotNull String title,
+                                  @NotificationTitle @NotNull String title,
                                   @NotNull String prefix,
                                   @NotNull String highlight,
                                   @NotNull String postfix,
                                   @NotNull String url) {
     LOG.info(title + "; " + prefix + highlight + postfix + "; " + url);
+    //noinspection HardCodedStringLiteral
     VcsNotifier.getInstance(project).notifyError(title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
                                                  NotificationListener.URL_OPENING_LISTENER);
   }
 
-  public static void showInfoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
+  public static void showInfoDialog(@Nullable Project project,
+                                    @NotificationTitle @NotNull String title,
+                                    @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showInfoMessage(project, message, title);
   }
 
-  public static void showInfoDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
+  public static void showInfoDialog(@NotNull Component component,
+                                    @NotificationTitle @NotNull String title,
+                                    @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showInfoMessage(component, message, title);
   }
 
-  public static void showWarningDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
+  public static void showWarningDialog(@Nullable Project project,
+                                       @NotificationTitle @NotNull String title,
+                                       @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showWarningDialog(project, message, title);
   }
 
-  public static void showWarningDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
+  public static void showWarningDialog(@NotNull Component component,
+                                       @NotificationTitle @NotNull String title,
+                                       @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showWarningDialog(component, message, title);
   }
 
-  public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
+  public static void showErrorDialog(@Nullable Project project,
+                                     @NotificationTitle @NotNull String title,
+                                     @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showErrorDialog(project, message, title);
   }
 
-  public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull Throwable e) {
+  public static void showErrorDialog(@Nullable Project project,
+                                     @NotificationTitle @NotNull String title,
+                                     @NotNull Throwable e) {
     LOG.warn(title, e);
     if (isOperationCanceled(e)) return;
     Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
-  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Throwable e) {
+  public static void showErrorDialog(@NotNull Component component,
+                                     @NotificationTitle @NotNull String title,
+                                     @NotNull Throwable e) {
     LOG.info(title, e);
     if (isOperationCanceled(e)) return;
     Messages.showErrorDialog(component, getErrorTextFromException(e), title);
   }
 
-  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull String prefix, @NotNull Exception e) {
+  public static void showErrorDialog(@NotNull Component component,
+                                     @NotificationTitle @NotNull String title,
+                                     @NotNull String prefix,
+                                     @NotNull Exception e) {
     LOG.info(title, e);
     if (isOperationCanceled(e)) return;
     Messages.showErrorDialog(component, prefix + getErrorTextFromException(e), title);
   }
 
   @Messages.YesNoResult
-  public static boolean showYesNoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
+  public static boolean showYesNoDialog(@Nullable Project project,
+                                        @NotificationTitle @NotNull String title,
+                                        @NotificationContent @NotNull String message) {
     return Messages.YES == Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
   }
 
   @Messages.YesNoResult
   public static boolean showYesNoDialog(@Nullable Project project,
-                                        @NotNull String title,
-                                        @NotNull String message,
+                                        @NotificationTitle @NotNull String title,
+                                        @NotificationContent @NotNull String message,
                                         @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
     return Messages.YES == Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon(), doNotAskOption);
   }
 
   @NotNull
   public static AnAction getConfigureAction(@NotNull Project project) {
-    return NotificationAction.createSimple("Configure...", () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME));
+    return NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.GithubNotifications.text.configure"),
+                                           () -> ShowSettingsUtil.getInstance()
+                                             .showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME));
   }
 }

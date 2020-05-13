@@ -131,7 +131,7 @@ public class UiUtils {
     });
   }
 
-  public static JPanel createTreeClassChooserList(final Collection<? super String> collection,
+  public static JPanel createTreeClassChooserList(final Collection<String> collection,
                                                   String borderTitle,
                                                   final String chooserTitle,
                                                   String... ancestorClasses) {
@@ -143,7 +143,7 @@ public class UiUtils {
       filter = new SubclassFilter(ancestorClasses);
     }
     final JPanel optionsPanel = new JPanel(new BorderLayout());
-    final JBList list = new JBList(collection);
+    final JBList<String> list = new JBList<>(collection);
 
     final JPanel panel = ToolbarDecorator.createDecorator(list)
       .disableUpDownActions()
@@ -163,7 +163,7 @@ public class UiUtils {
             return;
           }
           final String qualifiedName = selected.getQualifiedName();
-          final DefaultListModel model = (DefaultListModel)list.getModel();
+          final DefaultListModel<String> model = (DefaultListModel<String>)list.getModel();
           final int index = model.indexOf(qualifiedName);
           if (index < 0) {
             model.addElement(qualifiedName);

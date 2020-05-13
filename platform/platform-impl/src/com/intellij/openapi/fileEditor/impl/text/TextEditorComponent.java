@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.Disposable;
@@ -27,8 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ui.JBSwingUtilities;
@@ -44,7 +42,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 class TextEditorComponent extends JBLoadingPanel implements DataProvider, Disposable, BackgroundableDataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorComponent");
+  private static final Logger LOG = Logger.getInstance(TextEditorComponent.class);
 
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
@@ -108,14 +106,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
 
   public boolean isDisposed() {
     return myDisposed;
-  }
-
-  /**
-   * Should be invoked when the corresponding {@code TextEditorImpl}
-   * is selected. Updates the status bar.
-   */
-  void selectNotify(){
-    updateStatusBar();
   }
 
   public void loadingFinished() {
@@ -203,15 +193,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     Boolean oldValid = myValid;
     myValid = isEditorValidImpl();
     myTextEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, myValid);
-  }
-
-  /**
-   * Updates frame's status bar: insert/overwrite mode, caret position
-   */
-  private void updateStatusBar(){
-    final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar == null) return;
-    statusBar.updateWidgets(); // TODO: do we need this?!
   }
 
   @Nullable

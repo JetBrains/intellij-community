@@ -20,22 +20,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static git4idea.config.GitIncomingCheckStrategy.Never;
-
 /**
  * Git VCS settings
  */
 @State(name = "Git.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions> implements DvcsSyncSettings, DvcsCompareSettings {
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
-
-  /**
-   * The way the local changes are saved before update if user has selected auto-stash
-   */
-  public enum UpdateChangesPolicy {
-    STASH,
-    SHELVE,
-  }
 
   public GitVcsSettings() {
     super(new GitVcsOptions());
@@ -59,12 +49,12 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   @NotNull
-  public UpdateChangesPolicy updateChangesPolicy() {
-    return getState().getUpdateChangesPolicy();
+  public GitSaveChangesPolicy getSaveChangesPolicy() {
+    return getState().getSaveChangesPolicy();
   }
 
-  public void setUpdateChangesPolicy(UpdateChangesPolicy value) {
-    getState().setUpdateChangesPolicy(value);
+  public void setSaveChangesPolicy(GitSaveChangesPolicy value) {
+    getState().setSaveChangesPolicy(value);
   }
 
   /**
@@ -93,7 +83,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   private static void migrateUpdateIncomingBranchInfo(@NotNull GitVcsOptions state) {
     if (!state.isUpdateBranchesInfo()) {
-      state.setIncomingCheckStrategy(Never);
+      state.setIncomingCheckStrategy(GitIncomingCheckStrategy.Never);
       //set default value
       state.setUpdateBranchesInfo(true);
     }
@@ -246,8 +236,8 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   @NotNull
-  public DvcsBranchSettings getFavoriteBranchSettings() {
-    return getState().getFavoriteBranchSettings();
+  public DvcsBranchSettings getBranchSettings() {
+    return getState().getBranchSettings();
   }
 
   public boolean shouldSetUserNameGlobally() {
@@ -310,5 +300,33 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     public int hashCode() {
       return Objects.hash(super.hashCode(), targetRemoteName, targetBranchName);
     }
+  }
+
+  /**
+   * @deprecated Use {@link GitSaveChangesPolicy}
+   */
+  @Deprecated
+  public enum UpdateChangesPolicy {
+    STASH,
+    SHELVE;
+
+    @NotNull
+    private static UpdateChangesPolicy from(GitSaveChangesPolicy policy) {
+      return policy == GitSaveChangesPolicy.STASH ? STASH : SHELVE;
+    }
+
+    @NotNull
+    public GitSaveChangesPolicy convert() {
+      return this == STASH ? GitSaveChangesPolicy.STASH : GitSaveChangesPolicy.SHELVE;
+    }
+  }
+
+  /**
+   * @deprecated Use {@link #getSaveChangesPolicy()}
+   */
+  @Deprecated
+  @NotNull
+  public UpdateChangesPolicy updateChangesPolicy() {
+    return UpdateChangesPolicy.from(getSaveChangesPolicy());
   }
 }

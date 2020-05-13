@@ -109,7 +109,7 @@ public class PyExtractSuperclassPresenterTest
    */
   @NotNull
   private Capture<String> configureViewToCaptureError() {
-    final Capture<String> errorMessageCapture = new Capture<>();
+    final Capture<String> errorMessageCapture = Capture.newInstance();
     myView.showError(EasyMock.capture(errorMessageCapture));
     return errorMessageCapture;
   }

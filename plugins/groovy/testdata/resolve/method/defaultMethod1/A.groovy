@@ -1,3 +1,3 @@
 class A {
-  def f = { <ref>println "" }
+  def f = { <caret>println "" }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.util;
 
@@ -15,10 +15,9 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.util.CollectConsumer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -28,10 +27,7 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utility class, that contains various methods for testing
@@ -40,70 +36,19 @@ import java.util.Set;
  */
 public abstract class TestUtils {
   public static final String TEMP_FILE = "temp.groovy";
-  public static final String GSP_TEMP_FILE = "temp.gsp";
   public static final String CARET_MARKER = "<caret>";
   public static final String BEGIN_MARKER = "<begin>";
   public static final String END_MARKER = "<end>";
   public static final String GROOVY_JAR = "groovy-all.jar";
-  public static final String GROOVY_JAR_18 = "groovy-1.8.0-beta-2.jar";
-  public static final String GROOVY_JAR_21 = "groovy-all-2.1.3.jar";
-  public static final String GROOVY_JAR_22 = "groovy-all-2.2.0-beta-1.jar";
-  public static final String GROOVY_JAR_23 = "groovy-all-2.3.0.jar";
-  public static final String GROOVY_JAR_30 = "groovy-3.0.0-alpha-2.jar";
 
   @NotNull
   public static String getMockJdkHome() {
     return getAbsoluteTestDataPath() + "/mockJDK";
   }
 
-  public static String getMockGroovyLibraryHome() {
-    return getAbsoluteTestDataPath() + "/mockGroovyLib";
-  }
-
-  public static String getMockGroovy1_8LibraryHome() {
-    return getAbsoluteTestDataPath() + "/mockGroovyLib1.8";
-  }
-
-  public static String getMockGroovy2_1LibraryHome() {
-    return getAbsoluteTestDataPath() + "/mockGroovyLib2.1";
-  }
-
-  private static String getMockGroovy2_2LibraryHome() {
-    return getAbsoluteTestDataPath() + "/mockGroovyLib2.2";
-  }
-
-  private static String getMockGroovy2_3LibraryHome() {
-    return getAbsoluteTestDataPath() + "/mockGroovyLib2.3";
-  }
-
-  private static String getMockGroovy3_0LibraryHome() {
-    return getAbsoluteTestDataPath() + "/mockGroovyLib3.0";
-  }
-
-  public static String getMockGroovy1_8LibraryName() {
-    return getMockGroovy1_8LibraryHome() + "/" + GROOVY_JAR_18;
-  }
-
-  public static String getMockGroovy2_1LibraryName() {
-    return getMockGroovy2_1LibraryHome() + "/" + GROOVY_JAR_21;
-  }
-
-  public static String getMockGroovy2_2LibraryName() {
-    return getMockGroovy2_2LibraryHome() + "/" + GROOVY_JAR_22;
-  }
-
-  public static String getMockGroovy2_3LibraryName() {
-    return getMockGroovy2_3LibraryHome() + "/" + GROOVY_JAR_23;
-  }
-
-  public static String getMockGroovy3_0LibraryName() {
-    return getMockGroovy3_0LibraryHome() + "/" + GROOVY_JAR_30;
-  }
-
   public static PsiFile createPseudoPhysicalGroovyFile(final Project project, final String text) throws IncorrectOperationException {
     return createPseudoPhysicalFile(project, TEMP_FILE, text);
   }
-
 
   public static PsiFile createPseudoPhysicalFile(final Project project, final String fileName, final String text) throws IncorrectOperationException {
     return PsiFileFactory.getInstance(project).createFileFromText(
@@ -243,7 +188,7 @@ public abstract class TestUtils {
 
     file.acceptChildren(new PsiRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof GrReferenceExpression) {
           GrReferenceExpression psiReference = (GrReferenceExpression)element;
 
@@ -286,7 +231,7 @@ public abstract class TestUtils {
       }
 
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
       }
     });
 
@@ -302,5 +247,19 @@ public abstract class TestUtils {
 
   public static void disableAstLoading(@NotNull Project project, @NotNull Disposable parent) {
     PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, parent);
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  public static <T> RunAll runAll(@NotNull Collection<? extends T> input,
+                                  @NotNull ThrowableConsumer<? super T, Throwable> action) {
+    List<ThrowableRunnable<Throwable>> runnables = ContainerUtil.map(input, it -> () -> action.consume(it));
+    return new RunAll(runnables.toArray(new ThrowableRunnable[0]));
+  }
+
+  @NotNull
+  public static <K, V> RunAll runAll(@NotNull Map<? extends K, ? extends V> input,
+                                     @NotNull ThrowablePairConsumer<? super K, ? super V, Throwable> action) {
+    return runAll(input.entrySet(), e -> action.consume(e.getKey(), e.getValue()));
   }
 }

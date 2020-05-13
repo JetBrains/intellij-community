@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -17,6 +17,7 @@ import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -25,9 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.*;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author anna
@@ -48,7 +48,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   @NotNull
   @Override
   public String getText() {
-    return "Convert to atomic";
+    return TypeMigrationBundle.message("convert.to.atomic.family.name");
   }
 
   @NotNull
@@ -75,7 +75,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     if (psiTypeClass != null) {
       final String qualifiedName = psiTypeClass.getQualifiedName();
       if (qualifiedName != null) { //is already atomic
-        if (myFromToMap.values().contains(qualifiedName) ||
+        if (myFromToMap.containsValue(qualifiedName) ||
             qualifiedName.equals(AtomicReference.class.getName()) ||
             qualifiedName.equals(AtomicReferenceArray.class.getName())) {
           return false;
@@ -131,7 +131,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
     Project project = var.getProject();
     if (var instanceof PsiField || JavaCodeStyleSettings.getInstance(var.getContainingFile()).GENERATE_FINAL_LOCALS) {
-      PsiModifierList modifierList = assertNotNull(var.getModifierList());
+      PsiModifierList modifierList = Objects.requireNonNull(var.getModifierList());
       WriteAction.run(() -> {
         if (var.getInitializer() == null) {
           final PsiExpression newInitializer = JavaPsiFacade.getElementFactory(project).createExpressionFromText("new " + toType + "()", var);

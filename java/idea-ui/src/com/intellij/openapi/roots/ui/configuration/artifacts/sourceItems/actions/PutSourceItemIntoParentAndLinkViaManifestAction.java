@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -24,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefaultLocationActionBase {
   public PutSourceItemIntoParentAndLinkViaManifestAction(SourceItemsTree sourceItemsTree, ArtifactEditorEx artifactEditor) {
     super(sourceItemsTree, artifactEditor);
@@ -39,7 +37,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
 
     final ParentElementsInfo parentInfo = findParentAndGrandParent(artifact);
     if (parentInfo != null) {
-      presentation.setText("Put Into '" + parentInfo.getGrandparentArtifact().getName() + "' and link via manifest");
+      presentation.setText(JavaUiBundle.message("action.text.put.into.0.and.link.via.manifest", parentInfo.getGrandparentArtifact().getName()));
     }
 
     boolean enable = parentInfo != null;

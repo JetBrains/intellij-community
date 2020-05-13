@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,6 @@ public abstract class XmlNamespaceHelper {
   public abstract Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context);
 
   public String getNamespaceAlias(@NotNull final XmlFile file) {
-    return XmlBundle.message("namespace.alias");
+    return XmlPsiBundle.message("namespace.alias");
   }
 }

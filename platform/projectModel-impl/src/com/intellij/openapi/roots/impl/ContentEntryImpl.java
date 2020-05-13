@@ -36,7 +36,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public class ContentEntryImpl extends RootModelComponentBase implements ContentEntry, ClonableContentEntry, Comparable<ContentEntryImpl> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentEntryImpl");
+  private static final Logger LOG = Logger.getInstance(ContentEntryImpl.class);
   @NotNull private final VirtualFilePointer myRoot;
   @NonNls public static final String ELEMENT_NAME = JpsModuleRootModelSerializer.CONTENT_TAG;
   private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<>();
@@ -99,9 +99,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return myRoot.getUrl();
   }
 
-  @NotNull
   @Override
-  public SourceFolder[] getSourceFolders() {
+  public SourceFolder @NotNull [] getSourceFolders() {
     return mySourceFolders.toArray(new SourceFolder[0]);
   }
 
@@ -124,8 +123,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSourceFolderFiles() {
+  public VirtualFile @NotNull [] getSourceFolderFiles() {
     assert !isDisposed();
     final SourceFolder[] sourceFolders = getSourceFolders();
     ArrayList<VirtualFile> result = new ArrayList<>(sourceFolders.length);
@@ -138,9 +136,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public ExcludeFolder[] getExcludeFolders() {
+  public ExcludeFolder @NotNull [] getExcludeFolders() {
     //assert !isDisposed();
     return myExcludeFolders.toArray(new ExcludeFolder[0]);
   }
@@ -161,8 +158,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getExcludeFolderFiles() {
+  public VirtualFile @NotNull [] getExcludeFolderFiles() {
     assert !isDisposed();
     ArrayList<VirtualFile> result = new ArrayList<>();
     for (ExcludeFolder excludeFolder : getExcludeFolders()) {

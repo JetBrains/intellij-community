@@ -16,36 +16,26 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.ResourceBundle;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
+import java.util.function.Supplier;
 
-import com.intellij.CommonBundle;
+public class GroovyRefactoringBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.GroovyRefactoringBundle";
+  private static final GroovyRefactoringBundle INSTANCE = new GroovyRefactoringBundle();
 
-/**
- * @author ilyas
- */
-public class GroovyRefactoringBundle {
+  private GroovyRefactoringBundle() { super(BUNDLE); }
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls
-  private static final String BUNDLE = "org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle";
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

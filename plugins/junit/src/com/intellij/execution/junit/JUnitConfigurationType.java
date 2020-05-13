@@ -2,7 +2,7 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
@@ -28,18 +28,23 @@ public class JUnitConfigurationType implements ConfigurationType {
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JUnitConfiguration("", project, this);
       }
+
+      @Override
+      public @NotNull String getId() {
+        return "JUnit";
+      }
     };
   }
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return ExecutionBundle.message("junit.configuration.display.name");
+    return JUnitBundle.message("junit.configuration.display.name");
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return ExecutionBundle.message("junit.configuration.description");
+    return JUnitBundle.message("junit.configuration.description");
   }
 
   @Override
@@ -72,7 +77,7 @@ public class JUnitConfigurationType implements ConfigurationType {
 
   @Override
   public boolean isDumbAware() {
-    return false;
+    return true;
   }
 
   @NotNull

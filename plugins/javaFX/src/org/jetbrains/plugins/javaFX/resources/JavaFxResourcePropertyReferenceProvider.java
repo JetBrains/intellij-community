@@ -14,9 +14,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Pavel.Dolgov
  */
 class JavaFxResourcePropertyReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (element instanceof XmlAttributeValue) {
       final String value = ((XmlAttributeValue)element).getValue();
       if (value != null && value.startsWith("%") && value.length() > 1) {

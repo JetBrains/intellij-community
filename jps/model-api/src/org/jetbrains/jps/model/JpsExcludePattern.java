@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
  * Specifies a pattern for names of files which should be excluded from a module. If name of a file under {@link #getBaseDirUrl() the base directory}
  * matches {@link #getPattern() the pattern} it'll be excluded from the containing module, if name of a directory matches the pattern the directory
  * and all of its contents will be excluded. '?' and '*' wildcards are supported.
- *
- * @author nik
  */
 public interface JpsExcludePattern extends JpsElement {
   @NotNull

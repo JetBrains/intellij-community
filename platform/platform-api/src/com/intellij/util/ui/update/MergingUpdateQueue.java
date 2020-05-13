@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.update;
 
 import com.intellij.ide.UiActivity;
@@ -13,6 +13,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +23,6 @@ import javax.swing.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
@@ -38,7 +39,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private volatile boolean myActive;
   private volatile boolean mySuspended;
 
-  private final Map<Integer, Map<Update, Update>> myScheduledUpdates = new TreeMap<>();
+  private final Int2ObjectRBTreeMap<Map<Update, Update>> myScheduledUpdates = new Int2ObjectRBTreeMap<>();
 
   private final Alarm myWaiterForMerge;
 
@@ -109,15 +110,14 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myMergingTimeSpan = mergingTimeSpan;
     myModalityStateComponent = modalityStateComponent;
     myName = name;
-    Application app = ApplicationManager.getApplication();
-    myPassThrough = app == null || app.isUnitTestMode();
     myExecuteInDispatchThread = thread == Alarm.ThreadToUse.SWING_THREAD;
 
     if (parent != null) {
       Disposer.register(parent, this);
     }
 
-    myWaiterForMerge = createAlarm(thread, myExecuteInDispatchThread ? null : this);
+    AlarmFactory alarmFactory = AlarmFactory.getInstance();
+    myWaiterForMerge = myExecuteInDispatchThread ? alarmFactory.create(thread) : alarmFactory.create(thread, this);
 
     if (isActive) {
       showNotify();
@@ -126,10 +126,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (activationComponent != null) {
       setActivationComponent(activationComponent);
     }
-  }
-
-  private static Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, @Nullable Disposable parent) {
-    return parent == null ? AlarmFactory.getInstance().create(thread) : AlarmFactory.getInstance().create(thread, parent);
   }
 
   public void setMergingTimeSpan(int timeSpan) {
@@ -163,10 +159,23 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   /**
-   * @param passThrough if {@code true} the tasks won't be postponed but executed immediately instead (this is default mode for tests)
+   * @param passThrough if {@code true} the tasks won't be postponed but executed immediately instead
    */
   public final void setPassThrough(boolean passThrough) {
     myPassThrough = passThrough;
+  }
+
+  /**
+   * Switches on the PassThrough mode if this method is called during testing.
+   * It is needed to support some old tests, which expect such behaviour.
+   *
+   * @return this instance for the sequential creation (the Builder pattern)
+   */
+  @ApiStatus.Internal
+  public final MergingUpdateQueue usePassThroughInUnitTestMode() {
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isUnitTestMode()) myPassThrough = true;
+    return this;
   }
 
   public void activate() {
@@ -300,7 +309,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return each.isDisposed() || each.isExpired();
   }
 
-  protected void execute(@NotNull Update[] update) {
+  protected void execute(Update @NotNull [] update) {
     for (final Update each : update) {
       if (isExpired(each)) {
         each.setRejected();

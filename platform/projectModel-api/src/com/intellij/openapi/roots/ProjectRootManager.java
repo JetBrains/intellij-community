@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -72,8 +73,7 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
    * TODO: remove this method?
    */
-  @NotNull
-  public abstract VirtualFile[] getContentRootsFromAllModules();
+  public abstract VirtualFile @NotNull [] getContentRootsFromAllModules();
 
   /**
    * Returns the list of content root URLs for all modules in the project.
@@ -88,16 +88,14 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
     *
     * @return the list of content roots.
     */
-  @NotNull
-  public abstract VirtualFile[] getContentRoots();
+  public abstract VirtualFile @NotNull [] getContentRoots();
 
   /**
    * Returns the list of source roots under the content roots for all modules in the project.
    *
    * @return the list of content source roots.
    */
-  @NotNull
-  public abstract VirtualFile[] getContentSourceRoots();
+  public abstract VirtualFile @NotNull [] getContentSourceRoots();
 
   /**
    * Returns the list of source roots from all modules which types belong to the specified set
@@ -109,20 +107,23 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
   public abstract List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
-   * Returns the instance of the JDK selected for the project.
-   *
-   * @return the JDK instance, or null if the name of the selected JDK does not correspond
-   * to any existing JDK instance.
+   * @return the instance of the JDK selected for the project or null
+   * if the name of the selected JDK does not correspond to any existing JDK instance
    */
   @Nullable
   public abstract Sdk getProjectSdk();
 
   /**
-   * Returns the name of the SDK selected for the project.
-   *
-   * @return the SDK name.
+   * @return the name of the SDK selected for the project
    */
+  @Nullable
   public abstract String getProjectSdkName();
+
+  /**
+   * @return the SDK type name (@link {@link SdkTypeId#getName()} of the current Project SDK
+   */
+  @Nullable
+  public abstract String getProjectSdkTypeName();
 
   /**
    * Sets the SDK to be used for the project.
@@ -131,11 +132,15 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    */
   public abstract void setProjectSdk(@Nullable Sdk sdk);
 
+  /**
+   * @deprecated use {@link #setProjectSdk(Sdk)} or {@link #setProjectSdkName(String, String)}
+   */
+  @Deprecated
+  public abstract void setProjectSdkName(@NotNull String name);
 
   /**
-   * Sets the name of the JDK to be used for the project.
-   *
-   * @param name the name of the JDK.
+   * Sets the name of the JDK to be used for the project
+   * @param sdkTypeName the {@link SdkTypeId#getName()} of the SDK type
    */
-  public abstract void setProjectSdkName(@NotNull String name);
+  public abstract void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName);
 }

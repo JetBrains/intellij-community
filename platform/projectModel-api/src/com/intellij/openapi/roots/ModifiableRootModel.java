@@ -105,7 +105,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    */
   void removeOrderEntry(@NotNull OrderEntry orderEntry);
 
-  void rearrangeOrderEntries(@NotNull OrderEntry[] newOrder);
+  void rearrangeOrderEntries(OrderEntry @NotNull [] newOrder);
 
   void clear();
 
@@ -148,7 +148,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @param sdkName SDK name
    * @param sdkType SDK type
    */
-  void setInvalidSdk(@NotNull String sdkName, String sdkType);
+  void setInvalidSdk(@NotNull String sdkName, @NotNull String sdkType);
 
   /**
    * Makes this module inheriting SDK from its project.

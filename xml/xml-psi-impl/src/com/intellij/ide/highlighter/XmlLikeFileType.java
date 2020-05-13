@@ -20,7 +20,7 @@ public abstract class XmlLikeFileType extends LanguageFileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
     String charset =
       guessed.hardCodedCharset != null

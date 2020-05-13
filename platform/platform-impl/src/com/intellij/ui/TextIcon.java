@@ -1,24 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
-
-import com.intellij.ide.ui.AntialiasingType;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphVector;
+import java.awt.font.TextLayout;
+import java.util.Objects;
 
-import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
-import static java.awt.RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class TextIcon implements Icon {
-  private static final FontRenderContext CONTEXT =
-    new FontRenderContext(null, AntialiasingType.getKeyForCurrentScope(false), VALUE_FRACTIONALMETRICS_OFF);
-
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
   private Integer myRound;
@@ -27,11 +18,16 @@ public final class TextIcon implements Icon {
   private Font myFont;
   private String myText;
   private Rectangle myTextBounds;
+  private FontRenderContext myContext;
 
   private Rectangle getTextBounds() {
     if (myTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
-      GlyphVector vector = myFont.createGlyphVector(CONTEXT, myText);
-      myTextBounds = vector.getPixelBounds(CONTEXT, 0, 0);
+      Object aaHint = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
+      if (aaHint == null) aaHint = RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT;
+      Object fmHint = UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS);
+      if (fmHint == null) fmHint = RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT;
+      myContext = new FontRenderContext(null, aaHint, fmHint);
+      myTextBounds = getPixelBounds(myFont, myText, myContext);
     }
     return myTextBounds;
   }
@@ -94,16 +90,43 @@ public final class TextIcon implements Icon {
     }
     Rectangle bounds = getTextBounds();
     if (myForeground != null && bounds != null) {
-      g = g.create();
+      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x, myInsets.top + y, bounds.width, bounds.height);
       try {
-        g.setColor(myForeground);
-        g.setFont(myFont);
-        setupAntialiasing(g);
-        g.drawString(myText, myInsets.left + x - bounds.x, myInsets.top + y - bounds.y);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, myContext.getAntiAliasingHint());
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myContext.getFractionalMetricsHint());
+        g2d.setColor(myForeground);
+        g2d.setFont(myFont);
+        g2d.drawString(myText, -bounds.x, -bounds.y);
       }
       finally {
-        g.dispose();
+        g2d.dispose();
       }
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    TextIcon icon = (TextIcon)o;
+    return myInsets.equals(icon.myInsets) &&
+           Objects.equals(myRound, icon.myRound) &&
+           Objects.equals(myBackground, icon.myBackground) &&
+           Objects.equals(myForeground, icon.myForeground) &&
+           Objects.equals(myFont, icon.myFont) &&
+           Objects.equals(myText, icon.myText) &&
+           Objects.equals(myTextBounds, icon.myTextBounds);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds);
+  }
+
+  private static Rectangle getPixelBounds(Font font, String text, FontRenderContext context) {
+    return font.hasLayoutAttributes()
+           ? new TextLayout(text, font, context).getPixelBounds(context, 0, 0)
+           : font.createGlyphVector(context, text).getPixelBounds(context, 0, 0);
   }
 }

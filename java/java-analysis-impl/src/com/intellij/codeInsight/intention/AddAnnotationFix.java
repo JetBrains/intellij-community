@@ -28,14 +28,14 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAction {
-  public AddAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner modifierListOwner, @NotNull String... annotationsToRemove) {
+  public AddAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner modifierListOwner, String @NotNull ... annotationsToRemove) {
     this(fqn, modifierListOwner, PsiNameValuePair.EMPTY_ARRAY, annotationsToRemove);
   }
 
   public AddAnnotationFix(@NotNull String fqn,
                           @NotNull PsiModifierListOwner modifierListOwner,
-                          @NotNull PsiNameValuePair[] values,
-                          @NotNull String... annotationsToRemove) {
+                          PsiNameValuePair @NotNull [] values,
+                          String @NotNull ... annotationsToRemove) {
     super(fqn, modifierListOwner, values, annotationsToRemove);
   }
 
@@ -48,5 +48,4 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     applyFix();
   }
-
 }

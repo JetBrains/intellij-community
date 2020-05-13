@@ -3,7 +3,7 @@ class TextBlocks {
     System.out.println("""
                        first
                         second
-                         third
+                         third\
                        """ + <caret>//c1
                        " \\forth\"" );
   }

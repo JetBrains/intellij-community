@@ -5,21 +5,27 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class GroovyImporterTest extends MavenImportingTestCase {
+  private String repoPath;
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setRepositoryPath(new File(myDir, "repo").getPath());
+    repoPath = new File(myDir, "repo").getPath();
+    setRepositoryPath(repoPath);
   }
 
   public void testConfiguringFacetWithoutLibrary() {
@@ -224,6 +230,75 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                       "src/test/groovy",
                       "src/test/java");
     assertTestResources("project", "src/test/resources");
+
+    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    assertEquals("", compilerSettings.getState().greclipsePath);
+  }
+
+  public void testGroovyEclipsePluginWhenOnlyCompilerDependency() throws IOException {
+    createStdProjectFolders();
+    createProjectSubDirs("src/main/groovy",
+                         "src/test/groovy");
+
+    File batchDir = new File(repoPath, "org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/");
+    //noinspection ResultOfMethodCallIgnored
+    batchDir.mkdirs();
+    File batchJar = new File(batchDir, "groovy-eclipse-batch-2.1.3-01.jar");
+    //noinspection ResultOfMethodCallIgnored
+    batchJar.createNewFile();
+
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+                  "<build>\n" +
+                  "  <pluginManagement>\n" +
+                  "    <plugins>\n" +
+                  "      <plugin>\n" +
+                  "        <artifactId>maven-compiler-plugin</artifactId>\n" +
+                  "        <configuration>\n" +
+                  "          <compilerId>groovy-eclipse-compiler</compilerId>\n" +
+                  "          <source>1.7</source>\n" +
+                  "          <target>1.7</target>\n" +
+                  "          <showWarnings>false</showWarnings>\n" +
+                  "        </configuration>\n" +
+                  "        <dependencies>\n" +
+                  "          <dependency>\n" +
+                  "            <groupId>org.codehaus.groovy</groupId>\n" +
+                  "            <artifactId>groovy-eclipse-compiler</artifactId>\n" +
+                  "            <version>2.8.0-01</version>\n" +
+                  "          </dependency>\n" +
+                  "          <dependency>\n" +
+                  "            <groupId>org.codehaus.groovy</groupId>\n" +
+                  "            <artifactId>groovy-eclipse-batch</artifactId>\n" +
+                  "            <version>2.1.3-01</version>\n" +
+                  "          </dependency>\n" +
+                  "        </dependencies>\n" +
+                  "      </plugin>\n" +
+                  "      <plugin>\n" +
+                  "        <groupId>org.codehaus.groovy</groupId>\n" +
+                  "        <artifactId>groovy-eclipse-compiler</artifactId>\n" +
+                  "        <version>2.8.0-01</version>\n" +
+                  "        <extensions>true</extensions>\n" +
+                  "      </plugin>\n" +
+                  "    </plugins>\n" +
+                  "  </pluginManagement>\n" +
+                  "</build>\n");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "src/main/groovy",
+                  "src/main/java");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project",
+                      "src/test/groovy",
+                      "src/test/java");
+    assertTestResources("project", "src/test/resources");
+
+    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
   }
 
   public void testAddingCustomGroovySpecificSources() {
@@ -580,9 +655,9 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                     "</build>");
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        MavenRootModelAdapter a = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+        MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                             getModule("project"),
-                                                            new IdeModifiableModelsProviderImpl(myProject));
+                                                            new IdeModifiableModelsProviderImpl(myProject)));
         a.unregisterAll(getProjectPath() + "/target", true, true);
         a.getRootModel().commit();
       });
@@ -653,6 +728,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
 
     assertExcludes("project", "target");
+  }
+
+  public void testGrEclipseMavenPlugin(){
+
   }
 
 }

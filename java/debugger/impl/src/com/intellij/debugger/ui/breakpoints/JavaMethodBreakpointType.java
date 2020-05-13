@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,7 @@ import javax.swing.*;
  */
 public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMethodBreakpointProperties> {
   public JavaMethodBreakpointType() {
-    super("java-method", DebuggerBundle.message("method.breakpoints.tab.title"));
+    super("java-method", JavaDebuggerBundle.message("method.breakpoints.tab.title"));
   }
 
   @NotNull
@@ -68,7 +68,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   //@Override
   public String getDisplayName() {
-    return DebuggerBundle.message("method.breakpoints.tab.title");
+    return JavaDebuggerBundle.message("method.breakpoints.tab.title");
   }
 
   @Override
@@ -92,7 +92,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     }
     //}
     //else {
-    //  buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
+    //  buffer.append(JavaDebuggerBundle.message("status.breakpoint.invalid"));
     //}
     return buffer.toString();
   }

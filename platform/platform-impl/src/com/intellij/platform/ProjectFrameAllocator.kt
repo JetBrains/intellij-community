@@ -1,25 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform
 
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Dimension
@@ -27,10 +34,11 @@ import java.awt.Frame
 import java.awt.Image
 import java.io.EOFException
 import java.nio.file.Path
+import kotlin.math.min
 
 internal open class ProjectFrameAllocator {
-  open fun run(task: Runnable): Boolean {
-    task.run()
+  open fun run(task: () -> Unit): Boolean {
+    task()
     return true
   }
 
@@ -40,9 +48,7 @@ internal open class ProjectFrameAllocator {
   open fun projectLoaded(project: Project) {}
 
   open fun projectNotLoaded(error: CannotConvertException?) {
-    if (error != null) {
-      ProjectManagerImpl.showCannotConvertMessage(error, null)
-    }
+    error?.let { throw error }
   }
 
   open fun projectOpened(project: Project) {}
@@ -57,25 +63,39 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
   @Volatile
   private var cancelled = false
 
-  override fun run(task: Runnable): Boolean {
+  override fun run(task: () -> Unit): Boolean {
     var completed = false
-    TransactionGuard.getInstance().submitTransactionAndWait {
+    val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName ?: projectFile.fileName)
+    ApplicationManager.getApplication().invokeAndWait {
       val frame = createFrameIfNeeded()
-      completed = ProgressManager.getInstance().runProcessWithProgressSynchronously({
-        if (frameHelper == null) {
-          ApplicationManager.getApplication().invokeLater {
-            if (cancelled) {
-              return@invokeLater
-            }
+      val progressTask = object : Task.Modal(null, progressTitle, true) {
+        override fun run(indicator: ProgressIndicator) {
+          if (frameHelper == null) {
+            ApplicationManager.getApplication().invokeLater {
+              if (cancelled) {
+                return@invokeLater
+              }
 
-            runActivity("project frame initialization") {
-              initNewFrame(frame)
+              runActivity("project frame initialization") {
+                initNewFrame(frame)
+              }
             }
           }
+
+          task()
         }
 
-        task.run()
-      }, "Loading ${projectFile.fileName} Project", true, null, frame.rootPane)
+        override fun onThrowable(error: Throwable) {
+          if (error is StartupAbortedException || error is PluginException) {
+            StartupAbortedException.logAndExit(error)
+          }
+          else {
+            logger<ProjectFrameAllocator>().error(error)
+            projectNotLoaded(error as? CannotConvertException)
+          }
+        }
+      }
+      completed = (ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)
     }
     return completed
   }
@@ -97,9 +117,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       if (recentProjectManager is RecentProjectsManagerBase) {
         val info = recentProjectManager.getProjectMetaInfo(projectFile)
         if (info != null) {
-          options = options.copy()
-          options.frame = info.frame
-          options.projectWorkspaceId = info.projectWorkspaceId
+          options = options.copy(frame = info.frame, projectWorkspaceId = info.projectWorkspaceId)
         }
       }
     }
@@ -122,7 +140,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     var frameInfo = options.frame
     if (frameInfo?.bounds == null) {
       isFrameBoundsCorrect = false
-      frameInfo = (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfo
+      frameInfo = (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfoHelper.info
     }
     else {
       isFrameBoundsCorrect = true
@@ -132,6 +150,9 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       restoreFrameState(frameHelper, frameInfo)
     }
 
+    if (options.sendFrameBack && frame.isAutoRequestFocus) {
+      logger<ProjectFrameAllocator>().error("isAutoRequestFocus must be false")
+    }
     frame.isVisible = true
     frameHelper.init()
     this.frameHelper = frameHelper
@@ -148,10 +169,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     runActivity("create a frame", ActivityCategory.MAIN) {
       var frame = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
       if (frame == null) {
-        frame = createNewProjectFrame()
-        if (options.sendFrameBack) {
-          frame.isAutoRequestFocus = false
-        }
+        frame = createNewProjectFrame(forceDisableAutoRequestFocus = options.sendFrameBack)
       }
       return frame
     }
@@ -159,17 +177,28 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun projectLoaded(project: Project) {
     ApplicationManager.getApplication().invokeLater(Runnable {
-      val frame = frameHelper ?: return@Runnable
+      val frameHelper = frameHelper ?: return@Runnable
 
-      if (!isFrameBoundsCorrect) {
-        val frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace()
-        if (frameInfo?.bounds != null) {
-          restoreFrameState(frame, frameInfo)
+      val windowManager = WindowManager.getInstance() as WindowManagerImpl
+      runActivity("project frame assigning") {
+        val projectFrameBounds = ProjectFrameBounds.getInstance(project)
+        if (isFrameBoundsCorrect) {
+          // update to ensure that project stores correct frame bounds
+          projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frameHelper.frame.extendedState)) null else frameHelper.frame.bounds)
         }
-      }
+        else {
+          val frameInfo = projectFrameBounds.getFrameInfoInDeviceSpace()
+          if (frameInfo?.bounds != null) {
+            restoreFrameState(frameHelper, frameInfo)
+          }
+        }
 
-      (WindowManager.getInstance() as WindowManagerImpl).assignFrame(frame, project)
-    }, project.disposedOrDisposeInProgress)
+        windowManager.assignFrame(frameHelper, project)
+      }
+      runActivity("tool window pane creation") {
+        ToolWindowManagerEx.getInstanceEx(project).init(frameHelper)
+      }
+    }, project.disposed)
   }
 
   override fun projectNotLoaded(error: CannotConvertException?) {
@@ -183,7 +212,9 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
         ProjectManagerImpl.showCannotConvertMessage(error, frame?.frame)
       }
 
-      frame?.frame?.dispose()
+      if (frame != null) {
+        Disposer.dispose(frame)
+      }
     }
   }
 
@@ -214,18 +245,17 @@ private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameI
 }
 
 @ApiStatus.Internal
-fun createNewProjectFrame(): IdeFrameImpl {
+fun createNewProjectFrame(forceDisableAutoRequestFocus: Boolean): IdeFrameImpl {
   val frame = IdeFrameImpl()
   SplashManager.hideBeforeShow(frame)
 
   val size = ScreenUtil.getMainScreenBounds().size
-  size.width = Math.min(1400, size.width - 20)
-  size.height = Math.min(1000, size.height - 40)
+  size.width = min(1400, size.width - 20)
+  size.height = min(1000, size.height - 40)
   frame.size = size
   frame.setLocationRelativeTo(null)
 
-  if (UIUtil.DISABLE_AUTO_REQUEST_FOCUS &&
-      !ApplicationManager.getApplication().isActive) {
+  if (forceDisableAutoRequestFocus || (!ApplicationManager.getApplication().isActive && ComponentUtil.isDisableAutoRequestFocus())) {
     frame.isAutoRequestFocus = false
   }
   frame.minimumSize = Dimension(340, frame.minimumSize.height)

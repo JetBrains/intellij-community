@@ -33,8 +33,6 @@ import javax.swing.*;
  * &lt;/extensions&gt;
  * </pre>
  * </p>
- *
- * @author nik
  */
 public abstract class DeploymentSourceType<S extends DeploymentSource> {
   public static final ExtensionPointName<DeploymentSourceType<?>> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.deploymentSource.type");

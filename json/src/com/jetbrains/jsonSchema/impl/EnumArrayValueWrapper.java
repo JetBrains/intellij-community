@@ -7,14 +7,13 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class EnumArrayValueWrapper {
-  @NotNull private final Object[] myValues;
+  private final Object @NotNull [] myValues;
 
-  public EnumArrayValueWrapper(@NotNull Object[] values) {
+  public EnumArrayValueWrapper(Object @NotNull [] values) {
     myValues = values;
   }
 
-  @NotNull
-  public Object[] getValues() {
+  public Object @NotNull [] getValues() {
     return myValues;
   }
 

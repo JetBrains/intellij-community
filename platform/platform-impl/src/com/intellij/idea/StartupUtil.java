@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.Patches;
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
@@ -13,9 +14,11 @@ import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
+import com.intellij.ide.gdpr.Agreements;
+import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.EndUserAgreement;
+import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -25,19 +28,16 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -54,6 +54,7 @@ import org.jetbrains.io.BuiltInServer;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOError;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
@@ -73,22 +74,27 @@ import java.util.function.Function;
 import static com.intellij.diagnostic.LoadingState.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
+@ApiStatus.Internal
 public final class StartupUtil {
-  public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
+  // See ApplicationImpl.USE_SEPARATE_WRITE_THREAD
+  public static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
+  private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   private static SocketLock ourSocketLock;
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
 
   private StartupUtil() { }
 
-  /* called by the app after startup */
+  public static boolean isUsingSeparateWriteThread() {
+    return Boolean.getBoolean(USE_SEPARATE_WRITE_THREAD_PROPERTY);
+  }
+
+  // called by the app after startup
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
-    if (ourSocketLock != null) {
-      ourSocketLock.setCommandProcessor(processor);
-    }
+    if (ourSocketLock == null) throw new AssertionError("Not initialized yet");
+    ourSocketLock.setCommandProcessor(processor);
   }
 
   // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
@@ -98,10 +104,20 @@ public final class StartupUtil {
     return ourSocketLock == null ? null : ourSocketLock.getServer();
   }
 
-  @NotNull
-  public static synchronized CompletableFuture<BuiltInServer> getServerFuture() {
+  public static synchronized @NotNull CompletableFuture<BuiltInServer> getServerFuture() {
     CompletableFuture<BuiltInServer> serverFuture = ourSocketLock == null ? null : ourSocketLock.getServerFuture();
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
+  }
+
+  private static @Nullable Object loadEuaDocument() {
+    if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
+      return null;
+    }
+
+    Activity euaActivity = StartUpMeasurer.startActivity("eua getting");
+    EndUserAgreement.Document result = EndUserAgreement.getLatestDocument();
+    euaActivity.end();
+    return result;
   }
 
   public interface AppStarter {
@@ -134,13 +150,13 @@ public final class StartupUtil {
         Method invokeMethod = clazz.getDeclaredMethod("invoke");
         invokeMethod.invoke(null);
       }
-      catch (Exception ex) {
-        log.error("Failed pre-app class init for class " + classBeforeAppProperty, ex);
+      catch (Exception e) {
+        log.error("Failed pre-app class init for class " + classBeforeAppProperty, e);
       }
     }
   }
 
-  public static void prepareApp(@NotNull String[] args, @NotNull String mainClass) throws Exception {
+  public static void prepareApp(@NotNull String @NotNull [] args, @NotNull String mainClass) throws Exception {
     LoadingState.setStrictMode();
 
     Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
@@ -149,19 +165,21 @@ public final class StartupUtil {
     activity = activity.endAndStart("main class loading scheduling");
     ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
 
-    Future<Class<AppStarter>> mainStartFuture = executorService.submit(() -> {
+    Future<AppStarter> appStarterFuture = executorService.submit(() -> {
       Activity subActivity = StartUpMeasurer.startActivity("main class loading");
       @SuppressWarnings("unchecked")
       Class<AppStarter> aClass = (Class<AppStarter>)Class.forName(mainClass);
       subActivity.end();
-      return aClass;
+      return aClass.newInstance();
     });
 
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
     activity = activity.endAndStart("LaF init scheduling");
-    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
+    // EndUserAgreement.Document type is not specified to avoid class loading
+    Future<Object> euaDocument = Main.isHeadless() ? null : executorService.submit(StartupUtil::loadEuaDocument);
+    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument);
     activity.end();
 
     if (!checkJdkVersion()) {
@@ -169,91 +187,117 @@ public final class StartupUtil {
     }
 
     activity = StartUpMeasurer.startMainActivity("config path computing");
-    String configPath = PathManager.getConfigPath();
+    Path configPath = canonicalPath(PathManager.getConfigPath());
+    Path systemPath = canonicalPath(PathManager.getSystemPath());
     activity = activity.endAndStart("config path existence check");
 
     // this check must be performed before system directories are locked
-    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(configPath));
+    boolean configImportNeeded = !Main.isHeadless() &&
+                                 (!Files.exists(configPath) ||
+                                  Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)));
 
     activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
-    if (!checkSystemDirs()) {
+    if (!checkSystemDirs(configPath, systemPath)) {
       System.exit(Main.DIR_CHECK_FAILED);
     }
     activity = activity.endAndStart("system dirs locking");
-    lockSystemDirs(args);
+    lockSystemDirs(configPath, systemPath, args);
     activity = activity.endAndStart("file logger configuration");
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();
     activity.end();
 
+    // plugins cannot be loaded at this moment if needed to import configs, because plugins may be added after importing
+    if (!configImportNeeded) {
+      PluginManagerCore.scheduleDescriptorLoading();
+    }
+
     NonUrgentExecutor.getInstance().execute(() -> {
-      ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-      Activity subActivity = StartUpMeasurer.startActivity("essential IDE info logging");
-      logEssentialInfoAboutIde(log, appInfo);
-      subActivity.end();
+      setupSystemLibraries();
+      logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance());
+      loadSystemLibraries(log);
     });
 
-    Future<?> extraTaskFuture = executorService.submit(StartupUtil::setupSystemLibraries);
-
-    fixProcessEnvironment();
+    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
+    EnvironmentUtil.loadEnvironment(true)
+      .thenRun(subActivity::end);
 
     if (!configImportNeeded) {
-      installPluginUpdates();
       runPreAppClass(log);
     }
 
-    NonUrgentExecutor.getInstance().execute(() -> loadSystemLibraries(log));
-
-    activity = StartUpMeasurer.startMainActivity("tasks waiting");
-    extraTaskFuture.get();
-
-    activity = activity.endAndStart("main class loading waiting");
-    Class<AppStarter> aClass = mainStartFuture.get();
-    activity.end();
-
-    startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
+    startApp(args, initUiTask, log, configImportNeeded, appStarterFuture, euaDocument);
   }
 
-  private static void startApp(@NotNull String[] args,
+  private static @NotNull AppStarter getAppStarter(@NotNull Future<AppStarter> mainStartFuture)
+    throws InterruptedException, ExecutionException {
+    Activity activity = mainStartFuture.isDone() ? null : StartUpMeasurer.startMainActivity("main class loading waiting");
+    AppStarter result = mainStartFuture.get();
+    if (activity != null) {
+      activity.end();
+    }
+    return result;
+  }
+
+  private static void startApp(String @NotNull [] args,
                                @NotNull CompletableFuture<?> initUiTask,
                                @NotNull Logger log,
                                boolean configImportNeeded,
-                               @NotNull AppStarter appStarter) throws Exception {
+                               @NotNull Future<AppStarter> appStarterFuture,
+                               @Nullable Future<Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.startMainActivity("config importing");
+      Activity activity = StartUpMeasurer.startMainActivity("eua showing");
+      boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
+
+      if (agreementDialogWasShown) {
+        activity = activity.endAndStart("screen reader checking");
+        runInEdtAndWait(log, AccessibilityUtils::enableScreenReaderSupportIfNecessary, initUiTask);
+      }
 
       if (configImportNeeded) {
+        activity = activity.endAndStart("config importing");
+        AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
-        Path newConfigDir = Paths.get(PathManager.getConfigPath());
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log), initUiTask);
+        Path newConfigDir = PathManager.getConfigDir();
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, log), initUiTask);
         appStarter.importFinished(newConfigDir);
+
+        if (!ConfigImportHelper.isConfigImported()) {
+          // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
+          EventQueue.invokeAndWait(() -> {
+            runStartupWizard(appStarter);
+            PluginManagerCore.scheduleDescriptorLoading();
+          });
+        }
+        else {
+          PluginManagerCore.scheduleDescriptorLoading();
+        }
       }
-
-      showUserAgreementAndConsentsIfNeeded(log, initUiTask);
-
-      if (configImportNeeded && !ConfigImportHelper.isConfigImported()) {
-        // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
-        EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
-      }
-
       activity.end();
     }
 
-    EdtInvocationManager.executeWithCustomManager(new EdtInvocationManager.SwingEdtInvocationManager() {
+    EdtInvocationManager oldEdtInvocationManager = null;
+    EdtInvocationManager.SwingEdtInvocationManager edtInvocationManager = new EdtInvocationManager.SwingEdtInvocationManager() {
       @Override
       public void invokeAndWait(@NotNull Runnable task) {
         runInEdtAndWait(log, task, initUiTask);
       }
-    }, () -> appStarter.start(Arrays.asList(args), initUiTask));
+    };
+    try {
+      oldEdtInvocationManager = EdtInvocationManager.setEdtInvocationManager(edtInvocationManager);
+      getAppStarter(appStarterFuture).start(Arrays.asList(args), initUiTask);
+    }
+    finally {
+      EdtInvocationManager.restoreEdtInvocationManager(edtInvocationManager, oldEdtInvocationManager);
+    }
   }
 
-  @NotNull
-  private static CompletableFuture<?> scheduleInitUi(@NotNull String[] args, @NotNull ExecutorService executor) {
+  private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args, @NotNull ExecutorService executor, @Nullable Future<Object> eulaDocument) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    CompletableFuture<Void> future = new CompletableFuture<>();
+    CompletableFuture<Void> initUiFuture = new CompletableFuture<>();
     executor.execute(() -> {
       try {
         checkHiDPISettings();
@@ -270,11 +314,11 @@ public final class StartupUtil {
             StartupUiUtil.initDefaultLaF();
           }
           catch (Throwable e) {
-            future.completeExceptionally(e);
+            initUiFuture.completeExceptionally(e);
             return;
           }
 
-          future.complete(null);
+          initUiFuture.complete(null);
           StartUpMeasurer.setCurrentState(LAF_INITIALIZED);
 
           if (Main.isHeadless()) {
@@ -288,28 +332,57 @@ public final class StartupUtil {
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
 
-          Activity prepareSplashActivity = activity.endAndStart("splash preparation");
-          EventQueue.invokeLater(() -> {
-            SplashManager.show(args);
-            prepareSplashActivity.end();
-          });
+          if (!Main.isLightEdit() && !Boolean.getBoolean(CommandLineArgs.NO_SPLASH)) {
+            Activity prepareSplashActivity = activity.endAndStart("splash preparation");
+            EventQueue.invokeLater(() -> {
+              Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
+              boolean isEulaAccepted;
+              try {
+                isEulaAccepted = eulaDocument == null || ((EndUserAgreement.Document)eulaDocument.get()).isAccepted();
+              }
+              catch (InterruptedException | ExecutionException ignore) {
+                isEulaAccepted = true;
+              }
+              eulaActivity.end();
+
+              SplashManager.show(args, isEulaAccepted);
+              prepareSplashActivity.end();
+            });
+            return;
+          }
 
           // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
-          EventQueue.invokeLater(() -> StartupUiUtil.configureHtmlKitStylesheet());
+          EventQueue.invokeLater(StartupUiUtil::configureHtmlKitStylesheet);
         });
       }
       catch (Throwable e) {
-        future.completeExceptionally(e);
+        initUiFuture.completeExceptionally(e);
       }
     });
 
     if (!Main.isHeadless()) {
       // do not wait, approach like AtomicNotNullLazyValue is used under the hood
-      future.thenRunAsync(() -> {
-        updateFrameClassAndWindowIcon();
-      }, executor);
+      initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon, executor);
     }
-    return future;
+
+    CompletableFuture<Void> instrumentationFuture = new CompletableFuture<>();
+    if (isUsingSeparateWriteThread()) {
+      executor.execute(() -> {
+        Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading");
+        try {
+          WriteIntentLockInstrumenter.instrument();
+        }
+        finally {
+          activity.end();
+          instrumentationFuture.complete(null);
+        }
+      });
+    }
+    else {
+      instrumentationFuture.complete(null);
+    }
+
+    return CompletableFuture.allOf(initUiFuture, instrumentationFuture);
   }
 
   private static void updateFrameClassAndWindowIcon() {
@@ -349,12 +422,9 @@ public final class StartupUtil {
       }
     }
 
-    if ("true".equals(System.getProperty("idea.64bit.check"))) {
-      if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
-        String message = "32-bit JVM is not supported. Please use a 64-bit version.";
-        Main.showMessage("Unsupported JVM", message, true);
-        return false;
-      }
+    if ("true".equals(System.getProperty("idea.64bit.check")) && !SystemInfoRt.is64Bit && PlatformUtils.isCidr()) {
+      Main.showMessage("Unsupported JVM", "32-bit JVM is not supported. Please use a 64-bit version.", true);
+      return false;
     }
 
     return true;
@@ -366,25 +436,14 @@ public final class StartupUtil {
   }
 
   private static void checkHiDPISettings() {
-    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+    if (!Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       // suppress JRE-HiDPI mode
       System.setProperty("sun.java2d.uiScale.enabled", "false");
     }
   }
 
-  private static synchronized boolean checkSystemDirs() {
-    String configPath = PathManager.getConfigPath();
-    PathManager.ensureConfigFolderExists();
-    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, true, false)) {
-      return false;
-    }
-
-    String systemPath = PathManager.getSystemPath();
-    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, true, false)) {
-      return false;
-    }
-
-    if (FileUtil.pathsEqual(configPath, systemPath)) {
+  private static boolean checkSystemDirs(@NotNull Path configPath, @NotNull Path systemPath) {
+    if (configPath.equals(systemPath)) {
       String message = "Config and system paths seem to be equal.\n\n" +
                        "If you have modified '" + PathManager.PROPERTY_CONFIG_PATH + "' or '" + PathManager.PROPERTY_SYSTEM_PATH + "' properties,\n" +
                        "please make sure they point to different directories, otherwise please re-install the IDE.";
@@ -392,20 +451,30 @@ public final class StartupUtil {
       return false;
     }
 
-    String logPath = PathManager.getLogPath(), tempPath = PathManager.getTempPath();
-    return checkDirectory(logPath, "Log", PathManager.PROPERTY_LOG_PATH, !FileUtil.isAncestor(systemPath, logPath, true), false, false) &&
-           checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !FileUtil.isAncestor(systemPath, tempPath, true), false, SystemInfo.isXWindow);
+    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, true, false)) {
+      return false;
+    }
+
+    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, true, false)) {
+      return false;
+    }
+
+    Path logPath = Paths.get(PathManager.getLogPath()).normalize();
+    if (!checkDirectory(logPath, "Log", PathManager.PROPERTY_LOG_PATH, !logPath.startsWith(systemPath), false, false)) {
+      return false;
+    }
+
+    Path tempPath = Paths.get(PathManager.getTempPath()).normalize();
+    return checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !tempPath.startsWith(systemPath), false, SystemInfoRt.isUnix && !SystemInfoRt.isMac);
   }
 
-  private static boolean checkDirectory(String path, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
+  private static boolean checkDirectory(@NotNull Path directory, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
     String problem = null, reason = null;
     Path tempFile = null;
 
     try {
       problem = "cannot create the directory";
       reason = "path is incorrect";
-      Path directory = Paths.get(path);
-
       if (!Files.isDirectory(directory)) {
         problem = "cannot create the directory";
         reason = "parent directory is read-only or the user lacks necessary permissions";
@@ -441,30 +510,35 @@ public final class StartupUtil {
     }
     catch (Exception e) {
       String title = "Invalid " + kind + " Directory";
-      String advice = SystemInfo.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
+      String advice = SystemInfoRt.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
                       ? "The application seems to be trans-located by macOS and cannot be used in this state.\n" +
                         "Please use Finder to move it to another location."
                       : "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
                         "otherwise, please re-install the IDE.";
       String message = "The IDE " + problem + ".\nPossible reason: " + reason + ".\n\n" + advice +
-                       "\n\n-----\nLocation: " + path + "\n" + e.getClass().getName() + ": " + e.getMessage();
+                       "\n\n-----\nLocation: " + directory + "\n" + e.getClass().getName() + ": " + e.getMessage();
       Main.showMessage(title, message, true);
       return false;
     }
     finally {
       if (tempFile != null) {
-        try { Files.deleteIfExists(tempFile); }
-        catch (Exception ignored) { }
+        try {
+          Files.deleteIfExists(tempFile);
+        }
+        catch (Exception ignored) {
+        }
       }
     }
   }
 
-  private static synchronized void lockSystemDirs(String[] args) throws Exception {
-    if (ourSocketLock != null) throw new AssertionError();
-    ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
+  private static void lockSystemDirs(@NotNull Path configPath, @NotNull Path systemPath, @NotNull String[] args) throws Exception {
+    if (ourSocketLock != null) {
+      throw new AssertionError("Already initialized");
+    }
+    ourSocketLock = new SocketLock(configPath, systemPath);
 
-    Pair<SocketLock.ActivationStatus, CliResult> status = ourSocketLock.lockAndTryActivate(args);
-    switch (status.first) {
+    Map.Entry<SocketLock.ActivationStatus, CliResult> status = ourSocketLock.lockAndTryActivate(args);
+    switch (status.getKey()) {
       case NO_INSTANCE: {
         ShutDownTracker.getInstance().registerShutdownTask(() -> {
           //noinspection SynchronizeOnThis
@@ -477,7 +551,7 @@ public final class StartupUtil {
       }
 
       case ACTIVATED: {
-        CliResult result = status.second;
+        CliResult result = status.getValue();
         String message = result.message;
         if (message == null) message = "Already running";
         //noinspection UseOfSystemOutOrSystemErr
@@ -494,32 +568,26 @@ public final class StartupUtil {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  @NotNull
-  private static Logger setupLogger() {
-    Logger.setFactory(new LoggerFactory());
-    Logger log = Logger.getInstance("#com.intellij.idea.Main");
+  private static @NotNull Logger setupLogger() {
+    try {
+      Logger.setFactory(new LoggerFactory());
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    Logger log = Logger.getInstance(Main.class);
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
-    if (SystemProperties.getBooleanProperty("intellij.log.stdout", false)) {
+    if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
     }
     return log;
   }
 
-  private static void fixProcessEnvironment() {
-    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
-
-    if (!Main.isCommandLine()) {
-      System.setProperty("__idea.mac.env.lock", "unlocked");
-    }
-
-    EnvironmentUtil.loadEnv()
-      .thenRun(() -> subActivity.end());
-  }
-
+  @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
     Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
 
@@ -532,7 +600,7 @@ public final class StartupUtil {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
 
-    if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
+    if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
       System.setProperty("winp.folder.preferred", ideTempPath);
     }
 
@@ -545,18 +613,17 @@ public final class StartupUtil {
     subActivity.end();
   }
 
-  private static void loadSystemLibraries(Logger log) {
+  private static void loadSystemLibraries(@NotNull Logger log) {
     Activity activity = StartUpMeasurer.startActivity("system libs loading");
-
     JnaLoader.load(log);
-
     //noinspection ResultOfMethodCallIgnored
     IdeaWin32.isAvailable();
-
     activity.end();
   }
 
   private static void logEssentialInfoAboutIde(@NotNull Logger log, @NotNull ApplicationInfo appInfo) {
+    Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
+
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
@@ -566,12 +633,12 @@ public final class StartupUtil {
 
     List<String> arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
     if (arguments != null) {
-      log.info("JVM Args: " + StringUtil.join(arguments, " "));
+      log.info("JVM Args: " + String.join(" ", arguments));
     }
 
     String extDirs = System.getProperty("java.ext.dirs");
     if (extDirs != null) {
-      for (String dir : StringUtil.split(extDirs, File.pathSeparator)) {
+      for (String dir : extDirs.split(File.pathSeparator)) {
         String[] content = new File(dir).list();
         if (content != null && content.length > 0) {
           log.info("ext: " + dir + ": " + Arrays.toString(content));
@@ -579,24 +646,36 @@ public final class StartupUtil {
       }
     }
 
-    log.info("charsets: JNU=" + System.getProperty("sun.jnu.encoding") + " file=" + System.getProperty("file.encoding"));
+    logEnvVar(log, "_JAVA_OPTIONS");
+    logEnvVar(log, "JDK_JAVA_OPTIONS");
+    logEnvVar(log, "JAVA_TOOL_OPTIONS");
+
+    log.info(
+      "locale=" + Locale.getDefault() +
+      " JNU=" + System.getProperty("sun.jnu.encoding") +
+      " file.encoding=" + System.getProperty("file.encoding") +
+      "\n  " + PathManager.PROPERTY_CONFIG_PATH + '=' + logPath(PathManager.getConfigPath()) +
+      "\n  " + PathManager.PROPERTY_SYSTEM_PATH + '=' + logPath(PathManager.getSystemPath()) +
+      "\n  " + PathManager.PROPERTY_PLUGINS_PATH + '=' + logPath(PathManager.getPluginsPath()) +
+      "\n  " + PathManager.PROPERTY_LOG_PATH + '=' + logPath(PathManager.getLogPath())
+    );
+
+    activity.end();
   }
 
-  private static void installPluginUpdates() {
-    if (!Main.isCommandLine() || Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
-      try {
-        StartupActionScriptManager.executeActionScript();
-      }
-      catch (IOException e) {
-        String message =
-          "The IDE failed to install some plugins.\n\n" +
-          "Most probably, this happened because of a change in a serialization format.\n" +
-          "Please try again, and if the problem persists, please report it\n" +
-          "to http://jb.gg/ide/critical-startup-errors" +
-          "\n\nThe cause: " + e.getMessage();
-        Main.showMessage("Plugin Installation Error", message, false);
-      }
+  private static void logEnvVar(Logger log, String var) {
+    String value = System.getenv(var);
+    if (value != null) log.info(var + '=' + value);
+  }
+
+  public static String logPath(String path) {
+    try {
+      Path configured = Paths.get(path), real = configured.toRealPath();
+      if (!configured.equals(real)) return path + " -> " + real;
     }
+    catch (IOException | InvalidPathException ignored) {
+    }
+    return path;
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
@@ -676,26 +755,26 @@ public final class StartupUtil {
     IconManager.activate();
   }
 
-  private static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log, @NotNull CompletableFuture<?> initUiTask) {
-    if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      return;
-    }
-
+  private static boolean showUserAgreementAndConsentsIfNeeded(@NotNull Logger log,
+                                                              @NotNull CompletableFuture<?> initUiTask,
+                                                              @NotNull Future<Object> euaDocument) throws ExecutionException, InterruptedException {
+    boolean dialogWasShown = false;
     EndUserAgreement.updateCachedContentToLatestBundledVersion();
-    EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
+    EndUserAgreement.Document agreement = (EndUserAgreement.Document)euaDocument.get();
     if (!agreement.isAccepted()) {
       // todo: does not seem to request focus when shown
-      runInEdtAndWait(log, () -> AppUIUtil.showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()), initUiTask);
-      EndUserAgreement.setAccepted(agreement);
+      runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), initUiTask);
+      dialogWasShown = true;
     }
-
-    AppUIUtil.showConsentsAgreementIfNeeded(command -> runInEdtAndWait(log, command, initUiTask));
+    if (ConsentOptions.getInstance().getConsents().second) {
+      runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
+    }
+    return dialogWasShown;
   }
 
   private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull CompletableFuture<?> initUiTask) {
+    initUiTask.join();
     try {
-      initUiTask.get();
-
       if (!ourSystemPatched.get()) {
         EventQueue.invokeAndWait(() -> {
           if (!patchSystem(log)) {
@@ -716,8 +795,24 @@ public final class StartupUtil {
       // this invokeAndWait() call is needed to place on a freshly minted IdeEventQueue instance
       EventQueue.invokeAndWait(runnable);
     }
-    catch (InterruptedException | InvocationTargetException | ExecutionException e) {
+    catch (InterruptedException | InvocationTargetException e) {
       log.warn(e);
+    }
+  }
+
+  public static @NotNull Path canonicalPath(@NotNull String path) {
+    try {
+      // toRealPath doesn't properly restore actual name of file on case-insensitive fs (see LockSupportTest.testUseCanonicalPathLock)
+      return Paths.get(new File(path).getCanonicalPath());
+    }
+    catch (IOException ignore) {
+      Path file = Paths.get(path);
+      try {
+        return file.toAbsolutePath().normalize();
+      }
+      catch (IOError ignored) {
+        return file.normalize();
+      }
     }
   }
 }

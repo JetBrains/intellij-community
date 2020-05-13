@@ -17,9 +17,6 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface NullableConsumer<T> extends Consumer<T> {
   void consume(@Nullable T t);
 }

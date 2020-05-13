@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.CommonBundle;
@@ -21,29 +6,39 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
+import com.intellij.find.FindSettings;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.usages.SearchTarget;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.find.actions.FindUsagesKt.findUsages;
+import static com.intellij.find.actions.ResolverKt.findShowUsages;
+
 public class FindUsagesAction extends AnAction {
+
   public FindUsagesAction() {
     setInjectedContext(true);
   }
 
-  @Override
-  public boolean startInTransaction() {
-    return true;
+  protected boolean toShowDialog() {
+    return false;
   }
 
   @Override
@@ -53,10 +48,35 @@ public class FindUsagesAction extends AnAction {
       return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    DataContext dataContext = e.getDataContext();
+    if (Registry.is("ide.symbol.find.usages")) {
+      findSymbolUsages(project, dataContext);
+    }
+    else {
+      findUsageTargetUsages(project, dataContext);
+    }
+  }
 
-    UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
+  private void findSymbolUsages(@NotNull Project project, @NotNull DataContext dataContext) {
+    findShowUsages(project, dataContext, FindBundle.message("find.usages.ambiguous.title"), new UsageVariantHandler() {
+
+      @Override
+      public void handleTarget(@NotNull SearchTarget target) {
+        SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+        findUsages(toShowDialog(), project, searchScope, target);
+      }
+
+      @Override
+      public void handlePsi(@NotNull PsiElement element) {
+        startFindUsages(element);
+      }
+    });
+  }
+
+  private void findUsageTargetUsages(@NotNull Project project, @NotNull DataContext dataContext) {
+    UsageTarget[] usageTargets = dataContext.getData(UsageView.USAGE_TARGETS_KEY);
     if (usageTargets == null) {
-      final Editor editor = e.getData(CommonDataKeys.EDITOR);
+      final Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
       chooseAmbiguousTargetAndPerform(project, editor, element -> {
         startFindUsages(element);
         return false;
@@ -69,7 +89,8 @@ public class FindUsagesAction extends AnAction {
         if (element != null) {
           startFindUsages(element);
         }
-      } else {
+      }
+      else {
         target.findUsages();
       }
     }
@@ -80,7 +101,7 @@ public class FindUsagesAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event){
+  public void update(@NotNull AnActionEvent event) {
     FindUsagesInFileAction.updateFindUsagesAction(event);
   }
 
@@ -93,10 +114,12 @@ public class FindUsagesAction extends AnAction {
     }
     else {
       int offset = editor.getCaretModel().getOffset();
-      boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(project, editor, offset, processor, FindBundle.message("find.usages.ambiguous.title"), null);
+      boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(
+        project, editor, offset, processor, FindBundle.message("find.usages.ambiguous.title"), null
+      );
       if (!chosen) {
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
+          if (editor.isDisposed() || !EditorActivityManager.getInstance().isVisible(editor)) return;
           HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
         }, project.getDisposed());
       }
@@ -107,6 +130,11 @@ public class FindUsagesAction extends AnAction {
     @Override
     protected void startFindUsages(@NotNull PsiElement element) {
       FindManager.getInstance(element.getProject()).findUsages(element, true);
+    }
+
+    @Override
+    protected boolean toShowDialog() {
+      return true;
     }
   }
 }

@@ -16,9 +16,9 @@
 package com.intellij.codeInspection.equalsAndHashcode;
 
 import com.intellij.codeInsight.generation.GenerateEqualsHandler;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -52,8 +52,8 @@ public class EqualsAndHashcode extends EqualsAndHashcodeBase {
     @Override
     public String getFamilyName() {
       return myHasEquals
-             ? InspectionsBundle.message("inspection.equals.hashcode.generate.hashcode.quickfix")
-             : InspectionsBundle.message("inspection.equals.hashcode.generate.equals.quickfix");
+             ? JavaBundle.message("inspection.equals.hashcode.generate.hashcode.quickfix")
+             : JavaBundle.message("inspection.equals.hashcode.generate.equals.quickfix");
     }
 
     @Override

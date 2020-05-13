@@ -25,7 +25,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     PsiType myT = getCurrentType();
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
 
@@ -113,7 +113,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
 
     if (myExpression instanceof PsiMethodReferenceExpression) {
-      constraints.add(new PsiMethodReferenceCompatibilityConstraint(((PsiMethodReferenceExpression)myExpression), myT));
+      constraints.add(new PsiMethodReferenceCompatibilityConstraint((PsiMethodReferenceExpression)myExpression, myT));
       return true;
     }
 
@@ -237,7 +237,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   protected void collectReturnTypeVariables(InferenceSession session,
                                             PsiExpression psiExpression,
                                             PsiType returnType,
-                                            Set<InferenceVariable> result) {
+                                            Set<? super InferenceVariable> result) {
     if (psiExpression instanceof PsiLambdaExpression) {
       if (!PsiType.VOID.equals(returnType)) {
         final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)psiExpression);

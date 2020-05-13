@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, PsiLiteralValue {
+public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
 
   @Nullable private volatile String myStringValue;
   @Nullable private volatile List<TextRange> myValueTextRanges;
@@ -165,6 +165,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         // f-strings can't have "b" prefix so they are always unicode
         return builtinCache.getUnicodeType(languageLevel);
       }
+      else if (firstNode.getElementType() == PyTokenTypes.DOCSTRING) {
+        return builtinCache.getStrType();
+      }
 
       if (file != null) {
         final IElementType type = PythonHighlightingLexer.convertStringType(firstNode.getElementType(),
@@ -180,8 +183,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public final PsiReference[] getReferences() {
+  public final PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, Hints.NO_HINTS);
   }
 
@@ -298,6 +300,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     @Override
     public boolean isOneLine() {
       return true;
+    }
+
+    @NotNull
+    @Override
+    public TextRange getRelevantTextRange() {
+      return myHost.getStringValueTextRange();
     }
   }
 

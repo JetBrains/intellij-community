@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindBundle;
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,16 +51,19 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     comboBox.addActionListener(e -> {
       if (myUpdating) return;
       final VirtualFile directory = getDirectory();
-      final ComboBox source = (ComboBox)e.getSource();
+      final ComboBox<?> source = (ComboBox<?>)e.getSource();
       if (directory == null) {
+
+        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", "error");
         final Balloon balloon = JBPopupFactory.getInstance()
-          .createHtmlTextBalloonBuilder("Not a directory", AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
+          .createHtmlTextBalloonBuilder(SSRBundle.message("popup.content.directory"), AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
           .createBalloon();
         balloon.show(new RelativePoint(source, new Point(source.getWidth() / 2, 0)), Balloon.Position.above);
         source.requestFocus();
       }
       else {
+        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", null);
       }
       if (myCallback != null && directory != null) {
@@ -151,7 +155,9 @@ public class DirectoryComboBoxWithButtons extends JPanel {
 
   private class RecursiveAction extends ToggleAction {
     RecursiveAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
+      super(FindBundle.messagePointer("find.scope.directory.recursive.checkbox"),
+            FindBundle.messagePointer("find.recursively.hint"),
+            AllIcons.Actions.ShowAsTree);
     }
 
     @Override

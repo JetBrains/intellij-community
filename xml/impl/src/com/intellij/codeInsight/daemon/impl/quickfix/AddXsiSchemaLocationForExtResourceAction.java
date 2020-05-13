@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -71,7 +71,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
           doIt(file, editor, uri, tag, attrName);
         }
-      }, XmlErrorMessages.message("select.namespace.location.title"), this, editor);
+      }, XmlErrorBundle.message("select.namespace.location.title"), this, editor);
   }
 
   private static void doIt(final PsiFile file, final Editor editor, final String uri, final XmlTag tag, final String s) throws IncorrectOperationException {

@@ -18,4 +18,10 @@ public class WidenMulInLoop {
       System.out.println(i);
     }
   }
+
+  void test4(int b, int c) {
+    for (int i = 1; i < 100; i++) {
+      b = i * b / c;
+    }
+  }
 }

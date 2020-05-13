@@ -53,9 +53,8 @@ public class GrRangeType extends GrLiteralClassType {
     return myQualifiedName;
   }
 
-  @NotNull
   @Override
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     return myParameters;
   }
 

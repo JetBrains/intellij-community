@@ -3,14 +3,12 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.CodeDocumentationAwareCommenter;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.*;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,7 @@ import java.util.List;
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
 
 public class JoinLinesHandler extends EditorActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JoinLinesHandler");
+  private static final Logger LOG = Logger.getInstance(JoinLinesHandler.class);
   private final EditorActionHandler myOriginalHandler;
 
   public JoinLinesHandler(EditorActionHandler originalHandler) {
@@ -86,7 +85,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     int line = startLine;
 
     ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
-      "Join Lines", project, null, indicator -> {
+      LangBundle.message("progress.title.join.lines"), project, null, indicator -> {
         indicator.setIndeterminate(false);
         JoinLineProcessor processor = new JoinLineProcessor(doc, psiFile, line, indicator);
         processor.process(editor, caret, lineCount);
@@ -122,14 +121,14 @@ public class JoinLinesHandler extends EditorActionHandler {
     private void doProcess(int lineCount) {
       List<RangeMarker> markers = new ArrayList<>();
       try {
-        myIndicator.setText2("Converting end-of-line comments");
+        myIndicator.setText2(CodeInsightBundle.message("progress.text.converting.end.of.line.comments"));
         convertEndComments(lineCount);
-        myIndicator.setText2("Removing line-breaks");
+        myIndicator.setText2(CodeInsightBundle.message("progress.text.removing.line.breaks"));
         int newCount = processRawJoiners(lineCount);
         DocumentUtil.executeInBulk(myDoc, newCount > 100, () -> removeLineBreaks(newCount, markers));
-        myIndicator.setText2("Postprocessing");
+        myIndicator.setText2(CodeInsightBundle.message("progress.text.postprocessing"));
         List<RangeMarker> unprocessed = processNonRawJoiners(markers);
-        myIndicator.setText2("Adjusting white-space");
+        myIndicator.setText2(CodeInsightBundle.message("progress.text.adjusting.white.space"));
         adjustWhiteSpace(unprocessed);
       }
       finally {
@@ -361,6 +360,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
   }
 
+  @Contract(pure = true)
   private static int checkOffset(int offset, JoinLinesHandlerDelegate delegate, DocumentEx doc) {
     if (offset == CANNOT_JOIN) return offset;
     if (offset < 0) {

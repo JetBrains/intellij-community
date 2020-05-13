@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +35,7 @@ import java.util.Map;
  */
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private AnnotationHolderImpl myAnnotationHolder;
-  private final Map<String, List<Annotator>> myAnnotators = FactoryMap.create(key -> createAnnotators(key));
+  private final Map<Language, List<Annotator>> myAnnotators = FactoryMap.create(l -> createAnnotators(l));
   private static final Logger LOG = Logger.getInstance(DefaultHighlightVisitor.class);
 
   private final Project myProject;
@@ -75,6 +74,10 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
                          @NotNull final Runnable action) {
     myDumb = myDumbService.isDumb();
     myHolder = holder;
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("DefaultHighlightVisitor.analyze("+file.getName()+")");
+    }
+
     myAnnotationHolder = new AnnotationHolderImpl(holder.getAnnotationSession(), myBatchMode) {
       @Override
       void queueToUpdateIncrementally() {
@@ -91,10 +94,12 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     };
     try {
       action.run();
+      myAnnotationHolder.assertAllAnnotationsCreated();
     }
     finally {
       myAnnotators.clear();
       myHolder = null;
+      myAnnotationHolder = null;
     }
     return true;
   }
@@ -102,10 +107,12 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   @Override
   public void visit(@NotNull PsiElement element) {
     if (element instanceof PsiErrorElement) {
-      if (myHighlightErrorElements) visitErrorElement((PsiErrorElement)element);
+      if (myHighlightErrorElements) {
+        visitErrorElement((PsiErrorElement)element);
+      }
     }
-    else {
-      if (myRunAnnotators) runAnnotators(element);
+    else if (myRunAnnotators) {
+      runAnnotators(element);
     }
   }
 
@@ -117,17 +124,18 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private void runAnnotators(@NotNull PsiElement element) {
-    List<Annotator> annotators = myAnnotators.get(element.getLanguage().getID());
+    List<Annotator> annotators = myAnnotators.get(element.getLanguage());
     if (!annotators.isEmpty()) {
-      AnnotationHolderImpl aHolder = myAnnotationHolder;
+      AnnotationHolderImpl holder = myAnnotationHolder;
+      holder.myCurrentElement = element;
       for (Annotator annotator : annotators) {
         if (!myDumb || DumbService.isDumbAware(annotator)) {
           ProgressManager.checkCanceled();
-          annotator.annotate(element, aHolder);
+          annotator.annotate(element, holder);
           // assume that annotator is done messing with just created annotations after its annotate() method completed
           // and we can start applying them incrementally at last
           // (but not sooner, thanks to awfully racey Annotation.setXXX() API)
-          aHolder.queueToUpdateIncrementally();
+          holder.queueToUpdateIncrementally();
         }
       }
     }
@@ -202,11 +210,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   @NotNull
-  private static List<Annotator> createAnnotators(@NotNull String languageId) {
-    Language language = Language.findLanguageByID(languageId);
-    if (language == null) {
-      return ContainerUtil.emptyList();
-    }
+  private static List<Annotator> createAnnotators(@NotNull Language language) {
     return cloneTemplates(LanguageAnnotators.INSTANCE.allForLanguageOrAny(language));
   }
 }

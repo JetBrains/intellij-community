@@ -15,18 +15,23 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * Represents a separator.
  */
 @SuppressWarnings("ComponentNotRegistered")
-public final class Separator extends AnAction implements DumbAware {
+public final class Separator extends AnAction implements DumbAware, LightEditCompatible {
 
   private static final Separator ourInstance = new Separator();
+  private final Supplier<String> myDynamicText;
 
   @NotNull
   public static Separator getInstance() {
@@ -39,27 +44,29 @@ public final class Separator extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static Separator create(@Nullable String text) {
+  public static Separator create(@Nullable @NlsContexts.Separator String text) {
     return StringUtil.isEmptyOrSpaces(text)? ourInstance : new Separator(text);
   }
 
-  private final String myText;
-
   public Separator() {
-    myText = null;
+    myDynamicText = () -> null;
   }
 
-  public Separator(@Nullable String text) {
-    myText = text;
+  public Separator(@Nullable @NlsContexts.Separator String text) {
+    myDynamicText = () -> text;
+  }
+
+  public Separator(@NotNull Supplier<@NlsContexts.Separator String> dynamicText) {
+    myDynamicText = dynamicText;
   }
 
   public String getText() {
-    return myText;
+    return myDynamicText.get();
   }
 
   @Override
   public String toString() {
-    return "Separator (" + myText + ")";
+    return "Separator (" + myDynamicText.get() + ")";
   }
 
   @Override

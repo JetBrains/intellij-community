@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;

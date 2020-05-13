@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -37,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -45,15 +30,16 @@ import java.util.Map;
 /**
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
  */
-public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
+public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogStorage.class);
-  @NotNull private static final String HASHES_STORAGE = "hashes";
-  @NotNull private static final String REFS_STORAGE = "refs";
+  @NotNull private static final String HASHES_STORAGE = "hashes"; // NON-NLS
+  @NotNull private static final String REFS_STORAGE = "refs"; // NON-NLS
+  @NotNull private static final String STORAGE = "storage"; // NON-NLS
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
-  public static final int VERSION = 6;
+  public static final int VERSION = 7;
   public static final int NO_INDEX = -1;
-  private static final int REFS_VERSION = 1;
+  private static final int REFS_VERSION = 2;
 
   @NotNull private final MyPersistentBTreeEnumerator myCommitIdEnumerator;
   @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;
@@ -69,13 +55,18 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     List<VirtualFile> roots = StreamEx.ofKeys(logProviders).sortedBy(VirtualFile::getPath).toList();
 
     String logId = PersistentUtil.calcLogId(project, logProviders);
-    MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
 
-    File storageFile = new StorageId(HASHES_STORAGE, logId, VERSION).getStorageFile();
-    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(storageFile, commitIdKeyDescriptor),
-                                                         storageFile);
-    myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor),
-                                                                 new StorageId(REFS_STORAGE, logId, VERSION + REFS_VERSION));
+    MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
+    StorageId hashesStorageId = new StorageId(project.getName(), HASHES_STORAGE, logId, VERSION);
+    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageId, commitIdKeyDescriptor),
+                                                         hashesStorageId.getStorageFile(STORAGE).toFile());
+
+    VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
+    StorageId refsStorageId = new StorageId(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
+    myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(refsStorageId.getStorageFile(STORAGE),
+                                                                                           refsKeyDescriptor, Page.PAGE_SIZE,
+                                                                                           null, refsStorageId.getVersion()),
+                                                     refsStorageId.getStorageFile(STORAGE).toFile());
     Disposer.register(parent, this);
   }
 
@@ -315,8 +306,8 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   private static class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
-    MyPersistentBTreeEnumerator(File storageFile, MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
-      super(storageFile, commitIdKeyDescriptor, Page.PAGE_SIZE, null, VERSION);
+    MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
+      super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, null, storageId.getVersion());
     }
 
     public boolean contains(@NotNull CommitId id) throws IOException {

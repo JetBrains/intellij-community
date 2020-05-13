@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -32,11 +19,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author nik
- */
-public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
-  private Map<LibraryKind, LibraryPresentationProvider<?>> myPresentationProviders;
+final class LibraryPresentationManagerImpl extends LibraryPresentationManager implements Disposable {
+  private volatile Map<LibraryKind, LibraryPresentationProvider<?>> myPresentationProviders;
+
+  public LibraryPresentationManagerImpl() {
+    Runnable listener = () -> myPresentationProviders = null;
+    LibraryType.EP_NAME.addChangeListener(listener, this);
+    LibraryPresentationProvider.EP_NAME.addChangeListener(listener, this);
+  }
 
   public static List<LibraryKind> getLibraryKinds(@NotNull Library library, @Nullable StructureConfigurableContext context) {
     final List<LibraryKind> result = new SmartList<>();
@@ -55,8 +45,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     return result;
   }
 
-  @NotNull
-  private static VirtualFile[] getLibraryFiles(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+  private static VirtualFile @NotNull [] getLibraryFiles(@NotNull Library library, @Nullable StructureConfigurableContext context) {
     if (((LibraryEx)library).isDisposed()) {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -64,8 +53,9 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   }
 
   private <P extends LibraryProperties> LibraryPresentationProvider<P> getPresentationProvider(LibraryKind kind) {
-    if (myPresentationProviders == null) {
-      final Map<LibraryKind, LibraryPresentationProvider<?>> providers = new HashMap<>();
+    Map<LibraryKind, LibraryPresentationProvider<?>> providers = myPresentationProviders;
+    if (providers == null) {
+      providers = new HashMap<>();
       for (LibraryType<?> type : LibraryType.EP_NAME.getExtensions()) {
         providers.put(type.getKind(), type);
       }
@@ -75,7 +65,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       myPresentationProviders = providers;
     }
     //noinspection unchecked
-    return (LibraryPresentationProvider<P>)myPresentationProviders.get(kind);
+    return (LibraryPresentationProvider<P>)providers.get(kind);
   }
 
   @NotNull
@@ -152,7 +142,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @NotNull
   @Override
-  public List<String> getDescriptions(@NotNull VirtualFile[] classRoots, final Set<? extends LibraryKind> excludedKinds) {
+  public List<String> getDescriptions(VirtualFile @NotNull [] classRoots, final Set<? extends LibraryKind> excludedKinds) {
     final SmartList<String> result = new SmartList<>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(classRoots), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
@@ -191,5 +181,9 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       }
     }
     return libraries;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

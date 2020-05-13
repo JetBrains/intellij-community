@@ -9,8 +9,8 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
+import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -29,9 +29,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 
-/**
- * @author nik
- */
 @CompileStatic
 class CompilationContextImpl implements CompilationContext {
   final AntBuilder ant
@@ -42,7 +39,6 @@ class CompilationContextImpl implements CompilationContext {
   final JpsProject project
   final JpsGlobal global
   final JpsModel projectModel
-  final JpsGantProjectBuilder projectBuilder
   final Map<String, String> oldToNewModuleName
   final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
@@ -84,6 +80,8 @@ class CompilationContextImpl implements CompilationContext {
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
+    def jpsCache = new PortableCompilationCache(context)
+    if (jpsCache.canBeUsed) jpsCache.warmUp()
     return context
   }
 
@@ -162,7 +160,6 @@ class CompilationContextImpl implements CompilationContext {
     this.project = model.project
     this.global = model.global
     this.options = options
-    this.projectBuilder = new JpsGantProjectBuilder(ant.project, projectModel)
     this.messages = messages
     this.oldToNewModuleName = oldToNewModuleName
     this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
@@ -271,6 +268,9 @@ class CompilationContextImpl implements CompilationContext {
     cleanOutput(outputDirectoriesToKeep)
   }
 
+  /**
+   * @return url attribute value of output tag from .idea/misc.xml
+   */
   File getProjectOutputDirectory() {
     JpsPathUtil.urlToFile(JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl)
   }
@@ -411,6 +411,9 @@ class CompilationContextImpl implements CompilationContext {
   private static final AtomicLong totalSizeOfProducedArtifacts = new AtomicLong()
   @Override
   void notifyArtifactBuilt(String artifactPath) {
+    if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION)) {
+      return
+    }
     def file = new File(artifactPath)
     def artifactsDir = new File(paths.artifacts)
 

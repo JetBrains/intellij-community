@@ -8,6 +8,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,11 +56,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-/**
- * @author nik
- */
 public class ManifestFileUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl");
+  private static final Logger LOG = Logger.getInstance(ManifestFileUtil.class);
   public static final String MANIFEST_PATH = JarFile.MANIFEST_NAME;
   public static final String MANIFEST_FILE_NAME = PathUtil.getFileName(MANIFEST_PATH);
   public static final String MANIFEST_DIR_NAME = PathUtil.getParentPath(MANIFEST_PATH);
@@ -271,7 +269,7 @@ public class ManifestFileUtil {
 
   public static FileChooserDescriptor createDescriptorForManifestDirectory() {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle("Select Directory for META-INF/MANIFEST.MF file");
+    descriptor.setTitle(JavaCompilerBundle.message("select.directory.for.meta.inf.manifest.mf.file"));
     return descriptor;
   }
 

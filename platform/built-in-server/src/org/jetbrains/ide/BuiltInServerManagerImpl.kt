@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.idea.StartupUtil
@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
@@ -32,11 +31,13 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URLConnection
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.function.Consumer
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
+private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 
 private val LOG = logger<BuiltInServerManager>()
 
@@ -124,6 +125,12 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   private fun startServerInPooledThread(): Future<*> {
+    if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
+      return CompletableFuture<Any>().apply {
+        completeExceptionally(Throwable("Built-in server is disabled by `$PROPERTY_DISABLED` VM option"))
+      }
+    }
+
     return StartupUtil.getServerFuture()
       .thenAcceptAsync(Consumer { mainServer ->
         try {
@@ -137,8 +144,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
         catch (e: Throwable) {
           LOG.info(e)
           NOTIFICATION_GROUP.value.createNotification(
-            "Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
-            "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().fullProductName,
+            BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.git.integration.javascript.debugger.and.liveedit.may.operate.with.errors") +
+            BuiltInServerBundle.message("notification.content.please.check.your.firewall.settings.and.restart") + ApplicationNamesInfo.getInstance().fullProductName,
             NotificationType.ERROR).notify(null)
           return@Consumer
         }
@@ -174,9 +181,7 @@ private fun bindCustomPorts(server: BuiltInServer) {
     return
   }
 
-  for (customPortServerManager in CustomPortServerManager.EP_NAME.extensionList) {
-    LOG.runAndLogException {
-      SubServer(customPortServerManager, server).bind(customPortServerManager.port)
-    }
+  CustomPortServerManager.EP_NAME.forEachExtensionSafe { customPortServerManager ->
+    SubServer(customPortServerManager, server).bind(customPortServerManager.port)
   }
 }

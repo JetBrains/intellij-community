@@ -1,13 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,15 +20,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeConcatenationQuickFix");
-  @NonNls private static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
+public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
+  private static final Logger LOG = Logger.getInstance(I18nizeConcatenationQuickFix.class);
+  @NonNls static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
+
+  public I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
+    super(info);
+  }
 
   @Override
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     if (concatenation != null) return;
-    String message = CodeInsightBundle.message("quickfix.i18n.concatentation.error");
+    String message = JavaI18nBundle.message("quickfix.i18n.concatentation.error");
     throw new IncorrectOperationException(message);
   }
 
@@ -45,7 +48,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("quickfix.i18n.concatentation");
+    return JavaI18nBundle.message("quickfix.i18n.concatentation");
   }
 
   @Override
@@ -66,16 +69,10 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   @Override
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
-    String formatString = "";
     final List<PsiExpression> args = new ArrayList<>();
-    try {
-      formatString = StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args));
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    String formatString = getValueString(concatenation, args);
 
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, null, true, true) {
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, getCustomization(formatString), true, true) {
       @Override
       @Nullable
       protected String getTemplateName() {
@@ -83,7 +80,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
       }
 
       @Override
-      protected String generateText(final I18nizedTextGenerator textGenerator, final String propertyKey, final PropertiesFile propertiesFile,
+      protected String generateText(final I18nizedTextGenerator textGenerator, final @NotNull String propertyKey, final PropertiesFile propertiesFile,
                                     final PsiLiteralExpression literalExpression) {
         return textGenerator.getI18nizedConcatenationText(propertyKey, composeParametersText(args), propertiesFile, literalExpression);
       }
@@ -98,6 +95,18 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
         attributes.put(PARAMETERS_OPTION_KEY, composeParametersText(args));
       }
     };
+  }
+
+  @NotNull
+  static String getValueString(PsiPolyadicExpression concatenation, List<PsiExpression> args) {
+    String formatString = "";
+    try {
+      formatString = PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return formatString;
   }
 
   @Nullable

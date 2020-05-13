@@ -44,7 +44,7 @@ public interface IconManager {
   }
 
   @NotNull
-  Icon createLayered(@NotNull Icon... icons);
+  Icon createLayered(Icon @NotNull ... icons);
 
   @NotNull
   default Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
@@ -69,7 +69,7 @@ public interface IconManager {
   RowIcon createRowIcon(int iconCount, RowIcon.Alignment alignment);
 
   @NotNull
-  RowIcon createRowIcon(@NotNull Icon... icons);
+  RowIcon createRowIcon(Icon @NotNull ... icons);
 
   void registerIconLayer(int flagMask, @NotNull Icon icon);
 }
@@ -138,13 +138,13 @@ final class DummyIconManager implements IconManager {
 
   @NotNull
   @Override
-  public Icon createLayered(@NotNull Icon... icons) {
+  public Icon createLayered(Icon @NotNull ... icons) {
     return new DummyRowIcon(icons);
   }
 
   @NotNull
   @Override
-  public RowIcon createRowIcon(@NotNull Icon... icons) {
+  public RowIcon createRowIcon(Icon @NotNull ... icons) {
     return new DummyRowIcon(icons);
   }
 
@@ -217,9 +217,8 @@ final class DummyIconManager implements IconManager {
       return this;
     }
 
-    @NotNull
     @Override
-    public Icon[] getAllIcons() {
+    public Icon @NotNull [] getAllIcons() {
       return icons == null ? new Icon[0] : ContainerUtil.packNullables(icons).toArray(new Icon[0]);
     }
   }

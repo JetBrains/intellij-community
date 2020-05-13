@@ -49,14 +49,24 @@ public class InferenceSessionContainer {
     }
   }
 
-  static PsiSubstitutor infer(@NotNull PsiTypeParameter[] typeParameters,
-                              @NotNull PsiParameter[] parameters,
-                              @NotNull PsiExpression[] arguments,
+  static PsiSubstitutor infer(PsiTypeParameter @NotNull [] typeParameters,
+                              PsiParameter @NotNull [] parameters,
+                              PsiExpression @NotNull [] arguments,
                               @NotNull PsiSubstitutor partialSubstitutor,
                               @NotNull PsiElement parent,
-                              @NotNull ParameterTypeInferencePolicy policy, 
+                              @NotNull ParameterTypeInferencePolicy policy,
                               @Nullable MethodCandidateInfo currentMethod) {
     final PsiExpressionList argumentList = InferenceSession.getArgumentList(parent);
+    class NoContainer {
+      PsiSubstitutor infer(boolean prohibitCaching) {
+        final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
+        inferenceSession.initExpressionConstraints(parameters, arguments,
+                                                   currentMethod != null ? currentMethod.getElement() : null,
+                                                   currentMethod != null && currentMethod.isVarargs());
+        return inferenceSession.performGuardedInference(parameters, arguments, parent, currentMethod, PsiSubstitutor.EMPTY,
+                                                        prohibitCaching);
+      }
+    }
     if (parent instanceof PsiCall) {
       //overload resolution can't depend on outer call => should not traverse to top
       if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
@@ -103,6 +113,8 @@ public class InferenceSessionContainer {
           if (session != null) {
             final PsiSubstitutor childSubstitutor = inferNested(parameters, arguments, (PsiCall)parent, currentMethod, session);
             if (childSubstitutor != null) return childSubstitutor;
+
+            return new NoContainer().infer(true);
           }
           else if (topLevelCall instanceof PsiMethodCallExpression) {
             return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy).prepareSubstitution();
@@ -111,15 +123,11 @@ public class InferenceSessionContainer {
       }
     }
 
-    final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
-    inferenceSession.initExpressionConstraints(parameters, arguments, 
-                                               currentMethod != null ? currentMethod.getElement() : null, 
-                                               currentMethod != null && currentMethod.isVarargs());
-    return inferenceSession.infer(parameters, arguments, parent, currentMethod);
+    return new NoContainer().infer(false);
   }
 
-  private static PsiSubstitutor inferNested(@NotNull final PsiParameter[] parameters,
-                                            @NotNull final PsiExpression[] arguments,
+  private static PsiSubstitutor inferNested(final PsiParameter @NotNull [] parameters,
+                                            final PsiExpression @NotNull [] arguments,
                                             @NotNull final PsiCall parent,
                                             @NotNull final MethodCandidateInfo currentMethod,
                                             @NotNull final InferenceSession parentSession) {
@@ -144,10 +152,7 @@ public class InferenceSessionContainer {
     //find the nearest parent which appears in the map and start inference with a provided target type for a nested lambda
     while (true) {
       if (gParent instanceof PsiReturnStatement) { //process code block lambda
-        final PsiElement returnContainer = gParent.getParent();
-        if (returnContainer instanceof PsiCodeBlock) {
-          gParent = returnContainer.getParent();
-        }
+        gParent = PsiTreeUtil.getParentOfType(gParent, PsiLambdaExpression.class);
       }
       if (gParent instanceof PsiConditionalExpression) {
         gParent = PsiUtil.skipParenthesizedExprUp(gParent.getParent());
@@ -249,7 +254,7 @@ public class InferenceSessionContainer {
           new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall, policy);
         topLevelSession.setCurrentMethod(currentMethod);
         topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, method, ((MethodCandidateInfo)result).isVarargs());
-        topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result));
+        topLevelSession.performGuardedInference(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result), PsiSubstitutor.EMPTY, false);
         return topLevelSession;
       });
     }

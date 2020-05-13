@@ -99,8 +99,18 @@ public class VcsDirectoryMapping {
     myRootSettings = rootSettings;
   }
 
+  /**
+   * @return if this mapping denotes "default mapping" aka "&lt;Project&gt;".
+   */
   public boolean isDefaultMapping() {
     return myDirectory.length() == 0;
+  }
+
+  /**
+   * @return if this mapping denotes "no vcs" aka "&lt;none&gt;".
+   */
+  public boolean isNoneMapping() {
+    return myVcs.isEmpty();
   }
 
   public boolean equals(final Object o) {

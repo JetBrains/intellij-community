@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -8,9 +8,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import java.util.List;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class TreeModelListenerList implements TreeModelListener {
   private final List<TreeModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 

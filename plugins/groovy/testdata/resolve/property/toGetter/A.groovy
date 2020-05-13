@@ -1,4 +1,4 @@
-class A {
+class X {
   int property
 
   int getProperty() {
@@ -6,6 +6,6 @@ class A {
   }
 }
 
-def a = new A()
+def a = new X()
 
 def p = a.<ref>property

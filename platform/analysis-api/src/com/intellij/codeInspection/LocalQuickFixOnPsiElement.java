@@ -1,31 +1,29 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.LocalQuickFixAndIntentionAction");
+/**
+ * While it implements Cloneable, this is just a technical thing to implement
+ * {@link #getFileModifierForPreview(PsiFile)} default implementation.
+ * Calling {@link #clone()} is useless and will result in {@link CloneNotSupportedException}. 
+ */
+public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Cloneable {
+  protected static final Logger LOG = Logger.getInstance(LocalQuickFixOnPsiElement.class);
+  @SafeFieldForPreview // not actually safe but will be properly patched in getFileModifierForPreview 
   protected final SmartPsiElementPointer<PsiElement> myStartElement;
+  @SafeFieldForPreview // not actually safe but will be properly patched in getFileModifierForPreview 
   protected final SmartPsiElementPointer<PsiElement> myEndElement;
 
   protected LocalQuickFixOnPsiElement(@NotNull PsiElement element) {
@@ -83,6 +81,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
     return myEndElement == null ? null : myEndElement.getElement();
   }
 
+  @IntentionName
   @NotNull
   public abstract String getText();
 
@@ -106,4 +105,56 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
                               @NotNull PsiElement startElement,
                               @NotNull PsiElement endElement);
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * This implementation clones current intention replacing {@link #myStartElement} and
+   * {@link #myEndElement} field values with the pointers to the corresponding elements
+   * in the target file. It returns null if subclass has potentially unsafe fields not
+   * marked with {@link SafeFieldForPreview @SafeFieldForPreview}.
+   */
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    // Check field safety in subclass
+    if (LocalQuickFix.super.getFileModifierForPreview(target) != this) return null;
+    PsiElement startElement = getStartElement();
+    PsiElement endElement = getEndElement();
+    if (startElement == null && myStartElement != null || 
+        endElement == null && myEndElement != null) return null;
+    startElement = PsiTreeUtil.findSameElementInCopy(startElement, target);
+    endElement = PsiTreeUtil.findSameElementInCopy(endElement, target);
+    LocalQuickFixOnPsiElement clone;
+    try {
+      clone = (LocalQuickFixOnPsiElement)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new InternalError(e); // should not happen as we implement Cloneable
+    }
+    if (startElement != null) {
+      ReflectionUtil.setField(LocalQuickFixOnPsiElement.class, clone, SmartPsiElementPointer.class, "myStartElement",
+                              SmartPointerManager.createPointer(startElement));
+    }
+    if (endElement != null) {
+      ReflectionUtil.setField(LocalQuickFixOnPsiElement.class, clone, SmartPsiElementPointer.class, "myEndElement",
+                              SmartPointerManager.createPointer(endElement));
+    }
+    return clone;
+  }
+
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    if (!startInWriteAction()) return null;
+    if (myStartElement != null) return myStartElement.getContainingFile();
+    return currentFile;
+  }
+
+  /**
+   * @throws CloneNotSupportedException always
+   * @deprecated do not call this method, it's non-functional
+   */
+  @Deprecated
+  @Override
+  protected Object clone() throws CloneNotSupportedException {
+    throw new CloneNotSupportedException();
+  }
 }

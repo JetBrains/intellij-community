@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.DeleteProvider;
@@ -33,7 +33,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
 
   @Override
   @NotNull
-  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
+  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     if (parent.getValue() instanceof Form) return children;
 
     // Optimization. Check if there are any forms at all.
@@ -50,7 +50,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
 
     if (!formsFound) return children;
 
-    Collection<AbstractTreeNode> result = new LinkedHashSet<>(children);
+    Collection<AbstractTreeNode<?>> result = new LinkedHashSet<>(children);
     ProjectViewNode[] copy = children.toArray(new ProjectViewNode[0]);
     for (ProjectViewNode element : copy) {
       PsiClass psiClass = null;
@@ -82,7 +82,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (Form.DATA_KEY.is(dataId)) {
       List<Form> result = new ArrayList<>();
       for(AbstractTreeNode node: selected) {
@@ -112,7 +112,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     return psiFiles;
   }
 
-  private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<AbstractTreeNode> children, List<PsiFile> forms) {
+  private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<AbstractTreeNode<?>> children, List<PsiFile> forms) {
     if (children.isEmpty() || forms.isEmpty()) return Collections.emptyList();
     ArrayList<BasePsiNode<? extends PsiElement>> result = new ArrayList<>();
     HashSet<PsiFile> psiFiles = new HashSet<>(forms);
@@ -129,7 +129,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   private static class MyDeleteProvider implements DeleteProvider {
     private final PsiElement[] myElements;
 
-    MyDeleteProvider(final Collection<AbstractTreeNode> selected) {
+    MyDeleteProvider(final Collection<AbstractTreeNode<?>> selected) {
       myElements = collectFormPsiElements(selected);
     }
 
@@ -144,7 +144,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
       return DeleteHandler.shouldEnableDeleteAction(myElements);
     }
 
-    private static PsiElement[] collectFormPsiElements(Collection<AbstractTreeNode> selected) {
+    private static PsiElement[] collectFormPsiElements(Collection<AbstractTreeNode<?>> selected) {
       Set<PsiElement> result = new HashSet<>();
       for(AbstractTreeNode node: selected) {
         if (node.getValue() instanceof Form) {

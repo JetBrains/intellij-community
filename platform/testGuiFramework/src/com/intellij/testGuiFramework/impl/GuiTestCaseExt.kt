@@ -195,8 +195,8 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
   val syncFailed = "sync failed"
   var reimportStatus = ""
 
-  step("wait for Gradle reimport") {
-    GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05) {
+  step("wait for Gradle project reload") {
+    GuiTestUtilKt.waitUntil("for gradle project reload finishing", timeout = Timeouts.minutes05) {
       var isReimportButtonEnabled: Boolean = false
       var syncState = false
       try {
@@ -234,7 +234,7 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
               else {
                 syncState = false
               }
-              logInfo("Reimport status is '$reimportStatus', synchronization is ${if(syncState) "finished" else "in process"}")
+              logInfo("Project reload status is '$reimportStatus', synchronization is ${if(syncState) "finished" else "in process"}")
             }
           }
         }
@@ -250,7 +250,7 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
 }
 
 fun GuiTestCase.gradleReimport() {
-  step("reimport gradle project") {
+  step("reload gradle project") {
     ideFrame {
       toolwindow(id = "Gradle") {
         content(tabName = "") {
@@ -265,12 +265,12 @@ fun GuiTestCase.gradleReimport() {
 }
 
 fun GuiTestCase.mavenReimport() {
-  step("reimport maven project") {
+  step("reload maven project") {
     ideFrame {
       toolwindow(id = "Maven") {
         content(tabName = "") {
-          step("search when button 'Reimport All Maven Projects' becomes enable and click it") {
-            val reimportAction = "Reimport All Maven Projects"
+          step("search when button 'Reload All Maven Projects' becomes enable and click it") {
+            val reimportAction = "Reload All Maven Projects"
             val showDepAction = "Show UML Diagram" // but tooltip says "Show Dependencies"
             GuiTestUtilKt.waitUntil("Wait for button '$reimportAction' to be enabled.", timeout = Timeouts.minutes02) {
               actionButton(reimportAction, timeout = Timeouts.seconds30).isEnabled
@@ -279,7 +279,7 @@ fun GuiTestCase.mavenReimport() {
               actionButton(showDepAction, timeout = Timeouts.minutes01)
             }
             catch (ignore: ComponentLookupException) {
-              logInfo("Maven reimport: not found 'Show Dependencies' button after 1 min waiting")
+              logInfo("Maven reload: not found 'Show Dependencies' button after 1 min waiting")
             }
             robot().waitForIdle()
             actionButton(reimportAction).click()

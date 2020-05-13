@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.application.options.CodeStyle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDocumentManager;
@@ -21,6 +22,8 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +32,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.StringTokenizer;
 
 public class HTMLTextPainter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.HTMLTextPainter");
+  private static final Logger LOG = Logger.getInstance(HTMLTextPainter.class);
 
-  private int myOffset = 0;
+  private int myOffset;
   private final EditorHighlighter myHighlighter;
   private final String myText;
   private final String myFileName;
@@ -45,12 +51,12 @@ public class HTMLTextPainter {
   private int myFirstLineNumber;
   private final boolean myPrintLineNumbers;
   private int myColumn;
-  private final List<LineMarkerInfo<PsiElement>> myMethodSeparators = new ArrayList<>();
+  private final List<LineMarkerInfo<?>> myMethodSeparators = new ArrayList<>();
   private int myCurrentMethodSeparator;
   private final Project myProject;
   private final HtmlStyleManager htmlStyleManager;
 
-  public HTMLTextPainter(@NotNull PsiFile psiFile, @NotNull Project project, boolean printLineNumbers) {
+  HTMLTextPainter(@NotNull PsiFile psiFile, @NotNull Project project, boolean printLineNumbers) {
     this(psiFile, project, new HtmlStyleManager(false), printLineNumbers, true);
   }
 
@@ -99,13 +105,13 @@ public class HTMLTextPainter {
     return myPsiFile;
   }
 
-  public void setSegment(int segmentStart, int segmentEnd, int firstLineNumber) {
+  void setSegment(int segmentStart, int segmentEnd, int firstLineNumber) {
     myOffset = segmentStart;
     mySegmentEnd = segmentEnd;
     myFirstLineNumber = firstLineNumber;
   }
 
-  public void paint(@Nullable TreeMap refMap, @NotNull Writer writer, boolean isStandalone) throws IOException {
+  public void paint(@Nullable Int2ObjectRBTreeMap<PsiReference> refMap, @NotNull Writer writer, boolean isStandalone) throws IOException {
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     if (hIterator.atEnd()) {
       return;
@@ -113,16 +119,15 @@ public class HTMLTextPainter {
 
     lineCount = myFirstLineNumber;
     TextAttributes prevAttributes = null;
-    Iterator refKeys = null;
-
+    IntIterator refKeys = null;
     int refOffset = -1;
     PsiReference ref = null;
     if (refMap != null) {
       refKeys = refMap.keySet().iterator();
       if (refKeys.hasNext()) {
-        Integer key = (Integer)refKeys.next();
-        ref = (PsiReference)refMap.get(key);
-        refOffset = key.intValue();
+        int key = refKeys.nextInt();
+        ref = refMap.get(key);
+        refOffset = key;
       }
     }
 
@@ -200,9 +205,9 @@ public class HTMLTextPainter {
         writer.write("</a>");
         referenceEnd = -1;
         if (refKeys.hasNext()) {
-          Integer key = (Integer)refKeys.next();
-          ref = (PsiReference)refMap.get(key);
-          refOffset = key.intValue();
+          int key = refKeys.nextInt();
+          ref = refMap.get(key);
+          refOffset = key;
         }
       }
       hIterator.advance();
@@ -219,19 +224,19 @@ public class HTMLTextPainter {
     }
   }
 
-  protected void ensureStyles() {
+  private void ensureStyles() {
     htmlStyleManager.ensureStyles(myHighlighter.createIterator(myOffset), myMethodSeparators);
   }
 
   @Nullable
-  private LineMarkerInfo getMethodSeparator(int offset) {
+  private LineMarkerInfo<?> getMethodSeparator(int offset) {
     if (myDocument == null) {
       return null;
     }
 
     int line = myDocument.getLineNumber(Math.max(0, Math.min(myDocument.getTextLength(), offset)));
-    LineMarkerInfo marker = null;
-    LineMarkerInfo tmpMarker;
+    LineMarkerInfo<?> marker = null;
+    LineMarkerInfo<?> tmpMarker;
     while (myCurrentMethodSeparator < myMethodSeparators.size() &&
            (tmpMarker = myMethodSeparators.get(myCurrentMethodSeparator)) != null &&
            FileSeparatorProvider.getDisplayLine(tmpMarker, myDocument) <= line) {
@@ -263,12 +268,10 @@ public class HTMLTextPainter {
       }
     }
     fileName.append(ExportToHTMLManager.getHTMLFileName(refFile));
-    //noinspection HardCodedStringLiteral
     writer.write("<a href=\""+fileName+"\">");
     return ref.getElement().getTextRange().getEndOffset();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void writeString(Writer writer, CharSequence charArray, int start, int length, @NotNull PsiFile psiFile) throws IOException {
     for (int i = start; i < start + length; i++) {
       char c = charArray.charAt(i);
@@ -311,7 +314,7 @@ public class HTMLTextPainter {
   }
 
   private void writeLineSeparatorAndNumber(@NotNull Writer writer, int i) throws IOException {
-    LineMarkerInfo marker = getMethodSeparator(i + 1);
+    LineMarkerInfo<?> marker = getMethodSeparator(i + 1);
     if (marker == null) {
       writer.write('\n');
     }
@@ -402,6 +405,9 @@ public class HTMLTextPainter {
       StringWriter writer = new StringWriter();
       new HTMLTextPainter(context, codeFragment).paint(null, writer, false);
       return writer.toString();
+    }
+    catch (ProcessCanceledException cancel) {
+      throw cancel;
     }
     catch (Throwable e) {
       LOG.error(e);

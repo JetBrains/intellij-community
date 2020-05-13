@@ -27,9 +27,8 @@ public class GroovyInspectionSuppressor implements InspectionSuppressor {
     return GroovySuppressableInspectionTool.getElementToolSuppressedIn(element, name) != null;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+  public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
     return GroovySuppressableInspectionTool.getSuppressActions(toolId);
   }
 }

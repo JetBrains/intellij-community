@@ -22,12 +22,12 @@ import com.intellij.util.io.PersistentBTreeEnumerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implements PersistentSet<T> {
 
-  public PersistentSetImpl(@NotNull File file,
+  public PersistentSetImpl(@NotNull Path file,
                            @NotNull KeyDescriptor<T> dataDescriptor,
                            int initialSize,
                            @Nullable PagedFileStorage.StorageLockContext lockContext, int version) throws IOException {

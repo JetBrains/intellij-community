@@ -625,7 +625,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     Collection<MavenExecutionResult> results =
       doResolveProject(files, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles),
                        Collections.<ResolutionListener>singletonList(listener));
-    return ContainerUtilRt.mapNotNull(results, new Function<MavenExecutionResult, MavenServerExecutionResult>() {
+    return ContainerUtilRt.map2List(results, new Function<MavenExecutionResult, MavenServerExecutionResult>() {
       @Override
       public MavenServerExecutionResult fun(MavenExecutionResult result) {
         try {
@@ -917,17 +917,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
       result.setStartTime(myBuildStartTime);
 
+      File mavenMultiModuleProjectDirectory = getMultimoduleProjectDir(file);
+      result.setBaseDirectory(mavenMultiModuleProjectDirectory);
+
       final Method setMultiModuleProjectDirectoryMethod = getSetMultiModuleProjectDirectoryMethod(result);
       if (setMultiModuleProjectDirectoryMethod != null) {
         try {
-          File mavenMultiModuleProjectDirectory;
-          if (file == null) {
-            mavenMultiModuleProjectDirectory = new File(FileUtilRt.getTempDirectory());
-          }
-          else {
-            mavenMultiModuleProjectDirectory = MavenServerUtil.findMavenBasedir(file);
-            result.setBaseDirectory(mavenMultiModuleProjectDirectory);
-          }
           result.setMultiModuleProjectDirectory(mavenMultiModuleProjectDirectory);
         }
         catch (Exception e) {
@@ -940,6 +935,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     catch (MavenExecutionRequestPopulationException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  private File getMultimoduleProjectDir(@Nullable File file) {
+    File mavenMultiModuleProjectDirectory;
+    if (file == null) {
+      mavenMultiModuleProjectDirectory = new File(FileUtilRt.getTempDirectory());
+    }
+    else {
+      mavenMultiModuleProjectDirectory = MavenServerUtil.findMavenBasedir(file);
+
+    }
+    return mavenMultiModuleProjectDirectory;
   }
 
   private static Method getSetMultiModuleProjectDirectoryMethod(MavenExecutionRequest result) {
@@ -1021,6 +1029,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       if (each == null) continue;
 
       Maven3ServerGlobals.getLogger().info(each);
+      myConsoleWrapper.info("Validation error:", each);
 
       if (each instanceof IllegalStateException && each.getCause() != null) {
         each = each.getCause();
@@ -1048,11 +1057,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         problems.add(MavenProjectProblem.createStructureProblem(path, causeMessage));
       }
       else if (each.getStackTrace().length > 0 && each.getClass().getPackage().getName().equals("groovy.lang")) {
+        myConsoleWrapper.error("Maven server structure problem", each);
         StackTraceElement traceElement = each.getStackTrace()[0];
         problems.add(MavenProjectProblem.createStructureProblem(
           traceElement.getFileName() + ":" + traceElement.getLineNumber(), each.getMessage()));
       }
       else {
+        myConsoleWrapper.error("Maven server structure problem", each);
         problems.add(MavenProjectProblem.createStructureProblem(path, each.getMessage()));
       }
     }
@@ -1085,16 +1096,23 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                                  @NotNull final List<MavenRemoteRepository> remoteRepositories, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    final MavenExecutionRequest request =
-      createRequest(null, null, null, null);
-    final List<MavenArtifact>[] mavenArtifacts = new List[]{null};
-    executeWithMavenSession(request, new RunnableThrownRemote() {
-      @Override
-      public void run() throws RemoteException {
-        mavenArtifacts[0] = Maven3XServerEmbedder.this.doResolveTransitively(artifacts, remoteRepositories);
-      }
-    });
-    return mavenArtifacts[0];
+
+    try {
+      final MavenExecutionRequest request =
+        createRequest(null, null, null, null);
+
+      final List<MavenArtifact>[] mavenArtifacts = new List[]{null};
+      executeWithMavenSession(request, new RunnableThrownRemote() {
+        @Override
+        public void run() throws RemoteException {
+          mavenArtifacts[0] = Maven3XServerEmbedder.this.doResolveTransitively(artifacts, remoteRepositories);
+        }
+      });
+      return mavenArtifacts[0];
+    } catch (Exception e){
+      throw new RuntimeException(ExceptionUtilRt.getThrowableText(e, "com.intellij"));
+    }
+
   }
 
   @NotNull

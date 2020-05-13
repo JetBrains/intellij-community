@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Denis Zhdanov
@@ -131,18 +132,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
 
   public void testCollapsedFoldRegionIsUpdatedIfPlaceholderIsChanging() {
     int[] valuePlaceholder = new int[] {0};
-    FoldingBuilder builder = new FoldingBuilder() {
-      @NotNull
-      @Override
-      public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
-        int pos = document.getText().indexOf("value");
-        if (pos >= 0) {
-          return new FoldingDescriptor[] {new FoldingDescriptor(node, new TextRange(pos, pos + 5), null,
-                                                                Collections.singleton(ModificationTracker.EVER_CHANGED))};
-        }
-        return FoldingDescriptor.EMPTY;
-      }
-
+    runWithCustomFoldingBuilder(new TestFoldingBuilder() {
       @NotNull
       @Override
       public String getPlaceholderText(@NotNull ASTNode node) {
@@ -153,14 +143,41 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
       public boolean isCollapsedByDefault(@NotNull ASTNode node) {
         return true;
       }
-    };
-    LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, builder);
-    try {
+    }, () -> {
       openEditor("<caret>\nvalue", TestFileType.TEXT);
       checkFoldingState("[FoldRegion +(1:6), placeholder='0']");
       valuePlaceholder[0] = 1;
       runFoldingPass();
       checkFoldingState("[FoldRegion +(1:6), placeholder='1']");
+    });
+  }
+
+  public void testRegionIsUnfoldedIfPlaceholderAndCollapsedByDefaultAreChangingAtTheSameTime() {
+    AtomicBoolean setting = new AtomicBoolean(true);
+    runWithCustomFoldingBuilder(new TestFoldingBuilder() {
+      @NotNull
+      @Override
+      public String getPlaceholderText(@NotNull ASTNode node) {
+        return setting.get() ? "foo" : "bar";
+      }
+
+      @Override
+      public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+        return setting.get();
+      }
+    }, () -> {
+      openEditor("<caret>\nvalue", TestFileType.TEXT);
+      checkFoldingState("[FoldRegion +(1:6), placeholder='foo']");
+      setting.set(false);
+      runFoldingPass();
+      checkFoldingState("[FoldRegion -(1:6), placeholder='bar']");
+    });
+  }
+
+  private static void runWithCustomFoldingBuilder(FoldingBuilder builder, Runnable task) {
+    LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, builder);
+    try {
+      task.run();
     }
     finally {
       LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, builder);
@@ -200,5 +217,17 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     Runnable runnable = CodeFoldingManager.getInstance(getProject()).updateFoldRegionsAsync(getEditor(), firstTime);
     assertNotNull(runnable);
     runnable.run();
+  }
+
+  private static abstract class TestFoldingBuilder implements FoldingBuilder {
+    @Override
+    public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
+      int pos = document.getText().indexOf("value");
+      if (pos >= 0) {
+        return new FoldingDescriptor[] {new FoldingDescriptor(node, new TextRange(pos, pos + 5), null,
+                                                              Collections.singleton(ModificationTracker.EVER_CHANGED))};
+      }
+      return FoldingDescriptor.EMPTY;
+    }
   }
 }

@@ -7,17 +7,19 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.TabbedContentImpl;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -26,98 +28,98 @@ public class ContentUtilEx extends ContentsUtil {
 
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
-                                      @NotNull String groupPrefix,
-                                      @NotNull String tabName,
-                                      boolean select) {
-    addTabbedContent(manager, contentComponent, groupPrefix, tabName, select, null);
+                                      @NotNull @NonNls String groupPrefix,
+                                      @NotNull @Nls String tabName,
+                                      boolean select,
+                                      @Nullable Disposable childDisposable) {
+    addTabbedContent(manager, new TabGroupId(groupPrefix, groupPrefix),
+                     new TabDescriptor(contentComponent, () -> tabName, childDisposable), select);
   }
 
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
-                                      @NotNull String groupPrefix,
-                                      @NotNull String tabName,
+                                      @NotNull @NonNls String groupId,
+                                      @NotNull Supplier<@Nls String> groupDisplayName,
+                                      @NotNull Supplier<@Nls String> tabDisplayName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
-    if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix)) {
-      final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, getFullName(groupPrefix, tabName), true);
-      content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
-      content.putUserData(Content.TAB_GROUP_NAME_KEY, groupPrefix);
+    addTabbedContent(manager, new TabGroupId(groupId, groupDisplayName),
+                     new TabDescriptor(contentComponent, tabDisplayName, childDisposable), select);
+  }
 
-      for (Content c : manager.getContents()) {
-        if (c.getComponent() == contentComponent) {
-          if (select) {
-            manager.setSelectedContent(c);
-          }
-          return;
-        }
-      }
-      addContent(manager, content, select);
-
-      registerDisposable(content, childDisposable, contentComponent);
-
-      return;
-    }
-
-    TabbedContent tabbedContent = findTabbedContent(manager, groupPrefix);
-
-    if (tabbedContent == null) {
-      final Disposable disposable = Disposer.newDisposable();
-      tabbedContent = new TabbedContentImpl(contentComponent, tabName, true, groupPrefix);
-      ContentsUtil.addOrReplaceContent(manager, tabbedContent, select);
-      Disposer.register(tabbedContent, disposable);
+  public static void addTabbedContent(@NotNull ContentManager manager, @NotNull TabGroupId tabGroupId, @NotNull TabDescriptor tab,
+                                      boolean select) {
+    if (isSplitMode(tabGroupId.getId())) {
+      addSplitTabbedContent(manager, tabGroupId, tab, select);
     }
     else {
-      for (Pair<String, JComponent> tab : new ArrayList<>(tabbedContent.getTabs())) {
-        if (Comparing.equal(tab.second, contentComponent)) {
-          tabbedContent.removeContent(tab.second);
-        }
-      }
+      addMergedTabbedContent(manager, tabGroupId, tab, select);
+    }
+  }
+
+  public static void addSplitTabbedContent(@NotNull ContentManager manager,
+                                           @NotNull TabGroupId tabGroupId,
+                                           @NotNull TabDescriptor tab,
+                                           boolean select) {
+    Content content = ContentFactory.SERVICE.getInstance().createContent(tab.getComponent(), tabGroupId.getDisplayName(tab),
+                                                                         true);
+    content.setTabName(tabGroupId.getDisplayName(tab));
+    content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
+    content.putUserData(Content.TAB_GROUP_ID_KEY, tabGroupId);
+    content.putUserData(Content.TAB_GROUP_NAME_KEY, tabGroupId.getId()); // for backward compatibility
+    content.putUserData(Content.TAB_DESCRIPTOR_KEY, tab);
+
+    Disposer.register(content, tab);
+
+    addContent(manager, content, select);
+  }
+
+  private static void addMergedTabbedContent(@NotNull ContentManager manager,
+                                             @NotNull TabGroupId tabGroupId,
+                                             @NotNull TabDescriptor tab,
+                                             boolean select) {
+    TabbedContent tabbedContent = findTabbedContent(manager, tabGroupId.getId());
+    if (tabbedContent != null) {
       if (select) {
         manager.setSelectedContent(tabbedContent, true, true);
       }
-      tabbedContent.addContent(contentComponent, tabName, true);
+      tabbedContent.addContent(tab, true);
+      return;
     }
 
-    registerDisposable(tabbedContent, childDisposable, contentComponent);
+    createMergedTabbedContent(manager, tabGroupId, Collections.singletonList(tab), tab, select);
   }
 
-  private static void registerDisposable(@NotNull Content content,
-                                         @Nullable Disposable childDisposable,
-                                         @NotNull JComponent contentComponent) {
-    if (childDisposable != null) {
-      Disposer.register(content, childDisposable);
-      assert contentComponent.getClientProperty(DISPOSABLE_KEY) == null;
-      contentComponent.putClientProperty(DISPOSABLE_KEY, childDisposable);
-      Disposer.register(childDisposable, () -> contentComponent.putClientProperty(DISPOSABLE_KEY, null));
-    }
-    else {
-      Object disposableByKey = contentComponent.getClientProperty(DISPOSABLE_KEY);
-      if (disposableByKey instanceof Disposable) {
-        Disposer.register(content, (Disposable)disposableByKey);
-      }
+  private static void createMergedTabbedContent(@NotNull ContentManager manager,
+                                                @NotNull TabGroupId tabGroupId,
+                                                @NotNull List<TabDescriptor> tabs,
+                                                @Nullable TabDescriptor tabToSelect,
+                                                boolean selectContent) {
+    Iterator<TabDescriptor> iterator = tabs.iterator();
+    TabbedContent tabbedContent = new TabbedContentImpl(tabGroupId, iterator.next(), true);
+    addContent(manager, tabbedContent, selectContent);
+    while (iterator.hasNext()) {
+      TabDescriptor tab = iterator.next();
+      tabbedContent.addContent(tab, tab == tabToSelect);
     }
   }
 
   @Nullable
-  public static TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull String groupPrefix) {
-    TabbedContent tabbedContent = null;
+  public static TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull @NonNls String id) {
     for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) {
-        tabbedContent = (TabbedContent)content;
-        break;
+      if (content instanceof TabbedContent) {
+        if (((TabbedContent)content).getId().getId().equals(id)) {
+          return (TabbedContent)content;
+        }
       }
     }
-    return tabbedContent;
+    return null;
   }
 
   @NotNull
   public static String getFullName(@NotNull String groupPrefix, @NotNull String tabName) {
-    return getFullPrefix(groupPrefix) + tabName;
-  }
-
-  @NotNull
-  private static String getFullPrefix(@NotNull String groupPrefix) {
-    return groupPrefix + ": ";
+    if (tabName.isEmpty()) return groupPrefix;
+    return groupPrefix + ": " + tabName;
   }
 
   /**
@@ -150,13 +152,9 @@ public class ContentUtilEx extends ContentsUtil {
   @Nullable
   public static JComponent findContentComponent(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContentImpl) {
-        List<Pair<String, JComponent>> tabs = ((TabbedContentImpl)content).getTabs();
-        for (Pair<String, JComponent> tab : tabs) {
-          if (condition.value(tab.second)) {
-            return tab.second;
-          }
-        }
+      if (content instanceof TabbedContent) {
+        JComponent component = findContentComponent((TabbedContent)content, condition);
+        if (component != null) return component;
       }
       else if (condition.value(content.getComponent())) {
         return content.getComponent();
@@ -187,7 +185,6 @@ public class ContentUtilEx extends ContentsUtil {
         JComponent component = findContentComponent(tabbedContent, condition);
         if (component != null) {
           tabbedContent.removeContent(component);
-          dispose(component);
           return true;
         }
       }
@@ -214,22 +211,57 @@ public class ContentUtilEx extends ContentsUtil {
     return -1;
   }
 
-  public static void renameTabbedContent(@NotNull ContentManager manager,
-                                         @NotNull JComponent contentComponent,
-                                         @NotNull String newName) {
+  public static void updateTabbedContentDisplayName(@NotNull ContentManager manager, @NotNull JComponent contentComponent) {
     for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContentImpl) {
-        if (((TabbedContentImpl)content).rename(contentComponent, newName)) {
+      if (Comparing.equal(content.getComponent(), contentComponent)) {
+        TabGroupId groupId = content.getUserData(Content.TAB_GROUP_ID_KEY);
+        TabDescriptor tab = content.getUserData(Content.TAB_DESCRIPTOR_KEY);
+        if (groupId != null && tab != null) {
+          content.setDisplayName(groupId.getDisplayName(tab));
           return;
         }
       }
-      else if (Comparing.equal(content.getComponent(), contentComponent)) {
-        String groupPrefix = content.getUserData(Content.TAB_GROUP_NAME_KEY);
-        if (groupPrefix != null) {
-          content.setDisplayName(getFullName(groupPrefix, newName));
-          return;
+    }
+  }
+
+  public static void mergeTabs(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
+    List<TabDescriptor> tabs = new ArrayList<>();
+    Content selectedContent = manager.getSelectedContent();
+    TabDescriptor selectedTab = null;
+    List<Content> mergedContent = new ArrayList<>();
+    for (Content content : manager.getContents()) {
+      if (groupId.equals(content.getUserData(Content.TAB_GROUP_ID_KEY))) {
+        TabDescriptor tab = content.getUserData(Content.TAB_DESCRIPTOR_KEY);
+        if (tab == null) {
+          tab = new TabDescriptor(content.getComponent(), content.getDisplayName().substring(groupId.getDisplayName().length() + 2));
         }
+        if (content == selectedContent) {
+          selectedTab = tab;
+        }
+        tabs.add(tab);
+        manager.removeContent(content, false);
+        content.setComponent(null);
+        content.setShouldDisposeContent(false);
+        mergedContent.add(content);
       }
+    }
+
+    setSplitMode(groupId.getId(), false);
+    createMergedTabbedContent(manager, groupId, tabs, selectedTab, selectedTab != null);
+
+    mergedContent.forEach(Disposer::dispose);
+  }
+
+  public static boolean isSplitMode(@NonNls @NotNull String groupId) {
+    return PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId, false);
+  }
+
+  public static void setSplitMode(@NonNls @NotNull String groupId, boolean value) {
+    if (value) {
+      PropertiesComponent.getInstance().setValue(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId, Boolean.TRUE.toString());
+    }
+    else {
+      PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId);
     }
   }
 }

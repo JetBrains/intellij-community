@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -19,7 +19,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
   private volatile List<V> myCache;
   private final ExtensionPointAndAreaListener<Extension> myExtensionPointAndAreaListener;
 
-  protected SmartExtensionPoint(@NotNull final Collection<V> explicitExtensions) {
+  protected SmartExtensionPoint(@NotNull Collection<V> explicitExtensions) {
     myExplicitExtensions = explicitExtensions;
 
     myExtensionPointAndAreaListener = new ExtensionPointAdapter<Extension>() {
@@ -52,8 +52,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
     };
   }
 
-  @NotNull
-  protected abstract ExtensionPoint<Extension> getExtensionPoint();
+  protected abstract @NotNull ExtensionPoint<Extension> getExtensionPoint();
 
   public final void addExplicitExtension(@NotNull V extension) {
     synchronized (myExplicitExtensions) {
@@ -69,11 +68,9 @@ public abstract class SmartExtensionPoint<Extension, V> {
     }
   }
 
-  @Nullable
-  protected abstract V getExtension(@NotNull final Extension extension);
+  protected abstract @Nullable V getExtension(final @NotNull Extension extension);
 
-  @NotNull
-  public final List<V> getExtensions() {
+  public final @NotNull List<V> getExtensions() {
     List<V> result = myCache;
     if (result != null) {
       return result;

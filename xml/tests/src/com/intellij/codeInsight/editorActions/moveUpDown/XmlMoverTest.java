@@ -72,11 +72,11 @@ public class XmlMoverTest extends LightPlatformCodeInsightTestCase {
 
   private void performAction(final String fileName, final EditorActionHandler handler, final String afterFileName) throws Exception {
     configureByFile(fileName);
-    if (handler.isEnabled(getEditor(), null)) {
+    if (handler.isEnabled(getEditor(), null, null)) {
       WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
-          handler.execute(getEditor(), null);
+          handler.execute(getEditor(), null, null);
         }
       });
     }

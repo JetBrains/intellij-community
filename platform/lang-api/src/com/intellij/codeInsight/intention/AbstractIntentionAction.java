@@ -16,16 +16,18 @@
 
 package com.intellij.codeInsight.intention;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class AbstractIntentionAction implements IntentionAction {
 
+  @IntentionFamilyName
   @Override
   @NotNull
   public String getFamilyName() {

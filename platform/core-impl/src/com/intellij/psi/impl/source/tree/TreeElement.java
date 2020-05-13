@@ -79,8 +79,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   @Override
   public abstract LeafElement findLeafElementAt(int offset);
 
-  @NotNull
-  public abstract char[] textToCharArray();
+  public abstract char @NotNull [] textToCharArray();
 
   @Override
   public abstract TreeElement getFirstChildNode();

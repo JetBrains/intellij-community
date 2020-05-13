@@ -6,6 +6,5 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public interface JqlArgumentList extends JqlElement {
-  @NotNull
-  JqlLiteral[] getArguments();
+  JqlLiteral @NotNull [] getArguments();
 }

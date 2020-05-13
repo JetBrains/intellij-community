@@ -47,8 +47,7 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), new AbstractAction(myMode.other().getName()) {
       @Override
       public void actionPerformed(ActionEvent e) {

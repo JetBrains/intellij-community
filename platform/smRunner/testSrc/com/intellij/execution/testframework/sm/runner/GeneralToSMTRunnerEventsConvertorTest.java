@@ -440,6 +440,29 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals(0, children.get(1).getChildren().size());
   }
 
+  public void testClassConfigurationFailedCount() {
+    myEventsProcessor.onTestStarted(new TestStartedEvent("Class Configuration", "java:suite://com.jetbrains.testing.ATestCase"));
+    myEventsProcessor.onTestFailure(new TestFailedEvent("Class Configuration", "", "", true, null, null));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("Class Configuration", null));
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("ATestCase", "java:suite://com.jetbrains.testing.ATestCase"));
+    myEventsProcessor.onTestStarted(new TestStartedEvent("ATestCase.test1", "java:test://com.jetbrains.testing.ATestCase/test1"));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("ATestCase.test1", null));
+    myEventsProcessor.onTestStarted(new TestStartedEvent("ATestCase.test2", "java:test://com.jetbrains.testing.ATestCase/test2"));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("ATestCase.test2", null));
+
+    myEventsProcessor.onTestStarted(new TestStartedEvent("Class Configuration", "java:suite://com.jetbrains.testing.BTestCase"));
+    myEventsProcessor.onTestFailure(new TestFailedEvent("Class Configuration", "", "", true, null, null));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("Class Configuration", null));
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("ATestCase"));
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("BTestCase", "java:suite://com.jetbrains.testing.BTestCase"));
+    myEventsProcessor.onTestStarted(new TestStartedEvent("BTestCase.test1", "java:test://com.jetbrains.testing.BTestCase/test1"));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("BTestCase.test1", null));
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("BTestCase"));
+
+    assertEquals(5, myResultsViewer.getFinishedTestCount());
+    assertEquals(2, myResultsViewer.getFailedTestCount());
+  }
+
   public void test3212() {
     // let's make
     myEventsProcessor.clearInternalSuitesStack();

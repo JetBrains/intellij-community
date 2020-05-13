@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.Consumer;
@@ -58,13 +59,13 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
 
   public void startBatch() {
     if (myConsumer instanceof BatchConsumer) {
-      ((BatchConsumer)myConsumer).startBatch();
+      ((BatchConsumer<?>)myConsumer).startBatch();
     }
   }
 
   public void endBatch() {
     if (myConsumer instanceof BatchConsumer) {
-      ((BatchConsumer)myConsumer).endBatch();
+      ((BatchConsumer<?>)myConsumer).endBatch();
     }
   }
 
@@ -104,7 +105,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   @Contract(pure=true)
   public abstract CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
 
-  public abstract void addLookupAdvertisement(@NotNull String text);
+  public abstract void addLookupAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String text);
 
   /**
    * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
@@ -142,6 +143,11 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   }
 
   public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer, final boolean stop) {
+    runRemainingContributors(parameters, consumer, stop, null);
+  }
+
+  public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer, final boolean stop,
+                                       CompletionSorter customSorter) {
     if (stop) {
       stopHere();
     }
@@ -160,7 +166,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
       public void consume(CompletionResult result) {
         consumer.consume(result);
       }
-    });
+    }, customSorter);
   }
 
   /**

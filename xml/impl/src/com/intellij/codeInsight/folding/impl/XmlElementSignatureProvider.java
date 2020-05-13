@@ -18,7 +18,7 @@ import java.util.StringTokenizer;
  * @author yole
  */
 public class XmlElementSignatureProvider extends AbstractElementSignatureProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider");
+  private static final Logger LOG = Logger.getInstance(XmlElementSignatureProvider.class);
 
   @Override
   public String getSignature(@NotNull PsiElement element) {

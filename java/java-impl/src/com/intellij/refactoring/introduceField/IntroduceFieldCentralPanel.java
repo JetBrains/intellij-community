@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -24,7 +25,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class IntroduceFieldCentralPanel {
-   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
+  protected static final Logger LOG = Logger.getInstance(IntroduceFieldDialog.class);
 
   private static final String INTRODUCE_FIELD_FINAL_CHECKBOX = "introduce.final.checkbox";
   public static boolean ourLastCbFinalState = PropertiesComponent.getInstance().getBoolean(INTRODUCE_FIELD_FINAL_CHECKBOX, true);
@@ -226,7 +226,7 @@ public abstract class IntroduceFieldCentralPanel {
     JPanel panel = new JPanel(new GridBagLayout());
     myCbFinal = new StateRestoringCheckBox();
     myCbFinal.setFocusable(false);
-    myCbFinal.setText(RefactoringBundle.message("declare.final"));
+    myCbFinal.setText(JavaRefactoringBundle.message("declare.final"));
     myCbFinal.addItemListener(itemListener);
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
@@ -238,7 +238,7 @@ public abstract class IntroduceFieldCentralPanel {
         gbConstraints.insets = JBUI.insetsLeft(8);
       }
       myCbDeleteVariable = new StateRestoringCheckBox();
-      myCbDeleteVariable.setText(RefactoringBundle.message("delete.variable.declaration"));
+      myCbDeleteVariable.setText(JavaRefactoringBundle.message("delete.variable.declaration"));
       panel.add(myCbDeleteVariable, gbConstraints);
       if (myIsInvokedOnDeclaration) {
         myCbDeleteVariable.setEnabled(false);
@@ -261,7 +261,7 @@ public abstract class IntroduceFieldCentralPanel {
   public void appendOccurrences(ItemListener itemListener, GridBagConstraints gbConstraints, JPanel panel) {
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox();
-      myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurrences.of.expression.0.occurrences", myOccurrencesCount));
+      myCbReplaceAll.setText(JavaRefactoringBundle.message("replace.all.occurrences.of.expression.0.occurrences", myOccurrencesCount));
       gbConstraints.gridy++;
       panel.add(myCbReplaceAll, gbConstraints);
       myCbReplaceAll.addItemListener(itemListener);

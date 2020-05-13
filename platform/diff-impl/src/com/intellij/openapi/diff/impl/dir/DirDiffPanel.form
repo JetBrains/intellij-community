@@ -111,7 +111,7 @@
                                     <properties>
                                       <horizontalAlignment value="2"/>
                                       <iconTextGap value="0"/>
-                                      <text value="&amp;Filter:"/>
+                                      <text resource-bundle="messages/DiffBundle" key="button.dirdiff.filter"/>
                                     </properties>
                                   </component>
                                 </children>

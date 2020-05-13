@@ -20,8 +20,7 @@ public class PyBraceMatcher implements PairedBraceMatcher {
   };
 
   @Override
-  @NotNull
-  public BracePair[] getPairs() {
+  public BracePair @NotNull [] getPairs() {
     return ourBraces;
   }
 

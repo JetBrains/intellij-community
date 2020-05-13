@@ -18,9 +18,6 @@ package com.intellij.jps.impl;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
-/**
- * @author nik
- */
 public class JpsPluginBean extends AbstractExtensionPointBean {
   public static final ExtensionPointName<JpsPluginBean> EP_NAME = ExtensionPointName.create("com.intellij.jps.plugin");
 }

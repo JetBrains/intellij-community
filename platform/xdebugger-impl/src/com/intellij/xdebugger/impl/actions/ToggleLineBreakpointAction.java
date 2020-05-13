@@ -31,9 +31,6 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ToggleLineBreakpointAction extends XDebuggerActionBase implements DumbAware, Toggleable {
   public ToggleLineBreakpointAction() {
     super(true);

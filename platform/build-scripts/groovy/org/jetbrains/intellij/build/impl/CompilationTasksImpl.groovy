@@ -18,9 +18,6 @@ package org.jetbrains.intellij.build.impl
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
-/**
- * @author nik
- */
 @CompileStatic
 class CompilationTasksImpl extends CompilationTasks {
   private final CompilationContext context
@@ -100,5 +97,12 @@ class CompilationTasksImpl extends CompilationTasks {
   @Override
   void compileAllModulesAndTests() {
     compileModules(null, null)
+  }
+
+  @Override
+  void resolveProjectDependenciesAndCompileAll() {
+    resolveProjectDependencies()
+    context.compilationData.statisticsReported = false
+    compileAllModulesAndTests()
   }
 }

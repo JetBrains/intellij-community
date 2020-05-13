@@ -48,7 +48,7 @@ public class CopyPathsAction extends AnAction implements DumbAware {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(num > 0);
     presentation.setVisible(num > 0 || !ActionPlaces.isPopupPlace(event.getPlace()));
-    presentation.setText(IdeBundle.message(num == 1 ? "action.copy.path" : "action.copy.paths"));
+    presentation.setText(IdeBundle.messagePointer(num == 1 ? "action.copy.path" : "action.copy.paths"));
   }
 
   public static boolean isCopyReferencePopupAvailable() {

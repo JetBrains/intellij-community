@@ -1,14 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +26,8 @@ import static com.intellij.util.ObjectUtils.notNull;
  * own inner synchronization
  */
 @SomeQueue
-public class UpdateRequestsQueue {
-  private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
+public final class UpdateRequestsQueue {
+  private final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
 
   private final Project myProject;
   private final ChangeListManagerImpl.Scheduler myScheduler;
@@ -42,16 +41,11 @@ public class UpdateRequestsQueue {
   private boolean myRequestRunning;
   private final List<Runnable> myWaitingUpdateCompletionQueue = new ArrayList<>();
   private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
-  private final ProjectLevelVcsManager myPlVcsManager;
-  private final StartupManager myStartupManager;
 
-  public UpdateRequestsQueue(final Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, final Runnable delegate) {
+  public UpdateRequestsQueue(@NotNull Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, @NotNull Runnable delegate) {
     myProject = project;
     myScheduler = scheduler;
-
     myDelegate = delegate;
-    myPlVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myStartupManager = StartupManager.getInstance(myProject);
 
     // not initialized
     myStarted = false;
@@ -183,16 +177,15 @@ public class UpdateRequestsQueue {
 
   // true = do not execute
   private boolean checkHeavyOperations() {
-    if (myIgnoreBackgroundOperation) return false;
-    return myPlVcsManager.isBackgroundVcsOperationRunning();
+    return !myIgnoreBackgroundOperation && ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning();
   }
 
   // true = do not execute
   private boolean checkLifeCycle() {
-    return !myStarted || !((StartupManagerImpl)myStartupManager).startupActivityPassed();
+    return !myStarted || !StartupManagerEx.getInstanceEx(myProject).startupActivityPassed();
   }
 
-  private class MyRunnable implements Runnable {
+  private final class MyRunnable implements Runnable {
     @Override
     public void run() {
       final List<Runnable> copy = new ArrayList<>(myWaitingUpdateCompletionQueue.size());

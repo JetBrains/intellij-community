@@ -2,6 +2,7 @@ package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
@@ -13,9 +14,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
 
   private final Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<>();
@@ -24,7 +22,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   @NotNull
   @Override
   public <C extends ServerConfiguration> ServerConnection getOrCreateConnection(@NotNull RemoteServer<C> server) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
       connection = doCreateConnection(server, this);
@@ -52,8 +50,8 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     return myConnections.get(server);
   }
 
-  public void removeConnection(RemoteServer<?> server) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  void removeConnection(RemoteServer<?> server) {
+    ApplicationManager.getApplication().assertIsWriteThread();
     myConnections.remove(server);
   }
 
@@ -64,7 +62,23 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   @NotNull
   @Override
   public Collection<ServerConnection> getConnections() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     return Collections.unmodifiableCollection(myConnections.values());
+  }
+
+  public static class DisconnectFromRemovedServer implements RemoteServerListener {
+    @Override
+    public void serverRemoved(@NotNull RemoteServer<?> server) {
+      ServerConnectionManagerImpl impl = (ServerConnectionManagerImpl)ServerConnectionManager.getInstance();
+      ServerConnection<?> connection = impl.getConnection(server);
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+
+    @Override
+    public void serverAdded(@NotNull RemoteServer<?> server) {
+      //
+    }
   }
 }

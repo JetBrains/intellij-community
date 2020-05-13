@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class OptionTagBinding extends BasePrimitiveBinding {
+final class OptionTagBinding extends BasePrimitiveBinding {
   private final String myTagName;
   private final String myNameAttribute;
   private final String myValueAttribute;
@@ -40,8 +40,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
   }
 
   @Override
-  @Nullable
-  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
+  public @NotNull Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     Element targetElement = new Element(myTagName);
 
@@ -78,8 +77,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
   }
 
   @Override
-  @NotNull
-  public Object deserialize(@NotNull Object context, @NotNull Element element) {
+  public @NotNull Object deserialize(@NotNull Object context, @NotNull Element element) {
     Attribute valueAttribute = element.getAttribute(myValueAttribute);
     if (valueAttribute == null) {
       if (myValueAttribute.isEmpty()) {
@@ -89,16 +87,25 @@ class OptionTagBinding extends BasePrimitiveBinding {
       else {
         List<Element> children = element.getChildren();
         if (children.isEmpty()) {
-          myAccessor.set(context, null);
+          if (myBinding instanceof CollectionBinding || myBinding instanceof MapBinding) {
+            Object oldValue = myAccessor.read(context);
+            // do nothing if field is already null
+            if (oldValue != null) {
+              Object newValue = ((MultiNodeBinding)myBinding).deserializeList(oldValue, children);
+              if (oldValue != newValue) {
+                myAccessor.set(context, newValue);
+              }
+            }
+          }
+          else {
+            myAccessor.set(context, null);
+          }
         }
         else {
           assert myBinding != null;
           Object oldValue = myAccessor.read(context);
           Object newValue = Binding.deserializeList(myBinding, oldValue, children);
-          if (!myAccessor.isWritable()) {
-            LOG.assertTrue(oldValue == newValue);
-          }
-          else {
+          if (oldValue != newValue) {
             myAccessor.set(context, newValue);
           }
         }

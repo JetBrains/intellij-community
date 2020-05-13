@@ -15,11 +15,8 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderRootsEnumeratorImpl");
+  private static final Logger LOG = Logger.getInstance(OrderRootsEnumeratorImpl.class);
   private final OrderEnumeratorBase myOrderEnumerator;
   private final OrderRootType myRootType;
   private final NotNullFunction<? super OrderEntry, ? extends OrderRootType> myRootTypeProvider;
@@ -40,9 +37,8 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     myRootTypeProvider = rootTypeProvider;
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getRoots() {
+  public VirtualFile @NotNull [] getRoots() {
     if (myUsingCache) {
       checkCanUseCache();
       final OrderRootsCache cache = myOrderEnumerator.getCache();
@@ -53,9 +49,8 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     return VfsUtilCore.toVirtualFileArray(computeRoots());
   }
 
-  @NotNull
   @Override
-  public String[] getUrls() {
+  public String @NotNull [] getUrls() {
     if (myUsingCache) {
       checkCanUseCache();
       final OrderRootsCache cache = myOrderEnumerator.getCache();

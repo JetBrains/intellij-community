@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -8,7 +8,6 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectNameProvider
@@ -19,12 +18,15 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
-import com.intellij.util.containers.computeIfAny
-import com.intellij.util.io.*
+import com.intellij.util.io.delete
+import com.intellij.util.io.isDirectory
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -53,18 +55,18 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
       return PathUtilRt.getFileName(projectFilePath).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
 
-    val baseDir = projectBasePath
-    val nameFile = nameFile
-    if (nameFile.exists()) {
-      LOG.runAndLogException { readProjectNameFile(nameFile) }?.let {
-        lastSavedProjectName = it
-        return it
-      }
+    val projectDir = nameFile.parent
+    val storedName = JpsPathUtil.readProjectName(projectDir)
+    if (storedName != null) {
+      lastSavedProjectName = storedName
+      return storedName
     }
 
-    return ProjectNameProvider.EP_NAME.extensionList.computeIfAny {
-      LOG.runAndLogException { it.getDefaultName(project) }
-    } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
+    val computedName = ProjectNameProvider.EP_NAME.iterable.asSequence()
+      .map { LOG.runAndLogException { it.getDefaultName(project) } }
+      .find { it != null }
+
+    return computedName ?: JpsPathUtil.getDefaultProjectName(projectDir)
   }
 
   private suspend fun saveProjectName() {
@@ -163,7 +165,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
       val saveSessions: MutableList<SaveSession> = SmartList()
       // commit components
       for (module in modules) {
-        val moduleStore = ModuleServiceManager.getService(module, IComponentStore::class.java) as ComponentStoreImpl
+        val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
         // collectSaveSessions is very cheap, so, do it in EDT
         val saveManager = moduleStore.createSaveSessionProducerManager()
         commitModuleComponents(moduleStore, saveManager, projectSaveSessionManager, isForceSavingAllSettings, errors)
@@ -173,7 +175,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
     }
   }
 
-  open protected fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
+  protected open fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
                                             projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
                                             errors: MutableList<Throwable>) {
     moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, errors)

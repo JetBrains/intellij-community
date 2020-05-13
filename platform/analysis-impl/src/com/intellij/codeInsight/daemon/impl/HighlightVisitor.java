@@ -19,6 +19,9 @@ public interface HighlightVisitor {
   @NotNull
   HighlightVisitor clone();
 
+  /**
+   * @deprecated unused, left for binary compatibility
+   */
   @Deprecated
   default int order() { return -1; }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.java.JavaLanguage;
@@ -193,7 +193,7 @@ public class JavaParserUtil {
       if (!eatAll) throw new AssertionError("Unexpected token: '" + builder.getTokenText() + "'");
       final PsiBuilder.Marker extras = builder.mark();
       while (!builder.eof()) builder.advanceLexer();
-      extras.error(JavaErrorMessages.message("unexpected.tokens"));
+      extras.error(JavaPsiBundle.message("unexpected.tokens"));
     }
     root.done(chameleon.getElementType());
 
@@ -226,17 +226,17 @@ public class JavaParserUtil {
     }
   }
 
-  public static boolean expectOrError(PsiBuilder builder, TokenSet expected, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
+  public static boolean expectOrError(PsiBuilder builder, TokenSet expected, @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
     if (!PsiBuilderUtil.expect(builder, expected)) {
-      error(builder, JavaErrorMessages.message(key));
+      error(builder, JavaPsiBundle.message(key));
       return false;
     }
     return true;
   }
 
-  public static boolean expectOrError(PsiBuilder builder, IElementType expected, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
+  public static boolean expectOrError(PsiBuilder builder, IElementType expected, @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
     if (!PsiBuilderUtil.expect(builder, expected)) {
-      error(builder, JavaErrorMessages.message(key));
+      error(builder, JavaPsiBundle.message(key));
       return false;
     }
     return true;

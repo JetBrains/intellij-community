@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
@@ -53,15 +55,15 @@ public class HyperlinkLabel extends HighlightableComponent {
     this("");
   }
 
-  public HyperlinkLabel(String text) {
+  public HyperlinkLabel(@LinkLabel String text) {
     this(text, UIUtil.getLabelBackground());
   }
 
-  public HyperlinkLabel(String text, Color background) {
+  public HyperlinkLabel(@LinkLabel String text, Color background) {
     this(text, PlatformColors.BLUE, background, PlatformColors.BLUE);
   }
 
-  public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
+  public HyperlinkLabel(@LinkLabel String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
     myAnchorAttributes = StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?
                          new CustomTextAttributes(textBackgroundColor) :
                          new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
@@ -82,11 +84,11 @@ public class HyperlinkLabel extends HighlightableComponent {
     myFontSize = fontSize;
   }
 
-  public void setHyperlinkText(String text) {
+  public void setHyperlinkText(@LinkLabel String text) {
     setHyperlinkText("", text, "");
   }
 
-  public void setHyperlinkText(String beforeLinkText, String linkText, String afterLinkText) {
+  public void setHyperlinkText(@LinkLabel String beforeLinkText, @LinkLabel String linkText, @LinkLabel String afterLinkText) {
     myUseIconAsLink = beforeLinkText.isEmpty();
     prepareText(beforeLinkText, linkText, afterLinkText);
   }
@@ -179,6 +181,8 @@ public class HyperlinkLabel extends HighlightableComponent {
     if (url != null) {
       myHyperlinkListener = e -> BrowserUtil.browse(url);
       addHyperlinkListener(myHyperlinkListener);
+      setIcon(AllIcons.Ide.External_link_arrow);
+      setIconAtRight(true);
     }
   }
 
@@ -206,7 +210,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     fireHyperlinkEvent(null);
   }
 
-  public void setHtmlText(String text) {
+  public void setHtmlText(@LinkLabel String text) {
     HTMLEditorKit.Parser parse = new ParserDelegator();
     final HighlightedText highlightedText = new HighlightedText();
     try {

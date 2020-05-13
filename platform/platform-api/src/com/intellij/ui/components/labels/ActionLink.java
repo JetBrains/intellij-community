@@ -6,13 +6,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,19 +27,23 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private Color myActiveColor;
   private Color myNormalColor;
 
-  public ActionLink(String text, @NotNull AnAction action) {
+  public ActionLink(@NlsContexts.LinkLabel String text, @NotNull AnAction action) {
     this(text, ICON, action);
   }
 
-  public ActionLink(String text, Icon icon, @NotNull AnAction action) {
+  public ActionLink(@NlsContexts.LinkLabel String text, Icon icon, @NotNull AnAction action) {
     this(text, icon, action, null, ActionPlaces.UNKNOWN);
   }
 
-  public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable Runnable onDone, @NotNull String place) {
+  public ActionLink(@NlsContexts.LinkLabel String text,
+                    Icon icon,
+                    @NotNull AnAction action,
+                    @Nullable Runnable onDone,
+                    @NotNull String place) {
     super(text, icon);
     setListener(new LinkListener<Object>() {
       @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
         ActionUtil.invokeAction(myAction, ActionLink.this, place, myEvent, onDone);
       }
     }, null);

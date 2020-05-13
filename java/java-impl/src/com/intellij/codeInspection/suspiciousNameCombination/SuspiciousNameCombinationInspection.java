@@ -16,13 +16,14 @@
 
 package com.intellij.codeInspection.suspiciousNameCombination;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -39,6 +40,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -92,7 +94,8 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class"));
     JPanel panel = new JPanel(new GridLayout(2, 1));
     panel.add(nameGroupsPanel);
-    tablePanel.setBorder(IdeBorderFactory.createTitledBorder("Ignore methods", false));
+    tablePanel.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message(
+      "section.title.inspection.suspicious.names.ignore.methods"), false));
     panel.add(tablePanel);
     return panel;
   }
@@ -121,13 +124,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.BUGS_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("suspicious.name.combination.display.name");
+    return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override
@@ -174,7 +171,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   private class NameGroupsPanel extends AddEditDeleteListPanel<String> {
 
     NameGroupsPanel() {
-      super(InspectionsBundle.message("suspicious.name.combination.options.title"), myNameGroups);
+      super(AnalysisBundle.message("suspicious.name.combination.options.title"), myNameGroups);
       myListModel.addListDataListener(new ListDataListener() {
         @Override
         public void intervalAdded(ListDataEvent e) {
@@ -196,16 +193,16 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     @Override
     protected String findItemToAdd() {
       return Messages.showInputDialog(this,
-                                      InspectionsBundle.message("suspicious.name.combination.options.prompt"),
-                                      InspectionsBundle.message("suspicious.name.combination.add.title"),
+                                      AnalysisBundle.message("suspicious.name.combination.options.prompt"),
+                                      AnalysisBundle.message("suspicious.name.combination.add.title"),
                                       Messages.getQuestionIcon(), "", null);
     }
 
     @Override
     protected String editSelectedItem(String inputValue) {
       return Messages.showInputDialog(this,
-                                      InspectionsBundle.message("suspicious.name.combination.options.prompt"),
-                                      InspectionsBundle.message("suspicious.name.combination.edit.title"),
+                                      AnalysisBundle.message("suspicious.name.combination.options.prompt"),
+                                      AnalysisBundle.message("suspicious.name.combination.edit.title"),
                                       Messages.getQuestionIcon(),
                                       inputValue, null);
     }
@@ -279,11 +276,11 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     private void checkCombination(final PsiElement location,
                                   @Nullable final String name,
                                   @Nullable final String referenceName,
-                                  final String key) {
+                                  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
       String nameGroup1 = findNameGroup(name);
       String nameGroup2 = findNameGroup(referenceName);
       if (nameGroup1 != null && nameGroup2 != null && !nameGroup1.equals(nameGroup2)) {
-        myProblemsHolder.registerProblem(location, JavaErrorMessages.message(key, referenceName, name));
+        myProblemsHolder.registerProblem(location, JavaErrorBundle.message(key, referenceName, name));
       }
     }
 

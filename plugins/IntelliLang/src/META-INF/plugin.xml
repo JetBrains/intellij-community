@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
+  <category>Other Tools</category>
   <vendor>JetBrains</vendor>
   <description>
       <![CDATA[
@@ -21,8 +22,8 @@
   <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
 
   <extensionPoints>
-    <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport"/>
-    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean"/>
+    <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport" dynamic="true"/>
+    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -42,7 +43,9 @@
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
     <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
 
-    <projectConfigurable groupId="editor" displayName="Language Injections" dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI" nonDefaultProject="true"/>
+    <projectConfigurable groupId="editor" bundle="messages.IntelliLangBundle" key="configurable.InjectionsSettingsUI.display.name"
+                         dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"
+                         nonDefaultProject="true"/>
 
     <multiHostInjector id="TemporaryPlacesInjector" implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" order="first"/>
     <multiHostInjector id ="CommentLanguageInjector" implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector" order="after TemporaryPlacesInjector"/>

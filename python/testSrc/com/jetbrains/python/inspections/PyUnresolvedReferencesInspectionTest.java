@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -635,6 +634,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-7251
+  public void testImportHighlightLevel() {
+    doMultiFileTest();
+  }
+
   // PY-26243
   public void testNotImportedModuleInDunderAll() {
     doMultiFileTest("pkg/__init__.py");
@@ -693,11 +697,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23632
   public void testMockPatchObject() {
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/"+ getTestDirectoryPath() + "/lib");
-    assertNotNull(libDir);
-
     runWithAdditionalClassEntryInSdkRoots(
-      libDir,
+      getTestDirectoryPath() + "/lib",
       () -> {
         final PsiFile file = myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
         configureInspection();
@@ -815,6 +816,32 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                          "x1.<warning descr=\"Unresolved attribute reference 'clea' for class 'X'\">clea</warning>()\n" +
                          "x1.<warning descr=\"Unresolved attribute reference 'x' for class 'X'\">x</warning>()")
     );
+  }
+
+  // PY-37755 PY-2700
+  public void testGlobalResolveAttribute() {
+    doTest();
+  }
+
+  // PY-39078
+  public void testNoneAttribute() {
+    doTestByText("a = None\n" +
+                 "a.<warning descr=\"Cannot find reference 'append' in 'None'\">append</warning>(10)");
+  }
+
+  // PY-39682
+  public void testWildcardIgnorePatternReferenceForNestedBinaryModule() {
+    runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/python_stubs", () -> {
+        myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
+        final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+        inspection.ignoredIdentifiers.add("pkg.*");
+        myFixture.enableInspections(inspection);
+        myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+        assertSdkRootsNotParsed(myFixture.getFile());
+        assertProjectFilesNotParsed(myFixture.getFile());
+      });
+    });
   }
 
   @NotNull

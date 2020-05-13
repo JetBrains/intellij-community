@@ -2,11 +2,13 @@
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -24,26 +26,32 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
-  private val tooltip = CheckoutProvider.EXTENSION_POINT_NAME.extensions
-    .map { it.vcsName }
-    .joinToString { it.replace("_".toRegex(), "") }
 
   override fun getIcon(): Icon = AllIcons.Welcome.FromVCS
 
-  override fun getName() = "Repository URL"
+  override fun getName() = VcsBundle.message("clone.dialog.repository.url.item")
 
   override fun getTooltip(): String? {
-    return tooltip
+    return CheckoutProvider.EXTENSION_POINT_NAME.extensions
+      .map { it.vcsName }
+      .joinToString { it.replace("_", "") }
   }
 
-  override fun createMainComponent(project: Project): RepositoryUrlMainExtensionComponent {
-    return RepositoryUrlMainExtensionComponent(project)
+  override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
+    throw AssertionError("Shouldn't be called")
   }
 
-  class RepositoryUrlMainExtensionComponent(private val project: Project) : VcsCloneDialogExtensionComponent() {
+  override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
+    return RepositoryUrlMainExtensionComponent(project, modalityState)
+  }
+
+  class RepositoryUrlMainExtensionComponent(private val project: Project,
+                                            private val modalityState: ModalityState) : VcsCloneDialogExtensionComponent() {
     override fun onComponentSelected() {
-      dialogStateListener.onOkActionNameChanged(getCurrentVcsComponent()?.getOkButtonText() ?: "Clone")
+      dialogStateListener.onOkActionNameChanged(getCurrentVcsComponent()?.getOkButtonText() ?: VcsBundle.message("clone.dialog.clone.button"))
       dialogStateListener.onOkActionEnabled(true)
+
+      getCurrentVcsComponent()?.onComponentSelected(dialogStateListener)
     }
 
     private val vcsComponents = HashMap<CheckoutProvider, VcsCloneComponent>()
@@ -56,7 +64,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
     init {
       val northPanel = panel {
-        row("Version control:") {
+        row(VcsBundle.message("vcs.common.labels.version.control")) {
           comboBox()
         }
       }
@@ -75,7 +83,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
           centerPanel.setContent(vcsComponents.getOrPut(provider, {
-            val cloneComponent = provider.buildVcsCloneComponent(project)
+            val cloneComponent = provider.buildVcsCloneComponent(project, modalityState)
             Disposer.register(this, cloneComponent)
             cloneComponent
           }).getView())

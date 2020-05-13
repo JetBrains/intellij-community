@@ -23,9 +23,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportCommunicator {
   public static final ExtensionPointName<FrameworkSupportCommunicator> EP_NAME = ExtensionPointName.create("com.intellij.frameworkSupportCommunicator");
 

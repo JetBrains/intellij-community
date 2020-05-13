@@ -24,33 +24,11 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   @NotNull
   protected String getPrefix() {
-    return UIUtil.isUnderWin10LookAndFeel() ? "intellijlaf_native" : "intellijlaf";
-  }
-
-  @Override
-  @Nullable
-  protected String getSystemPrefix() {
-    if (SystemInfo.isLinux) {
-      return super.getSystemPrefix();
-    }
-    else if (SystemInfo.isWindows) {
-      return UIUtil.isUnderWin10LookAndFeel() ? null : getPrefix() + "_windows";
-    }
-    else if (SystemInfo.isMac) {
-      return UIUtil.isUnderDefaultMacTheme() ? getPrefix() + "_mac" : null;
-    }
-    else {
-      return null;
-    }
+    return "intellijlaf";
   }
 
   @Override
   protected DefaultMetalTheme createMetalTheme() {
     return new IdeaBlueMetalTheme();
-  }
-
-  public static Color getSelectedControlColor() {
-    // https://developer.apple.com/library/mac/e/Cocoa/Reference/ApplicationKit/Classes/NSColor_Class/#//apple_ref/occ/clm/NSColor/alternateSelectedControlColor
-    return MacUtil.colorFromNative(Foundation.invoke("NSColor", "alternateSelectedControlColor"));
   }
 }

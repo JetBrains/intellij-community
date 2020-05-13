@@ -4,21 +4,16 @@ package com.intellij.xml.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Verifier;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import static com.intellij.xml.CommonXmlStrings.*;
-/**
- * @author yole
- */
+
 public class XmlStringUtil {
 
   private XmlStringUtil() {
   }
 
-  @NotNull
-  public static String wrapInCDATA(@NotNull String str) {
+  public static @NotNull String wrapInCDATA(@NotNull String str) {
     StringBuilder sb = new StringBuilder();
     int cur = 0;
     int len = str.length();
@@ -88,8 +83,7 @@ public class XmlStringUtil {
     return buffer == null ? str : buffer.toString();
   }
 
-  @Nullable
-  public static StringBuilder appendEscapedSymbol(@NotNull String str, StringBuilder buffer, int i, String entity, char ch) {
+  public static @Nullable StringBuilder appendEscapedSymbol(@NotNull String str, StringBuilder buffer, int i, String entity, char ch) {
     if (buffer == null) {
       if (entity != null) {
         // An entity occurred, so we'll have to use StringBuffer
@@ -110,18 +104,15 @@ public class XmlStringUtil {
     return buffer;
   }
 
-  @NotNull
-  public static String wrapInHtml(@NotNull CharSequence result) {
+  public static @NotNull String wrapInHtml(@Nls @NotNull CharSequence result) {
     return HTML_START + result + HTML_END;
   }
 
   /**
-   *
    * @param lines Text to be used for example in multi-line labels
    * @return HTML where specified lines separated by &lt;br&gt; and each line wrapped in &lt;nobr&gt; to prevent breaking text inside
    */
-  @NotNull
-  public static String wrapInHtmlLines(@NotNull CharSequence...lines) {
+  public static @NotNull String wrapInHtmlLines(CharSequence @NotNull ... lines) {
     StringBuilder sb = new StringBuilder(HTML_START);
     for (int i = 0; i < lines.length; i++) {
       CharSequence sequence = lines[i];
@@ -131,13 +122,22 @@ public class XmlStringUtil {
     return sb.append(HTML_END).toString();
   }
 
+  public static @NotNull String wrapInHtmlTag(@Nls @NotNull String text, @NonNls @NotNull String tagWord) {
+    return String.format("<%s>%s</%s>", tagWord, text, tagWord);
+  }
+
+  public static @NotNull String wrapInHtmlTagWithAttributes(@Nls @NotNull String text,
+                                                            @NonNls @NotNull String tagWord,
+                                                            @NonNls @NotNull String attributes) {
+    return String.format("<%s %s>%s</%s>", tagWord, attributes, text, tagWord);
+  }
+
   public static boolean isWrappedInHtml(@NotNull String tooltip) {
     return StringUtil.startsWithIgnoreCase(tooltip, HTML_START) &&
            StringUtil.endsWithIgnoreCase(tooltip, HTML_END);
   }
 
-  @NotNull
-  public static String stripHtml(@NotNull String toolTip) {
+  public static @NotNull String stripHtml(@NotNull String toolTip) {
     toolTip = StringUtil.trimStart(toolTip, HTML_START);
     toolTip = StringUtil.trimStart(toolTip, BODY_START);
     toolTip = StringUtil.trimEnd(toolTip, HTML_END);
@@ -149,8 +149,7 @@ public class XmlStringUtil {
    * Converts {@code text} to a string which can be used inside an HTML document: if it's already an HTML text the root html/body tags will
    * be stripped, if it's a plain text special characters will be escaped
    */
-  @NotNull
-  public static String convertToHtmlContent(@NotNull String text) {
+  public static @NotNull String convertToHtmlContent(@NotNull String text) {
     return isWrappedInHtml(text) ? stripHtml(text) : escapeString(text);
   }
 
@@ -162,8 +161,7 @@ public class XmlStringUtil {
    * @see <a href="https://www.w3.org/International/questions/qa-controls">https://www.w3.org/International/questions/qa-controls</a>
    * @see Verifier#isXMLCharacter(int)
    */
-  @NotNull
-  public static String escapeIllegalXmlChars(@NotNull String text) {
+  public static @NotNull String escapeIllegalXmlChars(@NotNull String text) {
     StringBuilder b = null;
     int lastPos = 0;
     for (int i = 0; i < text.length(); i++) {
@@ -186,8 +184,7 @@ public class XmlStringUtil {
   /**
    * @see XmlStringUtil#escapeIllegalXmlChars(String)
    */
-  @NotNull
-  public static String unescapeIllegalXmlChars(@NotNull String text) {
+  public static @NotNull String unescapeIllegalXmlChars(@NotNull String text) {
     StringBuilder b = null;
     int lastPos = 0;
     for (int i = 0; i < text.length(); i++) {
@@ -204,7 +201,7 @@ public class XmlStringUtil {
           }
           if (b == null) b = new StringBuilder(text.length());
           b.append(text, lastPos, i);
-          b.append((char) charCode);
+          b.append((char)charCode);
           //noinspection AssignmentToForLoopParameter
           i = numberEnd;
           lastPos = i + 1;

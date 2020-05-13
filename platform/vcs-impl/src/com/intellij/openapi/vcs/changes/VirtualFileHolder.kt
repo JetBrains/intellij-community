@@ -1,28 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
-import java.util.*
 
-class VirtualFileHolder(private val myProject: Project, private val myType: FileHolder.HolderType) : FileHolder {
-  private val myFiles = HashSet<VirtualFile>()
+class VirtualFileHolder(private val myProject: Project) : FileHolder {
+  private val myFiles = hashSetOf<VirtualFile>()
 
-  // todo track number of copies made
-  val files: List<VirtualFile>
-    get() = ArrayList(myFiles)
-
-  override fun getType(): FileHolder.HolderType {
-    return myType
-  }
-
-  override fun notifyVcsStarted(vcs: AbstractVcs) {}
+  val files: List<VirtualFile> get() = myFiles.toList()
 
   override fun cleanAll() = myFiles.clear()
-
   override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = cleanScope(myFiles, scope)
 
   fun addFile(file: VirtualFile) {
@@ -33,27 +22,23 @@ class VirtualFileHolder(private val myProject: Project, private val myType: File
     myFiles.remove(file)
   }
 
-  override fun copy(): VirtualFileHolder {
-    val copyHolder = VirtualFileHolder(myProject, myType)
-    copyHolder.myFiles.addAll(myFiles)
-    return copyHolder
+  override fun copy(): VirtualFileHolder =
+    VirtualFileHolder(myProject).also {
+      it.myFiles.addAll(myFiles)
+    }
+
+  fun containsFile(file: VirtualFile): Boolean = file in myFiles
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as VirtualFileHolder
+
+    return myFiles == other.myFiles
   }
 
-  fun containsFile(file: VirtualFile): Boolean {
-    return myFiles.contains(file)
-  }
-
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o == null || javaClass != o.javaClass) return false
-
-    val that = (o as? VirtualFileHolder?) ?: return false
-
-    return myFiles == that.myFiles
-
-  }
-
-  override fun hashCode() = myFiles.hashCode()
+  override fun hashCode(): Int = myFiles.hashCode()
 
   companion object {
 
@@ -100,8 +85,6 @@ class VirtualFileHolder(private val myProject: Project, private val myType: File
       }
     }
 
-    private fun fileDropped(file: VirtualFile): Boolean {
-      return !file.isValid
-    }
+    private fun fileDropped(file: VirtualFile): Boolean = !file.isValid
   }
 }

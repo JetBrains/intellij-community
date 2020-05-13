@@ -38,7 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class BasicDomElementComponent<T extends DomElement> extends AbstractDomElementComponent<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ui.editors.BasicDomElementComponent");
+  private static final Logger LOG = Logger.getInstance(BasicDomElementComponent.class);
   private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<>();
 
   public BasicDomElementComponent(T domElement) {

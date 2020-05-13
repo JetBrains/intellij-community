@@ -24,8 +24,8 @@ public class TextDiffProviderBase implements TextDiffProvider {
   public TextDiffProviderBase(@NotNull TextDiffSettings settings,
                               @NotNull Runnable rediff,
                               @NotNull Disposable disposable,
-                              @NotNull IgnorePolicy[] ignorePolicies,
-                              @NotNull HighlightPolicy[] highlightPolicies) {
+                              IgnorePolicy @NotNull [] ignorePolicies,
+                              HighlightPolicy @NotNull [] highlightPolicies) {
     myIgnorePolicySettingAction = new MyIgnorePolicySettingAction(settings, ignorePolicies);
     myHighlightPolicySettingAction = new MyHighlightPolicySettingAction(settings, highlightPolicies);
     settings.addListener(new MyListener(rediff), disposable);
@@ -72,7 +72,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
 
   private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
     MyIgnorePolicySettingAction(@NotNull TextDiffSettings settings,
-                                       @NotNull IgnorePolicy[] ignorePolicies) {
+                                       IgnorePolicy @NotNull [] ignorePolicies) {
       super(settings, ignorePolicies);
     }
 
@@ -85,7 +85,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
 
   private class MyHighlightPolicySettingAction extends HighlightPolicySettingAction {
     MyHighlightPolicySettingAction(@NotNull TextDiffSettings settings,
-                                          @NotNull HighlightPolicy[] highlightPolicies) {
+                                          HighlightPolicy @NotNull [] highlightPolicies) {
       super(settings, highlightPolicies);
     }
 
@@ -96,7 +96,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
     }
   }
 
-  private static class MyListener implements TextDiffSettings.Listener {
+  private static class MyListener extends TextDiffSettings.Listener.Adapter {
     @NotNull private final Runnable myRediff;
 
     MyListener(@NotNull Runnable rediff) {

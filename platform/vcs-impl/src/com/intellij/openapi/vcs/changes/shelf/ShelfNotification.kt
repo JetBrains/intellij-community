@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.shelf
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.xml.util.XmlStringUtil
 
@@ -11,6 +12,7 @@ open class ShelfNotification(groupDisplayId: String,
                              content: String,
                              type: NotificationType) : Notification(groupDisplayId, title, content, type)
 
-class ShelfDeleteNotification(content: String) : ShelfNotification(VcsNotifier.STANDARD_NOTIFICATION.displayId, "Shelf Deletion",
+class ShelfDeleteNotification(content: String) : ShelfNotification(VcsNotifier.STANDARD_NOTIFICATION.displayId,
+                                                                   VcsBundle.message("shelve.deletion.title"),
                                                                    XmlStringUtil.wrapInHtml(content),
                                                                    NotificationType.INFORMATION)

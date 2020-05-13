@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
@@ -55,7 +55,7 @@ public class JBMacMessages extends MacMessagesEmulation {
   @Override
   public int showMessageDialog(@NotNull String title,
                                String message,
-                               @NotNull String[] buttons,
+                               String @NotNull [] buttons,
                                boolean errorStyle,
                                @Nullable Window window,
                                int defaultOptionIndex,
@@ -109,10 +109,14 @@ public class JBMacMessages extends MacMessagesEmulation {
 
     if (_window == null) {
       // Looks like ide lost focus, let's ask about the last focused component
-      focusOwner = ideFocusManager.getLastFocusedFor(ideFocusManager.getLastFocusedFrame());
+      focusOwner = ideFocusManager.getLastFocusedFor(ideFocusManager.getLastFocusedIdeWindow());
       if (focusOwner != null) {
         _window = SwingUtilities.getWindowAncestor(focusOwner);
       }
+    }
+
+    if (_window == null) {
+      _window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     }
 
     if (_window == null) {

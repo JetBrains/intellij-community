@@ -2,6 +2,7 @@
 
 package com.intellij.ui.debugger;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -92,9 +93,8 @@ public class UiDebugger extends JPanel implements Disposable {
         return result;
       }
 
-      @NotNull
       @Override
-      protected Action[] createActions() {
+      protected Action @NotNull [] createActions() {
         return new Action[] {new AbstractAction("Close") {
           @Override
           public void actionPerformed(ActionEvent e) {
@@ -104,7 +104,7 @@ public class UiDebugger extends JPanel implements Disposable {
       }
     };
     myDialog.setModal(false);
-    myDialog.setTitle("UI Debugger");
+    myDialog.setTitle(LangBundle.message("dialog.title.ui.debugger"));
     myDialog.setResizable(true);
 
     myDialog.show();

@@ -15,15 +15,21 @@
  */
 package com.intellij.ide.ui.search;
 
+import com.intellij.openapi.util.NlsContexts.Label;
+
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class BooleanOptionDescription extends OptionDescription {
-  public BooleanOptionDescription(String option, String configurableId) {
+  public BooleanOptionDescription(@Label String option, String configurableId) {
     super(option, configurableId, null, null);
   }
 
   public abstract boolean isOptionEnabled();
 
   public abstract void setOptionState(boolean enabled);
+
+  public interface RequiresRebuild {
+
+  }
 }

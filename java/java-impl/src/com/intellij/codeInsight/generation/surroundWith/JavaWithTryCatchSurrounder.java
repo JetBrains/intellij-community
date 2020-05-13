@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -37,7 +37,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
 
   @Override
   public String getTemplateDescription() {
-    return CodeInsightBundle.message("surround.with.try.catch.template");
+    return JavaBundle.message("surround.with.try.catch.template");
   }
 
   @Override
@@ -88,8 +88,8 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
         catchSection = factory.createCatchSection(exception, name, tryBlock);
       }
       catch (IncorrectOperationException e) {
-        Messages.showErrorDialog(project, CodeInsightBundle.message("surround.with.try.catch.incorrect.template.message"),
-                                 CodeInsightBundle.message("surround.with.try.catch.incorrect.template.title"));
+        Messages.showErrorDialog(project, JavaBundle.message("surround.with.try.catch.incorrect.template.message"),
+                                 JavaBundle.message("surround.with.try.catch.incorrect.template.title"));
         return null;
       }
       catchSection = (PsiCatchSection)catchSections[i].replace(catchSection);

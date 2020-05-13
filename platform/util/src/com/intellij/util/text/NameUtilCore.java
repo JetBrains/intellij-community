@@ -16,8 +16,7 @@ public class NameUtilCore {
    * @param name the identifier to split.
    * @return the array of strings into which the identifier has been split.
    */
-  @NotNull
-  public static String[] splitNameIntoWords(@NotNull String name) {
+  public static String @NotNull [] splitNameIntoWords(@NotNull String name) {
     final String[] underlineDelimited = name.split("_");
     List<String> result = new ArrayList<>();
     for (String word : underlineDelimited) {
@@ -86,8 +85,7 @@ public class NameUtilCore {
            (text.length() == i + 2 || isWordStart(text, i + 2));
   }
 
-  @NotNull
-  public static String[] nameToWords(@NotNull String name) {
+  public static String @NotNull [] nameToWords(@NotNull String name) {
     List<String> array = new ArrayList<>();
     int index = 0;
 

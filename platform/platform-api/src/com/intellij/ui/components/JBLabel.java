@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
@@ -48,22 +50,22 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super(image);
   }
 
-  public JBLabel(@NotNull String text) {
+  public JBLabel(@NotNull @NlsContexts.Label String text) {
     super(text);
   }
 
-  public JBLabel(@NotNull String text, @NotNull UIUtil.ComponentStyle componentStyle) {
+  public JBLabel(@NotNull @NlsContexts.Label String text, @NotNull UIUtil.ComponentStyle componentStyle) {
     super(text);
     setComponentStyle(componentStyle);
   }
 
-  public JBLabel(@NotNull String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
+  public JBLabel(@NotNull @NlsContexts.Label String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
     super(text);
     setComponentStyle(componentStyle);
     setFontColor(fontColor);
   }
 
-  public JBLabel(@NotNull String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public JBLabel(@NotNull @NlsContexts.Label String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, horizontalAlignment);
   }
 
@@ -71,7 +73,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super(image, horizontalAlignment);
   }
 
-  public JBLabel(@NotNull String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public JBLabel(@NotNull @NlsContexts.Label String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, icon, horizontalAlignment);
   }
 
@@ -145,7 +147,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   @Override
-  public void setText(String text) {
+  public void setText(@NlsContexts.Label String text) {
     super.setText(text);
     if (myEditorPane != null) {
       myEditorPane.setText(getText());
@@ -165,12 +167,12 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     }
   }
 
-  public void setIconWithAligment(Icon icon, int horizontalAligment, int verticalAligment) {
+  public void setIconWithAlignment(Icon icon, int horizontalAlignment, int verticalAlignment) {
     super.setIcon(icon);
     if (myIconLabel != null) {
       myIconLabel.setIcon(icon);
-      myIconLabel.setHorizontalAlignment(horizontalAligment);
-      myIconLabel.setVerticalAlignment(verticalAligment);
+      myIconLabel.setHorizontalAlignment(horizontalAlignment);
+      myIconLabel.setVerticalAlignment(verticalAlignment);
       updateLayout();
       updateTextAlignment();
     }
@@ -305,7 +307,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
         myEditorPane.addHyperlinkListener(createHyperlinkListener());
-        UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
+        ComponentUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
         updateStyle(myEditorPane);

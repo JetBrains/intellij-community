@@ -59,8 +59,8 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
     else {
       myDocument = new TextComponentDocument(textComponent);
     }
-    myCaretModel = new TextComponentCaretModel(textComponent, this);
-    mySelectionModel = new TextComponentSelectionModel(textComponent, this);
+    myCaretModel = new TextComponentCaretModel(this);
+    mySelectionModel = new TextComponentSelectionModel(this);
     myScrollingModel = new TextComponentScrollingModel(textComponent);
     mySoftWrapModel = new TextComponentSoftWrapModel();
     myFoldingModel = new TextComponentFoldingModel();
@@ -85,7 +85,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
 
   @Override
   @NotNull
-  public JComponent getContentComponent() {
+  public JTextComponent getContentComponent() {
     return myTextComponent;
   }
 

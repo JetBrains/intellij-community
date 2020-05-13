@@ -4,6 +4,7 @@ package com.intellij.core;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -36,10 +37,8 @@ import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
@@ -51,8 +50,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
-import java.io.File;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -65,6 +64,7 @@ public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
   protected final MockApplication myApplication;
   private final CoreLocalFileSystem myLocalFileSystem;
+  @NotNull
   protected final VirtualFileSystem myJarFileSystem;
   private final VirtualFileSystem myJrtFileSystem;
   @NotNull private final Disposable myParentDisposable;
@@ -78,7 +78,7 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
-    PluginManagerCore.dontLoadDisabledPlugins();
+    DisabledPluginsState.dontLoadDisabledPlugins();
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
@@ -110,7 +110,6 @@ public class CoreApplicationEnvironment {
     registerApplicationService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
     registerApplicationService(StubTreeLoader.class, new CoreStubTreeLoader());
     registerApplicationService(PsiReferenceService.class, new PsiReferenceServiceImpl());
-    registerApplicationService(MetaDataRegistrar.class, new MetaRegistry());
     registerApplicationService(ProgressManager.class, createProgressIndicatorProvider());
     registerApplicationService(JobLauncher.class, createJobLauncher());
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
@@ -263,7 +262,7 @@ public class CoreApplicationEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
   }
 
-  public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
+  public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     PluginManagerCore.registerExtensionPointAndExtensions(pluginRoot, fileName, area);
   }
 

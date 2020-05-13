@@ -21,7 +21,6 @@ import org.jetbrains.jps.model.JpsModel;
 
 /**
  * @see BuildTargetType#createLoader(JpsModel)
- * @author nik
  */
 public abstract class BuildTargetLoader<T extends BuildTarget<?>> {
   /**

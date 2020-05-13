@@ -23,6 +23,7 @@ import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
@@ -90,7 +91,7 @@ public final class PyExtractSuperclassHelper {
     if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
       PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
     }
-    PyClassRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
+    PyPsiRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
 
     final RefactoringEventData afterData = new RefactoringEventData();
     afterData.addElement(newClass);
@@ -146,7 +147,7 @@ public final class PyExtractSuperclassHelper {
       psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON27, PsiWhiteSpace.class, "\n\n"));
     }
     newClass = (PyClass)psiFile.add(newClass);
-    PyClassRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
+    PyPsiRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
     return newClass;
   }
 

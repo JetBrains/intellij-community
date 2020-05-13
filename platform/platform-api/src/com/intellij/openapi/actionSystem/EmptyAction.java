@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,8 @@ public final class EmptyAction extends AnAction {
     myEnabled = enabled;
   }
 
-  public EmptyAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
-                     @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description, @Nullable Icon icon) {
+  public EmptyAction(@Nullable @NlsActions.ActionText String text,
+                     @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
@@ -82,7 +83,7 @@ public final class EmptyAction extends AnAction {
            new MyDelegatingAction(action);
   }
 
-  public static class MyDelegatingAction extends AnAction {
+  public static class MyDelegatingAction extends AnAction implements ActionWithDelegate<AnAction> {
     @NotNull private final AnAction myDelegate;
 
     public MyDelegatingAction(@NotNull AnAction action) {
@@ -115,6 +116,12 @@ public final class EmptyAction extends AnAction {
     public boolean isInInjectedContext() {
       return myDelegate.isInInjectedContext();
     }
+
+    @NotNull
+    @Override
+    public AnAction getDelegate() {
+      return myDelegate;
+    }
   }
 
   public static class MyDelegatingActionGroup extends ActionGroup {
@@ -136,9 +143,8 @@ public final class EmptyAction extends AnAction {
       return myDelegate.isPopup();
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
       return myDelegate.getChildren(e);
     }
 

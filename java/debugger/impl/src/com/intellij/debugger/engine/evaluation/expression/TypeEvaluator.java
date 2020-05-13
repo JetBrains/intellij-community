@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -47,7 +47,7 @@ public class TypeEvaluator implements Evaluator {
     String typeName = myTypeName.getName(debugProcess);
     ReferenceType type = debugProcess.findClass(context, typeName, classLoader);
     if (type == null) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.class.not.loaded", typeName));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.class.not.loaded", typeName));
     }
     myLastClassLoader = new WeakReference<>(classLoader);
     myLastResult = new WeakReference<>(type);

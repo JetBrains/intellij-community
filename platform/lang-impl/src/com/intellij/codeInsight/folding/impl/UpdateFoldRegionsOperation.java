@@ -136,8 +136,6 @@ class UpdateFoldRegionsOperation implements Runnable {
                                                         descriptor.isNonExpandable());
       if (region == null) continue;
 
-      if (descriptor.isNonExpandable()) region.putUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
-
       PsiElement psi = descriptor.getElement().getPsi();
 
       if (psi == null || !psi.isValid() || !myFile.isValid()) {
@@ -154,14 +152,18 @@ class UpdateFoldRegionsOperation implements Runnable {
       info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
       newRegions.add(region);
 
-      boolean expandStatus = !descriptor.isNonExpandable() && shouldExpandNewRegion(range, rangeToExpandStatusMap, 
-                                                                                    regionInfo.collapsedByDefault);
-      if (group == null) {
-        shouldExpand.put(region, expandStatus);
+      if (descriptor.isNonExpandable()) {
+        region.putUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
       }
       else {
-        final Boolean alreadyExpanded = groupExpand.get(group);
-        groupExpand.put(group, alreadyExpanded == null ? expandStatus : alreadyExpanded.booleanValue() || expandStatus);
+        boolean expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault);
+        if (group == null) {
+          shouldExpand.put(region, expandStatus);
+        }
+        else {
+          final Boolean alreadyExpanded = groupExpand.get(group);
+          groupExpand.put(group, alreadyExpanded == null ? expandStatus : alreadyExpanded.booleanValue() || expandStatus);
+        }
       }
     }
 
@@ -271,11 +273,11 @@ class UpdateFoldRegionsOperation implements Runnable {
         FoldingDescriptor descriptor = regionInfo.descriptor;
         TextRange range = descriptor.getRange();
         if (TextRange.areSegmentsEqual(region, range)) {
-          if (!region.getPlaceholderText().equals(descriptor.getPlaceholderText()) || range.getLength() < 2) {
+          if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
+            rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
             return true;
           }
-          else if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
-            rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
+          else if (!region.getPlaceholderText().equals(descriptor.getPlaceholderText()) || range.getLength() < 2) {
             return true;
           }
           else {

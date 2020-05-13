@@ -52,7 +52,7 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   @Override
   @Nullable
   public PyExpression getDefaultValue() {
-    ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
     }
@@ -84,9 +84,8 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   @Override
-  @NotNull
-  public PyParameter[] getContents() {
-    return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
+  public PyParameter @NotNull [] getContents() {
+    return getStubOrPsiChildren(PythonDialectsTokenSetProvider.getInstance().getParameterTokens(), new PyParameter[0]);
   }
 
   @Override

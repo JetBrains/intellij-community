@@ -26,7 +26,7 @@ class UnitBitSet {
   final byte[] b;
   private final Alphabet alpha;
 
-  UnitBitSet(@NotNull byte[] indices, @NotNull Alphabet alphabet) {
+  UnitBitSet(byte @NotNull [] indices, @NotNull Alphabet alphabet) {
     b = indices;
     alpha = alphabet;
   }
@@ -57,8 +57,7 @@ class UnitBitSet {
     return s.toString();
   }
 
-  @NotNull
-  public byte[] pack() {
+  public byte @NotNull [] pack() {
     int meaningfulBits = 32 - Integer.numberOfLeadingZeros(alpha.getLastIndexUsed());
     assert meaningfulBits <= 8 && meaningfulBits >= 1 : meaningfulBits + ": "+alpha;
     byte[] result = new byte[(b.length * meaningfulBits + 7) / 8];
@@ -84,12 +83,12 @@ class UnitBitSet {
   }
 
   @NotNull
-  public static String decode(@NotNull byte[] packed, @NotNull Alphabet alphabet) {
+  public static String decode(byte @NotNull [] packed, @NotNull Alphabet alphabet) {
     return decode(packed, 0, packed.length, alphabet);
   }
 
   @NotNull
-  public static String decode(@NotNull byte[] packed, int from, int to, @NotNull Alphabet alphabet) {
+  public static String decode(byte @NotNull [] packed, int from, int to, @NotNull Alphabet alphabet) {
     int meaningfulBits = 32 - Integer.numberOfLeadingZeros(alphabet.getLastIndexUsed());
     assert meaningfulBits <= 8 : alphabet;
 

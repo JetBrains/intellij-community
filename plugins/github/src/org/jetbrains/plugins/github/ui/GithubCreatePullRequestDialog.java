@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.GithubCreatePullRequestWorker;
 import org.jetbrains.plugins.github.api.GHRepositoryPath;
+import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubProjectSettings;
 import org.jetbrains.plugins.github.util.GithubSettings;
@@ -73,8 +74,9 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
               break;
             case UNSURE:
               createRemote = GithubNotifications.showYesNoDialog(project,
-                                                                 "Can't Find Remote",
-                                                                 "Configure remote for '" + fork.getPath().getOwner() + "'?",
+                                                                 GithubBundle.message("pull.request.remote.not.found"),
+                                                                 GithubBundle
+                                                                   .message("pull.request.configure.remote.for", fork.getPath().getOwner()),
                                                                  ourDoNotAskOption);
               break;
           }
@@ -127,7 +129,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
       myPanel.setSelectedBranch(defaultBranch);
     }
 
-    setTitle("Create Pull Request - " + myWorker.getCurrentBranch());
+    setTitle(GithubBundle.message("pull.request.create.dialog.title", myWorker.getCurrentBranch()));
     init();
   }
 
@@ -181,7 +183,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   @Override
   protected ValidationInfo doValidate() {
     if (StringUtil.isEmptyOrSpaces(getRequestTitle())) {
-      return new ValidationInfo("Title can't be empty'", myPanel.getTitleTextField());
+      return new ValidationInfo(GithubBundle.message("pull.request.validation.empty.title"), myPanel.getTitleTextField());
     }
     return null;
   }

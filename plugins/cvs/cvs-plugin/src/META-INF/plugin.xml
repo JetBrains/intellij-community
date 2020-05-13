@@ -2,7 +2,7 @@
   <name>CVS</name>
   <id>CVS</id>
   <vendor>JetBrains</vendor>
-  <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
+  <resource-bundle>messages.CvsBundle</resource-bundle>
   <category>VCS Integration</category>
   <description>
       <![CDATA[

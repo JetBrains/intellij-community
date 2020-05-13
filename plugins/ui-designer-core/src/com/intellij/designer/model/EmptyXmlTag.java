@@ -59,9 +59,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public XmlAttribute[] getAttributes() {
+  public XmlAttribute @NotNull [] getAttributes() {
     return XmlAttribute.EMPTY_ARRAY;
   }
 
@@ -108,21 +107,18 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] getSubTags() {
+  public XmlTag @NotNull [] getSubTags() {
     return XmlTag.EMPTY;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] findSubTags(@NonNls String qname) {
+  public XmlTag @NotNull [] findSubTags(@NonNls String qname) {
     return XmlTag.EMPTY;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace) {
+  public XmlTag @NotNull [] findSubTags(@NonNls String localName, @NonNls String namespace) {
     return XmlTag.EMPTY;
   }
 
@@ -168,15 +164,13 @@ public class EmptyXmlTag implements XmlTag {
   @Override
   public XmlTagValue getValue() {
     return new XmlTagValue() {
-      @NotNull
       @Override
-      public XmlTagChild[] getChildren() {
+      public XmlTagChild @NotNull [] getChildren() {
         return XmlTagChild.EMPTY_ARRAY;
       }
 
-      @NotNull
       @Override
-      public XmlText[] getTextElements() {
+      public XmlText @NotNull [] getTextElements() {
         return XmlText.EMPTY_ARRAY;
       }
 
@@ -270,9 +264,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -341,9 +334,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return new char[0];
   }
 
@@ -458,9 +450,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return PsiReference.EMPTY_ARRAY;
   }
 

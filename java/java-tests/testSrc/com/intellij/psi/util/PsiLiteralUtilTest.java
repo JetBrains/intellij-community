@@ -13,9 +13,9 @@ public class PsiLiteralUtilTest {
 
   @Test
   public void testEscapeTextBlockCharacters() {
-    assertEquals("foo\\040\\040\n", PsiLiteralUtil.escapeTextBlockCharacters("foo  \\n"));
+    assertEquals("foo \\s\n", PsiLiteralUtil.escapeTextBlockCharacters("foo  \\n"));
     // escapes after 'bar' should be escaped since it's the last line in a text block
-    assertEquals("foo\\040\\040\nbar\\040\\040", PsiLiteralUtil.escapeTextBlockCharacters("foo  \\nbar  "));
+    assertEquals("foo \\s\nbar \\s", PsiLiteralUtil.escapeTextBlockCharacters("foo  \\nbar  "));
 
     assertEquals("", PsiLiteralUtil.escapeTextBlockCharacters(""));
     // last in line quote should be escaped

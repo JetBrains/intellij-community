@@ -19,9 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public interface ProjectBuilderLogger {
   boolean isEnabled();
 

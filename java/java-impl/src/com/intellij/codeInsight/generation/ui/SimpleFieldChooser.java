@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +53,7 @@ public class SimpleFieldChooser extends DialogWrapper {
     myList.setCellRenderer(new MyListCellRenderer());
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (myList.getSelectedValues().length > 0) {
           doOKAction();
           return true;

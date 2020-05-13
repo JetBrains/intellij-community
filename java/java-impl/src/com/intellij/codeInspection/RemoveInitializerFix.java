@@ -19,6 +19,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -37,7 +38,7 @@ public class RemoveInitializerFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.unused.assignment.remove.quickfix");
+    return JavaBundle.message("inspection.unused.assignment.remove.quickfix");
   }
 
   @Override

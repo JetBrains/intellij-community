@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
@@ -16,7 +17,7 @@ import java.util.regex.Pattern;
  */
 public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
-  private static final Logger LOG = Logger.getInstance("#org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler");
+  private static final Logger LOG = Logger.getInstance(HgDeleteModifyPromptHandler.class);
 
   private static final Pattern LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN = Pattern.compile(
     "remote\\schanged(.+)which\\slocal\\sdeleted\\s.+");
@@ -26,7 +27,7 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
   @Override
   public HgPromptChoice promptUser(@NotNull final String message,
-                                   @NotNull final HgPromptChoice[] choices,
+                                   final HgPromptChoice @NotNull [] choices,
                                    @NotNull final HgPromptChoice defaultChoice) {
 
     Matcher localDelMatcher = LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN.matcher(message);
@@ -35,13 +36,11 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
     final String modifiedMessage;
     if (localDelMatcher.matches()) {
       filename = localDelMatcher.group(1);
-      modifiedMessage =
-        "File " + filename + " is deleted locally, but modified remotely. Do you want to keep the modified version or remove the file?";
+      modifiedMessage = HgBundle.message("hg4idea.delete.modify.file.deleted.locally", filename);
     }
     else if (localModifyMatcher.matches()) {
       filename = localModifyMatcher.group(1);
-      modifiedMessage =
-        "File " + filename + " is deleted remotely, but modified locally. Do you want to keep the modified version or remove the file?";
+      modifiedMessage = HgBundle.message("hg4idea.delete.modify.file.deleted.remotely", filename);
     }
     else {
       modifiedMessage = message;
@@ -55,7 +54,7 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
             choicePresentationArray[i] = choices[i].toString();
           }
           chosen[0] = Messages
-            .showDialog(modifiedMessage, "Delete-Modify Conflict",
+            .showDialog(modifiedMessage, HgBundle.message("hg4idea.delete.modify.conflict.title"),
                         choicePresentationArray, defaultChoice.getChosenIndex(),
                         Messages.getQuestionIcon());
         });

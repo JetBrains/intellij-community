@@ -9,6 +9,7 @@ import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EditableTreeModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,9 +64,10 @@ class TreeToolbarDecorator extends ToolbarDecorator {
         myTree.stopEditing();
         Object element;
         if (model instanceof DefaultTreeModel && myProducer != null) {
-           element = myProducer.createElement();
+          element = myProducer.createElement();
           if (element == null) return;
-        } else {
+        }
+        else {
           element = null;
         }
         DefaultMutableTreeNode parent = selected;
@@ -104,12 +106,12 @@ class TreeToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  public ToolbarDecorator initPosition() {
+  public @NotNull ToolbarDecorator initPosition() {
     return setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
   }
 
   @Override
-  protected JComponent getComponent() {
+  protected @NotNull JComponent getComponent() {
     return myTree;
   }
 
@@ -119,7 +121,7 @@ class TreeToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  public ToolbarDecorator setVisibleRowCount(int rowCount) {
+  public @NotNull ToolbarDecorator setVisibleRowCount(int rowCount) {
     myTree.setVisibleRowCount(rowCount);
     return this;
   }

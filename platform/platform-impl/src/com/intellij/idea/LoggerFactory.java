@@ -1,13 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.CharSequenceReader;
 import org.apache.log4j.*;
 import org.apache.log4j.varia.LevelRangeFilter;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -18,74 +15,63 @@ import org.jdom.output.DOMOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Element;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
-public class LoggerFactory implements Logger.Factory {
+public final class LoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
 
-  private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
-  @SuppressWarnings("SpellCheckingInspection")
-  private static final String DOCUMENT_BUILDER_FACTORY_IMPL = "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl";
-
-  LoggerFactory() {
-    try {
-      init();
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  @NotNull
-  @Override
-  public Logger getLoggerInstance(@NotNull String name) {
-    return new IdeaLogger(org.apache.log4j.Logger.getLogger(name));
-  }
-
-  private static void init() throws Exception {
+  LoggerFactory() throws Exception {
     System.setProperty("log4j.defaultInitOverride", "true");
 
-    File xmlFile = PathManager.getLogFile();
-    if (xmlFile != null) {
-      loadFromXmlFile(xmlFile);
+    String configPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
+    if (configPath != null) {
+      Path configFile = Paths.get(configPath);
+      if (!configFile.isAbsolute()) {
+        configFile = Paths.get(PathManager.getBinPath()).resolve(configPath);  // look from the 'bin/' directory where log.xml was used to be
+      }
+      if (Files.exists(configFile)) {
+        configureFromXmlFile(configFile);
+        return;
+      }
     }
-    else {
-      configureProgrammatically();
-    }
+
+    configureProgrammatically();
   }
 
-  private static void loadFromXmlFile(File xmlFile) throws Exception {
-    String text = FileUtilRt.loadFile(xmlFile);
-    text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
-    text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
-    text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(PathManager.getLogPath(), "\\", "\\\\"));
+  @Override
+  public @NotNull Logger getLoggerInstance(@NotNull String name) {
+    return new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
+  }
 
-    File file = new File(PathManager.getLogPath());
-    if (!file.mkdirs() && !file.exists()) {
-      System.err.println("Cannot create log directory: " + file);
-    }
+  private static void configureFromXmlFile(@NotNull Path xmlFile) throws Exception {
+    String text = new String(Files.readAllBytes(xmlFile), StandardCharsets.UTF_8);
+    text = text.replace(SYSTEM_MACRO, PathManager.getSystemPath().replace("\\", "\\\\"));
+    text = text.replace(APPLICATION_MACRO, PathManager.getHomePath().replace("\\", "\\\\"));
+    text = text.replace(LOG_DIR_MACRO, PathManager.getLogPath().replace("\\", "\\\\"));
 
-    // Jdom is used instead of XML DOM because of https://youtrack.jetbrains.com/issue/IDEA-173468
-    // DOMConfigurator really wants Document
-    @SuppressWarnings("deprecation")
-    Document document = JDOMUtil.loadDocument(new CharSequenceReader(text));
+    // JDOM is used instead of XML DOM because of IDEA-173468 (`DOMConfigurator` really wants `Document`)
+    @SuppressWarnings("deprecation") Document document = JDOMUtil.loadDocument(new StringReader(text));
     Element element = new DOMOutputter(new JAXPDOMAdapter() {
       @Override
       public org.w3c.dom.Document createDocument() throws JDOMException {
-        String property = System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, DOCUMENT_BUILDER_FACTORY_IMPL);
+        String key = "javax.xml.parsers.DocumentBuilderFactory";
+        @SuppressWarnings("SpellCheckingInspection") String property = System.setProperty(key, "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
         try {
           return super.createDocument();
         }
         finally {
           if (property == null) {
-            System.clearProperty(DOCUMENT_BUILDER_FACTORY_KEY);
+            System.clearProperty(key);
           }
           else {
-            System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, property);
+            System.setProperty(key, property);
           }
         }
       }
@@ -100,8 +86,8 @@ public class LoggerFactory implements Logger.Factory {
 
     PatternLayout layout = new PatternLayout("%d [%7r] %6p - %30.30c - %m \n");
 
-    RollingFileAppender ideaLog = new RollingFileAppender(layout, PathManager.getLogPath() + "/" + "idea.log", true);
-    ideaLog.setEncoding("UTF-8");
+    RollingFileAppender ideaLog = new RollingFileAppender(layout, PathManager.getLogPath() + "/idea.log", true);
+    ideaLog.setEncoding(StandardCharsets.UTF_8.name());
     ideaLog.setMaxBackupIndex(12);
     ideaLog.setMaximumFileSize(10_000_000);
     root.addAppender(ideaLog);

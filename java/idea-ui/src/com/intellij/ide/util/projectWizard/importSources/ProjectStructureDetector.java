@@ -38,8 +38,6 @@ import java.util.List;
  * &nbsp;&nbsp;&lt;projectStructureDetector implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- *
- * @author nik
  */
 public abstract class ProjectStructureDetector {
   public static final ExtensionPointName<ProjectStructureDetector> EP_NAME = ExtensionPointName.create("com.intellij.projectStructureDetector");
@@ -58,7 +56,7 @@ public abstract class ProjectStructureDetector {
    *   </li>
    */
   @NotNull
-  public abstract DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
+  public abstract DirectoryProcessingResult detectRoots(@NotNull File dir, File @NotNull [] children, @NotNull File base,
                                                         @NotNull List<DetectedProjectRoot> result);
 
   /**

@@ -53,8 +53,9 @@ public abstract class VariablesProcessor implements PsiScopeProcessor, ElementCl
 
   @Override
   public final void handleEvent(@NotNull Event event, Object associated){
-    if(event == JavaScopeProcessorEvent.START_STATIC)
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStaticScopeFlag = true;
+    }
   }
 
   public int size(){

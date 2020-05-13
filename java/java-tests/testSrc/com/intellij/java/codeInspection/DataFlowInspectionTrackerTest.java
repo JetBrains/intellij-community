@@ -180,4 +180,6 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
   public void testEqualsNull() { doTest(); }
   public void testEnumCompare() { doTest(); }
   public void testMergeOnAnd() { doTest(); }
+  public void testPassedNotNull() { doTest(); }
+  public void testClassCheckInStream() { doTest(); }
 }

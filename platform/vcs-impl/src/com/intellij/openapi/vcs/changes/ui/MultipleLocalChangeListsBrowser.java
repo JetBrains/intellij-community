@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -54,6 +53,7 @@ import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY;
 import static com.intellij.util.containers.ContainerUtil.immutableSingletonList;
+import static com.intellij.util.containers.ContainerUtil.newUnmodifiableList;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
@@ -267,8 +267,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     if (myHasHiddenUnversioned) {
       myViewer.getEmptyText()
-        .setText("Unversioned files available. ")
-        .appendText("Show", SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
+        .setText(VcsBundle.message("status.text.unversioned.files.available"))
+        .appendText(VcsBundle.message("plugins.configurable.show"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
     }
     else {
       myViewer.getEmptyText()
@@ -281,8 +281,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Nullable
   @Override
   protected ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object entry) {
-    if (entry instanceof VirtualFile) {
-      return UnversionedDiffRequestProducer.create(myProject, (VirtualFile)entry);
+    if (entry instanceof FilePath) {
+      return UnversionedDiffRequestProducer.create(myProject, (FilePath)entry);
     }
     return super.getDiffRequestProducer(entry);
   }
@@ -291,7 +291,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   public Object getData(@NotNull String dataId) {
     if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
-      return VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG).userObjectsStream(FilePath.class);
+      return ChangesListView.getSelectedUnversionedFiles(myViewer);
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;
@@ -326,35 +326,35 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
   @NotNull
   @Override
-  public List<VirtualFile> getDisplayedUnversionedFiles() {
+  public List<FilePath> getDisplayedUnversionedFiles() {
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return ContainerUtil.mapNotNull(myUnversioned, FilePath::getVirtualFile);
+    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
 
-    return ContainerUtil.mapNotNull(treeModelData.userObjects(FilePath.class), FilePath::getVirtualFile);
+    return treeModelData.userObjects(FilePath.class);
   }
 
   @NotNull
   @Override
-  public List<VirtualFile> getSelectedUnversionedFiles() {
+  public List<FilePath> getSelectedUnversionedFiles() {
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return ContainerUtil.mapNotNull(myUnversioned, FilePath::getVirtualFile);
+    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
 
-    return ContainerUtil.mapNotNull(treeModelData.userObjects(FilePath.class), FilePath::getVirtualFile);
+    return treeModelData.userObjects(FilePath.class);
   }
 
   @NotNull
   @Override
-  public List<VirtualFile> getIncludedUnversionedFiles() {
+  public List<FilePath> getIncludedUnversionedFiles() {
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return ContainerUtil.mapNotNull(myUnversioned, FilePath::getVirtualFile);
+    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
 
-    return ContainerUtil.mapNotNull(treeModelData.userObjects(FilePath.class), FilePath::getVirtualFile);
+    return treeModelData.userObjects(FilePath.class);
   }
 
   private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {
@@ -428,7 +428,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
   private class ShowHideUnversionedFilesAction extends ToggleAction implements DumbAware {
     private ShowHideUnversionedFilesAction() {
-      super("Show Unversioned Files", null, AllIcons.Vcs.ShowUnversionedFiles);
+      super(VcsBundle.messagePointer("action.ToggleAction.text.show.unversioned.files"), Presentation.NULL_STRING,
+            AllIcons.Vcs.ShowUnversionedFiles);
     }
 
     @Override
@@ -444,7 +445,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
   private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction, DumbAware {
     ToggleChangeDiffAction() {
-      super(VcsBundle.message("commit.dialog.include.action.name"));
+      super(VcsBundle.messagePointer("commit.dialog.include.action.name"));
     }
 
     @NotNull

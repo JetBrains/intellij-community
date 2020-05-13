@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.ui;
 
 import com.intellij.CvsBundle;
@@ -17,13 +17,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.util.ui.ErrorTreeView;
@@ -52,7 +52,7 @@ public class CvsTabbedWindow implements Disposable {
 
     final ToolWindow toolWindow = getToolWindow();
     final ContentManager contentManager = toolWindow.getContentManager();
-    contentManager.addContentManagerListener(new ContentManagerAdapter() {
+    contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
         final JComponent component = event.getContent().getComponent();
@@ -85,7 +85,7 @@ public class CvsTabbedWindow implements Disposable {
 
   @NotNull
   private ToolWindow getToolWindow() {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
     return toolWindow;
   }
@@ -170,7 +170,7 @@ public class CvsTabbedWindow implements Disposable {
 
   private static class GlobalCvsSettingsAction extends AnAction {
     GlobalCvsSettingsAction() {
-      super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, AllIcons.Nodes.Cvs_global);
+      super(CvsBundle.messagePointer("configure.global.cvs.settings.action.name"), AllIcons.Nodes.Cvs_global);
     }
 
     @Override
@@ -181,7 +181,7 @@ public class CvsTabbedWindow implements Disposable {
 
   private class ReconfigureCvsRootAction extends AnAction {
     ReconfigureCvsRootAction() {
-      super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, AllIcons.Nodes.Cvs_roots);
+      super(CvsBundle.messagePointer("action.name.reconfigure.cvs.root"), AllIcons.Nodes.Cvs_roots);
     }
 
     @Override

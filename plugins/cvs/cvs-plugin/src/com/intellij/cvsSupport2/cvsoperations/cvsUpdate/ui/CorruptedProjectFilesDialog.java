@@ -38,7 +38,7 @@ import java.util.Collection;
 
 public class CorruptedProjectFilesDialog extends DialogWrapper {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui.CorruptedProjectFilesDialog");
+  private static final Logger LOG = Logger.getInstance(CorruptedProjectFilesDialog.class);
 
   private JLabel myMessageLabel;
   private JLabel myIconLabel;
@@ -76,8 +76,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{new SkipFile(), new GetFile(), new SkipAll(), new GetAll()
     //  , new VisualMerge()
     };

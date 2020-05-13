@@ -15,9 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<ModuleBuildTarget> {
   public static final JavaModuleBuildTargetType PRODUCTION = new JavaModuleBuildTargetType("java-production", false);
   public static final JavaModuleBuildTargetType TEST = new JavaModuleBuildTargetType("java-test", true);

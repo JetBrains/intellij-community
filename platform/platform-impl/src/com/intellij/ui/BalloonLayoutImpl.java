@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
+import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -51,6 +52,8 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   private final Runnable myCloseAll = () -> {
     for (Balloon balloon : new ArrayList<>(myBalloons)) {
+      BalloonLayoutData layoutData = myLayoutData.get(balloon);
+      NotificationCollector.getInstance().logNotificationBalloonClosedByUser(layoutData.id, layoutData.displayId, layoutData.groupId);
       remove(balloon, true);
     }
   };
@@ -272,7 +275,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
 
     ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
-    JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
+    JComponent layeredPane = pane != null ? pane.getLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
 
     doLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());

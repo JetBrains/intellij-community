@@ -8,6 +8,9 @@ public class SimplifiableIfStatementInspectionTest extends LightJavaInspectionTe
   public void testSimplifiableIfStatement() {
     doTest();
   }
+  public void testIfMayBeConditional() {
+    doTest();
+  }
 
   @Override
   protected InspectionProfileEntry getInspection() {

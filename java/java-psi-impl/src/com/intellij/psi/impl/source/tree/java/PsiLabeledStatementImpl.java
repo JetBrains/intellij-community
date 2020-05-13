@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiLabeledStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLabeledStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiLabeledStatementImpl.class);
 
   public PsiLabeledStatementImpl() {
     super(LABELED_STATEMENT);
@@ -102,7 +102,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
 
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    if (lastParent != null && lastParent.getParent() != this){
+    if (lastParent == null || lastParent.getParent() != this){
       PsiElement[] children = getChildren();
       for (PsiElement aChildren : children) {
         if (!aChildren.processDeclarations(processor, state, null, place)) {

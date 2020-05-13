@@ -39,6 +39,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   private static final char BACKSLASH = '\\';
   private static final char SLASH = '/';
+  private static class Holder {
   /**
    * The regular expression pattern that matches strings which are likely to
    * be date formats. <code>Pattern</font></b> instances are immutable, so
@@ -62,7 +63,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
   /**
    * All mimetypes, see http://www.iana.org/assignments/media-types/
    */
-  private static final Set<String> mimeTypes = new HashSet();
+  private static final Set<String> mimeTypes = new HashSet<>();
 
   static {
     for (ImageMediaType imageMediaType : ImageMediaType.values()) {
@@ -102,7 +103,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
   static {
     ContainerUtil.addAll(timeZoneIds, TimeZone.getAvailableIDs());
   }
-
+  }
   /**
    * @noinspection PublicField
    */
@@ -112,13 +113,6 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
   @NotNull
   public String getID() {
     return "HardcodedFileSeparator";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "hardcoded.file.separator.display.name");
   }
 
   @Override
@@ -261,7 +255,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         // Most likely this is a Windows-style full file name.
         return false;
       }
-      final Matcher dateFormatMatcher = DATE_FORMAT_PATTERN.matcher(string);
+      final Matcher dateFormatMatcher = Holder.DATE_FORMAT_PATTERN.matcher(string);
       return dateFormatMatcher.find();
     }
 
@@ -274,7 +268,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      *         {@code false} if not.
      */
     private boolean isURLString(String string) {
-      final Matcher urlMatcher = URL_PATTERN.matcher(string);
+      final Matcher urlMatcher = Holder.URL_PATTERN.matcher(string);
       return urlMatcher.find();
     }
 
@@ -307,10 +301,10 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
       // "example/foo."                 (can't end with a separator)
       //
       if (m_recognizeExampleMediaType &&
-          string.matches(EXAMPLE_MIME_MEDIA_TYPE_PATTERN)) {
+          string.matches(Holder.EXAMPLE_MIME_MEDIA_TYPE_PATTERN)) {
         return true;
       }
-      return mimeTypes.contains(string);
+      return Holder.mimeTypes.contains(string);
     }
 
     /**
@@ -322,7 +316,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      *         TimeZone ID, {@code false} if not.
      */
     private boolean isTimeZoneIdString(String string) {
-      return timeZoneIds.contains(string);
+      return Holder.timeZoneIds.contains(string);
     }
   }
 }

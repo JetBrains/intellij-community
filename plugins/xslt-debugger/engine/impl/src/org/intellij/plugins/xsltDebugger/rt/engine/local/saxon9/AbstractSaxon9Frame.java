@@ -6,7 +6,7 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.AbstractFrame;
 import javax.xml.transform.Source;
 import javax.xml.transform.SourceLocator;
 
-class AbstractSaxon9Frame<F extends Debugger.Frame, N extends Source> extends AbstractFrame<F> {
+class AbstractSaxon9Frame<F extends Debugger.Frame, N extends SourceLocator> extends AbstractFrame<F> {
   protected final N myElement;
 
   protected AbstractSaxon9Frame(F prev, N element) {
@@ -15,7 +15,7 @@ class AbstractSaxon9Frame<F extends Debugger.Frame, N extends Source> extends Ab
   }
 
   public int getLineNumber() {
-    return ((SourceLocator)myElement).getLineNumber();
+    return myElement.getLineNumber();
   }
 
   public String getURI() {

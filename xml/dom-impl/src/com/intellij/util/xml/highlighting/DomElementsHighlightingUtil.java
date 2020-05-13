@@ -68,7 +68,8 @@ public class DomElementsHighlightingUtil {
       TextRange range = s.first;
       if (text == null) range = TextRange.from(range.getStartOffset(), 0);
       range = range.shiftRight(s.second.getTextRange().getStartOffset());
-      final Annotation annotation = createAnnotation(severity, range, text);
+      String tooltip = text == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(text));
+      final Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, text, tooltip);
 
       if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
         annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
@@ -79,13 +80,6 @@ public class DomElementsHighlightingUtil {
       }
       return annotation;
     });
-  }
-
-  private static Annotation createAnnotation(final HighlightSeverity severity,
-                                             final TextRange range,
-                                             final String text) {
-    String tooltip = text == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(text));
-    return new Annotation(range.getStartOffset(), range.getEndOffset(), severity, text, tooltip);
   }
 
   @Nullable

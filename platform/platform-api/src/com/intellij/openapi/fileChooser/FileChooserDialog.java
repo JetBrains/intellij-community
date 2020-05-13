@@ -29,8 +29,7 @@ public interface FileChooserDialog {
    * it supports several selections
    */
   @Deprecated
-  @NotNull
-  VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project);
+  VirtualFile @NotNull [] choose(@Nullable VirtualFile toSelect, @Nullable Project project);
 
   /**
    * Choose one or more files
@@ -39,6 +38,5 @@ public interface FileChooserDialog {
    * @param toSelect files to be selected automatically.
    * @return files chosen by user
    */
-  @NotNull
-  VirtualFile[] choose(@Nullable Project project, @NotNull VirtualFile... toSelect);
+  VirtualFile @NotNull [] choose(@Nullable Project project, VirtualFile @NotNull ... toSelect);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,9 +10,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
+public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private static final Logger LOG = Logger.getInstance(AbstractCodeStylePropertyMapper.class);
 
   public static final String COMMON_DOMAIN_ID = "all";
@@ -116,7 +119,7 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
   @Nullable
   public String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
-    return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
+    return OptionsBundle.INSTANCE.containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
   }
 
   @Override

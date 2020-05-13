@@ -17,7 +17,7 @@ import java.util.List;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intellij.ui.icons.RowIcon {
+public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intellij.ui.icons.RowIcon, IconWithToolTip {
   private final com.intellij.ui.icons.RowIcon.Alignment myAlignment;
 
   private int myWidth;
@@ -27,8 +27,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   @ApiStatus.ScheduledForRemoval
   public enum Alignment {TOP, CENTER, BOTTOM}
 
-  @NotNull
-  private final Icon[] myIcons;
+  private final Icon @NotNull [] myIcons;
   private Icon[] myScaledIcons;
 
   {
@@ -94,16 +93,14 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     return icon;
   }
 
-  @NotNull
-  private Icon[] myScaledIcons() {
+  private Icon @NotNull [] myScaledIcons() {
     if (myScaledIcons != null) {
       return myScaledIcons;
     }
     return myScaledIcons = scaleIcons(myIcons, getScale());
   }
 
-  @NotNull
-  static Icon[] scaleIcons(@NotNull Icon[] icons, float scale) {
+  static Icon @NotNull [] scaleIcons(Icon @NotNull [] icons, float scale) {
     if (scale == 1f) return icons;
     Icon[] scaledIcons = new Icon[icons.length];
     for (int i = 0; i < icons.length; i++) {
@@ -115,8 +112,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   }
 
   @Override
-  @NotNull
-  public Icon[] getAllIcons() {
+  public Icon @NotNull [] getAllIcons() {
     List<Icon> icons = ContainerUtil.packNullables(myIcons);
     return icons.toArray(new Icon[0]);
   }
@@ -205,5 +201,10 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   @Override
   public String toString() {
     return "Row icon. myIcons=" + Arrays.asList(myIcons);
+  }
+
+  @Override
+  public String getToolTip(boolean composite) {
+    return LayeredIcon.combineIconTooltips(myIcons);
   }
 }

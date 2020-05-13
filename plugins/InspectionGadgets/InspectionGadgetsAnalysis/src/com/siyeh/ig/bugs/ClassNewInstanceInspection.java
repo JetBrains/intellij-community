@@ -2,6 +2,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -15,7 +16,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,14 +28,6 @@ import java.util.stream.Collectors;
  * @author Bas Leijdekkers
  */
 public class ClassNewInstanceInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.new.instance.display.name");
-  }
 
   @Override
   @NotNull
@@ -54,8 +46,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "class.new.instance.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Class.getConstructor().newInstance()");
     }
 
     @Override

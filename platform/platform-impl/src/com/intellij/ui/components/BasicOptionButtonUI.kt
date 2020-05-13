@@ -1,6 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
@@ -10,7 +8,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.OptionAction
-import com.intellij.openapi.ui.popup.JBPopupAdapter
+import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
@@ -230,7 +228,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       popup = createPopup(toSelect, ensureSelection).apply {
         // use invokeLater() to update flag "after" popup is auto-closed - to ensure correct togglePopup() behaviour on arrow button press
         setFinalRunnable { getApplication().invokeLater { isPopupShowing = false } }
-        addListener(object : JBPopupAdapter() {
+        addListener(object : JBPopupListener {
           override fun beforeShown(event: LightweightWindowEvent) {
             val popup = event.asPopup()
             val screen = ScreenUtil.getScreenRectangle(optionButton.locationOnScreen)

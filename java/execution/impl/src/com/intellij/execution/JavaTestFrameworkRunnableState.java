@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -7,11 +7,10 @@ import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.impl.ConsoleBuffer;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.target.*;
 import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -30,6 +29,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -120,9 +120,30 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull protected abstract String getForkMode();
 
-  @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
+  @NotNull
+  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+    appendForkInfo(executor);
+    appendRepeatMode();
 
-  public SearchForTestsTask createSearchingForTestsTask() {
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, new EmptyProgressIndicator());
+    TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
+    TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
+    Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
+
+    OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(process,
+                                                                               targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                                               targetedCommandLine.getCharset(),
+                                                                               targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+
+    ProcessTerminatedListener.attach(processHandler);
+    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
+    if (searchForTestsTask != null) {
+      searchForTestsTask.attachTaskToProcess(processHandler);
+    }
+    return processHandler;
+  }
+
+  public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
   }
 
@@ -134,19 +155,26 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return false;
   }
 
+  @NotNull
   @Override
-  protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    GeneralCommandLine commandLine = super.createCommandLine().withInput(InputRedirectAware.getInputFile(getConfiguration()));
-    Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                                 @Nullable TargetEnvironmentConfiguration configuration)
+    throws ExecutionException {
+    TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request, configuration);
+    File inputFile = InputRedirectAware.getInputFile(getConfiguration());
+    if (inputFile != null) {
+      commandLineBuilder.setInputFile(request.getDefaultVolume().createUpload(inputFile.getAbsolutePath()));
+    }
+    Map<String, String> content = commandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
     }
-    return commandLine;
+    return commandLineBuilder;
   }
 
   @NotNull
   @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -212,14 +240,19 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected abstract void configureRTClasspath(JavaParameters javaParameters, Module module) throws CantRunException;
 
+  protected Sdk getJdk() {
+    Project project = getConfiguration().getProject();
+    final Module module = getConfiguration().getConfigurationModule().getModule();
+
+    return module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
+  }
+  
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
     Project project = getConfiguration().getProject();
     final Module module = getConfiguration().getConfigurationModule().getModule();
-
-    Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
-    javaParameters.setJdk(jdk);
+    javaParameters.setJdk(getJdk());
 
     final String parameters = getConfiguration().getProgramParameters();
     getConfiguration().setProgramParameters(null);
@@ -372,6 +405,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
+    if (!useModulePath()) return;
     PsiJavaModule testModule = findJavaModule(module, true);
     if (testModule != null) {
       //adding the test module explicitly as it is unreachable from `idea.rt`
@@ -584,26 +618,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
               }
               configureRTClasspath(parameters, module);
               parameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
-              wWriter.println(parameters.getClassPath().getPathsString());
-              wWriter.println(parameters.getModulePath().getPathsString());
-              ParamsGroup paramsGroup = getJigsawOptions(parameters);
-              if (paramsGroup == null) {
-                wWriter.println(0);
-              }
-              else {
-                List<String> parametersList = paramsGroup.getParametersList().getList();
-                wWriter.println(parametersList.size());
-                for (String option : parametersList) {
-                  wWriter.println(option);
-                }
-              }
+              writeClasspath(wWriter, parameters);
             }
             catch (CantRunException e) {
-              wWriter.println(javaParameters.getClassPath().getPathsString());
+              writeClasspath(wWriter, javaParameters);
             }
           }
           else {
-            wWriter.println(classpath);
+            writeClasspath(wWriter, javaParameters);
           }
 
           final List<String> classNames = perModule.get(module);
@@ -613,6 +635,22 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           }
           wWriter.println(filters);
         }
+      }
+    }
+  }
+
+  private static void writeClasspath(PrintWriter wWriter, JavaParameters parameters) {
+    wWriter.println(parameters.getClassPath().getPathsString());
+    wWriter.println(parameters.getModulePath().getPathsString());
+    ParamsGroup paramsGroup = getJigsawOptions(parameters);
+    if (paramsGroup == null) {
+      wWriter.println(0);
+    }
+    else {
+      List<String> parametersList = paramsGroup.getParametersList().getList();
+      wWriter.println(parametersList.size());
+      for (String option : parametersList) {
+        wWriter.println(option);
       }
     }
   }
@@ -628,4 +666,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   public void appendRepeatMode() throws ExecutionException { }
+
+  protected boolean useModulePath() {
+    return true;
+  }
 }

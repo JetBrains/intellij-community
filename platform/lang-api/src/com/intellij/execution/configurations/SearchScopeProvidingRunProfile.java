@@ -22,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base interface for run configurations that can specify which part of the project should be used to search sources. This information
  * will be used to provide more accurate navigation to sources from stack traces, debugger, etc
- *
- * @author nik
  */
 public interface SearchScopeProvidingRunProfile extends RunProfile {
 

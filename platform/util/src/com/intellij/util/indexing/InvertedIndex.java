@@ -28,10 +28,12 @@ public interface InvertedIndex<Key, Value, Input> {
   ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 
   /**
-   * @param inputId *positive* id of content.
+   * Maps input as the first stage and returns a computation that does actual index data structure update.
+   * It may be used to separate long-running input mapping from writing data to disk.
+   * Computable returns `true` if data has been saved without errors, otherwise - `false`.
    */
   @NotNull
-  Computable<Boolean> update(int inputId, @Nullable Input content);
+  Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content);
 
   void flush() throws StorageException;
 

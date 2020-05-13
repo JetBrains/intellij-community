@@ -24,9 +24,6 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
 public class PyStringLiteralExpressionManipulator extends AbstractElementManipulator<PyStringLiteralExpressionImpl> {
 
   @Override
@@ -50,7 +47,7 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
   @NotNull
   @Override
   public TextRange getRangeInElement(@NotNull PyStringLiteralExpressionImpl element) {
-    return PyStringLiteralUtil.getStringValueTextRange(element.getText());
+    return element.getStringValueTextRange();
   }
 
   @NotNull

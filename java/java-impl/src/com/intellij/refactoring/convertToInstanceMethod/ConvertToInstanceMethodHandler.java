@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.convertToInstanceMethod;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,8 +38,7 @@ import java.util.List;
  * @author dsl
  */
 public class ConvertToInstanceMethodHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler");
-  static final String REFACTORING_NAME = RefactoringBundle.message("convert.to.instance.method.title");
+  private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodHandler.class);
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -52,8 +52,8 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     if (element instanceof PsiIdentifier) element = element.getParent();
 
     if(!(element instanceof PsiMethod)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CONVERT_TO_INSTANCE_METHOD);
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.method"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
     if(LOG.isDebugEnabled()) {
@@ -63,13 +63,13 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod)) return;
     final PsiMethod method = (PsiMethod)elements[0];
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-      String message = RefactoringBundle.message("convertToInstanceMethod.method.is.not.static", method.getName());
+      String message = JavaRefactoringBundle.message("convertToInstanceMethod.method.is.not.static", method.getName());
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CONVERT_TO_INSTANCE_METHOD);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -102,20 +102,24 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     if (targetQualifiers.isEmpty()) {
       String message;
       if (!classTypesFound) {
-        message = RefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
+        message = JavaRefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
       }
       else if (!resolvableClassesFound) {
-        message = RefactoringBundle.message("convertToInstanceMethod.all.reference.type.parametres.have.unknown.types");
+        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parametres.have.unknown.types");
       }
       else {
-        message = RefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
+        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
       }
       message += " and containing class doesn't have default constructor";
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.CONVERT_TO_INSTANCE_METHOD);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
 
     new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
+  }
+
+  static String getRefactoringName() {
+    return JavaRefactoringBundle.message("convert.to.instance.method.title");
   }
 }

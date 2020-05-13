@@ -17,7 +17,6 @@
 package com.intellij.lang.refactoring;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
@@ -33,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * @see InlineHandlers#getInlineHandlers(com.intellij.lang.Language)
  */
 public interface InlineHandler {
-
-  ExtensionPointName<InlineHandler> EP_NAME = new ExtensionPointName<>("com.intellij.refactoring.inlineHandler");
-
   interface Settings {
     /**
      * @return {@code true} if as a result of refactoring setup only the reference where refactoring

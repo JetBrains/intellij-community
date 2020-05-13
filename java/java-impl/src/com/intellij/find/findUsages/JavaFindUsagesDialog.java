@@ -15,10 +15,9 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -31,7 +30,7 @@ import javax.swing.*;
 public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
   private StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable;
-  protected final EventLogGroup myEventLogGroup = new EventLogGroup("JavaFindUsages", 1);
+  protected static final String EVENT_LOG_GROUP = "java.find.usages";
 
   protected JavaFindUsagesDialog(@NotNull PsiElement element,
                                  @NotNull Project project,
@@ -87,7 +86,7 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
   protected void addUsagesOptions(JPanel optionsPanel) {
     super.addUsagesOptions(optionsPanel);
     if (myIncludeOverloadedMethodsAvailable) {
-      myCbIncludeOverloadedMethods = addCheckboxToPanel(FindBundle.message("find.options.include.overloaded.methods.checkbox"),
+      myCbIncludeOverloadedMethods = addCheckboxToPanel(JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
                                                         FindSettings.getInstance().isSearchOverloadedMethods(), optionsPanel, false);
 
     }

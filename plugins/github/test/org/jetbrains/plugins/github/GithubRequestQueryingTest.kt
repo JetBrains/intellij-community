@@ -36,7 +36,7 @@ class GithubRequestQueryingTest : GithubTest() {
 
   @Throws(Throwable::class)
   fun testLinkPagination() {
-    retry {
+    retry(LOG) {
       val result = GithubApiPagesLoader
         .loadAll(mainAccount.executor, EmptyProgressIndicator(),
                  GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server,
@@ -50,7 +50,7 @@ class GithubRequestQueryingTest : GithubTest() {
 
   @Throws(Throwable::class)
   fun testOwnRepos() {
-    retry {
+    retry(LOG) {
       val result = GithubApiPagesLoader
         .loadAll(mainAccount.executor, EmptyProgressIndicator(),
                  GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server,
@@ -65,7 +65,7 @@ class GithubRequestQueryingTest : GithubTest() {
 
   @Throws(Throwable::class)
   fun testAllRepos() {
-    retry {
+    retry(LOG) {
       val result = GithubApiPagesLoader
         .loadAll(mainAccount.executor, EmptyProgressIndicator(),
                  GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server))
@@ -78,22 +78,5 @@ class GithubRequestQueryingTest : GithubTest() {
 
   companion object {
     private val LOG = logger<GithubRequestQueryingTest>()
-    private const val RETRIES = 3
-
-    private fun retry(action: () -> Unit) {
-      var exception: Exception? = null
-      for (i in 1..RETRIES) {
-        try {
-          LOG.debug("Attempt #$i")
-          action()
-          exception = null
-          break
-        }
-        catch (e: Exception) {
-          exception = e
-        }
-      }
-      exception?.let { throw it }
-    }
   }
 }

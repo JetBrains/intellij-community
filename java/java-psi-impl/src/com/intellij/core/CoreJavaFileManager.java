@@ -33,7 +33,7 @@ import java.util.*;
  * @author yole
  */
 public class CoreJavaFileManager implements JavaFileManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
+  private static final Logger LOG = Logger.getInstance(CoreJavaFileManager.class);
 
   private final List<VirtualFile> myClasspath = new ArrayList<>();
   private final PsiManager myPsiManager;
@@ -180,9 +180,8 @@ public class CoreJavaFileManager implements JavaFileManager {
     return curClass;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     List<PsiClass> result = new ArrayList<>();
     for (VirtualFile file : roots()) {
       final PsiClass psiClass = findClassInClasspathRoot(qName, file, myPsiManager, scope);

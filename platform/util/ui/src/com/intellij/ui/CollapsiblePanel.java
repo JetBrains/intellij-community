@@ -147,10 +147,10 @@ public class CollapsiblePanel extends JPanel {
 
   private String getToggleButtonToolTipText() {
     if (myIsCollapsed) {
-      return UIBundle.message("collapsible.panel.collapsed.state.tooltip.text");
+      return UtilUiBundle.message("collapsible.panel.collapsed.state.tooltip.text");
     }
     else {
-      return UIBundle.message("collapsible.panel.expanded.state.tooltip.text");
+      return UtilUiBundle.message("collapsible.panel.expanded.state.tooltip.text");
     }
   }
 

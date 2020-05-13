@@ -6,9 +6,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.SmartHashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +17,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,18 +30,32 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private Set<AnActionButtonUpdater> myUpdaters;
   private final List<ActionButtonListener> myListeners = new ArrayList<>();
 
-  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
-    super(text);
+  public AnActionButton(@NlsContexts.Button String text) {
+    super(() -> text);
   }
 
-  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                        @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public AnActionButton(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
+  }
+
+  public AnActionButton(@NlsContexts.Button String text,
+                        @NlsContexts.Tooltip String description,
                         @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon) {
+  public AnActionButton(@NotNull Supplier<String> dynamicText,
+                        @NotNull Supplier<String> dynamicDescription,
+                        @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
+  public AnActionButton(@NlsContexts.Button String text, Icon icon) {
     this(text, null, icon);
+  }
+
+  public AnActionButton(@NotNull Supplier<String> dynamicText, Icon icon) {
+    this(dynamicText, Presentation.NULL_STRING, icon);
   }
 
   public AnActionButton() {
@@ -169,23 +184,15 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public static class CheckedAnActionButton extends AnActionButtonWrapper implements CheckedActionGroup {
-    private final AnAction myDelegate;
-
-    public CheckedAnActionButton(Presentation presentation, AnAction action) {
+    public CheckedAnActionButton(Presentation presentation, @NotNull AnAction action) {
       super(presentation, action);
-      myDelegate = action;
-    }
-
-    public AnAction getDelegate() {
-      return myDelegate;
     }
   }
 
-  public static class AnActionButtonWrapper extends AnActionButton {
-
+  public static class AnActionButtonWrapper extends AnActionButton implements ActionWithDelegate<AnAction> {
     private final AnAction myAction;
 
-    public AnActionButtonWrapper(Presentation presentation, AnAction action) {
+    public AnActionButtonWrapper(Presentation presentation, @NotNull AnAction action) {
       super(presentation.getText(), presentation.getDescription(), presentation.getIcon());
       myAction = action;
     }
@@ -208,6 +215,12 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     @Override
     public boolean isDumbAware() {
       return myAction.isDumbAware();
+    }
+
+    @NotNull
+    @Override
+    public AnAction getDelegate() {
+      return myAction;
     }
   }
 

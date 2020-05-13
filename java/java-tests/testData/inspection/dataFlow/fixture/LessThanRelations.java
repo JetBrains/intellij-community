@@ -1,6 +1,48 @@
 import java.util.*;
 
 class LessThanRelations {
+  void test(int a, int b, int c, int d) {
+    if ((a >= c && b <= d) ||
+        (b >= c && a <= d)) {
+      if (<warning descr="Condition 'b > d && a > d' is always 'false'">b > d && <warning descr="Condition 'a > d' is always 'false' when reached">a > d</warning></warning>) {}
+    }
+    if (a > b) {
+      if (c < d) {
+        if (<warning descr="Condition 'a == c && b == d' is always 'false'">a == c && <warning descr="Condition 'b == d' is always 'false' when reached">b == d</warning></warning>) {
+
+        }
+      }
+    }
+  }
+
+  void foo1(long f1, long f2, long t1, long t2) {
+    if (t1 < f2 || f1 > f2) return;
+    if (f1 <= f2 && t1 >= t2) return;
+    if (f1 > f2 && t1 < t2) return;
+    if (f1 <= f2) return;
+    if (t1 >= t2) return; // TODO: must be always true
+  }
+
+  void foo2(long f1, long f2, long t1, long t2) {
+    if (f1 <= f2 && t1 >= t2) return;
+    if (f1 > f2 && t1 < t2) return;
+    if (f1 <= f2) return;
+    if (<warning descr="Condition 't1 >= t2' is always 'true'">t1 >= t2</warning>) return;
+  }
+
+  void foo3(long f1, long f2, long t1, long t2) {
+    if (t1 < f2 || f1 > f2) return;
+    if (f1 > f2 && t1 < t2) return;
+    if (f1 <= f2) return;
+    if (t1 >= t2) return; // TODO: must be always true
+  }
+
+  void foo4(long f1, long f2, long t1, long t2) {
+    if (f1 > f2 && t1 < t2) return;
+    if (f1 <= f2) return;
+    if (<warning descr="Condition 't1 >= t2' is always 'true'">t1 >= t2</warning>) return;
+  }
+
   // IDEA-184278
   void m(int value) {
     for (int i = 0; i < value; i++) {
@@ -41,6 +83,27 @@ class LessThanRelations {
       System.out.println("ok");
     }
   }
+
+  int test2(int a, int b, int c, int d) {
+    assert a <= b;
+    assert c <= d;
+
+    int r = 1;
+    if (b < c) {
+      r = 2;
+    } else if (d < a) {
+      r = 3;
+    } else if (b == c || a == d) {
+      if (a < d) {
+        r = 4;
+      } else if (b > c) {
+        r = 5;
+      } else {
+        r = 6;
+      }
+    }
+    return r;
+  }
 }
 final class Range {
   final long myFrom; // inclusive
@@ -58,7 +121,7 @@ final class Range {
       if (from <= myFrom) {
         return new Range(to + 1, myTo);
       }
-      if (<warning descr="Condition 'to >= myTo' is always 'true'">to >= myTo</warning>) {
+      if (to >= myTo) {
         return new Range(myFrom, from - 1);
       }
       throw new RuntimeException("Impossible: " + this + ":" + other);

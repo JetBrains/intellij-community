@@ -21,7 +21,7 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class RenameGroovyPropertyProcessor extends RenamePsiElementProcessor {
-  Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor");
+  Logger LOG = Logger.getInstance(RenameGroovyPropertyProcessor.class);
 
   @Override
   public void prepareRenaming(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<PsiElement, String> allRenames) {
@@ -44,7 +44,7 @@ public class RenameGroovyPropertyProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void renameElement(@NotNull PsiElement element, @NotNull String newName, @NotNull UsageInfo[] usages, @Nullable RefactoringElementListener listener)
+  public void renameElement(@NotNull PsiElement element, @NotNull String newName, UsageInfo @NotNull [] usages, @Nullable RefactoringElementListener listener)
     throws IncorrectOperationException {
 
     //do nothing

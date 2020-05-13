@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.create;
 
 import com.intellij.icons.AllIcons;
@@ -8,8 +6,8 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.application.ReadAction;
@@ -427,7 +425,7 @@ public class CreateResourceBundleDialogComponent {
                                                                                  }
                                                                                  return true;
                                                                                }, BundleNameEvaluator.DEFAULT);
-      Collections.sort(myLocales, LOCALE_COMPARATOR);
+      myLocales.sort(LOCALE_COMPARATOR);
     }
 
     @Override

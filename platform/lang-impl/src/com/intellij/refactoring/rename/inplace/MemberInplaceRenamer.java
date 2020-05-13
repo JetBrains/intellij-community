@@ -6,7 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -210,7 +209,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
           Runnable performRunnable = () -> {
             if (DumbService.isDumb(myProject)) {
-              DumbService.getInstance(myProject).showDumbModeNotification("Refactorings cannot be performed while indexing is in progress");
+              DumbService.getInstance(myProject).showDumbModeNotification(RefactoringBundle.message("refactoring.not.available.indexing"));
               return;
             }
 
@@ -227,7 +226,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             performRunnable.run();
           }
           else {
-            TransactionGuard.getInstance().submitTransactionLater(myProject, performRunnable);
+            ApplicationManager.getApplication().invokeLater(performRunnable, myProject.getDisposed());
           }
         }
       }

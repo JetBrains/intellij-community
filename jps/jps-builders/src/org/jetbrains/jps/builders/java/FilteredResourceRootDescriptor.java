@@ -39,7 +39,7 @@ public final class FilteredResourceRootDescriptor extends ResourceRootDescriptor
   @Override
   public FileFilter createFileFilter() {
     final JpsProject project = getTarget().getModule().getProject();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
     return file -> !excludes.isExcluded(file) && configuration.isResourceFile(file, getRootFile());
   }

@@ -28,7 +28,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,13 +40,6 @@ public class PublicConstructorInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new ReplaceConstructorWithFactoryMethodFix();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("public.constructor.display.name");
   }
 
   @NotNull
@@ -98,7 +90,7 @@ public class PublicConstructorInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (aClass == null || aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.isRecord()) {
         return;
       }
       if (SerializationUtils.isExternalizable(aClass)) {
@@ -113,7 +105,7 @@ public class PublicConstructorInspection extends BaseInspection {
     @Override
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
-      if (aClass.isInterface() || aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isRecord()) {
         return;
       }
       if (!aClass.hasModifierProperty(PsiModifier.PUBLIC) || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
 import com.intellij.ui.RestoreScaleRule;
@@ -15,9 +15,6 @@ import java.util.Arrays;
 
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class EffectPainterTest {
   @ClassRule
   public static final ExternalResource manageState = new RestoreScaleRule();

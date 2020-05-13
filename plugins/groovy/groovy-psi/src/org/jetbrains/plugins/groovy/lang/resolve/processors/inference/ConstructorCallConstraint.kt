@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 
 class ConstructorCallConstraint(private val leftType: PsiType?, private val expression: GrNewExpression) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     val reference = expression.referenceElement ?: return true
     val result = reference.advancedResolve()
     val clazz = result.element as? PsiClass ?: return true

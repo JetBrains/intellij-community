@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.inject.config.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
@@ -53,7 +54,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 
 public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
@@ -121,7 +121,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       return userObject instanceof PsiNamedElement? ((PsiNamedElement)userObject).getName() : null;
     });
-    new AnAction("Toggle") {
+    new AnAction(CommonBundle.message("action.text.toggle")) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         performToggleAction();
@@ -201,7 +201,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private void refreshTreeStructure() {
     myRootNode.removeAllChildren();
     final ArrayList<PsiMethod> methods = new ArrayList<>(myData.keySet());
-    Collections.sort(methods, (o1, o2) -> {
+    methods.sort((o1, o2) -> {
       final int names = o1.getName().compareTo(o2.getName());
       if (names != 0) return names;
       return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();

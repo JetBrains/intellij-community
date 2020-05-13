@@ -62,9 +62,8 @@ public class TrelloTask extends Task {
     return myCard.getDescription();
   }
 
-  @NotNull
   @Override
-  public Comment[] getComments() {
+  public Comment @NotNull [] getComments() {
     List<TrelloCommentAction> comments = myCard.getComments();
     return comments.toArray(Comment.EMPTY_ARRAY);
   }

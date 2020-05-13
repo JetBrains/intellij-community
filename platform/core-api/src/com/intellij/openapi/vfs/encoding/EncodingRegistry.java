@@ -39,6 +39,11 @@ public abstract class EncodingRegistry {
     return null;
   }
 
+  /**
+   * @return encoding used by default in {@link com.intellij.execution.configurations.GeneralCommandLine}
+   */
+  public abstract @NotNull Charset getDefaultConsoleEncoding();
+
   public static EncodingRegistry getInstance() {
     return EncodingManager.getInstance();
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +11,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Sergey.Malenkov
- */
 abstract public class TransferableList<T> implements Transferable {
   private static final DataFlavor LIST_DATA_FLAVOR = new DataFlavor(List.class, "Transferable List");
   private static final DataFlavor ALL_HTML_DATA_FLAVOR = DataFlavor.allHtmlFlavor;
@@ -36,7 +19,7 @@ abstract public class TransferableList<T> implements Transferable {
   private final List<T> myList;
 
   @SafeVarargs
-  public TransferableList(@NotNull T... array) {
+  public TransferableList(T @NotNull ... array) {
     this(Arrays.asList(array));
   }
 
@@ -44,9 +27,8 @@ abstract public class TransferableList<T> implements Transferable {
     myList = Collections.unmodifiableList(list);
   }
 
-  @NotNull
   @Override
-  public DataFlavor[] getTransferDataFlavors() {
+  public DataFlavor @NotNull [] getTransferDataFlavors() {
     return new DataFlavor[]{
       ALL_HTML_DATA_FLAVOR,//DataFlavor.allHtmlFlavor,
       PART_HTML_DATA_FLAVOR,//DataFlavor.fragmentHtmlFlavor,
@@ -94,6 +76,9 @@ abstract public class TransferableList<T> implements Transferable {
   }
 
   protected String getText(List<? extends T> list) {
+    if (list.size() == 1) {
+      return toString(list.get(0));
+    }
     StringBuilder sb = new StringBuilder();
     for (T object : list) {
       sb.append(toString(object)).append('\n');

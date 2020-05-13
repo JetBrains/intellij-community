@@ -39,9 +39,8 @@ public class XmlBaseReferenceProvider extends PsiReferenceProvider {
     myAcceptSelf = acceptSelf;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     PsiReference reference = URIReferenceProvider.getUrlReference(element, ElementManipulators.getValueText(element));
     if (reference != null) return new PsiReference[] { reference };
     FileReferenceSet referenceSet = FileReferenceSet.createSet(element, false, false, false);

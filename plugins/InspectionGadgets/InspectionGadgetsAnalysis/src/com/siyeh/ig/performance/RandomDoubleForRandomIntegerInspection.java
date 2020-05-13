@@ -42,13 +42,6 @@ public class RandomDoubleForRandomIntegerInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "random.double.for.random.integer.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "random.double.for.random.integer.problem.descriptor");

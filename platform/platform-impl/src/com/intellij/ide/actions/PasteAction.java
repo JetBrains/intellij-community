@@ -2,11 +2,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class PasteAction extends AnAction implements DumbAware {
+public class PasteAction extends AnAction implements DumbAware, LightEditCompatible {
   public PasteAction() {
     setEnabledInModalContext(true);
   }

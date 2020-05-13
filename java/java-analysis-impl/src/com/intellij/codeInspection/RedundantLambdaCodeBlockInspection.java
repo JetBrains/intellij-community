@@ -1,8 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,14 +21,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Statement lambda can be replaced with expression lambda";
+    return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
   @Override
@@ -61,7 +54,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
           } else {
             errorElement = body.getFirstChild();
           }
-          holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
+          holder.registerProblem(errorElement, JavaAnalysisBundle.message("statement.lambda.can.be.replaced.with.expression.lambda"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
         }
       }
@@ -107,7 +100,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with expression lambda";
+      return JavaAnalysisBundle.message("replace.with.expression.lambda");
     }
 
     @Override

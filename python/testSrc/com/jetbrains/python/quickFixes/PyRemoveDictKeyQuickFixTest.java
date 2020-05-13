@@ -17,6 +17,7 @@ package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyDictDuplicateKeysInspection;
 
@@ -24,15 +25,15 @@ import com.jetbrains.python.inspections.PyDictDuplicateKeysInspection;
 public class PyRemoveDictKeyQuickFixTest extends PyQuickFixTestCase {
 
   public void testFirst() {
-    doQuickFixTest(PyDictDuplicateKeysInspection.class, PyBundle.message("QFIX.NAME.remove.dict.key"));
+    doQuickFixTest(PyDictDuplicateKeysInspection.class, PyPsiBundle.message("QFIX.NAME.remove.dict.key"));
   }
 
   public void testLast() {
-    doQuickFixTest(PyDictDuplicateKeysInspection.class, PyBundle.message("QFIX.NAME.remove.dict.key"));
+    doQuickFixTest(PyDictDuplicateKeysInspection.class, PyPsiBundle.message("QFIX.NAME.remove.dict.key"));
   }
 
   public void testInTheMiddle() {
-    doQuickFixTest(PyDictDuplicateKeysInspection.class, PyBundle.message("QFIX.NAME.remove.dict.key"));
+    doQuickFixTest(PyDictDuplicateKeysInspection.class, PyPsiBundle.message("QFIX.NAME.remove.dict.key"));
   }
 
 }

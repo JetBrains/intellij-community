@@ -12,8 +12,8 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,15 +28,15 @@ import java.util.concurrent.ConcurrentMap;
  * @author Dmitry Avdeev
  */
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl");
+  private static final Logger LOG = Logger.getInstance(PsiReferenceRegistrarImpl.class);
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new THashMap<>();
   private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = new THashMap<>();
-  private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;
+  private final ConcurrentMap<Class<?>, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
 
   PsiReferenceRegistrarImpl() {
     myBindingCache = ConcurrentFactoryMap.createMap(key-> {
-        List<ProviderBinding> result = ContainerUtil.newSmartList();
+      List<ProviderBinding> result = new SmartList<>();
         for (Class<?> bindingClass : myBindingsMap.keySet()) {
           if (bindingClass.isAssignableFrom(key)) {
             result.add(myBindingsMap.get(bindingClass));
@@ -71,13 +71,13 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       LOG.error("Reference provider registration is only allowed from PsiReferenceContributor");
     }
 
-    final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
+    Class<?> scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
     final List<PatternCondition<? super T>> conditions = pattern.getCondition().getConditions();
     for (PatternCondition<? super T> _condition : conditions) {
       if (!(_condition instanceof PsiNamePatternCondition)) {
         continue;
       }
-      final PsiNamePatternCondition<?> nameCondition = (PsiNamePatternCondition)_condition;
+      PsiNamePatternCondition<?> nameCondition = (PsiNamePatternCondition<?>)_condition;
       List<PatternCondition<? super String>> conditions1 = nameCondition.getNamePattern().getCondition().getConditions();
       for (PatternCondition<? super String> condition1 : conditions1) {
         if (condition1 instanceof ValuePatternCondition) {
@@ -106,7 +106,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     myBindingCache.clear();
   }
 
-  public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
+  public void unregisterReferenceProvider(@NotNull Class<?> scope, @NotNull PsiReferenceProvider provider) {
     final SimpleProviderBinding binding = myBindingsMap.get(scope);
     if (binding != null) {
       binding.unregisterProvider(provider);
@@ -114,15 +114,16 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
         myBindingsMap.remove(scope);
       }
     }
+    myBindingCache.clear();
   }
 
-  private void registerNamedReferenceProvider(@NotNull String[] names,
+  private void registerNamedReferenceProvider(String @NotNull [] names,
                                               final PsiNamePatternCondition<?> nameCondition,
-                                              @NotNull Class scopeClass,
+                                              @NotNull Class<?> scopeClass,
                                               final boolean caseSensitive,
                                               @NotNull PsiReferenceProvider provider,
                                               final double priority,
-                                              @NotNull ElementPattern pattern,
+                                              @NotNull ElementPattern<?> pattern,
                                               @Nullable Disposable parentDisposable) {
     NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
 
@@ -152,7 +153,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     final ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 
-    List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = ContainerUtil.newSmartList();
+    List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = new SmartList<>();
     for (ProviderBinding binding : bindings) {
       binding.addAcceptableReferenceProviders(element, ret, hints);
     }

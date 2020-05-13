@@ -1,55 +1,48 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Mike
- */
 public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   public CreateLocalFromUsageFix(PsiReferenceExpression referenceExpression) {
     super(referenceExpression);
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix");
+  private static final Logger LOG = Logger.getInstance(CreateLocalFromUsageFix.class);
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.local.from.usage.text", varName);
+    return getMessage(varName);
+  }
+
+  public @NotNull
+  static String getMessage(String varName) {
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.LOCAL_VARIABLE.object(), varName);
   }
 
   @Override
@@ -71,21 +64,27 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  public boolean startInWriteAction() {
+    return true;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     String varName = myReferenceExpression.getReferenceName();
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false) || varName == null) return;
 
-    final Project project = myReferenceExpression.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    if (file.isPhysical()) {
+      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    }
 
-    final PsiFile targetFile = targetClass.getContainingFile();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
     final SmartTypePointer defaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(expectedTypes[0]);
     final PsiType preferredType = TypeSelectorManagerImpl.getPreferredType(expectedTypes, expectedTypes[0]);
     PsiType type = preferredType != null ? preferredType : expectedTypes[0];
     if (LambdaUtil.notInferredType(type)) {
-      type = PsiType.getJavaLangObject(myReferenceExpression.getManager(), targetClass.getResolveScope());
+      type = PsiType.getJavaLangObject(myReferenceExpression.getManager(), file.getResolveScope());
     }
 
     PsiExpression initializer = null;
@@ -111,15 +110,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     TypeExpression expression = new TypeExpression(project, expectedTypes);
 
     if (isInline) {
-      final PsiExpression expr = ((PsiExpressionStatement)anchor).getExpression();
-      final PsiElement semicolon = expr.getNextSibling();
-      if (semicolon != null) {
-        final PsiElement nextSibling = semicolon.getNextSibling();
-        if (nextSibling != null) {
-          decl.addRange(nextSibling, anchor.getLastChild());
-        }
-      }
-      decl = (PsiDeclarationStatement)anchor.replace(decl);
+      decl = (PsiDeclarationStatement)new CommentTracker().replaceAndRestoreComments(anchor, decl);
     }
     else {
       decl = (PsiDeclarationStatement)anchor.getParent().addBefore(decl, anchor);
@@ -127,12 +118,12 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
     boolean isFinal =
-      JavaCodeStyleSettings.getInstance(targetFile).GENERATE_FINAL_LOCALS &&
+      JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS &&
       !CreateFromUsageUtils.isAccessedForWriting(expressions);
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
     var = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(var);
-    if (var == null) return;
+    if (var == null || !file.isPhysical()) return;
     TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
     final PsiTypeElement typeElement = var.getTypeElement();
     LOG.assertTrue(typeElement != null);
@@ -141,7 +132,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     builder.setEndVariableAfter(var.getNameIdentifier());
     Template template = builder.buildTemplate();
 
-    final Editor newEditor = positionCursor(project, targetFile, var);
+    final Editor newEditor = positionCursor(project, file, var);
     if (newEditor == null) return;
     TextRange range = var.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
@@ -151,7 +142,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
         final int offset = newEditor.getCaretModel().getOffset();
-        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiLocalVariable.class, false);
+        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiLocalVariable.class, false);
         if (localVariable != null) {
           TypeSelectorManagerImpl.typeSelected(localVariable.getType(), defaultType.getType());
 
@@ -203,4 +194,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return QuickFixBundle.message("create.local.from.usage.family");
   }
 
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new CreateLocalFromUsageFix(PsiTreeUtil.findSameElementInCopy(myReferenceExpression, target));
+  }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -9,8 +8,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.messages.MessageBusConnection;
@@ -23,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RemoteRevisionsCache implements VcsListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsCache");
+  private static final Logger LOG = Logger.getInstance(RemoteRevisionsCache.class);
 
   public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
   public static final int DEFAULT_REFRESH_INTERVAL = 3 * 60 * 1000;
@@ -52,11 +49,7 @@ public class RemoteRevisionsCache implements VcsListener {
 
     myChangeDecorator = new RemoteStatusChangeNodeDecorator(this);
 
-    ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
-    myVcsManager = vcsManager;
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myKinds = new HashMap<>();
 
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
@@ -73,15 +66,18 @@ public class RemoteRevisionsCache implements VcsListener {
       return shouldBeDone;
     }, "Finishing \"changed on server\" update", DEFAULT_REFRESH_INTERVAL);
 
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
+
     updateRoots();
 
     if ((!myProject.isDefault()) && vcsConfiguration.isChangedOnServerEnabled()) {
-      vcsManager.addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
-                                          () -> {
-                                            // do not start if there're no vcses
-                                            if (!myVcsManager.hasActiveVcss() || !vcsConfiguration.isChangedOnServerEnabled()) return;
-                                            myControlledCycle.startIfNotStarted();
-                                          });
+      myVcsManager.runAfterInitialization(() -> {
+        // do not start if there're no vcses
+        if (!myVcsManager.hasActiveVcss() || !vcsConfiguration.isChangedOnServerEnabled()) return;
+        myControlledCycle.startIfNotStarted();
+      });
     }
   }
 
@@ -117,13 +113,14 @@ public class RemoteRevisionsCache implements VcsListener {
     if (! VcsConfiguration.getInstance(myProject).isChangedOnServerEnabled()) {
       manageAlarm();
     } else {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
         try {
           updateRoots();
           myRemoteRevisionsNumbersCache.directoryMappingChanged();
           myRemoteRevisionsStateCache.directoryMappingChanged();
           manageAlarm();
-        } catch (ProcessCanceledException ignore) {
+        }
+        catch (ProcessCanceledException ignore) {
         }
       });
     }
@@ -177,6 +174,7 @@ public class RemoteRevisionsCache implements VcsListener {
    * @return false if not up to date
    */
   public boolean isUpToDate(@NotNull Change change) {
+    if (myProject.isDisposed()) return true;
     final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
     if (vcs == null) return true;
     final RemoteDifferenceStrategy strategy = vcs.getRemoteDifferenceStrategy();

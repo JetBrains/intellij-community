@@ -29,13 +29,6 @@ public class PublicStaticArrayFieldInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "public.static.array.field.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "public.static.array.field.problem.descriptor");

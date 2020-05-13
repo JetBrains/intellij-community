@@ -15,9 +15,8 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class ReferenceProvidersRegistry {
   public static final PsiReferenceProvider NULL_REFERENCE_PROVIDER = new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         return PsiReference.EMPTY_ARRAY;
       }
     };
@@ -29,13 +28,11 @@ public abstract class ReferenceProvidersRegistry {
   @NotNull
   public abstract PsiReferenceRegistrar getRegistrar(@NotNull Language language);
 
-  @NotNull
-  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context) {
+  public static PsiReference @NotNull [] getReferencesFromProviders(@NotNull PsiElement context) {
     return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
   }
 
-  @NotNull
-  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints) {
+  public static PsiReference @NotNull [] getReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints) {
     ProgressIndicatorProvider.checkCanceled();
 
     if (hints == PsiReferenceService.Hints.NO_HINTS) {
@@ -50,6 +47,5 @@ public abstract class ReferenceProvidersRegistry {
   @ApiStatus.Internal
   public abstract void unloadProvidersFor(@NotNull Language language);
 
-  @NotNull
-  protected abstract PsiReference[] doGetReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints);
+  protected abstract PsiReference @NotNull [] doGetReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints);
 }

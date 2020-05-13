@@ -30,7 +30,7 @@ import java.util.Comparator;
 import java.util.Properties;
 
 public class AntInstallation {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.impl.AntInstallation");
+  private static final Logger LOG = Logger.getInstance(AntInstallation.class);
   public static final StringProperty HOME_DIR = new StringProperty("homeDir", "");
   public static final AbstractProperty<String> NAME = new StringProperty("name", "");
   public static final ListProperty<AntClasspathEntry> CLASS_PATH = ListProperty.create("classpath");

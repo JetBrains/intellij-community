@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -39,7 +40,8 @@ import java.awt.*;
 public class EditorRenderingBenchmarkAction extends AnAction implements DumbAware {
   private static final int PERIOD = 5; // s
 
-  private final NotificationGroup myNotificationGroup = NotificationGroup.logOnlyGroup("editor-rendering-benchmark");
+  private final NotificationGroup myNotificationGroup = NotificationGroup.logOnlyGroup("editor-rendering-benchmark",
+                                                                                       PluginId.getId("com.intellij"));
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

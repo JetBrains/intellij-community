@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
@@ -34,20 +34,13 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class XVariablesViewBase extends XDebugView {
   private final XDebuggerTreePanel myTreePanel;
   private MySelectionListener mySelectionListener;
@@ -169,8 +162,8 @@ public abstract class XVariablesViewBase extends XDebugView {
   }
 
   private static class MySelectionListener implements SelectionListener {
-    private static final Collection<String> SIDE_EFFECT_PRODUCERS = StreamEx.of("exec(", "++", "--", "=").toList();
-    private static final Set<String> IGNORED_TEXTS = StreamEx.of("", ";", "()").toSet();
+    private static final Collection<String> SIDE_EFFECT_PRODUCERS = Arrays.asList("exec(", "++", "--", "=");
+    private static final Set<String> IGNORED_TEXTS = new HashSet<>(Arrays.asList("", ";", "()"));
     private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     private static final int EVALUATION_DELAY_MILLIS = 100;
 

@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process
 
+import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.CommandLineWrapper
@@ -13,6 +15,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.nio.charset.StandardCharsets
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class JdkUtilTest : BareTestFixtureTestCase() {
   companion object {
@@ -89,6 +94,10 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   @Test fun dynamicClasspathWithArgFile() {
     setModuleMode()
     doTest("-Xmx256m", "-Dan.option=1", "#arg_file#", "-m", "hello/hello.Main", "hello")
+    val content = filesToDelete?.find { it.name.contains("idea_arg_file") }?.readLines()?.dropWhile { it.contains("-p") }
+    val modulePath = content?.first()
+    assertNotNull(modulePath)
+    assertTrue { modulePath.isNotEmpty() }
   }
 
   @Test fun dynamicClasspathWithArgFileAndParameters() {
@@ -107,19 +116,22 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     filesToDelete = setOf(file)
 
     val args = listOf("1#1", "\"2'", "line\n-", "C:\\", "D:\\work", "E:\\work space", "unicode\u2026")
-    JdkUtil.writeArgumentsToParameterFile(file, args)
-    val actual = file.readText(Charsets.UTF_8)
+    CommandLineWrapperUtil.writeArgumentsFile(file, args, StandardCharsets.UTF_8)
+    val actual = file.readLines(Charsets.UTF_8)
 
-    assertThat(actual.split("\n")).containsExactly("1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space", "unicode\u2026", "")
+    assertThat(actual).containsExactly("1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space", "unicode\u2026")
   }
 
   private fun doTest(vararg expected: String) {
-    val cmd = JdkUtil.setupJVMCommandLine(parameters)
-    filesToDelete = cmd.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION)
+    val environmentFactory = LocalTargetEnvironmentFactory()
+    val request = environmentFactory.createRequest()
+    val cmd = parameters.toCommandLine(request, environmentFactory.targetConfiguration)
+    filesToDelete = cmd.filesToDeleteOnTermination
 
-    val actual = cmd.getCommandLineList("-")
+    val actual = ParametersList()
+    actual.addAll(cmd.build().collectCommandsSynchronously())
     val toCompare = mutableListOf<String>()
-    actual.forEachIndexed { i, arg ->
+    actual.parameters.forEachIndexed { i, arg ->
       if (i > 0 && !arg.startsWith("-Dfile.encoding=")) {
         toCompare += when {
           arg.contains(File.pathSeparatorChar) -> arg.splitToSequence(File.pathSeparatorChar).map { mapPath(it) }.joinToString(":")

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -34,9 +35,8 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
     return myRootNode;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull final Object element) {
+  public Object @NotNull [] getChildElements(@NotNull final Object element) {
     return getChildren(element, myData, myStateBean);
   }
 
@@ -44,11 +44,11 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
                               final CoverageSuitesBundle bundle,
                               CoverageViewManager.StateBean stateBean) {
     if (element instanceof CoverageListRootNode && stateBean.myFlattenPackages) {
-      final Collection<? extends AbstractTreeNode> children = ((CoverageListRootNode)element).getChildren();
+      final Collection<? extends AbstractTreeNode<?>> children = ((CoverageListRootNode)element).getChildren();
       return ArrayUtil.toObjectArray(children);
     }
     if (element instanceof CoverageListNode) {
-      List<AbstractTreeNode> children = bundle.getCoverageEngine().createCoverageViewExtension(((CoverageListNode)element).getProject(),
+      List<AbstractTreeNode<?>> children = bundle.getCoverageEngine().createCoverageViewExtension(((CoverageListNode)element).getProject(),
                                                                                                bundle, stateBean)
         .getChildrenNodes((CoverageListNode)element);
       return children.toArray(new CoverageListNode[0]);

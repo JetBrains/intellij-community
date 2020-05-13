@@ -22,9 +22,6 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class ArtifactRootNode extends CompositePackagingElementNode {
   public ArtifactRootNode(CompositePackagingElement<?> rootElement, ArtifactEditorContext context,
                           ComplexElementSubstitutionParameters substitutionParameters, ArtifactType artifactType) {

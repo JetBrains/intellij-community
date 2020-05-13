@@ -50,7 +50,7 @@ public class ExpressionStatisticsAction extends AnAction {
           if (psiFile instanceof PsiJavaFile) {
             psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
               @Override
-              public void visitElement(PsiElement element) {
+              public void visitElement(@NotNull PsiElement element) {
                 if (element instanceof PsiIdentifier) {
                   int offset = element.getTextRange().getStartOffset();
                   PsiExpression minExpression = PsiTreeUtil.getParentOfType(element, PsiExpression.class);

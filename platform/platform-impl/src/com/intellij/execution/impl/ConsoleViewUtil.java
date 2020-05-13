@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.ConsoleDependentFilterProvider;
@@ -38,27 +38,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
  */
-public class ConsoleViewUtil {
-
+public final class ConsoleViewUtil {
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
 
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
-  @NotNull
-  public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
+  public static @NotNull EditorEx setupConsoleEditor(Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(document);
-    EditorEx editor = (EditorEx) editorFactory.createViewer(document, project, EditorKind.CONSOLE);
+    EditorEx editor = (EditorEx)editorFactory.createViewer(document, project, EditorKind.CONSOLE);
     setupConsoleEditor(editor, foldingOutlineShown, lineMarkerAreaShown);
     return editor;
   }
 
-  public static void setupConsoleEditor(@NotNull final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
+  public static void setupConsoleEditor(final @NotNull EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     ApplicationManager.getApplication().runReadAction(() -> {
 
       final EditorSettings editorSettings = editor.getSettings();
@@ -96,19 +95,16 @@ public class ConsoleViewUtil {
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
   }
 
-  @NotNull
-  public static DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {
+  public static @NotNull DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {
     return new DelegateColorScheme(scheme) {
-      @NotNull
       @Override
-      public Color getDefaultBackground() {
+      public @NotNull Color getDefaultBackground() {
         final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
         return color == null ? super.getDefaultBackground() : color;
       }
 
-      @NotNull
       @Override
-      public FontPreferences getFontPreferences() {
+      public @NotNull FontPreferences getFontPreferences() {
         return getConsoleFontPreferences();
       }
 
@@ -127,9 +123,8 @@ public class ConsoleViewUtil {
         return getConsoleLineSpacing();
       }
 
-      @NotNull
       @Override
-      public Font getFont(EditorFontType key) {
+      public @NotNull Font getFont(EditorFontType key) {
         return super.getFont(EditorFontType.getConsoleType(key));
       }
 
@@ -162,8 +157,8 @@ public class ConsoleViewUtil {
       });
     }
 
-    static final Map<Key, List<TextAttributesKey>> textAttributeKeys = ContainerUtil.newConcurrentMap();
-    static final Map<Key, TextAttributes> mergedTextAttributes = ConcurrentFactoryMap.createMap(contentKey-> {
+    static final Map<Key<?>, List<TextAttributesKey>> textAttributeKeys = new ConcurrentHashMap<>();
+    static final Map<Key<?>, TextAttributes> mergedTextAttributes = ConcurrentFactoryMap.createMap(contentKey-> {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
         for (TextAttributesKey key : textAttributeKeys.get(contentKey)) {
@@ -176,12 +171,12 @@ public class ConsoleViewUtil {
       }
     );
 
-    static final Map<List<TextAttributesKey>, Key> keys = ConcurrentFactoryMap.createMap(keys-> {
+    static final Map<List<TextAttributesKey>, Key<?>> keys = ConcurrentFactoryMap.createMap(keys-> {
         StringBuilder keyName = new StringBuilder("ConsoleViewUtil_");
         for (TextAttributesKey key : keys) {
           keyName.append("_").append(key.getExternalName());
         }
-        final Key newKey = new Key(keyName.toString());
+        Key<?> newKey = new Key<>(keyName.toString());
         textAttributeKeys.put(newKey, keys);
         ConsoleViewContentType contentType = new ConsoleViewContentType(keyName.toString(), HighlighterColors.TEXT) {
           @Override
@@ -222,8 +217,7 @@ public class ConsoleViewUtil {
     }
   }
 
-  @NotNull
-  public static ConsoleViewContentType getContentTypeForToken(@NotNull IElementType tokenType, @NotNull SyntaxHighlighter highlighter) {
+  public static @NotNull ConsoleViewContentType getContentTypeForToken(@NotNull IElementType tokenType, @NotNull SyntaxHighlighter highlighter) {
     TextAttributesKey[] keys = highlighter.getTokenHighlights(tokenType);
     if (keys.length == 0) {
       return ConsoleViewContentType.NORMAL_OUTPUT;
@@ -241,10 +235,9 @@ public class ConsoleViewUtil {
     }
   }
 
-  @NotNull
-  public static List<Filter> computeConsoleFilters(@NotNull Project project,
-                                                   @Nullable ConsoleView consoleView,
-                                                   @NotNull GlobalSearchScope searchScope) {
+  public static @NotNull List<Filter> computeConsoleFilters(@NotNull Project project,
+                                                            @Nullable ConsoleView consoleView,
+                                                            @NotNull GlobalSearchScope searchScope) {
     List<Filter> result = new ArrayList<>();
     for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
       Filter[] filters;

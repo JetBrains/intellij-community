@@ -19,6 +19,6 @@
         <<error descr="Unable to coerce java.lang.Class to javafx.geometry.Insets">Double</error> fx:constant="TYPE"/>
     </padding>
     <alignment>
-        <<error descr="Unable to coerce java.lang.Integer to javafx.geometry.Pos">Double</error> fx:constant="SIZE"/>
+        <Double fx:constant="SIZE"/>
     </alignment>
 </GridPane>

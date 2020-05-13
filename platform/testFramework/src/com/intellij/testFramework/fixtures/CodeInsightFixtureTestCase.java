@@ -15,6 +15,7 @@ import java.io.File;
 
 /**
  * @author yole
+ * @see BasePlatformTestCase for light tests
  */
 public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder> extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;

@@ -6,11 +6,13 @@ import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.PsiDiamondTypeUtil
 import com.intellij.psi.impl.source.tree.CompositeElement
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.castSafelyTo
@@ -27,7 +29,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
   override val language: Language
     get() = JavaLanguage.INSTANCE
 
-  private fun cleanupMethodCall(methodCall: PsiMethodCallExpression): PsiMethodCallExpression? {
+  private fun cleanupMethodCall(methodCall: PsiMethodCallExpression): PsiMethodCallExpression {
     if (methodCall.typeArguments.isNotEmpty()) {
       val resolved = methodCall.resolveMethod() ?: return methodCall
       if (methodCall.typeArguments.size == resolved.typeParameters.size &&
@@ -40,14 +42,13 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
           )
       ) {
         val emptyTypeArgumentsMethodCall = JavaPsiFacade.getElementFactory(methodCall.project)
-                                             .createExpressionFromText("foo()", null) as? PsiMethodCallExpression
-                                           ?: return methodCall
+                                             .createExpressionFromText("foo()", null) as PsiMethodCallExpression
 
         methodCall.typeArgumentList.replace(emptyTypeArgumentsMethodCall.typeArgumentList)
       }
     }
 
-    return methodCall
+    return JavaCodeStyleManager.getInstance(methodCall.project).shortenClassReferences(methodCall) as PsiMethodCallExpression
   }
 
   private fun adjustChainStyleToMethodCalls(oldPsi: PsiElement, newPsi: PsiElement) {
@@ -142,6 +143,12 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     else
       MethodCallUpgradeHelper(project, methodCall, expectedReturnType).tryUpgradeToExpectedType()
         ?.let { JavaUCallExpression(it, null) }
+  }
+
+  override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
+    val literalExpr = psiFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(text), context)
+    if (literalExpr !is PsiLiteralExpressionImpl) return null
+    return JavaULiteralExpression(literalExpr, null)
   }
 
   private class MethodCallUpgradeHelper(val project: Project, val methodCall: PsiMethodCallExpression, val expectedReturnType: PsiType) {

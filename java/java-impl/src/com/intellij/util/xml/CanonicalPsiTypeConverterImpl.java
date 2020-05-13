@@ -39,8 +39,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue<PsiType> genericDomValue, final PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue<PsiType> genericDomValue, final PsiElement element, ConvertContext context) {
     final String typeText = genericDomValue.getStringValue();
     if (typeText == null) {
       return PsiReference.EMPTY_ARRAY;
@@ -95,8 +94,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
           }
 
           @Override
-          @NotNull
-          public Object[] getVariants() {
+          public Object @NotNull [] getVariants() {
             final Object[] variants = super.getVariants();
             if (myIndex == 0) {
               return ArrayUtil.mergeArrays(variants, PRIMITIVES, ArrayUtil.OBJECT_ARRAY_FACTORY);

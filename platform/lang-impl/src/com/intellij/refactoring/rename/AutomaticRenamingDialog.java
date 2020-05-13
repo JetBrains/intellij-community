@@ -34,8 +34,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author dsl
@@ -87,9 +87,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     myShouldRename = new boolean[myRenames.length];
     if (renamer.isSelectedByDefault()) {
-      for (int i = 0; i < myShouldRename.length; i++) {
-        myShouldRename[i] = true;
-      }
+      Arrays.fill(myShouldRename, true);
     }
 
     myTableModel = new MyTableModel(renamer.allowChangeSuggestedName());
@@ -112,7 +110,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(myRenamer.getDialogDescription()), BorderLayout.CENTER);
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(createRenameSelectedAction()).setAsSecondary(true);
     panel.add(ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true).getComponent(), BorderLayout.EAST);
     final Box box = Box.createHorizontalBox();
@@ -133,7 +131,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       String newName = myNewNames[i];
       if (myShouldRename[i] && !RenameUtil.isValidName(myProject, myRenames[i], newName)) {
         getOKAction().setEnabled(false);
-        setErrorText("Identifier \'" + newName + "\' is invalid");
+        setErrorText(RefactoringBundle.message("automatic.renaming.dialog.identifier.invalid.error", newName));
         return;
       }
     }
@@ -164,16 +162,12 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     columnModel.getColumn(NEW_NAME_COLUMN).setCellEditor(new StringTableCellEditor(myProject));
 
     mySelectAllButton.addActionListener(e -> {
-      for (int i = 0; i < myShouldRename.length; i++) {
-        myShouldRename[i] = true;
-      }
+      Arrays.fill(myShouldRename, true);
       fireDataChanged();
     });
 
     myUnselectAllButton.addActionListener(e -> {
-      for (int i = 0; i < myShouldRename.length; i++) {
-        myShouldRename[i] = false;
-      }
+      Arrays.fill(myShouldRename, false);
       fireDataChanged();
     });
 
@@ -333,12 +327,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       switch (columnIndex) {
         case CHECK_COLUMN:
           return Boolean.class;
         case OLD_NAME_COLUMN:
-          return String.class;
         case NEW_NAME_COLUMN:
           return String.class;
         default:
@@ -350,7 +343,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     public String getColumnName(int column) {
       switch (column) {
         case OLD_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.enity.name.column", myRenamer.entityName());
+          return RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.entityName());
         case NEW_NAME_COLUMN:
           return RefactoringBundle.message("automatic.renamer.rename.to.column");
         default:
@@ -388,7 +381,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     private final AbstractTableModel myModel;
 
     public RenameSelectedAction(JTable table, final AbstractTableModel model) {
-      super("Rename Selected");
+      super(RefactoringBundle.message("automatic.renaming.dialog.rename.selected.title"));
       myTable = table;
       myModel = model;
     }
@@ -397,7 +390,8 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     public void actionPerformed(@NotNull AnActionEvent e) {
       int[] selectedRows = myTable.getSelectedRows();
       String initial = (String)myModel.getValueAt(selectedRows[0], NEW_NAME_COLUMN);
-      String newName = Messages.showInputDialog(myTable, "New name", "Rename Selected", null, initial, new InputValidatorEx() {
+      String newName = Messages.showInputDialog(myTable, RefactoringBundle.message("automatic.renaming.dialog.new.name.label"),
+                                                RefactoringBundle.message("automatic.renaming.dialog.rename.selected.title"), null, initial, new InputValidatorEx() {
         @Override
         public boolean checkInput(String inputString) {
           return getErrorText(inputString) == null;

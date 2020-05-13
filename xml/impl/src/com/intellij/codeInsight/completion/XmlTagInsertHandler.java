@@ -36,12 +36,17 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.xml.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlExtension.AttributeValuePresentation;
+import com.intellij.xml.XmlTagRuleProvider;
 import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
@@ -247,21 +252,9 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
                                    StringBuilder indirectRequiredAttrs) {
     if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
       template.addTextSegment(">");
-      boolean toInsertCDataEnd = false;
-
-      if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
-        final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
-
-        if (cDataContainer.requiresCdataBracesInContext(tag)) {
-          template.addTextSegment("<![CDATA[\n");
-          toInsertCDataEnd = true;
-        }
-      }
 
       if (indirectRequiredAttrs != null) template.addTextSegment(indirectRequiredAttrs.toString());
       template.addEndVariable();
-
-      if (toInsertCDataEnd) template.addTextSegment("\n]]>");
 
       if ((!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag, true)) && tag.getAttributes().length == 0) {
         if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag()) {
@@ -286,10 +279,13 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
       if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag, true)) {
+        if (hasOwnAttributes(descriptor, tag)) {
+          template.addEndVariable();
+        }
         template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : closeTag(tag));
       }
       else {
-        if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0
+        if (needAtLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0
             && template.getSegmentsCount() == 0) {
           completeAttribute(tag.getContainingFile(), template);
           return true;
@@ -320,7 +316,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     template.addTextSegment(XmlEditUtil.getAttributeQuote(file));
   }
 
-  private static boolean needAlLeastOneAttribute(XmlTag tag) {
+  private static boolean needAtLeastOneAttribute(XmlTag tag) {
     for (XmlTagRuleProvider ruleProvider : XmlTagRuleProvider.EP_NAME.getExtensionList()) {
       for (XmlTagRuleProvider.Rule rule : ruleProvider.getTagRule(tag)) {
         if (rule.needAtLeastOneAttribute(tag)) {
@@ -364,7 +360,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static void completeTagTail(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context, boolean firstLevel) {
-    boolean completeIt = !firstLevel || !canHaveAttributes(descriptor, context);
+    boolean completeIt = (!firstLevel || !canHaveAttributes(descriptor, context))
+                         && (file == null || XmlExtension.getExtension(file).shouldCompleteTag(context));
     switch (descriptor.getContentType()) {
       case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN:
         return;
@@ -395,6 +392,11 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
          }
          break;
     }
+  }
+
+  private static boolean hasOwnAttributes(XmlElementDescriptor descriptor, XmlTag tag) {
+    return ContainerUtil.find(descriptor.getAttributesDescriptors(tag),
+                              attr -> attr instanceof HtmlAttributeDescriptorImpl && HtmlUtil.isOwnHtmlAttribute(attr)) != null;
   }
 
   private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context) {

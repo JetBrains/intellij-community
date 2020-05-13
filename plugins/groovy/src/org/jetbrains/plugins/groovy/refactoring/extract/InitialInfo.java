@@ -127,15 +127,13 @@ public class InitialInfo implements ExtractInfoHelper {
     return myProject;
   }
 
-  @NotNull
   @Override
-  public ParameterInfo[] getParameterInfos() {
+  public ParameterInfo @NotNull [] getParameterInfos() {
     return myParameterInfos;
   }
 
   @Override
-  @NotNull
-  public VariableInfo[] getOutputVariableInfos() {
+  public VariableInfo @NotNull [] getOutputVariableInfos() {
     return myOutputNames;
   }
 
@@ -144,9 +142,8 @@ public class InitialInfo implements ExtractInfoHelper {
    *
    * @return array of argument names
    */
-  @NotNull
   @Override
-  public String[] getArgumentNames() {
+  public String @NotNull [] getArgumentNames() {
     return myArgumentNames;
   }
 
@@ -157,14 +154,12 @@ public class InitialInfo implements ExtractInfoHelper {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getInnerElements() {
+  public PsiElement @NotNull [] getInnerElements() {
     return myInnerElements;
   }
 
   @Override
-  @NotNull
-  public GrStatement[] getStatements() {
+  public GrStatement @NotNull [] getStatements() {
     return myStatements;
   }
 

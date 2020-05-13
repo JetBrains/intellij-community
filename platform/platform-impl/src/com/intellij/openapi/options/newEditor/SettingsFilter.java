@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -14,8 +17,10 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
 import java.awt.event.MouseAdapter;
@@ -25,26 +30,48 @@ import java.util.Set;
 
 public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
   final OptionsEditorContext myContext = new OptionsEditorContext();
-  private final Project myProject;
+  private final @Nullable Project myProject;
 
   private final SearchTextField mySearch;
   private final List<? extends ConfigurableGroup> myGroups;
 
-  private final SearchableOptionsRegistrar myRegistrar = SearchableOptionsRegistrar.getInstance();
   private Set<Configurable> myFiltered;
   private ConfigurableHit myHits;
 
   private boolean myUpdateRejected;
   private Configurable myLastSelected;
 
-  SettingsFilter(Project project, List<? extends ConfigurableGroup> groups, SearchTextField search) {
+  private volatile SearchableOptionsRegistrar searchableOptionRegistrar;
+
+  SettingsFilter(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, SearchTextField search) {
+    SearchableOptionsRegistrarImpl optionRegistrar =
+      (SearchableOptionsRegistrarImpl)ApplicationManager.getApplication().getServiceIfCreated(SearchableOptionsRegistrar.class);
+    if (optionRegistrar == null || !optionRegistrar.isInitialized()) {
+      // if not yet computed, preload it to ensure that will be no delay on user typing
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        SearchableOptionsRegistrarImpl r = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
+        r.initialize();
+        // must be set only after initializing (to avoid concurrent modifications)
+        searchableOptionRegistrar = r;
+        ApplicationManager.getApplication().invokeLater(() -> {
+           update(r, DocumentEvent.EventType.CHANGE, false, true);
+        }, ModalityState.any(), project == null ? ApplicationManager.getApplication().getDisposed() : project.getDisposed());
+      });
+    }
+    else {
+      searchableOptionRegistrar = optionRegistrar;
+    }
+
     myProject = project;
     myGroups = groups;
     mySearch = search;
     mySearch.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent event) {
-        update(event.getType(), true, false);
+        SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
+        if (registrar != null) {
+          update(registrar, event.getType(), true, false);
+        }
         // request focus if needed on changing the filter text
         IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(mySearch);
         if (manager.getFocusedDescendantFor(mySearch) == null) {
@@ -118,7 +145,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     return myHits != null && myHits.getNameHits().contains(configurable);
   }
 
-  void update(String text, boolean adjustSelection, boolean now) {
+  void update(@Nullable String text) {
     try {
       myUpdateRejected = true;
       mySearch.setText(text);
@@ -126,13 +153,18 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     finally {
       myUpdateRejected = false;
     }
-    update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
+
+    SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
+    if (registrar != null) {
+      update(registrar, DocumentEvent.EventType.CHANGE, false, true);
+    }
   }
 
-  private void update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
+  private void update(@NotNull SearchableOptionsRegistrar optionRegistrar, @NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
     if (myUpdateRejected) {
       return;
     }
+
     String text = getFilterText();
     if (text.isEmpty()) {
       myContext.setHoldingFilter(false);
@@ -140,7 +172,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     }
     else {
       myContext.setHoldingFilter(true);
-      myHits = myRegistrar.getConfigurables(myGroups, type, myFiltered, text, myProject);
+      myHits = optionRegistrar.getConfigurables(myGroups, type, myFiltered, text, myProject);
       myFiltered = myHits.getAll();
     }
     mySearch.getTextEditor().setBackground(myFiltered != null && myFiltered.isEmpty()
@@ -195,5 +227,13 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private static boolean isEmptyParent(Configurable configurable) {
     SearchableConfigurable.Parent parent = ConfigurableWrapper.cast(SearchableConfigurable.Parent.class, configurable);
     return parent != null && !parent.hasOwnContent();
+  }
+
+  void reload() {
+    myLastSelected = null;
+    myFiltered = null;
+    myHits = null;
+    mySearch.setText("");
+    myContext.reload();
   }
 }

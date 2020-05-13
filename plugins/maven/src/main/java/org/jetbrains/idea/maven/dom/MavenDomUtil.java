@@ -426,10 +426,10 @@ public class MavenDomUtil {
   }
 
 
-  @Deprecated
-  /*
-   *  @deprecated leavy for plugin binary compatilibity
+  /**
+   * @deprecated left for binary compatibility
    */
+  @Deprecated
   @NotNull
   public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
                                                        @Nullable Editor editor,

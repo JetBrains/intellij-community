@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ZipperUpdater;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.AsyncFileListener;
@@ -24,9 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,18 +57,14 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
         myQueue.clear();
       }
 
-      HashSet<FilePath> dirtyFiles = new HashSet<>();
-      HashSet<FilePath> dirtyDirs = new HashSet<>();
+      List<FilePath> dirtyFiles = new ArrayList<>();
+      List<FilePath> dirtyDirs = new ArrayList<>();
       for (FilesAndDirs filesAndDirs : list) {
-        dirtyFiles.addAll(filesAndDirs.forcedNonRecursive);
-
-        for (FilePath path : filesAndDirs.regular) {
-          if (path.isDirectory()) {
-            dirtyDirs.add(path);
-          }
-          else {
-            dirtyFiles.add(path);
-          }
+        for (Set<FilePath> value : filesAndDirs.files.asMap().values()) {
+          dirtyFiles.addAll(value);
+        }
+        for (Set<FilePath> value : filesAndDirs.dirs.asMap().values()) {
+          dirtyDirs.addAll(value);
         }
       }
 
@@ -85,9 +82,6 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
   }
 
   public static void install(@NotNull Project project) {
-    if (!project.isOpen()) {
-      throw new RuntimeException("Already closed: " + project);
-    }
     getInstance(project);
   }
 
@@ -109,14 +103,14 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
   }
 
   @TestOnly
-  void waitForAsyncTaskCompletion() {
+  public void waitForAsyncTaskCompletion() {
     myZipperUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
   @Nullable
   @Override
   public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-    if (myForbid || !myVcsManager.hasAnyMappings()) return null;
+    if (myForbid || !myVcsManager.hasActiveVcss()) return null;
     final FilesAndDirs dirtyFilesAndDirs = new FilesAndDirs();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
@@ -182,11 +176,11 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
    * not recursively, you should add it to files.
    */
   private static class FilesAndDirs {
-    @NotNull HashSet<FilePath> forcedNonRecursive = new HashSet<>();
-    @NotNull HashSet<FilePath> regular = new HashSet<>();
+    @NotNull VcsDirtyScopeMap files = new VcsDirtyScopeMap();
+    @NotNull VcsDirtyScopeMap dirs = new VcsDirtyScopeMap();
 
     private boolean isEmpty() {
-      return forcedNonRecursive.isEmpty() && regular.isEmpty();
+      return files.isEmpty() && dirs.isEmpty();
     }
   }
 
@@ -194,13 +188,14 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
                           @NotNull FilesAndDirs filesAndDirs,
                           @NotNull FilePath filePath,
                           boolean forceAddAsFiles) {
-    if (vcsManager.getVcsFor(filePath) == null) return;
+    AbstractVcs vcs = vcsManager.getVcsFor(filePath);
+    if (vcs == null) return;
 
-    if (forceAddAsFiles) {
-      filesAndDirs.forcedNonRecursive.add(filePath);
+    if (forceAddAsFiles || !filePath.isDirectory()) {
+      filesAndDirs.files.add(vcs, filePath);
     }
     else {
-      filesAndDirs.regular.add(filePath);
+      filesAndDirs.dirs.add(vcs, filePath);
     }
   }
 

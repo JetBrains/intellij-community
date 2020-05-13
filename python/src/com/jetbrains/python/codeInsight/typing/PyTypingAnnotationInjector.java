@@ -14,6 +14,8 @@ import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnot
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +94,8 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     if (!(parent instanceof PySubscriptionExpression)) return false;
 
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile());
-    return Ref.deref(PyTypingTypeProvider.getType((PySubscriptionExpression)parent, context)) instanceof PyLiteralType;
+    final PyType type = Ref.deref(PyTypingTypeProvider.getType((PySubscriptionExpression)parent, context));
+    return PyTypeUtil.toStream(type).allMatch(PyLiteralType.class::isInstance);
   }
 
   private static boolean isFunctionTypeComment(@NotNull PsiElement comment) {

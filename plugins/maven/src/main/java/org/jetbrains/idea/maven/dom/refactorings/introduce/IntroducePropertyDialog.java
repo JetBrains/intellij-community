@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class IntroducePropertyDialog extends DialogWrapper {
@@ -70,8 +69,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
@@ -152,9 +150,8 @@ public class IntroducePropertyDialog extends DialogWrapper {
     }
 
     result = new ArrayList<>(result);
-    Collections.sort((List)result,
-                     CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES ?
-                     StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
+    ((List)result).sort(CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES ?
+                        StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
     return ArrayUtilRt.toStringArray(result);
   }
 

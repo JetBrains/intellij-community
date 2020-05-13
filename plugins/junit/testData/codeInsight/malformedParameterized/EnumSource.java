@@ -54,3 +54,21 @@ class EnumSourceTest {
 
   private enum Empty {}
 }
+class WithMetaAnnotations {
+  @EnumSource(value = Foo.class, names = {""})
+  @interface MetaEnumSource {}
+
+  @ParameterizedTest
+  @MetaEnumSource
+  void <warning descr="Can't resolve enum constant reference.">empty</warning>() { }
+
+  private enum Foo {AAA}
+}
+
+class WithDefaultEnumSource {
+  @ParameterizedTest
+  @EnumSource
+  void emptyES(Foo foo) { }
+
+  private enum Foo {AAA}
+}

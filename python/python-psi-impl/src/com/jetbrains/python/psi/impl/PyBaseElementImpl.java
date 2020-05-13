@@ -28,9 +28,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author max
- */
 public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElementBase<T> implements PyElement {
   public PyBaseElementImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);
@@ -80,8 +77,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     pyVisitor.visitPyElement(this);
   }
 
-  @NotNull
-  protected <T extends PyElement> T[] childrenToPsi(TokenSet filterSet, T[] array) {
+  protected <T extends PyElement> T @NotNull [] childrenToPsi(TokenSet filterSet, T[] array) {
     final ASTNode[] nodes = getNode().getChildren(filterSet);
     return PyPsiUtils.nodesToPsi(nodes, array);
   }
@@ -152,8 +148,8 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     List<PsiReference> referencesList = new ArrayList<>();
     final PsiFile file = element.getContainingFile();
     final PyResolveContext resolveContext = file != null ?
-                                     PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :
-                                     PyResolveContext.defaultContext();
+                                     PyResolveContext.implicitContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :
+                                     PyResolveContext.implicitContext();
     while (element != null) {
       addReferences(offset, element, referencesList, resolveContext);
       offset = element.getStartOffsetInParent() + offset;

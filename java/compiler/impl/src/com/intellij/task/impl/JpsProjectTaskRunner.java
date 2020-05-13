@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task.impl;
 
 import com.intellij.compiler.impl.CompileDriver;
@@ -25,12 +25,13 @@ import com.intellij.task.*;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,9 +51,9 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
     context.putUserData(JPS_BUILD_DATA_KEY, new MyJpsBuildData());
-    MessageBusConnection fileGeneratedTopicConnection;
+    SimpleMessageBusConnection fileGeneratedTopicConnection;
     if (context.isCollectionOfGeneratedFilesEnabled()) {
-      fileGeneratedTopicConnection = project.getMessageBus().connect(project);
+      fileGeneratedTopicConnection = project.getMessageBus().simpleConnect();
       fileGeneratedTopicConnection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         @Override
         public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
@@ -198,9 +199,9 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
 
   private static ModulesBuildSettings assembleModulesBuildSettings(Collection<? extends ProjectTask> buildTasks) {
     Collection<Module> modules = new SmartList<>();
-    Collection<ModuleBuildTask> incrementalTasks = ContainerUtil.newSmartList();
-    Collection<ModuleBuildTask> excludeDependentTasks = ContainerUtil.newSmartList();
-    Collection<ModuleBuildTask> excludeRuntimeTasks = ContainerUtil.newSmartList();
+    Collection<ModuleBuildTask> incrementalTasks = new SmartList<>();
+    Collection<ModuleBuildTask> excludeDependentTasks = new SmartList<>();
+    Collection<ModuleBuildTask> excludeRuntimeTasks = new SmartList<>();
 
     for (ProjectTask buildProjectTask : buildTasks) {
       ModuleBuildTask moduleBuildTask = (ModuleBuildTask)buildProjectTask;
@@ -373,6 +374,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
   private static class MyCompileStatusNotification implements CompileStatusNotification {
 
     private final MyNotificationCollector myCollector;
+    private final AtomicBoolean finished = new AtomicBoolean();
 
     private MyCompileStatusNotification(@NotNull MyNotificationCollector collector) {
       myCollector = collector;
@@ -381,7 +383,12 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
 
     @Override
     public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
-      myCollector.appendJpsBuildResult(aborted, errors, warnings, compileContext, this);
+      if (finished.compareAndSet(false, true)) {
+        myCollector.appendJpsBuildResult(aborted, errors, warnings, compileContext, this);
+      } else {
+        // can be invoked by CompileDriver for rerun action
+        LOG.debug("Multiple invocation of the same CompileStatusNotification.");
+      }
     }
   }
 

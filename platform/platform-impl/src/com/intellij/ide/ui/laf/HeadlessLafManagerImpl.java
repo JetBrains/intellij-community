@@ -5,18 +5,18 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.components.BasicOptionButtonUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class HeadlessLafManagerImpl extends LafManager {
   public HeadlessLafManagerImpl() {
-    LafManagerImpl.fixOptionButton(UIManager.getLookAndFeelDefaults());
+    UIManager.getLookAndFeelDefaults().put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
   }
 
-  @NotNull
   @Override
-  public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
+  public UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
   }
 
@@ -26,12 +26,22 @@ public class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public CollectionComboBoxModel<UIManager.LookAndFeelInfo> getLafComboBoxModel() {
+  public LafReference getCurrentLookAndFeelReference() {
+    return null;
+  }
+
+  @Override
+  public void setCurrentLookAndFeel(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) { }
+
+  @Override
+  public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
     return new CollectionComboBoxModel<>();
   }
 
   @Override
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) { }
+  public UIManager.LookAndFeelInfo findLaf(LafReference reference) {
+    return null;
+  }
 
   @Override
   public void updateUI() { }

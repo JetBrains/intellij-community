@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.stripe;
 
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelListener;
@@ -11,9 +12,6 @@ import java.beans.EventHandler;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author Sergey.Malenkov
- */
 public class TreeUpdater<Painter extends ErrorStripePainter> extends Updater<Painter> {
   private final JTree myTree;
 
@@ -50,10 +48,7 @@ public class TreeUpdater<Painter extends ErrorStripePainter> extends Updater<Pai
 
   @Override
   protected void onSelect(Painter painter, int index) {
-    if (0 <= index) {
-      myTree.setSelectionRow(index);
-      myTree.scrollRowToVisible(index);
-    }
+    TreeUtil.selectRow(myTree, index);
   }
 
   @Override

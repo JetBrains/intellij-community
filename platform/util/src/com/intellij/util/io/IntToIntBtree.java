@@ -7,9 +7,9 @@ import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 public class IntToIntBtree {
@@ -49,7 +49,7 @@ public class IntToIntBtree {
   private final int myCachedMappingsSize;
   private static final int UNDEFINED_ADDRESS = -1;
 
-  public IntToIntBtree(int pageSize, @NotNull File file, @NotNull PagedFileStorage.StorageLockContext storageLockContext, boolean initial) throws IOException {
+  public IntToIntBtree(int pageSize, @NotNull Path file, @NotNull PagedFileStorage.StorageLockContext storageLockContext, boolean initial) throws IOException {
     this.pageSize = pageSize;
 
     if (initial) {
@@ -172,7 +172,7 @@ public class IntToIntBtree {
   private int myOptimizedInserts;
   private boolean myCanUseLastKey;
 
-  public boolean get(int key, @NotNull int[] result) {
+  public boolean get(int key, int @NotNull [] result) {
     if (key == 0) {
       if (hasZeroKey) {
         result[0] = zeroKeyValue;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.execution.ExecutionBundle;
@@ -11,7 +11,10 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +24,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.jediterm.terminal.HyperlinkStyle;
@@ -44,9 +46,6 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author traff
- */
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private static final Logger LOG = Logger.getInstance(TerminalExecutionConsole.class);
 
@@ -57,7 +56,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private volatile boolean myLastCR = false;
   private final PendingTasksRunner myOnResizedRunner;
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
-  private boolean myEnableConsoleActions = true;
 
   private boolean myEnterKeyDefaultCodeEnabled = true;
 
@@ -119,7 +117,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   /**
    * @deprecated use {{@link #addMessageFilter(Filter)}} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @Deprecated
   public void addMessageFilter(Project project, Filter filter) {
     myTerminalWidget.addMessageFilter(filter);
@@ -223,6 +221,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
           if (widget != null) {
             widget.getTerminalPanel().setCursorVisible(false);
           }
+          myAttachedToProcess.set(false);
         }, ModalityState.any());
       }
     });
@@ -271,29 +270,25 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return false;
   }
 
-  @NotNull
-  public AnAction[] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
-    AnAction[] actions = createConsoleActions();
-    myEnableConsoleActions = false;
-    if (prependSeparatorIfNonEmpty && actions.length > 0) {
-      actions = ArrayUtil.mergeArrays(new AnAction[] {Separator.create()}, actions);
-    }
-    return actions;
+  /**
+   * @deprecated already handled by {@link com.intellij.execution.runners.RunContentBuilder#createDescriptor()}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public AnAction @NotNull [] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
+    return AnAction.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public AnAction[] createConsoleActions() {
-    if (myEnableConsoleActions) {
-      return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
-    }
-    return AnAction.EMPTY_ARRAY;
+  public AnAction @NotNull [] createConsoleActions() {
+    return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
   }
 
   @Override
   public void allowHeavyFilters() {
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return myTerminalWidget.getComponent();
@@ -373,7 +368,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ClearAction extends DumbAwareAction {
     private ClearAction() {
-      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+      super(ExecutionBundle.messagePointer("clear.all.from.console.action.name"),
+            ExecutionBundle.messagePointer("clear.all.from.console.action.text"), AllIcons.Actions.GC);
     }
 
     @Override
@@ -389,8 +385,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ScrollToTheEndAction extends DumbAwareAction {
     private ScrollToTheEndAction() {
-      super(ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
-            ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+      super(ActionsBundle.messagePointer("action.EditorConsoleScrollToTheEnd.text"),
+            ActionsBundle.messagePointer("action.EditorConsoleScrollToTheEnd.text"),
             AllIcons.RunConfigurations.Scroll_down);
     }
 

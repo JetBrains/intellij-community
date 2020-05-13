@@ -116,6 +116,7 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
     );
   }
 
+  @SuppressWarnings("RedundantArrayCreation")
   public void testClassWildcard() {
     doTestIntentionNotAvailable(
       "class Y {" +
@@ -126,6 +127,7 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
     );
   }
 
+  @SuppressWarnings("RedundantArrayCreation")
   public void testEmptyArray() {
     doTest(
       "class X {" +

@@ -47,12 +47,6 @@ public class VarargParameterInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("variable.argument.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("variable.argument.method.problem.descriptor");
   }
@@ -129,7 +123,7 @@ public class VarargParameterInspection extends BaseInspection {
       final PsiElement element = reference.getElement();
       final PsiCall call = (PsiCall)(element instanceof PsiCall ? element : element.getParent());
       JavaResolveResult result = call.resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
         return;
       }
       final PsiExpressionList argumentList = call.getArgumentList();

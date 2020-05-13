@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.Html5SchemaProvider;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,7 @@ public class DefaultSchemasConfigurable implements Configurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Default XML Schemas";
+    return XmlBundle.message("configurable.DefaultSchemasConfigurable.display.name");
   }
 
   @Nullable

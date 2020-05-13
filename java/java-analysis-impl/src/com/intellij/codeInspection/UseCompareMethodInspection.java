@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
@@ -13,6 +14,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.style.SimplifiableIfStatementInspection;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -61,7 +63,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       private void register(CompareInfo info, PsiElement nameElement) {
-        holder.registerProblem(nameElement, "Can be replaced with '" + info.myClass.getClassName() + ".compare'",
+        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
                                new ReplaceWithPrimitiveCompareFix(info.getReplacementText()));
       }
     };
@@ -102,7 +104,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     if (!storeCondition(result, firstCondition, firstExpression)) return null;
     if (!storeCondition(result, secondCondition, ExpressionUtils.getAssignmentTo(secondStatement, variable))) return null;
     if (!storeCondition(result, null, ExpressionUtils.getAssignmentTo(thirdStatement, variable))) return null;
-    return fromMap(result, firstExpression, assignment);
+    return fromMap(result, firstExpression, firstStatement);
   }
 
   private static PsiStatement getElse(PsiIfStatement ifStatement) {
@@ -299,7 +301,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       myClass = aClass;
     }
 
-    private void replace(PsiElement toReplace, CommentTracker ct) {
+    private @NotNull PsiElement replace(PsiElement toReplace, CommentTracker ct) {
       String replacement;
       if (this.myLeft.getType() instanceof PsiClassType) {
         replacement = ct.text(this.myLeft, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".compareTo(" + ct.text(this.myRight) + ")";
@@ -307,10 +309,10 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
         replacement = this.myClass.getCanonicalText() + ".compare(" + ct.text(this.myLeft) + "," + ct.text(this.myRight) + ")";
       }
       if(toReplace == myTemplate) {
-        ct.replaceAndRestoreComments(myToReplace, replacement);
+        return ct.replaceAndRestoreComments(myToReplace, replacement);
       } else {
         ct.replace(myToReplace, replacement);
-        ct.replaceAndRestoreComments(toReplace, myTemplate);
+        return ct.replaceAndRestoreComments(toReplace, myTemplate);
       }
     }
 
@@ -338,7 +340,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with single comparison method";
+      return JavaAnalysisBundle.message("inspection.use.compare.method.fix.family.name");
     }
 
     @Override
@@ -369,8 +371,9 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
       if (info == null) return;
       CommentTracker ct = new CommentTracker();
-      info.replace(toReplace, ct);
+      PsiElement result = info.replace(toReplace, ct);
       StreamEx.of(toDelete).nonNull().filter(PsiElement::isValid).forEach(e -> new CommentTracker().deleteAndRestoreComments(e));
+      SimplifiableIfStatementInspection.tryJoinDeclaration(result);
     }
   }
 }

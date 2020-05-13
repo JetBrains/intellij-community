@@ -16,7 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.picker.ColorListener;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
@@ -63,21 +65,24 @@ public class ColorPanel extends JComponent {
 
   public void onPressed() {
     if (myEditable && isEnabled()) {
-      Color color = ColorChooser.chooseColor(this, UIBundle.message("color.panel.select.color.dialog.description"), myColor, mySupportTransparency);
-      if (color != null) {
-        setSelectedColor(color);
-        if (!myListeners.isEmpty() && (myEvent == null)) {
-          try {
-            myEvent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
-            for (ActionListener listener : myListeners) {
-              listener.actionPerformed(myEvent);
+      RelativePoint location = new RelativePoint(this, new Point(getWidth() / 2, getHeight()));
+      ColorChooserService.getInstance().showColorPickerPopup(null, myColor, new ColorListener() {
+        @Override
+        public void colorChanged(Color color, Object source) {
+          setSelectedColor(color);
+          if (!myListeners.isEmpty() && (myEvent == null)) {
+            try {
+              myEvent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
+              for (ActionListener listener : myListeners) {
+                listener.actionPerformed(myEvent);
+              }
+            }
+            finally {
+              myEvent = null;
             }
           }
-          finally {
-            myEvent = null;
-          }
         }
-      }
+      }, location, mySupportTransparency);
     }
   }
 
@@ -134,7 +139,7 @@ public class ColorPanel extends JComponent {
     }
     Color color = enabled ? myColor : null;
     if (color != null) {
-      myTextField.setText(' ' + StringUtil.toUpperCase(ColorUtil.toHex(color)) + ' ');
+      myTextField.setText(StringUtil.toUpperCase(ColorUtil.toHex(color)));
     }
     else {
       myTextField.setText(null);

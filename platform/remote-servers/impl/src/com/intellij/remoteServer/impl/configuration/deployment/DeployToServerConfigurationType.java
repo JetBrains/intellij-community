@@ -5,6 +5,7 @@ import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
@@ -17,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public final class DeployToServerConfigurationType extends ConfigurationTypeBase {
   private final ServerType<?> myServerType;
   private final MultiSourcesConfigurationFactory myMultiSourcesFactory;
@@ -27,7 +25,8 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
 
   public DeployToServerConfigurationType(@NotNull ServerType<?> serverType) {
     super(serverType.getId() + "-deploy", serverType.getDeploymentConfigurationTypePresentableName(),
-          "Deploy to " + serverType.getPresentableName() + " run configuration", serverType.getIcon());
+          CloudBundle.message("deploy.to.server.configuration.type.description", serverType.getPresentableName()),
+          serverType.getIcon());
 
     myServerType = serverType;
     if (myServerType.mayHaveProjectSpecificDeploymentSources()) {
@@ -43,6 +42,10 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
       addFactory(nextFactory);
       myPerTypeFactories.put(next, nextFactory);
     }
+  }
+
+  boolean isForServerType(@NotNull ServerType<?> serverType) {
+    return serverType.equals(myServerType);
   }
 
   /**
@@ -82,7 +85,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
   }
 
   // todo do not extends ConfigurationFactoryEx once Google Cloud Tools plugin will get rid of getFactory() usage
-  public class DeployToServerConfigurationFactory extends ConfigurationFactoryEx<DeployToServerRunConfiguration<?, ?>> {
+  public abstract class DeployToServerConfigurationFactory extends ConfigurationFactoryEx<DeployToServerRunConfiguration<?, ?>> {
     public DeployToServerConfigurationFactory() {
       super(DeployToServerConfigurationType.this);
     }
@@ -106,7 +109,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     @Override
     public String getId() {
       //compatibility reasons, before 173 it was the only configuration factory stored with this ID
-      return DeployToServerConfigurationType.this.getDisplayName();
+      return DeployToServerConfigurationType.this.getServerType().getDeploymentConfigurationFactoryId();
     }
   }
 

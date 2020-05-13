@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
@@ -45,16 +31,15 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   }
 
   @Override
-  public void visitFile(PsiFile file) {
+  public void visitFile(@NotNull PsiFile file) {
     ProblemDescriptor[] descriptors = checkFileWithExternalAnnotator(file, myHolder.getManager(), myIsOnTheFly, myAnnotator);
     addDescriptors(descriptors);
   }
 
-  @NotNull
-  public static <Init,Result> ProblemDescriptor[] checkFileWithExternalAnnotator(@NotNull PsiFile file,
-                                                                                 @NotNull InspectionManager manager,
-                                                                                 boolean isOnTheFly,
-                                                                                 @NotNull ExternalAnnotator<Init, Result> annotator) {
+  public static <Init,Result> ProblemDescriptor @NotNull [] checkFileWithExternalAnnotator(@NotNull PsiFile file,
+                                                                                           @NotNull InspectionManager manager,
+                                                                                           boolean isOnTheFly,
+                                                                                           @NotNull ExternalAnnotator<Init, Result> annotator) {
     if (isOnTheFly) {
       // ExternalAnnotator does this work
       return ProblemDescriptor.EMPTY_ARRAY;
@@ -68,7 +53,8 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       }
       return ReadAction.compute(() -> {
         AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), true);
-        annotator.apply(file, annotationResult, annotationHolder);
+        annotationHolder.applyExternalAnnotatorWithContext(file, annotator, annotationResult);
+        annotationHolder.assertAllAnnotationsCreated();
         return ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file);
       });
     }
@@ -76,7 +62,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   }
 
 
-  private void addDescriptors(@NotNull ProblemDescriptor[] descriptors) {
+  private void addDescriptors(ProblemDescriptor @NotNull [] descriptors) {
     for (ProblemDescriptor descriptor : descriptors) {
       LOG.assertTrue(descriptor != null, getClass().getName());
       myHolder.registerProblem(descriptor);

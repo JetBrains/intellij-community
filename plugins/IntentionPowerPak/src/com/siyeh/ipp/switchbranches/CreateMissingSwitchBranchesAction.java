@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.switchbranches;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -17,6 +17,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -36,7 +37,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiSwitchBlock block = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class, false, PsiCodeBlock.class, PsiStatement.class);
     if (block == null) return;
-    if (block instanceof PsiSwitchExpression && !HighlightUtil.Feature.SWITCH_EXPRESSION.isAvailable(block)) {
+    if (block instanceof PsiSwitchExpression && !HighlightingFeature.SWITCH_EXPRESSION.isAvailable(block)) {
       // Do not suggest if switch expression is not supported as we may generate unparseable code with 'yield' statement
       return;
     }
@@ -84,8 +85,8 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     CommonDataflow.DataflowResult dfr = CommonDataflow.getDataflowResult(expression);
     PsiType type = expression.getType();
     if (dfr != null) {
-      LongRangeSet range = dfr.getExpressionFact(expression, DfaFactType.RANGE);
-      if (range != null && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
+      LongRangeSet range = DfIntType.extractRange(dfr.getDfType(expression));
+      if (type != null && PsiType.INT.isAssignableFrom(type) && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
         return range.stream().mapToObj(c -> Value.fromConstant(TypeConversionUtil.computeCastTo(c, type))).collect(Collectors.toList());
       }
       Set<Object> values = dfr.getExpressionValues(expression);
@@ -134,7 +135,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Create missing switch branches";
+    return IntentionPowerPackBundle.message("create.missing.switch.branches.family.name");
   }
 
   @NotNull

@@ -60,9 +60,9 @@ public interface PermanentGraph<Id> {
   Condition<Id> getContainedInBranchCondition(@NotNull Collection<? extends Id> currentBranchHead);
 
   enum SortType {
-    Normal("Off", "Sort commits topologically and by date"),
-    Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)"),
-    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased");
+    Normal("Off", "Sort commits topologically and by date"), // NON-NLS
+    Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)"), // NON-NLS
+    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased"); // NON-NLS
 
     @NotNull private final String myPresentation;
     @NotNull private final String myDescription;

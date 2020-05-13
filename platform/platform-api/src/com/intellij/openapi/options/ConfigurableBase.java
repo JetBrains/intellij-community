@@ -4,6 +4,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public abstract class ConfigurableBase<UI extends ConfigurableUi<S>, S> implemen
 
   private UI ui;
 
-  protected ConfigurableBase(@NotNull String id, @NotNull String displayName, @Nullable String helpTopic) {
+  protected ConfigurableBase(@NonNls @NotNull String id, @Nls @NotNull String displayName, @NonNls @Nullable String helpTopic) {
     this.id = id;
     this.displayName = displayName;
     this.helpTopic = helpTopic;

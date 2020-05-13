@@ -17,6 +17,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,7 @@ public interface UsageContextPanel extends Disposable {
     boolean isAvailableFor(@NotNull UsageView usageView);
 
     @NotNull
+    @TabTitle
     String getTabTitle();
   }
 }

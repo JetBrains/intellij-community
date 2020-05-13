@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.ProjectRule
-import org.junit.After
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.TestName
 import javax.swing.JPanel
 import javax.swing.JTable
@@ -33,7 +31,15 @@ abstract class UiDslTest {
     System.clearProperty("idea.ui.comment.copyable")
   }
 
-  private val dummyTextBinding = PropertyBinding({ "" }, {})
+  @Test
+  fun `field with gear`() {
+    doTest { fieldWithGear() }
+  }
+
+  @Test
+  fun `field with gear with indent`() {
+    doTest { fieldWithGearWithIndent() }
+  }
 
   @Test
   fun `align fields in the nested grid`() {
@@ -86,6 +92,11 @@ abstract class UiDslTest {
   }
 
   @Test
+  fun `sample configurable panel`() {
+    doTest { sampleConfigurablePanel() }
+  }
+
+  @Test
   fun scrollPaneNoGrow() {
     doTest {
       panel {
@@ -100,17 +111,20 @@ abstract class UiDslTest {
   }
 
   @Test
-  fun hideableRow() {
-    doTest {
-      panel {
-        row("Foo") {
-          textField(dummyTextBinding)
-        }
-        hideableRow("Bar") {
-          textField(dummyTextBinding)
-        }
-      }
-    }
+  fun `hideable row`() {
+    doTest { hideableRow() }
+  }
+
+  @Test
+  fun subRowsIndent() {
+    doTest { rowWithIndent() }
+  }
+
+  @Test
+  fun `checkbox rows with big components`() {
+    // ComboBoxes in MacOs LaF have different border insets, that are used to build layout constraints
+    Assume.assumeTrue(!SystemInfo.isMac)
+    doTest { checkboxRowsWithBigComponents() }
   }
 
   protected abstract fun doTest(panelCreator: () -> JPanel)

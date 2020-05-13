@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public abstract class DetectedProjectRoot {
   private final File myDirectory;
 

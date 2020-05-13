@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,13 +10,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-/**
- * @author max
- */
 public class LayeredLexer extends DelegateLexer {
   public static final ThreadLocal<Boolean> ourDisableLayersFlag = new ThreadLocal<>();
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
+  private static final Logger LOG = Logger.getInstance(LayeredLexer.class);
   private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
   private static final int IN_LAYER_LEXER_FINISHED_STATE = 2048;
 

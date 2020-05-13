@@ -78,8 +78,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     IntentionUtils.createTemplateForMethod(paramTypesExpressions, method, targetClass, constraints, false, context);
   }
 
-  @NotNull
-  protected TypeConstraint[] getReturnTypeConstraints() {
+  protected TypeConstraint @NotNull [] getReturnTypeConstraints() {
     return GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)getRefExpr().getParent());
   }
 
@@ -108,8 +107,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     }
   }
 
-  @NotNull
-  private ChooseTypeExpression[] setupParams(@NotNull PsiMethod method, @NotNull PsiType[] argTypes, @NotNull JVMElementFactory factory) {
+  private ChooseTypeExpression @NotNull [] setupParams(@NotNull PsiMethod method, PsiType @NotNull [] argTypes, @NotNull JVMElementFactory factory) {
     final PsiParameterList parameterList = method.getParameterList();
 
     ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];

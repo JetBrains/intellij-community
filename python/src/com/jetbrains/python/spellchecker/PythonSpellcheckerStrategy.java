@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.spellchecker;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
@@ -94,6 +95,10 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PyStringLiteralExpression) {
+      final InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
+      if (element.getTextLength() >= 2 && injectionManager.getInjectedPsiFiles(element) != null) {
+        return EMPTY_TOKENIZER;
+      }
       PsiElement parent = element.getParent();
       if (parent instanceof PyBinaryExpression) {
         PyBinaryExpression binaryExpression = (PyBinaryExpression)parent;

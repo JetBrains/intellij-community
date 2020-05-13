@@ -32,9 +32,6 @@ import java.util.Set;
 import static com.intellij.util.io.TestFileSystemItem.fs;
 import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
 
-/**
- * @author nik
- */
 public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   protected static void createFileInArtifactOutput(JpsArtifact a, final String relativePath) {
     createFileInOutputDir(a.getOutputPath(), relativePath);

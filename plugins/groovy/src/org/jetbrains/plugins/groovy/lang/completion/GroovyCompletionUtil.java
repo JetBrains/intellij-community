@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.completion.originInfo.OriginInfoProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +26,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -74,6 +74,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.resolvePackageFqn;
+import static org.jetbrains.plugins.groovy.lang.resolve.impl.ConstructorsKt.getAllConstructors;
 
 /**
  * @author ilyas
@@ -361,11 +362,6 @@ public class GroovyCompletionUtil {
       builder = builder.withTailText(tailText, true);
     }
 
-    String originInfo = OriginInfoProvider.getOriginInfo(element);
-    if (originInfo != null) {
-      builder = builder.appendTailText(" " + originInfo, true);
-    }
-
     return builder;
   }
 
@@ -401,27 +397,24 @@ public class GroovyCompletionUtil {
   }
 
   public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull PsiElement place) {
-    final GroovyResolveResult[] constructors = ResolveUtil.getAllClassConstructors(clazz, PsiSubstitutor.EMPTY, null, place);
-
-
-    boolean hasSetters = ContainerUtil.find(clazz.getAllMethods(), method -> GroovyPropertyUtils.isSimplePropertySetter(method)) != null;
-
-    boolean hasParameters = false;
-    boolean hasAccessibleConstructors = false;
-    for (GroovyResolveResult result : constructors) {
-      final PsiElement element = result.getElement();
-      if (element instanceof PsiMethod) {
-        if (!((PsiMethod)element).getParameterList().isEmpty()) {
-          hasParameters = true;
+    final List<PsiMethod> constructors = getAllConstructors(clazz, place);
+    final List<PsiMethod> accessibleParameterlessConstructors = new SmartList<>();
+    final List<PsiMethod> inaccessibleConstructors = new SmartList<>();
+    for (PsiMethod constructor : constructors) {
+      if (PsiUtil.isAccessible(place, constructor)) {
+        if (constructor.hasParameters()) {
+          return true;
         }
-        if (result.isAccessible()) {
-          hasAccessibleConstructors = true;
-        }
-        if (hasAccessibleConstructors && hasParameters) return true;
+        accessibleParameterlessConstructors.add(constructor);
+      }
+      else {
+        inaccessibleConstructors.add(constructor);
       }
     }
-
-    return !hasAccessibleConstructors && (hasParameters || hasSetters);
+    return accessibleParameterlessConstructors.isEmpty() && (
+      ContainerUtil.or(inaccessibleConstructors, constructor -> constructor.hasParameters())
+      || ContainerUtil.or(clazz.getAllMethods(), method -> GroovyPropertyUtils.isSimplePropertySetter(method))
+    );
   }
 
   public static void addImportForItem(PsiFile file, int startOffset, LookupElement item) throws IncorrectOperationException {
@@ -451,10 +444,6 @@ public class GroovyCompletionUtil {
   }
 
   public static int addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
-//    LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
-//    LOG.assertTrue(
-//      ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
-
     final PsiManager manager = file.getManager();
 
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
@@ -645,7 +634,7 @@ public class GroovyCompletionUtil {
               sibling instanceof PsiErrorElement ||
               sibling instanceof GrVariableDeclaration ||
               sibling instanceof GrReferenceExpression && !((GrReferenceExpression)sibling).isQualified()
-            ) {
+          ) {
             sibling = sibling.getPrevSibling();
           }
           else {

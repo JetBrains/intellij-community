@@ -21,8 +21,7 @@ public abstract class FileEditorProviderManager {
    * @return All providers that can create editor for the specified {@code file} or empty array if there are none.
    * Please note that returned array is constructed with respect to editor policies.
    */
-  @NotNull
-  public abstract FileEditorProvider[] getProviders(@NotNull Project project, @NotNull VirtualFile file);
+  public abstract FileEditorProvider @NotNull [] getProviders(@NotNull Project project, @NotNull VirtualFile file);
 
   /**
    * @return {@code null} if no provider with specified {@code editorTypeId} exists.

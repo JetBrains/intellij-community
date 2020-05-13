@@ -83,11 +83,6 @@ public class GroovyTraitFieldsFileIndex
   }
 
   @Override
-  public boolean dependsOnFileContent() {
-    return true;
-  }
-
-  @Override
   public int getVersion() {
     return 5;
   }

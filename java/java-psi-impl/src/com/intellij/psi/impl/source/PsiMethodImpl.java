@@ -14,6 +14,8 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
+import com.intellij.psi.impl.light.LightCompactConstructorParameter;
+import com.intellij.psi.impl.light.LightParameterListBuilder;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
@@ -86,20 +88,17 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods() {
+  public PsiMethod @NotNull [] findSuperMethods() {
     return PsiSuperMethodImplUtil.findSuperMethods(this);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+  public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+  public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
   }
 
@@ -115,8 +114,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findDeepestSuperMethods() {
+  public PsiMethod @NotNull [] findDeepestSuperMethods() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
   }
 
@@ -167,7 +165,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  @NotNull public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return PsiImplUtil.getTypeParameters(this);
   }
 
@@ -207,7 +205,24 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @Override
   @NotNull
   public PsiParameterList getParameterList() {
-    return getRequiredStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
+    PsiParameterList list = getStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
+    if (list == null) {
+      return CachedValuesManager.getCachedValue(this, () -> {
+        final LightParameterListBuilder lightList = new LightParameterListBuilder(this.getManager(), this.getLanguage());
+        PsiClass aClass = this.getContainingClass();
+        if (aClass != null) {
+          PsiRecordComponent[] recordComponents = aClass.getRecordComponents();
+          for (PsiRecordComponent component : recordComponents) {
+            String name = component.getName();
+            if (name == null) continue;
+            lightList.addParameter(new LightCompactConstructorParameter(name, component.getType(), this, component));
+          }
+        }
+
+        return CachedValueProvider.Result.create(lightList, this, PsiModificationTracker.MODIFICATION_COUNT);
+      });
+    }
+    return list;
   }
 
   @Override

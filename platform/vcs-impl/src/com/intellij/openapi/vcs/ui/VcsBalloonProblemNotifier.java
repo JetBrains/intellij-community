@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,33 +27,33 @@ public class VcsBalloonProblemNotifier implements Runnable {
   private final Project myProject;
   private final String myMessage;
   private final MessageType myMessageType;
-  @Nullable private final NamedRunnable[] myNotificationListener;
+  private final NamedRunnable @Nullable [] myNotificationListener;
 
-  public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull final String message, final MessageType messageType) {
+  public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull @NotificationContent String message, final MessageType messageType) {
     this(project, message, messageType, null);
   }
 
   public VcsBalloonProblemNotifier(@NotNull final Project project,
-                                   @NotNull final String message,
+                                   @NotificationContent @NotNull final String message,
                                    final MessageType messageType,
-                                   @Nullable final NamedRunnable[] notificationListener) {
+                                   final NamedRunnable @Nullable [] notificationListener) {
     myProject = project;
     myMessage = message;
     myMessageType = messageType;
     myNotificationListener = notificationListener;
   }
 
-  public static void showOverChangesView(@NotNull final Project project, @NotNull final String message, final MessageType type,
+  public static void showOverChangesView(@NotNull final Project project, @NotificationContent @NotNull final String message, final MessageType type,
                                          final NamedRunnable... notificationListener) {
     show(project, message, type, notificationListener);
   }
 
-  public static void showOverVersionControlView(@NotNull final Project project, @NotNull final String message, final MessageType type) {
+  public static void showOverVersionControlView(@NotNull final Project project, @NotificationContent @NotNull String message, final MessageType type) {
     show(project, message, type, null);
   }
 
-  private static void show(final Project project, final String message, final MessageType type,
-                           @Nullable final NamedRunnable[] notificationListener) {
+  private static void show(final Project project, @NotificationContent final String message, final MessageType type,
+                           final NamedRunnable @Nullable [] notificationListener) {
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment()) return;
     final Runnable showErrorAction = () -> new VcsBalloonProblemNotifier(project, message, type, notificationListener).run();

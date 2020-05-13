@@ -4,10 +4,12 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,13 +61,13 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Suggest conversion to Map.computeIfAbsent", "mySuggestMapComputeIfAbsent");
-    panel.addCheckbox("Suggest conversion to Map.getOrDefault", "mySuggestMapGetOrDefault");
-    panel.addCheckbox("Suggest conversion to Map.putIfAbsent", "mySuggestMapPutIfAbsent");
-    panel.addCheckbox("Suggest conversion to Map.merge", "mySuggestMapMerge");
-    panel.addCheckbox("Suggest conversion to Map.replaceAll", "mySuggestMapReplaceAll");
-    panel.addCheckbox("Treat 'get(k) != null' the same as 'containsKey(k)' (may change semantics)", "myTreatGetNullAsContainsKey");
-    panel.addCheckbox("Suggest replacement even if lambda may have side effects", "mySideEffects");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.computeifabsent"), "mySuggestMapComputeIfAbsent");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.getordefault"), "mySuggestMapGetOrDefault");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.putifabsent"), "mySuggestMapPutIfAbsent");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.merge"), "mySuggestMapMerge");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.replaceall"), "mySuggestMapReplaceAll");
+    panel.addCheckbox(JavaBundle.message("checkbox.treat.get.k.null.the.same.as.containskey.k.may.change.semantics"), "myTreatGetNullAsContainsKey");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.replacement.even.if.lambda.may.have.side.effects"), "mySideEffects");
     return panel;
   }
 
@@ -282,6 +284,17 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
       myCallPointer = manager.createSmartPsiElementPointer(call);
       myValuePointer = manager.createSmartPsiElementPointer(value);
       myResultPointer = manager.createSmartPsiElementPointer(result);
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiMethodCallExpression call = myCallPointer.getElement();
+      PsiExpression value = myValuePointer.getElement();
+      PsiElement result = myResultPointer.getElement();
+      if (call == null || value == null || result == null) return null;
+      return new ReplaceWithSingleMapOperation(myMethodName, PsiTreeUtil.findSameElementInCopy(call, target),
+                                               PsiTreeUtil.findSameElementInCopy(value, target), 
+                                               PsiTreeUtil.findSameElementInCopy(result, target));
     }
 
     @Override

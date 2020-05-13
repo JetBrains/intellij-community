@@ -41,19 +41,12 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement expression = (PsiElement)infos[0];
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
@@ -122,7 +115,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Insert cast";
+      return InspectionGadgetsBundle.message("char.used.in.arithmetic.content.cast.fix.family.name");
     }
 
     @Override

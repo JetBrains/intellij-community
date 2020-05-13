@@ -1,12 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -48,13 +49,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.VISIBILITY_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Member access can be tightened";
+    return InspectionsBundle.message("group.names.visibility.issues");
   }
 
   @Override
@@ -130,7 +125,8 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         // can be null in some strange cases of malbuilt PSI, like in EA-95877
         if (toHighlight != null) {
           String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
-          myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(suggestedModifier), new ChangeModifierFix(suggestedModifier));
+          myHolder.registerProblem(toHighlight,
+                                   JavaAnalysisBundle.message("access.can.be.0", VisibilityUtil.toPresentableText(suggestedModifier)), new ChangeModifierFix(suggestedModifier));
         }
       }
     }

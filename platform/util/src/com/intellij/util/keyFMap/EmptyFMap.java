@@ -16,6 +16,7 @@
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import org.jetbrains.annotations.NotNull;
 
 class EmptyFMap implements KeyFMap {
@@ -46,9 +47,8 @@ class EmptyFMap implements KeyFMap {
     return 0;
   }
 
-  @NotNull
   @Override
-  public Key[] getKeys() {
+  public Key @NotNull [] getKeys() {
     return EMPTY_KEYS_ARRAY;
   }
 
@@ -75,5 +75,9 @@ class EmptyFMap implements KeyFMap {
   @Override
   public int hashCode() {
     return 0;
+  }
+  
+  static KeyFMap create() {
+    return DebugFMap.DEBUG_FMAP ? new DebugFMap(UnmodifiableHashMap.empty()) : new EmptyFMap();
   }
 }

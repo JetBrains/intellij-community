@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -22,11 +23,11 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
     this(null);
   }
 
-  public JBCheckBox(@Nullable String text) {
+  public JBCheckBox(@Nullable @NlsContexts.Checkbox String text) {
     this(text, false);
   }
 
-  public JBCheckBox(@Nullable String text, boolean selected) {
+  public JBCheckBox(@Nullable @NlsContexts.Checkbox String text, boolean selected) {
     super(text, null, selected);
   }
 

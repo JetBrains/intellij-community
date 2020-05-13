@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -13,7 +14,7 @@ public class EditPropertyValueIntentionAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return "Edit property value";
+    return JavaI18nBundle.message("intention.text.edit.property.value");
   }
 
   @Override

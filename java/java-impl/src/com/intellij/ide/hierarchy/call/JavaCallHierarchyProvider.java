@@ -49,6 +49,6 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
 
   @Override
   public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
-    ((CallHierarchyBrowser)hierarchyBrowser).changeView(CallHierarchyBrowserBase.CALLER_TYPE);
+    ((CallHierarchyBrowser)hierarchyBrowser).changeView(CallHierarchyBrowserBase.getCallerType());
   }
 }

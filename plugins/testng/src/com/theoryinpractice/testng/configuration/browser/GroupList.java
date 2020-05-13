@@ -8,6 +8,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ public class GroupList extends JPanel
         DialogBuilder builder = new DialogBuilder(component);
         builder.setCenterPanel(groupList);
       builder.setPreferredFocusComponent(groupList.list);
-      builder.setTitle("Choose Test Group");
+      builder.setTitle(TestngBundle.message("testng.choose.test.group"));
         return builder.show() != 0 ? null : groupList.getSelected();
     }
 }

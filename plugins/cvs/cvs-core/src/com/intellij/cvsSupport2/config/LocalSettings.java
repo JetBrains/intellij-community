@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class LocalSettings implements JDOMExternalizable, Cloneable {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.LocalSettings");
+  private static final Logger LOG = Logger.getInstance(LocalSettings.class);
 
   @NonNls
   public String PATH_TO_CVS_CLIENT = "cvs";

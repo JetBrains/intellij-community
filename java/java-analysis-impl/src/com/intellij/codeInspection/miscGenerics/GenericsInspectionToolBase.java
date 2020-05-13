@@ -65,6 +65,5 @@ public abstract class GenericsInspectionToolBase extends AbstractBaseJavaLocalIn
     return null;
   }
 
-  @Nullable
-  public abstract ProblemDescriptor[] getDescriptions(@NotNull PsiElement place, @NotNull InspectionManager manager, boolean isOnTheFly);
+  public abstract ProblemDescriptor @Nullable [] getDescriptions(@NotNull PsiElement place, @NotNull InspectionManager manager, boolean isOnTheFly);
 }

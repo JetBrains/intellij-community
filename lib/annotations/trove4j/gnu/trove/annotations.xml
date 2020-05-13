@@ -62,6 +62,9 @@
   <item name='gnu.trove.THashMap V put(K, V) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='gnu.trove.THashSet boolean add(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='gnu.trove.TIntFunction'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>

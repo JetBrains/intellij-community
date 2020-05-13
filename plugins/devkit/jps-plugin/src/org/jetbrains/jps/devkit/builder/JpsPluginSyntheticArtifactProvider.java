@@ -33,11 +33,9 @@ import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
-import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.JpsJavaModuleType;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -50,11 +48,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProvider {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.devkit.builder.JpsPluginSyntheticArtifactProvider");
+  private static final Logger LOG = Logger.getInstance(JpsPluginSyntheticArtifactProvider.class);
 
   @NotNull
   @Override
@@ -112,6 +107,16 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
         parent = factory.getOrCreateDirectory(root, "lib");
       }
       parent.addChild(factory.createLibraryElement(library.createReference()));
+      for (File nativeRoot : library.getFiles(JpsNativeLibraryRootType.INSTANCE)) {
+        JpsPackagingElement copy;
+        if (nativeRoot.isDirectory()) {
+          copy = factory.createDirectoryCopy(nativeRoot.getAbsolutePath());
+        }
+        else {
+          copy = factory.createFileCopy(nativeRoot.getAbsolutePath(), null);
+        }
+        factory.getOrCreateDirectory(root, "lib").addChild(copy);
+      }
     }
 
     String name = module.getName() + ":plugin";

@@ -10,7 +10,7 @@ public class SortLinesAction extends EditorAction {
   public SortLinesAction() {
     super(new AbstractPermuteLinesHandler() {
       @Override
-      public void permute(@NotNull String[] lines) {
+      public void permute(String @NotNull [] lines) {
         Arrays.parallelSort(lines);
       }
     });

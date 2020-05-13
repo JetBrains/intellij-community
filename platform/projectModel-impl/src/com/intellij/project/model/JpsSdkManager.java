@@ -19,9 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.jps.model.library.JpsLibrary;
 
-/**
- * @author nik
- */
 public abstract class JpsSdkManager {
   public static JpsSdkManager getInstance() {
     return ServiceManager.getService(JpsSdkManager.class);

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class UserFileType <T extends UserFileType> implements FileType, Cloneable {
+public abstract class UserFileType<T extends UserFileType<T>> implements FileType, Cloneable {
   @NotNull private String myName = "";
   private String myDescription = "";
 
@@ -19,9 +19,10 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
   public abstract SettingsEditor<T> getEditor();
 
   @Override
-  public UserFileType clone() {
+  public UserFileType<T> clone() {
     try {
-      return (UserFileType)super.clone();
+      //noinspection unchecked
+      return (UserFileType<T>)super.clone();
     }
     catch (CloneNotSupportedException e) {
       return null; //Can't be
@@ -77,11 +78,11 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return null;
   }
 
-  public void copyFrom(@NotNull UserFileType newType) {
+  public void copyFrom(@NotNull UserFileType<T> newType) {
     myName = newType.getName();
     myDescription = newType.getDescription();
   }

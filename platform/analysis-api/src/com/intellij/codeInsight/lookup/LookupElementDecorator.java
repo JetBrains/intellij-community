@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -16,14 +16,14 @@ import java.util.Set;
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */
 public abstract class LookupElementDecorator<T extends LookupElement> extends LookupElement {
-  private final T myDelegate;
+  private final @NotNull T myDelegate;
 
-  protected LookupElementDecorator(T delegate) {
+  protected LookupElementDecorator(@NotNull T delegate) {
     myDelegate = delegate;
     myDelegate.copyUserDataTo(this);
   }
 
-  public T getDelegate() {
+  public @NotNull T getDelegate() {
     return myDelegate;
   }
 
@@ -67,6 +67,19 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   @Override
   public void renderElement(LookupElementPresentation presentation) {
     myDelegate.renderElement(presentation);
+  }
+
+  @Override
+  public LookupElementRenderer<? extends LookupElement> getExpensiveRenderer() {
+    //noinspection rawtypes
+    LookupElementRenderer renderer = myDelegate.getExpensiveRenderer();
+    return renderer == null ? null : new LookupElementRenderer<LookupElementDecorator<?>>() {
+      @Override
+      public void renderElement(LookupElementDecorator<?> element, LookupElementPresentation presentation) {
+        //noinspection unchecked
+        renderer.renderElement(element.myDelegate, presentation);
+      }
+    };
   }
 
   @Override

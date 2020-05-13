@@ -18,6 +18,7 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.CommenterForm;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
@@ -29,7 +30,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBCheckBox;
@@ -79,7 +79,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
     myPanel.setBorder(JBUI.Borders.empty(2));
-    myJavaVisibilityPanel = new JavaVisibilityPanel(false, true, RefactoringBundle.message("default.visibility.border.title"));
+    myJavaVisibilityPanel = new JavaVisibilityPanel(false, true, JavaRefactoringBundle.message("default.visibility.border.title"));
   }
 
   @Override

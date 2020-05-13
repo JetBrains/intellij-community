@@ -1,6 +1,7 @@
 package com.intellij.json;
 
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.project.Project;
@@ -61,8 +62,19 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     if (rootSchema == null) return false;
     if (service.isSchemaFile(rootSchema)) {
       JsonProperty property = ObjectUtils.tryCast(element.getParent(), JsonProperty.class);
-      if (property != null && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(property.getName())) {
-        return true;
+      if (property != null) {
+        if (JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(property.getName())) {
+          return true;
+        }
+        if ("language".equals(property.getName())) {
+          PsiElement parent = property.getParent();
+          if (parent instanceof JsonObject) {
+            PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof JsonProperty && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(((JsonProperty)grandParent).getName())) {
+              return true;
+            }
+          }
+        }
       }
     }
 
@@ -79,7 +91,7 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, position).resolve();
     if (schemas.isEmpty()) return false;
 
-    return schemas.stream().anyMatch(s -> s.getProperties().keySet().contains(value)
+    return schemas.stream().anyMatch(s -> s.getProperties().containsKey(value)
       || s.getMatchingPatternPropertySchema(value) != null);
   }
 

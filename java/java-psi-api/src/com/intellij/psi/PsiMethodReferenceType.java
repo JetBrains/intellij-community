@@ -61,9 +61,8 @@ public class PsiMethodReferenceType extends PsiType {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return PsiType.EMPTY_ARRAY;
   }
 

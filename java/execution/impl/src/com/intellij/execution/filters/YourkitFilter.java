@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -35,7 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class YourkitFilter implements Filter{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.filters.YourkitFilter");
+  private static final Logger LOG = Logger.getInstance(YourkitFilter.class);
 
   private final Project myProject;
 
@@ -96,7 +97,7 @@ public class YourkitFilter implements Filter{
         final IPopupChooserBuilder<PsiFile> builder = JBPopupFactory.getInstance()
           .createPopupChooserBuilder(ContainerUtil.newArrayList(myPsiFiles))
           .setRenderer(renderer)
-          .setTitle("Choose file")
+          .setTitle(ExecutionBundle.message("choose.file"))
           .setItemsChosenCallback((selectedElements) -> {
             for (PsiFile element : selectedElements) {
               Navigatable descriptor = EditSourceUtil.getDescriptor(element);

@@ -2,6 +2,7 @@
   <name>JavaFX</name>
   <id>org.jetbrains.plugins.javaFX</id>
   <vendor>JetBrains</vendor>
+  <category>JVM Frameworks</category>
   <description>
       <![CDATA[
       Enables <a href="http://www.oracle.com/technetwork/java/javafx/overview/index.html">JavaFX</a> support.

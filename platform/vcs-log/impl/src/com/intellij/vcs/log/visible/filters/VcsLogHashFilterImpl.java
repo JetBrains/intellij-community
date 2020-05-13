@@ -24,13 +24,13 @@ class VcsLogHashFilterImpl implements VcsLogHashFilter {
 
   @NotNull
   @Override
-  public String getPresentation() {
+  public String getDisplayText() {
     return StringUtil.join(getHashes(), it -> VcsLogUtil.getShortHash(it), ", ");
   }
 
   @Override
   public String toString() {
-    return "hashes:" + myHashes;
+    return "hashes:" + myHashes; // NON-NLS
   }
 
   @Override

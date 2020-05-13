@@ -21,8 +21,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Max Medvedev
  */
 class GrCreateMissingSwitchBranchesTest extends GrIntentionTestCase {
-  private static final String HINT = GroovyIntentionsBundle.message("gr.create.missing.switch.branches.intention.name")
-
   final String basePath = "${TestUtils.testDataPath}intentions/constructorMatchingSuper/"
 
   void testSimple() {
@@ -36,7 +34,7 @@ E e = E.a
 switch (e) {
 <caret>
 }
-''', HINT, '''\
+''', getHINT(), '''\
 enum E {
     a, b, c
 }
@@ -53,5 +51,9 @@ switch (e) {
         break
 }
 ''')
+  }
+
+  private static String getHINT() {
+    return GroovyIntentionsBundle.message("gr.create.missing.switch.branches.intention.name")
   }
 }

@@ -39,9 +39,8 @@ public class MockFileTypeManager extends FileTypeManager {
     return MockLanguageFileType.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileType[] getRegisteredFileTypes() {
+  public FileType @NotNull [] getRegisteredFileTypes() {
     return new FileType[] {MockLanguageFileType.INSTANCE};
   }
 
@@ -55,9 +54,8 @@ public class MockFileTypeManager extends FileTypeManager {
     return false;
   }
 
-  @NotNull
   @Override
-  public String[] getAssociatedExtensions(@NotNull FileType type) {
+  public String @NotNull [] getAssociatedExtensions(@NotNull FileType type) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -102,11 +100,6 @@ public class MockFileTypeManager extends FileTypeManager {
   @Override
   public FileType getStdFileType(@NotNull @NonNls String fileTypeName) {
     return MockLanguageFileType.INSTANCE;
-  }
-
-  @Override
-  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-    return false;
   }
 
   @Nullable

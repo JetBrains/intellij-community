@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.options.BeanConfigurable
 import com.intellij.openapi.options.Configurable
@@ -11,8 +12,8 @@ import com.intellij.openapi.util.Setter
 
 class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
   override fun getConfigurable(project: Project?): UnnamedConfigurable? {
-    if (project == null) {
-      return super.getConfigurable(project)
+    if (project == null || !TerminalShellCommandHandlerHelper.isFeatureEnabled()) {
+      return null
     }
     return TerminalCommandHandlerConfigurable(project)
   }
@@ -28,7 +29,7 @@ class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
   class TerminalCommandHandlerConfigurable(project: Project) :
     BeanConfigurable<TerminalCommandHandlerOptions>(TerminalCommandHandlerOptions(project)), Configurable {
     init {
-      checkBox("Smart command handling",
+      checkBox(IdeBundle.message("settings.terminal.smart.command.handling"),
                Getter<Boolean> { instance!!.enabled },
                Setter<Boolean> { instance!!.enabled = it })
     }

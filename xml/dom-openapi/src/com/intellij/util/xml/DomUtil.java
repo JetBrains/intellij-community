@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author peter
  */
 public class DomUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
+  private static final Logger LOG = Logger.getInstance(DomUtil.class);
   public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = GenericValue.class.getTypeParameters()[0];
   private static final Class<Void> DUMMY = void.class;
   private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
@@ -66,8 +66,7 @@ public class DomUtil {
     return null;
   }
 
-  @NotNull
-  public static String[] getElementNames(@NotNull Collection<? extends DomElement> list) {
+  public static String @NotNull [] getElementNames(@NotNull Collection<? extends DomElement> list) {
     ArrayList<String> result = new ArrayList<>(list.size());
     if (list.size() > 0) {
       for (DomElement element: list) {
@@ -92,8 +91,7 @@ public class DomUtil {
     return result;
   }
 
-  @NotNull
-  public static XmlTag[] getElementTags(@NotNull DomElement[] list) {
+  public static XmlTag @NotNull [] getElementTags(DomElement @NotNull [] list) {
     XmlTag[] result = new XmlTag[list.length];
     int i = 0;
     for (DomElement element: list) {
@@ -295,13 +293,13 @@ public class DomUtil {
     }
   }
 
-  public static Collection<Class> getAllInterfaces(final Class aClass, final Collection<Class> result) {
-    final Class[] interfaces = aClass.getInterfaces();
+  public static Collection<Class<?>> getAllInterfaces(final Class<?> aClass, final Collection<Class<?>> result) {
+    final Class<?>[] interfaces = aClass.getInterfaces();
     ContainerUtil.addAll(result, interfaces);
     if (aClass.getSuperclass() != null) {
       getAllInterfaces(aClass.getSuperclass(), result);
     }
-    for (Class anInterface : interfaces) {
+    for (Class<?> anInterface : interfaces) {
       getAllInterfaces(anInterface, result);
     }
     return result;

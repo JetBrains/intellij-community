@@ -15,10 +15,10 @@
   -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/JavaIdePlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/tips-intellij-idea-community.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <module value="com.intellij.modules.idea"/>
   <module value="com.intellij.modules.idea.community"/>
   <module value="com.intellij.modules.java-capable"/>
-  <module value="com.intellij.modules.android-capable"/>
   <module value="com.intellij.modules.python-core-capable"/>
 </idea-plugin>

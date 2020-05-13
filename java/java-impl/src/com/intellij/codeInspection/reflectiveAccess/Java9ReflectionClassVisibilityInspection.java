@@ -4,8 +4,8 @@ package com.intellij.codeInspection.reflectiveAccess;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -61,7 +61,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
           final PsiJavaModule otherModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
           if (otherModule != null && otherModule != javaModule) {
             if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
-              String message = InspectionsBundle.message(
+              String message = JavaBundle.message(
                 "module.not.in.requirements", javaModule.getName(), otherModule.getName());
               holder.registerProblem(classNameArgument, message, new AddRequiresDirectiveFix(javaModule, otherModule.getName()));
               return;
@@ -80,7 +80,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
               if (publicApi && isPackageAccessible(otherModule.getExports(), packageName, javaModule)) {
                 return;
               }
-              final String message = InspectionsBundle.message(
+              final String message = JavaBundle.message(
                 publicApi ? "module.package.not.exported" : "module.package.not.open",
                 otherModule.getName(), packageName, javaModule.getName());
               holder.registerProblem(classNameArgument, message);

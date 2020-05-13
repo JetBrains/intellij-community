@@ -6,9 +6,7 @@ package com.intellij.codeInspection.dataFlow.inliner;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -36,18 +34,19 @@ public class MapUpdateInliner implements CallInliner {
       PsiExpression key = args[0];
       PsiExpression function = args[1];
       builder
-        .pushExpression(qualifier)
-        .pop();
+        .pushExpression(qualifier) // stack: .. qualifier
+        .pushExpression(key) // stack: .. qualifier; key
+        .evaluateFunction(function);
       String name = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
       switch (name) {
         case "computeIfAbsent":
-          inlineComputeIfAbsent(builder, qualifier, key, function, type);
+          inlineComputeIfAbsent(builder, function, type);
           break;
         case "computeIfPresent":
-          inlineComputeIfPresent(builder, qualifier, key, function, type);
+          inlineComputeIfPresent(builder, function, type);
           break;
         case "compute":
-          inlineCompute(builder, qualifier, key, function, type);
+          inlineCompute(builder, function, type);
           break;
         default:
           throw new IllegalStateException("Unsupported name: " + name);
@@ -65,78 +64,64 @@ public class MapUpdateInliner implements CallInliner {
       PsiExpression value = args[1];
       PsiExpression function = args[2];
       builder
-        .pushExpression(qualifier)
-        .pop()
-        .pushExpression(key)
-        .pop()
-        .pushExpression(value)
+        .pushExpression(qualifier) // stack: .. qualifier
+        .pushExpression(key) // stack: .. qualifier; key
+        .pop() // stack: .. qualifier
+        .pushExpression(value) // stack: .. qualifier; value
         .boxUnbox(value, ExpectedTypeUtils.findExpectedType(value, false))
         .evaluateFunction(function)
-        .pushUnknown()
-        .ifNotNull()
-        .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
-        .swap()
-        .invokeFunction(2, function)
+        .pushUnknown() // stack: .. qualifier; value; get() result
+        .ifNotNull() // stack: .. qualifier; value
+        .push(DfTypes.typedObject(type, Nullability.NOT_NULL)) // stack: .. qualifier; value; get() result
+        .swap() // stack: .. qualifier; get() result; value
+        .invokeFunction(2, function) // stack: .. qualifier; mapping result
         .end()
-        .chain(b -> flushSize(qualifier, b))
+        .chain(b -> flushSize(b))
         .resultOf(call);
       return true;
     }
     return false;
   }
 
-  private static void flushSize(PsiExpression qualifier, CFGBuilder builder) {
-    DfaValueFactory factory = builder.getFactory();
-    DfaValue value = factory.createValue(qualifier);
-    DfaValue size = SpecialField.COLLECTION_SIZE.createValue(factory, value);
-    builder.assignAndPop(size, DfaUnknownValue.getInstance());
+  private static void flushSize(CFGBuilder builder) {
+    builder.swap().unwrap(SpecialField.COLLECTION_SIZE).pushUnknown().assign().pop();
   }
 
   private static void inlineComputeIfAbsent(@NotNull CFGBuilder builder,
-                                            PsiExpression qualifier,
-                                            PsiExpression key,
                                             PsiExpression function,
                                             PsiType type) {
     builder
-      .pushExpression(key) // stack: .. key
-      .evaluateFunction(function)
-      .pushUnknown() // stack: .. key; get() result
-      .ifNull() // stack: .. key
-      .invokeFunction(1, function) // stack: .. mapping result
-      .chain(b -> flushSize(qualifier, b))
+      .pushUnknown() // stack: .. qualifier; key; get() result
+      .ifNull() // stack: .. qualifier; key
+      .invokeFunction(1, function) // stack: .. qualifier; mapping_result
+      .chain(MapUpdateInliner::flushSize)
       .elseBranch()
-      .pop()
-      .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
+      .splice(2)
+      .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
       .end();
   }
 
   private static void inlineComputeIfPresent(@NotNull CFGBuilder builder,
-                                             PsiExpression qualifier, PsiExpression key,
                                              PsiExpression function,
                                              PsiType type) {
     builder
-      .pushExpression(key) // stack: .. key
-      .evaluateFunction(function)
-      .pushUnknown() // stack: .. key; get() result
-      .ifNotNull() // stack: .. key
-      .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
-      .invokeFunction(2, function) // stack: .. mapping result
-      .chain(b -> flushSize(qualifier, b))
+      .pushUnknown() // stack: .. qualifier; key; get() result
+      .ifNotNull() // stack: .. qualifier; key
+      .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
+      .invokeFunction(2, function) // stack: .. qualifier; mapping result
+      .chain(MapUpdateInliner::flushSize)
       .elseBranch()
-      .pop()
+      .splice(2)
       .pushNull()
       .end();
   }
 
   private static void inlineCompute(@NotNull CFGBuilder builder,
-                                    PsiExpression qualifier, PsiExpression key,
                                     PsiExpression function,
                                     PsiType type) {
     builder
-      .pushExpression(key) // stack: .. key
-      .evaluateFunction(function)
-      .push(builder.getFactory().createTypeValue(type, Nullability.NULLABLE))
-      .invokeFunction(2, function) // stack: .. mapping result
-      .chain(b -> flushSize(qualifier, b));
+      .push(DfTypes.typedObject(type, Nullability.NULLABLE))
+      .invokeFunction(2, function) // stack: .. qualifier; mapping result
+      .chain(MapUpdateInliner::flushSize);
   }
 }

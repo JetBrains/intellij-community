@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
@@ -15,9 +16,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class MovePackagingElementAction extends DumbAwareAction {
   private final LayoutTreeComponent myLayoutTreeComponent;
   private final int myDirection;
@@ -32,7 +30,7 @@ public class MovePackagingElementAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     final boolean b = isEnabled();
     e.getPresentation().setEnabled(b);
-    e.getPresentation().setText(getTemplatePresentation().getText() + " (disabled if elements are sorted)");
+    e.getPresentation().setText(JavaUiBundle.message("action.text.0.disabled.if.elements.are.sorted", getTemplatePresentation().getText()));
   }
 
   private boolean isEnabled() {

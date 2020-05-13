@@ -21,9 +21,6 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 
-/**
-* @author nik
-*/
 public class FrameworkSupportNode extends FrameworkSupportNodeBase<FrameworkSupportInModuleProvider> {
   private FrameworkSupportInModuleConfigurable myConfigurable;
   private final FrameworkSupportModelBase myModel;

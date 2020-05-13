@@ -15,8 +15,9 @@
  */
 package com.jetbrains.python.testing;
 
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -24,12 +25,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.jetbrains.python.PyNames;
@@ -45,7 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class VFSTestFrameworkListener {
+@Service
+public final class VFSTestFrameworkListener implements Disposable {
   private static final Logger LOG = Logger.getInstance(VFSTestFrameworkListener.class);
 
   private final AtomicBoolean myIsUpdating = new AtomicBoolean(false);
@@ -53,52 +53,11 @@ public class VFSTestFrameworkListener {
   private final MergingUpdateQueue myQueue;
 
   public static VFSTestFrameworkListener getInstance() {
-    return ApplicationManager.getApplication().getComponent(VFSTestFrameworkListener.class);
+    return ApplicationManager.getApplication().getService(VFSTestFrameworkListener.class);
   }
 
   public VFSTestFrameworkListener() {
-    final Application application = ApplicationManager.getApplication();
-    final MessageBus messageBus = application.getMessageBus();
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (!(event.getFileSystem() instanceof LocalFileSystem) || event instanceof VFileContentChangeEvent) {
-            continue;
-          }
-          final String path = event.getPath();
-
-          final Set<String> existingFrameworks = new HashSet<>();
-          for (final String framework : PyTestFrameworkService.getFrameworkNamesSet()) {
-            if (path.contains(framework)) {
-              existingFrameworks.add(framework);
-            }
-            if (path.contains("py-1")) {
-              existingFrameworks.add(PyNames.PY_TEST);
-            }
-          }
-
-
-          if (existingFrameworks.isEmpty()) {
-            continue;
-          }
-          for (Sdk sdk : PythonSdkUtil.getAllSdks()) {
-            if (PythonSdkUtil.isRemote(sdk)) {
-              continue;
-            }
-            for (VirtualFile virtualFile : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-              final String root = virtualFile.getCanonicalPath();
-              if (root != null && path.contains(root)) {
-                final String framework = existingFrameworks.iterator().next();
-                scheduleTestFrameworkCheck(sdk, framework);
-                return;
-              }
-            }
-          }
-        }
-      }
-    });
-    myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null, application, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
   }
 
   public void updateAllTestFrameworks(@NotNull Sdk sdk) {
@@ -140,7 +99,7 @@ public class VFSTestFrameworkListener {
   }
 
   @NotNull
-  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, @NotNull String... testFrameworkNames) {
+  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, String @NotNull ... testFrameworkNames) {
     final Map<String, Boolean> result = new HashMap<>();
     if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
       LOG.info("Searching test runner in empty sdk");
@@ -174,5 +133,50 @@ public class VFSTestFrameworkListener {
 
   public final void setTestFrameworkInstalled(boolean installed, @NotNull String sdkHome, @NotNull String name) {
     myService.getSdkToTestRunnerByName(name).put(sdkHome, installed);
+  }
+
+  public static class Listener implements BulkFileListener {
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
+      for (VFileEvent event : events) {
+        if (!(event.getFileSystem() instanceof LocalFileSystem) || event instanceof VFileContentChangeEvent) {
+          continue;
+        }
+        final String path = event.getPath();
+
+        final Set<String> existingFrameworks = new HashSet<>();
+        for (final String framework : PyTestFrameworkService.getFrameworkNamesSet()) {
+          if (path.contains(framework)) {
+            existingFrameworks.add(framework);
+          }
+          if (path.contains("py-1")) {
+            existingFrameworks.add(PyNames.PY_TEST);
+          }
+        }
+
+
+        if (existingFrameworks.isEmpty()) {
+          continue;
+        }
+        for (Sdk sdk : PythonSdkUtil.getAllSdks()) {
+          if (PythonSdkUtil.isRemote(sdk)) {
+            continue;
+          }
+          for (VirtualFile virtualFile : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+            final String root = virtualFile.getCanonicalPath();
+            if (root != null && path.contains(root)) {
+              final String framework = existingFrameworks.iterator().next();
+              getInstance().scheduleTestFrameworkCheck(sdk, framework);
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Override
+  public void dispose() {
+    // Needed to dispose MergingUpdateQueue
   }
 }

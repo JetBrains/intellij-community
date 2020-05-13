@@ -2,6 +2,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.ui.LafManager;
@@ -81,6 +82,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       final JRadioButton radioButton = new JRadioButton(theme.name, myDefaultTheme == theme);
       radioButton.setOpaque(false);
       final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, () -> {
+        CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.UIThemeChanged);
+
         applyLaf(theme, this);
         theme.apply();
       });
@@ -162,20 +165,18 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @Override
   public String getTitle() {
-    return "UI Themes";
+    return IdeBundle.message("step.title.ui.themes");
   }
 
   @Override
   public String getHTMLHeader() {
-    return "<html><body><h2>Set UI theme</h2>&nbsp;</body></html>";
+    return IdeBundle.message("label.set.ui.theme");
   }
 
   @Override
   public String getHTMLFooter() {
-    return "You can change the UI theme later in " +
-           CommonBundle.settingsTitle()
-           + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
-           + " | " + "Appearance. Additional themes are available in " + CommonBundle.settingsTitle() + " | Plugins.";
+    return IdeBundle.message("label.you.can.change.the.ui.theme.later.in.0.1", CommonBundle.settingsTitle(),
+                             OptionsBundle.message("configurable.group.appearance.settings.display.name"), CommonBundle.settingsTitle());
   }
 
   private void applyLaf(ThemeInfo theme, Component component) {
@@ -198,7 +199,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         lafManager.setCurrentLookAndFeel(info);
         if (lafManager instanceof LafManagerImpl) {
           ((LafManagerImpl)lafManager).updateWizardLAF(wasUnderDarcula);//Actually updateUI would be called inside EditorColorsManager
-        } else {
+        }
+        else {
           lafManager.updateUI();
         }
       }

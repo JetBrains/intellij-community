@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
@@ -6,6 +6,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+/**
+ * @deprecated Use {@link it.unimi.dsi.fastutil.ints.IntArrayList}
+ */
+@Deprecated
 public final class IntArrayList implements Cloneable {
   private int[] myData;
   private int mySize;
@@ -44,7 +48,7 @@ public final class IntArrayList implements Cloneable {
       Arrays.fill(myData, fromIndex, toIndex, value);
   }
 
-  public void add(@NotNull int[] values) {
+  public void add(int @NotNull [] values) {
     int length = values.length;
     ensureCapacity(mySize + length);
     System.arraycopy(values, 0, myData, mySize, length);
@@ -97,13 +101,11 @@ public final class IntArrayList implements Cloneable {
     }
   }
 
-  @NotNull
-  public int[] toArray() {
+  public int @NotNull [] toArray() {
     return toArray(0,mySize);
   }
 
-  @NotNull
-  public int[] toArray(@NotNull int[] a) {
+  public int @NotNull [] toArray(int @NotNull [] a) {
     if (a.length < mySize){
       a = new int[mySize];
     }
@@ -113,8 +115,7 @@ public final class IntArrayList implements Cloneable {
     return a;
   }
 
-  @NotNull
-  public int[] toArray(int startIndex, int length) {
+  public int @NotNull [] toArray(int startIndex, int length) {
     int[] result = new int[length];
     System.arraycopy(myData, startIndex, result, 0, length);
     return result;

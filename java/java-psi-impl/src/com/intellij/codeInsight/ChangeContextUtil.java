@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ChangeContextUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ChangeContextUtil");
+  private static final Logger LOG = Logger.getInstance(ChangeContextUtil.class);
 
   private static final Key<ASTNode> HARD_REF_TO_AST = Key.create("HARD_REF_TO_AST");
   private static final Key<String> ENCODED_KEY = Key.create("ENCODED_KEY");

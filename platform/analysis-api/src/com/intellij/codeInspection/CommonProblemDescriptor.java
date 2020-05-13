@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ public interface CommonProblemDescriptor {
    * </ul>
    * @return the template for the problem description.
    */
+  @InspectionMessage
   @NotNull
   String getDescriptionTemplate();
 
@@ -53,6 +55,5 @@ public interface CommonProblemDescriptor {
    *
    * @return the list of quickfixes registered for the problem.
    */
-  @Nullable
-  QuickFix[] getFixes();
+  QuickFix @Nullable [] getFixes();
 }

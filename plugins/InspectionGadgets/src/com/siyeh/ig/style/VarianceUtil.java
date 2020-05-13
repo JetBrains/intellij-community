@@ -65,7 +65,7 @@ class VarianceUtil {
     return rootType.accept(new PsiTypeVisitor<Boolean>() {
       @NotNull
       @Override
-      public Boolean visitClassType(PsiClassType classType) {
+      public Boolean visitClassType(@NotNull PsiClassType classType) {
         for (PsiType param : classType.getParameters()) {
           if (param.accept(this)) return true;
         }
@@ -74,13 +74,13 @@ class VarianceUtil {
 
       @NotNull
       @Override
-      public Boolean visitArrayType(PsiArrayType arrayType) {
+      public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);
       }
 
       @NotNull
       @Override
-      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+      public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         PsiType bound = wildcardType.getBound();
         if (bound == null) {
           return false;
@@ -91,7 +91,7 @@ class VarianceUtil {
 
       @NotNull
       @Override
-      public Boolean visitType(PsiType type) {
+      public Boolean visitType(@NotNull PsiType type) {
         return typeResolvesTo(type, parameter, superClassSubstitutor);
       }
     });

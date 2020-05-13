@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.openapi.util.RecursionManager
@@ -11,11 +11,13 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
 class CollectingGroovyInferenceSession(
@@ -24,13 +26,15 @@ class CollectingGroovyInferenceSession(
   contextSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
   private val ignoreClosureArguments: Set<GrParameter> = emptySet(),
-  private val depth : Int = 0
-) : GroovyInferenceSession(typeParams, contextSubstitutor, context, false, emptySet()) {
-
+  private val skipClosureArguments: Boolean = false,
+  private val expressionFilters: Set<(GrExpression) -> Boolean> = emptySet(),
+  private val depth: Int = 0
+) : GroovyInferenceSession(typeParams, contextSubstitutor, context, skipClosureArguments, expressionFilters) {
 
 
   companion object {
     private const val MAX_DEPTH = 127
+    private const val OBSERVING_DISTANCE = 10
 
     fun getContextSubstitutor(resolveResult: GroovyMethodResult,
                               nearestCall: GrCall): PsiSubstitutor = RecursionManager.doPreventingRecursion(resolveResult, true) {
@@ -41,9 +45,9 @@ class CollectingGroovyInferenceSession(
 
   private fun substituteForeignTypeParameters(type: PsiType?): PsiType? {
     return type?.accept(object : PsiTypeMapper() {
-      override fun visitClassType(classType: PsiClassType?): PsiType? {
+      override fun visitClassType(classType: PsiClassType): PsiType? {
         if (classType.isTypeParameter()) {
-          return myInferenceVariables.find { it.delegate.name == classType?.canonicalText }?.type() ?: classType
+          return myInferenceVariables.find { it.delegate.name == classType.canonicalText }?.type() ?: classType
         }
         else {
           return classType
@@ -70,9 +74,14 @@ class CollectingGroovyInferenceSession(
                                   result: GroovyResolveResult,
                                   f: (GroovyInferenceSession) -> Unit) {
     if (depth >= MAX_DEPTH) {
-      throw AssertionError("Inference process has gone too deep on ${result.element?.text}")
+      var place = context
+      repeat(OBSERVING_DISTANCE) {
+        place = place.parent ?: place
+      }
+      throw AssertionError("Inference process has gone too deep on ${context.text} in ${place.text}")
     }
-    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, ignoreClosureArguments, depth + 1)
+    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, ignoreClosureArguments,
+                                                         skipClosureArguments, expressionFilters, depth + 1)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     mirrorInnerVariables(nestedSession)
@@ -107,11 +116,11 @@ class CollectingGroovyInferenceSession(
       InferenceBound.UPPER -> InferenceBound.LOWER
     }
 
-  override fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor) {
+  override fun initArgumentConstraints(mapping: ArgumentMapping<PsiCallParameter>?, inferenceSubstitutor: PsiSubstitutor) {
     if (mapping == null) return
     val substitutor = inferenceSubstitutor.putAll(inferenceSubstitution)
     for ((expectedType, argument) in mapping.expectedTypes) {
-      val parameter = mapping.targetParameter(argument)
+      val parameter = mapping.targetParameter(argument)?.psi
       if (proxyMethodMapping[parameter?.name] in ignoreClosureArguments && argument.type.isClosureTypeDeep()) {
         continue
       }

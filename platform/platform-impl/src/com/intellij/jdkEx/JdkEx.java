@@ -106,4 +106,19 @@ public class JdkEx {
       return null;
     }
   }
+
+  public static void setIgnoreMouseEvents(@NotNull Window window, boolean ignoreMouseEvents) {
+    if (SystemInfo.isJetBrainsJvm && (SystemInfo.isMac || SystemInfo.isWindows)) {
+      window.setEnabled(false);
+      try {
+        MethodInvocator invocator =
+          new MethodInvocator(false, Class.forName("java.awt.Window"), "setIgnoreMouseEvents", boolean.class);
+        if (invocator.isAvailable()) {
+          invocator.invoke(window, ignoreMouseEvents);
+        }
+      }
+      catch (ClassNotFoundException ignore) {
+      }
+    }
+  }
 }

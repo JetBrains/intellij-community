@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
@@ -15,13 +16,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.plaf.TreeUI;
@@ -29,12 +27,14 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.dnd.Autoscroll;
 import java.awt.event.*;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable,
+import static com.intellij.ide.dnd.SmoothAutoScroller.installDropTargetAsNecessary;
+
+public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -105,13 +105,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void setUI(TreeUI ui) {
-    TreeUI actualUI = ui;
-    if (!isCustomUI() && !Registry.is("ide.tree.ui.experimental")) {
-      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
-        actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
-      }
-    }
-    super.setUI(actualUI);
+    super.setUI(ui);
   }
 
   @Override
@@ -121,10 +115,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public boolean isEmpty() {
     return 0 >= getRowCount();
-  }
-
-  protected boolean isCustomUI() {
-    return false;
   }
 
   protected boolean isWideSelection() {
@@ -212,31 +202,27 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void paint(Graphics g) {
     Rectangle visible = getVisibleRect();
 
-    boolean canHoldSelection = false;
-    TreePath[] paths = getSelectionModel().getSelectionPaths();
-    if (paths != null) {
-      for (TreePath each : paths) {
-        Rectangle selection = getPathBounds(each);
-        if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
-          if (myBusy && myBusyIcon != null) {
-            Rectangle busyIconBounds = myBusyIcon.getBounds();
-            if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
-              canHoldSelection = false;
-              break;
+    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      boolean canHoldSelection = false;
+      TreePath[] paths = getSelectionModel().getSelectionPaths();
+      if (paths != null) {
+        for (TreePath each : paths) {
+          Rectangle selection = getPathBounds(each);
+          if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
+            if (myBusy && myBusyIcon != null) {
+              Rectangle busyIconBounds = myBusyIcon.getBounds();
+              if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
+                canHoldSelection = false;
+                break;
+              }
             }
-            else {
-              canHoldSelection = true;
-            }
-          }
-          else {
             canHoldSelection = true;
+            if (!myBusy || myBusyIcon == null) break;
           }
         }
       }
-    }
 
-    if (canHoldSelection) {
-      if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      if (canHoldSelection) {
         mySelectionModel.holdSelection();
       }
     }
@@ -286,7 +272,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (myBusy) {
         if (shouldShowBusyIconIfNeeded()) {
           myBusyIcon.resume();
-          myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
+          myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
         }
       }
       else {
@@ -415,25 +401,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public TreePath getNextMatch(String prefix, int startingRow, Position.Bias bias) {
     return null;
-  }
-
-  private static final int AUTOSCROLL_MARGIN = 10;
-
-  @Override
-  public Insets getAutoscrollInsets() {
-    return new Insets(getLocation().y + AUTOSCROLL_MARGIN, 0, getParent().getHeight() - AUTOSCROLL_MARGIN, getWidth() - 1);
-  }
-
-  @Override
-  public void autoscroll(Point p) {
-    int realRow = getClosestRowForLocation(p.x, p.y);
-    if (getLocation().y + p.y <= AUTOSCROLL_MARGIN) {
-      if (realRow >= 1) realRow--;
-    }
-    else {
-      if (realRow < getRowCount() - 1) realRow++;
-    }
-    scrollRowToVisible(realRow);
   }
 
   protected boolean highlightSingleNode() {
@@ -615,6 +582,24 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return treeNode != null ? new TreePath(treeNode.getPath()) : new TreePath(node);
   }
 
+  @Override
+  public void collapsePath(TreePath path) {
+    int row = Registry.is("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
+    if (row < 0) {
+      super.collapsePath(path);
+    }
+    else {
+      ArrayDeque<TreePath> deque = new ArrayDeque<>();
+      deque.addFirst(path);
+      while (++row < getRowCount()) {
+        TreePath next = getPathForRow(row);
+        if (!path.isDescendant(next)) break;
+        if (isExpanded(next)) deque.addFirst(next);
+      }
+      deque.forEach(super::collapsePath);
+    }
+  }
+
   private static class MySelectionModel extends DefaultTreeSelectionModel {
 
     private TreePath[] myHeldSelection;
@@ -754,8 +739,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public final void setLineStyleAngled() {
   }
 
-  @NotNull
-  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<? super T> filter) {
+  public <T> T @NotNull [] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<? super T> filter) {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return ArrayUtil.newArray(nodeType, 0);
 
@@ -823,6 +807,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return size;
   }
 
+  @Override
+  public void scrollPathToVisible(@Nullable TreePath path) {
+    if (path == null) return; // nothing to scroll
+    makeVisible(path); // expand parent paths if needed
+    TreeUtil.scrollToVisible(this, path, false);
+  }
+
   public boolean isHorizontalAutoScrollingEnabled() {
     return myHorizontalAutoScrolling != ThreeState.UNSURE ? myHorizontalAutoScrolling == ThreeState.YES : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
   }
@@ -863,76 +854,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return null;
   }
 
-  /**
-   * Note: This is the same implementation as the base class, except we
-   * fire the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event *only when*
-   * the tree has the focus.
-   *
-   * This is required because some screen readers (e.g. nvda) hook up
-   * the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event and treat it
-   * as a "focus gained" event. This is incorrect in many cases.
-   * For example, the "Project Structure" tool window contains a tree
-   * that is updated asynchronously as the caret moves in side the
-   * the editor window. When that happens, screen readers (incorrectly)
-   * assume the "Project Structure" tree received the focus, and stop
-   * listening to caret events from the editor, because they think the
-   * editor has lost the focus.
-   *
-   * The workaround implemented here is justified by the fact it is
-   * unlikely that screen readers are interested in events from trees
-   * when trees don't have the focus.
-   */
   @Override
-  public void setLeadSelectionPath(TreePath newPath) {
-    TreePath oldValue = getLeadSelectionPath();
-    AccessibleContext temp = accessibleContext;
-    try {
-      // Set to null so that the base class method does not invoke
-      // "fireActiveDescendantPropertyChange".
-      accessibleContext = null;
-      super.setLeadSelectionPath(newPath);
-    } finally {
-      accessibleContext = temp;
-    }
-
-    // Invoke our specialized version of "fireActiveDescendantPropertyChange"
-    if (accessibleContext instanceof AccessibleTree){
-      ((AccessibleTree)accessibleContext).fireActiveDescendantPropertyChange(oldValue, newPath);
-    }
-  }
-
-  @Override
-  public AccessibleContext getAccessibleContext() {
-    if (accessibleContext == null) {
-      accessibleContext = new AccessibleTree();
-    }
-    return accessibleContext;
-  }
-
-  protected class AccessibleTree extends AccessibleJTree {
-    /**
-     * See {@link #setLeadSelectionPath} comment: this method implements
-     * exactly the same behavior as the base class method, except for the
-     * {@link UIUtil#isFocusAncestor} check.
-     */
-    void fireActiveDescendantPropertyChange(TreePath oldPath, TreePath newPath) {
-      if (UIUtil.isFocusAncestor(Tree.this)) {
-        if (oldPath != newPath) {
-          Accessible oldLSA = (oldPath != null)
-                              ? new AccessibleJTreeNode(Tree.this,
-                                                        oldPath,
-                                                        null)
-                              : null;
-
-          Accessible newLSA = (newPath != null)
-                              ? new AccessibleJTreeNode(Tree.this,
-                                                        newPath,
-                                                        null)
-                              : null;
-          firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY,
-                             oldLSA, newLSA);
-        }
-      }
-    }
+  public void setTransferHandler(TransferHandler handler) {
+    installDropTargetAsNecessary(this);
+    super.setTransferHandler(handler);
   }
 }

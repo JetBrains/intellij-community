@@ -28,18 +28,16 @@ public class WaitNotifyNotInSynchronizedContextInspectionMerger extends Inspecti
     return "WaitNotifyNotInSynchronizedContext";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       "WaitNotInSynchronizedContext",
       "NotifyNotInSynchronizedContext"
     };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[]{
       "WaitWhileNotSynced",
       "NotifyNotInSynchronizedContext"

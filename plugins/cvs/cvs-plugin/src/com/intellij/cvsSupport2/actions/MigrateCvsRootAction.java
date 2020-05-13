@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MigrateCvsRootAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.MigrateCvsRootAction");
+  private static final Logger LOG = Logger.getInstance(MigrateCvsRootAction.class);
   private final CvsActionVisibility myVisibility = new CvsActionVisibility();
 
   public MigrateCvsRootAction() {

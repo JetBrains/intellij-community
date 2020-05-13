@@ -27,36 +27,6 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
 
-inline fun <T, R> Iterator<T>.computeIfAny(processor: (T) -> R): R? {
-  for (item in this) {
-    val result = processor(item)
-    if (result != null) {
-      return result
-    }
-  }
-  return null
-}
-
-inline fun <T, R> Array<T>.computeIfAny(processor: (T) -> R): R? {
-  for (file in this) {
-    val result = processor(file)
-    if (result != null) {
-      return result
-    }
-  }
-  return null
-}
-
-inline fun <T, R> List<T>.computeIfAny(processor: (T) -> R): R? {
-  for (item in this) {
-    val result = processor(item)
-    if (result != null) {
-      return result
-    }
-  }
-  return null
-}
-
 val <T> List<T>.tail: List<T> get() = this.subList(1, this.size)
 
 fun <T> List<T>.toHeadAndTail(): Pair<T, List<T>>? = if (this.isEmpty()) null else this.first() to this.tail
@@ -130,7 +100,7 @@ fun <T> Stream<T>?.getIfSingle(): T? =
  * There probably could be some performance issues if there is lots of streams to concat. See
  * http://mail.openjdk.java.net/pipermail/lambda-dev/2013-July/010659.html for some details.
  *
- * Also see [Stream.concat] documentation for other possible issues of concatenating large number of streams.
+ * See also [Stream.concat] documentation for other possible issues of concatenating large number of streams.
  */
 fun <T> concat(vararg streams: Stream<T>): Stream<T> = Stream.of(*streams).reduce(Stream.empty()) { a, b -> Stream.concat(a, b) }
 

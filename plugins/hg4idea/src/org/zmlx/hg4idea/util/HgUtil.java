@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,9 +44,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
@@ -66,7 +66,6 @@ import java.util.regex.Pattern;
  * HgUtil is a collection of static utility methods for Mercurial.
  */
 public abstract class HgUtil {
-
   public static final Pattern URL_WITH_PASSWORD = Pattern.compile("(?:.+)://(?:.+)(:.+)@(?:.+)");      //http(s)://username:password@url
   public static final int MANY_FILES = 100;
   private static final Logger LOG = Logger.getInstance(HgUtil.class);
@@ -232,7 +231,7 @@ public abstract class HgUtil {
   public static VirtualFile getHgRootOrThrow(Project project, FilePath filePath) throws VcsException {
     final VirtualFile vf = getHgRootOrNull(project, filePath);
     if (vf == null) {
-      throw new VcsException(HgVcsMessages.message("hg4idea.exception.file.not.under.hg", filePath.getPresentableUrl()));
+      throw new VcsException(HgBundle.message("hg4idea.exception.file.not.under.hg", filePath.getPresentableUrl()));
     }
     return vf;
   }
@@ -249,8 +248,8 @@ public abstract class HgUtil {
    */
   @Nullable
   public static String getNewBranchNameFromUser(@NotNull HgRepository repository,
-                                                @NotNull String dialogTitle) {
-    return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
+                                                @DialogTitle @NotNull String dialogTitle) {
+    return Messages.showInputDialog(repository.getProject(), HgBundle.message("hg4idea.branch.enter.name"), dialogTitle, Messages.getQuestionIcon(), "",
                                     new HgBranchReferenceValidator(repository));
   }
 
@@ -333,6 +332,7 @@ public abstract class HgUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
                                                                                @NotNull Collection<? extends FilePath> files) {
     Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<>();
@@ -440,8 +440,7 @@ public abstract class HgUtil {
     }
   }
 
-  @NotNull
-  public static byte[] loadContent(@NotNull Project project, @Nullable HgRevisionNumber revisionNumber, @NotNull HgFile fileToCat) {
+  public static byte @NotNull [] loadContent(@NotNull Project project, @Nullable HgRevisionNumber revisionNumber, @NotNull HgFile fileToCat) {
     HgCommandResult result = new HgCatCommand(project).execute(fileToCat, revisionNumber, fileToCat.toFilePath().getCharset());
     return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
@@ -488,8 +487,9 @@ public abstract class HgUtil {
   }
 
   @Nullable
+  @CalledInAny
   public static String getRepositoryDefaultPath(@NotNull Project project, @NotNull VirtualFile root) {
-    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRootQuick(root);
     assert hgRepository != null : "Repository can't be null for root " + root.getName();
     return hgRepository.getRepositoryConfig().getDefaultPath();
   }
@@ -512,9 +512,10 @@ public abstract class HgUtil {
   }
 
   @NotNull
+  @CalledInAny
   public static Collection<String> getRepositoryPaths(@NotNull Project project,
                                                       @NotNull VirtualFile root) {
-    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRootQuick(root);
     assert hgRepository != null : "Repository can't be null for root " + root.getName();
     return hgRepository.getRepositoryConfig().getPaths();
   }

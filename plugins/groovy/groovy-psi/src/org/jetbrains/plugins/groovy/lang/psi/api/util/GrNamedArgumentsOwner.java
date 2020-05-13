@@ -25,8 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
  */
 public interface GrNamedArgumentsOwner extends PsiElement {
 
-  @NotNull
-  GrNamedArgument[] getNamedArguments();
+  GrNamedArgument @NotNull [] getNamedArguments();
 
   @Nullable
   GrNamedArgument findNamedArgument(@NotNull String label);

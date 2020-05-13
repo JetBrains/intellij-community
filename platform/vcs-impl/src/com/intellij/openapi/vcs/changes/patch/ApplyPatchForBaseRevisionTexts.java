@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.CalledInAny;
@@ -116,16 +117,13 @@ public class ApplyPatchForBaseRevisionTexts {
                                                                               @NotNull String beforeVersionId,
                                                                               @NotNull VirtualFile file,
                                                                               @NotNull FilePath pathBeforeRename) {
-    DefaultPatchBaseVersionProvider baseVersionProvider = new DefaultPatchBaseVersionProvider(project, file, beforeVersionId);
-    if (!baseVersionProvider.canProvideContent()) return null;
-
     try {
       List<PatchHunk> hunks = patch.getHunks();
 
       Ref<String> baseRef = new Ref<>();
       Ref<String> patchedRef = new Ref<>();
 
-      baseVersionProvider.getBaseVersionContent(pathBeforeRename, base -> {
+      DefaultPatchBaseVersionProvider.getBaseVersionContent(project, beforeVersionId, file, pathBeforeRename, base -> {
         GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(base, hunks);
         if (appliedPatch == null) return true;
 
@@ -156,8 +154,8 @@ public class ApplyPatchForBaseRevisionTexts {
     GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(base, hunks);
 
     if (appliedPatch == null) {
-      LOG.warn(String.format("Patch for %s has wrong base and can't be applied properly",
-                             chooseNotNull(patch.getBeforeName(), patch.getAfterName())));
+      LOG.warn(VcsBundle.message("patch.apply.wrong.base.and.can.t.be.applied.warning",
+                                 chooseNotNull(patch.getBeforeName(), patch.getAfterName())));
 
       return null;
     }

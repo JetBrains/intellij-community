@@ -30,9 +30,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class AppEngineEnhancerBuilderTest extends JpsBuildTestCase {
   public void testChangeFile() {
     String file = createFile("src/A.java", "class A{}");

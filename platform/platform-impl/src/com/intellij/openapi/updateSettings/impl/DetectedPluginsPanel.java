@@ -1,13 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginHeaderPanel;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +50,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
         if (downloader != null) {
           String pluginName = downloader.getPluginName();
           append(pluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          IdeaPluginDescriptor ideaPluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(downloader.getPluginId()));
+          IdeaPluginDescriptor ideaPluginDescriptor = PluginManagerCore.getPlugin(downloader.getId());
           if (ideaPluginDescriptor != null) {
             String oldPluginName = ideaPluginDescriptor.getName();
             if (!Comparing.strEqual(pluginName, oldPluginName)) {
@@ -71,14 +75,12 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
         if (selectedRow != -1) {
           PluginDownloader selection = getValueAt(selectedRow);
           IdeaPluginDescriptor descriptor = selection.getDescriptor();
-          if (descriptor != null) {
-            PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader);
-          }
+          PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader);
         }
       }
     });
     setCheckboxColumnName("");
-    myDescriptionPanel.setPreferredSize(new Dimension(400, -1));
+    myDescriptionPanel.setPreferredSize(new JBDimension(600, 400));
     myDescriptionPanel.setEditable(false);
     myDescriptionPanel.setEditorKit(UIUtil.getHTMLEditorKit());
     myDescriptionPanel.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
@@ -109,24 +111,24 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
 
   @Override
   public boolean isChecked(PluginDownloader downloader) {
-    return !getSkippedPlugins().contains(downloader.getPluginId());
+    return !getSkippedPlugins().contains(downloader.getId());
   }
 
   @Override
   public void setChecked(PluginDownloader downloader, boolean checked) {
     if (checked) {
-      getSkippedPlugins().remove(downloader.getPluginId());
+      getSkippedPlugins().remove(downloader.getId());
     }
     else {
-      getSkippedPlugins().add(downloader.getPluginId());
+      getSkippedPlugins().add(downloader.getId());
     }
     for (Listener listener : myListeners) {
       listener.stateChanged();
     }
   }
 
-  protected Set<String> getSkippedPlugins() {
-    return UpdateChecker.getDisabledToUpdatePlugins();
+  protected Set<PluginId> getSkippedPlugins() {
+    return UpdateChecker.getDisabledToUpdate();
   }
 
   public void addStateListener(Listener l) {

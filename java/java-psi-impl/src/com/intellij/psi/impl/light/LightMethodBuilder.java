@@ -68,7 +68,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
 
   public LightMethodBuilder(PsiManager manager,
                             Language language,
-                            String name,
+                            @NotNull String name,
                             PsiParameterList parameterList,
                             PsiModifierList modifierList,
                             PsiReferenceList throwsList,
@@ -92,8 +92,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return PsiImplUtil.getTypeParameters(this);
   }
 
@@ -267,20 +266,17 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods() {
+  public PsiMethod @NotNull [] findSuperMethods() {
     return PsiSuperMethodImplUtil.findSuperMethods(this);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+  public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+  public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
   }
 
@@ -296,8 +292,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findDeepestSuperMethods() {
+  public PsiMethod @NotNull [] findDeepestSuperMethods() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
   }
 

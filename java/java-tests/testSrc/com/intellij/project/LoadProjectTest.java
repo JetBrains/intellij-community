@@ -21,9 +21,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+
+import static com.intellij.testFramework.RunAll.runAll;
 
 public class LoadProjectTest extends HeavyPlatformTestCase {
   @Override
@@ -35,14 +36,15 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
 
   @Override
   protected void tearDown() {
-    Project project = getProject();
+    Project project = myProject;
     myProject = null;
 
-    new RunAll(
+    runAll(
       () -> ((FileEditorManagerEx)FileEditorManager.getInstance(project)).closeAllFiles(),
-      () -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, true),
+      () -> ProjectManagerEx.getInstanceEx().forceCloseProject(project),
       () -> super.tearDown(),
-      () -> checkNoPsiFilesInProjectReachable(project)).run();
+      () -> checkNoPsiFilesInProjectReachable(project)
+    );
   }
 
   private static void checkNoPsiFilesInProjectReachable(Project project) {

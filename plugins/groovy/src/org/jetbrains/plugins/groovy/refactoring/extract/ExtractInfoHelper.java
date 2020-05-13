@@ -32,23 +32,18 @@ public interface ExtractInfoHelper {
   @NotNull
   Project getProject();
 
-  @NotNull
-  ParameterInfo[] getParameterInfos();
+  ParameterInfo @NotNull [] getParameterInfos();
 
-  @NotNull
-  VariableInfo[] getOutputVariableInfos();
+  VariableInfo @NotNull [] getOutputVariableInfos();
 
-  @NotNull
-  String[] getArgumentNames();
+  String @NotNull [] getArgumentNames();
 
   @NotNull
   PsiType getOutputType();
 
-  @NotNull
-  PsiElement[] getInnerElements();
+  PsiElement @NotNull [] getInnerElements();
 
-  @NotNull
-  GrStatement[] getStatements();
+  GrStatement @NotNull [] getStatements();
 
   @Nullable
   StringPartInfo getStringPartInfo();

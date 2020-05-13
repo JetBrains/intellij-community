@@ -17,9 +17,6 @@ package com.intellij.appengine.converter;
 
 import com.intellij.ide.plugins.PluginReplacement;
 
-/**
- * @author nik
- */
 public class AppEnginePluginReplacement extends PluginReplacement {
   public AppEnginePluginReplacement() {
     super("com.google.gct.core");

@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -141,7 +142,8 @@ public class SeverityEditorDialog extends DialogWrapper {
         @Override
         public void run(AnActionButton button) {
           String oldName = myCurrentSelection.getSeverity().getName();
-          String newName = Messages.showInputDialog(myPanel, InspectionsBundle.message("highlight.severity.create.dialog.name.label"), "Edit Severity Name", null, oldName, new InputValidator() {
+          String newName = Messages.showInputDialog(myPanel, InspectionsBundle.message("highlight.severity.create.dialog.name.label"),
+                                                    InspectionsBundle.message("highlight.severity.create.dialog.title"), null, oldName, new InputValidator() {
             @Override
             public boolean checkInput(String inputString) {
               return checkNameExist(inputString);
@@ -160,7 +162,8 @@ public class SeverityEditorDialog extends DialogWrapper {
             select(newSeverityBasedTextAttributes);
           }
         }
-      }).setEditActionUpdater(e -> myCurrentSelection != null && !SeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity())).setEditActionName("Rename").createPanel();
+      }).setEditActionUpdater(e -> myCurrentSelection != null && !SeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity())).setEditActionName(
+        LangBundle.message("action.rename.text")).createPanel();
     ToolbarDecorator.findRemoveButton(leftPanel).addCustomUpdater(
       e -> !SeverityRegistrar.isDefaultSeverity(myOptionsList.getSelectedValue().getSeverity()));
     ToolbarDecorator.findUpButton(leftPanel).addCustomUpdater(e -> {

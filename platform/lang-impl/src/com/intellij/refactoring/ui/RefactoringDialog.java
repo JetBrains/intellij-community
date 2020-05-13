@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,17 +29,64 @@ import java.util.List;
  * Author: msk
  */
 public abstract class RefactoringDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.ui.RefactoringDialog");
-
   private Action myRefactorAction;
   private Action myPreviewAction;
   private boolean myCbPreviewResults;
   protected final Project myProject;
 
   protected RefactoringDialog(@NotNull Project project, boolean canBeParent) {
+    this(project, canBeParent, false);
+  }
+
+  protected RefactoringDialog(@NotNull Project project, boolean canBeParent, boolean addOpenInEditorCheckbox) {
     super(project, canBeParent);
     myCbPreviewResults = true;
     myProject = project;
+    if (addOpenInEditorCheckbox) {
+      addOpenInEditorCheckbox();
+    }
+  }
+
+  /**
+   * Must be called before {@link #init()}.
+   */
+  protected void addOpenInEditorCheckbox() {
+    setDoNotAskOption(new DoNotAskOption.Adapter() {
+      @Override
+      public void rememberChoice(boolean selected, int exitCode) {
+        PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, true);
+        report(selected, "open.in.editor.saved");
+      }
+
+      @Override
+      public boolean isSelectedByDefault() {
+        boolean selected = PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", true);
+        return report(selected, "open.in.editor.shown");
+      }
+
+      private boolean report(boolean selected, String eventId) {
+        String refactoringClassName = RefactoringDialog.this.getClass().getName();
+        FeatureUsageData data = new FeatureUsageData().addData("selected", selected).addData("class_name", refactoringClassName);
+        FUCounterUsageLogger.getInstance().logEvent("refactoring.dialog", eventId, data);
+        return selected;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return RefactoringBundle.message("open.in.editor.label");
+      }
+    });
+  }
+
+  @NonNls
+  @NotNull
+  protected String getRefactoringId() {
+    return getClass().getName();
+  }
+
+  public boolean isOpenInEditor() {
+    return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isSelected();
   }
 
   public final boolean isPreviewUsages() {
@@ -51,7 +100,6 @@ public abstract class RefactoringDialog extends DialogWrapper {
   @Override
   public void show() {
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-    LOG.assertTrue(TransactionGuard.getInstance().getContextTransaction() != null, "Refactorings should be invoked inside transaction");
     super.show();
   }
 
@@ -92,8 +140,9 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   protected final void doOKAction() {
-    if (DumbService.isDumb(myProject)) {
-      Messages.showMessageDialog(myProject, "Refactoring is not available while indexing is in progress", "Indexing", null);
+    if (!DumbService.isDumbAware(this) && DumbService.isDumb(myProject)) {
+      Messages.showMessageDialog(myProject, RefactoringBundle.message("refactoring.not.available.indexing"),
+                                 RefactoringBundle.message("refactoring.indexing.warning.title"), null);
       return;
     }
 
@@ -107,7 +156,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
   }
 
   @Override
-  protected void setHelpTooltip(JButton helpButton) {
+  protected void setHelpTooltip(@NotNull JButton helpButton) {
     if (Registry.is("ide.helptooltip.enabled")) {
       new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }
@@ -138,9 +187,8 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return true;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getRefactorAction());
     if (hasPreviewButton()) {

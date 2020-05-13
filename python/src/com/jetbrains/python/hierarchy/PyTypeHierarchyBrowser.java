@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.hierarchy;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -20,7 +20,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.hierarchy.TypeHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(PyTypeHierarchyBrowser.class);
 
   protected PyTypeHierarchyBrowser(@NotNull PyClass pyClass) {
     super(pyClass.getProject(), pyClass);
@@ -54,13 +54,13 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   @Override
   @Nullable
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
-    if (SUPERTYPES_HIERARCHY_TYPE.equals(typeName)) {
+    if (getSupertypesHierarchyType().equals(typeName)) {
       return new PySuperTypesHierarchyTreeStructure((PyClass)psiElement);
     }
-    else if (SUBTYPES_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getSubtypesHierarchyType().equals(typeName)) {
       return new PySubTypesHierarchyTreeStructure((PyClass)psiElement);
     }
-    else if (TYPE_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getTypeHierarchyType().equals(typeName)) {
       return new PyTypeHierarchyTreeStructure((PyClass)psiElement);
     }
     else {
@@ -71,7 +71,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   @Override
   @Nullable
-  protected Comparator<NodeDescriptor> getComparator() {
+  protected Comparator<NodeDescriptor<?>> getComparator() {
     return PyHierarchyUtils.getComparator(myProject);
   }
 

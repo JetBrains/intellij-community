@@ -71,8 +71,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   }
 
   @Override
-  @NotNull
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, @NotNull ProcessingContext context) {
+  public Object @NotNull [] getCompletionVariants(String completionPrefix, PsiElement location, @NotNull ProcessingContext context) {
     final List<Object> result = new ArrayList<>();
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
 

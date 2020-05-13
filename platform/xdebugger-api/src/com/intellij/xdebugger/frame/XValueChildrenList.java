@@ -26,8 +26,6 @@ import java.util.List;
 /**
  * Represents chunk of values which can be added to a {@link XCompositeNode composite node}
  * @see XCompositeNode#addChildren(XValueChildrenList, boolean)
- *
- * @author nik
  */
 public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.emptyList(), Collections.emptyList());

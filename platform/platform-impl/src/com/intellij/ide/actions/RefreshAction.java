@@ -17,9 +17,15 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsActions.ActionText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
 
 /**
  * This class is here just to be able to assign shortcut to all "refresh"  actions from the keymap.
@@ -29,12 +35,14 @@ import javax.swing.*;
 public class RefreshAction extends AnAction implements DumbAware {
   public RefreshAction() { }
 
-  public RefreshAction(String text) {
-    super(text);
+  public RefreshAction(@ActionText @Nullable String text,
+                       @ActionDescription @Nullable String description,
+                       @Nullable Icon icon) {
+    super(text, description, icon);
   }
 
-  public RefreshAction(String text, String description, Icon icon) {
-    super(text, description, icon);
+  public RefreshAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @Override

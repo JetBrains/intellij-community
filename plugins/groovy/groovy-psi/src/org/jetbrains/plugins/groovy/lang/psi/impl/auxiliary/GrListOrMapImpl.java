@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -19,6 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrLiteralConstructorReference;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
 
   private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);
 
-  private final PsiReference myLiteralReference = new LiteralConstructorReference(this);
+  private final GroovyConstructorReference myConstructorReference = new GrLiteralConstructorReference(this);
   private volatile GrExpression[] myInitializers;
   private volatile GrNamedArgument[] myNamedArguments;
 
@@ -83,19 +85,20 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
     return getInitializers().length == 0 && getNamedArguments().length == 0;
   }
 
+  @NotNull
   @Override
   public PsiElement getLBrack() {
-    return findChildByType(GroovyTokenTypes.mLBRACK);
+    return findNotNullChildByType(GroovyTokenTypes.mLBRACK);
   }
 
+  @Nullable
   @Override
   public PsiElement getRBrack() {
     return findChildByType(GroovyTokenTypes.mRBRACK);
   }
 
   @Override
-  @NotNull
-  public GrExpression[] getInitializers() {
+  public GrExpression @NotNull [] getInitializers() {
     GrExpression[] initializers = myInitializers;
     if (initializers == null) {
       initializers = PsiTreeUtil.getChildrenOfType(this, GrExpression.class);
@@ -106,8 +109,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
   }
 
   @Override
-  @NotNull
-  public GrNamedArgument[] getNamedArguments() {
+  public GrNamedArgument @NotNull [] getNamedArguments() {
     GrNamedArgument[] namedArguments = myNamedArguments;
     if (namedArguments == null) {
       namedArguments = PsiTreeUtil.getChildrenOfType(this, GrNamedArgument.class);
@@ -124,7 +126,13 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
 
   @Override
   public PsiReference getReference() {
-    return myLiteralReference;
+    return getConstructorReference();
+  }
+
+  @Nullable
+  @Override
+  public GroovyConstructorReference getConstructorReference() {
+    return myConstructorReference.resolveClass() != null ? myConstructorReference : null;
   }
 
   @Override

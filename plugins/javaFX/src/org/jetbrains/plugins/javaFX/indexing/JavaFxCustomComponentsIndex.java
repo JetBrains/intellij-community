@@ -9,6 +9,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.externalizer.StringCollectionExternalizer;
 import com.intellij.util.xml.NanoXmlBuilder;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NonNls;
@@ -58,7 +59,6 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
       };
     }
   };
-  private final FxmlDataExternalizer myDataExternalizer = new FxmlDataExternalizer();
 
   @NotNull
   @Override
@@ -69,7 +69,7 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
   @NotNull
   @Override
   public DataExternalizer<Set<String>> getValueExternalizer() {
-    return myDataExternalizer;
+    return StringCollectionExternalizer.STRING_SET_EXTERNALIZER;
   }
 
   @NotNull

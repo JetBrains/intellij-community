@@ -37,13 +37,12 @@ import java.beans.PropertyChangeListener;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport implements SearchableConfigurable, PropertyChangeListener {
-  private static final String DISPLAY_NAME = ImagesBundle.message("settings.page.name");
   private ImagesOptionsComponent myComponent;
   private final Disposable myUIResourcesDisposable = Disposer.newDisposable();
 
   @Override
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return ImagesBundle.message("settings.page.name");
   }
 
   @Override

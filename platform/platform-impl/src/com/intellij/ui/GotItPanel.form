@@ -16,7 +16,7 @@
         </constraints>
         <properties>
           <font size="20"/>
-          <text value="Title"/>
+          <text value="Title" noi18n="true"/>
         </properties>
       </component>
       <vspacer id="a3eac">
@@ -32,7 +32,7 @@
           <contentType value="text/html"/>
           <font size="12"/>
           <opaque value="false"/>
-          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      Test test test&#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
+          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      Test test test&#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;" noi18n="true"/>
         </properties>
       </component>
       <grid id="fd7bc" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

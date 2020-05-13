@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
@@ -53,7 +54,7 @@ public interface CheckoutProvider {
   }
 
   @NotNull
-  default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project) {
+  default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
     return new VcsCloneComponentStub(this, "Clone");
   }
 }

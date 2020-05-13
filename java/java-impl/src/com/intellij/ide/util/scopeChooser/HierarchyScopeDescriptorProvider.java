@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HierarchyScopeDescriptorProvider implements ScopeDescriptorProvider {
   @Override
-  @NotNull
-  public ScopeDescriptor[] getScopeDescriptors(final Project project) {
+  public ScopeDescriptor @NotNull [] getScopeDescriptors(final Project project) {
     if (Comparing.strEqual(ToolWindowManager.getInstance(project).getActiveToolWindowId(), ToolWindowId.TODO_VIEW)) {
       return EMPTY;
     }

@@ -1,73 +1,63 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiErrorElement:parameter_expansion_body expected, got '}'
-              <empty list>
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiErrorElement:<parameter expansion> expected, got '}'
+          <empty list>
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('A')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('A')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('@')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(param_separator)('@')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('?')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(param_separator)('?')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('B:-B')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('B')
+        PsiElement(param_separator)(':-')
+        PsiElement(word)('B')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('$')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('$')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('$:-x')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('$')
+        PsiElement(param_separator)(':-')
+        PsiElement(word)('x')
+        PsiElement(})('}')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('#means the pid with substitution operator')

@@ -2,7 +2,6 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.io.FileUtil;
@@ -86,7 +85,7 @@ public class PyDocumentationBuilder {
     }
 
     final ASTNode node = elementDefinition.getNode();
-    if (node != null && PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(node.getElementType())) {
+    if (node != null && PythonDialectsTokenSetProvider.getInstance().getKeywordTokens().contains(node.getElementType())) {
       String documentationName = elementDefinition.getText();
       if (node.getElementType() == PyTokenTypes.AS_KEYWORD || node.getElementType() == PyTokenTypes.ELSE_KEYWORD) {
         final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyTryExceptStatement.class);
@@ -101,9 +100,9 @@ public class PyDocumentationBuilder {
 
     if (!mySectionsMap.isEmpty()) {
       mySections.addItem(DocumentationMarkup.SECTIONS_START);
-      final List<String> firstSections = Lists.newArrayList(CodeInsightBundle.message("javadoc.parameters"),
+      final List<String> firstSections = Lists.newArrayList(PyPsiBundle.message("QDOC.params"),
                                                             PyPsiBundle.message("QDOC.keyword.args"),
-                                                            CodeInsightBundle.message("javadoc.returns"),
+                                                            PyPsiBundle.message("QDOC.returns"),
                                                             PyPsiBundle.message("QDOC.raises"));
       firstSections.retainAll(mySectionsMap.keySet());
 
@@ -359,7 +358,7 @@ public class PyDocumentationBuilder {
 
 
     if (!paramList.isEmpty()) {
-      mySectionsMap.get(CodeInsightBundle.message("javadoc.parameters")).addItem(paramList);
+      mySectionsMap.get(PyPsiBundle.message("QDOC.params")).addItem(paramList);
     }
 
     final List<String> allKeywordArgs = structured.getKeywordArguments();
@@ -378,7 +377,7 @@ public class PyDocumentationBuilder {
 
     final String returnDescription = structured.getReturnDescription();
     if (returnDescription != null) {
-      mySectionsMap.get(CodeInsightBundle.message("javadoc.returns")).addItem(returnDescription);
+      mySectionsMap.get(PyPsiBundle.message("QDOC.returns")).addItem(returnDescription);
     }
 
     final String exceptionList = StreamEx.of(structured.getRaisedExceptions())
@@ -422,7 +421,7 @@ public class PyDocumentationBuilder {
 
   @Nullable
   private PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myContext);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myContext);
     final QualifiedResolveResult resolveResult = element.followAssignmentsChain(resolveContext);
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }

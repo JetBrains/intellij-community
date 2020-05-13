@@ -45,12 +45,6 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return message("unnecessary.final.on.local.variable.or.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     final String variableName = variable.getName();

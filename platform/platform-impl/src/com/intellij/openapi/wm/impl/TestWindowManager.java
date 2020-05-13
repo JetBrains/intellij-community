@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -30,10 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
   private final DesktopLayout myLayout = new DesktopLayout();
@@ -42,7 +38,7 @@ public final class TestWindowManager extends WindowManagerEx {
   public final void doNotSuggestAsParent(final Window window) { }
 
   @Override
-  public final Window suggestParentWindow(@Nullable final Project project) {
+  public final Window suggestParentWindow(final @Nullable Project project) {
     return null;
   }
 
@@ -62,15 +58,13 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
-  @Nullable
   @Override
-  public ProjectFrameHelper findFrameHelper(@Nullable Project project) {
+  public @Nullable ProjectFrameHelper findFrameHelper(@Nullable Project project) {
     return null;
   }
 
-  @Nullable
   @Override
-  public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
+  public @Nullable ProjectFrameHelper getFrameHelper(@Nullable Project project) {
     return null;
   }
 
@@ -80,14 +74,13 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public void setWindowMask(final Window window, final Shape mask) { }
+  public void setWindowMask(Window window, final Shape mask) { }
 
   @Override
-  public void resetWindow(final Window window) { }
+  public void resetWindow(Window window) { }
 
   @Override
-  @NotNull
-  public ProjectFrameHelper[] getAllProjectFrames() {
+  public ProjectFrameHelper @NotNull [] getAllProjectFrames() {
     return new ProjectFrameHelper[0];
   }
 
@@ -96,28 +89,18 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
-  @Nullable
   @Override
-  public final IdeFrameImpl getFrame(final Project project) {
+  public final @Nullable IdeFrameImpl getFrame(Project project) {
     return null;
   }
 
   @Override
-  @NotNull
-  public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
-    // no need to setup min / pref size for a test window
-    ProjectFrameHelper frame = new ProjectFrameHelper(new IdeFrameImpl(), null);
-    frame.init();
-    return frame;
-  }
-
-  @Override
-  public final Component getFocusedComponent(@NotNull final Window window) {
+  public final Component getFocusedComponent(@NotNull Window window) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final Component getFocusedComponent(final Project project) {
+  public final Component getFocusedComponent(Project project) {
     return null;
   }
 
@@ -131,19 +114,13 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
-  @NotNull
   @Override
-  public final CommandProcessor getCommandProcessor() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public final DesktopLayout getLayout() {
+  public @NotNull DesktopLayout getLayout() {
     return myLayout;
   }
 
   @Override
-  public final void setLayout(final DesktopLayout layout) {
+  public final void setLayout(@NotNull DesktopLayout layout) {
     throw new UnsupportedOperationException();
   }
 
@@ -153,7 +130,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final Rectangle getScreenBounds() {
+  public final @NotNull Rectangle getScreenBounds() {
     throw new UnsupportedOperationException();
   }
 
@@ -188,15 +165,10 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public void hideDialog(JDialog dialog, Project project) {
-    dialog.dispose();
-  }
+  public void adjustContainerWindow(@NotNull Component c, Dimension oldSize, Dimension newSize) { }
 
   @Override
-  public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) { }
-
-  @Override
-  public void addListener(final WindowManagerListener listener) { }
+  public void addListener(@NotNull WindowManagerListener listener) { }
 
   @Override
   public void removeListener(final WindowManagerListener listener) { }
@@ -209,9 +181,8 @@ public final class TestWindowManager extends WindowManagerEx {
   private static final class DummyStatusBar implements StatusBarEx {
     private final Map<String, StatusBarWidget> myWidgetMap = new HashMap<>();
 
-    @Nullable
     @Override
-    public Project getProject() {
+    public @Nullable Project getProject() {
       return null;
     }
 
@@ -220,9 +191,8 @@ public final class TestWindowManager extends WindowManagerEx {
       return new Dimension(0, 0);
     }
 
-    @Nullable
     @Override
-    public StatusBar createChild(@NotNull IdeFrame frame) {
+    public @Nullable StatusBar createChild(@NotNull IdeFrame frame) {
       return null;
     }
 
@@ -271,17 +241,14 @@ public final class TestWindowManager extends WindowManagerEx {
     @Override
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
       Disposer.register(parentDisposable, widget);
+      Disposer.register(widget, () -> myWidgetMap.remove(widget.ID()));
       addWidget(widget);
     }
 
     @Override
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable) {
-      Disposer.register(parentDisposable, widget);
-      addWidget(widget);
+      addWidget(widget, parentDisposable);
     }
-
-    @Override
-    public void updateWidgets() { }
 
     @Override
     public void dispose() { }
@@ -346,15 +313,13 @@ public final class TestWindowManager extends WindowManagerEx {
     frameHelper.getFrame().dispose();
   }
 
-  @NotNull
   @Override
-  public List<ProjectFrameHelper> getProjectFrameHelpers() {
+  public @NotNull List<ProjectFrameHelper> getProjectFrameHelpers() {
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public IdeFrameEx findFirstVisibleFrameHelper() {
+  public @Nullable IdeFrameEx findFirstVisibleFrameHelper() {
     return null;
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,17 +60,8 @@ public abstract class PyElementGenerator {
 
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
 
-  /**
-   * @param text the text to create an expression from
-   * @return the expression
-   * @deprecated use the overload with language level specified
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public abstract PyExpression createExpressionFromText(String text);
-
   @NotNull
-  public abstract PyExpression createExpressionFromText(final LanguageLevel languageLevel, String text) throws IncorrectOperationException;
+  public abstract PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
 
   /**
    * Adds elements to list inserting required commas.
@@ -146,7 +136,7 @@ public abstract class PyElementGenerator {
   public abstract PyPassStatement createPassStatement();
 
   @NotNull
-  public abstract PyDecoratorList createDecoratorList(@NotNull final String... decoratorTexts);
+  public abstract PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts);
 
   /**
    * Creates new line whitespace

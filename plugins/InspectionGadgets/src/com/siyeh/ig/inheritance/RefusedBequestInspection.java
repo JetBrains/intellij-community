@@ -32,7 +32,8 @@ import java.awt.*;
 public class RefusedBequestInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations =
-    new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
+    new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper",
+                                "org.jetbrains.annotations.MustBeInvokedByOverriders");
   @SuppressWarnings("PublicField") public boolean ignoreEmptySuperMethods;
   @SuppressWarnings("PublicField") public boolean ignoreDefaultSuperMethods;
   @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
@@ -41,7 +42,7 @@ public class RefusedBequestInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations, null);
-    final CheckBox checkBox1 = new CheckBox("Only report when super method is annotated by:", this, "onlyReportWhenAnnotated");
+    final CheckBox checkBox1 = new CheckBox(InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"), this, "onlyReportWhenAnnotated");
     final MultipleCheckboxOptionsPanel checkBoxPanel = new MultipleCheckboxOptionsPanel(this);
     checkBoxPanel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
     checkBoxPanel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
@@ -81,12 +82,6 @@ public class RefusedBequestInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("refused.bequest.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("refused.bequest.problem.descriptor");
   }
@@ -102,7 +97,7 @@ public class RefusedBequestInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Insert call to super method";
+      return InspectionGadgetsBundle.message("refused.bequest.fix.family.name");
     }
 
     @Override
@@ -152,7 +147,7 @@ public class RefusedBequestInspection extends BaseInspection {
       final PsiElement element = body.addAfter(newStatement, brace);
       final PsiElement element1 = styleManager.reformat(element);
       final PsiElement element2 = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element1);
-      if (isOnTheFly()) {
+      if (isOnTheFly() && element2.isPhysical()) {
         HighlightUtils.highlightElement(element2);
         if (element2 instanceof PsiDeclarationStatement) {
           final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element2;

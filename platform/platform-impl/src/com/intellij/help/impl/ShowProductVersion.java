@@ -16,7 +16,7 @@ public class ShowProductVersion implements ApplicationStarter {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @Override
-  public void main(@NotNull String[] args) {
+  public void main(String @NotNull [] args) {
     System.out.println(ApplicationInfoEx.getInstanceEx().getFullVersion());
     System.exit(0);
   }

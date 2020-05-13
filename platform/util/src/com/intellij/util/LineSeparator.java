@@ -45,8 +45,7 @@ public enum LineSeparator {
     return mySeparatorString;
   }
 
-  @NotNull
-  public byte[] getSeparatorBytes() {
+  public byte @NotNull [] getSeparatorBytes() {
     return myBytes;
   }
 

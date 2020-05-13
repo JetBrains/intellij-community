@@ -53,12 +53,6 @@ import java.util.Set;
  */
 public class RestRoleInspection extends RestInspection {
   public JDOMExternalizableStringList ignoredRoles = new JDOMExternalizableStringList();
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return RestBundle.message("INSP.role.not.defined");
-  }
 
   @Override
   public boolean isEnabledByDefault() {

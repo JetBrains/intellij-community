@@ -16,10 +16,10 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectModel.ProjectModelBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +41,7 @@ public class ProjectFileType implements InternalFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.idea.project");
+    return ProjectModelBundle.message("filetype.description.idea.project");
   }
 
   @Override
@@ -66,7 +66,7 @@ public class ProjectFileType implements InternalFileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
 }

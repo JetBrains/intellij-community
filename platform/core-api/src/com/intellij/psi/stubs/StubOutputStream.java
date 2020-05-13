@@ -30,7 +30,6 @@ import java.io.OutputStream;
  */
 public class StubOutputStream extends DataOutputStream {
   private final AbstractStringEnumerator myNameStorage;
-  private final byte[] myStringIOBuffer = IOUtil.allocReadWriteUTFBuffer();
 
   public StubOutputStream(@NotNull OutputStream out, @NotNull AbstractStringEnumerator nameStorage) {
     super(out);
@@ -38,7 +37,7 @@ public class StubOutputStream extends DataOutputStream {
   }
 
   public void writeUTFFast(@NotNull final String arg) throws IOException {
-    IOUtil.writeUTFFast(myStringIOBuffer, this, arg);
+    IOUtil.writeUTF(this, arg);
   }
 
   public void writeName(@Nullable final String arg) throws IOException {

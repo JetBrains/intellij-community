@@ -48,7 +48,7 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class InsertComponentProcessor extends EventProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.InsertComponentProcessor");
+  private static final Logger LOG = Logger.getInstance(InsertComponentProcessor.class);
 
   private final GuiEditor myEditor;
   private boolean mySticky;

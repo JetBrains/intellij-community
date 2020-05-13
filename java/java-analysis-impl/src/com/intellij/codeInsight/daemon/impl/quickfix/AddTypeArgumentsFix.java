@@ -16,10 +16,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -28,8 +30,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class AddTypeArgumentsFix extends MethodArgumentFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix");
+  private static final Logger LOG = Logger.getInstance(AddTypeArgumentsFix.class);
 
   private AddTypeArgumentsFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
@@ -66,6 +70,8 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
   public static PsiExpression addTypeArguments(PsiExpression expression, PsiType toType) {
     if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
 
+    PsiExpression orig = expression;
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
       final PsiReferenceParameterList list = methodCall.getMethodExpression().getParameterList();
@@ -87,7 +93,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
             final PsiType substitution;
             if (toType == null) {
               substitution = resolveResult.getSubstitutor().substitute(typeParameter);
-              if (!PsiTypesUtil.isDenotableType(substitution, element)) return null;
+              if (!PsiTypesUtil.isDenotableType(substitution, expression)) return null;
             }
             else {
               substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
@@ -116,12 +122,24 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
             methodExpression.setQualifierExpression(qualifierExpression);
           }
 
-          return (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy);
+          PsiExpression result = (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy);
+          if (orig != expression) {
+            PsiExpression parenthesized = (PsiExpression)orig.copy();
+            Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(parenthesized)).replace(result);
+            return parenthesized;
+          }
+          return result;
         }
       }
     }
     return null;
   }
 
-  public static ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+                                   myArgumentFixerActionFactory);
+  }
+
+  public static final ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
 }

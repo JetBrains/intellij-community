@@ -39,12 +39,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Bas Leijdekkers
  */
 public class SimplifiableBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("simplifiable.boolean.expression.display.name");
-  }
 
   @NotNull
   @Override

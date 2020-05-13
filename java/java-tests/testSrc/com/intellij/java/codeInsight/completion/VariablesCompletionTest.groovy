@@ -188,6 +188,21 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'field'
   }
 
+  void "test suggest fields in their modification inside constructor"() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+class Foo {
+  int total;
+
+  Foo() {
+    this.total = 0;
+    this.total += this.to<caret>tal
+  }
+}
+""")
+    complete()
+    myFixture.assertPreferredCompletionItems 0, 'total'
+  }
+
   void testInitializerMatters() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }")
     complete()
@@ -333,6 +348,18 @@ class C {
 '''
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'undefinedType', 'type'
+  }
+
+  void "test class-based suggestions for exception type"() {
+    myFixture.configureByText 'a.java', '''
+class C {
+    { 
+      try { } catch (java.io.IOException <caret>)
+    }
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'e', 'ioException', 'exception'
   }
 
 }

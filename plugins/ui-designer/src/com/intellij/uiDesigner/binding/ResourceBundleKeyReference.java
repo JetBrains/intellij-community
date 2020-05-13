@@ -21,7 +21,7 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
 
   public ResourceBundleKeyReference(final PsiPlainTextFile file, String bundleName, TextRange keyNameRange) {
     super(file, keyNameRange);
-    myBundleName = bundleName;
+    myBundleName = bundleName.replace('/', '.');
   }
 
   @Override
@@ -54,6 +54,6 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
     }
     IProperty property = (IProperty) element;
     String baseName = ResourceBundleManager.getInstance(element.getProject()).getFullName(property.getPropertiesFile());
-    return baseName != null && myBundleName.equals(baseName.replace('.', '/')) && getRangeText().equals(property.getUnescapedKey());
+    return baseName != null && myBundleName.equals(baseName) && getRangeText().equals(property.getUnescapedKey());
   }
 }

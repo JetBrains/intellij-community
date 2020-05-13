@@ -23,9 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,22 +35,14 @@ import java.util.Collection;
 public class PyDirectoryIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (element instanceof PsiDirectory && shouldIndicatePythonPackages(element)) {
+    if (element instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)element;
       // Preserve original icons for excluded directories and source roots
-      if (!isSpecialDirectory(directory) && isImportablePackage(directory)) {
+      if (!isSpecialDirectory(directory) && isImportableOldStylePackage(directory)) {
         return PlatformIcons.PACKAGE_ICON;
       }
     }
     return null;
-  }
-
-  private static boolean shouldIndicatePythonPackages(@NotNull PsiElement moduleAnchor) {
-    if (PlatformUtils.isPyCharm()) {
-      return true;
-    }
-    final Module module = ModuleUtilCore.findModuleForPsiElement(moduleAnchor);
-    return module != null && PythonSdkUtil.findPythonSdk(module) != null;
   }
 
   private static boolean isSpecialDirectory(@NotNull PsiDirectory directory) {
@@ -64,13 +54,14 @@ public class PyDirectoryIconProvider extends IconProvider {
     return module == null || PyUtil.getSourceRoots(module).contains(vFile);
   }
 
-  private static boolean isImportablePackage(@NotNull PsiDirectory directory) {
+  private static boolean isImportableOldStylePackage(@NotNull PsiDirectory directory) {
     final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(directory);
     for (PsiDirectory dir = directory; dir != null; dir = dir.getParentDirectory()) {
       if (sourceRoots.contains(dir.getVirtualFile())) {
         return true;
       }
-      if (!PyNames.isIdentifier(dir.getName()) || !PyUtil.isPackage(dir, false, null)) {
+      if (!PyNames.isIdentifier(dir.getName()) || (dir.findFile(PyNames.INIT_DOT_PY) == null &&
+                                                   dir.findFile(PyNames.INIT_DOT_PYI) == null)) {
         return false;
       }
     }

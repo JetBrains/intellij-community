@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
@@ -11,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ListSelection;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
 
   public ShowDiffWithLocalAction(boolean useBeforeVersion) {
     myUseBeforeVersion = useBeforeVersion;
-    ActionUtil.copyFrom(this, useBeforeVersion ? "Vcs.ShowDiffWithLocal.Before" : "Vcs.ShowDiffWithLocal");
+    ActionUtil.copyFrom(this, useBeforeVersion ? VcsActions.DIFF_BEFORE_WITH_LOCAL : VcsActions.DIFF_AFTER_WITH_LOCAL);
   }
 
   @Override

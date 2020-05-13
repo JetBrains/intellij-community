@@ -3,16 +3,12 @@
 package com.intellij.codeInsight.completion.proc;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -24,11 +20,6 @@ public class VariablesProcessor implements PsiScopeProcessor, ElementClassHint{
   private boolean myStaticScopeFlag;
   private final boolean myStaticSensitiveFlag;
   private final List<? super PsiVariable> myResultList;
-
-  /** Collecting _all_ variables in scope */
-  public VariablesProcessor(String _prefix, boolean staticSensitiveFlag){
-    this(_prefix, staticSensitiveFlag, new ArrayList<>());
-  }
 
   /** Collecting _all_ variables in scope */
   public VariablesProcessor(String _prefix, boolean staticSensitiveFlag, List<? super PsiVariable> lst){
@@ -60,8 +51,9 @@ public class VariablesProcessor implements PsiScopeProcessor, ElementClassHint{
 
   @Override
   public final void handleEvent(@NotNull Event event, Object associated){
-    if(event == JavaScopeProcessorEvent.START_STATIC)
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStaticScopeFlag = true;
+    }
   }
 
   /** sometimes it is important to get results as array */

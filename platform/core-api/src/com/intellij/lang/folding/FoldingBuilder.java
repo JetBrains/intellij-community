@@ -25,8 +25,7 @@ public interface FoldingBuilder {
    *                 numbers for folding regions.
    * @return the array of folding descriptors.
    */
-  @NotNull
-  FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document);
+  FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document);
 
   /**
    * Returns the text which is displayed in the editor for the folding region related to the

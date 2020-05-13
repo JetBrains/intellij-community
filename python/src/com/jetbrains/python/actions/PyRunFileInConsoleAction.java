@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfigurationParams;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
   public PyRunFileInConsoleAction() {
-    super("Run File in Python Console", "Run Current File in Python Console", PythonIcons.Python.Python);
+    super(PyBundle.messagePointer("acton.run.file.in.python.console.title"), PyBundle.messagePointer("action.run.file.in.python.console.description"), PythonIcons.Python.Python);
   }
 
   @Override

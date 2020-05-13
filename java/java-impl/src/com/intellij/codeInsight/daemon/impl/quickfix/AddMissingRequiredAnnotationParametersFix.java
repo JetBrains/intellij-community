@@ -16,9 +16,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,8 +28,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +43,7 @@ import java.util.TreeSet;
 /**
 * @author Dmitry Batkovich
 */
-public class AddMissingRequiredAnnotationParametersFix implements IntentionAction {
+public final class AddMissingRequiredAnnotationParametersFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(AddMissingRequiredAnnotationParametersFix.class);
 
   private final PsiAnnotation myAnnotation;
@@ -104,9 +108,21 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
       }
     }
 
-    final PsiExpression nullValue = JavaPsiFacade.getElementFactory(project).createExpressionFromText(PsiKeyword.NULL, null);
-    for (final String missedParameter : myMissedElements) {
-      newParameters.add(Pair.create(missedParameter, nullValue));
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    for (PsiMethod method : myAnnotationMethods) {
+      if (myMissedElements.contains(method.getName())) {
+        PsiType type = method.getReturnType();
+        String defaultValue;
+        if (TypeUtils.isJavaLangString(type)) {
+          defaultValue = "\"\"";
+        }
+        else if (type instanceof PsiArrayType) {
+          defaultValue = "{}";
+        } else {
+          defaultValue = TypeUtils.getDefaultValue(type);
+        }
+        newParameters.add(Pair.create(method.getName(), factory.createExpressionFromText(defaultValue, null)));
+      }
     }
 
     TemplateBuilderImpl builder = null;
@@ -117,9 +133,11 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
         if (builder == null) {
           builder = new TemplateBuilderImpl(myAnnotation.getParameterList());
         }
-        builder.replaceElement(value, new EmptyExpression(), true);
+        builder.replaceElement(value, new TextExpression(newParameter.getSecond().getText()), true);
       }
     }
+    
+    if (!file.isPhysical()) return;
 
     editor.getCaretModel().moveToOffset(myAnnotation.getParameterList().getTextRange().getStartOffset());
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -157,5 +175,11 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
       previousOrder = currentOrder;
     }
     return true;
+  }
+
+  @Override
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new AddMissingRequiredAnnotationParametersFix(PsiTreeUtil.findSameElementInCopy(myAnnotation, target), myAnnotationMethods,
+                                                         myMissedElements);
   }
 }

@@ -1,29 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.util.EdtRule
-import org.jetbrains.plugins.groovy.util.FixtureRule
+import org.jetbrains.plugins.groovy.util.Groovy30Test
 import org.jetbrains.plugins.groovy.util.ResolveTest
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
-import org.junit.rules.TestRule
 
 @CompileStatic
-class ResolveLocalTest implements ResolveTest {
-
-  public final FixtureRule myFixtureRule = new FixtureRule(GroovyProjectDescriptors.GROOVY_3_0, '')
-  public final @Rule TestRule myRules = RuleChain.outerRule(myFixtureRule).around(new EdtRule())
-
-  @NotNull
-  @Override
-  CodeInsightTestFixture getFixture() { myFixtureRule.fixture }
+class ResolveLocalTest extends Groovy30Test implements ResolveTest {
 
   @Test
   void 'resource variable from try block'() {
@@ -131,5 +117,4 @@ class ResolveLocalTest implements ResolveTest {
   void 'local variable inside lambda'() {
     resolveTest 'def l = a -> {def param; <caret>param }', GrVariable
   }
-
 }

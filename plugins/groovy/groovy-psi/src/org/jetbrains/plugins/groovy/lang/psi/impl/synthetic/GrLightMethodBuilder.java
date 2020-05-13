@@ -17,6 +17,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -93,8 +95,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return getTypeParameterList().getTypeParameters();
   }
 
@@ -153,9 +154,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return myNamedParameters;
   }
 
-  @NotNull
   @Override
-  public GrReflectedMethod[] getReflectedMethods() {
+  public GrReflectedMethod @NotNull [] getReflectedMethods() {
     // not caching
     return GrReflectedMethodImpl.doCreateReflectedMethods(this, null, getParameters());
   }
@@ -226,9 +226,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return null;
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getParameters() {
+  public GrParameter @NotNull [] getParameters() {
     return getParameterList().getParameters();
   }
 
@@ -256,7 +255,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
 
   @NotNull
   private GrLightMethodBuilder addParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
-    return addParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this), isOptional);
+    return addParameter(name, TypesUtil.createType(type, ObjectUtils.notNull(getContext(), this)), isOptional);
   }
 
   @NotNull
@@ -337,20 +336,17 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods() {
+  public PsiMethod @NotNull [] findSuperMethods() {
     return PsiSuperMethodImplUtil.findSuperMethods(this);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+  public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+  public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
   }
 
@@ -366,8 +362,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findDeepestSuperMethods() {
+  public PsiMethod @NotNull [] findDeepestSuperMethods() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
   }
 

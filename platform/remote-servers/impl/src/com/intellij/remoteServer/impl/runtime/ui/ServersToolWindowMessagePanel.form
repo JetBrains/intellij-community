@@ -17,7 +17,7 @@
         <properties>
           <background color="-1513240"/>
           <contentType value="text/html"/>
-          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
+          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;" noi18n="true"/>
         </properties>
       </component>
     </children>

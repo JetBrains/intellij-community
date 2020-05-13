@@ -25,8 +25,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
   private static final String DEF_PSEUDO_ANNO = "_____intellij_idea_rulez_def_";
 
   @Override
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     final ClassMember[] classMembers = chooseOriginalMembersImpl(aClass, project);
     if (classMembers == null) return null;
 
@@ -61,8 +60,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     return res.toArray(ClassMember.EMPTY_ARRAY);
   }
 
-  @Nullable
-  protected ClassMember[] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
     return super.chooseOriginalMembers(aClass, project);
   }
 

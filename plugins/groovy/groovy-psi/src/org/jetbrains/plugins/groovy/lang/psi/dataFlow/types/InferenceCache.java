@@ -90,7 +90,7 @@ class InferenceCache {
 
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
-                                            @NotNull Instruction[] flow,
+                                            Instruction @NotNull [] flow,
                                             @NotNull Couple<Set<Instruction>> interesting) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());

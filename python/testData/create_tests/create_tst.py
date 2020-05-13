@@ -9,3 +9,6 @@ class Spam:
 
 def test_foo():
     pass
+
+class SpamSpamSpamBakedBeans:
+    pass

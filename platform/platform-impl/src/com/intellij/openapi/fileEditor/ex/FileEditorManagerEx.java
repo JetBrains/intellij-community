@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.ex;
 
 import com.intellij.openapi.Disposable;
@@ -48,14 +48,11 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    *
    * @see EditorComposite#getPreferredFocusedComponent()
    */
-  @Nullable
-  public abstract JComponent getPreferredFocusedComponent();
+  public abstract @Nullable JComponent getPreferredFocusedComponent();
 
-  @NotNull
-  public abstract Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
+  public abstract @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
 
-  @Nullable
-  public abstract VirtualFile getFile(@NotNull FileEditor editor);
+  public abstract @Nullable VirtualFile getFile(@NotNull FileEditor editor);
 
   /**
    * Refreshes the text, colors and icon of the editor tabs representing the specified file.
@@ -73,8 +70,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   /**
    * Asynchronous version of {@link #getCurrentWindow()}. Execution happens after focus settle down. Can be invoked on any thread.
    */
-  @NotNull
-  public abstract Promise<EditorWindow> getActiveWindow();
+  public abstract @NotNull Promise<EditorWindow> getActiveWindow();
 
   public abstract void setCurrentWindow(EditorWindow window);
 
@@ -93,8 +89,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public abstract boolean hasSplitOrUndockedWindows();
 
-  @NotNull
-  public abstract EditorWindow[] getWindows();
+  public abstract EditorWindow @NotNull [] getWindows();
 
   /**
    * @return arrays of all files (including {@code file} itself) that belong
@@ -102,8 +97,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    * is not open. The returned files have the same order as they have in the
    * tabbed container.
    */
-  @NotNull
-  public abstract VirtualFile[] getSiblings(@NotNull VirtualFile file);
+  public abstract VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file);
 
   public abstract void createSplitter(int orientation, @Nullable EditorWindow window);
 
@@ -111,13 +105,11 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public abstract boolean isInSplitter();
 
-  public abstract boolean hasOpenedFile ();
+  public abstract boolean hasOpenedFile();
 
-  @Nullable
-  public abstract VirtualFile getCurrentFile();
+  public abstract @Nullable VirtualFile getCurrentFile();
 
-  @Nullable
-  public abstract FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file);
+  public abstract @Nullable FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file);
 
   /**
    * Closes all files IN ACTIVE SPLITTER (window).
@@ -127,42 +119,36 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    */
   public abstract void closeAllFiles();
 
-  @NotNull
-  public abstract EditorsSplitters getSplitters();
+  public abstract @NotNull EditorsSplitters getSplitters();
 
   @Override
-  @NotNull
-  public FileEditor[] openFile(@NotNull final VirtualFile file, final boolean focusEditor) {
-    return openFileWithProviders(file, focusEditor, false).getFirst ();
+  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor) {
+    return openFileWithProviders(file, focusEditor, false).getFirst();
   }
 
-  @NotNull
   @Override
-  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
+  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
     return openFileWithProviders(file, focusEditor, searchForOpen).getFirst();
   }
 
-  @NotNull
-  public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                boolean focusEditor,
-                                                                                boolean searchForSplitter);
+  public abstract @NotNull Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                         boolean focusEditor,
+                                                                                         boolean searchForSplitter);
 
-  @NotNull
-  public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                boolean focusEditor,
-                                                                                @NotNull EditorWindow window);
+  public abstract @NotNull Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                         boolean focusEditor,
+                                                                                         @NotNull EditorWindow window);
 
   public abstract boolean isChanged(@NotNull EditorComposite editor);
 
-  public abstract EditorWindow getNextWindow(@NotNull final EditorWindow window);
+  public abstract EditorWindow getNextWindow(final @NotNull EditorWindow window);
 
-  public abstract EditorWindow getPrevWindow(@NotNull final EditorWindow window);
+  public abstract EditorWindow getPrevWindow(final @NotNull EditorWindow window);
 
   public abstract boolean isInsideChange();
 
   @Override
-  @Nullable
-  public final Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret) {
+  public final @Nullable Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret) {
     for (final EditorDataProvider dataProvider : myDataProviders) {
       final Object o = dataProvider.getData(dataId, editor, caret);
       if (o != null) return o;
@@ -171,7 +157,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   }
 
   @Override
-  public void registerExtraEditorDataProvider(@NotNull final EditorDataProvider provider, Disposable parentDisposable) {
+  public void registerExtraEditorDataProvider(final @NotNull EditorDataProvider provider, Disposable parentDisposable) {
     myDataProviders.add(provider);
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, () -> myDataProviders.remove(provider));
@@ -193,8 +179,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract EditorsSplitters getSplittersFor(Component c);
 
 
-  @NotNull
-  public abstract ActionCallback notifyPublisher(@NotNull Runnable runnable);
+  public abstract @NotNull ActionCallback notifyPublisher(@NotNull Runnable runnable);
 
   @Override
   public void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.ui;
 
 import com.google.common.collect.Lists;
@@ -173,7 +173,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     catch (ExecutionException e) {
       throw new IOException(e);
     }
-    Collections.sort(packages, Comparator.comparing(InstalledPackage::getName));
+    packages.sort(Comparator.comparing(InstalledPackage::getName));
     return new ArrayList<>(packages);
   }
 
@@ -383,7 +383,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
-    myExecutorService.submit(() -> {
+    myExecutorService.execute(() -> {
       try {
         PyPIPackageUtil.INSTANCE.loadPackages();
         final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(myProject, pkg.getName());
@@ -398,5 +398,11 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public int compareVersions(@NotNull String version1, @NotNull String version2) {
     return PyPackageVersionComparator.getSTR_COMPARATOR().compare(version1, version2);
+  }
+
+  @Nullable
+  @Override
+  public String getID() {
+    return "Python";
   }
 }

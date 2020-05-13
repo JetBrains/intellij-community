@@ -1,14 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +29,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
   String PROP_ALERT = "alerting";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
-  Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  @Deprecated Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  Key<TabGroupId> TAB_GROUP_ID_KEY = Key.create("tabbedGroupId");
+  Key<TabDescriptor> TAB_DESCRIPTOR_KEY = Key.create("tabDescriptor");
   Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
   Key<DnDTarget> TAB_DND_TARGET_KEY = Key.create("tabDndTarget");
 
@@ -44,23 +44,31 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setIcon(Icon icon);
   Icon getIcon();
 
-  void setDisplayName(String displayName);
+  void setDisplayName(@TabTitle String displayName);
+
+  @TabTitle
   String getDisplayName();
 
-  void setTabName(String tabName);
+  void setTabName(@TabTitle String tabName);
+
+  @TabTitle
   String getTabName();
 
-  void setToolwindowTitle(String toolwindowTitle);
+  @TabTitle
   String getToolwindowTitle();
 
-  Disposable getDisposer();
+  void setToolwindowTitle(@TabTitle String toolwindowTitle);
+
+  @Nullable Disposable getDisposer();
+
   void setDisposer(@NotNull Disposable disposer);
 
   void setShouldDisposeContent(boolean value);
-  boolean shouldDisposeContent();
 
+  @NlsContexts.Tooltip
   String getDescription();
-  void setDescription(String description);
+
+  void setDescription(@NlsContexts.Tooltip String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
 

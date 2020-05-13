@@ -33,6 +33,6 @@ public class PyParameterTypeList extends PyElementImpl {
 
   @NotNull
   public List<PyExpression> getParameterTypes() {
-    return findChildrenByType(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    return findChildrenByType(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.Disposable;
@@ -21,7 +21,6 @@ import java.util.List;
  * Provides access to components. Serves as a base interface for {@link com.intellij.openapi.application.Application}
  * and {@link com.intellij.openapi.project.Project}.
  *
- * @see ProjectComponent
  * @see com.intellij.openapi.application.Application
  * @see com.intellij.openapi.project.Project
  */
@@ -30,7 +29,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Use {@link #getComponent(Class)} instead.
    */
   @Deprecated
-  default BaseComponent getComponent(@NotNull String name) {
+  default @Nullable BaseComponent getComponent(@NotNull String name) {
     return null;
   }
 
@@ -68,28 +67,30 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated use <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extensions_and_extension_points.html">extension points</a> instead
    */
   @Deprecated
-  @NotNull
-  default <T> T[] getComponents(@NotNull Class<T> baseClass) {
+  default <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
     return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass, false), baseClass);
   }
 
-  @NotNull
-  PicoContainer getPicoContainer();
+  @NotNull PicoContainer getPicoContainer();
 
   /**
    * @see com.intellij.application.Topics#subscribe
    */
-  @NotNull
-  MessageBus getMessageBus();
+  @NotNull MessageBus getMessageBus();
 
   /**
-   * Result is valid only in scope of a read action.
-   * (see https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock)
-   * Checking outside of a read action is meaningless, because application/project/module can be disposed at any moment.
+   * @return true when this component is disposed (e.g. the "File|Close Project" invoked or the application is exited)
+   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectImpl#dispose()} was called but not completed yet)
+   * <br>
+   * The result is only valid inside read action because the application/project/module can be disposed at any moment.
+   * (see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock">more details on read actions</a>)
    */
   boolean isDisposed();
 
-  @ApiStatus.Experimental
+  /**
+   * @deprecated Use {@link #isDisposed()} instead
+   */
+  @Deprecated
   default boolean isDisposedOrDisposeInProgress() {
     return isDisposed();
   }
@@ -97,9 +98,8 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * @deprecated Use {@link ExtensionPointName#getExtensionList(AreaInstance)}
    */
-  @NotNull
   @Deprecated
-  default <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
+  default <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return getExtensionArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
@@ -110,38 +110,44 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull
   Condition<?> getDisposed();
 
-  default <T> T getService(@NotNull Class<T> serviceClass) {
-    return getService(serviceClass, true);
-  }
-
-  @Nullable
-  default <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
-    return getService(serviceClass, false);
-  }
-
-  @ApiStatus.Internal
+  /**
+   * @deprecated Use {@link #getServiceIfCreated(Class)} or {@link #getService(Class)}.
+   */
+  @Deprecated
   default <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    if (createIfNeeded) {
+      return getService(serviceClass);
+    }
+    else {
+      return getServiceIfCreated(serviceClass);
+    }
+  }
+
+  default <T> T getService(@NotNull Class<T> serviceClass) {
     // default impl to keep backward compatibility
     //noinspection unchecked
     return (T)getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 
-  @NotNull
+  default @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+    return getService(serviceClass);
+  }
+
   @Override
-  default ExtensionsArea getExtensionArea() {
+  default @NotNull ExtensionsArea getExtensionArea() {
     // default impl to keep backward compatibility
     throw new AbstractMethodError();
   }
 
   @ApiStatus.Internal
-  default <T> T instantiateClass(@NotNull Class<T> aClass, @Nullable PluginId pluginId) {
+  default <T> T instantiateClass(@NotNull Class<T> aClass, @SuppressWarnings("unused") @Nullable PluginId pluginId) {
     return ReflectionUtil.newInstance(aClass, false);
   }
 
+  @SuppressWarnings({"deprecation", "unchecked"})
   @ApiStatus.Internal
-  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @NotNull PluginId pluginId) {
-    //noinspection unchecked
-    return (T)new CachingConstructorInjectionComponentAdapter(key, aClass, null, true).getComponentInstance(getPicoContainer());
+  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @SuppressWarnings("unused") @NotNull PluginId pluginId) {
+    return (T)new CachingConstructorInjectionComponentAdapter(key, aClass).getComponentInstance(getPicoContainer());
   }
 
   @ApiStatus.Internal
@@ -150,22 +156,19 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  @NotNull
-  default RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+  default @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
     ExceptionUtilRt.rethrowUnchecked(error);
     return new RuntimeException(error);
   }
 
   @ApiStatus.Internal
-  @NotNull
-  default RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
+  default @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
     return new RuntimeException(message);
   }
 
   // todo make pluginDescriptor as not-null
-  @NotNull
   @ApiStatus.Internal
-  default <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
+  default @NotNull <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
     try {
       //noinspection unchecked
       return (T)ReflectionUtil.newInstance(Class.forName(name));
@@ -178,18 +181,16 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * @deprecated Do not use.
    */
-  @NotNull
   @ApiStatus.Internal
   @Deprecated
-  default <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+  default @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
     return getComponentInstancesOfType(baseClass, false);
   }
 
   @SuppressWarnings("MissingDeprecatedAnnotation")
-  @NotNull
   @Deprecated
   @ApiStatus.Internal
-  default <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
+  default @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
     throw new UnsupportedOperationException();
   }
 }

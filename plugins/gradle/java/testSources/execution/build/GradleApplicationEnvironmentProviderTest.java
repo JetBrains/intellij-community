@@ -113,8 +113,21 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
       ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
     StringBuilder out = new StringBuilder();
     ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+      private volatile ExternalSystemTaskId myId = null;
+
+      @Override
+      public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+        if (myId != null) {
+          throw new IllegalStateException("This test listener is not supposed to listen to more than 1 task");
+        }
+        myId = id;
+      }
+
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        if (!id.equals(myId)) {
+          return;
+        }
         if (StringUtil.isEmptyOrSpaces(text)) return;
         (stdOut ? System.out : System.err).print(text);
         out.append(text);
@@ -122,26 +135,34 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
 
       @Override
       public void onEnd(@NotNull ExternalSystemTaskId id) {
-        notificationManager.removeNotificationListener(this);
+        if (!id.equals(myId)) {
+          return;
+        }
         done.up();
       }
     };
-    notificationManager.addNotificationListener(listener);
-    edt(() -> {
-      try {
-        ExecutionEnvironment environment =
-          ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configurationSettings)
-            .contentToReuse(null)
-            .dataContext(null)
-            .activeTarget()
-            .build();
-        ProgramRunnerUtil.executeConfiguration(environment, false, true);
-      }
-      catch (ExecutionException e) {
-        fail(e.getMessage());
-      }
-    });
-    Assert.assertTrue(done.waitFor(30000));
+
+    try {
+      notificationManager.addNotificationListener(listener);
+      edt(() -> {
+        try {
+          ExecutionEnvironment environment =
+            ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configurationSettings)
+              .contentToReuse(null)
+              .dataContext(null)
+              .activeTarget()
+              .build();
+          ProgramRunnerUtil.executeConfiguration(environment, false, true);
+        }
+        catch (ExecutionException e) {
+          fail(e.getMessage());
+        }
+      });
+      Assert.assertTrue(done.waitFor(30000));
+    }
+    finally {
+      notificationManager.removeNotificationListener(listener);
+    }
     return out.toString();
   }
 }

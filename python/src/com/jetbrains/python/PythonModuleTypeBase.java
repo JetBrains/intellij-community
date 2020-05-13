@@ -27,16 +27,16 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
   @Override
   @NotNull
   public String getName() {
-    return "Python Module";
+    return PyBundle.message("python.module.name");
   }
 
   @Override
   @NotNull
   public String getDescription() {
-    String basicDescription = "Python modules are used for developing <b>Python</b> applications.";
+    String basicDescription = PyBundle.message("python.module.description");
     for (FacetType type : FacetType.EP_NAME.getExtensionList()) {
       if (type.getId().toString().equalsIgnoreCase("django")) {
-        return basicDescription + " Supported technologies include <b>Django, Google App Engine, Mako, Jinja2</b> and others.";
+        return basicDescription + " " + PyBundle.message("python.module.description.extended");
       }
     }
     return basicDescription;

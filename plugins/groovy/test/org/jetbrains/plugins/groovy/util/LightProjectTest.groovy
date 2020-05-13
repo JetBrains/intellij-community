@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.junit.Rule
@@ -30,7 +30,7 @@ abstract class LightProjectTest {
   }
 
   @NotNull
-  final CodeInsightTestFixture getFixture() {
+  final JavaCodeInsightTestFixture getFixture() {
     myFixtureRule.fixture
   }
 }

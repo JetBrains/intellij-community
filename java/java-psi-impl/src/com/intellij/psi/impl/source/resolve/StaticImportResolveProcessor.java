@@ -85,8 +85,7 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
     return null;
   }
 
-  @NotNull
-  public JavaResolveResult[] getResults() {
+  public JavaResolveResult @NotNull [] getResults() {
     if (myResults.size() + myFieldResults.size() + myClassResult.size() > 1) {
       filterInvalid(myResults);
       filterInvalid(myFieldResults);

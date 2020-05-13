@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure.filtered;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -42,9 +42,9 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   private MergingUpdateQueue myRefilterQueue;
 
   public FilteringTreeBuilder(Tree tree,
-                              ElementFilter filter,
+                              ElementFilter<?> filter,
                               AbstractTreeStructure structure,
-                              @Nullable Comparator<? super NodeDescriptor> comparator) {
+                              @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     super(tree,
           (DefaultTreeModel)tree.getModel(),
           structure instanceof FilteringTreeStructure ? structure
@@ -280,5 +280,12 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   @Nullable
   public Object getElementFor(Object node) {
     return getUi().getElementFor(node);
+  }
+
+  @Override
+  public void cleanUp() {
+    super.cleanUp();
+    myLastSuccessfulSelect = null;
+    myRefilterQueue.cancelAllUpdates();
   }
 }

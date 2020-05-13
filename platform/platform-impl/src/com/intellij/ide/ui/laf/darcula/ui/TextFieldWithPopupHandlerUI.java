@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -33,10 +34,10 @@ import java.util.Objects;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.util.FontUtil.disableKerning;
 
 /**
  * @author Konstantin Bulenkov
- * @author Sergey Malenkov
  */
 public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI implements Condition {
   private static final String DOCUMENT = "document";
@@ -52,18 +53,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private Object variant;
   private int cursor;
 
-  @Deprecated
-  protected JTextField myTextField;
-
   public TextFieldWithPopupHandlerUI() {}
-
-  @Deprecated
-  public TextFieldWithPopupHandlerUI(JTextField textField) {
-    myTextField = textField;
-  }
-
-  @Deprecated
-  public static void updateBorderInsets(Component c, Insets insets) {}
 
   /**
    * @return a search icon in one of the four states or {@code null} to hide it
@@ -164,6 +154,15 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   protected void showSearchPopup() {
   }
 
+  @Override
+  protected void installDefaults() {
+    super.installDefaults();
+    if (SystemInfo.isMacOSCatalina) {
+      JTextComponent component = getComponent();
+      component.setFont(disableKerning(component.getFont()));
+    }
+  }
+
   /**
    * Adds listeners to the current text component and sets its variant.
    */
@@ -201,7 +200,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Override
   protected Caret createCaret() {
-    return Registry.is("ide.text.mouse.selection.new", true) ? new MouseDragAwareCaret() : new MarginAwareCaret();
+    return new MouseDragAwareCaret();
   }
 
   @Override
@@ -229,7 +228,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Nullable
   public static AbstractAction getNewLineAction(Component c) {
-    if (!isSearchField(c) || !Registry.is("ide.find.show.add.newline.hint", true)) return null;
+    if (!isSearchField(c)) return null;
     Object action = ((JTextField)c).getClientProperty("JTextField.Search.NewLineAction");
     return action instanceof AbstractAction ? (AbstractAction)action : null;
   }
@@ -576,7 +575,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         Font font = component.getFont();
         if (font == null || font instanceof UIResource) {
           font = UIManager.getFont(getPropertyPrefix() + ".font");
-          component.setFont(!monospaced ? font : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
+          component.setFont(!monospaced
+                            ? !SystemInfo.isMacOSCatalina ? font : disableKerning(font)
+                            : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
         }
       }
     }
@@ -615,6 +616,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
 
   private final class SearchExtension implements Extension {
+    private final PopupState myPopupState = new PopupState();
     private Rectangle bounds; // should be bound to IconHandler#bounds
 
     @Override
@@ -644,8 +646,12 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       Object property = component == null ? null : component.getClientProperty(POPUP);
       JPopupMenu popup = property instanceof JPopupMenu ? (JPopupMenu)property : null;
       return popup == null ? null : () -> {
+        if (myPopupState.isRecentlyHidden()) return; // do not show new popup
         Rectangle editor = getVisibleEditorRect();
-        if (editor != null) popup.show(component, bounds.x, editor.y + editor.height);
+        if (editor != null) {
+          popup.addPopupMenuListener(myPopupState);
+          popup.show(component, bounds.x, editor.y + editor.height);
+        }
       };
     }
 
@@ -712,13 +718,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   static class MouseDragAwareCaret extends MarginAwareCaret {
     @Override
     public void mouseDragged(MouseEvent e) {
-      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !getComponent().getText().contains("\n")) {
+      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !isMultiline(getComponent())) {
         boolean consumed = e.isConsumed();
         e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers() | e.getModifiersEx(), e.getX(),
                            getComponent().getHeight() / 2, e.getClickCount(), e.isPopupTrigger(), e.getButton());
         if (consumed) e.consume();
       }
       super.mouseDragged(e);
+    }
+
+    public boolean isMultiline(JTextComponent component) {
+      return component.getText().contains("\n")
+             || (component instanceof JTextArea && ((JTextArea) component).getLineWrap());
     }
   }
 }

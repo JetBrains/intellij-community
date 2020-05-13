@@ -23,14 +23,14 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class TooManyProjectLeakedException extends RuntimeException {
-  private final Iterable<Project> myLeakedProjects;
+  private final Iterable<? extends Project> myLeakedProjects;
 
-  public TooManyProjectLeakedException(@NotNull Iterable<Project> leakedProjects) {
+  public TooManyProjectLeakedException(@NotNull Iterable<? extends Project> leakedProjects) {
     myLeakedProjects = leakedProjects;
   }
 
   @NotNull
-  public Iterable<Project> getLeakedProjects() {
+  public Iterable<? extends Project> getLeakedProjects() {
     return myLeakedProjects;
   }
 }

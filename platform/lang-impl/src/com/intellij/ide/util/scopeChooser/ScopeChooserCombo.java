@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
@@ -36,6 +36,13 @@ import java.awt.event.ActionEvent;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Instances of <code>ScopeChooserCombo</code> <b>must be disposed</b> when the corresponding dialog or settings page is closed. Otherwise
+ * listeners registered in <code>init()</code> cause memory leak.<br/><br/>
+ * Example: if <code>ScopeChooserCombo</code> is used in a
+ * <code>DialogWrapper</code> subclass, call <code>Disposer.register(getDisposable(), myScopeChooserCombo)</code>, where
+ * <code>getDisposable()</code> is <code>DialogWrapper</code>'s method.
+ */
 public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
 
   public static final int OPT_LIBRARIES = 0x1;
@@ -171,7 +178,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     };
     for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
       if (StringUtil.isEmpty(each.getDisplayName())) continue;
-      List<SearchScope> scopes = each.getSearchScopes(project);
+      List<SearchScope> scopes = each.getSearchScopes(project, dataContext);
       if (scopes.isEmpty()) continue;
       if (!processor.process(new ScopeSeparator(each.getDisplayName()))) return false;
       for (SearchScope scope : ContainerUtil.sorted(scopes, comparator)) {

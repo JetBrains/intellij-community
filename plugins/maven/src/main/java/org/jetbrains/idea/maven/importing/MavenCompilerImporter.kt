@@ -12,18 +12,20 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
 import org.jdom.Element
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.jps.model.java.compiler.CompilerOptions
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
 /**
  * @author Vladislav.Soroka
  */
 class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
-  private val LOG = Logger.getInstance("#org.jetbrains.idea.maven.importing.MavenCompilerImporter")
+  private val LOG = Logger.getInstance(MavenCompilerImporter::class.java)
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
     return super.isApplicable(mavenProject) && Registry.`is`("maven.import.compiler.arguments", true)
@@ -94,7 +96,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
     for (compilerExtension in MavenCompilerExtension.EP_NAME.extensions) {
       if (mavenConfiguration.value != null && compilerId == compilerExtension.mavenCompilerId) {
-        importCompilerConfiguration(module, mavenConfiguration.value!!, compilerExtension)
+        importCompilerConfiguration(module, mavenConfiguration.value!!, compilerExtension, mavenProject)
       }
       else {
         // cleanup obsolete options
@@ -132,54 +134,14 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
   private fun importCompilerConfiguration(module: Module,
                                           compilerMavenConfiguration: Element,
-                                          extension: MavenCompilerExtension) {
-    val compilerOptions = extension.getCompiler(module.project)?.options as? JpsJavaCompilerOptions ?: return
-
-    val options = mutableListOf<String>()
-    val parameters = compilerMavenConfiguration.getChild("parameters")
-
-    if (parameters?.textTrim?.toBoolean() == true) {
-      options += "-parameters"
-    }
-
-    val compilerArguments = compilerMavenConfiguration.getChild("compilerArguments")
-    if (compilerArguments != null) {
-      val unresolvedArgs = mutableSetOf<String>()
-      val effectiveArguments = compilerArguments.children.map {
-        val key = it.name.run { if (startsWith("-")) this else "-$this" }
-        val value = getResolvedText(it)
-        if (value == null && hasUnresolvedProperty(it.textTrim)) {
-          unresolvedArgs += key
-        }
-        key to value
-      }.toMap()
-
-      effectiveArguments.forEach { key, value ->
-        if (key.startsWith("-A") && value != null) {
-          options.add("$key=$value")
-        }
-        else if (key !in unresolvedArgs) {
-          options.add(key)
-          addIfNotNull(options, value)
-        }
-      }
-    }
-
-    addIfNotNull(options, getResolvedText(compilerMavenConfiguration.getChildTextTrim("compilerArgument")))
-
-    val compilerArgs = compilerMavenConfiguration.getChild("compilerArgs")
-    if (compilerArgs != null) {
-      for (arg in compilerArgs.getChildren("arg")) {
-        addIfNotNull(options, getResolvedText(arg))
-      }
-      for (compilerArg in compilerArgs.getChildren("compilerArg")) {
-        addIfNotNull(options, getResolvedText(compilerArg))
-      }
-    }
-
-    val compilerConfiguration = CompilerConfiguration.getInstance(module.project) as CompilerConfigurationImpl
-    compilerConfiguration.setAdditionalOptions(compilerOptions, module, options)
+                                          extension: MavenCompilerExtension,
+                                          mavenProject: MavenProject) {
+    val compilerOptions = extension.getCompiler(module.project)?.options
+    val compilerArgs = collectCompilerArgs(compilerMavenConfiguration);
+    extension.configureOptions(compilerOptions, module, mavenProject, compilerArgs);
   }
+
+
 
   companion object {
     private val COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
@@ -217,6 +179,53 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
     private fun getResolvedText(it: Element): String? {
       return getResolvedText(it.textTrim)
+    }
+
+    private fun collectCompilerArgs(compilerMavenConfiguration: Element): List<String> {
+
+
+      val options = mutableListOf<String>()
+      val parameters = compilerMavenConfiguration.getChild("parameters")
+
+      if (parameters?.textTrim?.toBoolean() == true) {
+        options += "-parameters"
+      }
+
+      val compilerArguments = compilerMavenConfiguration.getChild("compilerArguments")
+      if (compilerArguments != null) {
+        val unresolvedArgs = mutableSetOf<String>()
+        val effectiveArguments = compilerArguments.children.map {
+          val key = it.name.run { if (startsWith("-")) this else "-$this" }
+          val value = getResolvedText(it)
+          if (value == null && hasUnresolvedProperty(it.textTrim)) {
+            unresolvedArgs += key
+          }
+          key to value
+        }.toMap()
+
+        effectiveArguments.forEach { key, value ->
+          if (key.startsWith("-A") && value != null) {
+            options.add("$key=$value")
+          }
+          else if (key !in unresolvedArgs) {
+            options.add(key)
+            addIfNotNull(options, value)
+          }
+        }
+      }
+
+      addIfNotNull(options, getResolvedText(compilerMavenConfiguration.getChildTextTrim("compilerArgument")))
+
+      val compilerArgs = compilerMavenConfiguration.getChild("compilerArgs")
+      if (compilerArgs != null) {
+        for (arg in compilerArgs.getChildren("arg")) {
+          addIfNotNull(options, getResolvedText(arg))
+        }
+        for (compilerArg in compilerArgs.getChildren("compilerArg")) {
+          addIfNotNull(options, getResolvedText(compilerArg))
+        }
+      }
+      return options;
     }
   }
 }

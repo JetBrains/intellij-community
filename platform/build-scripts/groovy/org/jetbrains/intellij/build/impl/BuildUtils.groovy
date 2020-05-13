@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -29,9 +17,8 @@ import org.codehaus.groovy.tools.RootLoader
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.library.JpsOrderRootType
 
-/**
- * @author nik
- */
+import java.nio.charset.StandardCharsets
+
 @CompileStatic
 class BuildUtils {
   static void addToClassPath(String path, AntBuilder ant) {
@@ -53,6 +40,7 @@ class BuildUtils {
     addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
   }
 
+  @CompileDynamic
   private static void addToClassLoaderClassPath(String path, AntBuilder ant, ClassLoader classLoader) {
     if (new File(path).exists()) {
       if (classLoader instanceof GroovyClassLoader) {
@@ -61,11 +49,11 @@ class BuildUtils {
       else if (classLoader instanceof AntClassLoader) {
         classLoader.addPathElement(path)
       }
-      else if (classLoader instanceof RootLoader) {
+      else if (classLoader.metaClass.respondsTo(classLoader, 'addURL', URL)) {
         classLoader.addURL(new File(path).toURI().toURL())
       }
       else {
-        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader")
+        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method")
       }
       ant.project.log("'$path' added to classpath", Project.MSG_INFO)
     }
@@ -113,7 +101,7 @@ class BuildUtils {
     defineFtpTask(context.ant, commonsNetJars)
   }
 
-    /**
+  /**
    * Defines ftp task using libraries from IntelliJ IDEA project sources.
    */
   @CompileDynamic
@@ -145,7 +133,7 @@ class BuildUtils {
     def ant = context.ant
     def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
     if (ant.project.hasReference(sshTaskLoaderRef)) return
-    
+
     Path pathSsh = new Path(ant.project)
     jschJars.each {
       pathSsh.createPathElement().setLocation(it)
@@ -153,5 +141,48 @@ class BuildUtils {
     ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
                                                                     ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
     ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)
+  }
+
+  /**
+   * Executes a Java class in a forked JVM using classpath shortening (@argfile on Java 9+, 'CommandLineWrapper' otherwise).
+   */
+  @CompileDynamic
+  static boolean runJava(BuildContext context,
+                         Iterable<String> vmOptions = [],
+                         Map<String, Object> sysProperties = [:],
+                         Iterable<String> classPath,
+                         String mainClass,
+                         Iterable<String> args = []) {
+    boolean argFile = JavaVersion.current().feature >= 9
+    File classpathFile = new File(context.paths.temp, "classpath.txt")
+
+    String rtClasses = null
+    if (!argFile) {
+      rtClasses = context.getModuleOutputPath(context.findModule("intellij.java.rt"))
+      if (!new File(rtClasses).exists()) {
+        context.messages.error("Cannot run application '${mainClass}': 'java-runtime' module isn't compiled ('${rtClasses}' doesn't exist)")
+      }
+    }
+
+    context.ant.java(classname: argFile ? mainClass : "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
+      vmOptions.each { jvmArg(value: it) }
+
+      sysProperties.each { sysproperty(key: it.key, value: it.value) }
+
+      if (argFile) {
+        CommandLineWrapperUtil.writeArgumentsFile(classpathFile, ["-classpath", classPath.join(File.pathSeparator)], StandardCharsets.UTF_8)
+        jvmArg(value: "@${classpathFile.path}")
+      }
+      else {
+        classpathFile.text = classPath.join("\n")
+        classpath { pathelement(location: rtClasses) }
+        arg(value: classpathFile.path)
+        arg(line: mainClass)
+      }
+
+      args.each { arg(value: it) }
+    }
+
+    true
   }
 }

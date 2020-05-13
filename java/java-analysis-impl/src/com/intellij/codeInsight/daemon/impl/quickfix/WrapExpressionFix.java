@@ -3,13 +3,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +139,10 @@ public class WrapExpressionFix implements IntentionAction {
     return true;
   }
 
-  public static void registerWrapAction(JavaResolveResult[] candidates, PsiExpression[] expressions, HighlightInfo highlightInfo) {
+  public static void registerWrapAction(JavaResolveResult[] candidates,
+                                        PsiExpression[] expressions,
+                                        HighlightInfo highlightInfo,
+                                        TextRange fixRange) {
     PsiType expectedType = null;
     PsiExpression expr = null;
 
@@ -174,7 +180,12 @@ public class WrapExpressionFix implements IntentionAction {
     }
 
     if (expectedType != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, expr.getTextRange(), new WrapExpressionFix(expectedType, expr));
+      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new WrapExpressionFix(expectedType, expr));
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new WrapExpressionFix(myExpectedType, PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }

@@ -34,7 +34,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PyExpression getOperand() {
-    return (PyExpression)childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    return (PyExpression)childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @Nullable
@@ -59,7 +59,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.noImplicits());
+    return getReference(PyResolveContext.defaultContext());
   }
 
   @NotNull
@@ -87,10 +87,10 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
     return Ref.deref(
       StreamEx
-      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.noImplicits().withTypeEvalContext(context)))
-      .map(PyCallExpression.PyArgumentsMapping::getMarkedCallee)
+      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext().withTypeEvalContext(context)))
+      .map(PyCallExpression.PyArgumentsMapping::getCallableType)
       .nonNull()
-      .map(callee -> callee.getCallableType().getCallType(context, this))
+      .map(callableType -> callableType.getCallType(context, this))
       .map(callType -> isAwait ? Ref.deref(getGeneratorReturnType(callType)) : callType)
       .collect(PyTypeUtil.toUnion())
     );

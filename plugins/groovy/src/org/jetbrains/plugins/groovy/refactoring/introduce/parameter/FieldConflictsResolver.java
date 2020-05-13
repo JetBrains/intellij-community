@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class FieldConflictsResolver {
   private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.FieldConflictsResolver");
+    Logger.getInstance(FieldConflictsResolver.class);
   private final GrCodeBlock myScope;
   private PsiField myField = null;
   private List<GrReferenceExpression> myReferenceExpressions = null;

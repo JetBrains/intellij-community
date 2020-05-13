@@ -1,8 +1,8 @@
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.paint.LinePainter2D;
 
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
@@ -20,17 +20,17 @@ public class BegPopupMenuBorder extends AbstractBorder implements UIResource {
     g.translate(x, y);
 
     g.setColor(color1);
-    UIUtil.drawLine(g, 0, 0, w - 2, 0);
-    UIUtil.drawLine(g, 0, 0, 0, h - 2);
+    LinePainter2D.paint((Graphics2D)g, 0, 0, w - 2, 0);
+    LinePainter2D.paint((Graphics2D)g, 0, 0, 0, h - 2);
     g.setColor(color2);
-    UIUtil.drawLine(g, 1, 1, w - 3, 1);
-    UIUtil.drawLine(g, 1, 1, 1, h - 3);
+    LinePainter2D.paint((Graphics2D)g, 1, 1, w - 3, 1);
+    LinePainter2D.paint((Graphics2D)g, 1, 1, 1, h - 3);
     g.setColor(color3);
-    UIUtil.drawLine(g, 1, h - 2, w - 2, h - 2);
-    UIUtil.drawLine(g, w - 2, 1, w - 2, h - 2);
+    LinePainter2D.paint((Graphics2D)g, 1, h - 2, w - 2, h - 2);
+    LinePainter2D.paint((Graphics2D)g, w - 2, 1, w - 2, h - 2);
     g.setColor(color4);
-    UIUtil.drawLine(g, 0, h - 1, w - 1, h - 1);
-    UIUtil.drawLine(g, w - 1, 0, w - 1, h - 1);
+    LinePainter2D.paint((Graphics2D)g, 0, h - 1, w - 1, h - 1);
+    LinePainter2D.paint((Graphics2D)g, w - 1, 0, w - 1, h - 1);
     g.translate(-x, -y);
   }
 

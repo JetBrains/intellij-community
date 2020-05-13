@@ -40,9 +40,6 @@ import java.util.Locale;
 
 import static org.junit.Assert.*;
 
-/**
- * @author nik
- */
 public class BuildResult implements MessageHandler {
   private final List<BuildMessage> myErrorMessages;
   private final List<BuildMessage> myWarnMessages;

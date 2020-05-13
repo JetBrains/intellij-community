@@ -140,6 +140,37 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
     assertFalse(suggestedTypes.stream().anyMatch(type -> "MyFactoryString".equals(type.getCanonicalText())));
   }
 
+  public void testConstructorFactoryWithDefaultConstructor() {
+    final Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo {}", "Foo::new");
+    checkWithExpected(suggestedTypes, "java.lang.Runnable",
+                      "java.util.concurrent.Callable<Foo>",
+                      "java.util.function.Supplier<Foo>");
+  }
+
+  public void testConstructorFactoryWithNoargConstructor() {
+    final Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo { Foo() {} }", "Foo::new");
+    checkWithExpected(suggestedTypes, "java.lang.Runnable",
+                      "java.util.concurrent.Callable<Foo>",
+                      "java.util.function.Supplier<Foo>");
+  }
+
+  public void testConstructorFactoryWithTypeParams() {
+    final Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo<T> {}", "Foo<Integer>::new");
+    checkWithExpected(suggestedTypes, "java.lang.Runnable",
+                      "java.util.concurrent.Callable<Foo<java.lang.Integer>>",
+                      "java.util.function.Supplier<Foo<java.lang.Integer>>");
+  }
+
+  public void testConstructorFactoryWithTypeParamsAndConstructors() {
+    final Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo<T> { Foo(int i) {} Foo() {} }", "Foo<String>::new");
+    checkWithExpected(suggestedTypes, "java.lang.Runnable",
+                      "java.util.concurrent.Callable<Foo<java.lang.String>>",
+                      "java.util.function.Function<java.lang.Integer,Foo<java.lang.String>>",
+                      "java.util.function.IntConsumer",
+                      "java.util.function.IntFunction<Foo<java.lang.String>>",
+                      "java.util.function.Supplier<Foo<java.lang.String>>");
+  }
+
   public void testSAMWithThrowable() {
     myFixture.addClass("@FunctionalInterface\n" +
                        "public interface MyThrowingConsumer<T> {\n" +
@@ -173,6 +204,16 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
     checkWithExpected(suggestedTypes, "MyFunc",
                       "java.util.function.BiConsumer<Foo,java.lang.Integer>",
                       "java.util.function.ObjIntConsumer<Foo>");
+  }
+
+  public void testMethodReferenceWithTypeArgs() {
+    Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo { " +
+                                                                "public static <T> T fromInt(Integer i) {\n" +
+                                                                "        return null;\n" +
+                                                                "    }}", "Foo::<String>fromInt");
+    checkWithExpected(suggestedTypes, "java.util.function.Function<java.lang.Integer,java.lang.String>",
+                      "java.util.function.IntConsumer",
+                      "java.util.function.IntFunction<java.lang.String>");
   }
 
   public void testMethodReferenceOfInstance() {

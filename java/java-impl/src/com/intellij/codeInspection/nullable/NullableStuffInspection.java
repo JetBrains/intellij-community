@@ -16,10 +16,10 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -121,7 +121,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.fix.family.name");
+      return JavaBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.fix.family.name");
     }
 
     @Override
@@ -133,7 +133,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       if (parameterIdx < 0) return;
 
       UsageViewPresentation presentation = new UsageViewPresentation();
-      String title = InspectionsBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.view.name", p.getName());
+      String title = JavaBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.view.name", p.getName());
       presentation.setUsagesString(title);
       presentation.setTabName(title);
       presentation.setTabText(title);
@@ -141,7 +141,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
         new UsageTarget[]{new PsiElement2UsageTargetAdapter(method.getParameterList().getParameters()[parameterIdx])},
         () -> new UsageSearcher() {
           @Override
-          public void generate(@NotNull final Processor<Usage> processor) {
+          public void generate(@NotNull final Processor<? super Usage> processor) {
             ReadAction.run(() -> JavaNullMethodArgumentUtil.searchNullArgument(method, parameterIdx, (arg) -> processor.process(new UsageInfo2UsageAdapter(new UsageInfo(arg)))));
           }
         }, false, false, presentation, null);

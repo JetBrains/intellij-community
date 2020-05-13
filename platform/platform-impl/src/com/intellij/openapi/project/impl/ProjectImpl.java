@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.idea.ApplicationLoader;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
@@ -19,21 +18,17 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLoadHelper;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,19 +36,20 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
+import com.intellij.util.messages.impl.MessageBusEx;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
+public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
+  private static final Logger LOG = Logger.getInstance(ProjectImpl.class);
 
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
@@ -68,18 +64,21 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private final String creationTrace;
   private ProjectStoreFactory myProjectStoreFactory;
 
+  private final AtomicReference<Disposable> earlyDisposable = new AtomicReference<>(Disposer.newDisposable());
+  private volatile boolean temporarilyDisposed;
+
   private final AtomicNotNullLazyValue<IComponentStore> myComponentStore = AtomicNotNullLazyValue.createValue(() -> {
     ProjectStoreFactory factory = myProjectStoreFactory != null ? myProjectStoreFactory : ServiceManager.getService(ProjectStoreFactory.class);
     return factory.createStore(this);
   });
 
   protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
-    super(ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
 
-    getPicoContainer().registerComponentInstance(Project.class, this);
+    registerServiceInstance(Project.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
@@ -91,7 +90,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   // default project constructor
   ProjectImpl() {
-    super(ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -105,13 +104,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  public boolean isDisposed() {
+  public final boolean isDisposed() {
     return super.isDisposed() || temporarilyDisposed;
-  }
-
-  @Override
-  public boolean isDisposedOrDisposeInProgress() {
-    return super.isDisposedOrDisposeInProgress() || temporarilyDisposed;
   }
 
   @Override
@@ -120,10 +114,33 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return myLight;
   }
 
-  private volatile boolean temporarilyDisposed;
   @TestOnly
-  void setTemporarilyDisposed(boolean disposed) {
-    temporarilyDisposed = disposed;
+  void setTemporarilyDisposed(boolean value) {
+    if (temporarilyDisposed == value) {
+      return;
+    }
+
+    if (value && super.isDisposed()) {
+      throw new IllegalStateException("Project was already disposed, flag temporarilyDisposed cannot be set to `true`");
+    }
+
+    if (!value) {
+      Disposable newDisposable = Disposer.newDisposable();
+      if (!earlyDisposable.compareAndSet(null, newDisposable)) {
+        throw new IllegalStateException("earlyDisposable must be null on second opening of light project");
+      }
+    }
+
+    // Must be not only on temporarilyDisposed = true, but also on temporarilyDisposed = false,
+    // because events fired for temporarilyDisposed project between project close and project open and it can lead to cache population.
+    // Message bus implementation can be complicated to add owner.isDisposed check before getting subscribers, but as bus is a very important subsystem,
+    // better to not add any non-production logic
+
+    // light project is not disposed, so, subscriber cache contains handlers that will handle events for a temporarily disposed project,
+    // so, we clear subscriber cache. `isDisposed` for project returns `true` if `temporarilyDisposed`, so, handler will be not added.
+    ((MessageBusEx)getMessageBus()).clearAllSubscriberCache();
+
+    temporarilyDisposed = value;
   }
 
   @TestOnly
@@ -142,17 +159,21 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void setProjectName(@NotNull String projectName) {
-    if (!projectName.equals(myName)) {
-      myName = projectName;
+    if (projectName.equals(myName)) {
+      return;
+    }
 
-      StartupManager.getInstance(this).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-        if (isDisposed()) return;
+    myName = projectName;
 
-        JFrame frame = WindowManager.getInstance().getFrame(this);
-        String title = FrameTitleBuilder.getInstance().getProjectTitle(this);
-        if (frame != null && title != null) {
-          frame.setTitle(title);
-        }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      StartupManager.getInstance(this).runAfterOpened(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          JFrame frame = WindowManager.getInstance().getFrame(this);
+          String title = FrameTitleBuilder.getInstance().getProjectTitle(this);
+          if (frame != null && title != null) {
+            frame.setTitle(title);
+          }
+        }, ModalityState.NON_MODAL, getDisposed());
       });
     }
   }
@@ -243,54 +264,17 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
-  public final void registerComponents() {
-    String activityNamePrefix = activityNamePrefix();
-    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
-    //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-    registerComponents(PluginManagerCore.getLoadedPlugins());
-    if (activity != null) {
-      activity = activity.endAndStart("projectComponentRegistered");
-    }
-
-    ProjectServiceContainerCustomizer.getEp().processWithPluginDescriptor((customizer, pluginDescriptor) -> {
-      String id = pluginDescriptor.getPluginId().getIdString();
-      if (!(id.equals("com.intellij.treeProjectModel") ||
-            (ApplicationManager.getApplication().isUnitTestMode() && id.equals(PluginManagerCore.CORE_PLUGIN_ID)))) {
-        LOG.error("Plugin " + pluginDescriptor + " is not approved to add ProjectServiceContainerCustomizer");
-      }
-
-      try {
-        customizer.serviceContainerInitialized(this);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    });
-
-    if (activity != null) {
-      activity.end();
-    }
-  }
-
   public void init(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
 
     // before components
     CompletableFuture<?> servicePreloadingFuture;
-    //noinspection TestOnlyProblems
-    if (isLight()) {
-      servicePreloadingFuture = CompletableFuture.completedFuture(null);
-    }
-    else {
-      //noinspection rawtypes
-      List plugins = PluginManagerCore.getLoadedPlugins();
-      Executor executor = ApplicationLoader.createExecutorToPreloadServices();
-      //noinspection unchecked
-      servicePreloadingFuture = ApplicationLoader.preloadServices(plugins, this, executor, /* activityPrefix = */ "project ");
-    }
+    //noinspection rawtypes
+    List plugins = PluginManagerCore.getLoadedPlugins();
+    // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
+    //noinspection TestOnlyProblems,unchecked
+    servicePreloadingFuture = ApplicationLoader
+      .preloadServices(plugins, this, /* activityPrefix = */ "project ", /* onlyIfAwait = */ isLight());
 
     createComponents(indicator);
 
@@ -303,7 +287,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
-    application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
+
+    ProjectLoadHelper.notifyThatComponentCreated(this);
   }
 
   @Override
@@ -319,18 +304,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     double toDistribute = 1 - indicator.getFraction();
     int modulesCount = ((ModuleManagerImpl)moduleManager).getModulePathsCount();
-    EditorsSplitters splitters = ((FileEditorManagerImpl)FileEditorManager.getInstance(this)).getMainSplitters();
-    int editors = splitters.getEditorsCount();
-
-    double modulesPart = ourClassesAreLoaded || editors == 0 ? toDistribute : toDistribute * 0.5;
     if (modulesCount != 0) {
-
-      double step = modulesPart / modulesCount;
-      ((ModuleManagerImpl)moduleManager).setProgressStep(step);
-    }
-
-    if (editors != 0) {
-      splitters.setProgressStep(toDistribute - modulesPart / editors);
+      ((ModuleManagerImpl)moduleManager).setProgressStep(toDistribute / modulesCount);
     }
   }
 
@@ -353,26 +328,28 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
-    setDisposeInProgress();
+    Application app = ApplicationManager.getApplication();
+    // dispose must be under write action
+    app.assertWriteAccessAllowed();
 
-    Application application = ApplicationManager.getApplication();
-    application.assertWriteAccessAllowed();  // dispose must be under write action
+    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
-    if (ProjectManagerEx.getInstanceEx().isProjectOpened(this)) {
+    if (projectManager.isProjectOpened(this)) {
       throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
     }
 
-    // we use super here, because temporarilyDisposed will be true if project closed
-    LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
-    disposeComponents();
-
     super.dispose();
 
-    if (!application.isDisposed()) {
-      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
+    if (myComponentStore.isComputed()) {
+      myComponentStore.getValue().release();
     }
-    ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
+
+    if (!app.isDisposed()) {
+      //noinspection deprecation
+      app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
+    }
+    projectManager.updateTheOnlyProjectField();
 
     TimedReference.disposeTimed();
     LaterInvocator.purgeExpiredItems();
@@ -386,7 +363,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String toString() {
-    return "Project (name=" + myName + ", containerState=" + myContainerState.name() +
+    return "Project (name=" + myName + ", containerState=" + getContainerStateName() +
            ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
            (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }
@@ -403,8 +380,22 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return "project ";
   }
 
+  @Override
+  @NotNull
+  @ApiStatus.Experimental
   @ApiStatus.Internal
-  public final void setDisposeInProgress() {
-    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
+  public final Disposable getEarlyDisposable() {
+    if (isDisposed()) {
+      throw new IllegalStateException(this + " is disposed already");
+    }
+
+    // maybe null only if disposed, but this condition is checked above
+    return earlyDisposable.get();
+  }
+
+  @ApiStatus.Internal
+  public final void disposeEarlyDisposable() {
+    Disposable earlyDisposable = this.earlyDisposable.getAndSet(null);
+    Disposer.dispose(earlyDisposable);
   }
 }

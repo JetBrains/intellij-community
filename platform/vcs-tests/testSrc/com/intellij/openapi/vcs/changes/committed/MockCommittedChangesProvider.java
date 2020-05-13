@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.Pair;
@@ -6,76 +6,65 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import com.intellij.openapi.vcs.versionBrowser.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockContentRevision;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author yole
- */
 public class MockCommittedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeListImpl, ChangeBrowserSettings> {
   private final List<CommittedChangeListImpl> myChangeLists = new ArrayList<>();
   private int myRefreshCount = 0;
 
+  @NotNull
   @Override
-  public ChangesBrowserSettingsEditor createFilterUI(final boolean showDateFilter) {
-    return null;
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
+    return new StandardVersionFilterComponent<ChangeBrowserSettings>(showDateFilter) {
+      @NotNull
+      @Override
+      public JComponent getComponent() {
+        return (JComponent)getStandardPanel();
+      }
+    };
   }
 
+  @NotNull
   @Override
-  public RepositoryLocation getLocationFor(FilePath root) {
+  public RepositoryLocation getLocationFor(@NotNull FilePath root) {
     return new DefaultRepositoryLocation(root.getPath());
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public VcsCommittedListsZipper getZipper() {
-    return null;
-  }
-
-  @Override
-  public List<CommittedChangeListImpl> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) {
+  public List<CommittedChangeListImpl> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount) {
     myRefreshCount++;
     return myChangeLists;
   }
 
   @Override
   public void loadCommittedChanges(ChangeBrowserSettings settings,
-                                   RepositoryLocation location,
+                                   @NotNull RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<? super CommittedChangeList> consumer) {
-    ++ myRefreshCount;
+                                   @NotNull AsynchConsumer<? super CommittedChangeList> consumer) {
+    ++myRefreshCount;
     for (CommittedChangeListImpl changeList : myChangeLists) {
       consumer.consume(changeList);
     }
     consumer.finished();
   }
 
+  @NotNull
   @Override
-  public Pair<CommittedChangeListImpl, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) {
-    ++ myRefreshCount;
+  public Pair<CommittedChangeListImpl, FilePath> getOneList(@NotNull VirtualFile file, VcsRevisionNumber number) {
+    ++myRefreshCount;
     return new Pair<>(myChangeLists.get(0), VcsUtil.getFilePath(file));
-  }
-
-  @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
-    return null;
-  }
-
-  @Override
-  public boolean supportsIncomingChanges() {
-    return true;
   }
 
   public int getRefreshCount() {
@@ -83,14 +72,8 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   }
 
   @Override
-  public ChangeListColumn[] getColumns() {
+  public ChangeListColumn @NotNull [] getColumns() {
     return new ChangeListColumn[0];
-  }
-
-  @Override
-  @Nullable
-  public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location) {
-    return null;
   }
 
   @Override
@@ -99,13 +82,13 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   }
 
   public CommittedChangeList registerChangeList(final String name, final Change... changes) {
-    final CommittedChangeListImpl list = createList(name, "user",name, new Date().getTime(), 1, changes);
+    final CommittedChangeListImpl list = createList(name, "user", name, new Date().getTime(), 1, changes);
     myChangeLists.add(list);
     return list;
   }
 
-  private static CommittedChangeListImpl createList(final String name, final String author, final String comment,
-                                                    final long date, final long number, final Change... changes) {
+  @NotNull
+  private static CommittedChangeListImpl createList(String name, String author, String comment, long date, long number, Change... changes) {
     final Collection<Change> changeList = new ArrayList<>();
     Collections.addAll(changeList, changes);
     return new CommittedChangeListImpl(name, comment, author, number, new Date(date), changeList);
@@ -117,7 +100,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   }
 
   @Override
-  public void writeChangeList(final DataOutput stream, final CommittedChangeListImpl list) throws IOException {
+  public void writeChangeList(@NotNull DataOutput stream, @NotNull CommittedChangeListImpl list) throws IOException {
     stream.writeUTF(list.getName());
     stream.writeInt(list.getChanges().size());
     stream.writeUTF(list.getCommitterName());
@@ -140,8 +123,9 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
     }
   }
 
+  @NotNull
   @Override
-  public CommittedChangeListImpl readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
+  public CommittedChangeListImpl readChangeList(@NotNull RepositoryLocation location, @NotNull DataInput stream) throws IOException {
     final String name = stream.readUTF();
     int changeCount = stream.readInt();
     final String author = stream.readUTF();
@@ -150,32 +134,22 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
     final long number = stream.readLong();
 
     final Change[] changes = new Change[changeCount];
-    for(int i=0; i<changeCount; i++) {
+    for (int i = 0; i < changeCount; i++) {
       int changeType = stream.readByte();
       String path = stream.readUTF();
       int revision = stream.readInt();
-      switch(changeType) {
+      switch (changeType) {
         case 0:
-          changes [i] = createMockDeleteChange(path, revision);
+          changes[i] = createMockDeleteChange(path, revision);
           break;
         case 2:
-          changes [i] = createMockCreateChange(path, revision);
+          changes[i] = createMockCreateChange(path, revision);
           break;
         default:
-          changes [i] = createMockChange(path, revision);
+          changes[i] = createMockChange(path, revision);
       }
     }
     return createList(name, author, comment, date, number, changes);
-  }
-
-  @Override
-  public boolean isMaxCountSupported() {
-    return true;
-  }
-
-  @Override
-  public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
-    return null;
   }
 
   @Override
@@ -186,13 +160,6 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   @Override
   public String getChangelistTitle() {
     return null;
-  }
-
-  @Override
-  public boolean isChangeLocallyAvailable(final FilePath filePath,
-                                          @Nullable final VcsRevisionNumber localRevision, final VcsRevisionNumber changeRevision,
-                                          final CommittedChangeListImpl changeList) {
-    return localRevision != null && localRevision.compareTo(changeRevision) >= 0;
   }
 
   @Override

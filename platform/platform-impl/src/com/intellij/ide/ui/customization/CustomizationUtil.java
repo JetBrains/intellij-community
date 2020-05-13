@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CustomizationUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizationUtil");
+  private static final Logger LOG = Logger.getInstance(CustomizationUtil.class);
 
   private CustomizationUtil() {
   }
@@ -281,9 +281,8 @@ public class CustomizationUtil {
   public static MouseListener installPopupHandler(JComponent component, @NotNull String groupId, String place) {
     return PopupHandler.installPopupHandler(
       component, new ActionGroup() {
-        @NotNull
         @Override
-        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
           return group == null ? EMPTY_ARRAY : group.getChildren(e);
         }

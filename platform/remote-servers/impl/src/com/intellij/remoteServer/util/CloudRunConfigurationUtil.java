@@ -8,6 +8,7 @@ import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
@@ -52,6 +53,6 @@ public class CloudRunConfigurationUtil {
   private static String generateRunConfigurationName(@NotNull RemoteServer<?> account, Module module) {
     String accountName = account.getName();
     String moduleName = module.getName();
-    return CloudBundle.getText("run.configuration.name", accountName, moduleName);
+    return CloudBundle.message("run.configuration.name", accountName, moduleName);
   }
 }

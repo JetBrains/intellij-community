@@ -30,14 +30,14 @@
                 <clientProperties>
                   <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
-                <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.naming"/>
+                <border type="etched" title-resource-bundle="messages/JavaBundle" title-key="title.naming"/>
                 <children>
                   <component id="c217b" class="javax.swing.JCheckBox" binding="myCbPreferLongerNames">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text resource-bundle="messages/ApplicationBundle" key="checkbox.prefer.longer.names"/>
+                      <text resource-bundle="messages/JavaBundle" key="checkbox.prefer.longer.names"/>
                     </properties>
                   </component>
                   <grid id="dc5b7" layout-manager="GridLayoutManager" row-count="7" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -53,7 +53,7 @@
                           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.naming.parameter"/>
+                          <text resource-bundle="messages/JavaBundle" key="label.naming.parameter"/>
                         </properties>
                       </component>
                       <component id="2a76f" class="javax.swing.JLabel">
@@ -61,7 +61,7 @@
                           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.naming.static.field"/>
+                          <text resource-bundle="messages/JavaBundle" key="label.naming.static.field"/>
                         </properties>
                       </component>
                       <component id="f50a3" class="javax.swing.JLabel">
@@ -69,7 +69,7 @@
                           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.naming.field"/>
+                          <text resource-bundle="messages/JavaBundle" key="label.naming.field"/>
                         </properties>
                       </component>
                       <component id="426b6" class="javax.swing.JLabel">
@@ -77,7 +77,7 @@
                           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.naming.local.variable"/>
+                          <text resource-bundle="messages/JavaBundle" key="label.naming.local.variable"/>
                         </properties>
                       </component>
                       <component id="db01f" class="javax.swing.JTextField" binding="myFieldPrefixField">
@@ -153,7 +153,7 @@
                           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.name.suffix"/>
+                          <text resource-bundle="messages/JavaBundle" key="label.name.suffix"/>
                         </properties>
                       </component>
                       <component id="54552" class="javax.swing.JLabel">
@@ -161,7 +161,7 @@
                           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.name.prefix"/>
+                          <text resource-bundle="messages/JavaBundle" key="label.name.prefix"/>
                         </properties>
                       </component>
                       <component id="551b5" class="javax.swing.JLabel">
@@ -169,7 +169,7 @@
                           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text value="Test class:"/>
+                          <text resource-bundle="messages/JavaBundle" key="label.naming.test.class"/>
                         </properties>
                       </component>
                       <component id="51b03" class="javax.swing.JTextField" binding="myTestClassPrefix" default-binding="true">
@@ -193,7 +193,7 @@
                           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text value="Subclass:"/>
+                          <text resource-bundle="messages/JavaBundle" key="label.naming.subclass"/>
                         </properties>
                       </component>
                       <component id="fd25f" class="javax.swing.JTextField" binding="mySubclassPrefix" default-binding="true">
@@ -230,7 +230,7 @@
                 <clientProperties>
                   <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
-                <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.naming.final.modifier"/>
+                <border type="etched" title-resource-bundle="messages/JavaBundle" title-key="title.naming.final.modifier"/>
                 <children>
                   <component id="a987" class="javax.swing.JCheckBox" binding="myCbGenerateFinalLocals">
                     <constraints>
@@ -238,7 +238,7 @@
                     </constraints>
                     <properties>
                       <margin top="5" left="10" bottom="2" right="2"/>
-                      <text resource-bundle="messages/ApplicationBundle" key="checkbox.make.generated.local.variables.final"/>
+                      <text resource-bundle="messages/JavaBundle" key="checkbox.make.generated.local.variables.final"/>
                     </properties>
                   </component>
                   <component id="dff46" class="javax.swing.JCheckBox" binding="myCbGenerateFinalParameters">
@@ -247,7 +247,7 @@
                     </constraints>
                     <properties>
                       <margin top="5" left="10" bottom="2" right="2"/>
-                      <text resource-bundle="messages/ApplicationBundle" key="checkbox.make.generated.parameters.final"/>
+                      <text resource-bundle="messages/JavaBundle" key="checkbox.make.generated.parameters.final"/>
                     </properties>
                   </component>
                   <vspacer id="4877b">
@@ -262,7 +262,7 @@
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="use.external.annotations"/>
+                  <text resource-bundle="messages/JavaBundle" key="use.external.annotations"/>
                 </properties>
               </component>
               <grid id="6fb9a" binding="myOverridePanel" layout-manager="GridBagLayout">
@@ -273,7 +273,7 @@
                 <clientProperties>
                   <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
-                <border type="etched" title="Override Method Signature"/>
+                <border type="etched" title-resource-bundle="messages/JavaBundle" title-key="code.style.generation.override.method.signature"/>
                 <children>
                   <component id="95854" class="javax.swing.JCheckBox" binding="myInsertOverrideAnnotationCheckBox" default-binding="true">
                     <constraints>
@@ -281,7 +281,7 @@
                       <gridbag weightx="1.0" weighty="0.0"/>
                     </constraints>
                     <properties>
-                      <text resource-bundle="messages/ApplicationBundle" key="insert.override.annotation"/>
+                      <text resource-bundle="messages/JavaBundle" key="insert.override.annotation"/>
                     </properties>
                   </component>
                   <component id="9c14a" class="javax.swing.JCheckBox" binding="myRepeatSynchronizedCheckBox" default-binding="true">
@@ -290,7 +290,7 @@
                       <gridbag weightx="1.0" weighty="0.0"/>
                     </constraints>
                     <properties>
-                      <text value="Repeat &amp;synchronized modifier"/>
+                      <text resource-bundle="messages/JavaBundle" key="code.style.generation.repeat.synchronized.modifier"/>
                     </properties>
                   </component>
                 </children>
@@ -331,7 +331,7 @@
                 <clientProperties>
                   <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
-                <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.naming.functional.expressions"/>
+                <border type="etched" title-resource-bundle="messages/JavaBundle" title-key="title.naming.functional.expressions"/>
                 <children>
                   <vspacer id="6e28c">
                     <constraints>
@@ -343,7 +343,7 @@
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Use Class::isInstance and Class::cast when possible"/>
+                      <text resource-bundle="messages/JavaBundle" key="code.style.generation.use.class.isInstance"/>
                     </properties>
                   </component>
                   <component id="f4ef0" class="com.intellij.ui.components.JBCheckBox" binding="myReplaceNullCheckCb">
@@ -351,7 +351,7 @@
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Replace null-check with Objects::nonNull or Objects::isNull"/>
+                      <text resource-bundle="messages/JavaBundle" key="code.style.generation.replace.null.check"/>
                     </properties>
                   </component>
                   <component id="de0d0" class="com.intellij.ui.components.JBCheckBox" binding="myReplaceSumCb">
@@ -359,7 +359,7 @@
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Use Integer::sum, etc. when possible"/>
+                      <text resource-bundle="messages/JavaBundle" key="code.style.generation.use.integer.sum"/>
                     </properties>
                   </component>
                 </children>

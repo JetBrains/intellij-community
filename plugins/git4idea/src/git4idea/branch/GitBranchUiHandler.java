@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,12 +77,11 @@ public interface GitBranchUiHandler {
    *                         specify the title of the force button; otherwise (force merge is not possible) pass null.
    * @return the code of the decision.
    */
-  @NotNull
   GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
                                                           @NotNull List<? extends Change> changes,
                                                           @NotNull Collection<String> paths,
                                                           @NotNull String operation,
-                                                          @Nullable String forceButtonTitle);
+                                                          @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle);
 
   /**
    * @return true if user decided to restore the branch.
@@ -90,16 +90,14 @@ public interface GitBranchUiHandler {
                                            @NotNull Map<GitRepository, List<GitCommit>> history,
                                            @NotNull Map<GitRepository, String> baseBranches,
                                            @NotNull String removedBranch);
-
   /**
-   * <p>Show confirmation about deleting of a remote branch.</p>
-   * <p>If there is a common tracking branch of this remote branch, the confirmation proposes to delete it as well.</p>
+   * <p>Show confirmation about deleting of a remote branches.</p>
+   * <p>If there is a common tracking branches, the confirmation proposes to delete it as well.</p>
    */
   @NotNull
-  DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull String branchName,
+  DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull List<String> branchNames,
                                                          @NotNull Collection<String> trackingBranches,
                                                          @NotNull Collection<GitRepository> repositories);
-
   enum DeleteRemoteBranchDecision {
     CANCEL,
     DELETE,

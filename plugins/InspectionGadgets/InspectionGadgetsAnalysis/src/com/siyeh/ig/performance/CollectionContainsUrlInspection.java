@@ -32,13 +32,6 @@ public class CollectionContainsUrlInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "collection.contains.url.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final ClassType type = (ClassType)infos[0];
     return InspectionGadgetsBundle.message(

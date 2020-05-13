@@ -81,7 +81,7 @@ public class TodoCheckinHandler extends CheckinHandler {
           myConfiguration.myTodoPanelSettings.todoFilterName = name;
           setFilterText(name);
         };
-        LinkLabel linkLabel = new LinkLabel("Configure", null);
+        LinkLabel linkLabel = new LinkLabel(VcsBundle.message("settings.filter.configure.link"), null);
         linkLabel.setListener(new LinkListener() {
           @Override
           public void linkSelected(LinkLabel aSource, Object aLinkData) {

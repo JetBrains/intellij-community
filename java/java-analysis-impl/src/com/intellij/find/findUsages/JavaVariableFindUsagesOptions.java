@@ -55,12 +55,12 @@ public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
     properties.setValue(prefix + "isWriteAccess", isWriteAccess, true);
   }
 
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (!super.equals(o)) return false;
     if (getClass() != o.getClass()) return false;
 
-    final JavaVariableFindUsagesOptions that = (JavaVariableFindUsagesOptions)o;
+    JavaVariableFindUsagesOptions that = (JavaVariableFindUsagesOptions)o;
 
     if (isReadAccess != that.isReadAccess) return false;
     if (isWriteAccess != that.isWriteAccess) return false;

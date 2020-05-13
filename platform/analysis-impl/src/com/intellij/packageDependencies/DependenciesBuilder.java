@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -48,10 +49,6 @@ public abstract class DependenciesBuilder {
 
   public void setTotalFileCount(final int totalFileCount) {
     myTotalFileCount = totalFileCount;
-  }
-
-  public int getTotalFileCount() {
-    return myTotalFileCount;
   }
 
   @NotNull
@@ -82,9 +79,9 @@ public abstract class DependenciesBuilder {
     return myProject;
   }
 
-  public abstract String getRootNodeNameInUsageView();
+  public abstract @Nls String getRootNodeNameInUsageView();
 
-  public abstract String getInitialUsagesPosition();
+  public abstract @Nls String getInitialUsagesPosition();
 
   public abstract boolean isBackward();
 
@@ -160,7 +157,7 @@ public abstract class DependenciesBuilder {
     return 0;
   }
 
-  public String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
+  String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
     return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
   }
 
@@ -171,12 +168,18 @@ public abstract class DependenciesBuilder {
   public static void analyzeFileDependencies(@NotNull PsiFile file,
                                              @NotNull DependencyProcessor processor,
                                              @NotNull DependencyVisitorFactory.VisitorOptions options) {
+    Boolean prev = file.getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING);
     file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
-    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, null);
+    try {
+      file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
+    }
+    finally {
+      file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, prev);
+    }
   }
 
+  @FunctionalInterface
   public interface DependencyProcessor {
-    void process(PsiElement place, PsiElement dependency);
+    void process(@NotNull PsiElement place, @NotNull PsiElement dependency);
   }
 }

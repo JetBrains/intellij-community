@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.findUsages;
 
@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author max
- */
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   @NotNull protected final PsiElement myPsiElement;
   @Nullable private final String myHelpId;
@@ -31,15 +28,17 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
                                 boolean toShowInNewTab,
                                 boolean mustOpenInNewTab,
                                 boolean isSingleFile,
-                                @NotNull FindUsagesHandler handler) {
+                                @NotNull FindUsagesHandlerBase handler) {
     super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler),
           true);
     myPsiElement = element;
-    myHelpId = ObjectUtils.chooseNotNull(handler.getHelpId(), HelpID.FIND_OTHER_USAGES);
+    String helpId = handler instanceof FindUsagesHandlerUi?
+       ((FindUsagesHandlerUi)handler).getHelpId(): null;
+    myHelpId = ObjectUtils.chooseNotNull(helpId, HelpID.FIND_OTHER_USAGES);
     init();
   }
 
-  private static boolean isTextSearch(@NotNull PsiElement element, boolean isSingleFile, @NotNull FindUsagesHandler handler) {
+  private static boolean isTextSearch(@NotNull PsiElement element, boolean isSingleFile, @NotNull FindUsagesHandlerBase handler) {
     return FindUsagesUtil.isSearchForTextOccurrencesAvailable(element, isSingleFile, handler);
   }
 

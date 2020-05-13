@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author mike
- */
 public abstract class FileStatusManager {
   public static FileStatusManager getInstance(@NotNull Project project) {
     return project.getService(FileStatusManager.class);
@@ -33,6 +30,10 @@ public abstract class FileStatusManager {
 
   public abstract void fileStatusChanged(VirtualFile file);
 
+  /**
+   * @deprecated Please use overload with parent disposable
+   */
+  @Deprecated
   public abstract void addFileStatusListener(@NotNull FileStatusListener listener);
 
   public abstract void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable);

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -382,7 +383,7 @@ public class SvnDiffViewer implements DiffViewer {
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
           g.setColor(JBColor.border());
-          UIUtil.drawLine(g, 0, 0, getWidth(), 0);
+          LinePainter2D.paint((Graphics2D)g, 0, 0, getWidth(), 0);
         }
       };
     }

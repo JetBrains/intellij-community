@@ -9,12 +9,12 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class PySearchUtilBase {
@@ -43,7 +44,7 @@ public class PySearchUtilBase {
 
   @NotNull
   public static GlobalSearchScope excludeSdkTestScope(@NotNull GlobalSearchScope scope) {
-    Project project = ObjectUtils.notNull(scope.getProject());
+    Project project = Objects.requireNonNull(scope.getProject());
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     // TODO cache the scope in project userdata (update when SDK paths change or different project SDK is selected)
     GlobalSearchScope exclude = excludeSdkTestsScope(project, sdk);
@@ -78,7 +79,7 @@ public class PySearchUtilBase {
       }
       // XXX: Disable resolving to any third-party libraries from typeshed in the same places where we don't want SDK tests
       excludedDirs.addAll(Arrays.stream(sdk.getRootProvider().getFiles(OrderRootType.CLASSES))
-                            .filter(file -> PyTypeShed.INSTANCE.isInside(file) || PyTypeShed.INSTANCE.isInThirdPartyLibraries(file))
+                            .filter(file -> PyTypeShed.INSTANCE.isInside(file) && PyTypeShed.INSTANCE.isInThirdPartyLibraries(file))
                             .collect(Collectors.toList()));
       if (!excludedDirs.isEmpty()) {
         GlobalSearchScope scope = buildUnionScope(project, excludedDirs);
@@ -126,6 +127,11 @@ public class PySearchUtilBase {
             libRoot = versionRoot;
           }
         }
+        // Empty in case of a temporary empty SDK created to install package management
+        if (classVFiles.length == 0) {
+          return LocalFileSystem.getInstance().findFileByIoFile(libRoot);
+        }
+
         final String libRootPath = libRoot.getPath();
         for (VirtualFile file : classVFiles) {
           if (FileUtil.pathsEqual(file.getPath(), libRootPath)) {

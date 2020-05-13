@@ -29,13 +29,6 @@ public class SynchronizeOnThisInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "synchronize.on.this.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final boolean syncOnClass = ((Boolean)infos[0]).booleanValue();
     return InspectionGadgetsBundle.message(

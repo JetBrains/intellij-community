@@ -34,4 +34,11 @@ public interface IntroduceVariableSettings {
   PsiType getSelectedType();
 
   boolean isOK();
+  
+  default IntroduceVariableBase.JavaReplaceChoice getReplaceChoice() {
+    if (isReplaceAllOccurrences()) {
+      return isReplaceLValues() ? IntroduceVariableBase.JavaReplaceChoice.ALL : IntroduceVariableBase.JavaReplaceChoice.NO_WRITE;
+    }
+    return IntroduceVariableBase.JavaReplaceChoice.NO;
+  }
 }

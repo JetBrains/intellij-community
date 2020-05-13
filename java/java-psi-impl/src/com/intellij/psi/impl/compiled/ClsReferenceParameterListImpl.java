@@ -71,15 +71,13 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException { }
 
-  @NotNull
   @Override
-  public PsiTypeElement[] getTypeParameterElements() {
+  public PsiTypeElement @NotNull [] getTypeParameterElements() {
     return myTypeParameters;
   }
 
-  @NotNull
   @Override
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     PsiType[] cachedTypes = myTypeParametersCachedTypes;
     if (cachedTypes == null) {
       cachedTypes = PsiType.createArray(myTypeParameters.length);
@@ -91,9 +89,8 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
     return cachedTypes;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return myTypeParameters;
   }
 

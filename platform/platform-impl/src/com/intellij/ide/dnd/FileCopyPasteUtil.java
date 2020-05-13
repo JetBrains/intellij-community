@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class FileCopyPasteUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.dnd.FileCopyPasteUtil");
+  private static final Logger LOG = Logger.getInstance(FileCopyPasteUtil.class);
 
   private FileCopyPasteUtil() { }
 
@@ -68,7 +68,7 @@ public class FileCopyPasteUtil {
            event.isDataFlavorSupported(LinuxDragAndDropSupport.gnomeFileListFlavor);
   }
 
-  public static boolean isFileListFlavorAvailable(@NotNull DataFlavor[] transferFlavors) {
+  public static boolean isFileListFlavorAvailable(DataFlavor @NotNull [] transferFlavors) {
     for (DataFlavor flavor : transferFlavors) {
       if (flavor != null && (flavor.equals(DataFlavor.javaFileListFlavor) ||
                              flavor.equals(LinuxDragAndDropSupport.uriListFlavor) ||

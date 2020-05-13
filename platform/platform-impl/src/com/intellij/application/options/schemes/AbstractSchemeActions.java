@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.WriteAction;
@@ -56,16 +44,11 @@ import java.util.function.BiFunction;
  * @see SchemeExporter
  */
 public abstract class AbstractSchemeActions<T extends Scheme> {
-  
-  private final Collection<String> mySchemeImportersNames;
-  private final Collection<String> mySchemeExporterNames;
   @NotNull
   protected final AbstractSchemesPanel<T, ?> mySchemesPanel;
 
   protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
-    mySchemeImportersNames = getSchemeImportersNames();
-    mySchemeExporterNames = getSchemeExporterNames();
   }
   
 
@@ -100,15 +83,17 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     addAdditionalActions(actions);
     actions.add(new ResetAction());
     actions.add(new DeleteAction());
-    if (!mySchemeExporterNames.isEmpty()) {
+    @NotNull Collection<String> schemeImportersNames = getSchemeImportersNames();
+    @NotNull Collection<String> schemeExporterNames = getSchemeExporterNames();
+    if (!schemeExporterNames.isEmpty()) {
       actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.export"),
-                                           mySchemeExporterNames,
+                                           schemeExporterNames,
                                            ExportAction::new));
     }
     actions.add(new Separator());
-    if (!mySchemeImportersNames.isEmpty()) {
+    if (!schemeImportersNames.isEmpty()) {
       actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.import", mySchemesPanel.getSchemeTypeName()),
-                                           mySchemeImportersNames,
+                                           schemeImportersNames,
                                            ImportAction::new));
     }
     return actions;
@@ -119,7 +104,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class CopyToProjectAction extends DumbAwareAction {
 
     CopyToProjectAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.copy.to.project"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.copy.to.project"));
     }
 
     @Override
@@ -142,7 +127,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class CopyToIDEAction extends DumbAwareAction {
 
     CopyToIDEAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.copy.to.ide"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.copy.to.ide"));
     }
 
     @Override
@@ -164,7 +149,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class ResetAction extends DumbAwareAction {
     
     ResetAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.reset"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.reset"));
     }
 
     @Override
@@ -193,7 +178,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class CopyAction extends DumbAwareAction {
     CopyAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.copy"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.copy"));
     }
 
     @Override
@@ -201,7 +186,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.editNewSchemeName(
-          SchemeManager.getDisplayName(currentScheme),
+          currentScheme.getDisplayName(),
           mySchemesPanel.supportsProjectSchemes() && getModel().isProjectScheme(currentScheme),
           newName ->  duplicateScheme(currentScheme, newName));
       }
@@ -218,7 +203,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class RenameAction extends DumbAwareAction {
     RenameAction() {
-      super("Rename...");
+      super(ActionsBundle.messagePointer("action.RenameAction.text"));
     }
 
     @Override
@@ -237,7 +222,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class DeleteAction extends DumbAwareAction {
     DeleteAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.delete"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.delete"));
     }
 
     @Override
@@ -287,9 +272,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       myActionNames = actionNames;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       List<AnAction> namedActions = new ArrayList<>();
       for (String actionName : myActionNames) {
         namedActions.add(createAction(actionName));
@@ -368,8 +352,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    */
   private void deleteScheme(@NotNull T scheme) {
     if (Messages.showOkCancelDialog(
-      "Do you want to delete \"" + scheme.getName() + "\" " + StringUtil.toLowerCase(mySchemesPanel.getSchemeTypeName()) + "?",
-      "Delete " + mySchemesPanel.getSchemeTypeName(), "Delete", CommonBundle.getCancelButtonText(),
+      IdeBundle.message("message.do.you.want.to.delete.0.1", scheme.getName(), StringUtil.toLowerCase(mySchemesPanel.getSchemeTypeName())),
+      IdeBundle.message("dialog.title.delete.0", mySchemesPanel.getSchemeTypeName()), IdeBundle.message("button.delete"), CommonBundle.getCancelButtonText(),
       Messages.getQuestionIcon()) == Messages.OK) {
       mySchemesPanel.getModel().removeScheme(scheme);
     }
@@ -407,7 +391,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
             ext), getSchemesPanel());
-      VirtualFileWrapper target = saver.save(exporter.getDefaultDir(project), exporter.getDefaultFileName(SchemeManager.getDisplayName(scheme)) + "." + ext);
+      VirtualFileWrapper target = saver.save(exporter.getDefaultDir(project), exporter.getDefaultFileName(scheme.getDisplayName()) + "." + ext);
       if (target != null) {
         VirtualFile targetFile = target.getVirtualFile(true);
         String message;

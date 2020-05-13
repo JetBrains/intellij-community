@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
 import com.intellij.openapi.diagnostic.logger
@@ -55,7 +55,13 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
    * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
    */
-  protected fun stringSet(): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet())
+  protected fun stringSet(): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet(null))
+
+  /**
+   * Collection considered as default if contains only the specified default value. It is *your* responsibility to call `incrementModificationCount` on collection modification.
+   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   */
+  protected fun stringSet(defaultValue: String): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet(defaultValue))
 
   /**
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
@@ -121,6 +127,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     intIncrementModificationCount()
   }
 
+  @ApiStatus.Internal
   fun intIncrementModificationCount() {
     MOD_COUNT_UPDATER.incrementAndGet(this)
   }
@@ -219,7 +226,8 @@ interface StatePropertyFactory {
 
   fun int(defaultValue: Int): StoredPropertyBase<Int>
 
-  fun stringSet(): StoredPropertyBase<MutableSet<String>>
+  // nullable default value is not a default value
+  fun stringSet(defaultValue: String?): StoredPropertyBase<MutableSet<String>>
 
   fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState
 

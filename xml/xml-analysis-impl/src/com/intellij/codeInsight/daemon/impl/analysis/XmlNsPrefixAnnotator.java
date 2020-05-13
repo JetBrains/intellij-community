@@ -46,7 +46,7 @@ public class XmlNsPrefixAnnotator implements Annotator {
       if (rangeInElement.isEmpty()) continue;
       TextRange range = rangeInElement.shiftRight(ref.getElement().getTextRange().getStartOffset());
       if (!range.intersects(elementRange)) continue;
-      holder.createInfoAnnotation(range, null).setTextAttributes(XmlHighlighterColors.XML_NS_PREFIX);
+      holder.newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(range).textAttributes(XmlHighlighterColors.XML_NS_PREFIX).create();
     }
   }
 }

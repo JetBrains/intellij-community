@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.parents
+import com.intellij.psi.util.parentsWithSelf
 import com.intellij.util.containers.withPrevious
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
@@ -52,7 +52,7 @@ fun <T : PsiElement> PsiElement.treeWalkUpAndGetElement(processor: GrSingleResul
 inline fun <reified T : PsiElement> PsiElement.skipParentsOfType(): Pair<PsiElement, PsiElement?>? = skipParentsOfType(true, T::class.java)
 
 fun PsiElement.skipParentsOfType(strict: Boolean = false, vararg types: Class<*>): Pair<PsiElement, PsiElement?>? {
-  val seq = parents().withPrevious().drop(if (strict) 1 else 0)
+  val seq = parentsWithSelf.withPrevious().drop(if (strict) 1 else 0)
   return seq.firstOrNull { (parent, _) ->
     !PsiTreeUtil.instanceOf(parent, *types)
   }

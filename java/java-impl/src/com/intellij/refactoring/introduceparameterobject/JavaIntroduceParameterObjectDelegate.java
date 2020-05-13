@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -42,6 +28,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -49,11 +36,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
+
 public class JavaIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> {
 
   @Override
-  public  List<ParameterInfoImpl> getAllMethodParameters(PsiMethod sourceMethod) {
+  public  List<ParameterInfoImpl> getAllMethodParameters(@NotNull PsiMethod sourceMethod) {
     return new JavaMethodDescriptor(sourceMethod).getParameters();
   }
 
@@ -86,7 +75,7 @@ public class JavaIntroduceParameterObjectDelegate
 
     final String classTypeText = descriptor.createFakeClassTypeText();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    return new ParameterInfoImpl(-1, paramName, facade.getElementFactory().createTypeFromText(classTypeText, method), null) {
+    return new ParameterInfoImpl(NEW_PARAMETER, paramName, facade.getElementFactory().createTypeFromText(classTypeText, method), null) {
       @Nullable
       @Override
       public PsiElement getActualValue(PsiElement exp, Object substitutor) {
@@ -169,7 +158,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public ChangeInfo createChangeSignatureInfo(PsiMethod method, List<ParameterInfoImpl> newParameterInfos, boolean delegate) {
+  public ChangeInfo createChangeSignatureInfo(PsiMethod method, List<? extends ParameterInfoImpl> newParameterInfos, boolean delegate) {
     PsiType returnType = method.getReturnType();
     return new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(method.getModifierList()),
                                   method,

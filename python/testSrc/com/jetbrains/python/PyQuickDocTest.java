@@ -348,7 +348,8 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
 
-    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement,
+                                                                        myFixture.getEditor().getCaretModel().getOffset());
     checkByHTML(myProvider.generateDoc(element, originalElement));
   }
 
@@ -356,7 +357,8 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
 
-    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement,
+                                                                        myFixture.getEditor().getCaretModel().getOffset());
     assertNull(element);
   }
 
@@ -364,7 +366,8 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
 
-    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement,
+                                                                        myFixture.getEditor().getCaretModel().getOffset());
     checkByHTML(myProvider.generateDoc(element, originalElement));
   }
 

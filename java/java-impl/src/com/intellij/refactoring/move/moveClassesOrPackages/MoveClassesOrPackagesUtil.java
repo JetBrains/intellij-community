@@ -35,13 +35,12 @@ import java.io.File;
 import java.util.*;
 
 public class MoveClassesOrPackagesUtil {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil");
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesUtil.class);
 
   private MoveClassesOrPackagesUtil() {
   }
 
-  /** @deprecated Use {@link MoveClassesOrPackagesUtil#findUsages(PsiElement, SearchScope, boolean, boolean, String)} */
+  /** @deprecated Use {@link #findUsages(PsiElement, SearchScope, boolean, boolean, String)} */
   @Deprecated
   public static UsageInfo[] findUsages(final PsiElement element,
                                        boolean searchInStringsAndComments,
@@ -51,12 +50,11 @@ public class MoveClassesOrPackagesUtil {
                       searchInStringsAndComments, searchInNonJavaFiles, newQName);
   }
 
-  @NotNull
-  public static UsageInfo[] findUsages(@NotNull PsiElement element,
-                                       @NotNull SearchScope searchScope,
-                                       boolean searchInStringsAndComments,
-                                       boolean searchInNonJavaFiles,
-                                       String newQName) {
+  public static UsageInfo @NotNull [] findUsages(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInStringsAndComments,
+                                                 boolean searchInNonJavaFiles,
+                                                 String newQName) {
     ArrayList<UsageInfo> results = new ArrayList<>();
     Set<PsiReference> foundReferences = new HashSet<>();
 
@@ -122,7 +120,6 @@ public class MoveClassesOrPackagesUtil {
 
   // Does not process non-code usages!
   public static PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
-                                         @NotNull SearchScope searchScope,
                                          @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
     final PackageWrapper targetPackage = moveDestination.getTargetPackage();
 
@@ -165,21 +162,23 @@ public class MoveClassesOrPackagesUtil {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
     if (aPackage != null) {
       final String sourcePackageName = aPackage.getName();
-      if (!sourcePackageName.equals(targetName)) {
+      if (sourcePackageName != null && !sourcePackageName.equals(targetName)) {
         targetName = sourcePackageName;
       }
     }
     final PsiDirectory subdirectoryInDest;
     final boolean isSourceRoot = RefactoringUtil.isSourceRoot(dir);
     if (VfsUtilCore.isAncestor(sourceVFile, destVFile, false) || isSourceRoot) {
-      PsiDirectory exitsingSubdir = destination.findSubdirectory(targetName);
-      if (exitsingSubdir == null) {
+      PsiDirectory existingSubdir = destination.findSubdirectory(targetName);
+      if (existingSubdir == null) {
         subdirectoryInDest = destination.createSubdirectory(targetName);
         movedPaths.add(subdirectoryInDest.getVirtualFile());
-      } else {
-        subdirectoryInDest = exitsingSubdir;
       }
-    } else {
+      else {
+        subdirectoryInDest = existingSubdir;
+      }
+    }
+    else {
       subdirectoryInDest = destination.findSubdirectory(targetName);
     }
 
@@ -282,17 +281,13 @@ public class MoveClassesOrPackagesUtil {
     return null;
   }
 
-  public static String getPackageName(PackageWrapper aPackage) {
-    if (aPackage == null) {
-      return null;
-    }
+  @NotNull
+  public static String getPackageName(@NotNull PackageWrapper aPackage) {
     String name = aPackage.getQualifiedName();
-    if (name.length() > 0) {
+    if (!name.isEmpty()) {
       return name;
     }
-    else {
-      return JavaFindUsagesProvider.DEFAULT_PACKAGE_NAME;
-    }
+    return JavaFindUsagesProvider.getDefaultPackageName();
   }
 
   @Nullable
@@ -366,7 +361,7 @@ public class MoveClassesOrPackagesUtil {
         qNameToCreate = RefactoringUtil.qNameToCreateInSourceRoot(aPackage, root);
       }
       catch (IncorrectOperationException e) {
-        continue sourceRoots;
+        continue;
       }
       PsiDirectory currentDirectory = aPackage.getManager().findDirectory(root);
       if (currentDirectory == null) continue;

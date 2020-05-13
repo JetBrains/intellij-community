@@ -33,9 +33,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifact {
   private CompositePackagingElement<?> myRootElement;
   private String myName;
@@ -144,7 +141,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   }
 
   @Override
-  public void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties) {
+  public void setProperties(@NotNull ArtifactPropertiesProvider provider, @Nullable ArtifactProperties<?> properties) {
     if (properties != null) {
       myProperties.put(provider, properties);
     }

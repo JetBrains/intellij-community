@@ -73,7 +73,7 @@ public class EmptyClassInspection extends BaseInspection {
                                                    this, "ignoreClassWithParameterization");
     panel.add(checkBox1, constraints);
     constraints.gridy++;
-    final CheckBox checkBox2 = new CheckBox("Ignore subclasses of java.lang.Throwable", this, "ignoreThrowables");
+    final CheckBox checkBox2 = new CheckBox(InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE), this, "ignoreThrowables");
     panel.add(checkBox2, constraints);
     constraints.gridy++;
     final CheckBox checkBox3 = new CheckBox(InspectionGadgetsBundle.message("comments.as.content.option"), this, "commentsAreContent");
@@ -85,12 +85,6 @@ public class EmptyClassInspection extends BaseInspection {
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     defaultWriteSettings(node, "commentsAreContent");
     writeBooleanOption(node, "commentsAreContent", false);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("empty.class.display.name");
   }
 
   @Override
@@ -110,9 +104,8 @@ public class EmptyClassInspection extends BaseInspection {
     }
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final Object info = infos[0];
     if (!(info instanceof PsiModifierListOwner)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
@@ -155,13 +148,13 @@ public class EmptyClassInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove '{}'";
+      return InspectionGadgetsBundle.message("convert.empty.anonymous.to.new.fix.family.name");
     }
   }
 
   private class EmptyClassVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (!(file instanceof PsiJavaFile)) {
         return;
@@ -196,16 +189,8 @@ public class EmptyClassInspection extends BaseInspection {
       if (aClass instanceof PsiTypeParameter) {
         return;
       }
-      final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length > 0) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.getMethods();
-      if (methods.length > 0) {
-        return;
-      }
-      final PsiField[] fields = aClass.getFields();
-      if (fields.length > 0) {
+      if (PsiTreeUtil.getChildOfType(aClass, PsiMethod.class) != null ||
+          PsiTreeUtil.getChildOfType(aClass, PsiField.class) != null) {
         return;
       }
       final PsiClassInitializer[] initializers = aClass.getInitializers();

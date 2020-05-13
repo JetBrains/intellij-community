@@ -17,6 +17,8 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
@@ -62,6 +64,8 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
   @Nullable
   @Override
   public String getToolTip(final int line, final Editor editor) {
+    String text = myAspect.getTooltipText(line);
+    if (text != null) return text;
     return isAvailable() ? myAnnotation.getHtmlToolTip(line) : null;
   }
 
@@ -78,6 +82,29 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
       return ((EditorGutterAction)myAspect).getCursor(line);
     }
     return super.getCursor(line);
+  }
+
+  @Override
+  public EditorFontType getStyle(int line, Editor editor) {
+    EditorFontType style = myAspect.getStyle(line);
+    if (style != null) return style;
+    return super.getStyle(line, editor);
+  }
+
+  @Nullable
+  @Override
+  public ColorKey getColor(int line, Editor editor) {
+    ColorKey color = myAspect.getColor(line);
+    if (color != null) return color;
+    return super.getColor(line, editor);
+  }
+
+  @Nullable
+  @Override
+  public Color getBgColor(int line, Editor editor) {
+    Color color = myAspect.getBgColor(line);
+    if (color != null) return color;
+    return super.getBgColor(line, editor);
   }
 
   @Override

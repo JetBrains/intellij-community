@@ -1,19 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDescription {
   private static final Logger LOG = Logger.getInstance(PublicMethodBasedOptionDescription.class);
   private final String myGetterName;
   private final String mySetterName;
 
-  public PublicMethodBasedOptionDescription(String option, String configurableId, String getterName, String setterName) {
+  public PublicMethodBasedOptionDescription(@NlsContexts.Label String option, String configurableId, String getterName, String setterName) {
     super(option, configurableId);
     myGetterName = getterName;
     mySetterName = setterName;

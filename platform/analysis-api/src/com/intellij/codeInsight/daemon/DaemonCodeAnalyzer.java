@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,6 @@ public abstract class DaemonCodeAnalyzer {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion="2020.2")
   public void updateVisibleHighlighters(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     DeprecatedMethodException.report("Please remove usages of this method deprecated eons ago");
     // no need, will not work anyway
   }
@@ -61,14 +59,14 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
 
-  public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = Topic.create("DAEMON_EVENT_TOPIC", DaemonListener.class);
+  public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<>("DAEMON_EVENT_TOPIC", DaemonListener.class, Topic.BroadcastDirection.NONE);
 
   public interface DaemonListener {
     /**
      * Fired when the background code analysis is being scheduled for the specified set of files.
      * @param fileEditors The list of files that will be analyzed during the current execution of the daemon.
      */
-    default void daemonStarting(@NotNull Collection<FileEditor> fileEditors) {
+    default void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
     }
 
     /**
@@ -81,7 +79,7 @@ public abstract class DaemonCodeAnalyzer {
      * Fired when the background code analysis is done.
      * @param fileEditors The list of files analyzed during the current execution of the daemon.
      */
-    default void daemonFinished(@NotNull Collection<FileEditor> fileEditors) {
+    default void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
       daemonFinished();
     }
 

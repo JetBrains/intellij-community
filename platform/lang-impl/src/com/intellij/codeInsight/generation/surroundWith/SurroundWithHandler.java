@@ -9,6 +9,9 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.SurroundWithLogger;
 import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
@@ -37,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class SurroundWithHandler implements CodeInsightActionHandler {
-  private static final String CHOOSER_TITLE = CodeInsightBundle.message("surround.with.chooser.title");
   public static final TextRange CARET_IS_OK = new TextRange(0, 0);
 
   @Override
@@ -53,7 +55,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (file instanceof PsiCompiledElement) {
-      HintManager.getInstance().showErrorHint(editor, "Can't modify decompiled code");
+      HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.can.t.modify.decompiled.code"));
       return;
     }
 
@@ -62,7 +64,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       showPopup(editor, applicable);
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      HintManager.getInstance().showErrorHint(editor, "Couldn't find Surround With variants applicable to the current context");
+      HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.couldn.t.find.surround"));
     }
   }
 
@@ -164,7 +166,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
     JBPopupFactory.ActionSelectionAid mnemonics = JBPopupFactory.ActionSelectionAid.MNEMONICS;
     DefaultActionGroup group = new DefaultActionGroup(applicable.toArray(AnAction.EMPTY_ARRAY));
-    JBPopupFactory.getInstance().createActionGroupPopup(CHOOSER_TITLE, group, context, mnemonics, true).showInBestPositionFor(editor);
+    JBPopupFactory.getInstance().createActionGroupPopup(CodeInsightBundle.message("surround.with.chooser.title"), group, context, mnemonics, true).showInBestPositionFor(editor);
   }
 
   static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
@@ -224,7 +226,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
 
     List<AnAction> templateGroup = SurroundWithTemplateHandler.createActionGroup(editor, file, usedMnemonicsSet);
     if (!templateGroup.isEmpty()) {
-      applicable.add(new Separator("Live templates"));
+      applicable.add(new Separator(IdeBundle.messagePointer("action.Anonymous.text.live.templates")));
       applicable.addAll(templateGroup);
       applicable.add(Separator.getInstance());
       applicable.add(new ConfigureTemplatesAction());
@@ -263,7 +265,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
 
   private static class ConfigureTemplatesAction extends AnAction {
     private ConfigureTemplatesAction() {
-      super("Configure Live Templates...");
+      super(ActionsBundle.messagePointer("action.ConfigureTemplatesAction.text"));
     }
 
     @Override

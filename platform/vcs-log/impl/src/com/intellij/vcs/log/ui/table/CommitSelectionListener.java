@@ -106,7 +106,7 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
   protected abstract void onDetailsLoaded(@NotNull List<? extends T> detailsList);
 
   @CalledInAwt
-  protected abstract void onSelection(@NotNull int[] selection);
+  protected abstract void onSelection(int @NotNull [] selection);
 
   @CalledInAwt
   protected abstract void onEmptySelection();

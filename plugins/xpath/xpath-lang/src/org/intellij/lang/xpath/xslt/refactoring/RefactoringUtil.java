@@ -28,6 +28,7 @@ import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -50,7 +51,7 @@ public class RefactoringUtil {
         block.accept(visitor);
 
         final List<XPathVariableReference> list = new ArrayList<>(visitor.getMatches());
-        Collections.sort(list, XsltCodeInsightUtil.POSITION_COMPARATOR);
+        list.sort(XsltCodeInsightUtil.POSITION_COMPARATOR);
         return list;
     }
 
@@ -96,7 +97,7 @@ public class RefactoringUtil {
         }
 
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
             if (element instanceof XPathElement) {
                 if (element instanceof XPathExpression) {
                     visitXPathExpression(((XPathExpression)element));

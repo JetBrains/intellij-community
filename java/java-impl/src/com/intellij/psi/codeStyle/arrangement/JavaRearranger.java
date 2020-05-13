@@ -408,7 +408,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     return MUTEXES;
   }
 
-  private static void and(@NotNull List<? super StdArrangementMatchRule> matchRules, @NotNull ArrangementSettingsToken... conditions) {
+  private static void and(@NotNull List<? super StdArrangementMatchRule> matchRules, ArrangementSettingsToken @NotNull ... conditions) {
       if (conditions.length == 1) {
         matchRules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
           conditions[0]
@@ -442,7 +442,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   }
 
   @Nullable
-  private static TextAttributes getAttributes(@NotNull EditorColorsScheme scheme, @NotNull TextAttributesKey ... keys) {
+  private static TextAttributes getAttributes(@NotNull EditorColorsScheme scheme, TextAttributesKey @NotNull ... keys) {
     TextAttributes result = null;
     for (TextAttributesKey key : keys) {
       TextAttributes attributes = scheme.getAttributes(key).clone();

@@ -21,9 +21,8 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
     myAcceptedExtension = acceptedExtension;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     final Object value = ((PsiLiteralExpression)element).getValue();
     if (!(value instanceof String)) return PsiReference.EMPTY_ARRAY;
     return getReferences(element, preprocessValue((String)value), myAcceptedExtension);

@@ -36,6 +36,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
                 @NotNull DiffElement element1,
                 @NotNull DiffElement element2,
                 @NotNull DirDiffSettings settings,
-                @Nullable String helpID) {
+                @Nullable @NonNls String helpID) {
     myHelpID = helpID;
 
     DirDiffTableModel model = new DirDiffTableModel(context.getProject(), element1, element2, settings);

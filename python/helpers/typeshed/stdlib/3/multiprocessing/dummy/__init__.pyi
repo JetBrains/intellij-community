@@ -4,10 +4,16 @@ import array
 import threading
 import weakref
 
-from queue import Queue
+from queue import Queue as Queue
 
 JoinableQueue = Queue
-
+Barrier = threading.Barrier
+BoundedSemaphore = threading.BoundedSemaphore
+Condition = threading.Condition
+Event = threading.Event
+Lock = threading.Lock
+RLock = threading.RLock
+Semaphore = threading.Semaphore
 
 class DummyProcess(threading.Thread):
     _children: weakref.WeakKeyDictionary[Any, Any]

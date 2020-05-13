@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.customization.CustomizationConfigurable;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CustomizeUIAction extends AnAction {
   public CustomizeUIAction() {
-    super("Customize Menus and Toolbars...");
+    super(ActionsBundle.messagePointer("action.CustomizeUIAction.text"));
   }
 
   @Override

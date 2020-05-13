@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -21,7 +21,7 @@ public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testIgnoreInClass() {
-    highlightTest("[ <warning descr=\"Duplicate character ' ' inside character class\"> </warning><warning descr=\"Duplicate character ' ' inside character class\"> </warning>]");
+    highlightTest("[   ]");
   }
 
   public void testIgnoreInClass2() {
@@ -39,6 +39,14 @@ public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
   public void testEscapedWhitespace() {
     quickfixTest("<warning descr=\"3 consecutive spaces in RegExp\"><caret>\\   </warning>", " {3}", "Replace with ' {3}",
                  new RegExpFileType(EcmaScriptRegexpLanguage.INSTANCE));
+  }
+
+  public void testNoStringIndexOutOfBoundsException() {
+    highlightTest("<error descr=\"Illegal/unsupported escape sequence\">\\</error>");
+  }
+
+  public void testNoStringIndexOutOfBoundsException2() {
+    highlightTest("<error descr=\"Illegal/unsupported escape sequence\">\\c</error>");
   }
 
   @Override

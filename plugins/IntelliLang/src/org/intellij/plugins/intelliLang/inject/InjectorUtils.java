@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -6,11 +6,10 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -23,8 +22,10 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
@@ -63,8 +64,21 @@ public final class InjectorUtils {
     if (language != null) return language;
     ReferenceInjector injector = ReferenceInjector.findById(languageId);
     if (injector != null) return injector.toLanguage();
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(languageId);
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    FileType fileType = fileTypeManager.getFileTypeByExtension(languageId);
+    if (fileType instanceof LanguageFileType) {
+      return ((LanguageFileType)fileType).getLanguage();
+    }
+
+    LightVirtualFile lightVirtualFile = new LightVirtualFile(languageId);
+    for (FileType registeredFileType : fileTypeManager.getRegisteredFileTypes()) {
+      if (registeredFileType instanceof FileTypeIdentifiableByVirtualFile &&
+          registeredFileType instanceof LanguageFileType &&
+          ((FileTypeIdentifiableByVirtualFile)registeredFileType).isMyFileType(lightVirtualFile)) {
+        return ((LanguageFileType)registeredFileType).getLanguage();
+      }
+    }
+    return null;
   }
 
   public static boolean registerInjectionSimple(@NotNull PsiLanguageInjectionHost host,
@@ -101,12 +115,15 @@ public final class InjectorUtils {
     }
     ParserDefinition parser = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     ReferenceInjector injector = ReferenceInjector.findById(language.getID());
-    if (parser == null && injector != null && list.size() == 1) {
-      String prefix = list.get(0).second.getPrefix();
-      String suffix = list.get(0).second.getSuffix();
-      PsiLanguageInjectionHost host = list.get(0).first;
-      TextRange textRange = list.get(0).third;
-      InjectedLanguageUtil.injectReference(registrar, language, prefix, suffix, host, textRange);
+    if (parser == null && injector != null) {
+      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+        String prefix = trinity.second.getPrefix();
+        String suffix = trinity.second.getSuffix();
+        PsiLanguageInjectionHost host = trinity.first;
+        TextRange textRange = trinity.third;
+        InjectedLanguageUtil.injectReference(registrar, language, prefix, suffix, host, textRange);
+        return;
+      }
       return;
     }
     boolean injectionStarted = false;
@@ -136,7 +153,7 @@ public final class InjectorUtils {
 
   @NotNull
   public static Collection<String> getActiveInjectionSupportIds() {
-    return ApplicationManager.getApplication().getService(LanguageInjectionSupportRegistry.class).ids();
+    return ContainerUtil.map(LanguageInjectionSupport.EP_NAME.getExtensionList(), LanguageInjectionSupport::getId);
   }
 
   @NotNull
@@ -146,32 +163,13 @@ public final class InjectorUtils {
 
   @Nullable
   public static LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
-    return ApplicationManager.getApplication().getService(LanguageInjectionSupportRegistry.class).findInjectionSupport(id);
+    for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
+      if (id.equals(support.getId())) return support;
+    }
+    return null;
   }
 
-  @Service
-  private static final class LanguageInjectionSupportRegistry {
-    private final Map<String, LanguageInjectionSupport> myMap = new LinkedHashMap<>();
-
-    private LanguageInjectionSupportRegistry() {
-      for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
-        myMap.put(support.getId(), support);
-      }
-    }
-
-    @Nullable
-    LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
-      return myMap.get(id);
-    }
-
-    @NotNull
-    public Set<String> ids() {
-      return myMap.keySet();
-    }
-  }
-
-  @NotNull
-  public static Class<?>[] getPatternClasses(@NotNull String supportId) {
+  public static Class<?> @NotNull [] getPatternClasses(@NotNull String supportId) {
     final LanguageInjectionSupport support = findInjectionSupport(supportId);
     return support == null ? ArrayUtil.EMPTY_CLASS_ARRAY : support.getPatternClasses();
   }

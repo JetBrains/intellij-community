@@ -15,9 +15,6 @@
  */
 package org.jetbrains.intellij.build.impl
 
-/**
- * @author nik
- */
 class BaseLayoutSpec {
   protected final BaseLayout layout
 
@@ -41,7 +38,7 @@ class BaseLayoutSpec {
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
   void withModule(String moduleName) {
-    layout.moduleJars.put("${BaseLayout.convertModuleNameToFileName(moduleName)}.jar", moduleName)
+    layout.moduleJars.putValue("${BaseLayout.convertModuleNameToFileName(moduleName)}.jar".toString(), moduleName)
   }
 
   /**
@@ -58,7 +55,7 @@ class BaseLayoutSpec {
     if (localizableResourcesJar != null) {
       layout.localizableResourcesJars.put(moduleName, localizableResourcesJar)
     }
-    layout.moduleJars.put(relativeJarPath, moduleName)
+    layout.moduleJars.putValue(relativeJarPath, moduleName)
     layout.explicitlySetJarPaths.add(relativeJarPath)
   }
 
@@ -82,6 +79,13 @@ class BaseLayoutSpec {
   }
 
   /**
+   * Exclude the module library from plugin distribution.
+   */
+  void withoutModuleLibrary(String moduleName, String libraryName) {
+    layout.excludedModuleLibraries.putValue(moduleName, libraryName)
+  }
+
+  /**
    * Exclude the specified files when {@code moduleName} is packed into JAR file.
    * <strong>This is a temporary method added to keep layout of some old plugins. If some files from a module shouldn't be included into the
    * module JAR it's strongly recommended to move these files outside of the module source roots.</strong>
@@ -89,7 +93,7 @@ class BaseLayoutSpec {
    * to exclude 'foo' directory
    */
   void excludeFromModule(String moduleName, String excludedPattern) {
-    layout.moduleExcludes.put(moduleName, excludedPattern)
+    layout.moduleExcludes.putValue(moduleName, excludedPattern)
   }
 
   /**
@@ -99,5 +103,12 @@ class BaseLayoutSpec {
    */
   void withArtifact(String artifactName, String relativeOutputPath) {
     layout.includedArtifacts.put(artifactName, relativeOutputPath)
+  }
+
+  /**
+   * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
+   */
+  void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
+    layout.projectLibrariesToUnpack.putValue(jarName, libraryName)
   }
 }

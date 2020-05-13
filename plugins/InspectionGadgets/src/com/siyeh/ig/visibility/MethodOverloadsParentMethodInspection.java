@@ -47,12 +47,6 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.overloads.display.name");
-  }
-
-  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }

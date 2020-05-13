@@ -28,7 +28,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsManagerWatcher;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -91,11 +90,13 @@ public class MavenModuleBuilderHelper {
         updateProjectPom(project, file);
 
         if (myAggregatorProject != null) {
-          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, myAggregatorProject.getFile());
+          VirtualFile aggregatorProjectFile = myAggregatorProject.getFile();
+          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, aggregatorProjectFile);
           if (model != null) {
             model.getPackaging().setStringValue("pom");
             MavenDomModule module = model.getModules().addModule();
             module.setValue(getPsiFile(project, file));
+            unblockAndSaveDocuments(project, aggregatorProjectFile);
           }
         }
         return file;
@@ -118,6 +119,8 @@ public class MavenModuleBuilderHelper {
         MavenLog.LOG.info(e);
       }
     }
+
+    MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
 
     // execute when current dialog is closed (e.g. Project Structure)
     MavenUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
@@ -161,20 +164,19 @@ public class MavenModuleBuilderHelper {
         MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
       }
 
-      for (VirtualFile v : pomFiles) {
-        v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
-        try {
-          Document doc = FileDocumentManager.getInstance().getDocument(v);
-          if (doc != null) {
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
-            FileDocumentManager.getInstance().saveDocument(doc);
-          }
-        }
-        finally {
-          v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
-        }
-      }
+      unblockAndSaveDocuments(project, pomFiles.toArray(VirtualFile.EMPTY_ARRAY));
     });
+  }
+
+  private static void unblockAndSaveDocuments(@NotNull Project project, VirtualFile @NotNull ... files) {
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    for (VirtualFile file : files) {
+      Document document = fileDocumentManager.getDocument(file);
+      if (document == null) continue;
+      psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
+      fileDocumentManager.saveDocument(document);
+    }
   }
 
   private static PsiFile getPsiFile(Project project, VirtualFile pom) {

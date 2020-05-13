@@ -18,8 +18,7 @@ public class PySuperTypesHierarchyTreeStructure extends HierarchyTreeStructure {
   }
 
   @Override
-  @NotNull
-  protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
+  protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     final List<PyHierarchyNodeDescriptor> res = new ArrayList<>();
     if (descriptor instanceof PyHierarchyNodeDescriptor) {
       final PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;

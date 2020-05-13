@@ -30,9 +30,8 @@ public class OptionalIsPresentInspectionTest extends LightQuickFixParameterizedT
     return LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new OptionalIsPresentInspection()
     };

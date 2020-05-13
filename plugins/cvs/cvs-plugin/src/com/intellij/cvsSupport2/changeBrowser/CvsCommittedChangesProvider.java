@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
@@ -10,14 +10,20 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.ChangeListColumn;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.committed.*;
+import com.intellij.openapi.vcs.changes.committed.RepositoryLocationGroup;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipperAdapter;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -25,22 +31,25 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import gnu.trove.TObjectLongHashMap;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
-/**
- * @author yole
- */
 public class CvsCommittedChangesProvider implements CachingCommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider");
+  private static final Logger LOG = Logger.getInstance(CvsCommittedChangesProvider.class);
 
   private final Project myProject;
 
@@ -48,8 +57,9 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new CvsVersionFilterComponent(showDateFilter);
   }
 
@@ -83,7 +93,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
 
     @Override
-    public long getNumber(final CommittedChangeList list) {
+    public long getNumber(@NotNull CommittedChangeList list) {
       final long time = list.getCommitDate().getTime();
       final Long roundedTime = Long.valueOf(time - (time % CvsChangeList.SUITABLE_DIFF));
       final CommittedChangeListKey key = new CommittedChangeListKey(list.getCommitterName(), roundedTime, list.getComment());
@@ -105,7 +115,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Override
   @Nullable
-  public CvsRepositoryLocation getLocationFor(final FilePath root) {
+  public CvsRepositoryLocation getLocationFor(@NotNull FilePath root) {
     if (!CvsUtil.fileIsUnderCvs(root.getIOFile())) {
       return null;
     }
@@ -116,14 +126,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public ChangeListColumn[] getColumns() {
+  public ChangeListColumn @NotNull [] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
-  }
-
-  @Override
-  @Nullable
-  public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location) {
-    return null;
   }
 
   @Override
@@ -133,7 +137,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Nullable
   @Override
-  public Pair<CvsChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+  public Pair<CvsChangeList, FilePath> getOneList(@NotNull VirtualFile file, VcsRevisionNumber number) throws VcsException {
     final File ioFile = new File(file.getPath());
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(ioFile);
     final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
@@ -190,20 +194,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return Pair.create(result.get(), filePath);
   }
 
+  @NotNull
   @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
-    return null;
-  }
-
-  @Override
-  public boolean supportsIncomingChanges() {
-    return true;
-  }
-
-  @Override
-  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
+  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, @NotNull RepositoryLocation location, int maxCount)
     throws VcsException {
-    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation)location;
     final String module = cvsLocation.getModuleName();
     final VirtualFile rootFile = cvsLocation.getRootFile();
     return loadCommittedChanges(settings, module, cvsLocation.getEnvironment(), rootFile);
@@ -211,12 +206,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Override
   public void loadCommittedChanges(ChangeBrowserSettings settings,
-                                   RepositoryLocation location,
+                                   @NotNull RepositoryLocation location,
                                    int maxCount,
-                                   final AsynchConsumer<? super CommittedChangeList> consumer)
-    throws VcsException {
+                                   @NotNull AsynchConsumer<? super CommittedChangeList> consumer) throws VcsException {
     try {
-      final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+      final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation)location;
       final String module = cvsLocation.getModuleName();
       final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
       if (connectionSettings.isOffline()) {
@@ -260,6 +254,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  @NotNull
   private List<CvsChangeList> loadCommittedChanges(final ChangeBrowserSettings settings,
                                                    final String module,
                                                    CvsEnvironment connectionSettings,
@@ -298,24 +293,20 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public void writeChangeList(final DataOutput stream, final CvsChangeList list) throws IOException {
+  public void writeChangeList(@NotNull DataOutput stream, @NotNull CvsChangeList list) throws IOException {
     list.writeToStream(stream);
   }
 
+  @NotNull
   @Override
-  public CvsChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
-    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+  public CvsChangeList readChangeList(@NotNull RepositoryLocation location, @NotNull DataInput stream) throws IOException {
+    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation)location;
     return new CvsChangeList(myProject, cvsLocation.getEnvironment(), cvsLocation.getRootFile(), stream);
   }
 
   @Override
   public boolean isMaxCountSupported() {
     return false;
-  }
-
-  @Override
-  public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
-    return null;
   }
 
   @Override
@@ -329,8 +320,10 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public boolean isChangeLocallyAvailable(final FilePath filePath, @Nullable VcsRevisionNumber localRevision,
-                                          VcsRevisionNumber changeRevision, final CvsChangeList changeList) {
+  public boolean isChangeLocallyAvailable(@NotNull FilePath filePath,
+                                          @Nullable VcsRevisionNumber localRevision,
+                                          @NotNull VcsRevisionNumber changeRevision,
+                                          @NotNull CvsChangeList changeList) {
     if (localRevision instanceof CvsRevisionNumber && changeRevision instanceof CvsRevisionNumber) {
       final CvsRevisionNumber cvsLocalRevision = (CvsRevisionNumber)localRevision;
       final CvsRevisionNumber cvsChangeRevision = (CvsRevisionNumber)changeRevision;
@@ -353,7 +346,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return isDifferentBranch(filePath, changeList) || (localRevision != null && localRevision.compareTo(changeRevision) >= 0);
   }
 
-  private static boolean isDifferentBranch(final FilePath filePath, final CvsChangeList changeList) {
+  private static boolean isDifferentBranch(@NotNull FilePath filePath, final CvsChangeList changeList) {
     final String localTag;
     final CvsEntriesManager cvsEntriesManager = CvsEntriesManager.getInstance();
     final VirtualFile parent = filePath.getVirtualFileParent();
@@ -372,7 +365,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       localTag = getDirectoryTag(validParent);
     }
     final String remoteTag = changeList.getBranch();
-    if (!Comparing.equal(localTag, remoteTag)) {
+    if (!Objects.equals(localTag, remoteTag)) {
       if (LOG.isDebugEnabled()) LOG.info(filePath + ": local tag " + localTag + ", remote tag " + remoteTag);
       return true;
     }

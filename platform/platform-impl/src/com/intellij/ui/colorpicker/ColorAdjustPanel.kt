@@ -20,8 +20,12 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
 import sun.security.util.SecurityConstants
-import java.awt.*
-import javax.swing.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import javax.swing.BoxLayout
+import javax.swing.JPanel
 import javax.swing.plaf.basic.BasicButtonUI
 import kotlin.math.abs
 
@@ -38,7 +42,8 @@ private val HUE_SLIDER_BORDER = JBUI.Borders.empty(0, 16, 8, 16)
 private val ALPHA_SLIDER_BORDER = JBUI.Borders.empty(8, 16, 0, 16)
 
 class ColorAdjustPanel(private val model: ColorPickerModel,
-                       private val pipetteProvider: ColorPipetteProvider)
+                       private val pipetteProvider: ColorPipetteProvider,
+                       showAlpha: Boolean = false)
   : JPanel(GridBagLayout()), ColorListener {
 
   private val pipetteButton by lazy {
@@ -47,7 +52,7 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
       border = PIPETTE_BUTTON_BORDER
       background = PICKER_BACKGROUND_COLOR
 
-      ui = BasicButtonUI()
+      setUI(BasicButtonUI())
 
       isFocusable = false
       preferredSize = COLOR_INDICATOR_SIZE
@@ -67,11 +72,14 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
     background = PICKER_BACKGROUND_COLOR
 
     addListener {
+      if (model.color.red == model.color.green && model.color.green == model.color.blue) {
+        return@addListener
+      }
       val hue = it / 360f
       val hsbValues = Color.RGBtoHSB(model.color.red, model.color.green, model.color.blue, null)
       val rgb = Color.HSBtoRGB(hue, hsbValues[1], hsbValues[2])
       val argb = (model.color.alpha shl 24) or (rgb and 0x00FFFFFF)
-      val newColor = Color(argb, true)
+      val newColor = if (showAlpha) Color(argb, true) else Color(rgb)
       model.setColor(newColor, this@ColorAdjustPanel)
     }
   }
@@ -111,11 +119,17 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
     c.gridy = 0
     c.weightx = 0.76
     val sliderPanel = JPanel()
-    sliderPanel.layout = BoxLayout(sliderPanel, BoxLayout.Y_AXIS)
-    sliderPanel.border = JBUI.Borders.empty()
     sliderPanel.background = PICKER_BACKGROUND_COLOR
-    sliderPanel.add(hueSlider)
-    sliderPanel.add(alphaSlider)
+    if (showAlpha) {
+      sliderPanel.border = JBUI.Borders.empty()
+      sliderPanel.layout = BoxLayout(sliderPanel, BoxLayout.Y_AXIS)
+      sliderPanel.add(hueSlider)
+      sliderPanel.add(alphaSlider)
+    } else {
+      sliderPanel.border = JBUI.Borders.empty(9, 0)
+      sliderPanel.layout = BorderLayout()
+      sliderPanel.add(hueSlider)
+    }
     add(sliderPanel, c)
 
     model.addListener(this)

@@ -21,13 +21,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.NanoXmlUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -350,8 +350,7 @@ public class TestNGUtil {
                      .toList();
   }
 
-  @Nullable
-  public static PsiClass[] getAllTestClasses(final TestClassFilter filter, boolean sync) {
+  public static PsiClass @Nullable [] getAllTestClasses(final TestClassFilter filter, boolean sync) {
     final PsiClass[][] holder = new PsiClass[1][];
     final Runnable process = () -> {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -363,7 +362,7 @@ public class TestNGUtil {
       for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
         if (filter.isAccepted(psiClass)) {
           if (indicator != null) {
-            indicator.setText2("Found test class " + ReadAction.compute(psiClass::getQualifiedName));
+            indicator.setText2(TestngBundle.message("testng.util.found.test.class", ReadAction.compute(psiClass::getQualifiedName)));
           }
           set.add(psiClass);
         }
@@ -371,7 +370,7 @@ public class TestNGUtil {
       holder[0] = set.toArray(PsiClass.EMPTY_ARRAY);
     };
     if (sync) {
-       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Searching For Tests...", true, filter.getProject());
+       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, TestngBundle.message("testng.util.searching.test.progress.title"), true, filter.getProject());
     }
     else {
        process.run();
@@ -380,17 +379,11 @@ public class TestNGUtil {
   }
 
   public static PsiAnnotation[] getTestNGAnnotations(PsiElement element) {
-    PsiElementProcessor.CollectFilteredElements<PsiAnnotation> processor = new PsiElementProcessor.CollectFilteredElements<>(e -> {
-      if (e instanceof PsiAnnotation) {
-        String name = ((PsiAnnotation)e).getQualifiedName();
-        if (name != null && name.startsWith("org.testng.annotations")) {
-          return true;
-        }
-      }
-      return false;
-    });
-    PsiTreeUtil.processElements(element, processor);
-    return processor.toArray(PsiAnnotation.EMPTY_ARRAY);
+    return SyntaxTraverser.psiTraverser(element).filter(PsiAnnotation.class)
+      .filter(anno -> {
+        String name = anno.getQualifiedName();
+        return name != null && name.startsWith("org.testng.annotations");
+      }).toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   public static boolean isTestNGClass(PsiClass psiClass) {
@@ -403,8 +396,8 @@ public class TestNGUtil {
     if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (Messages.showOkCancelDialog(psiElement.getProject(),
-                                        "TestNG will be added to module classpath",
-                                        "Unable to Convert.",
+                                        TestngBundle.message("testng.util.will.be.added.to.module.classpath"),
+                                        TestngBundle.message("testng.util.unable.to.convert"),
                                         Messages.getWarningIcon()) != Messages.OK) {
           return false;
         }

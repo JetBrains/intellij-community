@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
@@ -9,12 +9,10 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
@@ -41,11 +39,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.intellij.images.editor.ImageFileEditor;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -135,16 +129,10 @@ public class DvcsUtil {
   @CalledInAwt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, statusBar);
+    final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(statusBar);
     VirtualFile result = null;
     if (fileEditor != null) {
-      if (fileEditor instanceof TextEditor) {
-        Document document = ((TextEditor)fileEditor).getEditor().getDocument();
-        result = FileDocumentManager.getInstance().getFile(document);
-      }
-      else if (fileEditor instanceof ImageFileEditor) {
-        result = ((ImageFileEditor)fileEditor).getImageEditor().getFile();
-      }
+      result = fileEditor.getFile();
     }
 
     if (result == null) {
@@ -290,12 +278,13 @@ public class DvcsUtil {
   }
 
   @Nullable
+  @CalledInAny
   public static <T extends Repository> T guessRepositoryForFile(@NotNull Project project,
                                                                 @NotNull RepositoryManager<T> manager,
                                                                 @Nullable VirtualFile file,
                                                                 @Nullable String defaultRootPathValue) {
-    T repository = manager.getRepositoryForRoot(guessVcsRoot(project, file));
-    return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
+    T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    return repository != null ? repository : manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
   @Nullable
@@ -360,7 +349,7 @@ public class DvcsUtil {
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<? extends T> repositories) {
     List<T> validRepositories = ContainerUtil.filter(repositories, t -> t.getRoot().isValid());
-    Collections.sort(validRepositories, REPOSITORY_COMPARATOR);
+    validRepositories.sort(REPOSITORY_COMPARATOR);
     return validRepositories;
   }
 
@@ -419,6 +408,7 @@ public class DvcsUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
                                                                                               @NotNull List<? extends VcsFullCommitDetails> commits) {
     Map<R, List<VcsFullCommitDetails>> groupedCommits = new HashMap<>();

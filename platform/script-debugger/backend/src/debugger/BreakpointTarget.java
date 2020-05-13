@@ -16,6 +16,7 @@
 package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A reference to some JavaScript text that you can set breakpoints on. The reference may
@@ -36,7 +37,7 @@ public abstract class BreakpointTarget {
   public abstract <R> R accept(Visitor<R> visitor);
 
   public interface Visitor<R> {
-    R visitScriptName(String scriptName);
+    R visitScriptName(String scriptName, @Nullable Script script);
 
     R visitScript(Script script);
 
@@ -87,15 +88,29 @@ public abstract class BreakpointTarget {
    * A target that refers to a script by its name. Breakpoint will be set on every matching script currently loaded in VM.
    */
   public static final class ScriptName extends BreakpointTarget {
+    @NotNull
     private final String name;
+    @Nullable
+    private final Script script;
 
     public ScriptName(@NotNull String name) {
       this.name = name;
+      this.script = null;
+    }
+
+    public ScriptName(@NotNull Script script) {
+      this.script = script;
+      this.name = script.getUrl().toDecodedForm();
     }
 
     @NotNull
     public String getName() {
       return name;
+    }
+
+    @Nullable
+    public Script getScript() {
+      return script;
     }
 
     @Override
@@ -105,7 +120,7 @@ public abstract class BreakpointTarget {
 
     @Override
     public <R> R accept(@NotNull Visitor<R> visitor) {
-      return visitor.visitScriptName(name);
+      return visitor.visitScriptName(name, script);
     }
 
     @Override

@@ -64,12 +64,6 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("pointless.boolean.expression.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -376,10 +370,11 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       String simplifiedExpression = buildSimplifiedExpression(expression, new StringBuilder(), tracker).toString();
       boolean isConstant = simplifiedExpression.equals("true") || simplifiedExpression.equals("false");
       if (isConstant && myHasSideEffect) {
-        expression = RefactoringUtil.ensureCodeBlock(expression);
-        if (expression == null) return;
-        PsiStatement anchor = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
-        if (anchor == null) return;
+        CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expression);
+        if (surrounder == null) return;
+        CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+        expression = result.getExpression();
+        PsiStatement anchor = result.getAnchor();
         List<PsiExpression> sideEffects = extractSideEffects(expression);
         for (PsiExpression sideEffect : sideEffects) {
           tracker.markUnchanged(sideEffect);
@@ -504,7 +499,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       }
       if (containsConstant) {
         if (sideEffectMayBeRemoved && reducedToConstant) {
-          return ControlFlowUtils.canExtractStatement(expression)
+          return CodeBlockSurrounder.canSurround(expression)
                  ? BooleanExpressionKind.USELESS_WITH_SIDE_EFFECTS
                  : BooleanExpressionKind.UNKNOWN;
         }
@@ -587,7 +582,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     private boolean referenceFound;
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (referenceFound) {
         return;
       }

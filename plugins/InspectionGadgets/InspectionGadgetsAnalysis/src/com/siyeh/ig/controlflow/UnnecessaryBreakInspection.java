@@ -9,19 +9,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class UnnecessaryBreakInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.break.display.name");
-  }
 
   @NotNull
   @Override

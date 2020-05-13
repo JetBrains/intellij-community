@@ -25,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclarationKt;
@@ -34,17 +33,8 @@ import java.util.Set;
 
 public class ClassIndependentOfModuleInspection extends BaseGlobalInspection {
 
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.independent.of.module.display.name");
-  }
-
-  @Nullable
-  @Override
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope scope,
     @NotNull InspectionManager manager,

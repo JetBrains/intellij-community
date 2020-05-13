@@ -40,20 +40,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.function.Supplier;
+
 @TestOnly
 public class MockSdk implements Sdk, SdkModificator {
   private String myName;
   private String myHomePath;
   @NotNull private String myVersionString;
   private final MultiMap<OrderRootType, VirtualFile> myRoots;
-  private final SdkTypeId mySdkType;
+  private final @NotNull Supplier<? extends SdkTypeId> mySdkType;
   private SdkAdditionalData myData;
 
   public MockSdk(@NotNull String name,
-          @NotNull String homePath,
-          @NotNull String versionString,
-          @NotNull MultiMap<OrderRootType, VirtualFile> roots,
-          @NotNull SdkTypeId sdkType) {
+                 @NotNull String homePath,
+                 @NotNull String versionString,
+                 @NotNull MultiMap<OrderRootType, VirtualFile> roots,
+                 @NotNull Supplier<? extends SdkTypeId> sdkType) {
     myName = name;
     myHomePath = homePath;
     myVersionString = versionString;
@@ -61,10 +63,18 @@ public class MockSdk implements Sdk, SdkModificator {
     mySdkType = sdkType;
   }
 
+  public MockSdk(@NotNull String name,
+                 @NotNull String homePath,
+                 @NotNull String versionString,
+                 @NotNull MultiMap<OrderRootType, VirtualFile> roots,
+                 @NotNull SdkTypeId sdkType) {
+    this(name, homePath, versionString, roots, () -> sdkType);
+  }
+
   @NotNull
   @Override
   public SdkTypeId getSdkType() {
-    return mySdkType;
+    return mySdkType.get();
   }
 
   @NotNull
@@ -99,7 +109,7 @@ public class MockSdk implements Sdk, SdkModificator {
   @NotNull
   @Override
   public Sdk clone() {
-    return new MockSdk(myName, myHomePath, myVersionString, new MultiMap<>(myRoots), mySdkType) {
+    return new MockSdk(myName, myHomePath, myVersionString, new MultiMap<>(myRoots), mySdkType.get()) {
       private final UserDataHolder udh = new UserDataHolderBase();
       @NotNull
       @Override
@@ -128,8 +138,7 @@ public class MockSdk implements Sdk, SdkModificator {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
+  public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) {
     return myRoots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
@@ -190,15 +199,13 @@ public class MockSdk implements Sdk, SdkModificator {
   @Override
   public RootProvider getRootProvider() {
     return new RootProvider() {
-      @NotNull
       @Override
-      public String[] getUrls(@NotNull OrderRootType rootType) {
+      public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
         return ContainerUtil.map2Array(getFiles(rootType), String.class, VirtualFile::getUrl);
       }
 
-      @NotNull
       @Override
-      public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
+      public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType) {
         return getRoots(rootType);
       }
 

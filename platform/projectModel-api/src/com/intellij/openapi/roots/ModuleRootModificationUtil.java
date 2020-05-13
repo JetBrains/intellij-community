@@ -32,9 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ModuleRootModificationUtil {
   public static void addContentRoot(@NotNull Module module, @NotNull String path) {
     updateModel(module, model -> model.addContentEntry(VfsUtilCore.pathToUrl(path)));

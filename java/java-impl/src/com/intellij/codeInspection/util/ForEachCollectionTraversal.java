@@ -33,10 +33,8 @@ public class ForEachCollectionTraversal extends IterableTraversal {
   }
 
   @Override
-  public boolean isRemoveCall(PsiElement candidate) {
-    while (candidate instanceof PsiParenthesizedExpression) {
-      candidate = ((PsiParenthesizedExpression)candidate).getExpression();
-    }
+  public boolean isRemoveCall(PsiExpression candidate) {
+    candidate = PsiUtil.skipParenthesizedExprDown(candidate);
     if (!(candidate instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)candidate;
     if (!COLLECTION_REMOVE.test(call)) return false;

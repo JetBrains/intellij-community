@@ -84,7 +84,8 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with " + getCastType().getPresentableText() + " literal";
+      return InspectionGadgetsBundle
+        .message("replace.casted.literal.with.just.literal.fix.family.name", getCastType().getPresentableText());
     }
 
     @Override

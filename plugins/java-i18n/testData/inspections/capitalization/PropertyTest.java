@@ -29,5 +29,7 @@ class X {
     test2(<warning descr="String 'Hello {0,choice,0#World|1#Universe}' is not properly capitalized. It should have sentence capitalization">message("property.choice.title", x)</warning>);
     test2(<warning descr="String 'Hello {0,choice,0#World|1#universe}' is not properly capitalized. It should have sentence capitalization">message("property.choice.mixed", x)</warning>);
     test2(message("property.choice.lower", x));
+
+    test2(message("property.sentence.with.quote"));
   }
 }

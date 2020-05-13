@@ -8,11 +8,11 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
 import org.jetbrains.annotations.NotNull;
 
-public class TrackingReferenceRegistrar extends PsiReferenceRegistrar {
+class TrackingReferenceRegistrar extends PsiReferenceRegistrar {
   private final PsiReferenceRegistrarImpl myDelegate;
   private final Disposable myDisposable;
 
-  public TrackingReferenceRegistrar(PsiReferenceRegistrarImpl delegate, Disposable disposable) {
+  TrackingReferenceRegistrar(@NotNull PsiReferenceRegistrarImpl delegate, @NotNull Disposable disposable) {
     myDelegate = delegate;
     myDisposable = disposable;
   }

@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class AnnotationProcessorProfileSerializer {
   private static final Comparator<String> ALPHA_COMPARATOR = (o1, o2) -> o1.compareToIgnoreCase(o2);
   private static final String ENTRY = "entry";

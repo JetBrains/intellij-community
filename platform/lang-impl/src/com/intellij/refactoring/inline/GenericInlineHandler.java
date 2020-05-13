@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.find.FindBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,7 +32,7 @@ import java.util.*;
 /**
  * @author ven
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class GenericInlineHandler {
 
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);
@@ -65,7 +51,8 @@ public class GenericInlineHandler {
     }
     else {
       final Ref<Collection<? extends PsiReference>> usagesRef = new Ref<>();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> usagesRef.set(ReferencesSearch.search(element).findAll()), "Find Usages", false, element.getProject());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> usagesRef.set(ReferencesSearch.search(element).findAll()),
+                                                                        FindBundle.message("find.usages.progress.title"), false, element.getProject());
       allReferences = usagesRef.get();
     }
 
@@ -81,10 +68,7 @@ public class GenericInlineHandler {
 
     HashSet<PsiElement> elements = new HashSet<>();
     for (PsiReference reference : allReferences) {
-      PsiElement refElement = reference.getElement();
-      if (refElement != null) {
-        elements.add(refElement);
-      }
+      elements.add(reference.getElement());
     }
     if (!settings.isOnlyOneReferenceToInline()) {
       elements.add(element);
@@ -93,10 +77,9 @@ public class GenericInlineHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements, true)) {
       return true;
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
-
-      CommandProcessor.getInstance().executeCommand(project, () -> {
+    String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
+    WriteCommandAction.runWriteCommandAction(
+      project, RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>")), null, () -> {
         final PsiReference[] references = sortDepthFirstRightLeftOrder(allReferences);
 
 
@@ -112,8 +95,7 @@ public class GenericInlineHandler {
         if (!settings.isOnlyOneReferenceToInline()) {
           languageSpecific.removeDefinition(element, settings);
         }
-      }, RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>")), null);
-    });
+      });
     return true;
   }
 
@@ -127,7 +109,6 @@ public class GenericInlineHandler {
         continue;
       }
       PsiElement refElement = ref.getElement();
-      LOG.assertTrue(refElement != null, ref.getClass().getName());
 
       final Language language = refElement.getLanguage();
       if (inliners.containsKey(language)) continue;
@@ -187,7 +168,6 @@ public class GenericInlineHandler {
                                       final Map<Language, InlineHandler.Inliner> inliners,
                                       final MultiMap<PsiElement, String> conflicts) {
     final PsiElement referenceElement = reference.getElement();
-    if (referenceElement == null) return;
     final Language language = referenceElement.getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
@@ -221,7 +201,6 @@ public class GenericInlineHandler {
     Arrays.sort(usages, (usage1, usage2) -> {
       final PsiElement element1 = usage1.getElement();
       final PsiElement element2 = usage2.getElement();
-      if (element1 == null || element2 == null) return 0;
       return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
     });
     return usages;

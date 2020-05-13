@@ -7,6 +7,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 final class ExpandableArray<T> {
+  // Good trade-off between wasted allocation and amount of copying on our tests
+  // Also we would not waste too much if the method complexity is close to 
+  // Analysis.STEPS_LIMIT, which is currently 30000 (in this case we would allocate 30720 elements) 
+  private static final int INITIAL_SIZE = 30;
   private T[] array;
   
   @Nullable
@@ -18,7 +22,7 @@ final class ExpandableArray<T> {
   @SuppressWarnings("unchecked")
   void set(int index, T value) {
     if (array == null) {
-      array = (T[])new Object[Math.max(index + 1, 100)];
+      array = (T[])new Object[Math.max(index + 1, INITIAL_SIZE)];
     }
     else if (index >= array.length) {
       array = Arrays.copyOf(array, Math.max(index + 1, array.length * 2));

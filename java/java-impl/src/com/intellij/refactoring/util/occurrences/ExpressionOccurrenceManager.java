@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.RefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -46,7 +47,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
     myMaintainStaticContext = maintainStaticContext;
   }
   @Override
-  protected PsiExpression[] defaultOccurrences() {
+  protected PsiExpression @NotNull [] defaultOccurrences() {
     return new PsiExpression[]{myMainOccurence};
   }
 
@@ -55,7 +56,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
   }
 
   @Override
-  protected PsiExpression[] findOccurrences() {
+  protected PsiExpression @NotNull [] findOccurrences() {
     if("null".equals(myMainOccurence.getText())) {
       return defaultOccurrences();
     }
@@ -66,12 +67,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
     final PsiClass scopeClass = PsiTreeUtil.getNonStrictParentOfType(myScope, PsiClass.class);
     if (myMaintainStaticContext && expressionOccurrences.length > 1 && !RefactoringUtil.isInStaticContext(myMainOccurence, scopeClass)) {
       final ArrayList<PsiExpression> expressions = new ArrayList<>(Arrays.asList(expressionOccurrences));
-      for (Iterator<PsiExpression> iterator = expressions.iterator(); iterator.hasNext();) {
-        final PsiExpression expression = iterator.next();
-        if(RefactoringUtil.isInStaticContext(expression, scopeClass)) {
-          iterator.remove();
-        }
-      }
+      expressions.removeIf(expression -> RefactoringUtil.isInStaticContext(expression, scopeClass));
       return expressions.toArray(PsiExpression.EMPTY_ARRAY);
     }
     else {
@@ -83,7 +79,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
     return myScope;
   }
 
-  public PsiExpression[] findExpressionOccurrences() {
+  public PsiExpression @NotNull [] findExpressionOccurrences() {
     if (myMainOccurence instanceof PsiLiteralExpression && !myMainOccurence.isPhysical()) {
       final FindManager findManager = FindManager.getInstance(getScope().getProject());
       final FindModel findModel = findManager.getFindInFileModel().clone();

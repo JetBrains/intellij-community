@@ -64,7 +64,6 @@ b: B2 = {'x': 0}
 f2(<warning descr="Expected type 'A2', got 'B2' instead">b</warning>)
 
 
-
 class A3(TypedDict):
     x: str
 class B3(TypedDict):

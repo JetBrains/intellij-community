@@ -26,6 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -67,7 +68,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public void dispose() {
-    myEditor.dispose();
+    Disposer.dispose(myEditor);
   }
 
   @Override
@@ -187,15 +188,8 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     }
 
     @Override
-    @NotNull
-    public HighlightingPass[] createPassesForEditor() {
+    public HighlightingPass @NotNull [] createPassesForEditor() {
       return myPasses;
-    }
-
-    @Override
-    @NotNull
-    public HighlightingPass[] createPassesForVisibleArea() {
-      return HighlightingPass.EMPTY_ARRAY;
     }
   }
 }

@@ -92,9 +92,8 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
             ": " + function.getReturnType().getName() : null;
   }
 
-  @NotNull
   @Override
-  public Parameter[] getParameters() {
+  public Parameter @NotNull [] getParameters() {
     return getFunction().getParameters();
   }
 

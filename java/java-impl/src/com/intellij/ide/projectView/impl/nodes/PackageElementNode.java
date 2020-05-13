@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -22,7 +22,10 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> implements ValidateableNode {
   public PackageElementNode(@NotNull Project project,
@@ -59,10 +62,10 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
 
   @Override
   @NotNull
-  public Collection<AbstractTreeNode> getChildren() {
+  public Collection<AbstractTreeNode<?>> getChildren() {
     final PackageElement value = getValue();
     if (value == null) return Collections.emptyList();
-    final List<AbstractTreeNode> children = new ArrayList<>();
+    final List<AbstractTreeNode<?>> children = new ArrayList<>();
     final Module module = value.getModule();
     final PsiPackage aPackage = value.getPackage();
 
@@ -148,8 +151,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
     return getValue() != null && CopyPasteManager.getInstance().isCutElement(getValue().getPackage());
   }
 
-  @NotNull
-  public VirtualFile[] getVirtualFiles() {
+  public VirtualFile @NotNull [] getVirtualFiles() {
     final PackageElement value = getValue();
     if (value == null) {
       return VirtualFile.EMPTY_ARRAY;

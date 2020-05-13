@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
-import com.intellij.codeInsight.actions.FormatChangedTextUtil;
+import com.intellij.codeInsight.actions.VcsFacadeImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
@@ -59,6 +59,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -162,7 +163,7 @@ public class ShowAffectedTestsAction extends AnAction {
       if (DumbService.isDumb(project)) return;
       String className = ReadAction.compute(() -> DiscoveredTestsTreeModel.getClassName(psiClass));
       if (className == null) return;
-      List<Couple<String>> classesAndMethods = ContainerUtil.newSmartList(Couple.of(className, null));
+      List<Couple<String>> classesAndMethods = new SmartList<>(Couple.of(className, null));
       processTestDiscovery(project, createTreeProcessor(tree), classesAndMethods, Collections.emptyList());
       EdtInvocationManager.getInstance().invokeLater(() -> tree.setPaintBusy(false));
     });
@@ -194,7 +195,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   public static void showDiscoveredTestsByChanges(@NotNull Project project,
-                                                  @NotNull Change[] changes,
+                                                  Change @NotNull [] changes,
                                                   @NotNull String title,
                                                   @NotNull DataContext dataContext) {
     DiscoveredTestsTree tree = showTree(project, dataContext, title);
@@ -207,12 +208,11 @@ public class ShowAffectedTestsAction extends AnAction {
     });
   }
 
-  @NotNull
-  public static PsiMethod[] findMethods(@NotNull Project project, @NotNull Change... changes) {
+  public static PsiMethod @NotNull [] findMethods(@NotNull Project project, Change @NotNull ... changes) {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
     return PsiDocumentManager.getInstance(project).commitAndRunReadAction(
-      () -> FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
+      () -> VcsFacadeImpl.getVcsInstance().getChangedElements(project, changes, file -> {
         if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
         ProjectFileIndex index = ProjectFileIndex.getInstance(project);
         if (!index.isInSource(file)) return null;
@@ -221,10 +221,10 @@ public class ShowAffectedTestsAction extends AnAction {
         Document document = FileDocumentManager.getInstance().getDocument(file);
         if (document == null) return null;
 
-        List<PsiElement> physicalMethods = ContainerUtil.newSmartList();
+        List<PsiElement> physicalMethods = new SmartList<>();
         psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             UMethod method = UastContextKt.toUElement(element, UMethod.class);
             if (method != null) {
               ContainerUtil.addAllNotNull(physicalMethods, method.getSourcePsi());
@@ -364,7 +364,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   public static void processMethodsAsync(@NotNull Project project,
-                                         @NotNull PsiMethod[] methods,
+                                         PsiMethod @NotNull [] methods,
                                          @NotNull List<String> filePaths,
                                          @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
                                          @Nullable Runnable doWhenDone) {
@@ -378,7 +378,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   public static void processMethods(@NotNull Project project,
-                                    @NotNull PsiMethod[] methods,
+                                    PsiMethod @NotNull [] methods,
                                     @NotNull List<String> filePaths,
                                     @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
     List<Couple<String>> classesAndMethods =

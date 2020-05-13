@@ -14,6 +14,7 @@ import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerBundle;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.jetbrains.ide.CustomPortServerManager;
@@ -80,11 +81,9 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   public static final class MyCustomPortServerManager extends CustomPortServerManagerBase {
     @Override
     public void cannotBind(@NotNull Exception e, int port) {
-      BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue().createNotification("Cannot start built-in HTTP server on custom port " +
-                                                                                port + ". " +
-                                                                                "Please ensure that port is free (or check your firewall settings) and restart " +
-                                                                                ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                                                NotificationType.ERROR).notify(null);
+      BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue().createNotification(BuiltInServerBundle.message(
+        "notification.content.cannot.start.built.in.http.server.on.custom.port", port,
+        ApplicationNamesInfo.getInstance().getFullProductName()), NotificationType.ERROR).notify(null);
     }
 
     @Override

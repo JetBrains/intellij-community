@@ -1,4 +1,4 @@
-// "Replace l.removeAll(objs) with java.util.Collections.addAll(l, objs)" "false"
+// "Replace 'l.removeAll(objs)' with 'java.util.Collections.addAll(l, objs)'" "false"
 class T {
   public static void main(String[] args){
     List l = new List();

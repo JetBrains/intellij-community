@@ -16,8 +16,6 @@ import java.util.Map;
  * @see com.intellij.psi.JavaResolveResult#getSubstitutor()
  */
 public interface PsiSubstitutor {
-  Key<PsiSubstitutor> KEY = KeyWithDefaultValue.create("SUBSTITUTOR", () -> EmptySubstitutor.getInstance());
-
   /**
    * Empty, or natural, substitutor. For any type parameter {@code T},
    * substitutes type {@code T}.
@@ -26,6 +24,9 @@ public interface PsiSubstitutor {
    */
   @NotNull
   PsiSubstitutor EMPTY = EmptySubstitutor.getInstance();
+
+  Key<PsiSubstitutor> KEY = KeyWithDefaultValue.create("SUBSTITUTOR", EMPTY);
+
   @NotNull
   PsiSubstitutor UNKNOWN = EMPTY;
 
@@ -99,7 +100,7 @@ public interface PsiSubstitutor {
    */
   @NotNull
   @Contract(pure = true)
-  default PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  default PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return putAll(createSubstitutor(map));
   }
 
@@ -118,7 +119,7 @@ public interface PsiSubstitutor {
    * @return a substitutor backed by the supplied map
    */
   @NotNull
-  static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
+  static PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     if (map == null || map.isEmpty()) return EMPTY;
     return EMPTY.putAll(map);
   }

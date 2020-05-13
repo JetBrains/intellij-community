@@ -23,7 +23,7 @@ import com.intellij.vcsUtil.VcsUtil
 
 abstract class VcsStatusMerger<S> {
   fun merge(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
-    statuses.singleOrNull()?.let { return it.map { MergedStatusInfo(it) } }
+    statuses.singleOrNull()?.let { s -> return s.map { MergedStatusInfo(it) } }
 
     val pathsToStatusesMap = statuses.map { infos ->
       infos.mapNotNull { info -> getPath(info)?.let { Pair(it, info) } }.toMap(linkedMapOf())

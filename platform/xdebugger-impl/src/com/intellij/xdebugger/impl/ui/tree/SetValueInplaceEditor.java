@@ -21,9 +21,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final JPanel myEditorPanel;
   private final XValueModifier myModifier;

@@ -13,16 +13,14 @@ import org.jetbrains.concurrency.Promises;
 /**
  * Internal use only. Please use {@link com.intellij.execution.runners.GenericProgramRunner} or {@link com.intellij.execution.runners.AsyncProgramRunner}.
  * <p>
- * The callback used to execute a process from the {@link ExecutionManager#startRunProfile(RunProfileStarter, RunProfileState, ExecutionEnvironment)}.
- *
- * @author nik
+ * The callback used to execute a process from the {@link ExecutionManager#startRunProfile(RunProfileStarter, ExecutionEnvironment)}.
  */
 @ApiStatus.Internal
 public abstract class RunProfileStarter {
-
   /**
-   * @deprecated use {@link #executeAsync(RunProfileState, ExecutionEnvironment)}
+   * @deprecated use {@link #executeAsync(ExecutionEnvironment)}
    */
+  @SuppressWarnings("unused")
   @Nullable
   @Deprecated
   public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
@@ -33,8 +31,10 @@ public abstract class RunProfileStarter {
    * You should NOT throw exceptions in this method.
    * Instead return {@link Promises#rejectedPromise(Throwable)} or call {@link org.jetbrains.concurrency.AsyncPromise#setError(Throwable)}
    */
-  public Promise<RunContentDescriptor> executeAsync(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
+  @NotNull
+  public Promise<RunContentDescriptor> executeAsync(@NotNull ExecutionEnvironment environment)
     throws ExecutionException {
-    return Promises.resolvedPromise(execute(state, environment));
+    RunProfileState state = environment.getState();
+    return Promises.resolvedPromise(state == null ? null : execute(state, environment));
   }
 }

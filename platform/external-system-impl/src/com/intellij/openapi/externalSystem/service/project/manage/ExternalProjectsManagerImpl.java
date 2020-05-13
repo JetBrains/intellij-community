@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -37,10 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -76,7 +75,28 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     myTaskActivator = new ExternalSystemTaskActivator(project);
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
     myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
-    Disposer.register(this, myWatcher);
+
+    ApplicationManager.getApplication().getMessageBus().connect(project).
+      subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          Set<ProjectSystemId> availableES =
+            ExternalSystemManager.EP_NAME.getExtensionList().stream()
+              .map(ExternalSystemManager::getSystemId)
+              .collect(Collectors.toSet());
+
+          Iterator<ExternalProjectsView> iterator = myProjectsViews.iterator();
+          while(iterator.hasNext()) {
+            ExternalProjectsView view = iterator.next();
+            if (!availableES.contains(view.getSystemId())) {
+              iterator.remove();
+            }
+            if (view instanceof Disposable) {
+              Disposer.dispose((Disposable)view);
+            }
+          }
+        }
+      });
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
@@ -102,7 +122,10 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
         if (!module.isDisposed()) {
           ExternalSystemModulePropertyManager.getInstance(module).swapStore();
-          ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).stateChanged();
+          ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+          if (moduleRootManager instanceof ModuleRootManagerImpl) {
+            ((ModuleRootManagerImpl)moduleRootManager).stateChanged();
+          }
         }
       }
     }
@@ -155,7 +178,6 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     if (isInitializationStarted.getAndSet(true)) {
       return;
     }
-    myWatcher.start();
 
     // load external projects data
     ExternalProjectsDataStorage.getInstance(myProject).load();
@@ -236,7 +258,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   @NotNull
   @Override
   public ExternalProjectsState getState() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     for (ExternalProjectsView externalProjectsView : myProjectsViews) {
       if (externalProjectsView instanceof ExternalProjectsViewImpl) {
         final ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();
@@ -342,10 +364,5 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     TaskActivationState getTasksActivation(@NotNull ProjectSystemId systemId, @NotNull String projectPath);
 
     Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull ProjectSystemId systemId);
-  }
-
-  public static void disableProjectWatcherAutoUpdate(@NotNull Project project) {
-    ExternalProjectsManagerImpl projectsManager = getInstance(project);
-    projectsManager.myWatcher.disableAutoUpdate();
   }
 }

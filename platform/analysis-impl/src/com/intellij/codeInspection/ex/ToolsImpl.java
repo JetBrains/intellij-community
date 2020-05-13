@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -26,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class ToolsImpl implements Tools {
+public final class ToolsImpl implements Tools {
   @NonNls static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
   @NonNls static final String ENABLED_ATTRIBUTE = "enabled";
   @NonNls static final String LEVEL_ATTRIBUTE = "level";

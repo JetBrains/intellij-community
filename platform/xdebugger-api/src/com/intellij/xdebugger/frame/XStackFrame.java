@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a frame of execution stack. The selected frame is shown in 'Variables' panel of 'Debug' tool window.
  * Override {@link XValueContainer#computeChildren} to show local variable, parameters, fields available in the frame
- *
- * @author nik
  */
 public abstract class XStackFrame extends XValueContainer {
 

@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.RegExpFile;
@@ -26,6 +27,7 @@ import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpPattern;
 import org.intellij.lang.regexp.psi.RegExpRecursiveElementVisitor;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -69,7 +71,8 @@ public class ValueRegExpAnnotator implements Annotator {
         });
 
         if (count[0] != 1) {
-          holder.createWarningAnnotation(branch, "The pattern should contain exactly one capturing group");
+          holder.newAnnotation(HighlightSeverity.WARNING, IntelliLangBundle.message("annotation.message.the.pattern")).range(branch)
+            .create();
         }
       }
     }

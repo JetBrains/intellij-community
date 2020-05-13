@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class JpsModuleClasspathSerializer {
   private final String myClasspathId;
 

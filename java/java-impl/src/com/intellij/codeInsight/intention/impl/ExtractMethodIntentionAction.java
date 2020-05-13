@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.extract.method.text");
+    return JavaBundle.message("intention.extract.method.text");
   }
 
   @NotNull

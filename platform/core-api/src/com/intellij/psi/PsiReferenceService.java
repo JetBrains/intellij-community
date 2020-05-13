@@ -2,8 +2,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,13 +11,6 @@ import java.util.List;
  * @author Gregory.Shrago
  */
 public abstract class PsiReferenceService {
-
-  /**
-   * @deprecated unused
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public static final Key<Hints> HINTS = Key.create("HINTS");
 
   public static PsiReferenceService getService() {
     return ServiceManager.getService(PsiReferenceService.class);
@@ -39,8 +30,7 @@ public abstract class PsiReferenceService {
   @NotNull
   public abstract List<PsiReference> getReferences(@NotNull final PsiElement element, @NotNull final Hints hints);
 
-  @NotNull
-  public PsiReference[] getContributedReferences(@NotNull final PsiElement element) {
+  public PsiReference @NotNull [] getContributedReferences(@NotNull final PsiElement element) {
     final List<PsiReference> list = getReferences(element, Hints.NO_HINTS);
     return list.toArray(PsiReference.EMPTY_ARRAY);
   }

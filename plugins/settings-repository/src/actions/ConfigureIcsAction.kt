@@ -2,6 +2,7 @@
 package org.jetbrains.settingsRepository.actions
 
 import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
@@ -25,7 +26,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
           row(icsMessage("settings.upstream.url")) {
             urlTextField = textFieldWithBrowseButton(value = icsManager.repositoryManager.getUpstream(),
                                                      browseDialogTitle = "Choose Local Git Repository",
-                                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+                                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
           }
 
           noteRow(
@@ -50,6 +51,9 @@ internal class ConfigureIcsAction : DumbAwareAction() {
     }
 
     e.presentation.isEnabledAndVisible = icsManager.isActive || !(application.stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.isExclusivelyEnabled
+    if (!e.presentation.isEnabledAndVisible && ActionPlaces.MAIN_MENU == e.place) {
+      e.presentation.isVisible = true
+    }
     e.presentation.icon = null
   }
 }

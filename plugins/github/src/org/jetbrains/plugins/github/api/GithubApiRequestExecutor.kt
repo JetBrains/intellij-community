@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.Disposable
@@ -65,6 +65,8 @@ sealed class GithubApiRequestExecutor {
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
+      if (service<GHRequestExecutorBreaker>().isRequestsShouldFail) error(
+        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds.")
       indicator.checkCanceled()
       return createRequestBuilder(request)
         .tuner { connection ->
@@ -226,7 +228,7 @@ sealed class GithubApiRequestExecutor {
     }
   }
 
-  class Factory internal constructor(private val githubSettings: GithubSettings) {
+  class Factory {
     @CalledInAny
     fun create(token: String): WithTokenAuth {
       return create(token, true)
@@ -234,12 +236,12 @@ sealed class GithubApiRequestExecutor {
 
     @CalledInAny
     fun create(token: String, useProxy: Boolean = true): WithTokenAuth {
-      return WithTokenAuth(githubSettings, token, useProxy)
+      return WithTokenAuth(GithubSettings.getInstance(), token, useProxy)
     }
 
     @CalledInAny
     internal fun create(login: String, password: CharArray, twoFactorCodeSupplier: Supplier<String?>): WithBasicAuth {
-      return WithBasicAuth(githubSettings, login, password, twoFactorCodeSupplier)
+      return WithBasicAuth(GithubSettings.getInstance(), login, password, twoFactorCodeSupplier)
     }
 
     companion object {

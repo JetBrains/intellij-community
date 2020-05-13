@@ -55,8 +55,7 @@ public interface DocumentWindow extends Document {
 
   int injectedToHostLine(int line);
 
-  @NotNull
-  Segment[] getHostRanges();
+  Segment @NotNull [] getHostRanges();
 
   boolean areRangesEqual(@NotNull DocumentWindow documentWindow);
 

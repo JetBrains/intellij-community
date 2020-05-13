@@ -27,9 +27,9 @@ public class XPathConfigurable implements SearchableConfigurable {
     private ConfigUI configUI;
 
     @Override
-    public String getDisplayName() {
-        return "XPath Viewer";
-    }
+  public String getDisplayName() {
+    return XPathBundle.message("configurable.XPathConfigurable.display.name");
+  }
 
   @Override
   @Nullable

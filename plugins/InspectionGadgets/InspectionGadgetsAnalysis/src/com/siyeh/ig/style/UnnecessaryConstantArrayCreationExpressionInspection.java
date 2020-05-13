@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,13 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.constant.array.creation.expression.display.name");
-  }
 
   @Override
   @NotNull
@@ -70,8 +64,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.constant.array.creation.expression.quickfix", myType);
+      return CommonQuickFixBundle.message("fix.replace.with.x", "new "+myType);
     }
 
     @Override

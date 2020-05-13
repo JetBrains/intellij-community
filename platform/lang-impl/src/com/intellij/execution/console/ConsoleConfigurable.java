@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.options.Configurable;
@@ -15,12 +17,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,18 +31,24 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction.NO_ENCODING;
 
 /**
  * @author peter
  */
 public class ConsoleConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  private static final Logger LOG = Logger.getInstance(ConsoleConfigurable.class);
+
   private JPanel myMainComponent;
   private JCheckBox myCbUseSoftWrapsAtConsole;
   private JTextField myCommandsHistoryLimitField;
   private JCheckBox myCbOverrideConsoleCycleBufferSize;
+  private ConsoleEncodingComboBox myEncodingComboBox;
   private JTextField myConsoleCycleBufferSizeField;
   private JLabel myConsoleBufferSizeWarningLabel;
 
@@ -67,21 +76,26 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
           updateWarningLabel();
         }
       });
+      myEncodingComboBox = new ConsoleEncodingComboBox();
 
       JPanel northPanel = new JPanel(new GridBagLayout());
       GridBag gridBag = new GridBag();
       gridBag.anchor(GridBagConstraints.WEST).setDefaultAnchor(GridBagConstraints.WEST);
       northPanel.add(myCbUseSoftWrapsAtConsole, gridBag.nextLine().next());
       northPanel.add(Box.createHorizontalGlue(), gridBag.next().coverLine());
-      northPanel.add(new JLabel(ApplicationBundle.message("editbox.console.history.limit")), gridBag.nextLine().next());
+      JLabel label = new JLabel(ApplicationBundle.message("editbox.console.history.limit"));
+      label.setLabelFor(myCommandsHistoryLimitField);
+      northPanel.add(label, gridBag.nextLine().next());
       northPanel.add(myCommandsHistoryLimitField, gridBag.next());
       if (ConsoleBuffer.useCycleBuffer()) {
         northPanel.add(myCbOverrideConsoleCycleBufferSize, gridBag.nextLine().next());
         northPanel.add(myConsoleCycleBufferSizeField, gridBag.next());
-        northPanel.add(new JLabel(" KB"), gridBag.next());
+        northPanel.add(new JLabel(ExecutionBundle.message("settings.console.kb")), gridBag.next());
         northPanel.add(Box.createHorizontalStrut(JBUIScale.scale(20)), gridBag.next());
         northPanel.add(myConsoleBufferSizeWarningLabel, gridBag.next());
       }
+      northPanel.add(new JLabel(ApplicationBundle.message("combobox.console.default.encoding.label")), gridBag.nextLine().next());
+      northPanel.add(myEncodingComboBox,gridBag.next().coverLine());
       if (!editFoldingsOnly()) {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.add(northPanel, BorderLayout.WEST);
@@ -90,13 +104,15 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       Splitter splitter = new Splitter(true);
       myMainComponent.add(splitter, BorderLayout.CENTER);
       myPositivePanel =
-        new MyAddDeleteListPanel("Fold console lines that contain:", "Enter a substring of a console line you'd like to see folded:");
-      myNegativePanel = new MyAddDeleteListPanel("Exceptions:", "Enter a substring of a console line you don't want to fold:");
+        new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.console.lines"),
+                                 ApplicationBundle.message("console.enter.substring.folded"));
+      myNegativePanel = new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.exceptions"),
+                                                 ApplicationBundle.message("console.enter.substring.dont.fold:"));
       splitter.setFirstComponent(myPositivePanel);
       splitter.setSecondComponent(myNegativePanel);
 
-      myPositivePanel.getEmptyText().setText("Fold nothing");
-      myNegativePanel.getEmptyText().setText("No exceptions");
+      myPositivePanel.getEmptyText().setText(ApplicationBundle.message("console.fold.nothing"));
+      myNegativePanel.getEmptyText().setText(ApplicationBundle.message("console.no.exceptions"));
     }
     return myMainComponent;
   }
@@ -137,6 +153,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       isModified |= isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize());
       isModified |= isModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb());
     }
+    isModified |= isEncodingModified();
 
     return isModified;
   }
@@ -151,11 +168,24 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     }
   }
 
+  private boolean isEncodingModified() {
+    EncodingManager encodingManager = EncodingManager.getInstance();
+
+    Charset defaultEncoding = NO_ENCODING;
+    if (encodingManager instanceof EncodingManagerImpl) {
+      defaultEncoding = ((EncodingManagerImpl)encodingManager).getDefaultConsoleEncodingInternal();
+    }
+
+    Charset consoleEncoding = myEncodingComboBox.getSelectedCharset();
+    return defaultEncoding.compareTo(consoleEncoding) != 0;
+  }
+
   @Override
   public void apply() throws ConfigurationException {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     UISettings settingsManager = UISettings.getInstance();
     UISettingsState uiSettings = settingsManager.getState();
+    EncodingManager encodingManager = EncodingManager.getInstance();
 
     editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtConsole.isSelected(), SoftWrapAppliancePlaces.CONSOLE);
     boolean uiSettingsChanged = false;
@@ -176,6 +206,11 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     if (uiSettingsChanged) {
       settingsManager.fireUISettingsChanged();
     }
+    if (isEncodingModified()) {
+      if (encodingManager instanceof EncodingManagerImpl) {
+        ((EncodingManagerImpl)encodingManager).setDefaultConsoleEncodingInternal(myEncodingComboBox.getSelectedCharset());
+      }
+    }
 
     myNegativePanel.applyTo(mySettings.getNegativePatterns());
     myPositivePanel.applyTo(mySettings.getPositivePatterns());
@@ -185,6 +220,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   public void reset() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     UISettingsState uiSettings = UISettings.getInstance().getState();
+    EncodingManager encodingManager = EncodingManager.getInstance();
 
     myCbUseSoftWrapsAtConsole.setSelected(editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     myCommandsHistoryLimitField.setText(Integer.toString(uiSettings.getConsoleCommandHistoryLimit()));
@@ -194,6 +230,13 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     myConsoleCycleBufferSizeField.setEnabled(ConsoleBuffer.useCycleBuffer() && uiSettings.getOverrideConsoleCycleBufferSize());
     myConsoleCycleBufferSizeField.setText(Integer.toString(uiSettings.getConsoleCycleBufferSizeKb()));
 
+    Charset encoding = NO_ENCODING;
+    if (encodingManager instanceof EncodingManagerImpl) {
+      encoding = ((EncodingManagerImpl)encodingManager).getDefaultConsoleEncodingInternal();
+    } else {
+      LOG.error("Expected EncodingManagerImpl but got " + encodingManager.getClass().getName());
+    }
+    myEncodingComboBox.reset(encoding);
 
     myNegativePanel.resetFrom(mySettings.getNegativePatterns());
     myPositivePanel.resetFrom(mySettings.getPositivePatterns());
@@ -213,9 +256,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Console";
+    return ExecutionBundle.message("configurable.ConsoleConfigurable.display.name");
   }
 
   @Override
@@ -245,7 +287,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     @Nullable
     private String showEditDialog(final String initialValue) {
-      return Messages.showInputDialog(this, myQuery, "Folding Pattern", Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
+      return Messages.showInputDialog(this, myQuery, ExecutionBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
         @Override
         public boolean checkInput(String inputString) {
           return !StringUtil.isEmpty(inputString);

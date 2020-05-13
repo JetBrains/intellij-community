@@ -8,17 +8,17 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.text.VersionComparatorUtil
 
 class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
-
-  private val myPluginId = PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID)
+  private val myPluginId = PluginManagerCore.CORE_ID
   private val knownAnnotations: Map<String, Map<VersionRange, AnnotationsLocation>> by lazy { buildAnnotations() }
 
-  override fun getLocations(library: Library,
+  override fun getLocations(project: Project,
+                            library: Library,
                             artifactId: String?,
                             groupId: String?,
                             version: String?): Collection<AnnotationsLocation> {

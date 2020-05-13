@@ -15,7 +15,7 @@
     <suffix>}</suffix>
     <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("style")).inside(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
   </injection>
-\  <injection language="JavaScript" injector-id="xml">
+  <injection language="JavaScript" injector-id="xml">
     <display-name>script</display-name>
     <place><![CDATA[xmlTag().withLocalName(string().equalTo("script")).withNamespace(string().equalTo("http://www.w3.org/1999/xhtml"))]]></place>
   </injection>

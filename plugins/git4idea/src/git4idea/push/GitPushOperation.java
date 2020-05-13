@@ -344,7 +344,7 @@ public class GitPushOperation {
   private void collectUpdatedFiles(@NotNull UpdatedFiles updatedFiles, @NotNull GitRepository repository,
                                    @NotNull String preUpdatePosition) {
     try {
-      new MergeChangeCollector(myProject, repository.getRoot(), new GitRevisionNumber(preUpdatePosition)).collect(updatedFiles);
+      new MergeChangeCollector(myProject, repository, new GitRevisionNumber(preUpdatePosition)).collect(updatedFiles);
     }
     catch (VcsException e) {
       LOG.info(e);
@@ -437,7 +437,7 @@ public class GitPushOperation {
                                    @NotNull UpdateMethod updateMethod,
                                    boolean checkForRebaseOverMergeProblem) {
     GitUpdateProcess updateProcess = new GitUpdateProcess(myProject, myProgressIndicator,
-                                                          new HashSet<>(rootsToUpdate), UpdatedFiles.create(),
+                                                          new HashSet<>(rootsToUpdate), UpdatedFiles.create(), null,
                                                           checkForRebaseOverMergeProblem, false);
     GitUpdateResult updateResult = updateProcess.update(updateMethod);
     Map<GitRepository, HashRange> ranges = updateProcess.getUpdatedRanges();

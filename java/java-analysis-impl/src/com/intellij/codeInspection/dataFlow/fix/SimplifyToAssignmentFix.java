@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInspection.dataFlow.fix;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,7 +30,7 @@ public class SimplifyToAssignmentFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.data.flow.simplify.to.assignment.quickfix.name");
+    return JavaAnalysisBundle.message("inspection.data.flow.simplify.to.assignment.quickfix.name");
   }
 
   @Override

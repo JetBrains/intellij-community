@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -20,10 +21,10 @@ import java.util.List;
  */
 public class TextFilter extends FilterAction {
 
-  boolean showHierarchy;
+  boolean myShowHierarchy;
 
   public TextFilter(FilterTable filterTable) {
-    super("Text", filterTable);
+    super(SSRBundle.messagePointer("text.filter.name"), filterTable);
   }
 
   @Override
@@ -54,18 +55,17 @@ public class TextFilter extends FilterAction {
       return false;
     }
     final StructuralSearchProfile profile = myTable.getProfile();
-    showHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
+    myShowHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
     return profile.isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, target);
   }
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
     final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
-    myLabel.append("text=");
-    if (constraint.isInvertRegExp()) myLabel.append("!");
-    myLabel.append(constraint.getRegExp());
-    if (constraint.isWholeWordsOnly()) myLabel.append(", whole words", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    if (constraint.isWithinHierarchy()) myLabel.append(", within hierarchy", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    String value = constraint.isInvertRegExp() ? "!" + constraint.getRegExp() : constraint.getRegExp();
+    myLabel.append(SSRBundle.message("text.0.label", value));
+    if (constraint.isWholeWordsOnly()) myLabel.append(SSRBundle.message("whole.words.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    if (constraint.isWithinHierarchy()) myLabel.append(SSRBundle.message("within.hierarchy.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   @Override
@@ -73,13 +73,11 @@ public class TextFilter extends FilterAction {
     return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
-      private final JCheckBox myWordsCheckBox = new JCheckBox("Words", false);
-      private final JCheckBox myHierarchyCheckBox = new JCheckBox("Within type hierarchy", false);
-      private final JLabel myTextLabel = new JLabel("text=");
+      private final JCheckBox myWordsCheckBox = new JCheckBox(SSRBundle.message("whole.words.check.box"), false);
+      private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
+      private final JLabel myTextLabel = new JLabel(SSRBundle.message("text.label"));
       private final ContextHelpLabel myHelpLabel =
-        ContextHelpLabel.create("<p>Text of the match is checked against the provided pattern." +
-                                "<p>Use \"!\" to invert the pattern." +
-                                "<p>Regular expressions are supported.");
+        ContextHelpLabel.create(SSRBundle.message("text.filter.help.text"));
 
       @Override
       protected void layoutComponents() {
@@ -124,7 +122,7 @@ public class TextFilter extends FilterAction {
         myTextField.setText((myConstraint.isInvertRegExp() ? "!" : "") + myConstraint.getRegExp());
         myWordsCheckBox.setSelected(myConstraint.isWholeWordsOnly());
         myHierarchyCheckBox.setSelected(myConstraint.isWithinHierarchy());
-        myHierarchyCheckBox.setVisible(showHierarchy);
+        myHierarchyCheckBox.setVisible(myShowHierarchy);
       }
 
       @Override

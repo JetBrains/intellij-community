@@ -1,12 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.FilePathIconProvider;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.PlatformIcons;
@@ -36,6 +38,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     return myShowFlatten.get();
   }
 
+  @DirtyUI
   @Override
   public void customizeCellRenderer(@NotNull JTree tree,
                                     Object value,
@@ -50,7 +53,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   }
 
   public void appendFileName(@Nullable VirtualFile vFile, @NotNull String fileName, Color color) {
-    ChangesFileNameDecorator decorator = myProject != null && !myProject.isDefault()
+    ChangesFileNameDecorator decorator = myProject != null && !myProject.isDefault() && !myProject.isDisposed()
                                          ? ChangesFileNameDecorator.getInstance(myProject) : null;
 
     if (decorator != null) {
@@ -89,9 +92,17 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  public void setIcon(@NotNull FileType fileType, boolean isDirectory) {
-    Icon icon = isDirectory ? PlatformIcons.FOLDER_ICON : fileType.getIcon();
-    setIcon(icon);
+  public void setIcon(@NotNull FilePath filePath, boolean isDirectory) {
+    if (isDirectory) {
+      setIcon(PlatformIcons.FOLDER_ICON);
+      return;
+    }
+    Icon icon = FilePathIconProvider.EP_NAME.computeSafeIfAny(provider -> provider.getIcon(filePath, myProject));
+    if (icon != null) {
+      setIcon(icon);
+      return;
+    }
+    setIcon(filePath.getFileType().getIcon());
   }
 
   public void setBackgroundInsets(@Nullable JBInsets backgroundInsets) {

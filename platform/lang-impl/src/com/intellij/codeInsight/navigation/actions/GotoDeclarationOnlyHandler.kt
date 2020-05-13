@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.NavigationUtil
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.*
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.findAllTargetElements
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.gotoTargetElement
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
+import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -28,46 +29,44 @@ object GotoDeclarationOnlyHandler : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration.only")
     val dumbService = DumbService.getInstance(project)
-    try {
-      dumbService.isAlternativeResolveEnabled = true
-      val offset = editor.caretModel.offset
-      val elements = underModalProgress(project, "Resolving Reference...") {
-        findAllTargetElements(project, editor, offset)
-      }
-      if (elements.size == 1) {
-        // simplest case
-        val element = elements[0]
-        val navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, element.navigationElement)
-        if (navElement != null) {
-          gotoTargetElement(navElement, editor, file)
+    dumbService.runWithAlternativeResolveEnabled<RuntimeException> {
+      try {
+        val offset = editor.caretModel.offset
+        val elements = underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
+          findAllTargetElements(project, editor, offset)
         }
-      }
-      else if (elements.isEmpty()) {
-        // this means either there is really nowhere to go or weird TargetElementUtil didn't return anything
-        val reference = TargetElementUtil.findReference(editor, offset)
-        if (reference != null) {
-          val targets = underModalProgress(project, "Resolving Reference...") {
-            TargetElementUtil.getInstance().getTargetCandidates(reference)
-          }
-          if (targets.isNotEmpty()) {
-            chooseAmbiguousTarget(editor, file, targets.toArray(PsiElement.EMPTY_ARRAY))
-            return
+        if (elements.size == 1) {
+          // simplest case
+          val element = elements[0]
+          val navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, element.navigationElement)
+          if (navElement != null) {
+            gotoTargetElement(navElement, editor, file)
           }
         }
-        //disable 'no declaration found' notification for keywords
-        if (!isKeywordUnderCaret(project, file, offset)) {
-          HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to")
+        else if (elements.isEmpty()) {
+          // this means either there is really nowhere to go or weird TargetElementUtil didn't return anything
+          val reference = TargetElementUtil.findReference(editor, offset)
+          var executed = false
+          if (reference != null) {
+            val targets = underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
+              TargetElementUtil.getInstance().getTargetCandidates(reference)
+            }
+            if (targets.isNotEmpty()) {
+              chooseAmbiguousTarget(editor, file, targets.toArray(PsiElement.EMPTY_ARRAY))
+              executed = true
+            }
+          }
+          if (!executed) {
+            notifyNowhereToGo(project, editor, file, offset)
+          }
+        }
+        else {
+          chooseAmbiguousTarget(editor, file, elements)
         }
       }
-      else {
-        chooseAmbiguousTarget(editor, file, elements)
+      catch (e: IndexNotReadyException) {
+        dumbService.showDumbModeNotification(CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"))
       }
-    }
-    catch (e: IndexNotReadyException) {
-      dumbService.showDumbModeNotification("Navigation is not available here during index update")
-    }
-    finally {
-      dumbService.isAlternativeResolveEnabled = false
     }
   }
 

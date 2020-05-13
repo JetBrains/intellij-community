@@ -10,17 +10,15 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import java.awt.Rectangle
 import java.util.*
-import javax.swing.JComponent
-import javax.swing.JFrame
-import javax.swing.JPanel
-import javax.swing.SwingUtilities
+import javax.swing.*
 import javax.swing.event.ChangeListener
 
-class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
+class MainFrameHeader(frame: JFrame, menuBar: IdeMenuBar?) : FrameHeader(frame){
   private val mySelectedEditorFilePath: CustomDecorationPath
   private val myIdeMenu: IdeMenuBar
   private val menuHolder: JComponent
@@ -31,10 +29,13 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
   private var disposable: Disposable? = null
 
   init {
-    layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top, hidemode 2", "$H_GAP[pref!][][grow][pref!]")
+    layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top, hidemode 2", "[pref!][][grow][pref!]")
+    val empty = JBUI.Borders.empty(V, H, V, 0)
+
+    productIcon.border = empty
     add(productIcon)
 
-    myIdeMenu = CustomHeaderMenuBar()
+    myIdeMenu = CustomHeaderMenuBar(menuBar)
 
     changeListener = ChangeListener {
       updateCustomDecorationHitTestSpots()
@@ -42,12 +43,17 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
 
     mySelectedEditorFilePath = CustomDecorationPath(frame) {updateCustomDecorationHitTestSpots()}
 
-    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 2", "$H_GAP[pref!]${GAP_AFTER_MENU - H_GAP}"))
+    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 3", "[pref!]${JBUI.scale(10)}"))
+    menuHolder.border = JBUI.Borders.empty(0, H - 1, 0, 0)
     menuHolder.isOpaque = false
     menuHolder.add(myIdeMenu, "wmin 0, wmax pref, top, growy")
 
     add(menuHolder, "wmin 0, top, growy, pushx")
-    add(mySelectedEditorFilePath.getView(), "left, growx, gapafter $H_GAP, gapbottom 1, gapbefore $H_GAP")
+    val view = mySelectedEditorFilePath.getView().apply {
+      border = empty
+    }
+
+    add(view, "left, growx, gapbottom 1")
     add(buttonPanes.getView(), "top, wmin pref")
 
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})

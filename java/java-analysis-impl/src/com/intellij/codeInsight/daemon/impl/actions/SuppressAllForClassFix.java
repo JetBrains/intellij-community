@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SuppressAllForClassFix extends SuppressFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassFix");
+  private static final Logger LOG = Logger.getInstance(SuppressAllForClassFix.class);
 
   public SuppressAllForClassFix() {
     super(SuppressionUtil.ALL);
@@ -63,7 +63,7 @@ public class SuppressAllForClassFix extends SuppressFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("suppress.all.for.class");
+    return JavaAnalysisBundle.message("suppress.all.for.class");
   }
 
   @Override

@@ -6,6 +6,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -166,12 +169,24 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   /**
+   * Consider using {@link #toCommandLine(TargetEnvironmentRequest, TargetEnvironmentConfiguration)} instead with request created by {@link com.intellij.execution.target.local.LocalTargetEnvironmentFactory} as an argument
+   *
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
    */
   @NotNull
   public GeneralCommandLine toCommandLine() throws CantRunException {
     return JdkUtil.setupJVMCommandLine(this);
+  }
+
+  /**
+   * @throws CantRunException when incorrect Java SDK is specified
+   * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
+   */
+  @NotNull
+  public TargetedCommandLineBuilder toCommandLine(@NotNull TargetEnvironmentRequest request, @Nullable TargetEnvironmentConfiguration configuration)
+    throws CantRunException {
+    return JdkUtil.setupJVMCommandLine(this, request, configuration);
   }
 
   @NotNull

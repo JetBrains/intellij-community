@@ -74,7 +74,6 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
     if (elements.size() < minElementCount()) return null;
     if (!canChop(elements)) return null;
     if (!hasElementsNotOnSeparateLines(elements)) return null;
-    canChop(elements);
     return new Context<>(list, elements);
   }
 

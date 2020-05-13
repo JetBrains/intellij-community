@@ -34,7 +34,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAcces
  * @date: 26.03.2007
  */
 public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeReferenceElement> implements GrCodeReferenceElement {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl");
+  private static final Logger LOG = Logger.getInstance(GrCodeReferenceElementImpl.class);
 
   public GrCodeReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
@@ -74,7 +74,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @NotNull
   @Override
   protected GrReferenceElement<GrCodeReferenceElement> createQualifiedRef(@NotNull String qName) {
-    return GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+    return GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(qName);
   }
 
   @Override
@@ -230,9 +230,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return TypeInferenceHelper.getTopContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     if (shouldInferTypeArguments(this)) {
       return getDiamondTypes(this);
     }
@@ -247,9 +246,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return doGetKind(this);
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return findChildrenByType(GroovyStubElementTypes.ANNOTATION, GrAnnotation.class);
   }
 }

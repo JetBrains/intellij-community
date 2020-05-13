@@ -6,6 +6,6 @@ def foo() {}
 
 new A() {
   def a(){
-    fo<ref>o()
+    fo<caret>o()
   }
 }

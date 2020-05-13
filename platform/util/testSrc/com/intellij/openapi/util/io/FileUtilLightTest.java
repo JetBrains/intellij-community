@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.PropertiesUtil;
@@ -141,18 +141,6 @@ public class FileUtilLightTest {
     String data = "key2=value2\nkey1=value1\nkey3=value3";
     Map<String, String> map = PropertiesUtil.loadProperties(new StringReader(data));
     assertEquals(ContainerUtil.newArrayList("key2", "key1", "key3"), new ArrayList<>(map.keySet()));
-  }
-
-  @Test
-  public void testRootPath() {
-    assertTrue(FileUtil.isRootPath("/"));
-    assertTrue(FileUtil.isRootPath("c:/"));
-    assertTrue(FileUtil.isRootPath("Z:\\"));
-
-    assertFalse(FileUtil.isRootPath(""));
-    assertFalse(FileUtil.isRootPath("/tmp"));
-    assertFalse(FileUtil.isRootPath("c:"));
-    assertFalse(FileUtil.isRootPath("X:\\Temp"));
   }
 
   @Test

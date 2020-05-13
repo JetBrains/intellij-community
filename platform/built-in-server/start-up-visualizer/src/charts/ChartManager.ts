@@ -1,16 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
 
-import am4themes_animated from "@amcharts/amcharts4/themes/animated"
-
 am4core.options.onlyShowOnViewport = true
-am4core.useTheme(am4themes_animated)
 
 export interface ChartManager {
   render(data: DataManager): void
 
+  dispose(): void
+}
+
+export interface StatChartManager {
   dispose(): void
 }
 
@@ -21,14 +22,20 @@ export function addExportMenu(chart: am4charts.XYChart) {
     const chartElement = topItems[i]
     if (chartElement.label == "Data") {
       topItems.splice(i, 1)
-    } else if (chartElement.label == "Image") {
+    }
+    else if (chartElement.label == "Image") {
       // remove PDF
-      const length = chartElement.menu!!.length
-      if (chartElement.menu!![length - 1].label == "PDF")
-        chartElement.menu!!.length = length - 1
+      const subMenu = chartElement.menu!!
+      const length = subMenu.length
+      if (subMenu[length - 1].label == "PDF") {
+        subMenu.length = length - 1
+      }
     }
   }
+
   chart.exporting.menu = exportMenu
+  chart.exporting.menu.align = "right"
+  chart.exporting.menu.verticalAlign = "bottom"
 }
 
 export function configureCommonChartSettings(chart: am4charts.XYChart) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -37,7 +38,7 @@ public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
       final String qualifiedName = aPackage.getQualifiedName();
       if (!qualifiedName.isEmpty()) return qualifiedName;
       if (presentable) {
-        return PsiBundle.message("default.package.presentation") + " (" + directory.getVirtualFile().getPresentableUrl() + ")";
+        return JavaBundle.message("default.package.presentable.name") + " (" + directory.getVirtualFile().getPresentableUrl() + ")";
       }
       return "";
     }

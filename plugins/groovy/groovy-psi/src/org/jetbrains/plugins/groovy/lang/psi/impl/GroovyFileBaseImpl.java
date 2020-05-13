@@ -86,8 +86,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  @NotNull
-  public GrTypeDefinition[] getTypeDefinitions() {
+  public GrTypeDefinition @NotNull [] getTypeDefinitions() {
     final StubElement<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenByType(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
@@ -97,8 +96,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  @NotNull
-  public GrMethod[] getMethods() {
+  public GrMethod @NotNull [] getMethods() {
     final StubElement<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenByType(GroovyStubElementTypes.METHOD, GrMethod.ARRAY_FACTORY);
@@ -108,8 +106,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  @NotNull
-  public GrTopStatement[] getTopStatements() {
+  public GrTopStatement @NotNull [] getTopStatements() {
     return findChildrenByClass(GrTopStatement.class);
   }
 
@@ -133,9 +130,8 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
   }
 
-  @NotNull
   @Override
-  public GrStatement[] getStatements() {
+  public GrStatement @NotNull [] getStatements() {
     return findChildrenByClass(GrStatement.class);
   }
 
@@ -182,8 +178,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getClasses() {
+  public PsiClass @NotNull [] getClasses() {
     return getTypeDefinitions();
   }
 
@@ -200,10 +195,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     assert isValid();
     Instruction[] result = SoftReference.dereference(myControlFlow);
     if (result == null) {
-      result = new ControlFlowBuilder(getProject()).buildControlFlow(this);
+      result = new ControlFlowBuilder().buildControlFlow(this);
       myControlFlow = new SoftReference<>(result);
     }
-    return ControlFlowBuilder.assertValidPsi(result);
+    return result;
   }
 
   @Override

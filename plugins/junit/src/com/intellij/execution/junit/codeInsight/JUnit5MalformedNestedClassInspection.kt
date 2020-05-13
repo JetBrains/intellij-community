@@ -3,6 +3,7 @@ package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.execution.JUnitBundle
 import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmElementVisitor
@@ -11,6 +12,7 @@ import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.lang.jvm.inspection.JvmLocalInspection
 import com.intellij.openapi.project.Project
+import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 
 class JUnit5MalformedNestedClassInspection : JvmLocalInspection() {
@@ -22,7 +24,7 @@ class JUnit5MalformedNestedClassInspection : JvmLocalInspection() {
             clazz.hasAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) {
 
           val fixes = createModifierActions(clazz, modifierRequest(JvmModifier.STATIC, false)).toTypedArray()
-          sink.highlight("Only non-static nested classes can serve as @Nested test classes.",
+          sink.highlight(JUnitBundle.message("junit5.malformed.nested.class.inspection.description"),
                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                          *IntentionWrapper.wrapToQuickFixes(fixes, clazz.sourceElement!!.containingFile))
         }

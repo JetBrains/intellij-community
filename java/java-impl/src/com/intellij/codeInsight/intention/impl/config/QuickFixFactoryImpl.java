@@ -55,7 +55,7 @@ import java.util.*;
  * @author cdr
  */
 public class QuickFixFactoryImpl extends QuickFixFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
 
   @NotNull
   @Override
@@ -102,7 +102,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull String methodText,
                                                                         @NotNull PsiClass toClass,
-                                                                        @NotNull String... exceptions) {
+                                                                        String @NotNull ... exceptions) {
     return new AddMethodFix(methodText, toClass, exceptions);
   }
 
@@ -155,12 +155,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass) {
-    return new MakeClassInterfaceFix(aClass, true);
-  }
-
-  @NotNull
-  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface) {
     return new MakeClassInterfaceFix(aClass, makeInterface);
   }
@@ -199,14 +193,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createCreateFieldOrPropertyFix(@NotNull final PsiClass aClass, @NotNull final String name, @NotNull final PsiType type, @NotNull final PropertyMemberType targetMember, @NotNull final PsiAnnotation... annotations) {
+  public IntentionAction createCreateFieldOrPropertyFix(@NotNull final PsiClass aClass, @NotNull final String name, @NotNull final PsiType type, @NotNull final PropertyMemberType targetMember, final PsiAnnotation @NotNull ... annotations) {
     return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
-  }
-
-  @NotNull
-  @Override
-  public IntentionAction createSetupJDKFix() {
-    return SetupJDKFix.getInstance();
   }
 
   @NotNull
@@ -279,10 +267,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createDeleteReturnFix(@NotNull PsiMethod method,
-                                               @NotNull PsiReturnStatement returnStatement,
-                                               @NotNull PsiExpression returnValue) {
-    return new DeleteReturnFix(method, returnStatement, returnValue);
+  public IntentionAction createDeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement) {
+    return new DeleteReturnFix(method, returnStatement);
   }
 
   @NotNull
@@ -475,7 +461,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
-                                                                 @NotNull PsiExpression[] expressions,
+                                                                 PsiExpression @NotNull [] expressions,
                                                                  @NotNull PsiSubstitutor substitutor,
                                                                  @NotNull PsiElement context,
                                                                  boolean changeAllUsages,
@@ -486,7 +472,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
-                                                                             @NotNull PsiExpression[] expressions,
+                                                                             PsiExpression @NotNull [] expressions,
                                                                              @NotNull PsiSubstitutor substitutor,
                                                                              @NotNull PsiElement context,
                                                                              boolean changeAllUsages,
@@ -622,34 +608,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createOptimizeImportsFix(final boolean onTheFly) {
-    return new IntentionAction() {
-      @NotNull
-      @Override
-      public String getText() {
-        return QuickFixBundle.message("optimize.imports.fix");
-      }
-
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return QuickFixBundle.message("optimize.imports.fix");
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        return (!onTheFly || timeToOptimizeImports(file)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
-      }
-
-      @Override
-      public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-        invokeOnTheFlyImportOptimizer(file);
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return true;
-      }
-    };
+    return new OptimizeImportsAction(onTheFly);
   }
 
   @Override
@@ -752,7 +711,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull final PsiAnnotation annotation,
-                                                                         @NotNull final PsiMethod[] annotationMethods,
+                                                                         final PsiMethod @NotNull [] annotationMethods,
                                                                          @NotNull final Collection<String> missedElements) {
     return new AddMissingRequiredAnnotationParametersFix(annotation, annotationMethods, missedElements);
   }
@@ -912,5 +871,50 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule) {
     return new WrapSwitchRuleStatementsIntoBlockFix(rule);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddParameterListFix(PsiMethod method) {
+    return new AddParameterListFix(method);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddEmptyRecordHeaderFix(PsiClass psiClass) {
+    return new AddEmptyRecordHeaderFix(psiClass);
+  }
+
+  private static class OptimizeImportsAction implements IntentionAction {
+    private final boolean myOnTheFly;
+
+    public OptimizeImportsAction(boolean onTheFly) {myOnTheFly = onTheFly;}
+
+    @NotNull
+    @Override
+    public String getText() {
+      return QuickFixBundle.message("optimize.imports.fix");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return QuickFixBundle.message("optimize.imports.fix");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return (!myOnTheFly || timeToOptimizeImports(file)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
+    }
+
+    @Override
+    public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+      invokeOnTheFlyImportOptimizer(file);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
+    }
   }
 }

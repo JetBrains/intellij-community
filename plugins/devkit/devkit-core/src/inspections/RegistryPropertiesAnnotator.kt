@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.impl.PropertyImpl
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
@@ -54,15 +55,15 @@ class RegistryPropertiesAnnotator : Annotator {
     val groupName = propertyName.substringBefore('.').toLowerCase()
     if (PLUGIN_GROUP_NAMES.contains(groupName) ||
         propertyName.startsWith("editor.config.")) {
-      holder.createErrorAnnotation(element.node, "Plugin specific keys should be registered via 'com.intellij.registryKey' EP")
-        .registerFix(ShowEPDeclarationIntention(propertyName))
+      holder.newAnnotation(HighlightSeverity.ERROR, "Plugin specific keys should be registered via 'com.intellij.registryKey' EP")
+        .withFix(ShowEPDeclarationIntention(propertyName)).create()
     }
 
     val propertiesFile = file as PropertiesFile
     val descriptionProperty = propertiesFile.findPropertyByKey(propertyName + DESCRIPTION_SUFFIX)
     if (descriptionProperty == null) {
-      holder.createWarningAnnotation(element.node, "Key '$propertyName' does not have description key")
-        .registerFix(AddDescriptionKeyIntention(propertyName))
+      holder.newAnnotation(HighlightSeverity.WARNING, "Key '$propertyName' does not have description key")
+        .withFix(AddDescriptionKeyIntention(propertyName)).create()
     }
   }
 

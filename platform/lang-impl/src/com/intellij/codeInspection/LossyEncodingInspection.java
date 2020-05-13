@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.ide.DataManager;
@@ -62,20 +48,13 @@ import java.util.List;
 import java.util.Set;
 
 public class LossyEncodingInspection extends LocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.LossyEncodingInspection");
+  private static final Logger LOG = Logger.getInstance(LossyEncodingInspection.class);
 
   @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("lossy.encoding");
   }
 
   @Override
@@ -86,8 +65,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) return null;
     if (!file.isPhysical()) return null;
     FileViewProvider viewProvider = file.getViewProvider();
@@ -123,17 +101,16 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
     if (!isGoodCharset(virtualFile, charset)) {
       LocalQuickFix[] fixes = getFixes(file, virtualFile, charset);
-      descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '" + charset + "'", true,
+      descriptors.add(manager.createProblemDescriptor(file, InspectionsBundle.message("inspection.lossy.encoding.description", charset), true,
                                                       ProblemHighlightType.GENERIC_ERROR, isOnTheFly, fixes));
       return false;
     }
     return true;
   }
 
-  @NotNull
-  private static LocalQuickFix[] getFixes(@NotNull PsiFile file,
-                                          @NotNull VirtualFile virtualFile,
-                                          @NotNull Charset wrongCharset) {
+  private static LocalQuickFix @NotNull [] getFixes(@NotNull PsiFile file,
+                                                    @NotNull VirtualFile virtualFile,
+                                                    @NotNull Charset wrongCharset) {
     Set<Charset> suspects = ContainerUtil.newHashSet(CharsetToolkit.getDefaultSystemCharset(), CharsetToolkit.getPlatformCharset());
     suspects.remove(wrongCharset);
     List<Charset> goodCharsets = ContainerUtil.filter(suspects, c -> isGoodCharset(virtualFile, c));
@@ -145,7 +122,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
         @NotNull
         @Override
         public String getFamilyName() {
-          return "Reload in '" + goodCharset.displayName()+"'";
+          return InspectionsBundle.message("reload.file.encoding.family.name", goodCharset.displayName());
         }
 
         @Override
@@ -156,7 +133,9 @@ public class LossyEncodingInspection extends LocalInspectionTool {
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
           Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-          if (document == null) return;
+          if (document == null) {
+            return;
+          }
           ChangeFileEncodingAction.changeTo(project, document, null, virtualFile, goodCharset, EncodingUtil.Magic8.ABSOLUTELY, EncodingUtil.Magic8.ABSOLUTELY);
         }
       });
@@ -165,7 +144,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
         @NotNull
         @Override
         public String getFamilyName() {
-          return "Set project encoding to '" + goodCharset.displayName()+"'";
+          return InspectionsBundle.message("set.project.encoding.family.name", goodCharset.displayName());
         }
 
         @Override
@@ -321,7 +300,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getText() {
-      return "Reload in another encoding";
+      return InspectionsBundle.message("reload.in.another.encoding.text");
     }
 
     @Override
@@ -349,7 +328,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Change file encoding";
+      return InspectionsBundle.message("change.encoding.fix.family.name");
     }
 
     @Override

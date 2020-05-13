@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.SettingsProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
@@ -13,6 +11,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -23,23 +22,23 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder.ID;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class FavoritesTreeStructure extends ProjectTreeStructure {
-
+public final class FavoritesTreeStructure extends ProjectTreeStructure {
   private static final Logger LOGGER = Logger.getInstance(FavoritesTreeStructure.class);
-  private TreeStructureProvider myNonProjectProvider = null;
+  private final TreeStructureProvider myNonProjectProvider;
   public FavoritesTreeStructure(@NotNull Project project) {
-    super(project, FavoritesProjectViewPane.ID);
+    super(project, ID);
     myNonProjectProvider = new MyProvider(project);
   }
 
   @Override
-  protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
+  protected AbstractTreeNode<?> createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
     return new FavoritesRootNode(project);
   }
 
@@ -48,14 +47,13 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     if (!(element instanceof AbstractTreeNode)) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    final AbstractTreeNode favTreeElement = (AbstractTreeNode)element;
+    AbstractTreeNode<?> favTreeElement = (AbstractTreeNode<?>)element;
     try {
       if (!(element instanceof FavoritesListNode)) {
         Object[] elements = super.getChildElements(favTreeElement);
@@ -65,18 +63,18 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
         return ArrayUtil.toObjectArray(myNonProjectProvider.modify(favTreeElement, new ArrayList<>(), settings));
       }
 
-      final List<AbstractTreeNode> result = new ArrayList<>();
-      final FavoritesListNode listNode = (FavoritesListNode)element;
+      List<AbstractTreeNode<?>> result = new ArrayList<>();
+      FavoritesListNode listNode = (FavoritesListNode)element;
       if (listNode.getProvider() != null) {
         return ArrayUtil.toObjectArray(listNode.getChildren());
       }
-      final Collection<AbstractTreeNode> roots = FavoritesListNode.getFavoritesRoots(myProject, listNode.getName(), listNode);
+      Collection<AbstractTreeNode<?>> roots = FavoritesListNode.getFavoritesRoots(myProject, listNode.getName(), listNode);
       for (AbstractTreeNode<?> abstractTreeNode : roots) {
         final Object value = abstractTreeNode.getValue();
 
         if (value == null) continue;
         if (value instanceof PsiElement && !((PsiElement)value).isValid()) continue;
-        if (value instanceof SmartPsiElementPointer && ((SmartPsiElementPointer)value).getElement() == null) continue;
+        if (value instanceof SmartPsiElementPointer && ((SmartPsiElementPointer<?>)value).getElement() == null) continue;
 
         boolean invalid = false;
         for (FavoriteNodeProvider nodeProvider : FavoriteNodeProvider.EP_NAME.getExtensions(myProject)) {
@@ -89,11 +87,9 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
         result.add(abstractTreeNode);
       }
-      //myFavoritesRoots = result;
-      //if (result.isEmpty()) {
-      //  result.add(getEmptyScreen());
-      //}
       return ArrayUtil.toObjectArray(result);
+    }
+    catch (ProcessCanceledException ignored) {
     }
     catch (Exception e) {
       LOGGER.error(e);
@@ -102,29 +98,14 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  private AbstractTreeNode<String> getEmptyScreen() {
-    return new AbstractTreeNode<String>(myProject, IdeBundle.message("favorites.empty.screen")) {
-      @Override
-      @NotNull
-      public Collection<AbstractTreeNode> getChildren() {
-        return Collections.emptyList();
-      }
-
-      @Override
-      public void update(@NotNull final PresentationData presentation) {
-        presentation.setPresentableText(getValue());
-      }
-    };
-  }
-
   @Override
   public Object getParentElement(@NotNull Object element) {
-    AbstractTreeNode parent = null;
+    AbstractTreeNode<?> parent = null;
     if (element == getRootElement()) {
       return null;
     }
     if (element instanceof AbstractTreeNode) {
-      parent = ((AbstractTreeNode)element).getParent();
+      parent = ((AbstractTreeNode<?>)element).getParent();
     }
     if (parent == null) {
       return getRootElement();
@@ -134,8 +115,8 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
-    return new FavoritesTreeNodeDescriptor(myProject, parentDescriptor, (AbstractTreeNode)element);
+  public NodeDescriptor<?> createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+    return new FavoriteTreeNodeDescriptor(myProject, parentDescriptor, (AbstractTreeNode<?>)element);
   }
 
   private static class MyProvider implements TreeStructureProvider {
@@ -147,17 +128,17 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
     @NotNull
     @Override
-    public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
-                                               @NotNull Collection<AbstractTreeNode> children,
+    public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                               @NotNull Collection<AbstractTreeNode<?>> children,
                                                ViewSettings settings) {
       if (parent instanceof PsiDirectoryNode && children.isEmpty()) {
         VirtualFile virtualFile = ((PsiDirectoryNode)parent).getVirtualFile();
         if (virtualFile == null) return children;
         VirtualFile[] virtualFiles = virtualFile.getChildren();
-        List<AbstractTreeNode> result = new ArrayList<>();
+        List<AbstractTreeNode<?>> result = new ArrayList<>();
         PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(myProject);
         for (VirtualFile file : virtualFiles) {
-          AbstractTreeNode child;
+          AbstractTreeNode<?> child;
           if (file.isDirectory()) {
             PsiDirectory directory = psiManager.findDirectory(file);
             if (directory == null) continue;

@@ -48,12 +48,6 @@ public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return PropertiesBundle.message("trail.spaces.property.inspection.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "TrailingSpacesInProperty";
   }

@@ -3,12 +3,14 @@ package com.intellij.sh;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -22,15 +24,19 @@ import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class ShExplainShellIntention extends BaseIntentionAction {
-  private static final String FEATURE_ACTION_ID = "ExplainShellUsed";
+  private final static Logger LOG = Logger.getInstance(ShExplainShellIntention.class);
+  @NonNls private static final String FEATURE_ACTION_ID = "ExplainShellUsed";
 
   @NotNull
   @Override
@@ -41,7 +47,7 @@ public class ShExplainShellIntention extends BaseIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Explain shell";
+    return ShBundle.message("sh.explain.inspection.text");
   }
 
   @Override
@@ -90,7 +96,8 @@ public class ShExplainShellIntention extends BaseIntentionAction {
       List<ShCompositeElement> commands = ContainerUtil.filter(parents, e -> (e instanceof ShCommand || e instanceof ShCommandsList) && strings.add(e.getText()));
 
       if (commands.isEmpty()) {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Nothing to explain", "Nothing to explain", "");
+        CommonRefactoringUtil.showErrorHint(project, editor, ShBundle.message("sh.explain.nothing.to.explain"), ShBundle.message(
+          "sh.explain.nothing.to.explain"), "");
       }
       else {
         IntroduceTargetChooser.showChooser(editor, commands, new Pass<PsiElement>() {
@@ -98,13 +105,20 @@ public class ShExplainShellIntention extends BaseIntentionAction {
           public void pass(@NotNull PsiElement psiElement) {
             explain(psiElement.getText());
           }
-        }, PsiElement::getText, "Command to Explain");
+        }, PsiElement::getText, ShBundle.message("sh.explain.command.to.explain"));
       }
       ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
     }
   }
 
   private static void explain(@NotNull String text) {
-    BrowserUtil.browse("https://explainshell.com/explain?cmd=" + text);
+    String encodedText = text;
+    try {
+      encodedText = URLEncoder.encode(text, CharsetToolkit.UTF8);
+    }
+    catch (UnsupportedEncodingException e) {
+      LOG.warn("Couldn't encode " + text + " for explainshell URL", e);
+    }
+    BrowserUtil.browse("https://explainshell.com/explain?cmd=" + encodedText);
   }
 }

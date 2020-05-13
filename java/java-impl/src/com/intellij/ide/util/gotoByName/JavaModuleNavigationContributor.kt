@@ -27,11 +27,11 @@ import com.intellij.util.indexing.IdFilter
 
 class JavaModuleNavigationContributor : ChooseByNameContributorEx {
 
-  override fun processNames(processor: Processor<String>, scope: GlobalSearchScope, filter: IdFilter?) {
+  override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
     StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.MODULE_NAMES, processor, scope, filter)
   }
 
-  override fun processElementsWithName(name: String, processor: Processor<NavigationItem>, parameters: FindSymbolParameters) {
+  override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
     StubIndex.getInstance().processElements(JavaStubIndexKeys.MODULE_NAMES, name,
                                             parameters.project, parameters.searchScope, parameters.idFilter,
                                             PsiJavaModule::class.java, processor)

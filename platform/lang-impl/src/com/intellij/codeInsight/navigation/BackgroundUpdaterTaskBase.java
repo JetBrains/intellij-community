@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -35,7 +35,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
 
   public BackgroundUpdaterTaskBase(@Nullable Project project, @NotNull String title, @Nullable Comparator<T> comparator) {
     super(project, title);
-    myData = comparator == null ? ContainerUtil.newSmartList() : new TreeSet<>(comparator);
+    myData = comparator == null ? new SmartList<>() : new TreeSet<>(comparator);
   }
 
   @TestOnly
@@ -87,7 +87,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
       if (myData.contains(element)) return true;
       myData.add(element);
       if (comparator != null && myData instanceof List) {
-        Collections.sort((List)myData, comparator);
+        ((List)myData).sort(comparator);
       }
     }
 

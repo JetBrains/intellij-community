@@ -13,6 +13,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -48,7 +49,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectFromSourcesBuilderImpl.class);
   private static final String NAME = "Existing Sources";
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<>();

@@ -4,9 +4,10 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -15,13 +16,10 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
-import java.awt.Graphics
 import java.awt.Point
-import java.awt.event.MouseEvent
 import java.util.*
 
 interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
@@ -41,11 +39,9 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
                                                              override val virtualFile: VirtualFile,
                                                              mode: Mode
 ) : LineStatusTrackerBase<R>(project, document), LineStatusTracker<R> {
-  enum class Mode {
-    DEFAULT, SMART, SILENT
-  }
-
-  private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
+  class Mode(val isVisible: Boolean,
+             val showErrorStripeMarkers: Boolean,
+             val detectWhitespaceChangedLines: Boolean)
 
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
@@ -53,30 +49,26 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
     set(value) {
       if (value == mode) return
       field = value
-      updateInnerRanges()
+      resetInnerRanges()
+      updateHighlighters()
     }
 
 
   @CalledInAwt
   override fun isAvailableAt(editor: Editor): Boolean {
-    return mode != Mode.SILENT && editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
+    return mode.isVisible && editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
   }
 
   @CalledInAwt
-  override fun isDetectWhitespaceChangedLines(): Boolean = mode == Mode.SMART
+  override fun isDetectWhitespaceChangedLines(): Boolean = mode.isVisible && mode.detectWhitespaceChangedLines
 
   @CalledInAwt
   override fun fireFileUnchanged() {
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
       // later to avoid saving inside document change event processing and deadlock with CLM.
-      TransactionGuard.getInstance().submitTransactionLater(project, Runnable {
+      ApplicationManager.getApplication().invokeLater(Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
-        val isEmpty = documentTracker.readLock { blocks.isEmpty() }
-        if (isEmpty) {
-          // file was modified, and now it's not -> dirty local change
-          vcsDirtyScopeManager.fileDirty(virtualFile)
-        }
-      })
+      }, project.disposed)
     }
   }
 
@@ -99,14 +91,12 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
     : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
-    override fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean {
-      if (tracker.mode == Mode.SILENT) return false
-      return super.canDoAction(editor, ranges, e)
+    override fun shouldPaintGutter(): Boolean {
+      return tracker.mode.isVisible
     }
 
-    override fun paint(editor: Editor, g: Graphics) {
-      if (tracker.mode == Mode.SILENT) return
-      super.paint(editor, g)
+    override fun shouldPaintErrorStripeMarkers(): Boolean {
+      return tracker.mode.isVisible && tracker.mode.showErrorStripeMarkers
     }
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
@@ -123,7 +113,7 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
     override fun getFileType(): FileType = tracker.virtualFile.fileType
 
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
+      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {

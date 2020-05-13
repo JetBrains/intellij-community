@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,7 +27,6 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -44,7 +44,7 @@ import java.util.List;
  * @author ven
  */
 public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiClass> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeClassStaticProcessor");
+  private static final Logger LOG = Logger.getInstance(MakeClassStaticProcessor.class);
   private final List<PsiField> myFieldsToSplit = new ArrayList<>();
 
   public MakeClassStaticProcessor(final Project project, final PsiClass aClass, final Settings settings) {
@@ -367,7 +367,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       final String fieldName = convertToFieldName(mySettings.getClassParameterName());
       final PsiField existing = myMember.findFieldByName(fieldName, false);
       if (existing != null) {
-        String message = RefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
+        String message = JavaRefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
                                               RefactoringUIUtil.getDescription(myMember, false));
               conflicts.putValue(existing, message);
       }
@@ -380,7 +380,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         final PsiField existing = myMember.findFieldByName(fieldName, false);
 
         if (existing != null) {
-          String message = RefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
+          String message = JavaRefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
                                                 RefactoringUIUtil.getDescription(myMember, false));
           conflicts.putValue(existing, message);
         }

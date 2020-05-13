@@ -18,16 +18,15 @@ package com.intellij.facet;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.ModificationTracker;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
+@ApiStatus.NonExtendable
 public abstract class FacetFinder {
 
   public static FacetFinder getInstance(Project project) {
@@ -35,10 +34,10 @@ public abstract class FacetFinder {
   }
 
   @Nullable
-  public abstract <F extends Facet & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type);
+  public abstract <F extends Facet<?> & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type);
 
   @NotNull
-  public abstract <F extends Facet & FacetRootsProvider> Collection<F> findFacets(VirtualFile file, FacetTypeId<F> type);
+  public abstract <F extends Facet<?> & FacetRootsProvider> Collection<F> findFacets(VirtualFile file, FacetTypeId<F> type);
 
-  public abstract <F extends Facet> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type);
+  public abstract <F extends Facet<?>> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type);
 }

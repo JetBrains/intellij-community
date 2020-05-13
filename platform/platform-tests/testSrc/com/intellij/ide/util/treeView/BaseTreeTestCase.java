@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.testFramework.FlyIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -138,7 +141,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     BaseTreeBuilder(JTree tree,
                            DefaultTreeModel treeModel,
                            AbstractTreeStructure treeStructure,
-                           @Nullable Comparator<? super NodeDescriptor> comparator,
+                           @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                            boolean updateIfInactive) {
       super(tree, treeModel, treeStructure, comparator, updateIfInactive);
     }
@@ -228,7 +231,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   AbstractTreeUi _createUi() {
     return new AbstractTreeUi() {
       @Override
-      protected void yield(Runnable runnable) {
+      protected void yieldToEDT(@NotNull Runnable runnable) {
         SimpleTimer.getInstance().setUp(runnable, 100);
       }
 
@@ -275,9 +278,8 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     @NotNull
     public abstract NodeDescriptor doCreateDescriptor(Object element, NodeDescriptor parentDescriptor);
 
-    @NotNull
     @Override
-    public final Object[] getChildElements(@NotNull Object element) {
+    public final Object @NotNull [] getChildElements(@NotNull Object element) {
       return _getChildElements(element, true);
     }
 

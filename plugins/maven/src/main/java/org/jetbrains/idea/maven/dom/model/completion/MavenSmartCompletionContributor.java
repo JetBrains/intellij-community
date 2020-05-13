@@ -95,8 +95,7 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
     }
   }
 
-  @NotNull
-  private static PsiReference[] getReferences(CompletionParameters parameters) {
+  private static PsiReference @NotNull [] getReferences(CompletionParameters parameters) {
     PsiElement psiElement = parameters.getPosition().getParent();
     return psiElement instanceof XmlText ? psiElement.getParent().getReferences() : psiElement.getReferences();
   }

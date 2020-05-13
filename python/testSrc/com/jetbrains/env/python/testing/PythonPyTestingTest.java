@@ -1,8 +1,10 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -120,7 +122,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         final CharBuffer data = Charset.defaultCharset().decode(ByteBuffer.wrap(file.contentsToByteArray()));
         final Element element = builder.build(new StringReader(data.toString())).getRootElement();
 
-        final PyTestConfiguration configuration = new PyTestConfiguration(myFixture.getProject(), PyTestFactory.INSTANCE);
+        final PyTestConfiguration configuration = new PyTestConfiguration(myFixture.getProject(), new PyTestFactory());
         configuration.readExternal(element);
         return configuration;
       }
@@ -178,7 +180,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   /**
-   * Test name must be reported as meta info to be used as argument for "-k" for parametrized tests
+   * Test name must be reported as meta info to be used as parameter for for parametrized tests
    */
   @Test
   public void testMetaInfoForMethod() {
@@ -230,6 +232,44 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                               "...(three plus file-8)(-)\n" +
                               ((runner.getCurrentRerunStep() == 0) ? "...((2)+(4)-6)(+)\n" : "") +
                               "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
+  /**
+   * Ensure that testName[param] is only launched for parametrized test if param provided
+   */
+  @Test
+  public void testParametrizedRunByParameter() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/parametrized", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_pytest_parametrized.py", 1) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.getTarget().setTarget("test_pytest_parametrized.test_eval");
+              configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
+              configuration.setMetaInfo("test_eval[three plus file-8]");
+            }
+          };
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all, int exitCode) {
+          assertEquals("Only one test should be launched",
+                       "Test tree:\n" +
+                       "[root](-)\n" +
+                       ".test_pytest_parametrized(-)\n" +
+                       "..test_eval(-)\n" +
+                       "...(three plus file-8)(-)\n",
+                       runner.getFormattedTestTree());
         }
       });
   }
@@ -484,7 +524,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyAbstractTestFactory<PyTestConfiguration> createFactory() {
-        return PyTestFactory.INSTANCE;
+        return new PyTestFactory();
       }
 
       @Override
@@ -497,8 +537,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         configuration.setWorkingDirectory(myFixture.getTempDirPath());
 
         ReadAction.run(() -> Assert.assertThat("Failed to resolve qname",
-                                           configuration.getTarget().asPsiElement(configuration),
-                                           Matchers.instanceOf(PyFile.class)));
+                                               configuration.getTarget().asPsiElement(configuration),
+                                               Matchers.instanceOf(PyFile.class)));
       }
     });
   }
@@ -518,6 +558,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     runPythonTest(
       new CreateConfigurationTestTask<PyTestConfiguration>(myFrameworkName, PyTestConfiguration.class) {
 
+
         @NotNull
         private PyFunction getFunction(@NotNull final String folder) {
           final PyFile file = (PyFile)myFixture.configureByFile(String.format("configurationByContext/%s/test_foo.py", folder));
@@ -532,14 +573,33 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                           @NotNull final PsiElement elementToRightClickOn) {
 
 
-          final PyTestConfiguration sameConfig = createConfigurationByElement(getFunction("bar"), PyTestConfiguration.class);
+          PyFunction bar = getFunction("bar");
+          final PyTestConfiguration sameConfig = createConfigurationByElement(bar, PyTestConfiguration.class);
           Assert.assertEquals("Same element must provide same config", sameConfig, configuration);
 
-          final PyTestConfiguration differentConfig = createConfigurationByElement(getFunction("foo"), PyTestConfiguration.class);
+          PyFunction foo = getFunction("foo");
+          final PyTestConfiguration differentConfig = createConfigurationByElement(foo, PyTestConfiguration.class);
           //Although targets are same, working dirs are different
           assert differentConfig.getTarget().equals(configuration.getTarget());
 
           Assert.assertNotEquals("Function from different folder must provide different config", differentConfig, configuration);
+
+          try {
+            // Test "custom symbol" mode: instead of QN we must get custom with additional arguments pointing to file and symbol
+            ((PyTestConfiguration)RunManager.getInstance(getProject())
+              .getConfigurationTemplate(new PyTestFactory())
+              .getConfiguration())
+              .setWorkingDirectory(bar.getContainingFile().getParent().getVirtualFile().getPath());
+            PyTestConfiguration customConfiguration = createConfigurationByElement(foo, PyTestConfiguration.class);
+            assertEquals(PyRunTargetVariant.CUSTOM, customConfiguration.getTarget().getTargetType());
+            assertEquals(foo.getContainingFile().getVirtualFile().getPath() + "::test_test", customConfiguration.getAdditionalArguments());
+          }
+          finally {
+            ((PyTestConfiguration)RunManager.getInstance(getProject())
+              .getConfigurationTemplate(new PyTestFactory())
+              .getConfiguration())
+              .setWorkingDirectory(null);
+          }
         }
 
         @NotNull
@@ -600,7 +660,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyTestFactory createFactory() {
-          return PyTestFactory.INSTANCE;
+          return new PyTestFactory();
         }
       });
   }
@@ -650,9 +710,11 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        final String resultTree = runner.getFormattedTestTree().trim();
-        final String expectedTree = myFixture.configureByFile("test_escape_me.tree.txt").getText().trim();
-        Assert.assertEquals("Test result wrong tree", expectedTree, resultTree);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          final String resultTree = runner.getFormattedTestTree().trim();
+          final String expectedTree = myFixture.configureByFile("test_escape_me.tree.txt").getText().trim();
+          assertEquals("Test result wrong tree", expectedTree, resultTree);
+        });
       }
     });
   }

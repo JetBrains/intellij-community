@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
@@ -9,24 +9,29 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-@State(name = "StructureViewFactory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "StructureViewFactory", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public final class StructureViewFactoryImpl extends StructureViewFactoryEx implements PersistentStateComponent<StructureViewFactoryImpl.State> {
-  public static class State {
+  private static final ExtensionPointName<StructureViewExtension> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.lang.structureViewExtension");
+
+  public static final class State {
     @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_MODE = true;
     @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_FROM_SOURCE = false;
     @SuppressWarnings({"WeakerAccess"}) public String ACTIVE_ACTIONS = "";
@@ -37,22 +42,16 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   private State myState = new State();
   private Runnable myRunWhenInitialized = null;
 
-  private static final NotNullLazyValue<MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>> myExtensions = new NotNullLazyValue<MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>>() {
-    @NotNull
-    @Override
-    protected MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> compute() {
-      MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map =
-        new MultiValuesMap<>();
-      for (StructureViewExtension extension : StructureViewExtension.EXTENSION_POINT_NAME.getExtensionList()) {
-        map.put(extension.getType(), extension);
-      }
-      return map;
-    }
-  };
-  private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myImplExtensions = new MultiValuesMap<>();
+  private final Map<Class<? extends PsiElement>, Collection<StructureViewExtension>> myImplExtensions = new ConcurrentHashMap<>();
 
-  public StructureViewFactoryImpl(Project project) {
+  public StructureViewFactoryImpl(@NotNull Project project) {
     myProject = project;
+    EXTENSION_POINT_NAME.addChangeListener(() -> {
+      myImplExtensions.clear();
+      if (myStructureViewWrapperImpl != null) {
+        myStructureViewWrapperImpl.rebuild();
+      }
+    }, project);
   }
 
   @Override
@@ -61,8 +60,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   @Override
-  @NotNull
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -71,7 +69,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     myState = state;
   }
 
-  public void initToolWindow(@NotNull ToolWindowEx toolWindow) {
+  public void initToolWindow(@NotNull ToolWindow toolWindow) {
     myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject, toolWindow);
     if (myRunWhenInitialized != null) {
       myRunWhenInitialized.run();
@@ -79,24 +77,25 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
-  @NotNull
   @Override
-  public Collection<StructureViewExtension> getAllExtensions(@NotNull Class<? extends PsiElement> type) {
+  public @NotNull Collection<StructureViewExtension> getAllExtensions(@NotNull Class<? extends PsiElement> type) {
     Collection<StructureViewExtension> result = myImplExtensions.get(type);
-    if (result == null) {
-      MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map = myExtensions.getValue();
-      for (Class<? extends PsiElement> registeredType : map.keySet()) {
-        if (ReflectionUtil.isAssignable(registeredType, type)) {
-          final Collection<StructureViewExtension> extensions = map.get(registeredType);
-          for (StructureViewExtension extension : extensions) {
-            myImplExtensions.put(type, extension);
-          }
-        }
-      }
-      result = myImplExtensions.get(type);
-      if (result == null) return Collections.emptyList();
+    if (result != null) {
+      return result;
     }
-    return result;
+
+    ExtensionPointImpl<StructureViewExtension> point = (ExtensionPointImpl<StructureViewExtension>)EXTENSION_POINT_NAME.getPoint(null);
+    Set<Class<? extends PsiElement>> visitedTypes = new HashSet<>();
+    result = new ArrayList<>();
+    for (StructureViewExtension extension : point.getExtensionList()) {
+      Class<? extends PsiElement> registeredType = extension.getType();
+      if (ReflectionUtil.isAssignable(registeredType, type) && visitedTypes.add(registeredType)) {
+        result.addAll(ExtensionProcessingHelper.getByGroupingKey(point, registeredType, StructureViewExtension::getType));
+      }
+    }
+
+    Collection<StructureViewExtension> oldValue = myImplExtensions.putIfAbsent(type, result);
+    return oldValue == null ? result : oldValue;
   }
 
   @Override
@@ -117,8 +116,8 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     return StringUtil.join(activeActions, ",");
   }
 
-  public Collection<String> collectActiveActions() {
-    return ContainerUtil.newLinkedHashSet(myState.ACTIVE_ACTIONS.split(","));
+  public @NotNull Collection<String> collectActiveActions() {
+    return new LinkedHashSet<>(Arrays.asList(myState.ACTIVE_ACTIONS.split(",")));
   }
 
   @Override
@@ -136,20 +135,16 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
-  @NotNull
   @Override
-  public StructureView createStructureView(final FileEditor fileEditor,
-                                           @NotNull final StructureViewModel treeModel,
-                                           @NotNull final Project project) {
+  public @NotNull StructureView createStructureView(FileEditor fileEditor, @NotNull StructureViewModel treeModel, @NotNull Project project) {
     return createStructureView(fileEditor, treeModel, project, true);
   }
 
-  @NotNull
   @Override
-  public StructureView createStructureView(final FileEditor fileEditor,
-                                           @NotNull StructureViewModel treeModel,
-                                           @NotNull Project project,
-                                           final boolean showRootNode) {
+  public @NotNull StructureView createStructureView(FileEditor fileEditor,
+                                                    @NotNull StructureViewModel treeModel,
+                                                    @NotNull Project project,
+                                                    boolean showRootNode) {
     return new StructureViewComponent(fileEditor, treeModel, project, showRootNode);
   }
 

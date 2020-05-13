@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -179,7 +180,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace inefficient Stream.count()";
+      return JavaBundle.message("quickfix.family.replace.inefficient.stream.count");
     }
 
     @Override

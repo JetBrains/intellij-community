@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
@@ -171,6 +172,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
 
   private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
     if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return null;
+    if (Registry.is("ui.disable.dimension.service.keys")) return null;
     if (UISettings.getInstance().getPresentationMode()) key += ".inPresentationMode"; // separate key for the presentation mode
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {

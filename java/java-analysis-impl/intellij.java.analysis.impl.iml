@@ -7,6 +7,7 @@
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/InspectionGadgetsAnalysis">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/InspectionGadgetsAnalysis/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/InspectionGadgetsAnalysis/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -25,5 +26,6 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

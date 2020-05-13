@@ -15,6 +15,7 @@
  */
 package com.intellij.jarFinder;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.WriteAction;
@@ -123,7 +124,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
 
       @Override
       public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
-        final Task task = new Task.Modal(psiFile.getProject(), "Searching source...", true) {
+        final Task task = new Task.Modal(psiFile.getProject(), JavaUiBundle.message("progress.title.searching.source"), true) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             String artifactUrl = null;

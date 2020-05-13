@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,13 +6,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -79,7 +66,6 @@ abstract class RenameChooser {
 
         for (PsiReference reference : refs) {
           final PsiElement element = reference.getElement();
-          if (element == null) continue;
           final TextRange textRange = element.getTextRange();
           final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
             textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, myAttributes,
@@ -87,12 +73,12 @@ abstract class RenameChooser {
           myRangeHighlighters.add(rangeHighlighter);
         }
       })
-      .setTitle("String occurrences found")
+      .setTitle(RefactoringBundle.message("rename.string.occurrences.found.title"))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChosenCallback((selectedValue) -> runRenameTemplate(ALL_OCCURRENCES.equals(selectedValue) ? stringUsages : new ArrayList<>()))
-      .addListener(new JBPopupAdapter() {
+      .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters();

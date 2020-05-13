@@ -31,7 +31,7 @@ import javax.swing.*;
  * @author dsl
  */
 public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiEnumConstant {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiEnumConstantImpl");
+  private static final Logger LOG = Logger.getInstance(PsiEnumConstantImpl.class);
   private final MyReference myReference = new MyReference();
 
   public PsiEnumConstantImpl(final PsiFieldStub stub) {
@@ -243,8 +243,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     }
 
     @Override
-    @NotNull
-    public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+    public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
       PsiClassType type = facade.getElementFactory().createType(getContainingClass());
       return facade.getResolveHelper().multiResolveConstructor(type, getArgumentList(), getElement());

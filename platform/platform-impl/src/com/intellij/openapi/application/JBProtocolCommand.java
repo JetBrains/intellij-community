@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,6 +12,7 @@ import java.util.Map;
  */
 public abstract class JBProtocolCommand {
   private static final ExtensionPointName<JBProtocolCommand> EP_NAME = new ExtensionPointName<>("com.intellij.jbProtocolCommand");
+
   private final String myCommand;
 
   public JBProtocolCommand(@NotNull String command) {

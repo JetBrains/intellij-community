@@ -46,7 +46,7 @@ public class DosTime {
     if (year < 1980) {
       return (1 << 21) | (1 << 16);
     }
-    return (year - 1980) << 25
+    return (year - 1980L) << 25
            | (cal.get(Calendar.MONTH) + 1) << 21
            | cal.get(Calendar.DAY_OF_MONTH) << 16
            | cal.get(Calendar.HOUR_OF_DAY) << 11

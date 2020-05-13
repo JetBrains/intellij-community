@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -8,12 +8,12 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class CommittedChangesBrowser extends SimpleChangesBrowser {
@@ -52,7 +52,7 @@ public class CommittedChangesBrowser extends SimpleChangesBrowser {
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       Set<AbstractVcs> abstractVcs = ChangesUtil.getAffectedVcses(getSelectedChanges(), myProject);
-      if (abstractVcs.size() == 1) return ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(abstractVcs)).getKeyInstanceMethod();
+      if (abstractVcs.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(abstractVcs)).getKeyInstanceMethod();
       return null;
     }
     return super.getData(dataId);

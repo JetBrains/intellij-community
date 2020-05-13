@@ -75,7 +75,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
     })
 
     object : DoubleClickListener() {
-      override fun onDoubleClick(event: MouseEvent?): Boolean {
+      override fun onDoubleClick(event: MouseEvent): Boolean {
         if (list.selectedValue == null) return true
         install(project, list.selectedValue, popup)
         return true
@@ -100,7 +100,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
 
   private fun fetchPlugins(): List<Plugin> {
     var plugins = emptyList<Plugin>()
-    HttpRequests.request("http://vscode.blob.core.windows.net/gallery/index").connect { request ->
+    HttpRequests.request("https://vscode.blob.core.windows.net/gallery/index").connect { request ->
       plugins = loadPlugins(request.reader)
     }
     return plugins
@@ -141,7 +141,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
         DownloadUtil.downloadAtomically(indicator, "${selectedValue.url}/Microsoft.VisualStudio.Services.VSIXPackage", temp)
 
         indicator.text = "Unzipping $selectedValue..."
-        val extensionDir = File(File(PathManager.getConfigPath(), "vscode"), selectedValue.name)
+        val extensionDir = PathManager.getConfigDir().resolve("vscode").resolve(selectedValue.name).toFile()
         ZipUtil.extract(temp, extensionDir, null)
 
         indicator.text = "Applying $selectedValue"

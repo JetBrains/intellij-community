@@ -47,7 +47,7 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
     if (sourceElement == null) {
       return null;
     }
-    final PyResolveContext context = PyResolveContext.noImplicits()
+    final PyResolveContext context = PyResolveContext.defaultContext()
       .withTypeEvalContext(TypeEvalContext.userInitiated(sourceElement.getProject(), sourceElement.getContainingFile()));
 
     PyReferenceOwner referenceOwner = null;

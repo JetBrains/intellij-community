@@ -17,8 +17,7 @@ private class Parameterizer(val context: PsiElement,
   val elementFactory = GroovyPsiElementFactory.getInstance(context.project)
 
 
-  override fun visitClassType(classType: PsiClassType?): PsiClassType? {
-    classType ?: return classType
+  override fun visitClassType(classType: PsiClassType): PsiClassType? {
     val generifiedClassType = if (classType.isRaw) {
       val resolveResult = classType.resolve()!!
       val wildcards = Array(resolveResult.typeParameters.size) { PsiWildcardType.createUnbounded(context.manager) }
@@ -37,8 +36,7 @@ private class Parameterizer(val context: PsiElement,
     }
   }
 
-  override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
-    wildcardType ?: return null
+  override fun visitWildcardType(wildcardType: PsiWildcardType): PsiType? {
     val upperBound = if (wildcardType.isExtends && !wildcardType.extendsBound.equalsToText(JAVA_LANG_OBJECT)) {
       val bound = wildcardType.extendsBound
       if (bound is PsiCapturedWildcardType) {
@@ -52,8 +50,7 @@ private class Parameterizer(val context: PsiElement,
     return registerTypeParameterAction(upperBound)
   }
 
-  override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
-    intersectionType ?: return null
+  override fun visitIntersectionType(intersectionType: PsiIntersectionType): PsiType? {
     val parametrizedConjuncts = intersectionType.conjuncts.map { it.accept(this) }
     return createIntersection(parametrizedConjuncts)
   }

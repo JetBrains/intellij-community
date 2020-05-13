@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +33,7 @@ import java.util.stream.Collectors;
 * @author cdr
 */
 public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionListStep");
+  private static final Logger LOG = Logger.getInstance(IntentionListStep.class);
 
   private final CachedIntentions myCachedIntentions;
   @Nullable
@@ -44,10 +46,10 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private final Editor myEditor;
 
   public IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
-                    @Nullable Editor editor,
-                    @NotNull PsiFile file,
-                    @NotNull Project project,
-                    CachedIntentions intentions) {
+                           @Nullable Editor editor,
+                           @NotNull PsiFile file,
+                           @NotNull Project project,
+                           CachedIntentions intentions) {
     myIntentionHintComponent = intentionHintComponent;
     myProject = project;
     myFile = file;
@@ -66,7 +68,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   @Override
-  public PopupStep onChosen(IntentionActionWithTextCaching action, final boolean finalChoice) {
+  public PopupStep<?> onChosen(IntentionActionWithTextCaching action, final boolean finalChoice) {
     IntentionAction a = IntentionActionDelegate.unwrap(action.getAction());
 
     if (finalChoice && !(a instanceof AbstractEmptyIntentionAction)) {
@@ -75,10 +77,20 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
 
     if (hasSubstep(action)) {
+      closeIntentionPreviewPopup();
+
       return getSubStep(action, action.getToolName());
     }
 
     return FINAL_CHOICE;
+  }
+
+  private static void closeIntentionPreviewPopup() {
+    ApplicationManager.getApplication().invokeLater(() ->
+       StackingPopupDispatcher.getInstance().getPopupStream()
+         .filter(popup -> popup.getUserData(IntentionPreviewPopupUpdateProcessor.IntentionPreviewPopupKey.class) != null)
+         .collect(Collectors.toList())
+         .forEach(popup -> popup.cancel()));
   }
 
   @Override
@@ -93,7 +105,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       if (myEditor != null && (myEditor.isDisposed() || (!myEditor.getComponent().isShowing() && !ApplicationManager.getApplication().isUnitTestMode()))) return;
 
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
-        DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
+        DumbService.getInstance(myProject).showDumbModeNotification(
+          CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()));
         return;
       }
 

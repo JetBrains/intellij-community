@@ -6,20 +6,14 @@ import com.intellij.debugger.DebugUIEnvironment;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DefaultDebugUIEnvironment;
 import com.intellij.debugger.engine.JavaDebugProcess;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -27,34 +21,12 @@ import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DebuggerPanelsManager {
+@Service
+public final class DebuggerPanelsManager {
   private final Project myProject;
 
   public DebuggerPanelsManager(Project project) {
     myProject = project;
-
-    project.getMessageBus().connect().subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
-      @Override
-      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (executor == DefaultDebugExecutor.getDebugExecutorInstance()) {
-          DebuggerSession session = descriptor == null ? null : getSession(project, descriptor);
-          if (session != null) {
-            getContextManager().setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.Event.CONTEXT, null);
-          }
-          else {
-            getContextManager().setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
-          }
-        }
-      }
-
-      @Override
-      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-      }
-    });
-  }
-
-  private DebuggerStateManager getContextManager() {
-    return DebuggerManagerEx.getInstanceEx(myProject).getContextManager();
   }
 
   @Nullable
@@ -85,15 +57,6 @@ public class DebuggerPanelsManager {
   }
 
   public static DebuggerPanelsManager getInstance(Project project) {
-    return project.getComponent(DebuggerPanelsManager.class);
-  }
-
-  private static DebuggerSession getSession(Project project, RunContentDescriptor descriptor) {
-    for (JavaDebugProcess process : XDebuggerManager.getInstance(project).getDebugProcesses(JavaDebugProcess.class)) {
-      if (Comparing.equal(process.getProcessHandler(), descriptor.getProcessHandler())) {
-        return process.getDebuggerSession();
-      }
-    }
-    return null;
+    return project.getService(DebuggerPanelsManager.class);
   }
 }

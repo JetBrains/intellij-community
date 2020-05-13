@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.java.JShellLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +42,7 @@ public class JShellFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.jshell");
+    return JavaPsiBundle.message("filetype.description.jshell");
   }
 
   @Override

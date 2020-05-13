@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
   @Nullable
   public CodeStyleSettings importCodeStyle() throws SchemeImportException {
     if (myCorePreferences != null) {
-      CodeStyleSettings settings = new CodeStyleSettings();
+      CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().createSettings();
       importProperties(myCorePreferences, settings);
       if (myUiPreferences != null && myImportOrganizeImportsConfig) {
         importOptimizeImportsSettings(myUiPreferences, settings);

@@ -57,9 +57,8 @@ public abstract class JqlClauseWithHistoryPredicatesImpl extends JqlTerminalClau
     return findOperandOfPredicate(JqlHistoryPredicate.Type.TO);
   }
 
-  @NotNull
   @Override
-  public JqlHistoryPredicate[] getHistoryPredicates() {
+  public JqlHistoryPredicate @NotNull [] getHistoryPredicates() {
     return findChildrenByClass(JqlHistoryPredicate.class);
   }
 

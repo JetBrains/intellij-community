@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.TimeoutUtil;
@@ -24,6 +25,7 @@ import java.util.Random;
 import java.util.stream.IntStream;
 
 public class ConcurrentBitSetTest extends TestCase {
+  private static final Logger LOG = Logger.getInstance(ConcurrentBitSetTest.class);
   public void test() {
     ConcurrentBitSet bitSet = new ConcurrentBitSet();
     assertEquals(0, bitSet.nextClearBit(0));
@@ -152,7 +154,7 @@ public class ConcurrentBitSetTest extends TestCase {
         })
       );
 
-      System.out.println("elapsed = " + el);
+      LOG.debug("elapsed = " + el);
     }
   }
 
@@ -178,7 +180,7 @@ public class ConcurrentBitSetTest extends TestCase {
         assertEquals(N/2 * len, r);
       });
 
-      System.out.println("elapsed = " + el);
+      LOG.debug("elapsed = " + el);
     }
   }
 

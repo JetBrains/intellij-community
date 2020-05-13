@@ -68,6 +68,17 @@ class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
   public static class StaticInnerImpl2 extends StaticInner {
   }
 
+  public static class StaticInnerImpl3 extends ProtectedMembers.StaticInner {
+    // No warning must be generated here: "Access to protected ProtectedMembers.StaticInner declared in a different module
+    public StaticInnerImpl3() {
+      super();
+    }
+
+    public StaticInnerImpl3(int x) {
+      super(x);
+    }
+  }
+
   public class OwnInner {
     void bar() {
       <warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>();
@@ -94,5 +105,16 @@ class AccessingDefaultProtectedConstructorFromSubclass extends ProtectedConstruc
 class AccessingProtectedConstructorFromSubclass extends ProtectedConstructors {
   AccessingProtectedConstructorFromSubclass() {
     super(1);
+  }
+}
+
+//KT-35296: Must not produce false positive warnings for package-private empty constructor.
+class AccessProtectedSuperConstructorInsteadOfEmptyPackagePrivate extends PackagePrivateEmptyConstructor {
+  AccessProtectedSuperConstructorInsteadOfEmptyPackagePrivate(int i) {
+    super(i);
+  }
+
+  AccessProtectedSuperConstructorInsteadOfEmptyPackagePrivate(int i, int i2) {
+    this(i + i2);
   }
 }

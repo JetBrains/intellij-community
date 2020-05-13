@@ -3,7 +3,7 @@ class A {
   void method(String m) {}
 
 {
-meth<ref>od([:])
+meth<caret>od([:])
 }
 
 }

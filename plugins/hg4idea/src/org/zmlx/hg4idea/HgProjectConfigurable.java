@@ -17,19 +17,14 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.ui.HgConfigurationProjectPanel;
 
-public class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProjectPanel, HgProjectConfigurable.HgSettingsHolder> {
-
-  public static final String DISPLAY_NAME = HgVcsMessages.message("hg4idea.mercurial");
-
+public final class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProjectPanel, HgProjectConfigurable.HgSettingsHolder> {
   @NotNull private final Project myProject;
   @NotNull private final HgSettingsHolder mySettingsHolder;
 
-  public HgProjectConfigurable(@NotNull Project project,
-                               @NotNull HgGlobalSettings globalSettings,
-                               @NotNull HgProjectSettings projectSettings) {
-    super("vcs.Mercurial", DISPLAY_NAME, "project.propVCSSupport.VCSs.Mercurial");
+  public HgProjectConfigurable(@NotNull Project project) {
+    super("vcs.Mercurial", getDISPLAY_NAME(), "project.propVCSSupport.VCSs.Mercurial");
     myProject = project;
-    mySettingsHolder = new HgSettingsHolder(globalSettings, projectSettings);
+    mySettingsHolder = new HgSettingsHolder(HgGlobalSettings.getInstance(), HgProjectSettings.getInstance(myProject));
   }
 
   @NotNull
@@ -43,7 +38,7 @@ public class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProje
     return new HgConfigurationProjectPanel(myProject);
   }
 
-  public static class HgSettingsHolder {
+  public static final class HgSettingsHolder {
     @NotNull private final HgGlobalSettings myGlobalSettings;
     @NotNull private final HgProjectSettings myProjectSettings;
 
@@ -61,5 +56,9 @@ public class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProje
     public HgProjectSettings getProjectSettings() {
       return myProjectSettings;
     }
+  }
+
+  public static String getDISPLAY_NAME() {
+    return HgBundle.message("hg4idea.mercurial");
   }
 }

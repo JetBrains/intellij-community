@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -16,6 +16,7 @@ import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
 import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -41,21 +41,11 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
   protected enum LineMarkerType { External, InferredNullability, InferredContract }
 
-  private final Function<PsiElement, String> myTooltipProvider = nameIdentifier -> {
-    PsiModifierListOwner owner = (PsiModifierListOwner)nameIdentifier.getParent();
-
-    return XmlStringUtil.wrapInHtml(NonCodeAnnotationGenerator.getNonCodeHeader(NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values()) +
-                                    " available. Full signature:<p>\n" + JavaDocInfoGenerator.generateSignature(owner));
-  };
-
-  private static LineMarkerType getAnnotationLineMarkerType(PsiModifierListOwner owner) {
-    Collection<? extends AnnotationDocGenerator> nonCodeAnnotations =
-      NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
+  private static LineMarkerType getAnnotationLineMarkerType(Collection<? extends AnnotationDocGenerator> nonCodeAnnotations) {
     if (ContainerUtil.find(nonCodeAnnotations, (anno) -> !anno.isInferred()) != null) {
       return LineMarkerType.External;
     }
@@ -89,28 +79,24 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     return myName;
   }
 
-  @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     PsiModifierListOwner owner = getAnnotationOwner(element);
     if (owner == null) return null;
 
-    if (!hasAnnotationsToShow(owner)) {
+    Collection<AnnotationDocGenerator> nonCodeAnnotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
+    if (getAnnotationLineMarkerType(nonCodeAnnotations) != myLineMarkerType) {
       return null;
     }
 
-    return new LineMarkerInfo<>(element, element.getTextRange(),
-                                AllIcons.Gutter.ExtAnnotation,
-                                myTooltipProvider, MyIconGutterHandler.INSTANCE,
+    String tooltip = XmlStringUtil.wrapInHtml(
+      NonCodeAnnotationGenerator.getNonCodeHeader(nonCodeAnnotations) + " available. Full signature:<p>\n" +
+      JavaDocInfoGenerator.generateSignature(owner));
+    return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
   }
 
-  protected boolean hasAnnotationsToShow(@NotNull PsiModifierListOwner owner) {
-    return getAnnotationLineMarkerType(owner) == myLineMarkerType;
-  }
-
-  @Nullable
-  static PsiModifierListOwner getAnnotationOwner(@Nullable PsiElement element) {
+  static @Nullable PsiModifierListOwner getAnnotationOwner(@Nullable PsiElement element) {
     if (element == null) return null;
 
     PsiElement owner = element.getParent();
@@ -123,9 +109,8 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     return (PsiModifierListOwner)owner;
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return AllIcons.Gutter.ExtAnnotation;
   }
 
@@ -156,8 +141,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       }
     }
 
-    @Nullable
-    private static JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
+    private static @Nullable JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
       List<AnAction> actions = StreamEx.of(getMethodActions(file, project, editor),
                                            getParameterAnnotationActions(file, project, editor))
                                        .remove(List::isEmpty)
@@ -174,22 +158,20 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       return null;
     }
 
-    @NotNull
-    private static List<AnAction> getMethodActions(PsiFile file, Project project, Editor editor) {
+    private static @NotNull List<AnAction> getMethodActions(PsiFile file, Project project, Editor editor) {
       Comparator<IntentionAction> comparator =
         Comparator.comparing((IntentionAction action) ->
                                action instanceof PriorityAction ? ((PriorityAction)action).getPriority() : PriorityAction.Priority.NORMAL)
                   .thenComparing(IntentionAction::getText);
-      return Stream.of(IntentionManager.getInstance().getAvailableIntentionActions())
-                   .map(action -> IntentionActionDelegate.unwrap(action))
+      return IntentionManager.getInstance().getAvailableIntentions().stream()
+                   .map(IntentionActionDelegate::unwrap)
                    .filter(action -> shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file))
                    .sorted(comparator)
                    .map(action -> new ApplyIntentionAction(action, action.getText(), editor, file))
                    .collect(Collectors.toList());
     }
 
-    @NotNull
-    private static List<AnAction> getParameterAnnotationActions(@NotNull PsiFile file, Project project, Editor editor) {
+    private static @NotNull List<AnAction> getParameterAnnotationActions(@NotNull PsiFile file, Project project, Editor editor) {
       final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
       if (leaf == null) return Collections.emptyList();
       PsiMethod method = ObjectUtils.tryCast(leaf.getParent(), PsiMethod.class);
@@ -198,7 +180,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       for (PsiParameter parameter: method.getParameterList().getParameters()) {
         MakeInferredAnnotationExplicit intention = new MakeInferredAnnotationExplicit();
         if (intention.isAvailable(project, file, parameter)) {
-          actions.add(new AnAction(intention.getText() + " on parameter '" + parameter.getName() + "'") {
+          actions.add(new AnAction(JavaBundle.message("action.text.0.on.parameter.1", intention.getText(), parameter.getName())) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
               PsiDocumentManager.getInstance(project).commitAllDocuments();

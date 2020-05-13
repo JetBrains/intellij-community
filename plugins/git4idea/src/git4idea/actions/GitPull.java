@@ -44,14 +44,14 @@ public class GitPull extends GitMergeAction {
 
   @Override
   protected DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
-                                                                        @NotNull VirtualFile defaultRoot) {
+                                      @NotNull VirtualFile defaultRoot) {
     final GitPullDialog dialog = new GitPullDialog(project, gitRoots, defaultRoot);
     if (!dialog.showAndGet()) {
       return null;
     }
 
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    GitRepository repository = repositoryManager.getRepositoryForRoot(dialog.gitRoot());
+    GitRepository repository = repositoryManager.getRepositoryForRootQuick(dialog.gitRoot());
     assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
     String remoteOrUrl = dialog.getRemote();
     if (remoteOrUrl == null) {

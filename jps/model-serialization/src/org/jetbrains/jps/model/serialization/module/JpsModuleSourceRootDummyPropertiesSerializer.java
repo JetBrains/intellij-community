@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-/**
- * @author nik
- */
 public class JpsModuleSourceRootDummyPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JpsDummyElement> {
   public JpsModuleSourceRootDummyPropertiesSerializer(JpsModuleSourceRootType<JpsDummyElement> type, String typeId) {
     super(type, typeId);

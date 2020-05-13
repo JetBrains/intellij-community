@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.xml.dom" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

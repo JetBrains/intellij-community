@@ -1,6 +1,7 @@
 <idea-plugin>
   <id>com.intellij.properties</id>
   <name>Properties</name>
+  <category>Languages</category>
   <depends>com.intellij.modules.xml</depends>
   <description>
     Enables smart editing of .properties files.
@@ -8,9 +9,15 @@
   <vendor>JetBrains</vendor>
 
   <extensionPoints>
-    <extensionPoint name="implicitPropertyUsageProvider" interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"/>
-    <extensionPoint name="alphaUnsortedInspectionSuppressor" interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"/>
+    <extensionPoint name="implicitPropertyUsageProvider"
+                    interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"
+                    dynamic="true"/>
+    <extensionPoint name="alphaUnsortedInspectionSuppressor"
+                    interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"
+                    dynamic="true"/>
   </extensionPoints>
+
+  <depends optional="true" config-file="properties-copyright.xml">com.intellij.copyright</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <typeIcon className="com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile" icon="AllIcons.Nodes.ResourceBundle"/>
@@ -46,7 +53,6 @@
 
     <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighter"/>
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
-    <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromEditorRenameHandler"/>
     <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromProjectViewRenameHandler"/>
     <automaticRenamerFactory implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFactory"/>
     <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>
@@ -85,17 +91,12 @@
                      key="wrong.property.key.value.delimiter.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WEAK WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.WrongPropertyKeyValueDelimiterInspection"/>
-    <localInspection language="Properties" shortName="IncompleteProperty" unfair="true" bundle="messages.PropertiesBundle"
-                     key="incomplete.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
-                     enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>
 
     <projectService serviceImplementation="com.intellij.lang.properties.PropertiesReferenceManager"/>
 
-    <fileEditorProvider implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
     <spellchecker.support language="Properties"
                           id="propertiesSpellcheckingStrategy"
                           implementationClass="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
@@ -105,14 +106,11 @@
     <iconProvider implementation="com.intellij.lang.properties.xml.XmlPropertiesIconProvider"/>
     <psi.referenceContributor language="XML" implementation="com.intellij.lang.properties.xml.XmlPropertiesReferenceContributor"/>
     <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder"/>
-    <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoResourceBundleLocalizationsProvider"/>
-    <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
 
-    <codeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesLanguageCodeStyleSettingsProvider"/>
 
     <internalFileTemplate name="XML Properties File.xml"/>
-    <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandler"/>
+    <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandler" id="properties"/>
     <lang.formatter language="Properties" implementationClass="com.intellij.lang.properties.formatting.PropertiesFormattingModelBuilder"/>
 
     <definitionsScopedSearch implementation="com.intellij.lang.properties.editor.PropertiesInheritorsSearcher"/>
@@ -124,9 +122,10 @@
 
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
-
-    <postStartupActivity implementation="com.intellij.lang.properties.Native2AsciiListenerStartupActivity"/>
   </extensions>
+  <projectListeners>
+    <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>
+  </projectListeners>
 
   <actions>
     <action id="DissociateResourceBundleAction" text="Dissociate Resource Bundle" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">
@@ -135,33 +134,12 @@
     <action id="CombinePropertiesFilesAction" class="com.intellij.lang.properties.customizeActions.CombinePropertiesFilesAction">
       <add-to-group group-id="ProjectViewPopupMenu"/>
     </action>
-    <action id="ChooseNextSubsequentPropertyValueEditorAction"
-            class="com.intellij.lang.properties.editor.ChooseSubsequentPropertyValueEditorAction$Next"
-            text="Choose Next Property Value Editor"
-            use-shortcut-of="MethodDown"/>
-    <action id="ChoosePrevSubsequentPropertyValueEditorAction"
-            class="com.intellij.lang.properties.editor.ChooseSubsequentPropertyValueEditorAction$Prev"
-            text="Choose Previous Property Value Editor"
-            use-shortcut-of="MethodUp"/>
-    <action id="NewPropertyAction" class="com.intellij.lang.properties.editor.NewPropertyAction"
-            text="Property"
-            description="Add Property to Resource Bundle">
-      <add-to-group group-id="NewGroup" anchor="first"/>
-    </action>
-    <action id="GotoNextIncompletePropertyAction"
-            class="com.intellij.lang.properties.editor.GotoNextIncompletePropertyAction"
-            text="Go to next incomplete property"
-            use-shortcut-of="GotoNextError"/>
-
     <action id="AddNewPropertyFile" class="com.intellij.lang.properties.create.AddNewPropertyFileAction">
       <add-to-group group-id="NewGroup" anchor="first"/>
     </action>
     <action id="CreateResourceBundle" class="com.intellij.lang.properties.create.CreateResourceBundleAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
     </action>
-    <action id="ResourceBundleEditorShowIntentions"
-            class="com.intellij.lang.properties.editor.ResourceBundleEditorShowQuickFixesAction"
-            use-shortcut-of="ShowIntentionActions"/>
 
   </actions>
 </idea-plugin>

@@ -25,14 +25,16 @@ import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
 
+@NonNls
 public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsCommitMetadata> {
-  public static final String TRIGRAMS = "trigrams";
+  public static final String TRIGRAMS = "trigrams"; // NON-NLS
 
   public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
                                     @NotNull FatalErrorHandler fatalErrorHandler,

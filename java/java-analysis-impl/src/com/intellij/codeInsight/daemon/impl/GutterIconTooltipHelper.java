@@ -30,7 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * @deprecated use {@link GutterIconTooltipHelper}
+ * @deprecated use {@link GutterTooltipHelper}
  */
 @Deprecated
 public class GutterIconTooltipHelper {
@@ -38,15 +38,15 @@ public class GutterIconTooltipHelper {
   }
 
   /**
-   * @deprecated use {@link GutterIconTooltipHelper}
+   * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
-  public static String composeText(@NotNull PsiElement[] elements, @NotNull String start, @NotNull String pattern) {
+  public static String composeText(PsiElement @NotNull [] elements, @NotNull String start, @NotNull String pattern) {
     return composeText(Arrays.asList(elements), start, pattern);
   }
 
   /**
-   * @deprecated use {@link GutterIconTooltipHelper}
+   * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
   public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern) {
@@ -54,7 +54,7 @@ public class GutterIconTooltipHelper {
   }
 
   /**
-   * @deprecated use {@link GutterIconTooltipHelper}
+   * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
   static String composeText(@NotNull Iterable<? extends PsiElement> elements,

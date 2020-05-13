@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper;
@@ -62,8 +64,8 @@ public class QuickFixPreviewPanelFactory {
       return myEmpty;
     }
 
-    private boolean fillPanel(@NotNull QuickFixAction[] fixes,
-                              @NotNull QuickFixAction[] partialFixes,
+    private boolean fillPanel(QuickFixAction @NotNull [] fixes,
+                              QuickFixAction @NotNull [] partialFixes,
                               boolean multipleDescriptors,
                               @NotNull InspectionResultsView view) {
       boolean hasFixes = fixes.length != 0;
@@ -123,7 +125,7 @@ public class QuickFixPreviewPanelFactory {
 
       return new ComboBoxAction() {
         {
-          getTemplatePresentation().setText("Fix partially");
+          getTemplatePresentation().setText(CodeInsightBundle.messagePointer("action.presentation.QuickFixPreviewPanelFactory.text"));
           setSmallVariant(false);
         }
 
@@ -150,7 +152,7 @@ public class QuickFixPreviewPanelFactory {
       }
       final ComboBoxAction action = new ComboBoxAction() {
         {
-          getTemplatePresentation().setText("Suppress");
+          getTemplatePresentation().setText(CodeInsightBundle.messagePointer("action.presentation.QuickFixPreviewPanelFactory.text.suppress"));
         }
 
         @NotNull
@@ -165,12 +167,16 @@ public class QuickFixPreviewPanelFactory {
       return action;
     }
 
-    @NotNull
-    private static AnAction[] createFixActions(QuickFixAction[] fixes, boolean multipleDescriptors) {
+    private static AnAction @NotNull [] createFixActions(QuickFixAction[] fixes, boolean multipleDescriptors) {
       if (fixes.length > MAX_FIX_COUNT) {
         final ComboBoxAction fixComboBox = new ComboBoxAction() {
           {
-            getTemplatePresentation().setText("Apply quick fixes" + (multipleDescriptors ? " to all the problems" : ""));
+            if (multipleDescriptors) {
+              getTemplatePresentation().setText(InspectionsBundle.message("apply.quick.fixes.to.all.action.text"));
+            }
+            else {
+              getTemplatePresentation().setText(InspectionsBundle.message("apply.quick.fixes.action.text"));
+            }
             getTemplatePresentation().setIcon(AllIcons.Actions.IntentionBulb);
             setSmallVariant(false);
           }

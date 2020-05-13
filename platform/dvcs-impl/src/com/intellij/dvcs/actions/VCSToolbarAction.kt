@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction
 class VcsToolbarAction() : IconWithTextAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val vcsOperationPopupAction =
-            ActionManager.getInstance().getAction("Vcs.QuickListPopupAction") ?: error("cannot find VcsOperationPopup action")
+            ActionManager.getInstance().getAction("Vcs.QuickListPopupAction") ?: error("cannot find VcsOperationPopup action") // NON-NLS
         vcsOperationPopupAction.actionPerformed(e)
     }
 

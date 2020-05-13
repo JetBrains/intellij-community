@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index
 
 import com.google.common.hash.HashCode
@@ -14,11 +14,9 @@ import junit.framework.TestCase
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * @author traff
- */
 abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
   companion object {
+    @Suppress("MemberVisibilityCanBePrivate") // used by GoLand
     const val CHECK_HASH_COLLISIONS_PROPERTY = "idea.index.generator.check.hash.collisions"
     val CHECK_HASH_COLLISIONS: Boolean = SystemProperties.`is`(CHECK_HASH_COLLISIONS_PROPERTY)
   }
@@ -27,29 +25,25 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
     get() = VirtualFileFilter { f -> !f.isDirectory }
 
   data class Stats(val indexed: AtomicInteger, val skipped: AtomicInteger) {
-    constructor() : this(AtomicInteger(0), AtomicInteger(0))
+    constructor() : this(AtomicInteger(), AtomicInteger())
   }
 
   protected fun buildIndexForRoots(roots: Collection<VirtualFile>) {
     val hashing = FileContentHashing()
-
     val storage = createStorage(indexStorageFilePath)
 
-    println("Writing indices to ${storage.baseFile.absolutePath}")
+    println("Writing indices to ${storage.baseFile}")
 
     storage.use {
       val map = HashMap<HashCode, String>()
-
       for (file in roots) {
         println("Processing files in root ${file.path}")
         val stats = Stats()
-        VfsUtilCore.visitChildrenRecursively(file,
-                                             object : VirtualFileVisitor<Boolean>() {
-                                               override fun visitFile(file: VirtualFile): Boolean {
-                                                 return indexFile(file, hashing, map, storage, stats)
-                                               }
-                                             })
-
+        VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Boolean>() {
+          override fun visitFile(file: VirtualFile): Boolean {
+            return indexFile(file, hashing, map, storage, stats)
+          }
+        })
         println("${stats.indexed.get()} entries written, ${stats.skipped.get()} skipped")
       }
     }
@@ -62,8 +56,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
                         stats: Stats): Boolean {
     try {
       if (fileFilter.accept(file)) {
-        val fileContent = FileContentImpl(
-          file, file.contentsToByteArray())
+        val fileContent = FileContentImpl.createByFile(file) as FileContentImpl
 
         val hashCode = hashing.hashString(fileContent)
 
@@ -93,7 +86,6 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
     catch (e: NoSuchElementException) {
       return false
     }
-
     return true
   }
 

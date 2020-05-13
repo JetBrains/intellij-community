@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class ControlBinder {
 
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.options.binding.ControlBinder");
+  private final static Logger LOG = Logger.getInstance(ControlBinder.class);
 
   private final Object myBean;
   private final List<Pair<ControlValueAccessor, BeanValueAccessor>> myBindings = new ArrayList<>();

@@ -6,6 +6,7 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileMessageEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Contract;
@@ -27,6 +28,7 @@ public class JavacOutputParser implements BuildOutputParser {
 
   private static final char COLON = ':';
   private static final String WARNING_PREFIX = "warning:"; // default value
+  private static final String NOTE_PREFIX = "note:";
   private static final String ERROR_PREFIX = "error:";
   private final String[] myFileExtensions;
 
@@ -34,7 +36,7 @@ public class JavacOutputParser implements BuildOutputParser {
     this("java");
   }
 
-  public JavacOutputParser(@NotNull String... fileExtensions) {
+  public JavacOutputParser(String @NotNull ... fileExtensions) {
     myFileExtensions = fileExtensions;
   }
 
@@ -97,6 +99,10 @@ public class JavacOutputParser implements BuildOutputParser {
             text = text.substring(WARNING_PREFIX.length()).trim();
             kind = MessageEvent.Kind.WARNING;
           }
+          else if (text.startsWith(NOTE_PREFIX)) {
+            text = text.substring(NOTE_PREFIX.length()).trim();
+            kind = MessageEvent.Kind.INFO;
+          }
           else if (text.startsWith(ERROR_PREFIX)) {
             text = text.substring(ERROR_PREFIX.length()).trim();
             kind = MessageEvent.Kind.ERROR;
@@ -153,7 +159,7 @@ public class JavacOutputParser implements BuildOutputParser {
 
     if (line.endsWith("java.lang.OutOfMemoryError")) {
       messageConsumer.accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP,
-                                                  "Out of memory.", line));
+                                                  LangBundle.message("build.event.message.out.memory"), line));
       return true;
     }
 

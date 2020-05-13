@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,28 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
+import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MissortedModifiersInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
@@ -40,18 +45,41 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
    */
   public boolean m_requireAnnotationsFirst = true;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "missorted.modifiers.display.name");
-  }
+  public boolean typeUseWithType = false;
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "missorted.modifiers.problem.descriptor");
+    final PsiModifierList modifierList = (PsiModifierList)infos[0];
+    final List<String> modifiers = getModifiers(modifierList);
+    final List<String> sortedModifiers = getSortedModifiers(modifierList);
+    final List<String> missortedModifiers = stripCommonPrefixSuffix(modifiers, sortedModifiers);
+    return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor", String.join(" ", missortedModifiers));
+  }
+
+  private static <E> List<E> stripCommonPrefixSuffix(List<E> list1, List<E> list2) {
+    final int max = list1.size() - commonSuffixLength(list1, list2);
+    final List<E> result = new SmartList<>();
+    for (int i = 0; i < max; i++) {
+      final E token = list1.get(i);
+      if (token.equals(list2.get(i))) continue; // common prefix
+      result.add(token);
+    }
+    return result;
+  }
+
+  @Contract(pure = true)
+  private static <E> int commonSuffixLength(@NotNull List<E> l1, @NotNull List<E> l2) {
+    final int size1 = l1.size();
+    final int size2 = l2.size();
+    if (size1 == 0 || size2 == 0) return 0;
+    int i = 0;
+    for (; i < size1 && i < size2; i++) {
+      if (!l1.get(size1 - i - 1).equals(l2.get(size2 - i - 1))) {
+        break;
+      }
+    }
+    return i;
   }
 
   @Override
@@ -65,66 +93,77 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "missorted.modifiers.require.option"),
-      this, "m_requireAnnotationsFirst");
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "typeUseWithType");
+    writeBooleanOption(node, "typeUseWithType", false);
   }
 
-  private static class SortModifiersFix extends InspectionGadgetsFix {
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    final JCheckBox box = panel.addCheckboxEx(InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
+                                              "m_requireAnnotationsFirst");
+    panel.addDependentCheckBox(InspectionGadgetsBundle.message("missorted.modifiers.typeuse.before.type.option"), "typeUseWithType", box);
+    return panel;
+  }
+
+  private class SortModifiersFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "missorted.modifiers.sort.quickfix");
+      return InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix");
     }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiModifierList modifierList = (PsiModifierList)descriptor.getPsiElement();
-      final List<String> modifiers = new ArrayList<>();
-      final List<String> typeAnnotations = new ArrayList<>();
-      final PsiElement[] children = modifierList.getChildren();
-      for (final PsiElement child : children) {
-        if (child instanceof PsiComment) {
-          final PsiComment comment = (PsiComment)child;
-          final IElementType tokenType = comment.getTokenType();
-          if (JavaTokenType.END_OF_LINE_COMMENT.equals(tokenType)) {
-            @NonNls final String text = child.getText() + '\n';
-            modifiers.add(text);
-          }
-          else {
-            modifiers.add(child.getText());
-          }
-        }
-        else if (child instanceof PsiJavaToken) {
-          modifiers.add(child.getText());
-        }
-        else if (child instanceof PsiAnnotation) {
-          if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
-            typeAnnotations.add(child.getText());
-          }
-          else {
-            modifiers.add(0, child.getText());
-          }
-        }
+      PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiModifierList)) {
+        element = element.getParent();
+        if (!(element instanceof PsiModifierList)) return;
       }
-      Collections.sort(modifiers, new ModifierComparator());
-      @NonNls final StringBuilder buffer = new StringBuilder();
-      for (String modifier : modifiers) {
-        buffer.append(modifier).append(' ');
-      }
-      for (String annotation : typeAnnotations) {
-        buffer.append(annotation).append(' ');
-      }
-      buffer.append("void x() {}");
-      final String text = buffer.toString();
-      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text, modifierList);
+      final PsiModifierList modifierList = (PsiModifierList)element;
+      @NonNls final String text = String.join(" ", getSortedModifiers(modifierList));
+      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text + " void x() {}", modifierList);
       final PsiModifierList newModifierList = method.getModifierList();
       new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
     }
+  }
+
+  private static List<String> getModifiers(PsiModifierList modifierList) {
+    return Stream.of(modifierList.getChildren())
+      .filter(e -> e instanceof PsiJavaToken || e instanceof PsiAnnotation)
+      .map(PsiElement::getText)
+      .collect(Collectors.toList());
+  }
+
+  private List<String> getSortedModifiers(PsiModifierList modifierList) {
+    final List<String> modifiers = new SmartList<>();
+    final List<String> typeAnnotations = new SmartList<>();
+    final List<String> annotations = new SmartList<>();
+    for (PsiElement child : modifierList.getChildren()) {
+      if (child instanceof PsiJavaToken) {
+        modifiers.add(child.getText());
+      }
+      else if (child instanceof PsiAnnotation) {
+        final PsiAnnotation annotation = (PsiAnnotation)child;
+        if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
+          final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
+          if (typeUseWithType || !modifiers.isEmpty() ||
+              AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
+            typeAnnotations.add(child.getText());
+            continue;
+          }
+        }
+        annotations.add(child.getText());
+      }
+    }
+    modifiers.sort(new ModifierComparator());
+    final List<String> result = new SmartList<>();
+    result.addAll(annotations);
+    result.addAll(modifiers);
+    result.addAll(typeAnnotations);
+    return result;
   }
 
   private class MissortedModifiersVisitor extends BaseInspectionVisitor {
@@ -173,57 +212,68 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       if (modifierList == null) {
         return;
       }
-      if (!isModifierListMissorted(modifierList)) {
+      final PsiElement modifier = getFirstMisorderedModifier(modifierList);
+      if (modifier == null) {
         return;
       }
-      registerError(modifierList);
+      registerError(isVisibleHighlight(modifierList) ? modifier : modifierList, modifierList);
     }
 
-    private boolean isModifierListMissorted(PsiModifierList modifierList) {
+    private PsiElement getFirstMisorderedModifier(PsiModifierList modifierList) {
       if (modifierList == null) {
-        return false;
+        return null;
       }
-      final PsiElement[] children = modifierList.getChildren();
-      String currentModifier = null;
-      boolean typeAnnotationSeen = false;
-      for (final PsiElement child : children) {
+      final Deque<PsiElement> modifiers = new ArrayDeque<>();
+      PsiAnnotation typeAnnotation = null;
+      for (final PsiElement child : modifierList.getChildren()) {
         if (child instanceof PsiJavaToken) {
-          if (m_requireAnnotationsFirst && typeAnnotationSeen) return true;
+          if (typeAnnotation != null) return typeAnnotation;
           final String text = child.getText();
-          if (modifierComparator.compare(text, currentModifier) < 0) {
-            return true;
+          if (!modifiers.isEmpty() && modifierComparator.compare(text, modifiers.getLast().getText()) < 0) {
+            while (!modifiers.isEmpty()) {
+              final PsiElement first = modifiers.pollFirst();
+              if (modifierComparator.compare(text, first.getText()) < 0) {
+                return first;
+              }
+            }
           }
-          currentModifier = text;
+          modifiers.add(child);
         }
         if (child instanceof PsiAnnotation) {
-          if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
-            // type annotations come next to type
-            // see e.g. http://www.oracle.com/technetwork/articles/java/ma14-architect-annotations-2177655.html
-            typeAnnotationSeen = true;
-            continue;
+          final PsiAnnotation annotation = (PsiAnnotation)child;
+          if (m_requireAnnotationsFirst) {
+            if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !isMethodWithVoidReturnType(modifierList.getParent())) {
+              // type annotations go next to the type
+              // see e.g. https://www.oracle.com/technical-resources/articles/java/ma14-architect-annotations.html
+              if (typeUseWithType || !modifiers.isEmpty()) {
+                typeAnnotation = annotation;
+              }
+              final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
+              if (AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
+                typeAnnotation = annotation;
+              }
+              continue;
+            }
+            if (m_requireAnnotationsFirst && !modifiers.isEmpty()) {
+              //things aren't in order, since annotations come first
+              return modifiers.getFirst();
+            }
           }
-          if (m_requireAnnotationsFirst && currentModifier != null) {
-            //things aren't in order, since annotations come first
-            return true;
+          else if (!modifiers.isEmpty()) {
+            typeAnnotation = annotation;
           }
         }
       }
-      return false;
+      return null;
     }
   }
 
   static boolean isMethodWithVoidReturnType(PsiElement element) {
-    if (!(element instanceof PsiMethod)) {
-      return false;
-    }
-    final PsiMethod method = (PsiMethod)element;
-    return PsiType.VOID.equals(method.getReturnType());
+    return element instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)element).getReturnType());
   }
 
   private static class ModifierComparator implements Comparator<String> {
 
-    /**
-     */
     @NonNls private static final Map<String, Integer> s_modifierOrder = new HashMap<>(12);
 
     static {

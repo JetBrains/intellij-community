@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,19 +7,19 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -29,14 +29,14 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * as a part of forEach operation of resulting stream possibly with
  * some intermediate operations extracted.
  */
-class TerminalBlock {
+final class TerminalBlock {
   private static final Logger LOG = Logger.getInstance(TerminalBlock.class);
 
   private final @NotNull PsiVariable myVariable;
-  private final @NotNull Operation[] myOperations;
-  private final @NotNull PsiStatement[] myStatements;
+  private final Operation @NotNull [] myOperations;
+  private final PsiStatement @NotNull [] myStatements;
 
-  private TerminalBlock(@NotNull Operation[] operations, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
+  private TerminalBlock(Operation @NotNull [] operations, @NotNull PsiVariable variable, PsiStatement @NotNull ... statements) {
     // At least one operation is present (stream source)
     LOG.assertTrue(operations.length > 0);
     for(Operation operation : operations) Objects.requireNonNull(operation);
@@ -57,7 +57,7 @@ class TerminalBlock {
   private TerminalBlock(@Nullable TerminalBlock previousBlock,
                         @NotNull Operation operation,
                         @NotNull PsiVariable variable,
-                        @NotNull PsiStatement... statements) {
+                        PsiStatement @NotNull ... statements) {
     this(previousBlock == null ? new Operation[]{operation} : ArrayUtil.append(previousBlock.myOperations, operation), variable,
          statements);
   }
@@ -74,8 +74,7 @@ class TerminalBlock {
     return myStatements.length == 1 ? myStatements[0] : null;
   }
 
-  @NotNull
-  PsiStatement[] getStatements() {
+  PsiStatement @NotNull [] getStatements() {
     return myStatements;
   }
 
@@ -106,10 +105,11 @@ class TerminalBlock {
     PsiStatement single = getSingleStatement();
     if (single instanceof PsiIfStatement) {
       PsiIfStatement ifStatement = (PsiIfStatement)single;
-      if(ifStatement.getElseBranch() == null && ifStatement.getCondition() != null) {
+      PsiExpression condition = ifStatement.getCondition();
+      if(ifStatement.getElseBranch() == null && condition != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         if(thenBranch != null) {
-          return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
+          return fromCondition(condition, false, thenBranch);
         }
       }
     }
@@ -118,7 +118,8 @@ class TerminalBlock {
       // extract filter with negation
       if(first instanceof PsiIfStatement) {
         PsiIfStatement ifStatement = (PsiIfStatement)first;
-        if(ifStatement.getCondition() == null) return null;
+        PsiExpression condition = ifStatement.getCondition();
+        if(condition == null) return null;
         PsiStatement branch = ifStatement.getThenBranch();
         if(branch instanceof PsiBlockStatement) {
           PsiStatement[] statements = ((PsiBlockStatement)branch).getCodeBlock().getStatements();
@@ -133,10 +134,30 @@ class TerminalBlock {
         } else {
           statements = Arrays.copyOfRange(myStatements, 1, myStatements.length);
         }
-        return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, true), myVariable, statements);
+        return fromCondition(condition, true, statements);
       }
     }
     return null;
+  }
+
+  @Nullable
+  private TerminalBlock fromCondition(PsiExpression condition, boolean negated, PsiStatement... statements) {
+    TerminalBlock result = new TerminalBlock(this, new FilterOp(condition, myVariable, negated), myVariable, statements);
+    List<PsiPatternVariable> vars = JavaPsiPatternUtil.getExposedPatternVariables(condition);
+    if (!vars.isEmpty()) {
+      List<PsiPatternVariable> used =
+        ContainerUtil.filter(vars, var -> Stream.of(statements).anyMatch(st -> VariableAccessUtils.variableIsUsed(var, st)));
+      if (used.size() > 1) return null;
+      if (!used.isEmpty()) {
+        PsiPatternVariable var = used.get(0);
+        String text = JavaPsiPatternUtil.getEffectiveInitializerText(var);
+        if (text == null) return null;
+        if (Stream.of(statements).anyMatch(st -> VariableAccessUtils.variableIsUsed(myVariable, st))) return null;
+        PsiExpression mappingExpression = JavaPsiFacade.getElementFactory(condition.getProject()).createExpressionFromText(text, var);
+        result = new TerminalBlock(result, new MapOp(mappingExpression, myVariable, var.getType()), var, statements);
+      }
+    }
+    return result;
   }
 
   /**
@@ -402,7 +423,7 @@ class TerminalBlock {
    * @return the terminal block with all possible terminal operations extracted (may return this if no operations could be extracted)
    */
   @NotNull
-  TerminalBlock extractOperations() {
+  private TerminalBlock extractOperations() {
     return StreamEx.iterate(this, Objects::nonNull, TerminalBlock::extractOperation).reduce((a, b) -> b).orElse(this);
   }
 
@@ -434,7 +455,7 @@ class TerminalBlock {
   /**
    * @return stream of physical expressions used in intermediate operations in arbitrary order
    */
-  StreamEx<PsiExpression> intermediateExpressions() {
+  private StreamEx<PsiExpression> intermediateExpressions() {
     return StreamEx.of(myOperations, 1, myOperations.length).flatMap(Operation::expressions);
   }
 
@@ -501,7 +522,7 @@ class TerminalBlock {
   }
 
   @NotNull
-  static TerminalBlock fromStatements(StreamSource source, @NotNull PsiStatement... statements) {
+  static TerminalBlock fromStatements(StreamSource source, PsiStatement @NotNull ... statements) {
     return new TerminalBlock(null, source, source.myVariable, statements).extractOperations().tryPeelLimit(false).tryExtractDistinct();
   }
 

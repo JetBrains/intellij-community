@@ -37,6 +37,6 @@ public class GitCompareBranchesHelper implements CompareBranchesHelper {
   @Override
   @NotNull
   public String formatLogCommand(@NotNull String firstBranch, @NotNull String secondBranch) {
-    return String.format("git log %s..%s", firstBranch, secondBranch);
+    return String.format("git log %s..%s", firstBranch, secondBranch); // NON-NLS
   }
 }

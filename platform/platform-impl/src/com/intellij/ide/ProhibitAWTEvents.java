@@ -28,7 +28,7 @@ import java.awt.*;
  * @author peter
  */
 public class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ProhibitAWTEvents");
+  private static final Logger LOG = Logger.getInstance(ProhibitAWTEvents.class);
 
   private final String myActivityName;
   private boolean myReported;

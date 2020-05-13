@@ -28,9 +28,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsAppEngineModuleExtensionImpl extends JpsElementBase<JpsAppEngineModuleExtensionImpl> implements
                                                                                                      JpsAppEngineModuleExtension {
   public static final JpsElementChildRole<JpsAppEngineModuleExtension> ROLE = JpsElementChildRoleBase.create("AppEngine");

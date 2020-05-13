@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeState;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +69,14 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     Color color = myColorsMap.get(key);
     if (color != null) return color == NULL_COLOR_MARKER ? null : color;
 
+    ColorKey fallbackKey = key.getFallbackColorKey();
+    Color fallback = fallbackKey == null ? null : getFallbackColor(fallbackKey);
+    if (fallback != null && fallback != AbstractColorsScheme.INHERITED_COLOR_MARKER) return fallback;
+
     if (!useDefaults) return null;
-    return key.getDefaultColor();
+    Color keyDefaults = key.getDefaultColor();
+    if (keyDefaults != null) return keyDefaults;
+    return fallbackKey == null ? null : fallbackKey.getDefaultColor();
   }
 
   @Override
@@ -113,7 +118,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
   
   public String getEditableCopyName() {
-    return SchemeManager.EDITABLE_COPY_PREFIX + myName;
+    return EDITABLE_COPY_PREFIX + myName;
   }
 
   @Override

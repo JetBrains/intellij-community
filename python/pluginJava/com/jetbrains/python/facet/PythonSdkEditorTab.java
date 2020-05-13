@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,7 @@ public class PythonSdkEditorTab extends FacetEditorTab {
   @Override
   @Nls
   public String getDisplayName() {
-    return "Python SDK";
+    return PyBundle.message("configurable.PythonSdkEditorTab.display.name");
   }
 
   @Override

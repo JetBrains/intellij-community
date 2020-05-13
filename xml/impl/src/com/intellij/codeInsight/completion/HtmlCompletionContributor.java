@@ -85,9 +85,8 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     return xmlTag != null && xmlTag.getLanguage() == XHTMLLanguage.INSTANCE;
   }
 
-  @NotNull
   @NonNls
-  public static String[] addSpecificCompletions(final XmlAttribute attribute) {
+  public static String @NotNull [] addSpecificCompletions(final XmlAttribute attribute) {
     @NonNls String name = attribute.getName();
     final XmlTag tag = attribute.getParent();
     if (tag == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;

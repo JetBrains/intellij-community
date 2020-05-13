@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
@@ -30,6 +32,21 @@ public class JarFileSystemImpl extends JarFileSystem {
     // to prevent platform .jar files from copying
     boolean runningFromDist = new File(PathManager.getLibPath(), "openapi.jar").exists();
     myNoCopyJarDir = !runningFromDist ? null : new File(PathManager.getHomePath());
+  }
+
+  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(super::getAttributes);
+
+  @Nullable
+  @Override
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
+    return myAttrGetter.accessDiskWithCheckCanceled(file);
+  }
+
+  private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(super::list);
+
+  @Override
+  public String @NotNull [] list(@NotNull VirtualFile file) {
+    return myChildrenGetter.accessDiskWithCheckCanceled(file);
   }
 
   @Override
@@ -70,23 +87,18 @@ public class JarFileSystemImpl extends JarFileSystem {
     return super.extractPresentableUrl(StringUtil.trimEnd(path, JAR_SEPARATOR));
   }
 
-  @NotNull
+  @Nullable
   @Override
   protected String normalize(@NotNull String path) {
-    final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
-    if (jarSeparatorIndex > 0) {
-      final String root = path.substring(0, jarSeparatorIndex);
-      return FileUtil.normalize(root) + path.substring(jarSeparatorIndex);
-    }
-    return super.normalize(path);
+    int separatorIndex = path.indexOf(JAR_SEPARATOR);
+    return separatorIndex > 0 ? FileUtil.normalize(path.substring(0, separatorIndex)) + path.substring(separatorIndex) : null;
   }
 
   @NotNull
   @Override
-  protected String extractRootPath(@NotNull String path) {
-    final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
-    assert jarSeparatorIndex >= 0 : "Path passed to JarFileSystem must have jar separator '!/' but got: " + path;
-    return path.substring(0, jarSeparatorIndex + JAR_SEPARATOR.length());
+  protected String extractRootPath(@NotNull String normalizedPath) {
+    int separatorIndex = normalizedPath.indexOf(JAR_SEPARATOR);
+    return separatorIndex > 0 ? normalizedPath.substring(0, separatorIndex + JAR_SEPARATOR.length()) : "";
   }
 
   @NotNull

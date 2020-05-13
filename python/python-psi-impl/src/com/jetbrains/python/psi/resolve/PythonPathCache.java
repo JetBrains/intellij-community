@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,13 +26,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author yole
  */
 public abstract class PythonPathCache {
-  private final Map<QualifiedName, SoftReference<List<PsiElement>>> myCache = ContainerUtil.newConcurrentMap();
-  private final Map<String, List<QualifiedName>> myQNameCache = ContainerUtil.newConcurrentMap();
+  private final Map<QualifiedName, SoftReference<List<PsiElement>>> myCache = new ConcurrentHashMap<>();
+  private final Map<String, List<QualifiedName>> myQNameCache = new ConcurrentHashMap<>();
 
   public void clearCache() {
     myCache.clear();
@@ -43,8 +43,7 @@ public abstract class PythonPathCache {
   /***
    * @return null if nothing found in cache. If path resolves to nothing you get empty list
    */
-  @Nullable
-  public List<PsiElement> get(@NotNull final QualifiedName qualifiedName) {
+  public @Nullable List<PsiElement> get(final @NotNull QualifiedName qualifiedName) {
     final SoftReference<List<PsiElement>> references = myCache.get(qualifiedName);
     if (references == null) {
       return null;
@@ -63,8 +62,7 @@ public abstract class PythonPathCache {
     }
   }
 
-  @Nullable
-  public List<QualifiedName> getNames(VirtualFile vFile) {
+  public @Nullable List<QualifiedName> getNames(VirtualFile vFile) {
     if (vFile == null) {
       return null;
     }

@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -55,16 +57,33 @@ public class PyResolveContext {
     return myAllowRemote;
   }
 
-  private static final PyResolveContext ourDefaultContext = new PyResolveContext(true, true);
-  private static final PyResolveContext ourNoImplicitsContext = new PyResolveContext(false, true);
+  private static final PyResolveContext ourDefaultContext = new PyResolveContext(false, true);
+  private static final PyResolveContext ourImplicitsContext = new PyResolveContext(true, true);
   private static final PyResolveContext ourNoPropertiesContext = new PyResolveContext(false, false);
 
   public static PyResolveContext defaultContext() {
     return ourDefaultContext;
   }
 
+  /**
+   * Allow searching for dynamic usages based on duck typing and guesses during resolve.
+   *
+   * Note that this resolve context is slower than the default one. Use it only for one-off user actions.
+   */
+  @NotNull
+  public static PyResolveContext implicitContext() {
+    return ourImplicitsContext;
+  }
+
+  /**
+   * @deprecated Use {@link #defaultContext()} instead, now it doesn't contain implicit results.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated
   public static PyResolveContext noImplicits() {
-    return ourNoImplicitsContext;
+    Logger.getInstance(PyResolveContext.class).warn("Deprecated method used: 'noImplicits'. This method will be dropped soon." +
+                                                    "Consider migrate to the new one");
+    return defaultContext();
   }
 
   public static PyResolveContext noProperties() {

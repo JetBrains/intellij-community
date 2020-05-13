@@ -47,18 +47,18 @@ public class SubtypesMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length == 0) return null;
     return params[0].calculateQuickResult(context);
   }
 
   @Override
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length == 0) return LookupElement.EMPTY_ARRAY;
     Result paramResult = params[0].calculateQuickResult(context);
     if (paramResult instanceof PsiTypeResult) {

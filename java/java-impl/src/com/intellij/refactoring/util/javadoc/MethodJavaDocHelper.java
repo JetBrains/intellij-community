@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
  *  @author dsl
  */
 public class MethodJavaDocHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.javadoc.MethodJavaDocHelper");
+  private static final Logger LOG = Logger.getInstance(MethodJavaDocHelper.class);
   private final PsiMethod myMethod;
   private final boolean myDoCorrectJavaDoc;
   private final PsiDocComment myDocComment;

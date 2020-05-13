@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -12,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-/**
- * @author max
- */
-public class DummyProject extends UserDataHolderBase implements Project {
+public final class DummyProject extends UserDataHolderBase implements Project {
   private static class DummyProjectHolder {
     private static final DummyProject ourInstance = new DummyProject();
   }
@@ -73,7 +70,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
   public void save() { }
 
   @Override
-  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+  public <T> T getService(@NotNull Class<T> serviceClass) {
     return null;
   }
 

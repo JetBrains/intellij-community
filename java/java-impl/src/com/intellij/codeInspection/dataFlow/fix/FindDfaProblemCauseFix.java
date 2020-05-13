@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -17,8 +18,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
@@ -38,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction {
+public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction {
   private final boolean myUnknownMembersAsNullable;
   private final boolean myIgnoreAssertStatements;
   private final SmartPsiElementPointer<PsiExpression> myAnchor;
@@ -63,7 +64,7 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Find cause";
+    return JavaBundle.message("quickfix.family.find.cause");
   }
 
   @Override
@@ -74,7 +75,7 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
       return TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
     };
     TrackingRunner.CauseItem item = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(causeFinder), "Finding Cause", true, project);
+      () -> ReadAction.compute(causeFinder), JavaBundle.message("progress.title.finding.cause"), true, project);
     PsiFile file = myAnchor.getContainingFile();
     if (item != null && file != null) {
       displayProblemCause(file, item);
@@ -139,7 +140,7 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
         TextRange range = TextRange.create(target);
         h.highlight(Pair.create(range, Collections.singletonList(range)));
       })
-      .addListener(new JBPopupAdapter() {
+      .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.getAndSet(null).dropHighlight();

@@ -22,7 +22,6 @@ import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.testFramework.UsefulTestCase
@@ -54,7 +53,7 @@ abstract class DiffTestCase : TestCase() {
   }
 
   override fun tearDown() {
-    DiffIterableUtil.setVerifyEnabled(Registry.`is`("diff.verify.iterable"))
+    DiffIterableUtil.setVerifyEnabled(false)
     super.tearDown()
   }
 
@@ -81,7 +80,7 @@ abstract class DiffTestCase : TestCase() {
     val debugData = DebugData()
 
     for (i in 1..runs) {
-      if (i % 1000 == 0) println(i)
+      if (i % 1000 == 0 && !UsefulTestCase.IS_UNDER_TEAMCITY) println("Completed $i runs")
 
       try {
         lastSeed = getCurrentSeed()

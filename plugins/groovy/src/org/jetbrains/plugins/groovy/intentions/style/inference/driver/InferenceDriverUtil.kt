@@ -43,7 +43,7 @@ fun getJavaLangObject(context: PsiElement): PsiClassType {
 fun GroovyMethodCandidate.smartReceiver(): PsiType? =
   when (this) {
     is GdkMethodCandidate -> argumentMapping?.arguments?.first()?.type
-    else -> receiver
+    else -> receiverType
   }
 
 

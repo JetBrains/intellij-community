@@ -45,9 +45,8 @@ public class MagicNumberInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreInitialCapacity = false;
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[0];
     final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
     if (fix == null) {
@@ -59,12 +58,6 @@ public class MagicNumberInspection extends BaseInspection {
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("magic.number.display.name");
   }
 
   @Override

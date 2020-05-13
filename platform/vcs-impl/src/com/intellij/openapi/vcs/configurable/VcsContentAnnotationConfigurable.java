@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings;
 import org.jetbrains.annotations.Nls;
 
@@ -13,7 +14,7 @@ import javax.swing.*;
  */
 public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   public VcsContentAnnotationConfigurable(Project project) {
-    super(project, "Show changed in last", "days");
+    super(project, VcsBundle.message("settings.checkbox.show.changed.in.last"), VcsBundle.message("settings.checkbox.measure.days"));
   }
 
   @Override
@@ -24,7 +25,7 @@ public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConf
   @Nls
   @Override
   public String getDisplayName() {
-    return "Show recently changed";
+    return VcsBundle.message("configurable.VcsContentAnnotationConfigurable.display.name");
   }
 
   @Override

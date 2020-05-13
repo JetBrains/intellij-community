@@ -35,13 +35,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DanglingJavadocInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("dangling.javadoc.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -53,9 +46,8 @@ public class DanglingJavadocInspection extends BaseInspection {
     return true;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return new InspectionGadgetsFix[] {
       new DeleteCommentFix(),
       new ConvertCommentFix()

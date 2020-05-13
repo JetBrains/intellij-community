@@ -9,12 +9,11 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class ResultOfInstruction extends Instruction implements ExpressionPushingInstruction {
-  @NotNull
-  private final PsiExpression myExpression;
+import java.util.Objects;
 
+public class ResultOfInstruction extends ExpressionPushingInstruction<PsiExpression> {
   public ResultOfInstruction(@NotNull PsiExpression expression) {
-    myExpression = expression;
+    super(expression);
   }
 
   @Override
@@ -23,12 +22,12 @@ public class ResultOfInstruction extends Instruction implements ExpressionPushin
   }
 
   public String toString() {
-    return "RESULT_OF "+myExpression.getText();
+    return "RESULT_OF "+getExpression().getText();
   }
 
   @NotNull
   @Override
   public PsiExpression getExpression() {
-    return myExpression;
+    return Objects.requireNonNull(super.getExpression());
   }
 }

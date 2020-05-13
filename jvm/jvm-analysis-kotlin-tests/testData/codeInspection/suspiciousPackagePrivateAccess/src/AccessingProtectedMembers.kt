@@ -76,3 +76,14 @@ class AccessingProtectedMembersFromObjectLiteral {
     }
   }
 }
+
+//KT-35296: Must not produce false positive warnings for package-private empty constructor.
+class AccessProtectedSuperConstructor : PackagePrivateEmptyConstructor {
+  constructor(i: Int) : super(i)
+
+  constructor(i: Int, i2: Int): this(i + i2)
+}
+
+class AccessProtectedSuperConstructorWithArgument(i: Int) : PackagePrivateEmptyConstructor(i) {
+  constructor(i: Int, i2: Int): this(i + i2)
+}

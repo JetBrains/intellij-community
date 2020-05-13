@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ide
 
-import com.intellij.execution.ExecutionManager
 import com.intellij.execution.console.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.actions.CloseAction
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -29,8 +29,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JPanel
 
-class GroovyScriptingShellAction : AnAction() {
-
+internal class GroovyScriptingShellAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     initConsole(project)
@@ -82,7 +81,7 @@ private fun initConsole(project: Project) {
   toolbarActions.addAll(*console.createConsoleActions())
   val executor = DefaultRunExecutor.getRunExecutorInstance()
   toolbarActions.add(CloseAction(executor, descriptor, project))
-  ExecutionManager.getInstance(project).contentManager.showRunContent(executor, descriptor)
+  RunContentManager.getInstance(project).showRunContent(executor, descriptor)
 
   val appInfo = ApplicationInfo.getInstance()
   val namesInfo = ApplicationNamesInfo.getInstance()

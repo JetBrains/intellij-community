@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.ecmascript;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiLiteralValue;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.regexp.RegExpMatchResult;
 import org.intellij.lang.regexp.RegExpMatcherProvider;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.script.ScriptEngine;
@@ -40,7 +41,7 @@ public class EcmaScriptRegExpMatcherProvider implements RegExpMatcherProvider {
     }
     final ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
     try {
-      @Language("Nashorn JS")
+      @NonNls @Language("Nashorn JS")
       final String script =
         "var a = \"" + StringUtil.escapeStringCharacters(sampleText) + "\".match(/" + StringUtil.escapeChar(regExp, '/') + "/" + modifiers + ");\n" +
         "a !== null";

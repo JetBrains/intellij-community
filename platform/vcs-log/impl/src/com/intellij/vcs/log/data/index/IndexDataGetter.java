@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -37,7 +36,6 @@ import java.util.*;
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
 public class IndexDataGetter {
-  private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   @NotNull private final Project myProject;
   @NotNull private final Set<? extends VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
@@ -270,9 +268,9 @@ public class IndexDataGetter {
     TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> affectedCommits = new TIntObjectHashMap<>();
 
     VirtualFile root = VcsLogUtil.getActualRoot(myProject, path);
-    if (myRoots.contains(root)) {
+    if (myRoots.contains(root) && root != null) {
       executeAndCatch(() -> {
-        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {
+        myIndexStorage.paths.iterateCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
           List<Integer> parents = myIndexStorage.parents.get(commit);
           if (parents == null) {
             throw new CorruptedDataException("No parents for commit " + commit);
@@ -308,7 +306,7 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  public FileHistoryData createFileHistoryData(@NotNull Collection<FilePath> paths) {
+  public FileHistoryData createFileHistoryData(@NotNull Collection<? extends FilePath> paths) {
     if (paths.size() == 1 && ContainerUtil.getFirstItem(paths).isDirectory()) {
       return new DirectoryHistoryData(ContainerUtil.getFirstItem(paths));
     }
@@ -333,7 +331,10 @@ public class IndexDataGetter {
     @Nullable
     @Override
     public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
-      return executeAndCatch(() -> myIndexStorage.paths.findRename(parent, child, path, isChildPath));
+      VirtualFile root = Objects.requireNonNull(VcsLogUtil.getActualRoot(myProject, path));
+      return executeAndCatch(() -> {
+        return myIndexStorage.paths.findRename(parent, child, root, path, isChildPath);
+      });
     }
   }
 

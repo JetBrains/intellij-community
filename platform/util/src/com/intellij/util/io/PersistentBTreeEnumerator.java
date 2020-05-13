@@ -7,8 +7,8 @@ import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 // Assigns / store unique integral id for Data instances.
 // Btree stores mapping between integer hash code into integer that interpreted in following way:
@@ -51,21 +51,21 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private static final int MAX_DATA_SEGMENT_LENGTH = 128;
 
-  private static final int VERSION = 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
+  protected static final int VERSION = 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
   private static final int KEY_SHIFT = 1;
 
-  public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
+  public PersistentBTreeEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     this(file, dataDescriptor, initialSize, null);
   }
 
-  public PersistentBTreeEnumerator(@NotNull File file,
+  public PersistentBTreeEnumerator(@NotNull Path file,
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
                                    @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
     this(file, dataDescriptor, initialSize, lockContext, 0);
   }
 
-  public PersistentBTreeEnumerator(@NotNull File file,
+  public PersistentBTreeEnumerator(@NotNull Path file,
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
                                    @Nullable PagedFileStorage.StorageLockContext lockContext,
@@ -86,8 +86,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           false
     );
 
-    myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantKeyMapping();
-    myExternalKeysNoMapping = !(myDataDescriptor instanceof InlineKeyDescriptor) && !wantKeyMapping();
+    myInlineKeysNoMapping = dataDescriptor instanceof InlineKeyDescriptor;
+    myExternalKeysNoMapping = !(dataDescriptor instanceof InlineKeyDescriptor);
 
     if (myBTree == null) {
       try {
@@ -120,12 +120,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @NotNull
-  private static File indexFile(@NotNull File file) {
-    return new File(file.getPath() + "_i");
-  }
-
-  private static boolean wantKeyMapping() {
-    return false;
+  private static Path indexFile(@NotNull Path file) {
+    return file.resolveSibling(file.getFileName() + "_i");
   }
 
   private void initBtree(boolean initial) throws IOException {
@@ -271,7 +267,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   @Override
   protected int setupValueId(int hashCode, int dataOff) {
     if (myExternalKeysNoMapping) return addrToIndex(dataOff);
-    final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = getRecordHandler();
+    final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = getRecordHandler();
     final byte[] buf = recordHandler.getRecordBuffer(this);
 
     // optimization for using putInt / getInt on aligned empty storage (our page always contains on storage ByteBuffer)
@@ -283,7 +279,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public void setRecordHandler(@NotNull PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
+  public void setRecordHandler(@NotNull PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler) {
     myExternalKeysNoMapping = false;
     super.setRecordHandler(recordHandler);
   }
@@ -526,11 +522,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     super.doFlush();
   }
 
-  private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentBTreeEnumerator> {
+  private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentBTreeEnumerator<?>> {
     private byte[] myBuffer;
 
     @Override
-    int recordWriteOffset(@NotNull PersistentBTreeEnumerator enumerator, @NotNull byte[] buf) {
+    int recordWriteOffset(@NotNull PersistentBTreeEnumerator<?> enumerator, byte @NotNull [] buf) {
       if (enumerator.myFirstPageStart == -1) {
         enumerator.myFirstPageStart = enumerator.myDataPageStart = enumerator.allocPage();
         int existingOffset = enumerator.myDataPageStart % INTERNAL_PAGE_SIZE;
@@ -551,9 +547,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       return recordWriteOffset + enumerator.myDataPageStart;
     }
 
-    @NotNull
     @Override
-    byte[] getRecordBuffer(@NotNull PersistentBTreeEnumerator enumerator) {
+    byte @NotNull [] getRecordBuffer(@NotNull PersistentBTreeEnumerator<?> enumerator) {
       if (myBuffer == null) {
         myBuffer = enumerator.myInlineKeysNoMapping ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[RECORD_SIZE];
       }
@@ -561,7 +556,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
 
     @Override
-    void setupRecord(@NotNull PersistentBTreeEnumerator enumerator, int hashCode, int dataOffset, byte[] buf) {
+    void setupRecord(@NotNull PersistentBTreeEnumerator<?> enumerator, int hashCode, int dataOffset, byte[] buf) {
       if (!enumerator.myInlineKeysNoMapping) Bits.putInt(buf, 0, dataOffset);
     }
   }

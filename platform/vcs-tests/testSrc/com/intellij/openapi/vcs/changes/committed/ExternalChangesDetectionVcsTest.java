@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,13 +8,14 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.Processor;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
@@ -115,8 +102,8 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     final Pattern pattern = Pattern.compile("f([0-9])+\\.txt");
     int cnt = 0;
     for (VirtualFile unversionedFile : unversionedFiles) {
-      if (VfsUtil.isAncestor(myWorkingCopyDir, unversionedFile, true)) {
-        ++ cnt;
+      if (VfsUtilCore.isAncestor(myWorkingCopyDir, unversionedFile, true)) {
+        ++cnt;
         Assert.assertTrue(pattern.matcher(unversionedFile.getName()).matches());
       }
     }
@@ -171,23 +158,19 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
 
   private static class MyMockChangeProvider implements ChangeProvider {
     @Override
-    public void doCleanup(List<VirtualFile> files) {
-    }
-
-    @Override
     public void getChanges(@NotNull VcsDirtyScope dirtyScope,
                            @NotNull final ChangelistBuilder builder,
                            @NotNull ProgressIndicator progress,
                            @NotNull ChangeListManagerGate addGate) {
       for (FilePath path : dirtyScope.getDirtyFiles()) {
-        builder.processUnversionedFile(path.getVirtualFile());
+        builder.processUnversionedFile(path);
       }
       final Processor<VirtualFile> processor = vf -> {
-        builder.processUnversionedFile(vf);
+        builder.processUnversionedFile(VcsUtil.getFilePath(vf));
         return true;
       };
       for (FilePath dir : dirtyScope.getRecursivelyDirtyDirectories()) {
-        VfsUtil.processFilesRecursively(dir.getVirtualFile(), processor);
+        VfsUtilCore.processFilesRecursively(dir.getVirtualFile(), processor);
       }
     }
 

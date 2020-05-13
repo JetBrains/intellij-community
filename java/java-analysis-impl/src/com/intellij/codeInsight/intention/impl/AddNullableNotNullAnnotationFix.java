@@ -17,7 +17,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
  */
 @Deprecated
 public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
-  public AddNullableNotNullAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner owner, @NotNull String... annotationToRemove) {
+  public AddNullableNotNullAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner owner, String @NotNull ... annotationToRemove) {
     super(fqn, owner, PsiNameValuePair.EMPTY_ARRAY, annotationToRemove);
   }
 

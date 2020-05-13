@@ -40,6 +40,7 @@ public abstract class FileDifferenceModel {
   public String getTitle() {
     Entry e = getRightEntry();
     if (e == null) e = getLeftEntry();
+    if (e == null) return null;
     return FileUtil.toSystemDependentName(e.getPath());
   }
 

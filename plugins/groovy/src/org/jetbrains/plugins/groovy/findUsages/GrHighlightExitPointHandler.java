@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -45,17 +46,17 @@ public class GrHighlightExitPointHandler extends HighlightUsagesHandlerBase<PsiE
   }
 
   @Override
-  public List<PsiElement> getTargets() {
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
   @Override
-  protected void selectTargets(List<PsiElement> targets, Consumer<List<PsiElement>> selectionConsumer) {
+  protected void selectTargets(@NotNull List<? extends PsiElement> targets, @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
   @Override
-  public void computeUsages(List<PsiElement> targets) {
+  public void computeUsages(@NotNull List<? extends PsiElement> targets) {
     PsiElement parent = myTarget.getParent();
     if (!(parent instanceof GrReturnStatement) && !(parent instanceof GrThrowStatement)) return;
 

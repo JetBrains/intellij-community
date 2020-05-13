@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
   private final ClasspathPanel myPanel;
 

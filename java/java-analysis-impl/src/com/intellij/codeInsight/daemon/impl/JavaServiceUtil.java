@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.*;
@@ -67,7 +67,7 @@ class JavaServiceUtil {
                     if (interfaceClassName != null) {
                       LineMarkerInfo<PsiElement> info =
                         new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
-                                             e -> DaemonBundle.message("service.provides", interfaceClassName),
+                                             e -> JavaAnalysisBundle.message("service.provides", interfaceClassName),
                                              new ServiceProvidesNavigationHandler(interfaceClassName, implementerClassName),
                                              GutterIconRenderer.Alignment.LEFT);
                       return Collections.singletonList(info);
@@ -105,7 +105,7 @@ class JavaServiceUtil {
                 if (usedClass != null && psiClass.equals(usedClass.resolve())) {
                   LineMarkerInfo<PsiElement> info =
                     new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
-                                         e -> DaemonBundle.message("service.uses", qualifiedName),
+                                         e -> JavaAnalysisBundle.message("service.uses", qualifiedName),
                                          new ServiceUsesNavigationHandler(qualifiedName),
                                          GutterIconRenderer.Alignment.LEFT);
                   return Collections.singletonList(info);

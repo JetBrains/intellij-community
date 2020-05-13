@@ -41,18 +41,18 @@ public class DiffString extends CharArrayCharSequence {
   }
 
   @NotNull
-  static DiffString create(@NotNull char[] data) {
+  static DiffString create(char @NotNull [] data) {
     return create(data, 0, data.length);
   }
 
   @NotNull
-  static DiffString create(@NotNull char[] data, int start, int length) {
+  static DiffString create(char @NotNull [] data, int start, int length) {
     if (length == 0) return EMPTY;
     checkBounds(start, length, data.length);
     return new DiffString(data, start, length);
   }
 
-  private DiffString(@NotNull char[] data, int start, int length) {
+  private DiffString(char @NotNull [] data, int start, int length) {
     super(data, start, start + length);
   }
 
@@ -87,7 +87,7 @@ public class DiffString extends CharArrayCharSequence {
     return create(Arrays.copyOfRange(myChars, myStart, myStart + length()));
   }
 
-  public void copyData(@NotNull char[] dst, int start) {
+  public void copyData(char @NotNull [] dst, int start) {
     checkBounds(start, length(), dst.length);
     System.arraycopy(myChars, myStart, dst, start, length());
   }
@@ -130,12 +130,12 @@ public class DiffString extends CharArrayCharSequence {
   }
 
   @NotNull
-  public static DiffString concatenateCopying(@NotNull DiffString[] strings) {
+  public static DiffString concatenateCopying(DiffString @NotNull [] strings) {
     return concatenateCopying(strings, 0, strings.length);
   }
 
   @NotNull
-  public static DiffString concatenateCopying(@NotNull DiffString[] strings, int start, int length) {
+  public static DiffString concatenateCopying(DiffString @NotNull [] strings, int start, int length) {
     checkBounds(start, length, strings.length);
 
     int len = 0;
@@ -182,12 +182,12 @@ public class DiffString extends CharArrayCharSequence {
   }
 
   @NotNull
-  public static DiffString concatenate(@NotNull DiffString[] strings) {
+  public static DiffString concatenate(DiffString @NotNull [] strings) {
     return concatenate(strings, 0, strings.length);
   }
 
   @NotNull
-  public static DiffString concatenate(@NotNull DiffString[] strings, int start, int length) {
+  public static DiffString concatenate(DiffString @NotNull [] strings, int start, int length) {
     checkBounds(start, length, strings.length);
 
     char[] data = null;
@@ -320,8 +320,7 @@ public class DiffString extends CharArrayCharSequence {
     }
   }
 
-  @NotNull
-  public DiffString[] tokenize() {
+  public DiffString @NotNull [] tokenize() {
     return new LineTokenizer(this).execute();
   }
 
@@ -332,8 +331,7 @@ public class DiffString extends CharArrayCharSequence {
       myText = text;
     }
 
-    @NotNull
-    public DiffString[] execute() {
+    public DiffString @NotNull [] execute() {
       ArrayList<DiffString> lines = new ArrayList<>();
       doExecute(lines);
       return lines.toArray(new DiffString[0]);

@@ -22,9 +22,6 @@ import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class AppEngineWebFileDescription extends DomFileDescription<AppEngineWebApp> {
   public AppEngineWebFileDescription() {
     super(AppEngineWebApp.class, "appengine-web-app");

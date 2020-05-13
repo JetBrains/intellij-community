@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -6,19 +6,17 @@ import com.intellij.internal.statistic.beans.newCounterMetric
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceManager.getService
-import com.intellij.openapi.components.ServiceManager.getServiceIfCreated
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.TimeUnit
 
-class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
+@NonNls
+internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): MutableSet<MetricEvent> {
     val metricEvents = mutableSetOf<MetricEvent>()
     if (!Registry.`is`("vcs.log.index.git")) {
@@ -38,7 +36,7 @@ class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
     return metricEvents
   }
 
-  private fun getBigRepositoriesList() = getServiceIfCreated<VcsLogBigRepositoriesList>(VcsLogBigRepositoriesList::class.java)
+  private fun getBigRepositoriesList() = serviceIfCreated<VcsLogBigRepositoriesList>()
 
   override fun getGroupId(): String = "vcs.log.index.application"
 
@@ -63,9 +61,9 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
     return usages
   }
 
-  private fun getSharedSettings(project: Project) = getServiceIfCreated<VcsLogSharedSettings>(project, VcsLogSharedSettings::class.java)
+  private fun getSharedSettings(project: Project) = project.serviceIfCreated<VcsLogSharedSettings>()
 
-  private fun getIndexCollector(project: Project) = getServiceIfCreated<VcsLogIndexCollector>(project, VcsLogIndexCollector::class.java)
+  private fun getIndexCollector(project: Project) = project.serviceIfCreated<VcsLogIndexCollector>()
 
   override fun getGroupId(): String = "vcs.log.index.project"
 

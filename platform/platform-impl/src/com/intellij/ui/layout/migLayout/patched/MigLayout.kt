@@ -38,10 +38,9 @@ import net.miginfocom.layout.*
 import java.awt.*
 import java.awt.event.ActionListener
 import javax.swing.*
+import kotlin.math.max
+import kotlin.math.roundToInt
 
-/** A very flexible layout manager.
- * Read the documentation that came with this layout manager for information on usage.
- */
 open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(), val columnConstraints: AC = AC(), val rowConstraints: AC = AC()) : LayoutManager2 {
   @Transient
   private var cacheParentW: ContainerWrapper? = null
@@ -53,8 +52,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   @Transient
   private var grid: Grid? = null
-  @Transient
-  private var lastModCount = PlatformDefaults.getModCount()
+
   @Transient
   private var lastHash = -1
   @Transient
@@ -140,13 +138,6 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
     componentWrapperToConstraints.retainEntries { wrapper, _ -> (wrapper as SwingComponentWrapper).component.parent === parent }
 
-    // check if the grid is valid
-    val mc = PlatformDefaults.getModCount()
-    if (lastModCount != mc) {
-      grid = null
-      lastModCount = mc
-    }
-
     if (parent.isValid) {
       lastWasInvalid = false
     }
@@ -154,7 +145,8 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
       lastWasInvalid = true
 
       var hash = 0
-      var resetLastInvalidOnParent = false // Added in 3.7.3 to resolve a timing regression introduced in 3.7.1
+      // added in 3.7.3 to resolve a timing regression introduced in 3.7.1
+      var resetLastInvalidOnParent = false
       for (wrapper in componentWrapperToConstraints.keys) {
         val component = wrapper.component
         if (component is JTextArea || component is JEditorPane) {
@@ -181,7 +173,6 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     }
 
     val par = checkParent(parent)
-
     if (debugMillis > 0) {
       startDebug(par)
     }
@@ -280,8 +271,8 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
     val p = if (packable.isShowing) packable.locationOnScreen else packable.location
 
-    val x = Math.round(p.x - (targetW - packable.width) * (1 - layoutConstraints.packWidthAlign))
-    val y = Math.round(p.y - (targetH - packable.height) * (1 - layoutConstraints.packHeightAlign))
+    val x = (p.x - (targetW - packable.width) * (1 - layoutConstraints.packWidthAlign)).roundToInt()
+    val y = (p.y - (targetH - packable.height) * (1 - layoutConstraints.packHeightAlign)).roundToInt()
 
     if (packable is JPopupMenu) {
       val popupMenu = packable as JPopupMenu?
@@ -332,8 +323,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     }
 
     retSize = constrain.constrain(retSize, prefSize.toFloat(), parent)
-
-    return if (constrain.gapPush) Math.max(winSize, retSize) else retSize
+    return if (constrain.gapPush) max(winSize, retSize) else retSize
   }
 
   fun getComponentConstraints(): Map<Component, CC> {
@@ -395,9 +385,9 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   override fun addLayoutComponent(comp: Component, constraints: Any?) {
     synchronized(comp.parent.treeLock) {
-      val componentWrapper = SwingComponentWrapper(comp as JComponent)
-      if (constraints != null) {
-        componentWrapperToConstraints.put(componentWrapper, constraints as CC)
+      if (constraints is CC && comp is JComponent) {
+        val componentWrapper = SwingComponentWrapper(comp)
+        componentWrapperToConstraints.put(componentWrapper, constraints)
       }
 
       dirty = true
@@ -406,7 +396,9 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   override fun removeLayoutComponent(comp: Component) {
     synchronized(comp.parent.treeLock) {
-      componentWrapperToConstraints.remove(SwingComponentWrapper(comp as JComponent))
+      if (comp is JComponent) {
+        componentWrapperToConstraints.remove(SwingComponentWrapper(comp))
+      }
       // to clear references
       grid = null
     }

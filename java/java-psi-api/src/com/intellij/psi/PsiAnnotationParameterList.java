@@ -29,6 +29,5 @@ public interface PsiAnnotationParameterList extends PsiElement {
    *
    * @return the array of name/value pairs.
    */
-  @NotNull
-  PsiNameValuePair[] getAttributes();
+  PsiNameValuePair @NotNull [] getAttributes();
 }

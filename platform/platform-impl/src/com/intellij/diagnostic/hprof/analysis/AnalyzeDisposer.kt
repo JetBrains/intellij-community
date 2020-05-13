@@ -17,18 +17,16 @@ package com.intellij.diagnostic.hprof.analysis
 
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
-import com.intellij.diagnostic.hprof.util.HeapReportUtils.Companion.toPaddedShortStringAsSize
-import com.intellij.diagnostic.hprof.util.HeapReportUtils.Companion.toShortStringAsCount
-import com.intellij.diagnostic.hprof.util.HeapReportUtils.Companion.toShortStringAsSize
-import com.intellij.diagnostic.hprof.util.IntList
+import com.intellij.diagnostic.hprof.util.HeapReportUtils.toPaddedShortStringAsSize
+import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
+import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsSize
 import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
-import gnu.trove.TIntHashSet
 import gnu.trove.TLongArrayList
 import gnu.trove.TLongHashSet
 import gnu.trove.TObjectIntHashMap
-import java.util.ArrayDeque
+import java.util.*
 
-class AnalyzeDisposer(private val nav: ObjectNavigator) {
+class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
 
   data class Grouping(val childClass: ClassDefinition,
                       val parentClass: ClassDefinition?,
@@ -56,16 +54,17 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
     )
   }
 
-  fun createDisposerTreeReport(): String {
-    if (!nav.classStore.containsClass("com.intellij.openapi.util.Disposer")) {
+  fun prepareDisposerTreeSection(): String {
+    if (!analysisContext.classStore.containsClass("com.intellij.openapi.util.Disposer")) {
       return ""
     }
+    val nav = analysisContext.navigator
 
     val result = StringBuilder()
 
     nav.goToStaticField("com.intellij.openapi.util.Disposer", "ourTree")
     assert(!nav.isNull())
-    nav.goToInstanceField("com.intellij.openapi.util.objectTree.ObjectTree", "myObject2NodeMap")
+    nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myObject2NodeMap")
     nav.goToInstanceField("gnu.trove.THashMap", "_values")
 
     val groupingToObjectStats = HashMap<Grouping, InstanceStats>()
@@ -75,15 +74,15 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
       if (it == 0L) return@forEach true
 
       nav.goTo(it)
-      val objectNodeParentId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myParent")
-      val objectNodeObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myObject")
+      val objectNodeParentId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myParent")
+      val objectNodeObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
       nav.goTo(objectNodeParentId)
 
       val parentId =
         if (nav.isNull())
           0L
         else
-          nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myObject")
+          nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
 
       val parentClass =
         if (parentId == 0L)
@@ -109,8 +108,8 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
         var iterationCount = 0
         do {
           nav.goTo(rootObjectNodeId)
-          rootObjectNodeId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myParent")
-          rootObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myObject")
+          rootObjectNodeId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myParent")
+          rootObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
           iterationCount++
         }
         while (rootObjectNodeId != 0L && iterationCount < maxTreeDepth)
@@ -134,8 +133,6 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
     }
 
     TruncatingPrintBuffer(400, 0, result::appendln).use { buffer ->
-      buffer.println("Disposer tree stats:")
-
       groupingToObjectStats
         .entries
         .sortedByDescending { it.value.objectCount() }
@@ -165,6 +162,7 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
                                           mapping: Grouping,
                                           groupedObjects: InstanceStats) {
     val (sourceClass, parentClass, rootClass) = mapping
+    val nav = analysisContext.navigator
 
     val objectCount = groupedObjects.objectCount()
     val parentCount = groupedObjects.parentCount()
@@ -191,16 +189,20 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
     buffer.println("  ${String.format("%6d", objectCount)} $sourceClassName $parentString")
   }
 
-  fun computeDisposedObjectsIDsSet(parentList: IntList): TIntHashSet {
-    val result = TIntHashSet()
+  fun computeDisposedObjectsIDs() {
+    val disposedObjectsIDs = analysisContext.disposedObjectsIDs
+    disposedObjectsIDs.clear()
+
+    val nav = analysisContext.navigator
+    val parentList = analysisContext.parentList
 
     if (!nav.classStore.containsClass("com.intellij.openapi.util.Disposer")) {
-      return result
+      return
     }
 
     nav.goToStaticField("com.intellij.openapi.util.Disposer", "ourTree")
     assert(!nav.isNull())
-    nav.goToInstanceField("com.intellij.openapi.util.objectTree.ObjectTree", "myDisposedObjects")
+    nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myDisposedObjects")
     nav.goToInstanceField("com.intellij.util.containers.WeakHashMap", "myMap")
     nav.goToInstanceField("com.intellij.util.containers.RefHashMap\$MyMap", "_set")
     val weakKeyClass = nav.classStore["com.intellij.util.containers.WeakHashMap\$WeakKey"]
@@ -221,20 +223,22 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
         // If there is no parent, then the object does not have a strong-reference path to GC root
         return@forEach true
       }
-      result.add(leakId)
+      disposedObjectsIDs.add(leakId)
       true
     }
-    return result
   }
 
-  fun analyzeDisposedObjects(disposedObjectsIDs: TIntHashSet,
-                             parentList: IntList,
-                             sizesList: IntList): String {
+  fun prepareDisposedObjectsSection(): String {
     val result = StringBuilder()
 
     val leakedInstancesByClass = HashMap<ClassDefinition, TLongArrayList>()
     val countByClass = TObjectIntHashMap<ClassDefinition>()
     var totalCount = 0
+
+    val nav = analysisContext.navigator
+    val disposedObjectsIDs = analysisContext.disposedObjectsIDs
+    val disposerOptions = analysisContext.config.disposerOptions
+
     disposedObjectsIDs.forEach {
       nav.goTo(it.toLong(), ObjectNavigator.ReferenceResolution.ALL_REFERENCES)
 
@@ -258,20 +262,22 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
       true
     }
 
-    // Print counts of disposed-but-strong-referenced objects
-    TruncatingPrintBuffer(100, 0, result::appendln).use { buffer ->
-      buffer.println("Count of disposed-but-strong-referenced objects: $totalCount")
-      entries
-        .sortedByDescending { it.value }
-        .partition { TOP_REPORTED_CLASSES.contains(it.key.name) }
-        .let { it.first + it.second }
-        .forEach { entry ->
-          buffer.println("  ${entry.value} ${entry.key.prettyName}")
-        }
+    if (disposerOptions.includeDisposedObjectsSummary) {
+      // Print counts of disposed-but-strong-referenced objects
+      TruncatingPrintBuffer(100, 0, result::appendln).use { buffer ->
+        buffer.println("Count of disposed-but-strong-referenced objects: $totalCount")
+        entries
+          .sortedByDescending { it.value }
+          .partition { TOP_REPORTED_CLASSES.contains(it.key.name) }
+          .let { it.first + it.second }
+          .forEach { entry ->
+            buffer.println("  ${entry.value} ${entry.key.prettyName}")
+          }
+      }
+      result.appendln()
     }
-    result.appendln()
 
-    val disposedTree = GCRootPathsTree(disposedObjectsIDs, parentList, sizesList, nav, null)
+    val disposedTree = GCRootPathsTree(analysisContext, AnalysisConfig.TreeDisplayOptions.all(), null)
     for (disposedObjectsID in disposedObjectsIDs) {
       disposedTree.registerObject(disposedObjectsID)
     }
@@ -293,37 +299,41 @@ class AnalyzeDisposer(private val nav: ObjectNavigator) {
         DisposedDominatorReportEntry(classDefinition, dominatorClassInstanceCount, dominatorClassSubgraphSize))
     }
 
-    TruncatingPrintBuffer(30, 0, result::appendln).use { buffer ->
-      buffer.println("Disposed-but-strong-referenced dominator object count: $allDominatorsCount")
-      buffer.println(
-        "Disposed-but-strong-referenced dominator sub-graph size: ${toShortStringAsSize(allDominatorsSubgraphSize)}")
-      disposedDominatorClassSizeList
-        .sortedByDescending { it.size }
-        .forEach { entry ->
-          buffer.println(
-            "  ${toPaddedShortStringAsSize(entry.size)} - ${toShortStringAsCount(entry.count)} ${entry.classDefinition.name}")
-        }
-    }
-    result.appendln()
-
-    val instancesListInOrder = getInstancesListInPriorityOrder(
-      leakedInstancesByClass,
-      disposedDominatorClassSizeList
-    )
-
-    TruncatingPrintBuffer(700, 0, result::appendln).use { buffer ->
-      instancesListInOrder
-        .forEach { instances ->
-          nav.goTo(instances[0])
-          buffer.println(
-            "Disposed but still strong-referenced objects: ${instances.size()} ${nav.getClass().prettyName}, most common paths from GC-roots:")
-          val gcRootPathsTree = GCRootPathsTree(disposedObjectsIDs, parentList, sizesList, nav, nav.getClass())
-          instances.forEach { leakId ->
-            gcRootPathsTree.registerObject(leakId.toInt())
-            true
+    if (disposerOptions.includeDisposedObjectsSummary) {
+      TruncatingPrintBuffer(30, 0, result::appendln).use { buffer ->
+        buffer.println("Disposed-but-strong-referenced dominator object count: $allDominatorsCount")
+        buffer.println(
+          "Disposed-but-strong-referenced dominator sub-graph size: ${toShortStringAsSize(allDominatorsSubgraphSize)}")
+        disposedDominatorClassSizeList
+          .sortedByDescending { it.size }
+          .forEach { entry ->
+            buffer.println(
+              "  ${toPaddedShortStringAsSize(entry.size)} - ${toShortStringAsCount(entry.count)} ${entry.classDefinition.name}")
           }
-          gcRootPathsTree.printTree(70, 5).split("\n").forEach(buffer::println)
-        }
+      }
+      result.appendln()
+    }
+
+    if (disposerOptions.includeDisposedObjectsDetails) {
+      val instancesListInOrder = getInstancesListInPriorityOrder(
+        leakedInstancesByClass,
+        disposedDominatorClassSizeList
+      )
+
+      TruncatingPrintBuffer(700, 0, result::appendln).use { buffer ->
+        instancesListInOrder
+          .forEach { instances ->
+            nav.goTo(instances[0])
+            buffer.println(
+              "Disposed but still strong-referenced objects: ${instances.size()} ${nav.getClass().prettyName}, most common paths from GC-roots:")
+            val gcRootPathsTree = GCRootPathsTree(analysisContext, disposerOptions.disposedObjectsDetailsTreeDisplayOptions, nav.getClass())
+            instances.forEach { leakId ->
+              gcRootPathsTree.registerObject(leakId.toInt())
+              true
+            }
+            gcRootPathsTree.printTree().lineSequence().forEach(buffer::println)
+          }
+      }
     }
     return result.toString()
   }

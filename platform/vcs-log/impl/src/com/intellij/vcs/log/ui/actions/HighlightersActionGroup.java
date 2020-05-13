@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,15 +20,14 @@ import java.util.List;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 
 public class HighlightersActionGroup extends ActionGroup implements DumbAware {
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> actions = new ArrayList<>();
 
     if (e != null) {
       if (e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES) != null) {
-        actions.add(new Separator("Highlight"));
-        for (VcsLogHighlighterFactory factory : AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(e.getProject())) {
+        actions.add(new Separator(IdeBundle.messagePointer("action.Anonymous.text.highlight")));
+        for (VcsLogHighlighterFactory factory : AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
           if (factory.showMenuItem()) {
             actions.add(new EnableHighlighterAction(factory));
           }
@@ -42,7 +42,7 @@ public class HighlightersActionGroup extends ActionGroup implements DumbAware {
     @NotNull private final VcsLogHighlighterFactory myFactory;
 
     private EnableHighlighterAction(@NotNull VcsLogHighlighterFactory factory) {
-      super(factory.getTitle());
+      super(() -> factory.getTitle());
       myFactory = factory;
     }
 

@@ -21,6 +21,7 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,13 +43,13 @@ public class DefineAttributeQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return "Define " + myAttrName + " attribute";
+    return XmlDomBundle.message("define.0.attribute", myAttrName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Define attribute";
+    return XmlDomBundle.message("define.attribute");
   }
 
   @Override

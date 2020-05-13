@@ -15,6 +15,7 @@ import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.text.StringUtil.contains
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.closure_header_with_arrow
@@ -63,6 +64,7 @@ private val typeWasPrimitive: Key<Boolean> = Key.create("groovy.parse.type.was.p
 private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.ref.had.type.arguments")
 private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
 private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closure.parameter")
+private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.parse.nl.before.closure.argument")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -194,6 +196,21 @@ fun closureParameter(builder: PsiBuilder, level: Int, parameterParser: Parser): 
 
 fun isClosureParameter(builder: PsiBuilder, level: Int): Boolean = builder[parseClosureParameter]
 
+fun enableNlBeforeClosure(builder: PsiBuilder, level: Int, parameterParser: Parser): Boolean {
+  return builder.withKey(parseNlBeforeClosureArgument, true) {
+    parameterParser.parse(builder, level)
+  }
+}
+
+fun disableNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
+  builder[parseNlBeforeClosureArgument] = false
+  return true
+}
+
+fun isParseNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
+  return builder.latestDoneMarker?.tokenType == NEW_EXPRESSION || builder[parseNlBeforeClosureArgument]
+}
+
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {
   return builder.withKey(parseArguments, true) {
     argumentParser.parse(builder, level)
@@ -281,7 +298,7 @@ fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advan
 
 fun equalityOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(EQUALITY_OPERATORS)
 
-fun error(builder: PsiBuilder, level: Int, key: String): Boolean {
+fun error(builder: PsiBuilder, level: Int, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   val marker = builder.latestDoneMarker ?: return false
   val elementType = marker.tokenType
   val newMarker = (marker as Marker).precede()
@@ -291,11 +308,11 @@ fun error(builder: PsiBuilder, level: Int, key: String): Boolean {
   return true
 }
 
-fun unexpected(builder: PsiBuilder, level: Int, key: String): Boolean {
+fun unexpected(builder: PsiBuilder, level: Int, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   return unexpected(builder, level, Parser { b, _ -> b.any() }, key)
 }
 
-fun unexpected(builder: PsiBuilder, level: Int, parser: Parser, key: String): Boolean {
+fun unexpected(builder: PsiBuilder, level: Int, parser: Parser, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   val marker = builder.mark()
   if (parser.parse(builder, level)) {
     marker.error(GroovyBundle.message(key))

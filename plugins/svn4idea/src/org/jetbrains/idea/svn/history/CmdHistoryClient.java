@@ -28,7 +28,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
                     boolean discoverChangedPaths,
                     boolean includeMergedRevisions,
                     long limit,
-                    @Nullable String[] revisionProperties,
+                    String @Nullable [] revisionProperties,
                     @Nullable LogEntryConsumer handler) throws VcsException {
     // TODO: add revision properties parameter if necessary
 

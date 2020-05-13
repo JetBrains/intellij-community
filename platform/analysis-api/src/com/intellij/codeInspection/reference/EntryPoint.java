@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
   private static final Logger LOG = Logger.getInstance(EntryPoint.class);
 
   @NotNull
+  @Nls
   public abstract String getDisplayName();
   public abstract boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement);
   public abstract boolean isEntryPoint(@NotNull PsiElement psiElement);
@@ -37,8 +39,7 @@ public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
     return true;
   }
 
-  @Nullable
-  public String[] getIgnoreAnnotations() {
+  public String @Nullable [] getIgnoreAnnotations() {
     return null;
   }
 

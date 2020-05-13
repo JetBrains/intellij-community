@@ -40,6 +40,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +68,7 @@ public class DeleteHandler {
       return shouldEnableDeleteAction(elements);
     }
 
-    @Nullable
-    private static PsiElement[] getPsiElements(DataContext dataContext) {
+    private static PsiElement @Nullable [] getPsiElements(DataContext dataContext) {
       PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (elements == null) {
         final PsiElement data = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -180,7 +180,7 @@ public class DeleteHandler {
   }
 
   private static boolean makeWritable(Project project, PsiElement[] elements) {
-    Collection<PsiElement> directories = ContainerUtil.newSmartList();
+    Collection<PsiElement> directories = new SmartList<>();
     for (PsiElement e : elements) {
       if (e instanceof PsiFileSystemItem && e.getParent() != null) {
         directories.add(e.getParent());

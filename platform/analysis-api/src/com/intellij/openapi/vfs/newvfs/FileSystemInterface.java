@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,9 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * @author max
- */
 public interface FileSystemInterface {
   // default values for missing files (same as in corresponding java.io.File methods)
   long DEFAULT_LENGTH = 0;
@@ -19,7 +16,7 @@ public interface FileSystemInterface {
 
   boolean exists(@NotNull VirtualFile file);
 
-  @NotNull String[] list(@NotNull VirtualFile file);
+  String @NotNull [] list(@NotNull VirtualFile file);
 
   boolean isDirectory(@NotNull VirtualFile file);
 
@@ -41,7 +38,7 @@ public interface FileSystemInterface {
 
   @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
 
-  @NotNull byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
+  byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
 
   /** Does NOT strip the BOM from the beginning of the stream, unlike the {@link VirtualFile#getInputStream()} */
   @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException;

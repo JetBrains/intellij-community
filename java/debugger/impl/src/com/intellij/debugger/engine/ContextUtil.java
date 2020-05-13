@@ -19,6 +19,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
@@ -34,7 +35,7 @@ import java.util.List;
 
 public class ContextUtil {
   public static final Key<Boolean> IS_JSP_IMPLICIT = new Key<>("JspImplicit");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.PositionUtil");
+  private static final Logger LOG = Logger.getInstance(PositionUtil.class);
 
   @Nullable
   public static SourcePosition getSourcePosition(@Nullable final StackFrameContext context) {

@@ -33,12 +33,6 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("ambiguous.method.call.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiClass superClass = (PsiClass)infos[0];
     final PsiClass outerClass = (PsiClass)infos[1];

@@ -50,11 +50,7 @@ public abstract class ProblemHighlightFilter {
   private static boolean shouldProcess(PsiFile psiFile, boolean onTheFly) {
     if (psiFile == null) return true;
 
-    final ProblemHighlightFilter[] filters = EP_NAME.getExtensions();
-    for (ProblemHighlightFilter filter : filters) {
-      if (onTheFly ? !filter.shouldHighlight(psiFile) : !filter.shouldProcessInBatch(psiFile)) return false;
-    }
-
-    return true;
+    return EP_NAME.getExtensionList().stream()
+      .noneMatch(filter -> onTheFly ? !filter.shouldHighlight(psiFile) : !filter.shouldProcessInBatch(psiFile));
   }
 }

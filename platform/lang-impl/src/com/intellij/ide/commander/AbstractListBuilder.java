@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.commander;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -21,6 +6,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Eugene Belyaev
  */
-public abstract class AbstractListBuilder {
+public abstract class AbstractListBuilder implements Disposable {
   protected final Project myProject;
   protected final JList myList;
   protected final Model myModel;
@@ -170,7 +156,7 @@ public abstract class AbstractListBuilder {
 
       for (int i = 0; i < myModel.getSize(); i++) {
         if (myModel.getElementAt(i) instanceof AbstractTreeNode) {
-          final AbstractTreeNode desc = (AbstractTreeNode)myModel.getElementAt(i);
+          final AbstractTreeNode<?> desc = (AbstractTreeNode)myModel.getElementAt(i);
           if (desc.getValue() instanceof StructureViewTreeElement) {
             StructureViewTreeElement treeelement = (StructureViewTreeElement)desc.getValue();
             if (element.equals(treeelement.getValue())) {
@@ -235,9 +221,9 @@ public abstract class AbstractListBuilder {
     return lastPathNode;
   }
 
-  private AbstractTreeNode findInChildren(AbstractTreeNode rootElement, VirtualFile file, Object element) {
+  private AbstractTreeNode findInChildren(AbstractTreeNode<?> rootElement, VirtualFile file, Object element) {
     Object[] childElements = getChildren(rootElement);
-    List<AbstractTreeNode> nodes = getAllAcceptableNodes(childElements, file);
+    List<AbstractTreeNode<?>> nodes = getAllAcceptableNodes(childElements, file);
     if (nodes.size() == 1) return nodes.get(0);
     if (nodes.isEmpty()) return null;
     if (file.isDirectory()) {
@@ -248,13 +234,13 @@ public abstract class AbstractListBuilder {
     }
   }
 
-  private AbstractTreeNode performDeepSearch(Object[] nodes, Object element, Set<? super AbstractTreeNode> visited) {
+  private AbstractTreeNode performDeepSearch(Object[] nodes, Object element, Set<? super AbstractTreeNode<?>> visited) {
     for (Object node1 : nodes) {
-      AbstractTreeNode node = (AbstractTreeNode)node1;
+      AbstractTreeNode<?> node = (AbstractTreeNode)node1;
       if (nodeIsAcceptableForElement(node, element)) return node;
       Object[] children = getChildren(node);
       if (visited.add(node)) {
-        AbstractTreeNode nodeResult = performDeepSearch(children, element, visited);
+        AbstractTreeNode<?> nodeResult = performDeepSearch(children, element, visited);
         if (nodeResult != null) {
           return nodeResult;
         }
@@ -265,8 +251,9 @@ public abstract class AbstractListBuilder {
 
   protected abstract boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element);
 
-  protected abstract List<AbstractTreeNode> getAllAcceptableNodes(Object[] childElements, VirtualFile file);
+  protected abstract List<AbstractTreeNode<?>> getAllAcceptableNodes(Object[] childElements, VirtualFile file);
 
+  @Override
   public void dispose() {
     myIsDisposed = true;
   }
@@ -325,7 +312,7 @@ public abstract class AbstractListBuilder {
       myTreeStructure.commit();
     }
 
-    AbstractTreeNode parentDescriptor = myCurrentParent;
+    AbstractTreeNode<?> parentDescriptor = myCurrentParent;
 
     while (true) {
       parentDescriptor.update();
@@ -333,14 +320,14 @@ public abstract class AbstractListBuilder {
       parentDescriptor = parentDescriptor.getParent();
     }
 
-    final Object[] children = getChildren(parentDescriptor);
-    final HashMap<Object,Integer> elementToIndexMap = new HashMap<>();
+    Object[] children = getChildren(parentDescriptor);
+    HashMap<Object, Integer> elementToIndexMap = new HashMap<>();
     for (int i = 0; i < children.length; i++) {
       elementToIndexMap.put(children[i], Integer.valueOf(i));
     }
 
-    final List<NodeDescriptor> resultDescriptors = new ArrayList<>();
-    final Object[] listChildren = myModel.toArray();
+    List<NodeDescriptor<?>> resultDescriptors = new ArrayList<>();
+    Object[] listChildren = myModel.toArray();
     for (final Object child : listChildren) {
       if (!(child instanceof NodeDescriptor)) {
         continue;
@@ -366,12 +353,12 @@ public abstract class AbstractListBuilder {
       }
     }
 
-    final SelectionInfo selection = storeSelection();
+    SelectionInfo selection = storeSelection();
     if (myComparator != null) {
-      Collections.sort(resultDescriptors, myComparator);
+      resultDescriptors.sort(myComparator);
     }
     else {
-      Collections.sort(resultDescriptors, IndexComparator.INSTANCE);
+      resultDescriptors.sort(IndexComparator.INSTANCE);
     }
 
     if (shouldAddTopElement()) {

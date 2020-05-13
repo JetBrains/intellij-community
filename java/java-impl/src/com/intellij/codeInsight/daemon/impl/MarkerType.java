@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -10,11 +10,13 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -160,7 +162,7 @@ public class MarkerType {
   }
 
   @NotNull
-  private static String getImplementationTooltip(@NotNull String prefix, @NotNull PsiElement... elements) {
+  private static String getImplementationTooltip(@NotNull String prefix, PsiElement @NotNull ... elements) {
     return getImplementationTooltip(Arrays.asList(elements), prefix);
   }
 
@@ -182,14 +184,13 @@ public class MarkerType {
   private static void navigateToSiblingOverridingMethod(MouseEvent e, @NotNull PsiMethod method) {
     PsiMethod superMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
     if (superMethod == null) return;
-    PsiElementListNavigator.openTargets(e, new NavigatablePsiElement[]{superMethod},
+    PsiElementListNavigator.openTargets(e, new PsiMethod[]{superMethod},
                                         DaemonBundle.message("navigation.title.super.method", method.getName()),
                                         DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                                         new MethodCellRenderer(false));
   }
 
-  @NotNull
-  private static PsiMethod[] composeSuperMethods(@NotNull PsiMethod method, boolean acceptSelf) {
+  private static PsiMethod @NotNull [] composeSuperMethods(@NotNull PsiMethod method, boolean acceptSelf) {
     PsiElement[] superElements = FindSuperElementsHelper.findSuperElements(method);
 
     PsiMethod[] superMethods = ContainerUtil.map(superElements, element -> (PsiMethod)element, PsiMethod.EMPTY_ARRAY);
@@ -251,7 +252,7 @@ public class MarkerType {
   private static void navigateToOverriddenMethod(MouseEvent e, @NotNull final PsiMethod method) {
     if (DumbService.isDumb(method.getProject())) {
       DumbService.getInstance(method.getProject()).showDumbModeNotification(
-        "Navigation to overriding classes is not possible during index update");
+        JavaBundle.message("notification.navigation.to.overriding.classes"));
       return;
     }
 
@@ -278,7 +279,7 @@ public class MarkerType {
     if (overridings.isEmpty()) return;
     boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(methodOverriders);
     MethodOrFunctionalExpressionCellRenderer renderer = new MethodOrFunctionalExpressionCellRenderer(showMethodNames);
-    Collections.sort(overridings, renderer.getComparator());
+    overridings.sort(renderer.getComparator());
     final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
     PsiElementListNavigator.openTargets(e, overridings.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY), methodsUpdater.getCaption(overridings.size()), "Overriding methods of " + method.getName(), renderer, methodsUpdater);
   }
@@ -329,7 +330,8 @@ public class MarkerType {
                                                @NotNull final PsiClass aClass,
                                                PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
     if (DumbService.isDumb(aClass.getProject())) {
-      DumbService.getInstance(aClass.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
+      DumbService.getInstance(aClass.getProject()).showDumbModeNotification(
+        JavaBundle.message("notification.navigation.to.overriding.methods"));
       return;
     }
 
@@ -349,15 +351,36 @@ public class MarkerType {
     ContainerUtil.addIfNotNull(inheritors, collectExprProcessor.getFoundElement());
     if (inheritors.isEmpty()) return;
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
-    Collections.sort(inheritors, renderer.getComparator());
+    inheritors.sort(renderer.getComparator());
     PsiElementListNavigator.openTargets(e, inheritors.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY), subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 
-  private static class SubclassUpdater extends BackgroundUpdaterTask {
+  private static abstract class OverridingMembersUpdater extends BackgroundUpdaterTask {
+    private OverridingMembersUpdater(@Nullable Project project,
+                                     @NotNull String title,
+                                     @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
+      super(project, title, createComparatorWrapper((Comparator)renderer.getComparator()));
+    }
+
+    protected void collectFunctionalInheritors(@NotNull ProgressIndicator indicator, PsiClass psiClass) {
+      FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
+        @Override
+        public boolean process(final PsiFunctionalExpression expr) {
+          if (!updateComponent(expr)) {
+            indicator.cancel();
+          }
+          ProgressManager.checkCanceled();
+          return super.process(expr);
+        }
+      });
+    }
+  }
+
+  private static class SubclassUpdater extends OverridingMembersUpdater {
     private final PsiClass myClass;
 
     private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
-      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, createComparatorWrapper((Comparator)renderer.getComparator()));
+      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, renderer);
       myClass = aClass;
     }
 
@@ -393,24 +416,15 @@ public class MarkerType {
         }
       });
 
-      FunctionalExpressionSearch.search(myClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
-        @Override
-        public boolean process(final PsiFunctionalExpression expr) {
-          if (!updateComponent(expr)) {
-            indicator.cancel();
-          }
-          ProgressManager.checkCanceled();
-          return super.process(expr);
-        }
-      });
+      collectFunctionalInheritors(indicator, myClass);
     }
   }
 
-  private static class OverridingMethodsUpdater extends BackgroundUpdaterTask {
+  private static class OverridingMethodsUpdater extends OverridingMembersUpdater {
     private final PsiMethod myMethod;
 
-    private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer renderer) {
-      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, createComparatorWrapper(renderer.getComparator()));
+    private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
+      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, renderer);
       myMethod = method;
     }
 
@@ -447,17 +461,7 @@ public class MarkerType {
           }
         });
       if (ReadAction.compute(() -> myMethod.hasModifierProperty(PsiModifier.ABSTRACT))) {
-        PsiClass psiClass = ReadAction.compute(myMethod::getContainingClass);
-        FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
-          @Override
-          public boolean process(final PsiFunctionalExpression expr) {
-            if (!updateComponent(expr)) {
-              indicator.cancel();
-            }
-            ProgressManager.checkCanceled();
-            return super.process(expr);
-          }
-        });
+        collectFunctionalInheritors(indicator, ReadAction.compute(myMethod::getContainingClass));
       }
     }
   }

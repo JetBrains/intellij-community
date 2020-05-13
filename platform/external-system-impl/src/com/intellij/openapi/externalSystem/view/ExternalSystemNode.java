@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystem
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -20,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -183,8 +185,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   @Override
-  @NotNull
-  public final ExternalSystemNode<?>[] getChildren() {
+  public final ExternalSystemNode<?> @NotNull [] getChildren() {
     if (myChildren == null) {
       myChildren = buildChildren();
       onChildrenBuilt();
@@ -195,8 +196,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   protected void onChildrenBuilt() {
   }
 
-  @NotNull
-  private ExternalSystemNode<?>[] buildChildren() {
+  private ExternalSystemNode<?> @NotNull [] buildChildren() {
     List<? extends ExternalSystemNode<?>> newChildrenCandidates = doBuildChildren();
     if (newChildrenCandidates.isEmpty()) return NO_CHILDREN;
 
@@ -215,14 +215,13 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     myTotalErrorLevel = null;
   }
 
-  @Nullable
-  protected ExternalSystemNode<?>[] getCached() {
+  protected ExternalSystemNode<?> @Nullable [] getCached() {
     return myChildren;
   }
 
   protected void sort(List<? extends ExternalSystemNode<?>> list) {
     if (!list.isEmpty()) {
-      Collections.sort(list, ORDER_AWARE_COMPARATOR);
+      list.sort(ORDER_AWARE_COMPARATOR);
     }
   }
 
@@ -326,6 +325,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
       for (SimpleNode each : getChildren()) {
         ExternalProjectsStructure.ErrorLevel eachLevel = ((ExternalSystemNode<?>)each).getTotalErrorLevel();
         if (eachLevel.compareTo(result) > 0) result = eachLevel;
+        if (result == ExternalProjectsStructure.ErrorLevel.ERROR) break;
       }
       return result;
     }
@@ -349,11 +349,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     setNameAndTooltip(getName(), null);
   }
 
-  protected void setNameAndTooltip(String name, @Nullable String tooltip) {
+  protected void setNameAndTooltip(String name, @Nullable @Tooltip String tooltip) {
     setNameAndTooltip(name, tooltip, (String)null);
   }
 
-  protected void setNameAndTooltip(String name, @Nullable String tooltip, @Nullable String hint) {
+  protected void setNameAndTooltip(String name, @Nullable @Tooltip String tooltip, @Nullable String hint) {
     final boolean ignored = isIgnored();
     final SimpleTextAttributes textAttributes = ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : getPlainAttributes();
     setNameAndTooltip(name, tooltip, textAttributes);
@@ -362,7 +362,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
   }
 
-  protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
+  protected void setNameAndTooltip(String name, @Nullable @Tooltip String tooltip, SimpleTextAttributes attributes) {
     clearColoredText();
     addColoredFragment(name, prepareAttributes(attributes));
     final String s = (tooltip != null ? tooltip + "\n\r" : "") + StringUtil.join(myErrors, "\n\r");
@@ -389,7 +389,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return null;
   }
 
-  protected String message(@NotNull String key, @NotNull Object... params) {
+  protected String message(@PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) @NotNull String key, Object @NotNull ... params) {
     return ExternalSystemBundle.message(key, params);
   }
 

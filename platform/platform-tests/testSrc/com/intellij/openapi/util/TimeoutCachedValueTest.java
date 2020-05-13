@@ -31,4 +31,34 @@ public class TimeoutCachedValueTest extends TestCase {
 
     assertEquals(1, cachedValue.get().intValue());
   }
+
+  public void testExceptionDuringComputingValue() {
+    final int[] counter = new int[1];
+
+    final TimeoutCachedValue<Integer> cachedValue = new TimeoutCachedValue<Integer>(50, TimeUnit.MILLISECONDS, ()-> {
+      int current = counter[0]++;
+      if (current == 0) {
+        throw new TestProgressCancelException();
+      }
+      return current;
+    });
+
+    assertExceptionThrown(() -> cachedValue.get());
+    assertEquals(1, cachedValue.get().intValue());
+    assertEquals(1, cachedValue.get().intValue());
+  }
+
+  private static void assertExceptionThrown(Runnable runnable) {
+    boolean thrown = false;
+    try {
+      runnable.run();
+    }
+    catch (TestProgressCancelException e) {
+      thrown = true;
+    }
+    assertTrue(thrown);
+  }
+
+  private static class TestProgressCancelException extends RuntimeException {
+  }
 }

@@ -20,12 +20,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Helper class that can compute the prefix and suffix of an expression inside a binary (usually additive) expression
@@ -47,7 +47,7 @@ public class ContextComputationProcessor {
     ArrayList<Object> result = new ArrayList<>();
     ContextComputationProcessor processor = new ContextComputationProcessor(operands[0].getProject());
     addStringFragment(prefix, result);
-    PsiElement topParent = ObjectUtils.assertNotNull(PsiTreeUtil.findCommonParent(operands));
+    PsiElement topParent = Objects.requireNonNull(PsiTreeUtil.findCommonParent(operands));
     processor.collectOperands(getTopLevelInjectionTarget(topParent), result, unparsable);
     addStringFragment(suffix, result);
     return result;

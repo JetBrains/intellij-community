@@ -2,6 +2,7 @@
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.Constants;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -15,17 +16,17 @@ public @interface XCollection {
    * The property element name. Defaults to property name if {@link #style} is set to {@link Style#v2}.
    * If not specified and {@link #style} is not specified - property serialized using option tag.
    */
-  String propertyElementName() default "";
+  @NonNls String propertyElementName() default "";
 
   /**
    * Value of primitive type wrapped into element named {@code option}. This option allows you to customize element name.
    */
-  String elementName() default Constants.OPTION;
+  @NonNls String elementName() default Constants.OPTION;
 
   /**
    * Value of primitive type wrapped into element named `option`. This option allows you to customize name of value attribute.
    */
-  String valueAttributeName() default Constants.VALUE;
+  @NonNls String valueAttributeName() default Constants.VALUE;
 
   Class<?>[] elementTypes() default {};
 

@@ -38,7 +38,7 @@ public class ResolverProcessorImpl extends ResolverProcessor<GroovyResolveResult
   protected ResolverProcessorImpl(@Nullable String name,
                                   @NotNull EnumSet<DeclarationKind> resolveTargets,
                                   @NotNull PsiElement place,
-                                  @NotNull PsiType[] typeArguments) {
+                                  PsiType @NotNull [] typeArguments) {
     super(name, resolveTargets, place);
     myTypeArguments = typeArguments;
   }

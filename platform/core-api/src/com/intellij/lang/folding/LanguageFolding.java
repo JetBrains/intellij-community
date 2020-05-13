@@ -68,11 +68,10 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public static FoldingDescriptor[] buildFoldingDescriptors(@Nullable FoldingBuilder builder,
-                                                            @NotNull PsiElement root,
-                                                            @NotNull Document document,
-                                                            boolean quick) {
+  public static FoldingDescriptor @NotNull [] buildFoldingDescriptors(@Nullable FoldingBuilder builder,
+                                                                      @NotNull PsiElement root,
+                                                                      @NotNull Document document,
+                                                                      boolean quick) {
     FoldingDescriptor[] descriptors = buildFoldingDescriptorsNoPlaceholderCaching(builder, root, document, quick);
     for (FoldingDescriptor descriptor : descriptors) {
       descriptor.setPlaceholderText(descriptor.getPlaceholderText()); // cache placeholder text
@@ -80,11 +79,10 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     return descriptors;
   }
 
-  @NotNull
-  static FoldingDescriptor[] buildFoldingDescriptorsNoPlaceholderCaching(@Nullable FoldingBuilder builder,
-                                                                         @NotNull PsiElement root,
-                                                                         @NotNull Document document,
-                                                                         boolean quick) {
+  static FoldingDescriptor @NotNull [] buildFoldingDescriptorsNoPlaceholderCaching(@Nullable FoldingBuilder builder,
+                                                                                   @NotNull PsiElement root,
+                                                                                   @NotNull Document document,
+                                                                                   boolean quick) {
     try {
       if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
         return FoldingDescriptor.EMPTY;

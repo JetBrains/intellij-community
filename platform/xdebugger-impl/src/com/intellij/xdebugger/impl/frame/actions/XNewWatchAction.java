@@ -22,9 +22,6 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XNewWatchAction extends XWatchesTreeActionBase {
   @Override
   protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {

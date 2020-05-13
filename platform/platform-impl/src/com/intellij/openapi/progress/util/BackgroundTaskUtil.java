@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -30,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
@@ -41,14 +30,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
-public class BackgroundTaskUtil {
+public final class BackgroundTaskUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundTaskUtil.class);
 
-  @NotNull
   @CalledInAwt
-  public static ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
-                                                    @Nullable Runnable onSlowAction) {
+  public static @NotNull ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
+                                                             @Nullable Runnable onSlowAction) {
     return executeAndTryWait(backgroundTask, onSlowAction, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
   }
 
@@ -73,9 +62,8 @@ public class BackgroundTaskUtil {
     * will lead to "Loading..." visible between current moment and execution of invokeLater() event.
     * This period can be very short and looks like 'jumping' if background operation is fast.
     */
-  @NotNull
   @CalledInAwt
-  public static ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
+  public static @NotNull ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
                                                     @Nullable Runnable onSlowAction,
                                                     long waitMillis,
                                                     boolean forceEDT) {
@@ -127,9 +115,8 @@ public class BackgroundTaskUtil {
    * <li> If the computation is slow, abort computation (cancel ProgressIndicator).
    * </ul>
    */
-  @Nullable
   @CalledInAwt
-  public static <T> T tryComputeFast(@NotNull Function<? super ProgressIndicator, ? extends T> backgroundTask,
+  public static @Nullable <T> T tryComputeFast(@NotNull Function<? super ProgressIndicator, ? extends T> backgroundTask,
                                      long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
       backgroundTask,
@@ -145,11 +132,10 @@ public class BackgroundTaskUtil {
     return result;
   }
 
-  @Nullable
   @CalledInAny
-  public static <T> T computeInBackgroundAndTryWait(@NotNull Computable<? extends T> computable,
-                                                    @NotNull Consumer<? super T> asyncCallback,
-                                                    long waitMillis) {
+  public static @Nullable <T> T computeInBackgroundAndTryWait(@NotNull Computable<? extends T> computable,
+                                                              @NotNull Consumer<? super T> asyncCallback,
+                                                              long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
       indicator -> computable.compute(),
       (result, indicator) -> asyncCallback.consume(result),
@@ -167,9 +153,8 @@ public class BackgroundTaskUtil {
    * </ul>
    * Callback will be executed on the same thread as the background task.
    */
-  @NotNull
   @CalledInAny
-  private static <T> Pair<T, ProgressIndicator> computeInBackgroundAndTryWait(@NotNull Function<? super ProgressIndicator, ? extends T> task,
+  private static @NotNull <T> Pair<T, ProgressIndicator> computeInBackgroundAndTryWait(@NotNull Function<? super ProgressIndicator, ? extends T> task,
                                                                               @NotNull PairConsumer<? super T, ? super ProgressIndicator> asyncCallback,
                                                                               @NotNull ModalityState modality,
                                                                               long waitMillis) {
@@ -201,9 +186,8 @@ public class BackgroundTaskUtil {
    * This allows to stop a lengthy background activity by calling {@link ProgressManager#checkCanceled()}
    * and avoid Already Disposed exceptions (in particular, because checkCanceled() is called in {@link ServiceManager#getService(Class)}.
    */
-  @NotNull
   @CalledInAny
-  public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Runnable runnable) {
+  public static @NotNull ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Runnable runnable) {
     ProgressIndicator indicator = new EmptyProgressIndicator();
     indicator.start();
 
@@ -238,20 +222,24 @@ public class BackgroundTaskUtil {
   }
 
   @CalledInAny
-  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
+  public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Supplier<T> task) {
+    Ref<T> ref = new Ref<>();
     runUnderDisposeAwareIndicator(parent, () -> {
-      task.run();
-      return null;
+      ref.set(task.get());
     });
+    return ref.get();
   }
 
   @CalledInAny
-  public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Computable<T> task) {
-    ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
-    indicator.start();
-
+  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
+    final ProgressIndicator threadProgress = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator indicator = threadProgress == null
+                                        ? new EmptyProgressIndicator(ModalityState.defaultModalityState())
+                                        : new SensitiveProgressWrapper(threadProgress);
     Disposable disposable = () -> {
-      if (indicator.isRunning()) indicator.cancel();
+      if (indicator.isRunning()) {
+        indicator.cancel();
+      }
     };
 
     if (!registerIfParentNotDisposed(parent, disposable)) {
@@ -260,7 +248,7 @@ public class BackgroundTaskUtil {
     }
 
     try {
-      return ProgressManager.getInstance().runProcess(task, indicator);
+      ProgressManager.getInstance().runProcess(task, indicator);
     }
     finally {
       Disposer.dispose(disposable);
@@ -268,14 +256,21 @@ public class BackgroundTaskUtil {
   }
 
   private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
+    if (parent instanceof ComponentManager && ((ComponentManager)parent).isDisposed()) {
+      return false;
+    }
+
     return ReadAction.compute(() -> {
-      if (Disposer.isDisposed(parent)) return false;
+      if (Disposer.isDisposed(parent)) {
+        return false;
+      }
+
       try {
         Disposer.register(parent, disposable);
         return true;
       }
-      catch(IncorrectOperationException ioe) {
-        LOG.error(ioe);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
         return false;
       }
     });
@@ -289,10 +284,11 @@ public class BackgroundTaskUtil {
    * @see #syncPublisher(Topic)
    */
   @CalledInAny
-  @NotNull
-  public static <L> L syncPublisher(@NotNull Project project, @NotNull Topic<L> topic) throws ProcessCanceledException {
+  public static @NotNull <L> L syncPublisher(@NotNull Project project, @NotNull Topic<L> topic) throws ProcessCanceledException {
     return ReadAction.compute(() -> {
-      if (project.isDisposed()) throw new ProcessCanceledException();
+      if (project.isDisposed()) {
+        throw new ProcessCanceledException();
+      }
       return project.getMessageBus().syncPublisher(topic);
     });
   }
@@ -305,8 +301,7 @@ public class BackgroundTaskUtil {
    * @see #syncPublisher(Project, Topic)
    */
   @CalledInAny
-  @NotNull
-  public static <L> L syncPublisher(@NotNull Topic<L> topic) throws ProcessCanceledException {
+  public static @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) throws ProcessCanceledException {
     return ReadAction.compute(() -> {
       if (ApplicationManager.getApplication().isDisposed()) throw new ProcessCanceledException();
       return ApplicationManager.getApplication().getMessageBus().syncPublisher(topic);

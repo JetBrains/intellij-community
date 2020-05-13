@@ -21,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class SimpleTreeStructure extends AbstractTreeStructure {
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     return ((SimpleNode) element).getChildren();
   }
 

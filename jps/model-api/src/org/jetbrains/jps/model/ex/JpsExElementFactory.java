@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-/**
- * @author nik
- */
 public abstract class JpsExElementFactory {
   public static JpsExElementFactory getInstance() {
     return InstanceHolder.INSTANCE;

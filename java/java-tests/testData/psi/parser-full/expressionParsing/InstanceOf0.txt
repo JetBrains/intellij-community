@@ -24,7 +24,7 @@ PsiJavaFile:InstanceOf0.java
         PsiReturnStatement
           PsiKeyword:return('return')
           PsiWhiteSpace(' ')
-          PsiInstanceofExpression:a instanceof String
+          PsiInstanceofExpression
             PsiReferenceExpression:a
               PsiReferenceParameterList
                 <empty list>
@@ -32,11 +32,12 @@ PsiJavaFile:InstanceOf0.java
             PsiWhiteSpace(' ')
             PsiKeyword:instanceof('instanceof')
             PsiWhiteSpace(' ')
-            PsiTypeElement:String
-              PsiJavaCodeReferenceElement:String
-                PsiIdentifier:String('String')
-                PsiReferenceParameterList
-                  <empty list>
+            PsiTypeTestPattern
+              PsiTypeElement:String
+                PsiJavaCodeReferenceElement:String
+                  PsiIdentifier:String('String')
+                  PsiReferenceParameterList
+                    <empty list>
           PsiJavaToken:SEMICOLON(';')
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')

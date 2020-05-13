@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -20,13 +20,19 @@ internal class ExternalCompilerConfigurationStorage(private val project: Project
   var loadedState: Map<String, String>? = null
     private set
 
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): ExternalCompilerConfigurationStorage = 
+      project.getService(ExternalCompilerConfigurationStorage::class.java)
+  } 
+  
   override fun getState(): Element {
     val result = Element("state")
     if (!project.isExternalStorageEnabled) {
       return result
     }
 
-    val map = (CompilerConfigurationImpl.getInstance(project) as CompilerConfigurationImpl).modulesBytecodeTargetMap
+    val map = if (project.isDefault) emptyMap() else (CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl).modulesBytecodeTargetMap
     val moduleNames = getFilteredModuleNameList(project, map, true)
     if (moduleNames.isNotEmpty()) {
       val element = Element(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL)

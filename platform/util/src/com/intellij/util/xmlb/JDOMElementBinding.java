@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,9 +23,8 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
     myTagName = StringUtil.isEmpty(tagName) ? myAccessor.getName() : tagName;
   }
 
-  @NotNull
   @Override
-  public MutableAccessor getAccessor() {
+  public @NotNull MutableAccessor getAccessor() {
     return myAccessor;
   }
 
@@ -52,9 +51,8 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
     throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
   }
 
-  @NotNull
   @Override
-  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
+  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     if (myAccessor.getValueClass().isArray()) {
       myAccessor.set(context, elements.toArray(new Element[0]));
     }
@@ -70,8 +68,7 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
   }
 
   @Override
-  @NotNull
-  public Object deserialize(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull Element element) {
+  public @NotNull Object deserialize(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull Element element) {
     myAccessor.set(context, element);
     return context;
   }

@@ -13,7 +13,7 @@
           <gridbag weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="(nothing to update)"/>
+          <text value="(nothing to update)" noi18n="true"/>
         </properties>
       </component>
       <component id="bc72e" class="javax.swing.JEditorPane" binding="myMessageArea">

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.*;
@@ -43,10 +43,10 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.FixedHashMap;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ import java.util.Map;
  */
 public abstract class DesignerEditorPanel extends JPanel
   implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, RadPropertyContext {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
+  private static final Logger LOG = Logger.getInstance(DesignerEditorPanel.class);
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
   protected static final Integer LAYER_DECORATION = JLayeredPane.POPUP_LAYER;
@@ -89,7 +89,7 @@ public abstract class DesignerEditorPanel extends JPanel
   protected final VirtualFile myFile;
 
   private final CardLayout myLayout = new CardLayout();
-  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
+  private final ThreeComponentsSplitter myContentSplitter;
   private final JPanel myPanel = new JPanel(myLayout);
   private JComponent myDesignerCard;
 
@@ -142,6 +142,7 @@ public abstract class DesignerEditorPanel extends JPanel
     initUI();
 
     myToolProvider.loadDefaultTool();
+    myContentSplitter = new ThreeComponentsSplitter(myEditor);
   }
 
   private void initUI() {
@@ -575,7 +576,7 @@ public abstract class DesignerEditorPanel extends JPanel
       for (int i = 0; i < myExpandedState.length; i++) {
         IntArrayList path = new IntArrayList();
         componentToPath((RadComponent)myExpandedComponents.get(i), path);
-        myExpandedState[i] = path.toArray();
+        myExpandedState[i] = path.toIntArray();
       }
 
       mySelectionState = getSelectionState();
@@ -607,7 +608,7 @@ public abstract class DesignerEditorPanel extends JPanel
     for (int i = 0; i < selectionState.length; i++) {
       IntArrayList path = new IntArrayList();
       componentToPath(selection.get(i), path);
-      selectionState[i] = path.toArray();
+      selectionState[i] = path.toIntArray();
     }
 
     return selectionState;
@@ -755,7 +756,6 @@ public abstract class DesignerEditorPanel extends JPanel
     Disposer.dispose(myProgressIcon);
     getDesignerWindowManager().dispose(this);
     getPaletteWindowManager().dispose(this);
-    Disposer.dispose(myContentSplitter);
   }
 
   protected AbstractToolWindowManager getDesignerWindowManager() {
@@ -799,8 +799,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return TablePanelActionPolicy.ALL;
   }
 
-  @Nullable
-  public PropertyTableTab[] getPropertyTableTabs() {
+  public PropertyTableTab @Nullable [] getPropertyTableTabs() {
     return null;
   }
 

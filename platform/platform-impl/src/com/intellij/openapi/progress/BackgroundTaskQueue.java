@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.progress;
 
@@ -20,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -27,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,16 +28,16 @@ import static com.intellij.util.concurrency.QueueProcessor.ThreadToUse;
  */
 @SomeQueue
 public class BackgroundTaskQueue {
-  @NotNull protected final String myTitle;
+  @Nls(capitalization = Nls.Capitalization.Title) @NotNull protected final String myTitle;
   @NotNull protected final QueueProcessor<TaskData> myProcessor;
 
   @NotNull private final Object TEST_TASK_LOCK = new Object();
   private volatile boolean myForceAsyncInTests;
 
-  public BackgroundTaskQueue(@Nullable Project project, @NotNull String title) {
+  public BackgroundTaskQueue(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
     myTitle = title;
 
-    Condition disposeCondition = project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed();
+    Condition<?> disposeCondition = project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed();
     myProcessor = new QueueProcessor<>(TaskData::consume, true, ThreadToUse.AWT, disposeCondition);
   }
 
@@ -146,7 +134,7 @@ public class BackgroundTaskQueue {
         task.setTitle(myTitle);
       }
 
-      boolean synchronous = task.isHeadless() && !myForceAsyncInTests ||
+      boolean synchronous = task.isHeadless() && !CoreProgressManager.shouldRunHeadlessTasksSynchronously() && !myForceAsyncInTests ||
                             task.isConditionalModal() && !task.shouldStartInBackground();
 
       ProgressManagerImpl pm = (ProgressManagerImpl)ProgressManager.getInstance();

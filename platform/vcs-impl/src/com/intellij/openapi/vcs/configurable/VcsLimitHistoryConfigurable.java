@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import org.jetbrains.annotations.Nls;
 
@@ -26,7 +27,7 @@ public class VcsLimitHistoryConfigurable extends VcsCheckBoxWithSpinnerConfigura
   private final VcsConfiguration myConfiguration;
 
   public VcsLimitHistoryConfigurable(Project project) {
-    super(project, "Limit history to: ", "rows");
+    super(project, VcsBundle.message("settings.checkbox.limit.history.to"), VcsBundle.message("settings.checkbox.rows"));
     myConfiguration = VcsConfiguration.getInstance(myProject);
   }
 
@@ -39,7 +40,7 @@ public class VcsLimitHistoryConfigurable extends VcsCheckBoxWithSpinnerConfigura
   @Nls
   @Override
   public String getDisplayName() {
-    return "Limit History";
+    return VcsBundle.message("configurable.VcsLimitHistoryConfigurable.display.name");
   }
 
   @Override

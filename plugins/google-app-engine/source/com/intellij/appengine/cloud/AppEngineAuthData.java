@@ -17,9 +17,6 @@ package com.intellij.appengine.cloud;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class AppEngineAuthData {
   private final boolean myOAuth2;
   private final String myEmail;

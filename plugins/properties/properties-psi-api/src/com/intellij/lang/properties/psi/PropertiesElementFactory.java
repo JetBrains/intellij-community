@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.IProperty;
@@ -48,11 +33,23 @@ public class PropertiesElementFactory {
                                          @NonNls @NotNull String name,
                                          @NonNls @NotNull String value,
                                          @Nullable Character delimiter) {
-    String text = getPropertyText(name, value, delimiter, project, true);
+    return createProperty(project, name, value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
+  }
+
+  @NotNull
+  public static IProperty createProperty(@NotNull Project project,
+                                         @NonNls @NotNull String name,
+                                         @NonNls @NotNull String value,
+                                         @Nullable Character delimiter,
+                                         @NotNull PropertyKeyValueFormat format) {
+    String text = getPropertyText(name, value, delimiter, project, format);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
   }
 
+  /**
+   * @deprecated use {@link #createProperty(Project, String, String, Character)}
+   */
   @Deprecated
   @NotNull
   public static IProperty createProperty(@NotNull Project project,
@@ -66,11 +63,11 @@ public class PropertiesElementFactory {
                                        @NonNls @NotNull String value,
                                        @NonNls @Nullable Character delimiter,
                                        @Nullable Project project,
-                                       boolean escape) {
+                                       @NotNull PropertyKeyValueFormat format) {
     if (delimiter == null) {
       delimiter = project == null ? '=' : PropertiesCodeStyleSettings.getInstance(project).getDelimiter();
     }
-    return (escape ? escape(name) : name) + delimiter + (escape ? escapeValue(value, delimiter) : value);
+    return (format != PropertyKeyValueFormat.FILE ? escape(name) : name) + delimiter + escapeValue(value, delimiter, format);
   }
 
   @NotNull
@@ -107,12 +104,15 @@ public class PropertiesElementFactory {
     return StringUtil.escapeChars(name, '=', ':', ' ', '\t');
   }
 
+  /**
+   * @deprecated use {@link #escapeValue(String, char, PropertyKeyValueFormat)} instead
+   */
   @Deprecated
-  public static String escapeValue(String value) {
-    return escapeValue(value, '=');
+  public static String escapeValue(String value, char delimiter) {
+    return escapeValue(value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
   }
 
-  public static String escapeValue(String value, char delimiter) {
-    return PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(value, delimiter);
+  public static String escapeValue(String value, char delimiter, PropertyKeyValueFormat format) {
+    return PropertiesResourceBundleUtil.convertValueToFileFormat(value, delimiter, format);
   }
 }

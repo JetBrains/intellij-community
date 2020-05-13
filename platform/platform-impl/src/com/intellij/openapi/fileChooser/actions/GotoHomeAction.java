@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.actions;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -10,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author Vladimir Kondratyev
  */
-public final class GotoHomeAction extends FileChooserAction {
+public final class GotoHomeAction extends FileChooserAction implements LightEditCompatible {
   @Override
   protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();

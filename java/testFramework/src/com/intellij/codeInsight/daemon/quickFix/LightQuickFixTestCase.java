@@ -142,7 +142,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected void invoke(@NotNull IntentionAction action) throws IncorrectOperationException {
-    CodeInsightTestFixtureImpl.invokeIntention(action, getFile(), getEditor(), action.getText());
+    CodeInsightTestFixtureImpl.invokeIntention(action, getFile(), getEditor());
   }
 
   protected IntentionAction findActionAndCheck(@NotNull ActionHint hint, String testFullPath) {
@@ -180,8 +180,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  @NotNull
-  public static File[] getBeforeTestFiles(@NotNull QuickFixTestCase testCase) {
+  public static File @NotNull [] getBeforeTestFiles(@NotNull QuickFixTestCase testCase) {
     assertNotNull("getBasePath() should not return null!", testCase.getBasePath());
 
     final String testDirPath = testCase.getTestDataPath().replace(File.separatorChar, '/') + testCase.getBasePath();

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
@@ -73,9 +74,8 @@ public class PyImportReference extends PyReferenceImpl {
     return qname == null ? Collections.emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     // no completion in invalid import statements
     PyImportElement importElement = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
     if (importElement != null) {
@@ -262,7 +262,7 @@ public class PyImportReference extends PyReferenceImpl {
         .forEach(directory -> fillFromDir(directory, insertHandler));
     }
 
-    private void addImportedNames(@NotNull PyImportElement[] importElements) {
+    private void addImportedNames(PyImportElement @NotNull [] importElements) {
       for (PyImportElement element : importElements) {
         PyReferenceExpression ref = element.getImportReferenceExpression();
         if (ref != null) {
@@ -293,6 +293,16 @@ public class PyImportReference extends PyReferenceImpl {
         }
       }
     }
+  }
+
+  @Override
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+    final PyExpression qualifier = myElement.getQualifier();
+    if (qualifier != null && context.getType(qualifier) == null) {
+      /* in case the element qualifier can not be resolved, the qualifier need to be highlighted instead of the element */
+      return null;
+    }
+    return HighlightSeverity.ERROR;
   }
 
   /**

@@ -16,8 +16,8 @@
 
 package com.intellij.packageDependencies;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   private final int myTransitive;
   @Nullable
   private final GlobalSearchScope myTargetScope;
+  private Set<VirtualFile> myStarted = new THashSet<>();
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);
@@ -65,12 +67,12 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
 
   @Override
   public String getRootNodeNameInUsageView(){
-    return AnalysisScopeBundle.message("forward.dependencies.usage.view.root.node.text");
+    return AnalysisBundle.message("forward.dependencies.usage.view.root.node.text");
   }
 
   @Override
   public String getInitialUsagesPosition(){
-    return AnalysisScopeBundle.message("forward.dependencies.usage.view.initial.text");
+    return AnalysisBundle.message("forward.dependencies.usage.view.initial.text");
   }
 
   @Override
@@ -84,9 +86,9 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     psiManager.startBatchFilesProcessingMode();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     try {
-      getScope().accept(new PsiRecursiveElementVisitor() {
+      getScope().acceptIdempotentVisitor(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitFile(final PsiFile file) {
+        public void visitFile(@NotNull final PsiFile file) {
           visit(file, fileIndex, psiManager);
         }
       });
@@ -106,12 +108,12 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       if (indicator.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
+      indicator.setText(AnalysisBundle.message("package.dependencies.progress.text"));
 
       if (virtualFile != null) {
         indicator.setText2(getRelativeToProjectPath(virtualFile));
       }
-      if ( myTotalFileCount > 0) {
+      if ( myTotalFileCount > 0 && myStarted.add(virtualFile)) {
         indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);
       }
     }
@@ -135,23 +137,19 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             processed.add(psiFile);
           }
         }
-        if (!processed.contains(psiFile)) {
-          processed.add(psiFile);
+        if (processed.add(psiFile)) {
           Set<PsiFile> found = new HashSet<>();
-          analyzeFileDependencies(psiFile, new DependencyProcessor() {
-            @Override
-            public void process(PsiElement place, PsiElement dependency) {
-              PsiFile dependencyFile = dependency.getContainingFile();
-              if (dependencyFile != null) {
-                if (viewProvider == dependencyFile.getViewProvider()) return;
-                if (dependencyFile.isPhysical()) {
-                  final VirtualFile virtualFile = dependencyFile.getVirtualFile();
-                  if (virtualFile != null
-                      && (fileIndex.isInContent(virtualFile) || fileIndex.isInLibrary(virtualFile))
-                      && (myTargetScope == null || myTargetScope.contains(virtualFile))) {
-                    final PsiElement navigationElement = dependencyFile.getNavigationElement();
-                    found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);
-                  }
+          analyzeFileDependencies(psiFile, (place, dependency) -> {
+            PsiFile dependencyFile = dependency.getContainingFile();
+            if (dependencyFile != null) {
+              if (viewProvider == dependencyFile.getViewProvider()) return;
+              if (dependencyFile.isPhysical()) {
+                final VirtualFile depFile = dependencyFile.getVirtualFile();
+                if (depFile != null
+                    && (fileIndex.isInContent(depFile) || fileIndex.isInLibrary(depFile))
+                    && (myTargetScope == null || myTargetScope.contains(depFile))) {
+                  final PsiElement navigationElement = dependencyFile.getNavigationElement();
+                  found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);
                 }
               }
             }
@@ -164,7 +162,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
           collectedDeps.addAll(found);
 
           psiManager.dropResolveCaches();
-          InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
+          InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(psiFile);
         }
       }
       collectedDeps.removeAll(processed);

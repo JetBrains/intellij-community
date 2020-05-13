@@ -4,6 +4,9 @@ package com.jetbrains.python.codeInsight.mlcompletion
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.PsiElement
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyQualifiedExpression
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
@@ -11,10 +14,10 @@ object PyMlCompletionHelpers {
   private val LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.completion.mlcompletion")
 
   // imports and builtins popularity was calculated on github by number of search results for each present builtins or import
-  val importPopularity = initMapFromJsonResource("importPopularityWeights.json")
-  val builtinsPopularity = initMapFromJsonResource("builtinsPopularityWeights.json")
+  val importPopularity = initMapFromJsonResource("/mlcompletion/importPopularityWeights.json")
+  val builtinsPopularity = initMapFromJsonResource("/mlcompletion/builtinsPopularityWeights.json")
 
-  private val keyword2id = initMapFromJsonResource("keywordsNumeration.json")
+  private val keyword2id = initMapFromJsonResource("/mlcompletion/keywordsNumeration.json")
 
   fun getKeywordId(kw: String): Int? = keyword2id[kw]
 
@@ -30,4 +33,11 @@ object PyMlCompletionHelpers {
       return emptyMap()
     }
   }
+
+  fun getQualifiedComponents(element: PyExpression): List<String> =
+    generateSequence<PsiElement>(element) { it.firstChild }
+      .filterIsInstance<PyQualifiedExpression>()
+      .mapNotNull { it.name }
+      .toList()
+      .asReversed()
 }

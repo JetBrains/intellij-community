@@ -49,13 +49,12 @@ fun createVirtualMethodWithoutVararg(method: GrMethod, typeParameterList: PsiTyp
 class SubstitutorTypeMapper(private val substitutor: PsiSubstitutor) : PsiTypeMapper() {
   private val typeParameters = substitutor.substitutionMap.keys
 
-  override fun visitClassType(classType: PsiClassType?): PsiType? {
-    val correctClassType = typeParameters.find { it.name == classType?.name }?.type() ?: classType
+  override fun visitClassType(classType: PsiClassType): PsiType? {
+    val correctClassType = typeParameters.find { it.name == classType.name }?.type() ?: classType
     return substitutor.substitute(correctClassType)
   }
 
-  override fun visitArrayType(type: PsiArrayType?): PsiType? {
-    type ?: return type
+  override fun visitArrayType(type: PsiArrayType): PsiType? {
     val substitution = removeWildcard(type.componentType.accept(this))
     return substitution.createArrayType()
 
@@ -157,8 +156,7 @@ private fun buildResidualTypeParameterList(resultMethod: GrMethod,
   val outerClassParameters = collectClassParameters(resultMethod.containingClass).map { it.name!! }.toSet()
   val visitor = object : PsiTypeMapper() {
 
-    override fun visitClassType(classType: PsiClassType?): PsiType? {
-      classType ?: return classType
+    override fun visitClassType(classType: PsiClassType): PsiType? {
       val resolvedTypeParameter = classType.typeParameter()
       if (resolvedTypeParameter != null &&
           resolvedTypeParameter.name.run { this !in outerClassParameters && this !in necessaryTypeNames }) {

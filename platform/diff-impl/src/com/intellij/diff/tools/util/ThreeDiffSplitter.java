@@ -43,11 +43,6 @@ public class ThreeDiffSplitter extends JPanel {
     getDivider(side).setPainter(painter);
   }
 
-  public void repaintDividers() {
-    repaintDivider(Side.LEFT);
-    repaintDivider(Side.RIGHT);
-  }
-
   public void repaintDivider(@NotNull Side side) {
     getDivider(side).repaint();
   }
@@ -98,8 +93,7 @@ public class ThreeDiffSplitter extends JPanel {
     }
   }
 
-  @NotNull
-  private static int[] calcComponentsWidths(int width, float proportion1, float proportion2) {
+  private static int @NotNull [] calcComponentsWidths(int width, float proportion1, float proportion2) {
     int dividersTotalWidth = getDividerWidth() * 2;
     int contentsTotalWidth = Math.max(width - dividersTotalWidth, 0);
 

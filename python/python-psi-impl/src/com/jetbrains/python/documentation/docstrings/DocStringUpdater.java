@@ -100,7 +100,7 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     // If several updates insert in one place (e.g. new field), insert them in backward order,
     // so the first added is placed above
     Collections.reverse(myUpdates);
-    Collections.sort(myUpdates, Collections.reverseOrder());
+    myUpdates.sort(Collections.reverseOrder());
     for (final Modification update : myUpdates) {
       final TextRange updateRange = update.range;
       if (updateRange.getStartOffset() == updateRange.getEndOffset()) {
@@ -114,7 +114,7 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
   }
 
   protected void beforeApplyingModifications() {
-    
+
   }
 
   @NotNull

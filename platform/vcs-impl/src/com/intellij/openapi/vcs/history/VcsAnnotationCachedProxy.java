@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAnnotationProvider {
   private final VcsHistoryCache myCache;
   private final AbstractVcs myVcs;
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy");
+  private final static Logger LOG = Logger.getInstance(VcsAnnotationCachedProxy.class);
   private final AnnotationProvider myAnnotationProvider;
 
   public VcsAnnotationCachedProxy(@NotNull AbstractVcs vcs, @NotNull AnnotationProvider provider) {
@@ -104,7 +104,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
   private void loadHistoryInBackgroundToCache(final VcsRevisionNumber revisionNumber,
                                               final FilePath filePath,
                                               final VcsAnnotation vcsAnnotation) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    BackgroundTaskUtil.executeOnPooledThread(myVcs.getProject(), () -> {
       try {
         getHistory(revisionNumber, filePath, myVcs.getVcsHistoryProvider(), vcsAnnotation.getFirstRevision());
       }

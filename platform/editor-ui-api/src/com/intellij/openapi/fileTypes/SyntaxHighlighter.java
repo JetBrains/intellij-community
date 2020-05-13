@@ -58,6 +58,5 @@ public interface SyntaxHighlighter {
    * @param tokenType The token type for which the highlighting is requested.
    * @return The array of text attribute keys.
    */
-  @NotNull
-  TextAttributesKey[] getTokenHighlights(IElementType tokenType);
+  TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType);
 }

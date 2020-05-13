@@ -345,7 +345,7 @@ public class SubstitutionHandler extends MatchingHandler {
       while (fNodes.hasNext() && matchedOccurs < minOccurs) {
         if (handler.match(currentPatternNode, matchNodes.current(), context)) {
           ++matchedOccurs;
-        } else if (handler instanceof TopLevelMatchingHandler ||
+        } else if (handler instanceof TopLevelMatchingHandler && matchedOccurs == 0 ||
                    currentPatternNode instanceof PsiComment ||
                    !(matchNodes.current() instanceof PsiComment)) {
           break;
@@ -367,7 +367,7 @@ public class SubstitutionHandler extends MatchingHandler {
         while (fNodes.hasNext() && matchedOccurs < maxOccurs) {
           if (handler.match(currentPatternNode, matchNodes.current(), context)) {
             ++matchedOccurs;
-          } else if (handler instanceof TopLevelMatchingHandler ||
+          } else if (handler instanceof TopLevelMatchingHandler && matchedOccurs == 0 ||
                      currentPatternNode instanceof PsiComment ||
                      !(matchNodes.current() instanceof PsiComment)) {
             break;

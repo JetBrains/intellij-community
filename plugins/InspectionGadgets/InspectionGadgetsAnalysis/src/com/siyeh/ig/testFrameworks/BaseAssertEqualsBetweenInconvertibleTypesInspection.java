@@ -6,19 +6,24 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.bugs.InconvertibleTypesChecker;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
+  private static final CallMatcher ASSERTJ_IS_EQUAL = CallMatcher.instanceCall(
+    "org.assertj.core.api.Assert", "isEqualTo").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+  private static final CallMatcher ASSERTJ_DESCRIBED = CallMatcher.instanceCall(
+    "org.assertj.core.api.Descriptable", "describedAs");
+  private static final CallMatcher ASSERTJ_ASSERT_THAT = CallMatcher.staticCall(
+    "org.assertj.core.api.Assertions", "assertThat").parameterCount(1);
+  
   protected abstract boolean checkTestNG();
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.display.name");
-  }
-  
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
@@ -43,34 +48,44 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
+      processAssertEquals(expression);
+      processAssertJ(expression);
+    }
+
+    private void processAssertJ(PsiMethodCallExpression call) {
+      if (!ASSERTJ_IS_EQUAL.test(call)) return;
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      while (ASSERTJ_DESCRIBED.test(qualifierCall)) {
+        qualifierCall = MethodCallUtils.getQualifierMethodCall(qualifierCall);
+      }
+      if (!ASSERTJ_ASSERT_THAT.test(qualifierCall)) return;
+      checkConvertibleTypes(call, call.getArgumentList().getExpressions()[0], qualifierCall.getArgumentList().getExpressions()[0]);
+    }
+
+    private void processAssertEquals(@NotNull PsiMethodCallExpression expression) {
       final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression, checkTestNG());
       if (assertHint == null) return;
-      final PsiType type1 = assertHint.getFirstArgument().getType();
-      if (type1 == null) {
-        return;
-      }
-      final PsiType type2 = assertHint.getSecondArgument().getType();
-      if (type2 == null) {
-        return;
-      }
-      final int argIndex = assertHint.getArgIndex();
-      final PsiParameter[] parameters = assertHint.getMethod().getParameterList().getParameters();
-      final PsiType parameterType1 = parameters[argIndex].getType();
-      final PsiType parameterType2 = parameters[argIndex + 1].getType();
-      final PsiClassType objectType = TypeUtils.getObjectType(expression);
-      if (!objectType.equals(parameterType1) || !objectType.equals(parameterType2)) {
-        return;
-      }
+      PsiExpression firstArgument = assertHint.getFirstArgument();
+      PsiExpression secondArgument = assertHint.getSecondArgument();
+      PsiParameter firstParameter = MethodCallUtils.getParameterForArgument(firstArgument);
+      if (firstParameter == null || !TypeUtils.isJavaLangObject(firstParameter.getType())) return;
+      PsiParameter secondParameter = MethodCallUtils.getParameterForArgument(secondArgument);
+      if (secondParameter == null || !TypeUtils.isJavaLangObject(secondParameter.getType())) return;
+      checkConvertibleTypes(expression, firstArgument, secondArgument);
+    }
 
-      new InconvertibleTypesChecker() {
-        @Override
-        protected void registerEqualsError(PsiElement highlightLocation,
-                                           @NotNull PsiType leftType,
-                                           @NotNull PsiType rightType,
-                                           boolean convertible) {
-            AssertEqualsBetweenInconvertibleTypesVisitor.this.registerError(highlightLocation, leftType, rightType, convertible);
-          }
-        }.checkTypes(expression.getMethodExpression(), type1, type2, true, isOnTheFly());
+    private void checkConvertibleTypes(@NotNull PsiMethodCallExpression expression, PsiExpression firstArgument, PsiExpression secondArgument) {
+      final PsiType type1 = firstArgument.getType();
+      if (type1 == null) return;
+      final PsiType type2 = secondArgument.getType();
+      if (type2 == null) return;
+      InconvertibleTypesChecker.LookForMutualSubclass lookForMutualSubclass =
+        isOnTheFly() ? InconvertibleTypesChecker.LookForMutualSubclass.IF_CHEAP : InconvertibleTypesChecker.LookForMutualSubclass.ALWAYS;
+      InconvertibleTypesChecker.TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(type1, type2, lookForMutualSubclass);
+      if (mismatch != null) {
+        PsiElement name = Objects.requireNonNull(expression.getMethodExpression().getReferenceNameElement());
+        registerError(name, mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+      }
     }
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SharedProcessingContext;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +27,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMap = new THashMap<>(5);
   private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<>(5);
 
-  public void registerProvider(@NonNls @NotNull String[] names,
+  public void registerProvider(@NonNls String @NotNull [] names,
                                @NotNull ElementPattern filter,
                                boolean caseSensitive,
                                @NotNull PsiReferenceProvider provider,
@@ -87,6 +88,8 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
                                    @NotNull PsiReferenceService.Hints hints) {
     if (providerList == null) return;
 
+    SharedProcessingContext sharedProcessingContext = new SharedProcessingContext();
+
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < providerList.size(); i++) {
       ProviderInfo<ElementPattern> info = providerList.get(i);
@@ -94,7 +97,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
         continue;
       }
 
-      final ProcessingContext context = new ProcessingContext();
+      ProcessingContext context = new ProcessingContext(sharedProcessingContext);
       boolean suitable = false;
       try {
         suitable = info.processingContext.accepts(position, context);

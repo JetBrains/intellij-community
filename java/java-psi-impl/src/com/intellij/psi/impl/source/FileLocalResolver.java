@@ -66,7 +66,10 @@ public class FileLocalResolver {
 
       for (LighterASTNode var : getDeclarations(scope, lastParent)) {
         if (refName.equals(JavaLightTreeUtil.getNameIdentifierText(myTree, var))) {
-          if (passedClass) return var.getTokenType() == FIELD ? LightResolveResult.NON_LOCAL : LightResolveResult.UNKNOWN;
+          if (passedClass) {
+            IElementType type = var.getTokenType();
+            return type == FIELD || type == RECORD_COMPONENT ? LightResolveResult.NON_LOCAL : LightResolveResult.UNKNOWN;
+          }
           return LightResolveResult.resolved(var);
         }
       }
@@ -107,7 +110,10 @@ public class FileLocalResolver {
       return before(LightTreeUtil.getChildrenOfType(myTree, scope, RESOURCE_VARIABLE), lastParent);
     }
     if (type == CLASS) {
-      return LightTreeUtil.getChildrenOfType(myTree, scope, FIELD);
+      List<LighterASTNode> fields = LightTreeUtil.getChildrenOfType(myTree, scope, FIELD);
+      LighterASTNode recordHeader = LightTreeUtil.firstChildOfType(myTree, scope, RECORD_HEADER);
+      if (recordHeader == null) return fields;
+      return JBIterable.from(fields).append(LightTreeUtil.getChildrenOfType(myTree, recordHeader, RECORD_COMPONENT));
     }
     if (type == LAMBDA_EXPRESSION || type == METHOD) {
       LighterASTNode paramList = LightTreeUtil.firstChildOfType(myTree, scope, PARAMETER_LIST);

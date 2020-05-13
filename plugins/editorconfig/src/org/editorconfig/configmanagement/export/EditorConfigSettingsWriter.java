@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.export;
 
 import com.intellij.application.options.codeStyle.properties.*;
@@ -147,7 +147,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
         if (pattern != null) {
           write("\n[" + pattern + "]\n");
         }
-        Collections.sort(optionValueList, PAIR_COMPARATOR);
+        optionValueList.sort(PAIR_COMPARATOR);
         writeProperties(optionValueList, myCommentOutProperties);
         return true;
       }

@@ -17,16 +17,15 @@
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import org.jetbrains.annotations.NotNull;
@@ -44,12 +43,10 @@ import java.util.ArrayList;
 
 public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListener, ListSelectionListener  {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.FocusDebugger");
-
   private JComponent myComponent;
 
-  private JList myLog;
-  private DefaultListModel myLogModel;
+  private JList<FocusElement> myLog;
+  private DefaultListModel<FocusElement> myLogModel;
   private JEditorPane myAllocation;
 
   @Override
@@ -64,8 +61,8 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
   private JComponent init() {
     final JPanel result = new JPanel(new BorderLayout());
 
-    myLogModel = new DefaultListModel();
-    myLog = new JBList(myLogModel);
+    myLogModel = new DefaultListModel<>();
+    myLog = new JBList<>(myLogModel);
     myLog.setCellRenderer(new FocusElementRenderer());
 
 
@@ -96,9 +93,10 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
   }
 
   class ClearAction extends AnAction {
-    ClearAction() {
-      super("Clear", "", AllIcons.Actions.Close);
-    }
+  ClearAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.clear"),
+          IdeBundle.messagePointer("action.AnAction.description.clear"), AllIcons.Actions.Close);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -111,7 +109,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     if (myLog.getSelectedIndex() == -1) {
       myAllocation.setText(null);
     } else {
-      FocusElement element = (FocusElement)myLog.getSelectedValue();
+      FocusElement element = myLog.getSelectedValue();
       final StringWriter s = new StringWriter();
       final PrintWriter writer = new PrintWriter(s);
       element.getAllocation().printStackTrace(writer);
@@ -134,11 +132,11 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     boolean affectsDebugger = false;
 
     if (newValue instanceof Component && isInsideDebuggerDialog((Component)newValue)) {
-      affectsDebugger |= true;
+      affectsDebugger = true;
     }
 
     if (oldValue instanceof Component && isInsideDebuggerDialog((Component)oldValue)) {
-      affectsDebugger |= true;
+      affectsDebugger = true;
     }
 
 
@@ -146,7 +144,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     final SimpleColoredText text = new SimpleColoredText();
     text.append(evt.getPropertyName(), maybeGrayOut(new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null), affectsDebugger));
     text.append(" newValue=", maybeGrayOut(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, affectsDebugger));
-    text.append(evt.getNewValue() + "", maybeGrayOut(SimpleTextAttributes.REGULAR_ATTRIBUTES, affectsDebugger));
+    text.append(String.valueOf(evt.getNewValue()), maybeGrayOut(SimpleTextAttributes.REGULAR_ATTRIBUTES, affectsDebugger));
     text.append(" oldValue=" + evt.getOldValue(), maybeGrayOut(SimpleTextAttributes.REGULAR_ATTRIBUTES, affectsDebugger));
 
 
@@ -162,18 +160,21 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     });
   }
 
-  private SimpleTextAttributes maybeGrayOut(SimpleTextAttributes attr, boolean greyOut) {
-    return greyOut ? attr.derive(attr.getStyle(), Color.gray, attr.getBgColor(), attr.getWaveColor()) : attr;
+  private static SimpleTextAttributes maybeGrayOut(SimpleTextAttributes attr, boolean greyOut) {
+    return greyOut ? attr.derive(attr.getStyle(), JBColor.GRAY, attr.getBgColor(), attr.getWaveColor()) : attr;
   }
 
-  static class FocusElementRenderer extends ColoredListCellRenderer {
+  static class FocusElementRenderer extends ColoredListCellRenderer<FocusElement> {
     @Override
-    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList<? extends FocusElement> list,
+                                         FocusElement value,
+                                         int index,
+                                         boolean selected,
+                                         boolean hasFocus) {
       clear();
-      final FocusElement element = (FocusElement)value;
-      final SimpleColoredText text = element.getText();
+      final SimpleColoredText text = value.getText();
       final ArrayList<String> strings = text.getTexts();
-      final ArrayList<SimpleTextAttributes> attributes = element.getText().getAttributes();
+      final ArrayList<SimpleTextAttributes> attributes = value.getText().getAttributes();
       for (int i = 0; i < strings.size(); i++) {
         append(strings.get(i), attributes.get(i));
       }
@@ -198,10 +199,9 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     }
   }
 
-
   @Override
-  public String getName() {
-    return "Focus";
+  public @NlsContexts.TabTitle String getName() {
+    return LangBundle.message("tab.title.focus");
   }
 
   @Override

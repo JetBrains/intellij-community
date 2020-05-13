@@ -4,14 +4,14 @@ else
   set -e XDG_CONFIG_HOME
 end
 
-if test -d ~/.config/fish/conf.d
-  for f in ~/.config/fish/conf.d/*.fish
+if test -d ~/.config/fish/functions
+  for f in ~/.config/fish/functions/*.fish
     source $f
   end
 end
 
-if test -d ~/.config/fish/functions
-  for f in ~/.config/fish/functions/*.fish
+if test -d ~/.config/fish/conf.d
+  for f in ~/.config/fish/conf.d/*.fish
     source $f
   end
 end
@@ -45,6 +45,17 @@ function override_jb_variables
             set -x $new_name (string split ":" -- $value)
         else
             set -x $new_name $value
+        end
+      end
+    end
+
+    if string match -q -- "_INTELLIJ_FORCE_PREPEND_*" $name
+      set new_name (string sub -s 25 -- $name)
+      if [ $new_name ]
+        if [ $new_name = "PATH" ]; or [ $new_name = "CDPATH" ]; or [ $new_name = "MANPATH" ]
+            set -x $new_name (string split ":" -- "$value$$new_name")
+        else
+            set -x $new_name "$value$$new_name"
         end
       end
     end

@@ -21,12 +21,15 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +85,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @deprecated Use {@link #PresentationData(String, String, Icon, TextAttributesKey)} instead.
    */
   @Deprecated
-  public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,
+  public PresentationData(@Nls String presentableText, String locationString, Icon openIcon, Icon closedIcon,
                           @Nullable TextAttributesKey attributesKey) {
     this(presentableText, locationString, closedIcon, attributesKey);
   }
@@ -138,7 +141,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *
    * @param presentableText the name of the object.
    */
-  public void setPresentableText(String presentableText) {
+  public void setPresentableText(@Nls String presentableText) {
     myPresentableText = presentableText;
   }
 
@@ -223,7 +226,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     return myTooltip;
   }
 
-  public void setTooltip(@Nullable final String tooltip) {
+  public void setTooltip(@Nullable @Tooltip String tooltip) {
     myTooltip = tooltip;
   }
 
@@ -244,7 +247,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myColoredText.add(coloredFragment);
   }
 
-  public void addText(String text, SimpleTextAttributes attributes) {
+  public void addText(@NlsContexts.Label String text, SimpleTextAttributes attributes) {
     myColoredText.add(new PresentableNodeDescriptor.ColoredFragment(text, attributes));
   }
 
@@ -268,8 +271,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   @Override
-  @NotNull
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[]{myIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
       myLocationString, mySeparatorAbove, myLocationPrefix, myLocationSuffix};
   }

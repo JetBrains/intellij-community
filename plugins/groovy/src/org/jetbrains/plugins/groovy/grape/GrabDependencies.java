@@ -78,7 +78,7 @@ import java.util.*;
  * @author peter
  */
 public class GrabDependencies implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.grape.GrabDependencies");
+  private static final Logger LOG = Logger.getInstance(GrabDependencies.class);
 
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
   public static final String GRAPE_RUNNER = "org.jetbrains.plugins.groovy.grape.GrapeRunner";
@@ -230,7 +230,7 @@ public class GrabDependencies implements IntentionAction {
     final Set<GrAnnotation> resolvers = new THashSet<>();
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof GrAnnotation) {
           GrAnnotation anno = (GrAnnotation)element;
           String qname = anno.getQualifiedName();

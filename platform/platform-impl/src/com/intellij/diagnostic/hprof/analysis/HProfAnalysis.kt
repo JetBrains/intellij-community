@@ -15,15 +15,19 @@
  */
 package com.intellij.diagnostic.hprof.analysis
 
-import com.intellij.diagnostic.hprof.classstore.ClassStore
+import com.google.common.base.Stopwatch
+import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 import com.intellij.diagnostic.hprof.util.FileBackedIntList
+import com.intellij.diagnostic.hprof.util.FileBackedUByteList
+import com.intellij.diagnostic.hprof.util.HeapReportUtils.sectionHeader
+import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
 import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
 import com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
-import com.google.common.base.Stopwatch
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -52,7 +56,7 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
     includeMetaInfo = value
   }
 
-  private fun openTempEmptyFileChannel(type: String): FileChannel {
+  private fun openTempEmptyFileChannel(@NonNls type: String): FileChannel {
     val tempPath = tempFilenameSupplier.getTempFilePath(type)
 
     val tempChannel = FileChannel.open(tempPath,
@@ -69,7 +73,8 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
   fun analyze(progress: ProgressIndicator): String {
     val result = StringBuilder()
     val totalStopwatch = Stopwatch.createStarted()
-    val stopwatch = Stopwatch.createStarted()
+    val prepareFilesStopwatch = Stopwatch.createStarted()
+    val analysisStopwatch = Stopwatch.createUnstarted()
 
     progress.text = "Analyze Heap"
     progress.text2 = "Open heap file"
@@ -80,12 +85,12 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       progress.text2 = "Create class definition map"
       progress.fraction = 0.0
 
-      var classStore = ClassStore.create(parser)
+      val hprofMetadata = HProfMetadata.create(parser)
 
       progress.text2 = "Create class histogram"
       progress.fraction = 0.1
 
-      val histogram = Histogram.create(parser, classStore)
+      val histogram = Histogram.create(parser, hprofMetadata.classStore)
 
       val nominatedClasses = ClassNomination(histogram, 5).nominateClasses()
 
@@ -95,7 +100,6 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       // Currently, there is a maximum count of supported instances. Produce simplified report
       // (histogram only), if the count exceeds maximum.
       if (!isSupported(histogram.instanceCount)) {
-        result.appendln("Histogram. Top 50 by instance count:")
         result.appendln(histogram.prepareReport("All", 50))
         return result.toString()
       }
@@ -107,7 +111,7 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
       parser.accept(remapIDsVisitor, "id mapping")
       parser.setIdRemappingFunction(remapIDsVisitor.getRemappingFunction())
-      classStore = classStore.createStoreWithRemappedIDs(remapIDsVisitor.getRemappingFunction())
+      hprofMetadata.remapIds(remapIDsVisitor.getRemappingFunction())
 
       progress.text2 = "Create object graph files"
       progress.fraction = 0.3
@@ -116,68 +120,53 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
         parser,
         openTempEmptyFileChannel("auxOffset"),
         openTempEmptyFileChannel("aux"),
-        classStore,
+        hprofMetadata,
         histogram.instanceCount
       )
 
-      if (includeMetaInfo) {
-        result.appendln("Prepare files duration: $stopwatch")
-      }
-      stopwatch.reset().start()
+      prepareFilesStopwatch.stop()
 
       val parentList = FileBackedIntList.createEmpty(openTempEmptyFileChannel("parents"), navigator.instanceCount + 1)
       val sizesList = FileBackedIntList.createEmpty(openTempEmptyFileChannel("sizes"), navigator.instanceCount + 1)
       val visitedList = FileBackedIntList.createEmpty(openTempEmptyFileChannel("visited"), navigator.instanceCount + 1)
+      val refIndexList = FileBackedUByteList.createEmpty(openTempEmptyFileChannel("refIndex"), navigator.instanceCount + 1)
 
-      val nominatedClassNames = nominatedClasses.map { it.classDefinition.name }.toSet()
-      val analyzeGraph = AnalyzeGraph(navigator,
-                                      parentList,
-                                      sizesList,
-                                      visitedList,
-                                      nominatedClassNames,
-                                      includeMetaInfo
+      analysisStopwatch.start()
+
+      val nominatedClassNames = nominatedClasses.map { it.classDefinition.name }
+      val analysisConfig = AnalysisConfig(perClassOptions = AnalysisConfig.PerClassOptions(classNames = nominatedClassNames),
+                                          metaInfoOptions = AnalysisConfig.MetaInfoOptions(include = includeMetaInfo))
+      val analysisContext = AnalysisContext(
+        navigator,
+        analysisConfig,
+        parentList,
+        sizesList,
+        visitedList,
+        refIndexList,
+        histogram
       )
-      val analyzeReport = analyzeGraph.analyze(PartialProgressIndicator(progress, 0.4, 0.4))
-      val analyzeDisposer = AnalyzeDisposer(navigator)
-      val disposedObjectsIDsSet = analyzeDisposer.computeDisposedObjectsIDsSet(parentList)
 
-      val graphReport = analyzeGraph.prepareReport(PartialProgressIndicator(progress, 0.8, 0.2),
-                                                   disposedObjectsIDsSet)
-      val strongRefHistogram = analyzeGraph.getStrongRefHistogram()
+      val analysisReport = AnalyzeGraph(analysisContext).analyze(PartialProgressIndicator(progress, 0.4, 0.4))
 
-      val disposerTreeReport = analyzeDisposer.createDisposerTreeReport()
-      val disposerDisposedObjectsReport = analyzeDisposer.analyzeDisposedObjects(disposedObjectsIDsSet, parentList, sizesList)
+      result.appendln(analysisReport)
+
+      analysisStopwatch.stop()
 
       if (includeMetaInfo) {
-        result.appendln("Analysis duration: $stopwatch")
+        result.appendln(sectionHeader("Analysis information"))
+        result.appendln("Prepare files duration: $prepareFilesStopwatch")
+        result.appendln("Analysis duration: $analysisStopwatch")
         result.appendln("TOTAL DURATION: $totalStopwatch")
         result.appendln("Temp files:")
-        result.appendln("  heapdump = ${hprofFileChannel.size() / 1_000_000}MB")
+        result.appendln("  heapdump = ${toShortStringAsCount(hprofFileChannel.size())}")
 
         tempFiles.forEach { temp ->
           val channel = temp.channel
           if (channel.isOpen) {
-            result.appendln("  ${temp.type} = ${channel.size() / 1_000_000}MB")
+            result.appendln("  ${temp.type} = ${toShortStringAsCount(channel.size())}")
           }
         }
       }
-      result.appendln("Histogram. Top 50 by instance count [All-objects] [Only-strong-ref]:")
-      result.append(
-        Histogram.prepareMergedHistogramReport(histogram, "All", strongRefHistogram, "Strong-ref", 50))
-      result.appendln()
-      result.appendln("Nominated classes:")
-      nominatedClasses.sortedBy { it.classDefinition.name }.forEach {
-        result.appendln(" --> ${it.totalInstances} ${it.classDefinition.prettyName} (${it.totalBytes / 1_000_000}MB)")
-      }
-      result.appendln()
-
-      result.appendln("=============== OBJECT GRAPH ===============")
-      result.append(analyzeReport)
-      result.append(graphReport)
-      result.appendln("============== DISPOSER TREE ===============")
-      result.append(disposerTreeReport)
-      result.appendln("============= DISPOSED OBJECTS =============")
-      result.append(disposerDisposedObjectsReport)
     }
     finally {
       parser.close()

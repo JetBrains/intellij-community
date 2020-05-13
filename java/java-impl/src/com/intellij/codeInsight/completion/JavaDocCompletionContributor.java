@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -49,7 +49,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
 
 public class JavaDocCompletionContributor extends CompletionContributor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaDocCompletionContributor");
+  private static final Logger LOG = Logger.getInstance(JavaDocCompletionContributor.class);
   private static final @NonNls String VALUE_TAG = "value";
   private static final @NonNls String LINK_TAG = "link";
   private static final InsertHandler<LookupElement> PARAM_DESCRIPTION_INSERT_HANDLER = (context, item) -> {
@@ -285,10 +285,10 @@ public class JavaDocCompletionContributor extends CompletionContributor {
     final Set<String> descriptions = new HashSet<>();
     position.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         PsiParameter param1 = getDocTagParam(element);
         if (param1 != null && param1 != param &&
-            Comparing.equal(param1.getName(), param.getName()) && Comparing.equal(param1.getType(), param.getType())) {
+            Objects.equals(param1.getName(), param.getName()) && Comparing.equal(param1.getType(), param.getType())) {
           String text = "";
           for (PsiElement psiElement : ((PsiDocTag)element).getDataElements()) {
             if (psiElement != ((PsiDocTag)element).getValueElement()) {

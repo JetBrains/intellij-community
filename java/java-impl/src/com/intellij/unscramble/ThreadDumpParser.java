@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,7 +14,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public class ThreadDumpParser {
+public final class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?.*tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
   private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
@@ -23,7 +22,7 @@ public class ThreadDumpParser {
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
-  private static final Pattern ourParkingToWaitForLockPattern = Pattern.compile("- parking to wait for  <(.+)>");
+  private static final Pattern ourParkingToWaitForLockPattern = Pattern.compile("- parking to wait for {2}<(.+)>");
   @NonNls private static final String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at java\\.util\\.TimerThread\\.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at javax\\.swing\\.TimerQueue\\.run");
@@ -32,6 +31,7 @@ public class ThreadDumpParser {
   private ThreadDumpParser() {
   }
 
+  @NotNull
   public static List<ThreadState> parse(String threadDump) {
     List<ThreadState> result = new ArrayList<>();
     StringBuilder lastThreadStack = new StringBuilder();
@@ -104,7 +104,7 @@ public class ThreadDumpParser {
   }
 
   public static void sortThreads(List<? extends ThreadState> result) {
-    Collections.sort(result, (o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
+    result.sort((o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }
 
   @Nullable

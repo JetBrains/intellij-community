@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.*;
@@ -9,7 +10,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -23,10 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-/**
- * @author nik
- */
 public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
   private final WizardContext myWizardContext;
   private JTextField myModuleName;
@@ -73,10 +72,10 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     AbstractModuleBuilder moduleBuilder = getModuleBuilder();
     if (moduleBuilder == null) return;
 
-    final String moduleName = getModuleName();
+    String moduleName = getModuleName();
+    Path moduleFile = Paths.get(myModuleFileLocation.getText(), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     moduleBuilder.setName(moduleName);
-    moduleBuilder.setModuleFilePath(
-      FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    moduleBuilder.setModuleFilePath(FileUtil.toSystemIndependentName(moduleFile.toString()));
     moduleBuilder.setContentEntryPath(FileUtil.toSystemIndependentName(getModuleContentRoot()));
   }
 
@@ -94,8 +93,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       }
     });
 
-    myModuleContentRoot.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.content.root.chooser.title"),
-                                                ProjectBundle.message("project.new.wizard.module.content.root.chooser.description"),
+    myModuleContentRoot.addBrowseFolderListener(JavaUiBundle.message("project.new.wizard.module.content.root.chooser.title"),
+                                                JavaUiBundle.message("project.new.wizard.module.content.root.chooser.description"),
                                                 myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
 
     namePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -150,8 +149,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       }
     });
 
-    myModuleFileLocation.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.file.chooser.title"),
-                                                 ProjectBundle.message("project.new.wizard.module.file.description"),
+    myModuleFileLocation.addBrowseFolderListener(JavaUiBundle.message("project.new.wizard.module.file.chooser.title"),
+                                                 JavaUiBundle.message("project.new.wizard.module.file.description"),
                                                  myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     myModuleFileLocation.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -227,18 +226,18 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       throw new ConfigurationException("Enter a module name");
     }
 
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), moduleFileDirectory,
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(JavaUiBundle.message("directory.module.file"), moduleFileDirectory,
                                                       myImlLocationChangedByUser)) {
       return false;
     }
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(),
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(JavaUiBundle.message("directory.module.content.root"), myModuleContentRoot.getText(),
                                                       myContentRootChangedByUser)) {
       return false;
     }
 
     File moduleFile = new File(moduleFileDirectory, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     if (moduleFile.exists()) {
-      int answer = Messages.showYesNoDialog(IdeBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
+      int answer = Messages.showYesNoDialog(JavaUiBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
                                                               IdeBundle.message("project.new.wizard.module.identification")),
                                             IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
       if (answer != Messages.YES) {

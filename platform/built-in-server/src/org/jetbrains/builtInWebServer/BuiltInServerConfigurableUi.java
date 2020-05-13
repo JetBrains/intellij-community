@@ -3,6 +3,7 @@ package org.jetbrains.builtInWebServer;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.ui.PortField;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.BuiltInServerBundle;
 
 import javax.swing.*;
 
@@ -20,7 +21,8 @@ class BuiltInServerConfigurableUi implements ConfigurableUi<BuiltInServerOptions
     builtInServerPort.addChangeListener(e -> {
       boolean isEnabled = builtInServerPort.getNumber() < BuiltInServerOptions.DEFAULT_PORT;
       builtInServerAvailableExternallyCheckBox.setEnabled(isEnabled);
-      builtInServerAvailableExternallyCheckBox.setToolTipText(isEnabled ? null : "Can’t be enabled for default port (port number >= 63342). Please change it.");
+      builtInServerAvailableExternallyCheckBox
+        .setToolTipText(isEnabled ? null : BuiltInServerBundle.message("checkbox.tooltip.can.t.be.enabled.for.default.port"));
     });
   }
 

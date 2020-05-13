@@ -20,9 +20,6 @@ import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XRemoveAllWatchesAction extends XWatchesTreeActionBase {
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {

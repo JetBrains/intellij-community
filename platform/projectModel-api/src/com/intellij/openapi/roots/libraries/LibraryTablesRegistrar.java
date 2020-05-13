@@ -48,16 +48,21 @@ public abstract class LibraryTablesRegistrar {
   public abstract LibraryTable getLibraryTable(@NotNull Project project);
 
   /**
-   * Returns a custom library table registered by {@link #registerLibraryTable(LibraryTable)}.
+   * Returns the standard or a custom library table registered by {@link #registerLibraryTable(LibraryTable)} or via {@link CustomLibraryTableDescription}.
    */
   @Nullable
   public abstract LibraryTable getLibraryTableByLevel(@NonNls String level, @NotNull Project project);
 
   /**
-   * Register a custom library table. The platform doesn't provide editors for libraries from custom tables and doesn't save their configurations
-   * automatically, so a plugin providing such a table must implement this functionality on its own. Modules from custom tables may be added to
-   * dependencies of modules in any project in 'Project Structure' dialog.
+   * Returns a custom library table registered by {@link #registerLibraryTable(LibraryTable)} or via {@link CustomLibraryTableDescription}.
    */
+  @Nullable
+  public abstract LibraryTable getCustomLibraryTableByLevel(@NonNls String level);
+
+  /**
+   * @deprecated use {@link CustomLibraryTableDescription} extension point instead
+   */
+  @Deprecated
   public abstract void registerLibraryTable(@NotNull LibraryTable libraryTable);
 
   @NotNull

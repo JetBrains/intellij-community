@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,16 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.name");
-  }
-
-  @NotNull
-  @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.descriptor", infos);
   }
 
@@ -49,10 +40,9 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
     return new InferLambdaParameterTypeVisitor();
   }
 
-  @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new InferLambdaParameterTypeFix(infos);
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+    return new InferLambdaParameterTypeFix((String)infos[0]);
   }
 
 
@@ -71,8 +61,8 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
       final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null &&
           LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null) {
-        final String inferredTypesText = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression,
-                                                                                                        true);
+        final String inferredTypesText = LambdaUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression,
+                                                                                             true);
         if (inferredTypesText != null) {
           PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(parameterList);
           if (PsiUtil.isJavaToken(nextElement, JavaTokenType.ARROW)) {
@@ -87,23 +77,21 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
   }
 
   private static class InferLambdaParameterTypeFix extends InspectionGadgetsFix {
-    private final Object[] myInfos;
+    private final String mySignatureText;
 
-    InferLambdaParameterTypeFix(Object... infos) {
-      myInfos = infos;
+    InferLambdaParameterTypeFix(String signatureText) {
+      mySignatureText = signatureText;
     }
 
     @Nls
-    @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.quickfix", myInfos);
+    public @NotNull String getName() {
+      return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.quickfix", mySignatureText);
     }
 
     @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.family.quickfix");
     }
 
@@ -111,7 +99,7 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiLambdaExpression) {
-        LambdaRefactoringUtil.specifyLambdaParameterTypes((PsiLambdaExpression)element);
+        LambdaUtil.specifyLambdaParameterTypes((PsiLambdaExpression)element);
       }
     }
   }

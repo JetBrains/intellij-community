@@ -58,8 +58,7 @@ abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIcon
    * @see #MARKERS
    */
   @TestOnly
-  @Nullable
-  static NavigatablePsiElement[] getNavigationTargets(@NotNull final UserDataHolder holder) {
+  static NavigatablePsiElement @Nullable [] getNavigationTargets(@NotNull final UserDataHolder holder) {
     return holder.getUserData(MARKERS);
   }
 

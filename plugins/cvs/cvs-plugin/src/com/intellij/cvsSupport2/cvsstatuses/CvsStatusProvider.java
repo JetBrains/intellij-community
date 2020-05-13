@@ -31,7 +31,7 @@ import java.util.Date;
  * author: lesya
  */
 public class CvsStatusProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider");
+  private static final Logger LOG = Logger.getInstance(CvsStatusProvider.class);
 
   private static long TIME_STAMP_EPSILON = 3000;
 

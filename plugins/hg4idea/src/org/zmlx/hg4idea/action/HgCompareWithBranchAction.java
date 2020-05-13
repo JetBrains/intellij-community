@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.action;
 
 import com.google.common.collect.Iterables;
@@ -22,13 +8,13 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -78,7 +64,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
   private static Hash getHeavyBranchMainHash(@NotNull HgRepository repository, @NotNull String branchName) {
     // null for new branch or not heavy ref
     final LinkedHashSet<Hash> branchHashes = repository.getBranches().get(branchName);
-    return branchHashes != null ? ObjectUtils.assertNotNull(Iterables.getLast(branchHashes)) : null;
+    return branchHashes != null ? Objects.requireNonNull(Iterables.getLast(branchHashes)) : null;
   }
 
   @Nullable
@@ -135,7 +121,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
                                                          @NotNull String branchName) throws VcsException {
     Hash refHashToCompare = detectActiveHashByName(repository, branchName);
     if (refHashToCompare == null) {
-      throw new VcsException(String.format("Couldn't detect commit related to %s name for %s.", branchName, repository.getRoot()));
+      throw new VcsException(HgBundle.message("action.hg4idea.CompareWithBranch.cannot.detect.commit", branchName, repository.getRoot()));
     }
     return HgRevisionNumber.getInstance(branchName, refHashToCompare.toString());
   }

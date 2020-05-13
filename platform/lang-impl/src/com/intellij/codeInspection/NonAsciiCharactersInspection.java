@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -28,7 +29,6 @@ import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
@@ -45,6 +45,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
   public boolean CHECK_FOR_NOT_ASCII_COMMENT;
   
   public boolean CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
+  public boolean CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING;
   public boolean CHECK_FOR_FILES_CONTAINING_BOM;
 
   @Override
@@ -52,13 +53,6 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
   @NotNull
   public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("non.ascii.characters");
   }
 
   @Override
@@ -77,16 +71,21 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     if (!isFileWorthIt(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME || CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME) {
           PsiElement parent = element.getParent();
-          if (parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == element) {
+          PsiElement identifier;
+          if (parent instanceof PsiNameIdentifierOwner &&
+              (identifier = ((PsiNameIdentifierOwner)parent).getNameIdentifier()) != null) {
+            // Groovy has this twisted PSI where method.geNameIdentifier() is some random light element
             String text = element.getText();
-            if (CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME) {
-              checkAscii(element, text, holder, "an identifier");
-            }
-            if (CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME) {
-              checkSameLanguage(element, text, holder);
+            if (identifier == element || text.equals(identifier.getText())) {
+              if (CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME) {
+                checkAscii(element, text, holder, "an identifier");
+              }
+              if (CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME) {
+                checkSameLanguage(element, text, holder);
+              }
             }
           }
         }
@@ -95,15 +94,19 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
             checkAsciiRange(element, element.getText(), holder, "a comment");
           }
         }
-        if (CHECK_FOR_NOT_ASCII_STRING_LITERAL) {
-          if (element instanceof PsiLiteralValue) {
-            checkAsciiRange(element, element.getText(), holder, "a string literal");
+        if (element instanceof PsiLiteralValue) {
+          String text = element.getText();
+          if (CHECK_FOR_NOT_ASCII_STRING_LITERAL) {
+            checkAsciiRange(element, text, holder, "a string literal");
+          }
+          if (CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING) {
+            checkSameLanguage(element, text, holder);
           }
         }
       }
 
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         super.visitFile(file);
         if (CHECK_FOR_FILES_CONTAINING_BOM) {
           VirtualFile virtualFile = file.getVirtualFile();
@@ -114,8 +117,12 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
               .mapToObj(b -> StringUtil.toUpperCase(Integer.toString(b & 0x00ff, 16)))
               .collect(Collectors.joining());
             Charset charsetFromBOM = CharsetToolkit.guessFromBOM(bom);
-            holder.registerProblem(file, "File contains BOM: '" + hex +"'"+
-                                         (charsetFromBOM == null ? "" : " (charset '"+charsetFromBOM.displayName()+"' signature)"),
+            holder.registerProblem(file,
+                                   LangBundle.message("inspection.message.file.contains.bom", hex, charsetFromBOM == null
+                                                                                                   ? ""
+                                                                                                   : LangBundle.message(
+                                                                                                     "inspection.message.charset.signature",
+                                                                                                     charsetFromBOM.displayName())),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }
@@ -123,7 +130,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     };
   }
 
-  private static boolean isFileWorthIt(PsiFile file) {
+  private static boolean isFileWorthIt(@NotNull PsiFile file) {
     if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) return false;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
@@ -136,9 +143,9 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
   }
 
 
-  private static void checkSameLanguage(PsiElement element,
-                                        String text,
-                                        ProblemsHolder holder) {
+  private static void checkSameLanguage(@NotNull PsiElement element,
+                                        @NotNull String text,
+                                        @NotNull ProblemsHolder holder) {
     Set<Character.UnicodeScript> scripts = text.codePoints()
       .mapToObj(Character.UnicodeScript::of)
       .filter(script -> !script.equals(Character.UnicodeScript.COMMON))
@@ -146,23 +153,23 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     if (scripts.size() > 1) {
       List<Character.UnicodeScript> list = new ArrayList<>(scripts);
       Collections.sort(list); // a little bit of stability
-      holder.registerProblem(element, "Identifier contains symbols from different languages: " + list,
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      holder.registerProblem(element, LangBundle.message("inspection.message.symbols.from.different.languages.found", list),
+                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
   }
 
-  private static void checkAscii(PsiElement element,
-                                 String text,
-                                 ProblemsHolder holder,
-                                 String where) {
+  private static void checkAscii(@NotNull PsiElement element,
+                                 @NotNull String text,
+                                 @NotNull ProblemsHolder holder,
+                                 @NotNull String where) {
     if (!IOUtil.isAscii(text)) {
-      holder.registerProblem(element, "Non-ASCII characters in " + where, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      holder.registerProblem(element, LangBundle.message("inspection.message.non.ascii.characters.in", where), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
   }
-  private static void checkAsciiRange(PsiElement element,
-                                 String text,
-                                 ProblemsHolder holder,
-                                 String where) {
+  private static void checkAsciiRange(@NotNull PsiElement element,
+                                      @NotNull String text,
+                                      @NotNull ProblemsHolder holder,
+                                      @NotNull String where) {
     int errorCount = 0;
     int start = -1;
     for (int i = 0; i <= text.length(); i++) {
@@ -170,7 +177,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
       if (i == text.length() || c<128) {
         if (start != -1) {
           TextRange range = new TextRange(start, i);
-          String message = "Non-ASCII characters in " + where;
+          String message = LangBundle.message("inspection.message.non.ascii.characters.in", where);
           holder.registerProblem(element, range, message);
           start = -1;
           //do not report too many errors
@@ -183,7 +190,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     }
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JComponent createOptionsPanel() {
     return new NonAsciiCharactersInspectionForm(this).myPanel;

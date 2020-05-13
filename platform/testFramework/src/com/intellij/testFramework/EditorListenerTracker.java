@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.EditorFactory;
@@ -42,9 +42,14 @@ public final class EditorListenerTracker {
         // listeners may hang on default project which comes and goes unpredictably, so just ignore them
         afterList.removeIf(listener -> {
           //noinspection CastConflictsWithInstanceof
-          return (listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject()) ||
-                 // app level listener
-                 listener.getClass().getName().startsWith("com.intellij.copyright.CopyrightManagerDocumentListener$");
+          if (listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject()) {
+            return true;
+          }
+
+          // app level listener
+          String name = listener.getClass().getName();
+          return name.startsWith("com.intellij.copyright.CopyrightManagerDocumentListener$") ||
+                 name.startsWith("com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener");
         });
         if (!afterList.isEmpty()) {
           leaked.put(aClass, afterList);

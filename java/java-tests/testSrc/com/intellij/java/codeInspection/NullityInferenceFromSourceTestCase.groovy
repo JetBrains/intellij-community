@@ -209,7 +209,7 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
   }
   
   void "test reassigned in switch"() {
-    assert inferNullability(parse("""String foo() {
+    assert inferNullability(parse("""String foo(int foo) {
                                       String res = "bar";
                                       switch(foo) {
                                       case 1:res = getSomething();

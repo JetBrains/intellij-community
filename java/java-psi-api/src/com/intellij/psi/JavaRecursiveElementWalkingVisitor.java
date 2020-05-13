@@ -37,7 +37,7 @@ public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisi
   };
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     myWalkingState.elementStarted(element);
   }
 

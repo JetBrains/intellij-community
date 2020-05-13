@@ -18,6 +18,7 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementProblemDescriptorImpl");
+  private static final Logger LOG = Logger.getInstance(DomElementProblemDescriptorImpl.class);
   private final DomElement myDomElement;
   private final HighlightSeverity mySeverity;
   private final String myMessage;
@@ -51,30 +52,30 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
   private final ProblemHighlightType myHighlightType;
 
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, final String message, final HighlightSeverity type) {
+  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, @InspectionMessage String message, final HighlightSeverity type) {
     this(domElement, message, type, LocalQuickFix.EMPTY_ARRAY);
   }
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         final String message,
+                                         @InspectionMessage String message,
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange) {
     this(domElement, message, type, textRange, null, LocalQuickFix.EMPTY_ARRAY);
   }
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         final String message,
+                                         @InspectionMessage String message,
                                          final HighlightSeverity type,
-                                         @NotNull LocalQuickFix... fixes) {
+                                         LocalQuickFix @NotNull ... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         final String message,
+                                         @InspectionMessage String message,
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange,
                                          ProblemHighlightType highlightType,
-                                         @NotNull LocalQuickFix... fixes) {
+                                         LocalQuickFix @NotNull ... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
     if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -112,8 +113,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  @NotNull
-  public LocalQuickFix[] getFixes() {
+  public LocalQuickFix @NotNull [] getFixes() {
     return myFixes;
   }
 

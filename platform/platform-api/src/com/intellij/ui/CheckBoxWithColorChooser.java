@@ -65,7 +65,7 @@ public class CheckBoxWithColorChooser extends JPanel {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (myCheckbox.isSelected()) {
-            final Color color = ColorChooser.chooseColor(myCheckbox, "Chose color", CheckBoxWithColorChooser.this.myColor);
+            final Color color = ColorChooser.chooseColor(myCheckbox, UIBundle.message("dialog.title.choose.color"), CheckBoxWithColorChooser.this.myColor);
             if (color != null) {
               myColor = color;
             }

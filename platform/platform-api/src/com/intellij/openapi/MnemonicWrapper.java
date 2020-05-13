@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi;
 
 import com.intellij.ide.ui.UISettings;
@@ -14,9 +14,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author Sergey.Malenkov
- */
 abstract class MnemonicWrapper<T extends JComponent> implements Runnable, PropertyChangeListener {
   public static MnemonicWrapper getWrapper(Component component) {
     if (component == null || component.getClass().getName().equals("com.intellij.openapi.wm.impl.StripeButton")) {
@@ -277,6 +274,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   }
 
   private static class LabelWrapper extends MnemonicWrapper<JLabel> {
+    private KeyStroke myStrokePress;
     private KeyStroke myStrokeRelease;
 
     private LabelWrapper(JLabel component) {
@@ -285,6 +283,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
 
     @Override
     void updateInputMap(InputMap map, int code) {
+      myStrokePress = fixMacKeyStroke(myStrokePress, map, code, false, "press");
       myStrokeRelease = fixMacKeyStroke(myStrokeRelease, map, code, true, "release");
     }
 

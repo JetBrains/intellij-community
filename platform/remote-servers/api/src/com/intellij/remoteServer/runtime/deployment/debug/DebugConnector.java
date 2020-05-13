@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  *  <li>{@link DebuggerLauncher} is used to start debugging</li>
  * </ul>
  *
- * @author nik
  * @see com.intellij.remoteServer.ServerType#createDebugConnector()
  * @see com.intellij.remoteServer.runtime.deployment.DeploymentTask#isDebugMode()
  */

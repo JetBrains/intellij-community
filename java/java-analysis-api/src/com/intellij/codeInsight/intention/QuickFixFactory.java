@@ -71,7 +71,7 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull String methodText,
                                                                                  @NotNull PsiClass toClass,
-                                                                                 @NotNull String... exceptions);
+                                                                                 String @NotNull ... exceptions);
 
   /**
    * @param psiElement psiClass or enum constant without class initializer
@@ -105,9 +105,6 @@ public abstract class QuickFixFactory {
                                                                                            boolean fixWholeHierarchy);
 
   @NotNull
-  public abstract LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass);
-
-  @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass,
                                                                                           final boolean makeInterface);
 
@@ -139,10 +136,7 @@ public abstract class QuickFixFactory {
                                                                  @NotNull String name,
                                                                  @NotNull PsiType type,
                                                                  @NotNull PropertyMemberType targetMember,
-                                                                 @NotNull PsiAnnotation... annotations);
-
-  @NotNull
-  public abstract IntentionAction createSetupJDKFix();
+                                                                 PsiAnnotation @NotNull ... annotations);
 
   @NotNull
   public abstract IntentionAction createAddExceptionToCatchFix();
@@ -184,12 +178,9 @@ public abstract class QuickFixFactory {
    *
    * @param method method with return statement
    * @param returnStatement statement to remove
-   * @param returnValue statement value
    */
   @NotNull
-  public abstract IntentionAction createDeleteReturnFix(@NotNull PsiMethod method,
-                                                        @NotNull PsiReturnStatement returnStatement,
-                                                        @NotNull PsiExpression returnValue);
+  public abstract IntentionAction createDeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement);
 
   @NotNull
   public abstract IntentionAction createDeleteCatchFix(@NotNull PsiParameter parameter);
@@ -291,14 +282,14 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
-                                                                          @NotNull PsiExpression[] expressions,
+                                                                          PsiExpression @NotNull [] expressions,
                                                                           @NotNull PsiSubstitutor substitutor,
                                                                           @NotNull PsiElement context,
                                                                           boolean changeAllUsages, int minUsagesNumberToShowDialog);
 
   @NotNull
   public abstract IntentionAction createChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
-                                                                                      @NotNull PsiExpression[] expressions,
+                                                                                      PsiExpression @NotNull [] expressions,
                                                                                       @NotNull PsiSubstitutor substitutor,
                                                                                       @NotNull PsiElement context,
                                                                                       boolean changeAllUsages,
@@ -424,7 +415,7 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
-                                                                                  @NotNull PsiMethod[] annotationMethods,
+                                                                                  PsiMethod @NotNull [] annotationMethods,
                                                                                   @NotNull Collection<String> missedElements);
 
   @NotNull
@@ -483,4 +474,10 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule);
+  
+  @NotNull
+  public abstract IntentionAction createAddParameterListFix(PsiMethod method);
+
+  @NotNull
+  public abstract IntentionAction createAddEmptyRecordHeaderFix(PsiClass record);
 }

@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -23,7 +8,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author nik
+ * @see PlatformPatterns#virtualFile()
  */
 public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualFile, VirtualFilePattern> {
   public VirtualFilePattern() {
@@ -39,11 +24,14 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     });
   }
 
+  /**
+   * @see #withName(ElementPattern)
+   */
   public VirtualFilePattern withName(final String name) {
-    return withName(PlatformPatterns.string().equalTo(name));
+    return withName(StandardPatterns.string().equalTo(name));
   }
 
-  public VirtualFilePattern withExtension(@NotNull final String... alternatives) {
+  public VirtualFilePattern withExtension(final String @NotNull ... alternatives) {
     return with(new PatternCondition<VirtualFile>("withExtension") {
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
@@ -67,6 +55,9 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     });
   }
 
+  /**
+   * @see #withName(String)
+   */
   public VirtualFilePattern withName(final ElementPattern<String> namePattern) {
     return with(new PatternCondition<VirtualFile>("withName") {
       @Override

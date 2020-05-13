@@ -36,13 +36,6 @@ public class HashCodeUsesNonFinalVariableInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.final.field.in.hashcode.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.field.in.hashcode.problem.descriptor");

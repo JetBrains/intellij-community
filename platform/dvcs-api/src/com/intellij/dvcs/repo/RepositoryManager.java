@@ -18,6 +18,8 @@ package com.intellij.dvcs.repo;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +42,7 @@ public interface RepositoryManager<T extends Repository> {
    * via {@link #addExternalRepository(VirtualFile, Repository)}.
    */
   @Nullable
+  @CalledInBackground
   T getRepositoryForRoot(@Nullable VirtualFile root);
 
   boolean isExternal(@NotNull T repository);
@@ -48,17 +51,23 @@ public interface RepositoryManager<T extends Repository> {
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git or Hg repository.
    */
   @Nullable
+  @CalledInBackground
   T getRepositoryForFile(@NotNull VirtualFile file);
 
   /**
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git ot Hg repository.
    */
   @Nullable
+  @CalledInBackground
   T getRepositoryForFile(@NotNull FilePath file);
 
   @Nullable
+  @CalledInAny
   T getRepositoryForFileQuick(@NotNull FilePath file);
 
+  @Nullable
+  @CalledInAny
+  T getRepositoryForRootQuick(@Nullable VirtualFile root);
   /**
    * @return all repositories tracked by the manager.
    */

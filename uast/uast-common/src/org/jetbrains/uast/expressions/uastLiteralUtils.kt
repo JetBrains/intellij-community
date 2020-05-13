@@ -130,6 +130,21 @@ val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
     return null
   }
 
+val UExpression.allPsiLanguageInjectionHosts: List<PsiLanguageInjectionHost>
+  @ApiStatus.Experimental
+  get() {
+    sourceInjectionHost?.let { return listOf(it) }
+    (this as? UPolyadicExpression)?.let { return this.operands.mapNotNull { it.sourceInjectionHost } }
+    return emptyList()
+  }
+
+@ApiStatus.Experimental
+fun isConcatenation(uExpression: UElement?): Boolean {
+  if (uExpression !is UPolyadicExpression) return false
+  if (uExpression.operator != UastBinaryOperator.PLUS) return false
+  return true
+}
+
 /**
  * @return a non-strict parent [PsiLanguageInjectionHost] for [sourcePsi] of given literal expression if it exists.
  *

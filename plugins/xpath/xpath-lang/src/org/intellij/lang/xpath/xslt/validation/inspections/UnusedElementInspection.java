@@ -31,14 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnusedElementInspection extends XsltInspection {
 
-    @Override
-    @Nls
-    @NotNull
-    public String getDisplayName() {
-        return "Unused Variable/Parameter";
-    }
-
-    @Override
+  @Override
     @NonNls
     @NotNull
     public String getShortName() {

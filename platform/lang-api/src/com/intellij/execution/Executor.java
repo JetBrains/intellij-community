@@ -5,9 +5,11 @@ package com.intellij.execution;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +60,11 @@ public abstract class Executor {
    *
    * @return the executor action description.
    */
+  @NlsActions.ActionDescription
   public abstract String getDescription();
 
   @NotNull
+  @NlsActions.ActionText
   public abstract String getActionName();
 
   /**
@@ -76,6 +80,7 @@ public abstract class Executor {
    * @return text of the action in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getStartActionText();
 
   @NonNls

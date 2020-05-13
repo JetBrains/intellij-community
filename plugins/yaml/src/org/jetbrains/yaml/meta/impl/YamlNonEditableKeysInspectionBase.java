@@ -64,7 +64,7 @@ public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInsp
       @NotNull
       @Override
       public String getFamilyName() {
-        return YAMLBundle.message("YamlNonEditableKeyInspectionBase.strip.noneditable.keys.quickfix.name", new Object[]{});
+        return YAMLBundle.message("YamlNonEditableKeyInspectionBase.strip.noneditable.keys.quickfix.name");
       }
 
       @Override

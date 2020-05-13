@@ -132,7 +132,7 @@ public class JavaGenericsUtil {
     return false;
   }
 
-  public static boolean isUncheckedCast(PsiType castType, PsiType operandType) {
+  public static boolean isUncheckedCast(@NotNull PsiType castType, @NotNull PsiType operandType) {
     if (TypeConversionUtil.isAssignable(castType, operandType, false)) return false;
 
     castType = castType.getDeepComponentType();

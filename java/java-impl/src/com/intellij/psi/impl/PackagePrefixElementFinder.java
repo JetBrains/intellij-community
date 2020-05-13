@@ -10,6 +10,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -37,9 +38,8 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
   }
 
@@ -51,9 +51,8 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     final Map<String, PsiPackage> packagesMap = new HashMap<>();
     final String qualifiedName = psiPackage.getQualifiedName();
 
@@ -71,6 +70,7 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
     return packagesMap.values().toArray(PsiPackage.EMPTY_ARRAY);
   }
 
+  @Contract(pure = true)
   public boolean packagePrefixExists(String packageQName) {
     for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(null)) {
       if (StringUtil.startsWithConcatenation(prefix, packageQName, ".") || prefix.equals(packageQName)) {

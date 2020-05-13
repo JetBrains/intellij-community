@@ -16,7 +16,6 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
-import com.intellij.codeInsight.intention.impl.SplitDeclarationAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -29,10 +28,10 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -582,8 +581,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
             final PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(var, PsiDeclarationStatement.class);
             if (decl == null) return null;
             final Project project = var.getProject();
-            final PsiAssignmentExpression assignment =
-              SplitDeclarationAction.invokeOnDeclarationStatement(decl, PsiManager.getInstance(project), project);
+            final PsiAssignmentExpression assignment = ExpressionUtils.splitDeclaration(decl, project);
             final PsiExpression rExpression = assignment.getRExpression();
             if (rExpression == null) return null;
             assignment.replace(rExpression);

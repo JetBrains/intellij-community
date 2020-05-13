@@ -1,28 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Sergey.Malenkov
- */
 final class IntentionsOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "intentions";
   }
 
-  @NotNull
   @Override
-  public Collection<OptionDescription> getOptions() {
+  public boolean preloadNeeded() {
+    Application application = ApplicationManager.getApplication();
+    return !(application instanceof ApplicationImpl) || ((ApplicationImpl)application).isLightEditMode();
+  }
+
+  @Override
+  public @NotNull Collection<OptionDescription> getOptions() {
     IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
     Collection<BooleanOptionDescription> options = new ArrayList<>();
     for (IntentionActionMetaData data : settings.getMetaData()) {

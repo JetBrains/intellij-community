@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.diagnostic.Activity;
@@ -24,6 +24,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Locale;
 import java.util.Map;
 
@@ -33,8 +35,7 @@ public final class StartupUiUtil {
 
   public static final String ARIAL_FONT_NAME = "Arial";
 
-  @NotNull
-  public static String getSystemLookAndFeelClassName() {
+  public static @NotNull String getSystemLookAndFeelClassName() {
     if (ourSystemLaFClassName != null) {
       return ourSystemLaFClassName;
     }
@@ -91,6 +92,17 @@ public final class StartupUiUtil {
     // Applied to all JLabel instances, including subclasses. Supported in JBR only.
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
     activity.end();
+  }
+
+  public static @NotNull StyleSheet createStyleSheet(@NotNull String css) {
+    StyleSheet styleSheet = new StyleSheet();
+    try {
+      styleSheet.loadRules(new StringReader(css), null);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // shouldn't happen
+    }
+    return styleSheet;
   }
 
   public static boolean isUnderDarcula() {
@@ -170,13 +182,11 @@ public final class StartupUiUtil {
     return JreHiDpiUtil.isJreHiDPIEnabled() && JBUIScale.isHiDPI(JBUIScale.sysScale(ctx));
   }
 
-  @NotNull
-  public static Point getCenterPoint(@NotNull Dimension container, @NotNull Dimension child) {
+  public static @NotNull Point getCenterPoint(@NotNull Dimension container, @NotNull Dimension child) {
     return getCenterPoint(new Rectangle(container), child);
   }
 
-  @NotNull
-  public static Point getCenterPoint(@NotNull Rectangle container, @NotNull Dimension child) {
+  public static @NotNull Point getCenterPoint(@NotNull Rectangle container, @NotNull Dimension child) {
     return new Point(
       container.x + (container.width - child.width) / 2,
       container.y + (container.height - child.height) / 2

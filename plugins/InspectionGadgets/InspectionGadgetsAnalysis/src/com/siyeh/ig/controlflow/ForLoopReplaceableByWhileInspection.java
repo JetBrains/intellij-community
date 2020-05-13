@@ -30,10 +30,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,15 +45,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreLoopsWithoutConditions = false;
-  public boolean m_ignoreLoopsWithBody = true;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "for.loop.replaceable.by.while.display.name");
-  }
+  public boolean m_ignoreLoopsWithoutConditions = true;
 
   @Pattern(VALID_ID_PATTERN)
   @Override
@@ -74,14 +66,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message(
       "for.loop.replaceable.by.while.ignore.option"), "m_ignoreLoopsWithoutConditions");
-    panel.addCheckbox("Ignore non-empty for loops", "m_ignoreLoopsWithBody");
     return panel;
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) {
-    defaultWriteSettings(node,"m_ignoreLoopsWithBody");
-    writeBooleanOption(node, "m_ignoreLoopsWithBody", true);
   }
 
   @Override
@@ -195,10 +180,6 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       if (PsiUtilCore.hasErrorElementChild(statement)){
         return;
       }
-      if (!m_ignoreLoopsWithBody) {
-        registerStatementError(statement);
-        return;
-      }
 
       ProblemHighlightType highlightType;
       if (highlightLoop(statement)) {
@@ -224,13 +205,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       }
       if (m_ignoreLoopsWithoutConditions) {
         final PsiExpression condition = statement.getCondition();
-        if (condition == null) {
-          return false;
-        }
-        final String conditionText = condition.getText();
-        if (PsiKeyword.TRUE.equals(conditionText)) {
-          return false;
-        }
+        return condition != null && !BoolUtils.isTrue(condition);
       }
       return true;
     }

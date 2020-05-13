@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 
@@ -43,7 +44,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  * @author Maxim.Medvedev
  */
 public class ClassItemGeneratorImpl implements ClassItemGenerator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClassItemGeneratorImpl");
+  private static final Logger LOG = Logger.getInstance(ClassItemGeneratorImpl.class);
 
   private final ClassNameProvider classNameProvider;
   private final ExpressionContext context;
@@ -359,7 +360,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     Map<PsiMethod, String> setters = context.getSetters();
     Set<Map.Entry<PsiMethod, String>> entries = setters.entrySet();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      entries = ImmutableSortedSet.copyOf(Comparator.comparing(Map.Entry::getValue), entries);
+      entries = ImmutableSortedSet.copyOf(Map.Entry.comparingByValue(), entries);
     }
     for (Map.Entry<PsiMethod, String> entry : entries) {
       new SetterWriter(builder, psiClass, entry.getKey(), entry.getValue(), classNameProvider, context).write();

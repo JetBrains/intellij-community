@@ -16,7 +16,9 @@
 
 package org.intellij.images.thumbnail.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,13 +50,13 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         ImageTagManager tagManager = ImageTagManager.getInstance(project);
         e.getPresentation().setVisible(view != null && !tagManager.getAllTags().isEmpty());
         TagFilter[] filters = view != null ? view.getTagFilters() : null;
-        e.getPresentation().setText(filters == null ? "All" : StringUtil.join(filters, filter -> filter.getDisplayName(), ","));
+        e.getPresentation().setText(filters == null ? CommonBundle.message("action.text.all")
+                                                    : StringUtil.join(filters, filter -> filter.getDisplayName(), ","));
         e.getPresentation().setIcon(AllIcons.Duplicates.SendToTheRight);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         if (e == null) return AnAction.EMPTY_ARRAY;
         DefaultActionGroup group = new DefaultActionGroup();
         Project project = e.getProject();
@@ -64,7 +66,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
 
         List<MyToggleAction> tagActions =
           ContainerUtil.map(tagManager.getAllTags(), tag -> new MyToggleAction(view, new TagFilter(tag, tagManager)));
-        group.add(new AnAction("All") {
+        group.add(new AnAction(IdeBundle.messagePointer("action.Anonymous.text.all")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
                 for (MyToggleAction tagAction : tagActions) {

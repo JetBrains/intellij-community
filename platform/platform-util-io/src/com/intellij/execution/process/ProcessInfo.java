@@ -80,7 +80,7 @@ public class ProcessInfo {
   @Override
   public String toString() {
     return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'" +
-           (myExecutablePath.isPresent() ? " " + myExecutablePath.get() : "");
+           myExecutablePath.map(s -> " " + s).orElse("");
   }
 
   @Override

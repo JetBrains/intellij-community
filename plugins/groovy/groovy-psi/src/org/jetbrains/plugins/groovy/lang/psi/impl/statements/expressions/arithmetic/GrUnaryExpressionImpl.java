@@ -15,13 +15,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrUnaryOperatorReference;
 
 import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromResult;
 
 public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryExpression {
 
-  private final GroovyCallReference myReference = new GrUnaryOperatorReference(this);
+  private final GroovyMethodCallReference myReference = new GrUnaryOperatorReference(this);
 
   public GrUnaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -29,7 +30,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
 
   @NotNull
   @Override
-  public GroovyCallReference getReference() {
+  public GroovyMethodCallReference getReference() {
     return myReference;
   }
 

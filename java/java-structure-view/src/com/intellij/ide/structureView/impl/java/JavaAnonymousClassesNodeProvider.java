@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,8 +28,8 @@ import java.util.List;
  */
 public class JavaAnonymousClassesNodeProvider
   implements FileStructureNodeProvider<JavaAnonymousClassTreeElement>, PropertyOwner, DumbAware {
-  public static final String ID = "SHOW_ANONYMOUS";
-  public static final String JAVA_ANONYMOUS_PROPERTY_NAME = "java.anonymous.provider";
+  @NonNls public static final String ID = "SHOW_ANONYMOUS";
+  @NonNls public static final String JAVA_ANONYMOUS_PROPERTY_NAME = "java.anonymous.provider";
 
   @NotNull
   @Override
@@ -54,12 +55,11 @@ public class JavaAnonymousClassesNodeProvider
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return "Show Anonymous Classes";
+    return JavaStructureViewBundle.message("file.structure.toggle.show.anonymous.classes");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta I" : "control I")};
   }
 

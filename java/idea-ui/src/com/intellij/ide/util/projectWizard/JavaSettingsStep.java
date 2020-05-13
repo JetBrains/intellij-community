@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -64,7 +64,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
   private void addSourcePath(SettingsStep settingsStep) {
     Project project = settingsStep.getContext().getProject();
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle(IdeBundle.message("prompt.select.source.directory"));
+    descriptor.setTitle(JavaUiBundle.message("prompt.select.source.directory"));
     mySourcePath.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {
       @NotNull
       @Override

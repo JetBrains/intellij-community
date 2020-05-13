@@ -204,7 +204,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       gutters.add(mergeSourceGutter);
     }
 
-    final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
+    final List<LineAnnotationAspect> aspects = ContainerUtil.newArrayList(fileAnnotation.getAspects());
+    for (AnnotationGutterColumnProvider extension : AnnotationGutterColumnProvider.EP_NAME.getExtensions()) {
+      ContainerUtil.addIfNotNull(aspects, extension.createColumn(fileAnnotation));
+    }
     for (LineAnnotationAspect aspect : aspects) {
       gutters.add(new AspectAnnotationFieldGutter(fileAnnotation, aspect, presentation, bgColorMap));
     }
@@ -344,10 +347,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static Provider getProvider(AnActionEvent e) {
-    for (Provider provider : EP_NAME.getExtensions()) {
-      if (provider.isEnabled(e)) return provider;
-    }
-    return null;
+    return EP_NAME.findFirstSafe(provider -> provider.isEnabled(e));
   }
 
   public interface Provider {
@@ -371,8 +371,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
       setText(VcsBundle.message("annotation.wrong.line.number.notification.text", vcs.getDisplayName()));
 
-      createActionLabel("Display anyway", () -> showAnnotations());
-      createActionLabel("Hide", () -> hideNotification()).setToolTipText("Hide this notification");
+      createActionLabel(VcsBundle.message("link.label.display.anyway"), () -> showAnnotations());
+      createActionLabel(VcsBundle.message("link.label.hide"), () -> hideNotification()).setToolTipText("Hide this notification");
     }
 
     public void showAnnotations() {

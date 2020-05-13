@@ -35,15 +35,30 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
 
   @NotNull
   @Override
-  default String getPresentation() {
+  default String getDisplayText() {
     if (getBefore() != null && getAfter() != null) {
       return DateFormatUtil.formatBetweenDates(getAfter().getTime(), getBefore().getTime());
     }
     else if (getAfter() != null) {
-      return "after " + DateFormatUtil.formatDate(getAfter());
+      return VcsLogBundle.message("vcs.log.filter.date.display.name.after", DateFormatUtil.formatDate(getAfter()));
     }
     else if (getBefore() != null) {
-      return "before " + DateFormatUtil.formatDate(getBefore());
+      return VcsLogBundle.message("vcs.log.filter.date.display.name.before", DateFormatUtil.formatDate(getBefore()));
+    }
+    return "";
+  }
+
+  @NotNull
+  default String getDisplayTextWithPrefix() {
+    if (getBefore() != null && getAfter() != null) {
+      String betweenDates = DateFormatUtil.formatBetweenDates(getAfter().getTime(), getBefore().getTime());
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made", betweenDates);
+    }
+    else if (getAfter() != null) {
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.after", DateFormatUtil.formatDate(getAfter()));
+    }
+    else if (getBefore() != null) {
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.before", DateFormatUtil.formatDate(getBefore()));
     }
     return "";
   }

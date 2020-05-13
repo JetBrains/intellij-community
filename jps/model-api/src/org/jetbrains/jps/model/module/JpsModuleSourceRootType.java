@@ -25,7 +25,6 @@ import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
  * <p>
  * Use {@link org.jetbrains.jps.model.ex.JpsElementTypeBase} as a base class for implementations of this interface
  * </p>
- * @author nik
  */
 public interface JpsModuleSourceRootType<P extends JpsElement> extends JpsElementType<P>, JpsElementTypeWithDefaultProperties<P> {
 

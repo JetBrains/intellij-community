@@ -111,8 +111,7 @@ public class HgFileRevision implements VcsFileRevision {
   }
 
   @Override
-  @NotNull
-  public byte[] loadContent() {
+  public byte @NotNull [] loadContent() {
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myFile);
     return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }

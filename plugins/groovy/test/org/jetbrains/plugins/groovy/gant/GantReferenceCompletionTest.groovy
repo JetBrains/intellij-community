@@ -1,40 +1,28 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
+import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
+import org.jetbrains.plugins.groovy.RepositoryTestLibrary
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
+
+import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_1_7
+
 /**
  * @author ilyas
  */
+@CompileStatic
 class GantReferenceCompletionTest extends LightJavaCodeInsightFixtureTestCase {
-  static def descriptor = new GantProjectDescriptor()
 
-  final LightProjectDescriptor projectDescriptor = descriptor
+  private static final LightProjectDescriptor GANT_PROJECT = new LibraryLightProjectDescriptor(
+    LIB_GROOVY_1_7 + new RepositoryTestLibrary('org.codehaus.gant:gant_groovy1.7:1.9.7')
+  )
+
+  final LightProjectDescriptor projectDescriptor = GANT_PROJECT
   final String basePath = TestUtils.testDataPath + "gant/completion"
 
   void complete(String text) {
@@ -141,7 +129,6 @@ target (default : '') {
         delete(file: 'to.txt')
 }"""
     myFixture.checkHighlighting(true, false, false)
-
   }
 
   void testStringTargets() throws Exception {
@@ -156,21 +143,4 @@ target (default : '') {
 }"""
     myFixture.checkHighlighting(true, false, false)
   }
-
-  static final def GANT_JARS = ["gant.jar", "ant.jar", "ant-junit.jar", "ant-launcher.jar", "commons.jar"]
-
-}
-
-class GantProjectDescriptor extends DefaultLightProjectDescriptor {
-  void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel()
-
-      def fs = JarFileSystem.instance
-      modifiableModel.addRoot(fs.findFileByPath("$TestUtils.mockGroovyLibraryHome/$TestUtils.GROOVY_JAR!/"), OrderRootType.CLASSES)
-
-      GantReferenceCompletionTest.GANT_JARS.each {
-        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/lib/$it!/"), OrderRootType.CLASSES)
-      }
-      modifiableModel.commit()
-    }
 }

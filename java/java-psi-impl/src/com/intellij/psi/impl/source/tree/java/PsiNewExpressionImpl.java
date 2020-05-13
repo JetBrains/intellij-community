@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiNewExpressionImpl.class);
 
   public PsiNewExpressionImpl() {
     super(JavaElementType.NEW_EXPRESSION);
@@ -111,8 +111,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  @NotNull
-  public PsiExpression[] getArrayDimensions() {
+  public PsiExpression @NotNull [] getArrayDimensions() {
     PsiExpression[] expressions = getChildrenAsPsiElements(ElementType.ARRAY_DIMENSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
     PsiExpression qualifier = getQualifier();
     if (qualifier == null ||
@@ -141,8 +140,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   public PsiPolyVariantCachingReference getConstructorFakeReference() {
     return CachedValuesManager.getCachedValue(this, () -> new CachedValueProvider.Result<>(new PsiPolyVariantCachingReference() {
       @Override
-      @NotNull
-      public JavaResolveResult[] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {
+      public JavaResolveResult @NotNull [] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {
         ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
         if (classRef != null) {
           ASTNode argumentList = PsiImplUtil.skipWhitespaceAndComments(classRef.getTreeNext());
@@ -229,8 +227,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  @NotNull
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     return getTypeArgumentList().getTypeArguments();
   }
 

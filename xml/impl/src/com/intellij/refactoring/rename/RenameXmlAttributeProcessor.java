@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameXmlAttributeProcessor");
+  private static final Logger LOG = Logger.getInstance(RenameXmlAttributeProcessor.class);
 
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
@@ -30,7 +30,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   @Override
   public void renameElement(@NotNull final PsiElement element,
                             @NotNull final String newName,
-                            @NotNull final UsageInfo[] usages,
+                            final UsageInfo @NotNull [] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     if (element instanceof XmlAttribute) {
       doRenameXmlAttribute((XmlAttribute)element, newName, listener);

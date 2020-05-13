@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -34,12 +33,13 @@ import java.beans.BeanInfo;
 import java.beans.EventSetDescriptor;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
+import java.util.Objects;
 
 /**
  * @author yole
  */
 public class ListenerNavigateButton extends JButton implements ActionListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.ListenerNavigateButton");
+  private static final Logger LOG = Logger.getInstance(ListenerNavigateButton.class);
 
   private final RadComponent myComponent;
 
@@ -114,7 +114,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
           if (psiElement instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) psiElement;
             for(EventSetDescriptor eventSetDescriptor: eventSetDescriptors) {
-              if (Comparing.equal(eventSetDescriptor.getAddListenerMethod().getName(), method.getName())) {
+              if (Objects.equals(eventSetDescriptor.getAddListenerMethod().getName(), method.getName())) {
                 final String eventName = eventSetDescriptor.getName();
                 final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
                 if (args.length > 0) {

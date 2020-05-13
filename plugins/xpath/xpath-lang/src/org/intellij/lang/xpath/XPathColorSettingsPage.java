@@ -29,8 +29,7 @@ public class XPathColorSettingsPage implements ColorSettingsPage {
     }
 
     @Override
-    @NotNull
-    public AttributesDescriptor[] getAttributeDescriptors() {
+    public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
         return new AttributesDescriptor[]{
                 new AttributesDescriptor("Keyword", XPathHighlighter.XPATH_KEYWORD),
                 new AttributesDescriptor("Name", XPathHighlighter.XPATH_NAME),
@@ -47,8 +46,7 @@ public class XPathColorSettingsPage implements ColorSettingsPage {
     }
 
     @Override
-    @NotNull
-    public ColorDescriptor[] getColorDescriptors() {
+    public ColorDescriptor @NotNull [] getColorDescriptors() {
         return ColorDescriptor.EMPTY_ARRAY;
     }
 

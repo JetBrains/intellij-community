@@ -31,7 +31,7 @@ public abstract class FakeFileType implements FileTypeIdentifiableByVirtualFile 
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return null;
   }
 }

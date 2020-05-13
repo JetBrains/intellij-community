@@ -18,9 +18,6 @@ package org.jetbrains.jps.model.java.compiler;
 import java.io.File;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public interface JpsCompilerExcludes {
   void addExcludedFile(String url);
 

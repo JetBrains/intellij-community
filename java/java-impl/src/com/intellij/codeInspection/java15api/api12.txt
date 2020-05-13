@@ -1,7 +1,7 @@
-sun.util.locale.provider.NumberFormatProviderImpl#getCompactNumberInstance(java.util.Locale;NumberFormat.Style;)
-java.net.ServerSocket#ServerSocket(SocketImpl;)
+sun.util.locale.provider.NumberFormatProviderImpl#getCompactNumberInstance(java.util.Locale;java.text.NumberFormat.Style;)
+java.net.ServerSocket#ServerSocket(java.net.SocketImpl;)
 java.net.SecureCacheResponse#getSSLSession()
-java.nio.file.Files#mismatch(Path;Path;)
+java.nio.file.Files#mismatch(java.nio.file.Path;java.nio.file.Path;)
 java.lang.invoke.VarHandle#describeConstable()
 java.lang.invoke.VarHandle.VarHandleDesc
 java.lang.invoke.MethodType#descriptorString()
@@ -21,7 +21,7 @@ java.lang.constant.DynamicConstantDesc
 java.lang.constant.DirectMethodHandleDesc.Kind
 java.lang.constant.DirectMethodHandleDesc
 java.lang.Enum#describeConstable()
-java.lang.Enum.EnumDesc#of(ClassDesc;java.lang.String;)
+java.lang.Enum.EnumDesc#of(java.lang.constant.ClassDesc;java.lang.String;)
 java.lang.Enum.EnumDesc
 java.lang.Long#describeConstable()
 java.lang.Long#resolveConstantDesc(java.lang.invoke.MethodHandles.Lookup;)
@@ -59,7 +59,7 @@ java.lang.Character.UnicodeScript#DOGRA
 java.lang.Character.UnicodeScript#GUNJALA_GONDI
 java.lang.Character.UnicodeScript#MAKASAR
 java.lang.Character.UnicodeScript#MEDEFAIDRIN
-java.text.spi.NumberFormatProvider#getCompactNumberInstance(java.util.Locale;NumberFormat.Style;)
+java.text.spi.NumberFormatProvider#getCompactNumberInstance(java.util.Locale;java.text.NumberFormat.Style;)
 java.text.NumberFormat#getCompactNumberInstance()
 java.text.NumberFormat#getCompactNumberInstance(java.util.Locale;java.text.NumberFormat.Style;)
 java.text.NumberFormat.Field#PREFIX
@@ -82,11 +82,11 @@ com.sun.source.tree.CaseTree#getBody()
 com.sun.source.tree.CaseTree#getCaseKind()
 com.sun.source.tree.CaseTree.CaseKind
 com.sun.source.tree.BreakTree#getValue()
-com.sun.source.tree.TreeVisitor#visitSwitchExpression(SwitchExpressionTree;P;)
+com.sun.source.tree.TreeVisitor#visitSwitchExpression(com.sun.source.tree.SwitchExpressionTree;P;)
 com.sun.source.tree.SwitchExpressionTree
-com.sun.source.util.DocTreeFactory#newSystemPropertyTree(Name;)
-com.sun.source.util.DocTreeScanner#visitSystemProperty(SystemPropertyTree;P;)
-com.sun.source.util.SimpleDocTreeVisitor#visitSystemProperty(SystemPropertyTree;P;)
-com.sun.source.doctree.DocTreeVisitor#visitSystemProperty(SystemPropertyTree;P;)
+com.sun.source.util.DocTreeFactory#newSystemPropertyTree(javax.lang.model.element.Name;)
+com.sun.source.util.DocTreeScanner#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;P;)
+com.sun.source.util.SimpleDocTreeVisitor#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;P;)
+com.sun.source.doctree.DocTreeVisitor#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;P;)
 com.sun.source.doctree.SystemPropertyTree
 javax.lang.model.SourceVersion#RELEASE_12

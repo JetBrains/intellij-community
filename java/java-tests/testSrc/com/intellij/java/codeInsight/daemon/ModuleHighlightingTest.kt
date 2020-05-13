@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
@@ -10,6 +10,7 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.util.TextRange
 import org.assertj.core.api.Assertions.assertThat
+import java.util.jar.JarFile
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -106,6 +107,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testRequires() {
     addFile("module-info.java", "module M2 { requires M1 }", M2)
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: all.fours\n", M4)
     highlight("""
         module M1 {
           requires <error descr="Module not found: M.missing">M.missing</error>;
@@ -116,7 +118,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           requires lib.multi.release;
           requires lib.named;
           requires lib.claimed;
+          requires all.fours;
         }""".trimIndent())
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\n", M4)
+    highlight("""module M1 { requires <error descr="Module not found: all.fours">all.fours</error>; }""")
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: all.fours\n", M4)
+    highlight("""module M1 { requires all.fours; }""")
   }
 
   fun testExports() {
@@ -467,7 +474,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val available = myFixture.availableIntentions
-      .map { IntentionActionDelegate.unwrap(it)::class.simpleName }
+      .map { IntentionActionDelegate.unwrap(it)::class.java.simpleName }
       .filter { it != "GutterIntentionAction" }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }

@@ -27,8 +27,6 @@ import java.awt.*;
 import java.util.LinkedHashSet;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
-  private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
-
   private final Project myProject;
   private final GrExpression myExpression;
   private final int myOccurrencesCount;
@@ -55,7 +53,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     super.init();
 
     setModal(true);
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
 
     myCbReplaceAllOccurrences.setFocusable(false);
     myCbIsFinal.setFocusable(false);
@@ -219,5 +217,9 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     public PsiType getSelectedType() {
       return mySelectedType;
     }
+  }
+
+  private static String getRefactoringName() {
+    return GroovyRefactoringBundle.message("introduce.variable.title");
   }
 }

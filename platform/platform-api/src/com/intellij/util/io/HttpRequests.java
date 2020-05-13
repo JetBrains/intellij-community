@@ -94,8 +94,7 @@ public final class HttpRequests {
     @NotNull
     File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
 
-    @NotNull
-    byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
+    byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
 
     @NotNull
     String readString(@Nullable ProgressIndicator indicator) throws IOException;
@@ -112,7 +111,7 @@ public final class HttpRequests {
       write(data.getBytes(StandardCharsets.UTF_8));
     }
 
-    default void write(@NotNull byte[] data) throws IOException {
+    default void write(byte @NotNull [] data) throws IOException {
       HttpURLConnection connection = (HttpURLConnection)getConnection();
       connection.setFixedLengthStreamingMode(data.length);
       try (OutputStream stream = connection.getOutputStream()) {
@@ -424,8 +423,7 @@ public final class HttpRequests {
     }
 
     @Override
-    @NotNull
-    public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
+    public byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
       return doReadBytes(indicator).toByteArray();
     }
 

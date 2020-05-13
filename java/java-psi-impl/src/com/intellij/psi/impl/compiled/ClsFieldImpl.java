@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -22,9 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
   private final NotNullLazyValue<PsiTypeElement> myTypeElement;
@@ -47,15 +49,14 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
       @Override
       protected PsiExpression compute() {
         String initializerText = getStub().getInitializerText();
-        return initializerText != null && !Comparing.equal(PsiFieldStub.INITIALIZER_TOO_LONG, initializerText) ?
+        return initializerText != null && !Objects.equals(PsiFieldStub.INITIALIZER_TOO_LONG, initializerText) ?
                ClsParsingUtil.createExpressionFromText(initializerText, getManager(), ClsFieldImpl.this) : null;
       }
     };
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return getChildren(getDocComment(), getModifierList(), getTypeElement(), getNameIdentifier());
   }
 
@@ -67,7 +68,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   @Override
   @NotNull
   public PsiType getType() {
-    return assertNotNull(getTypeElement()).getType();
+    return Objects.requireNonNull(getTypeElement()).getType();
   }
 
   @Override
@@ -77,12 +78,12 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   public PsiModifierList getModifierList() {
-    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
+    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return assertNotNull(getModifierList()).hasModifierProperty(name);
+    return Objects.requireNonNull(getModifierList()).hasModifierProperty(name);
   }
 
   @Override

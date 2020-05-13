@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactProblemDescription extends ProjectStructureProblemDescription {
   private final List<PackagingElement<?>> myPathToPlace;
 

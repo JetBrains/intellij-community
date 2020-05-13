@@ -76,11 +76,15 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
     doTest("C", "foo", "X.java");
   }
 
+  public void testTwoParentsPreferClass() throws Exception {
+    doTest("C3", "m", "X.java");
+  }
+
   private void doTest(final String classFqn, final String methodName, final String... fileNames) throws Exception {
     doHierarchyTest(() -> {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
       final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
-      return new MethodHierarchyTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+      return new MethodHierarchyTreeStructure(getProject(), method, HierarchyBrowserBaseEx.getScopeProject());
     }, fileNames);
   }
 

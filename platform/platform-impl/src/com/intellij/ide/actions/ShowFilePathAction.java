@@ -45,7 +45,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     if (visible) {
       VirtualFile file = getFile(e);
       e.getPresentation().setEnabled(file != null);
-      e.getPresentation().setText(ActionsBundle.message(file != null && file.isDirectory() ? "action.ShowFilePath.directory" : "action.ShowFilePath.file"));
+      e.getPresentation().setText(ActionsBundle.messagePointer(file != null && file.isDirectory() ? "action.ShowFilePath.directory" : "action.ShowFilePath.file"));
     }
   }
 

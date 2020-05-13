@@ -10,9 +10,8 @@ import org.jetbrains.annotations.NotNull;
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class BaseJavaLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
-  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(PsiElement element) {
+  public SuppressIntentionAction @NotNull [] getSuppressActions(PsiElement element) {
     String shortName = getShortName();
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {

@@ -58,12 +58,16 @@ public class FileTypeEditorHighlighterProviders extends FileTypeExtension<Editor
       SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedFactoryEPBean>() {
         @Override
         public void extensionAdded(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          invalidateCacheForExtension(extension.key);
+          if (extension.key != null) {
+            invalidateCacheForExtension(extension.key);
+          }
         }
 
         @Override
         public void extensionRemoved(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          invalidateCacheForExtension(extension.key);
+          if (extension.key != null) {
+            invalidateCacheForExtension(extension.key);
+          }
         }
       }, null);
     }

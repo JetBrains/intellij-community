@@ -2,16 +2,15 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
@@ -115,6 +114,7 @@ public class HintManagerImpl extends HintManager {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
     busConnection.subscribe(ProjectManager.TOPIC, projectManagerListener);
     busConnection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
+    busConnection.subscribe(DynamicPluginListener.TOPIC, new MyDynamicPluginListener());
 
     myEditorMouseListener = new EditorMouseListener() {
       @Override
@@ -132,26 +132,34 @@ public class HintManagerImpl extends HintManager {
       }
     };
 
-    myEditorDocumentListener = new DocumentListener() {
+    myEditorDocumentListener = new BulkAwareDocumentListener() {
       @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-        if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
-        HintInfo[] infos = getHintsStackArray();
-        for (HintInfo info : infos) {
-          if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
-            if (info.hint.isVisible()) {
-              info.hint.hide();
-            }
-            myHintsStack.remove(info);
-          }
-        }
+      public void documentChangedNonBulk(@NotNull DocumentEvent event) {
+        if (event.getOldLength() != 0 || event.getNewLength() != 0) onDocumentChange();
+      }
 
-        if (myHintsStack.isEmpty()) {
-          updateLastEditor(null);
-        }
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        onDocumentChange();
       }
     };
+  }
+
+  private void onDocumentChange() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    HintInfo[] infos = getHintsStackArray();
+    for (HintInfo info : infos) {
+      if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
+        if (info.hint.isVisible()) {
+          info.hint.hide();
+        }
+        myHintsStack.remove(info);
+      }
+    }
+
+    if (myHintsStack.isEmpty()) {
+      updateLastEditor(null);
+    }
   }
 
   /**
@@ -168,8 +176,7 @@ public class HintManagerImpl extends HintManager {
     myRequestFocusForNextHint = requestFocus;
   }
 
-  @NotNull
-  private HintInfo[] getHintsStackArray() {
+  private HintInfo @NotNull [] getHintsStackArray() {
     return myHintsStack.toArray(new HintInfo[0]);
   }
 
@@ -774,17 +781,25 @@ public class HintManagerImpl extends HintManager {
                                @PositionFlags short constraint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideQuestionHint();
-    TextAttributes attributes = new TextAttributes();
-    attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
-    attributes.setEffectType(EffectType.LINE_UNDERSCORE);
-    final RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter;
+    if (offset1 != offset2) {
+      TextAttributes attributes = new TextAttributes();
+      attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
+      attributes.setEffectType(EffectType.LINE_UNDERSCORE);
+      highlighter = editor.getMarkupModel()
+        .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    }
+    else {
+      highlighter = null;
+    }
 
     hint.addHintListener(new HintListener() {
       @Override
       public void hintHidden(@NotNull EventObject event) {
         hint.removeHintListener(this);
-        highlighter.dispose();
+        if (highlighter != null) {
+          highlighter.dispose();
+        }
 
         if (myQuestionHint == hint) {
           myQuestionAction = null;
@@ -905,6 +920,13 @@ public class HintManagerImpl extends HintManager {
     }
   }
 
+
+  private final class MyDynamicPluginListener implements DynamicPluginListener {
+    @Override
+    public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      cleanup();
+    }
+  }
   /**
    * We have to spy for all opened projects to register MyEditorManagerListener into
    * all opened projects.

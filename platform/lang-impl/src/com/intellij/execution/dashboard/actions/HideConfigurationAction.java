@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardManagerImpl;
@@ -17,7 +18,11 @@ public class HideConfigurationAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     JBIterable<RunDashboardRunConfigurationNode> nodes = RunDashboardActionUtils.getTargets(e);
-    e.getPresentation().setEnabledAndVisible(nodes.isNotEmpty());
+    boolean enabled = nodes.isNotEmpty();
+    e.getPresentation().setEnabledAndVisible(enabled);
+    if (enabled) {
+      e.getPresentation().setText(ExecutionBundle.message("run.dashboard.hide.configuration.action.name", nodes.size()));
+    }
   }
 
   @Override

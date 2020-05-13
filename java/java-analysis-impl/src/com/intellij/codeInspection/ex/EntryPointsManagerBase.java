@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -7,15 +7,12 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -23,7 +20,6 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -80,25 +76,11 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myProject = project;
     myTemporaryEntryPoints = new HashSet<>();
     myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
-    DEAD_CODE_EP_NAME.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
-      @Override
-      public void extensionAdded(@NotNull EntryPoint extension, @NotNull PluginDescriptor pluginDescriptor) {
-        extensionRemoved(extension, pluginDescriptor);
+    DEAD_CODE_EP_NAME.addChangeListener(() -> {
+      if (ADDITIONAL_ANNOS != null) {
+        ADDITIONAL_ANNOS = null;
       }
-
-      @Override
-      public void extensionRemoved(@NotNull EntryPoint extension, @NotNull PluginDescriptor pluginDescriptor) {
-        if (ADDITIONAL_ANNOS != null) {
-          ADDITIONAL_ANNOS = null;
-          UIUtil.invokeLaterIfNeeded(() -> {
-            if (!ApplicationManager.getApplication().isDisposed()) {
-              ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-            }
-          });
-        }
-        // annotations changed
-        DaemonCodeAnalyzer.getInstance(myProject).restart();
-      }
+      DaemonCodeAnalyzer.getInstance(project).restart();
     }, this);
   }
 
@@ -107,7 +89,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(@NotNull Element element) {
     Element entryPointsElement = element.getChild("entry_points");
     if (entryPointsElement != null) {
@@ -348,7 +329,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         final String qualifiedName = aClass.getQualifiedName();
         for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
           ClassPattern classPattern = iterator.next();
-          if (Comparing.equal(classPattern.pattern, qualifiedName)) {
+          if (Objects.equals(classPattern.pattern, qualifiedName)) {
             if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
               if (classPattern.method.isEmpty()) {
                 //todo if inheritance or pattern?
@@ -367,9 +348,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
   }
 
-  @NotNull
   @Override
-  public RefElement[] getEntryPoints(RefManager refManager) {
+  public RefElement @NotNull [] getEntryPoints(RefManager refManager) {
     validateEntryPoints();
     List<RefElement> entries = new ArrayList<>();
     Collection<SmartRefElementPointer> collection = myPersistentEntryPoints.values();

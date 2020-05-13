@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
 
@@ -44,12 +30,6 @@ public class PlatformDataKeys extends CommonDataKeys {
    * is unknown returns {@code null}.
    */
   public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
-
-  /**
-   * @deprecated see {@link com.intellij.diff.tools.util.DiffDataKeys}
-   */
-  @Deprecated
-  public static final DataKey<DiffViewer> DIFF_VIEWER = DataKey.create("diffViewer");
 
   /**
    * Returns help id.
@@ -93,6 +73,8 @@ public class PlatformDataKeys extends CommonDataKeys {
   public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
 
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
+
+  public static final DataKey<StatusBar> STATUS_BAR = DataKey.create("STATUS_BAR");
 
   public static final DataKey<TreeExpander> TREE_EXPANDER = DataKey.create("treeExpander");
 

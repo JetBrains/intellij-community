@@ -26,7 +26,10 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
     myDefaultItem = defaultItem;
     insertItemAt(myDefaultItem, 0);
     for (LanguageLevel level : LanguageLevel.values()) {
-      addItem(level);
+      if (level != LanguageLevel.JDK_X) {
+        // Now JDK_X level has no useful features, so prevent users from selecting it
+        addItem(level);
+      }
     }
 
     setRenderer(new ColoredListCellRenderer<Object>() {
@@ -104,7 +107,7 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
 
   @Override
   public void setSelectedItem(Object anObject) {
-    super.setSelectedItem(anObject == null ? myDefaultItem : anObject);
+    super.setSelectedItem(anObject == null || anObject == LanguageLevel.JDK_X ? myDefaultItem : anObject);
     checkAcceptedLevel(getSelectedLevel());
   }
 }

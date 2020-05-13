@@ -55,8 +55,7 @@ public class RestoreDirectoriesConfirmationDialog extends OptionsDialog{
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     Action okAction = getOKAction();
     UIUtil.setActionNameAndMnemonic(com.intellij.CvsBundle.message("button.text.close"), okAction);
     return new Action[]{okAction};

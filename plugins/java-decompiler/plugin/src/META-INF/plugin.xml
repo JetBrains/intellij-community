@@ -2,6 +2,7 @@
 
   <id>org.jetbrains.java.decompiler</id>
   <name>Java Bytecode Decompiler</name>
+  <category>Other Tools</category>
   <description>
     Extends standard .class file viewer with the Fernflower Java decompiler
   </description>

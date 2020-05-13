@@ -26,6 +26,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -48,7 +49,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.JavaDirectoryServiceImpl");
+  private static final Logger LOG = Logger.getInstance(JavaDirectoryServiceImpl.class);
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
@@ -127,6 +128,17 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
 
   @Override
   @NotNull
+  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+    String templateName = JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME;
+    PsiClass someClass = createClassFromTemplate(dir, name, templateName);
+    if (!someClass.isRecord()) {
+      throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName, dir.getProject()));
+    }
+    return someClass;
+  }
+
+  @Override
+  @NotNull
   public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
@@ -187,7 +199,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   private static String getIncorrectTemplateMessage(String templateName, Project project) {
-    return PsiBundle.message("psi.error.incorrect.class.template.message",
+    return JavaBundle.message("psi.error.incorrect.class.template.message",
                              FileTemplateManager.getInstance(project).internalTemplateToSubject(templateName), templateName);
   }
 

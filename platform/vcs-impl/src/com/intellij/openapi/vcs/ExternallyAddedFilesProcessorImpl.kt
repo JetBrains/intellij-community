@@ -28,7 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-private const val ASKED_ADD_EXTERNAL_FILES_PROPERTY = "ASKED_ADD_EXTERNAL_FILES"
+internal const val ASKED_ADD_EXTERNAL_FILES_PROPERTY = "ASKED_ADD_EXTERNAL_FILES"
 
 private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 
@@ -44,8 +44,6 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
 
   private val unprocessedFiles = mutableSetOf<VirtualFile>()
 
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
@@ -53,7 +51,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   fun install() {
     runReadAction {
       if (!project.isDisposed) {
-        changeListManager.addChangeListListener(this, parentDisposable)
+        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
         AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
       }
     }
@@ -83,6 +81,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun filesChanged(events: List<VFileEvent>) {
     if (!needProcessExternalFiles()) return
 
+    LOG.debug("Got events", events)
     val configDir = project.getProjectConfigDir()
     val externallyAddedFiles =
       events.asSequence()
@@ -114,9 +113,12 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun dispose() {
     super.dispose()
     queue.clear()
-    unprocessedFiles.clear()
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.clear()
+    }
   }
 
+  override val notificationDisplayId: String = "externally.added.files.notification"
   override val askedBeforeProperty = ASKED_ADD_EXTERNAL_FILES_PROPERTY
   override val doForCurrentProjectProperty: String? = null
 
@@ -145,7 +147,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
     && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> =
-    changeListManager.unversionedFiles
+    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
       .asSequence()
       .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
       .filter { isUnder(files, it) }

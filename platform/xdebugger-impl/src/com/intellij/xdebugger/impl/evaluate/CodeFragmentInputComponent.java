@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class CodeFragmentInputComponent extends EvaluationInputComponent {
   private final XDebuggerExpressionEditor myMultilineEditor;
   private final ExpressionInputForm myMainForm = new ExpressionInputForm();

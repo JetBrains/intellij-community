@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class OverlappingSourceRootsTest extends JavaPsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.OverlappingSourceRootsTest");
+  private static final Logger LOG = Logger.getInstance(OverlappingSourceRootsTest.class);
 
   private VirtualFile myProjectRoot;
   private VirtualFile mySourceRoot1;

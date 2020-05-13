@@ -21,6 +21,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -270,7 +271,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    renderer.append(userObject.toString(), myAttributes);
+    renderer.append(getTextPresentation(), myAttributes);
     appendCount(renderer);
   }
 
@@ -397,10 +398,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return getFileCount();
   }
 
-  private static class Tag {
-    @NotNull private final String myKey;
+  public boolean shouldExpandByDefault() {
+    return true;
+  }
 
-    Tag(@NotNull String key) {
+  private static class Tag {
+    @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull private final String myKey;
+
+    Tag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
       myKey = key;
     }
 

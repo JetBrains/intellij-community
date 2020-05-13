@@ -17,36 +17,13 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
-import com.intellij.remote.RemoteCredentialsHolder;
 import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.remote.VagrantBasedCredentialsHolder;
-import com.intellij.remote.WebDeploymentCredentialsHolder;
-import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CredentialsTypeExChecker {
-  private boolean mySshContribution;
-  private boolean myVagrantContribution;
-  private boolean myWebDeploymentContribution;
-
-  public CredentialsTypeExChecker withSshContribution(boolean sshContribution) {
-    mySshContribution = sshContribution;
-    return this;
-  }
-
-  public CredentialsTypeExChecker withVagrantContribution(boolean vagrantContribution) {
-    myVagrantContribution = vagrantContribution;
-    return this;
-  }
-
-  public CredentialsTypeExChecker withWebDeploymentContribution(boolean webDeploymentContribution) {
-    myWebDeploymentContribution = webDeploymentContribution;
-    return this;
-  }
-
   public boolean check(@Nullable final Sdk sdk) {
     if (sdk == null) {
       return false;
@@ -59,29 +36,14 @@ public abstract class CredentialsTypeExChecker {
   }
 
   public boolean check(RemoteSdkAdditionalData data) {
-    final Ref<Boolean> result = Ref.create(mySshContribution);
+    final Ref<Boolean> result = Ref.create(false);
     data.switchOnConnectionType(new LanguageCaseCollector<PyCredentialsContribution>() {
 
       @Override
       protected void processLanguageContribution(PyCredentialsContribution languageContribution, Object credentials) {
         result.set(checkLanguageContribution(languageContribution));
       }
-    }.collectCases(PyCredentialsContribution.class, new CredentialsCase.Ssh() {
-      @Override
-      public void process(RemoteCredentialsHolder credentials) {
-        result.set(mySshContribution);
-      }
-    }, new CredentialsCase.Vagrant() {
-      @Override
-      public void process(VagrantBasedCredentialsHolder credentials) {
-        result.set(myVagrantContribution);
-      }
-    }, new CredentialsCase.WebDeployment() {
-      @Override
-      public void process(WebDeploymentCredentialsHolder credentials) {
-        result.set(myWebDeploymentContribution);
-      }
-    }));
+    }.collectCases(PyCredentialsContribution.class));
     return result.get();
   }
 

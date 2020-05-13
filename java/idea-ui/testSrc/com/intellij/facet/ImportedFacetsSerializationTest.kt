@@ -4,10 +4,8 @@ package com.intellij.facet
 import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import org.jetbrains.jps.model.serialization.facet.FacetState
+import org.junit.Assume
 
-/**
- * @author nik
- */
 class ImportedFacetsSerializationTest : FacetTestCase() {
   override fun getProjectDirOrFile() = getProjectDirOrFile(true)
 
@@ -107,6 +105,12 @@ class ImportedFacetsSerializationTest : FacetTestCase() {
     else {
       assertEmpty(state.subFacets)
     }
+  }
+
+  override fun getFacetManager(): FacetManagerImpl {
+    val facetManager = super.getFacetManager()
+    Assume.assumeTrue("Test is ignored in workspace model", facetManager is FacetManagerImpl)
+    return facetManager as FacetManagerImpl
   }
 
   private fun getExternalFacetStates() = FacetFromExternalSourcesStorage.getInstance(module).state.facets

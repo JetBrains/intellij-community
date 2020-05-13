@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
@@ -15,11 +15,9 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class PySyntheticType implements PyType {
   private final List<PyCustomMember> myMembers;
   private final String myName;
@@ -47,7 +45,7 @@ public class PySyntheticType implements PyType {
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final List<Object> result = Lists.newArrayList();
+    final List<Object> result = new ArrayList<>();
     for (PyCustomMember member : myMembers) {
       result.add(LookupElementBuilder.create(member.getName()));
     }

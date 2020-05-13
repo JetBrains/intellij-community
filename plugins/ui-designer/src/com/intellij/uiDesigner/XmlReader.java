@@ -40,7 +40,7 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class XmlReader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.XmlReader");
+  private static final Logger LOG = Logger.getInstance(XmlReader.class);
 
   private XmlReader() {
   }
@@ -107,7 +107,7 @@ public final class XmlReader {
             }
           }
           catch (final Exception exc) {
-            String errorDescription = MessageFormat.format(UIDesignerBundle.message("error.class.cannot.be.instantiated"), lwComponent.getComponentClassName());
+            @SuppressWarnings("UnresolvedPropertyKey") String errorDescription = MessageFormat.format(UIDesignerBundle.message("error.class.cannot.be.instantiated"), lwComponent.getComponentClassName());
             final String message = FormEditingUtil.getExceptionMessage(exc);
             if (message != null) {
               errorDescription += ": " + message;

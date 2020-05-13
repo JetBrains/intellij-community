@@ -66,7 +66,8 @@ class QuickListPanel {
                           }
                         }
                       })
-                      .addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
+                      .addExtraAction(new AnActionButton(KeyMapBundle.messagePointer("action.AnActionButton.text.add.separator"),
+                                                         AllIcons.General.SeparatorH) {
                         @Override
                         public void actionPerformed(@NotNull AnActionEvent e) {
                           actionsModel.add(QuickList.SEPARATOR_ID);

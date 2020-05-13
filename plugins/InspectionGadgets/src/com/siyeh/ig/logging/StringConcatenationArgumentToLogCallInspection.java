@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -19,7 +19,6 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,13 +69,6 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       .addLabeledComponent(InspectionGadgetsBundle.message("warn.on.label"), comboBox)
       .addVerticalGap(-1)
       .getPanel();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.display.name");
   }
 
   @NotNull
@@ -188,7 +180,10 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
             newMethodCall.append(text, 1, text.length() - 1);
           }
           else if (operand instanceof PsiLiteralExpression && PsiType.CHAR.equals(operand.getType()) && inStringLiteral) {
-            newMethodCall.append(text, 1, text.length() - 1);
+            final Object value = ((PsiLiteralExpression)operand).getValue();
+            if (value instanceof Character) {
+              newMethodCall.append(StringUtil.escapeStringCharacters(value.toString()));
+            }
           }
           else {
             if (inStringLiteral) {
@@ -285,7 +280,8 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       }
       final PsiClass containingClass = method.getContainingClass();
       if (!InheritanceUtil.isInheritor(containingClass, "org.slf4j.Logger") &&
-          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.Logger")) {
+          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.Logger") &&
+          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.LogBuilder")) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();

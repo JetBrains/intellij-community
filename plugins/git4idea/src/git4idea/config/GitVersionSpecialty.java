@@ -255,10 +255,35 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 22, 0, 0));
     }
+  },
+
+  STATUS_SUPPORTS_IGNORED_MODES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 16, 0, 0));
+    }
+  },
+
+  STATUS_SUPPORTS_NO_RENAMES {
+    @Override
+    public boolean existsIn (@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 18, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
 
+  /**
+   * Check version of configured git executable.
+   * Might show modal progress dialog if invoked on EDT.
+   * <p>
+   * NB: In some cases (ex: incorrectly configured executable)
+   * this method can show long modal progress on every invocation.
+   * <p>
+   * This method should not be called from {@link com.intellij.openapi.actionSystem.AnAction#update},
+   * use {@link #existsIn(GitVersion)} and {@link GitExecutableManager#getVersion(Project)} instead
+   * (it will not execute an external process).
+   */
   public boolean existsIn(@NotNull Project project) {
     GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project);
     return existsIn(ObjectUtils.chooseNotNull(version, GitVersion.NULL));

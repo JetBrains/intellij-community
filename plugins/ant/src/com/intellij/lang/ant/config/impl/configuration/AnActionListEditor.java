@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
@@ -72,12 +71,12 @@ public class AnActionListEditor<T> extends JPanel {
       if (list.size() == 1) {
         return Messages.showOkCancelDialog(description.getList(),
                                            AntBundle.message("delete.selected.ant.configuration.confirmation.text"),
-                                           ExecutionBundle.message("delete.confirmation.dialog.title"),
+                                           AntBundle.message("delete.confirmation.dialog.title"),
                                            Messages.getQuestionIcon()) == Messages.OK;
       } else {
         return Messages.showOkCancelDialog(description.getList(),
                                            AntBundle.message("delete.selected.ant.configurations.confirmation.text"),
-                                           ExecutionBundle.message("delete.confirmation.dialog.title"),
+                                           AntBundle.message("delete.confirmation.dialog.title"),
                                            Messages.getQuestionIcon()) == Messages.OK;
       }
     });

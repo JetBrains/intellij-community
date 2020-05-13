@@ -1,9 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.openapi.util.Pair;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,19 +26,23 @@ public abstract class ContractReturnValue {
   private static final int PARAMETER_ORDINAL_BASE = 10;
   private static final int MAX_SUPPORTED_PARAMETER = 100;
 
-  private static final Function<PsiMethod, String> NOT_CONSTRUCTOR =
-    method -> method.isConstructor() ? "not applicable for constructor" : null;
-  private static final Function<PsiMethod, String> NOT_STATIC =
-    method -> method.hasModifierProperty(PsiModifier.STATIC) ? "not applicable for static method" : null;
-  private static final Function<PsiMethod, String> NOT_PRIMITIVE_RETURN =
+  private interface Validator extends Function<PsiMethod, @Nls @Nullable String> {}
+  
+  private static final Validator NOT_CONSTRUCTOR =
+    method -> method.isConstructor() ? JavaAnalysisBundle.message("contract.return.validator.not.applicable.for.constructor") : null;
+  private static final Validator NOT_STATIC =
+    method -> method.hasModifierProperty(PsiModifier.STATIC) ? JavaAnalysisBundle.message("contract.return.validator.not.applicable.static")
+                                                             : null;
+  private static final Validator NOT_PRIMITIVE_RETURN =
     method -> {
       PsiType returnType = method.getReturnType();
       return returnType instanceof PsiPrimitiveType
-             ? "not applicable for primitive return type '" + returnType.getPresentableText() + "'"
+             ? JavaAnalysisBundle.message("contract.return.validator.not.applicable.primitive", returnType.getPresentableText())
              : null;
     };
-  private static final Function<PsiMethod, String> BOOLEAN_RETURN =
-    method -> PsiType.BOOLEAN.equals(method.getReturnType()) ? null : "method return type must be 'boolean'";
+  private static final Validator BOOLEAN_RETURN =
+    method -> PsiType.BOOLEAN.equals(method.getReturnType()) ? null : JavaAnalysisBundle
+      .message("contract.return.validator.return.type.must.be.boolean");
 
   private final @NotNull String myName;
   private final int myOrdinal;
@@ -50,7 +61,7 @@ public abstract class ContractReturnValue {
   }
 
   /**
-   * @return a string which is used to represent this return value inside {@link org.jetbrains.annotations.Contract} annotation.
+   * @return a string which is used to represent this return value inside {@link Contract} annotation.
    */
   @Override
   public String toString() {
@@ -62,13 +73,13 @@ public abstract class ContractReturnValue {
    * E.g. "true" contract value makes sense for method returning {@code boolean}, but does not make sense for method returning {@code int}.
    * This method can be used to check the contract correctness.
    *
-   * @param method
+   * @param method method to check
    * @return null if this contract return value makes sense for the supplied return type.
    * Otherwise the human-readable error message is returned.
    */
   public final String getMethodCompatibilityProblem(PsiMethod method) {
     return validators().map(fn -> fn.apply(method)).filter(Objects::nonNull).findFirst()
-                       .map(("Contract return value '" + this + "': ")::concat)
+                       .map((JavaAnalysisBundle.message("contract.return.value.validation.prefix", this)+' ')::concat)
                        .orElse(null);
   }
 
@@ -77,14 +88,14 @@ public abstract class ContractReturnValue {
    * E.g. "true" contract value makes sense for method returning {@code boolean}, but does not make sense for method returning {@code int}.
    * This method can be used to check the contract correctness.
    *
-   * @param method
+   * @param method method to check
    * @return true if this contract return value makes sense for the supplied return type.
    */
   public final boolean isMethodCompatible(PsiMethod method) {
     return validators().map(fn -> fn.apply(method)).allMatch(Objects::isNull);
   }
 
-  abstract Stream<Function<PsiMethod, String>> validators();
+  abstract Stream<Validator> validators();
 
   public ContractReturnValue intersect(ContractReturnValue other) {
     if (this.equals(other) || other == ANY_VALUE) return this;
@@ -94,27 +105,25 @@ public abstract class ContractReturnValue {
   }
 
   public boolean isSuperValueOf(ContractReturnValue value) {
-    if (value == this || this == ANY_VALUE) return true;
-    if (this == NOT_NULL_VALUE && value.isNotNull()) return true;
-    return false;
+    return this == value || this == ANY_VALUE || (this == NOT_NULL_VALUE && value.isNotNull());
   }
 
   static DfaValue merge(DfaValue defaultValue, DfaValue newValue, DfaMemoryState memState) {
-    if (defaultValue == null || defaultValue == DfaUnknownValue.getInstance()) return newValue;
-    if (newValue == null || newValue == DfaUnknownValue.getInstance()) return defaultValue;
-    if (defaultValue instanceof DfaFactMapValue) {
-      DfaFactMap defaultFacts = ((DfaFactMapValue)defaultValue).getFacts();
-      if (newValue instanceof DfaFactMapValue) {
-        DfaFactMap intersection = defaultFacts.intersect(((DfaFactMapValue)newValue).getFacts());
-        if (intersection != null) {
-          return defaultValue.getFactory().getFactFactory().createValue(intersection);
-        }
-      }
-      if (newValue instanceof DfaVariableValue) {
-        defaultFacts.facts(Pair::create).forEach(fact -> memState.applyFact(newValue, fact.getFirst(), fact.getSecond()));
-      }
+    if (defaultValue == null || DfaTypeValue.isUnknown(defaultValue)) return newValue;
+    if (newValue == null || DfaTypeValue.isUnknown(newValue)) return defaultValue;
+    DfType defaultType = memState.getDfType(defaultValue);
+    DfType newType = memState.getDfType(newValue);
+    DfType result = defaultType.meet(newType);
+    if (result == DfTypes.BOTTOM) return newValue;
+    if (newValue instanceof DfaVariableValue) {
+      memState.meetDfType(newValue, result);
+      return newValue;
     }
-    return newValue;
+    if (defaultValue instanceof DfaVariableValue) {
+      memState.meetDfType(defaultValue, result);
+      return defaultValue;
+    }
+    return defaultValue.getFactory().fromDfType(result);
   }
 
   /**
@@ -331,7 +340,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue ANY_VALUE = new ContractReturnValue("_", 0) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR);
     }
 
@@ -348,13 +357,13 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue FAIL_VALUE = new ContractReturnValue("fail", 5) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.empty();
     }
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      return factory.getConstFactory().getContractFail();
+      return factory.fromDfType(DfTypes.FAIL);
     }
 
     @Override
@@ -365,13 +374,13 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue NULL_VALUE = new ContractReturnValue("null", 1) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
     }
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      return factory.getConstFactory().getNull();
+      return factory.getNull();
     }
 
     @Override
@@ -382,7 +391,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue NOT_NULL_VALUE = new ContractReturnValue("!null", 2) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
     }
 
@@ -393,11 +402,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      if (defaultValue instanceof DfaVariableValue) {
-        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
-        return defaultValue;
-      }
-      return factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+      return merge(defaultValue, factory.fromDfType(DfTypes.NOT_NULL_OBJECT), callState.myMemoryState);
     }
 
     @Override
@@ -408,26 +413,23 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue NEW_VALUE = new ContractReturnValue("new", 6) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
     }
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      if (defaultValue instanceof DfaVariableValue) {
-        defaultValue = factory.getFactFactory().createValue(callState.myMemoryState.getFacts((DfaVariableValue)defaultValue));
-      }
-      DfaValue value = factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
-      if (callState.myCallArguments.myPure) {
-        boolean unmodifiableView =
-          value instanceof DfaFactMapValue && ((DfaFactMapValue)value).get(DfaFactType.MUTABILITY) == Mutability.UNMODIFIABLE_VIEW;
+      DfType dfType = callState.myMemoryState.getDfType(defaultValue);
+      dfType = dfType.meet(DfTypes.NOT_NULL_OBJECT);
+      if (callState.myCallArguments.myMutation.isPure()) {
+        boolean unmodifiableView = Mutability.fromDfType(dfType) == Mutability.UNMODIFIABLE_VIEW;
         // Unmodifiable view methods like Collections.unmodifiableList create new object, but their special field "size" is
         // actually a delegate, so we cannot trust it if the original value is not local
         if (!unmodifiableView) {
-          value = factory.withFact(value, DfaFactType.LOCALITY, true);
+          dfType = dfType.meet(DfTypes.LOCAL_OBJECT);
         }
       }
-      return value;
+      return merge(defaultValue, factory.fromDfType(dfType), callState.myMemoryState);
     }
 
     @Override
@@ -443,7 +445,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue THIS_VALUE = new ContractReturnValue("this", 7) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, NOT_STATIC, NOT_PRIMITIVE_RETURN, method -> {
         PsiType returnType = method.getReturnType();
         if (returnType instanceof PsiClassType) {
@@ -452,7 +454,7 @@ public abstract class ContractReturnValue {
             return null;
           }
         }
-        return "method return type should be compatible with method containing class";
+        return JavaAnalysisBundle.message("contract.return.validator.method.return.incompatible.with.method.containing.class");
       });
     }
 
@@ -464,10 +466,10 @@ public abstract class ContractReturnValue {
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       DfaValue qualifier = callState.myCallArguments.myQualifier;
-      if (qualifier != null && qualifier != DfaUnknownValue.getInstance()) {
+      if (qualifier != null && !DfaTypeValue.isUnknown(qualifier)) {
         return merge(defaultValue, qualifier, callState.myMemoryState);
       }
-      return factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+      return merge(defaultValue, factory.fromDfType(DfTypes.NOT_NULL_OBJECT), callState.myMemoryState);
     }
 
     @Override
@@ -501,7 +503,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, BOOLEAN_RETURN);
     }
 
@@ -512,8 +514,8 @@ public abstract class ContractReturnValue {
 
     @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
-      DfaConstValue dfaConst = state.getConstantValue(value);
-      return dfaConst == null || Boolean.valueOf(myValue).equals(dfaConst.getValue());
+      DfType type = state.getUnboxedDfType(value);
+      return type.isSuperType(DfTypes.booleanValue(myValue));
     }
   }
 
@@ -530,21 +532,18 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, method -> {
         PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameters.length <= myParamNumber) {
-          return "not applicable for method which has " + parameters.length +
-                 " parameter" + (parameters.length == 1 ? "" : "s");
+          return JavaAnalysisBundle
+            .message("contract.return.validator.too.few.parameters", parameters.length);
         }
         PsiType parameterType = parameters[myParamNumber].getType();
         PsiType returnType = method.getReturnType();
-        if (returnType != null && !returnType.isAssignableFrom(parameterType)) {
-          return "return type '" +
-                 returnType.getPresentableText() +
-                 "' must be assignable from parameter type '" +
-                 parameterType.getPresentableText() +
-                 "'";
+        if (returnType != null && !returnType.isConvertibleFrom(parameterType)) {
+          return JavaAnalysisBundle.message("contract.return.validator.incompatible.return.parameter.type", 
+                                            returnType.getPresentableText(), parameterType.getPresentableText());
         }
         return null;
       });

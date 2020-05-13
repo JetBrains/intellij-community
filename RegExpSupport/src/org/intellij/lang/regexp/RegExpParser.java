@@ -19,12 +19,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.intellij.lang.regexp.psi.impl.RegExpCharImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+
+import static org.intellij.lang.regexp.RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF;
 
 public class RegExpParser implements PsiParser, LightPsiParser {
   private static final TokenSet PROPERTY_TOKENS = TokenSet.create(RegExpTT.NUMBER, RegExpTT.COMMA, RegExpTT.NAME, RegExpTT.RBRACE);
@@ -59,7 +63,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   /**
    * PATTERN ::= BRANCH "|" PATTERN | BRANCH
    */
-  private void parsePattern(PsiBuilder builder) {
+  protected void parsePattern(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
     parseBranch(builder);
@@ -139,7 +143,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
           numberMark.done(RegExpElementTypes.NUMBER);
         }
         else {
-          builder.error("Number expected");
+          builder.error(RegExpBundle.message("parse.error.number.expected"));
         }
       }
       if (builder.getTokenType() == RegExpTT.RBRACE) {
@@ -149,7 +153,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       }
       else {
         if (!minOmitted) {
-          checkMatches(builder, RegExpTT.COMMA, "',' expected");
+          checkMatches(builder, RegExpTT.COMMA, RegExpBundle.message("parse.error.comma.expected"));
         }
         if (builder.getTokenType() == RegExpTT.RBRACE) {
           builder.advanceLexer();
@@ -160,12 +164,12 @@ public class RegExpParser implements PsiParser, LightPsiParser {
           final PsiBuilder.Marker numberMark = builder.mark();
           builder.advanceLexer();
           numberMark.done(RegExpElementTypes.NUMBER);
-          checkMatches(builder, RegExpTT.RBRACE, "'}' expected");
+          checkMatches(builder, RegExpTT.RBRACE, RegExpBundle.message("parse.error.closing.brace.expected"));
           parseQuantifierType(builder);
           marker.done(RegExpElementTypes.QUANTIFIER);
         }
         else {
-          builder.error("'}' or number expected");
+          builder.error(RegExpBundle.message("parse.error.closing.brace.or.number.expected"));
           marker.done(RegExpElementTypes.QUANTIFIER);
           return true;
         }
@@ -190,7 +194,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else {
       if (RegExpTT.QUANTIFIERS.contains(builder.getTokenType())) {
-        builder.error("Dangling metacharacter");
+        builder.error(RegExpBundle.message("error.dangling.metacharacter"));
       }
     }
   }
@@ -212,7 +216,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     parseClassIntersection(builder);
 
-    checkMatches(builder, RegExpTT.CLASS_END, "Unclosed character class");
+    checkMatches(builder, RegExpTT.CLASS_END, RegExpBundle.message("parse.error.unclosed.character.class"));
     marker.done(RegExpElementTypes.CLASS);
     return marker;
   }
@@ -229,7 +233,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       builder.advanceLexer();
       final boolean right = parseClassdef(builder);
       if (!left && !right) {
-        builder.error("character class expected");
+        builder.error(RegExpBundle.message("parse.error.character.class.expected"));
       }
       left = right;
     }
@@ -276,8 +280,8 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     if (builder.getTokenType() == RegExpTT.CARET) {
       builder.advanceLexer();
     }
-    checkMatches(builder, RegExpTT.NAME, "POSIX character class name expected");
-    checkMatches(builder, RegExpTT.BRACKET_EXPRESSION_END, "Unclosed POSIX bracket expression");
+    checkMatches(builder, RegExpTT.NAME, RegExpBundle.message("parse.error.posix.character.class.name.expected"));
+    checkMatches(builder, RegExpTT.BRACKET_EXPRESSION_END, RegExpBundle.message("parse.error.unclosed.posix.bracket.expression"));
     marker.done(RegExpElementTypes.POSIX_BRACKET_EXPRESSION);
   }
 
@@ -288,17 +292,17 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       builder.advanceLexer();
     }
     else {
-      checkMatches(builder, RegExpTT.CHARACTER, "Character or MySQL character name expected");
+      checkMatches(builder, RegExpTT.CHARACTER, RegExpBundle.message("parse.error.character.or.mysql.character.name.expected"));
     }
-    checkMatches(builder, RegExpTT.MYSQL_CHAR_END, "Unclosed MySQL character expression");
+    checkMatches(builder, RegExpTT.MYSQL_CHAR_END, RegExpBundle.message("parse.error.unclosed.mysql.character.expression"));
     marker.done(RegExpElementTypes.MYSQL_CHAR_EXPRESSION);
   }
 
   private static void parseMysqlCharEqExpression(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
-    checkMatches(builder, RegExpTT.CHARACTER, "Character expected");
-    checkMatches(builder, RegExpTT.MYSQL_CHAR_EQ_END, "Unclosed MySQL character equivalence class");
+    checkMatches(builder, RegExpTT.CHARACTER, RegExpBundle.message("parse.error.character.expected"));
+    checkMatches(builder, RegExpTT.MYSQL_CHAR_EQ_END, RegExpBundle.message("parse.error.unclosed.mysql.character.equivalence.class"));
     marker.done(RegExpElementTypes.MYSQL_CHAR_EQ_EXPRESSION);
   }
 
@@ -328,7 +332,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
         }
         else {
           minusMarker.drop();
-          builder.error("Illegal character range");
+          builder.error(RegExpBundle.message("parse.error.illegal.character.range"));
           rangeMarker.done(RegExpElementTypes.CHAR_RANGE);
         }
       }
@@ -373,7 +377,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
         marker.done(RegExpElementTypes.GROUP);
       }
       else {
-        checkMatches(builder, RegExpTT.GROUP_END, "Unclosed options group");
+        checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.options.group"));
         marker.done(RegExpElementTypes.SET_OPTIONS);
       }
     }
@@ -397,12 +401,13 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else if (type == RegExpTT.PYTHON_NAMED_GROUP || type == RegExpTT.RUBY_NAMED_GROUP || type == RegExpTT.RUBY_QUOTED_NAMED_GROUP) {
       builder.advanceLexer();
-      checkMatches(builder, RegExpTT.NAME, "Group name expected");
-      checkMatches(builder, type == RegExpTT.RUBY_QUOTED_NAMED_GROUP ? RegExpTT.QUOTE : RegExpTT.GT, "Unclosed group name");
+      checkMatches(builder, RegExpTT.NAME, RegExpBundle.message("parse.error.group.name.expected"));
+      checkMatches(builder, type == RegExpTT.RUBY_QUOTED_NAMED_GROUP ? RegExpTT.QUOTE : RegExpTT.GT,
+                   RegExpBundle.message("parse.error.unclosed.group.name"));
       parseGroupEnd(builder);
       marker.done(RegExpElementTypes.GROUP);
     }
-    else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
+    else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF || type == PCRE_RECURSIVE_NAMED_GROUP_REF) {
       parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
     }
     else if (type == RegExpTT.RUBY_NAMED_GROUP_REF || type == RegExpTT.RUBY_NAMED_GROUP_CALL) {
@@ -411,22 +416,17 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF || type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.QUOTE);
     }
-    else if (type == RegExpTT.PYTHON_COND_REF) {
+    else if (type == RegExpTT.PYTHON_COND_REF || type == RegExpTT.PCRE_COND_REF) {
       builder.advanceLexer();
-      if (builder.getTokenType() == RegExpTT.NAME || builder.getTokenType() == RegExpTT.NUMBER) {
-        builder.advanceLexer();
-      }
-      else {
-        builder.error("Group name or number expected");
-      }
-      checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group reference");
+      parseCondRefName(builder, type);
+      checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
       parseBranch(builder);
       if (builder.getTokenType() == RegExpTT.UNION) {
         builder.advanceLexer();
         parseBranch(builder);
       }
-      checkMatches(builder, RegExpTT.GROUP_END, "Unclosed conditional");
-      marker.done(RegExpElementTypes.PY_COND_REF);
+      checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.conditional"));
+      marker.done(RegExpElementTypes.CONDITIONAL);
     }
     else if (type == RegExpTT.PROPERTY) {
       marker.drop();
@@ -447,15 +447,24 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     return marker;
   }
 
+  protected void parseCondRefName(PsiBuilder builder, IElementType condRefType) {
+    if (builder.getTokenType() == RegExpTT.NAME || builder.getTokenType() == RegExpTT.NUMBER) {
+      builder.advanceLexer();
+    }
+    else {
+      builder.error(RegExpBundle.message("parse.error.group.name.or.number.expected"));
+    }
+  }
+
   private void parseGroupEnd(PsiBuilder builder) {
     parsePattern(builder);
-    checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
+    checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group"));
   }
 
   private static void parseNamedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker, IElementType type) {
     builder.advanceLexer();
-    checkMatches(builder, RegExpTT.NAME, "Group name expected");
-    checkMatches(builder, type, "Unclosed group reference");
+    checkMatches(builder, RegExpTT.NAME, RegExpBundle.message("parse.error.group.name.expected"));
+    checkMatches(builder, type, RegExpBundle.message("parse.error.unclosed.group.reference"));
     marker.done(RegExpElementTypes.NAMED_GROUP_REF);
   }
 
@@ -471,23 +480,23 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     builder.advanceLexer();
     if (builder.getTokenType() == RegExpTT.CATEGORY_SHORT_HAND) {
       if (!myCapabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND)) {
-        builder.error("Category shorthand not allowed in this regular expression dialect");
+        builder.error(RegExpBundle.message("parse.error.category.shorthand.not.allowed.in.this.regular.expression.dialect"));
       }
       builder.advanceLexer();
     }
     else {
       if (builder.getTokenType() == RegExpTT.CHARACTER && isLetter(builder.getTokenText())) {
         builder.error(myCapabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND) ?
-                      "Illegal category shorthand" :
-                      "'{' expected");
+                      RegExpBundle.message("parse.error.illegal.category.shorthand") :
+                      RegExpBundle.message("parse.error.opening.brace.expected"));
         builder.advanceLexer();
       }
       else if (checkMatches(builder, RegExpTT.LBRACE, myCapabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND) ?
-                                                      "'{' or category shorthand expected" :
-                                                      "'{' expected")) {
+                                                      RegExpBundle.message("parse.error.opening.brace.or.category.shorthand.expected") :
+                                                      RegExpBundle.message("parse.error.opening.brace.expected"))) {
         if (builder.getTokenType() == RegExpTT.CARET) {
           if (!myCapabilities.contains(RegExpCapability.CARET_NEGATED_PROPERTIES)) {
-            builder.error("Negating a property not allowed in this regular expression dialect");
+            builder.error(RegExpBundle.message("parse.error.negating.a.property.not.allowed.in.this.regular.expression.dialect"));
           }
           builder.advanceLexer();
         }
@@ -495,18 +504,18 @@ public class RegExpParser implements PsiParser, LightPsiParser {
           builder.advanceLexer(); //name
           if (myCapabilities.contains(RegExpCapability.PROPERTY_VALUES) && builder.getTokenType() == RegExpTT.EQ) {
             builder.advanceLexer(); //eq
-            checkMatches(builder, RegExpTT.NAME, "Property value expected");
+            checkMatches(builder, RegExpTT.NAME, RegExpBundle.message("parse.error.property.value.expected"));
           }
-          checkMatches(builder, RegExpTT.RBRACE, "Unclosed property");
+          checkMatches(builder, RegExpTT.RBRACE, RegExpBundle.message("parse.error.unclosed.property"));
         }
         else
         {
           if (builder.getTokenType() == RegExpTT.RBRACE) {
-            builder.error("Empty property");
+            builder.error(RegExpBundle.message("parse.error.empty.property"));
             builder.advanceLexer();
           }
           else {
-            builder.error("Property name expected");
+            builder.error(RegExpBundle.message("parse.error.property.name.expected"));
           }
           while (PROPERTY_TOKENS.contains(builder.getTokenType())) {
             builder.advanceLexer();
@@ -521,10 +530,26 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     final PsiBuilder.Marker marker = builder.mark();
     if (builder.getTokenType() == RegExpTT.NAMED_CHARACTER) {
       builder.advanceLexer();
-      checkMatches(builder, RegExpTT.LBRACE, "'{' expected");
-      checkMatches(builder, RegExpTT.NAME, "Unicode character name expected");
-      checkMatches(builder, RegExpTT.RBRACE, "'}' expected");
+      checkMatches(builder, RegExpTT.LBRACE, RegExpBundle.message("parse.error.opening.brace.expected"));
+      checkMatches(builder, RegExpTT.NAME, RegExpBundle.message("parse.error.unicode.character.name.expected"));
+      checkMatches(builder, RegExpTT.RBRACE, RegExpBundle.message("parse.error.closing.brace.expected"));
       marker.done(RegExpElementTypes.NAMED_CHARACTER);
+    }
+    else if (builder.getTokenType() == RegExpTT.UNICODE_CHAR) {
+      final String text1 = builder.getTokenText();
+      assert text1 != null;
+      final int value1 = RegExpCharImpl.unescapeChar(text1);
+      builder.advanceLexer();
+      // merge surrogate pairs into single regexp char
+      if (!Character.isSupplementaryCodePoint(value1) && Character.isHighSurrogate((char)value1)) {
+        final String text2 = builder.getTokenText();
+        assert text2 != null;
+        final int value2 = RegExpCharImpl.unescapeChar(text2);
+        if (!Character.isSupplementaryCodePoint(value2) && Character.isLowSurrogate((char)value2)) {
+          builder.advanceLexer();
+        }
+      }
+      marker.done(RegExpElementTypes.CHAR);
     }
     else {
       builder.advanceLexer();
@@ -535,18 +560,18 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   private static void patternExpected(PsiBuilder builder) {
     final IElementType token = builder.getTokenType();
     if (token == RegExpTT.GROUP_END) {
-      builder.error("Unmatched closing ')'");
+      builder.error(RegExpBundle.message("parse.error.unmatched.closing.parenthesis"));
     }
     else if (RegExpTT.QUANTIFIERS.contains(token) || token == RegExpTT.RBRACE || token == RegExpTT.CLASS_END) {
-      builder.error("Dangling metacharacter");
+      builder.error(RegExpBundle.message("error.dangling.metacharacter"));
     }
     else {
-      builder.error("Pattern expected");
+      builder.error(RegExpBundle.message("parse.error.pattern.expected"));
     }
     builder.advanceLexer();
   }
 
-  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, @NotNull String message) {
+  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, @NotNull @NlsContexts.ParsingError String message) {
     if (builder.getTokenType() == token) {
       builder.advanceLexer();
       return true;

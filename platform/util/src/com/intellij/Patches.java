@@ -110,5 +110,8 @@ public class Patches {
   /**
    * https://bugs.openjdk.java.net/browse/JDK-8220231
    */
-  public static final boolean TEXT_LAYOUT_IS_SLOW = !SystemInfo.isJetBrainsJvm && !SystemInfo.isJavaVersionAtLeast(13);
+  public static final boolean TEXT_LAYOUT_IS_SLOW = !SystemInfo.isJetBrainsJvm &&
+                                                    !SystemInfo.isJavaVersionAtLeast(13) &&
+                                                    (SystemInfo.isJavaVersionAtLeast(12) ||
+                                                     !SystemInfo.isJavaVersionAtLeast(11, 0, 6));
 }

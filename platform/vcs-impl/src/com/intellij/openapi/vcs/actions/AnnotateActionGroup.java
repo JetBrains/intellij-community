@@ -57,9 +57,8 @@ public class AnnotateActionGroup extends ActionGroup implements DumbAware {
     myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myActions;
   }
 

@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
  */
 @Tag("Lighthouse")
 public class LighthouseRepository extends BaseRepositoryImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.lighthouse.LighthouseRepository");
+  private static final Logger LOG = Logger.getInstance(LighthouseRepository.class);
   private static final Pattern DATE_PATTERN = Pattern.compile("(\\d\\d\\d\\d\\-\\d\\d\\-\\d\\d).*(\\d\\d:\\d\\d:\\d\\d).*");
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -169,9 +169,8 @@ public class LighthouseRepository extends BaseRepositoryImpl {
         return description;
       }
 
-      @NotNull
       @Override
-      public Comment[] getComments() {
+      public Comment @NotNull [] getComments() {
         return Comment.EMPTY_ARRAY;
       }
 

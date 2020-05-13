@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 */
 class PreviewUsageAction extends RuleAction {
   PreviewUsageAction(@NotNull UsageView usageView) {
-    super(usageView, UsageViewBundle.message("preview.usages.action.text", StringUtil.capitalize(StringUtil.pluralize(usageView.getPresentation().getUsagesWord()))), AllIcons.Actions.PreviewDetails);
+    super(usageView, UsageViewBundle.messagePointer("preview.usages.action.text", StringUtil.capitalize(StringUtil.pluralize(usageView.getPresentation().getUsagesWord()))), AllIcons.Actions.PreviewDetails);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ class NCSSVisitor extends JavaRecursiveElementWalkingVisitor {
   private int m_statementCount;
 
   @Override
-  public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+  public void visitClass(PsiClass aClass) {
     // no call to super, to keep this from drilling down
   }
 
@@ -32,6 +32,13 @@ class NCSSVisitor extends JavaRecursiveElementWalkingVisitor {
     if (statement instanceof PsiEmptyStatement ||
         statement instanceof PsiBlockStatement) {
       return;
+    }
+    final PsiElement parent = statement.getParent();
+    if (parent instanceof PsiForStatement) {
+      final PsiForStatement forStatement = (PsiForStatement)parent;
+      if (forStatement.getInitialization() == statement || forStatement.getUpdate() == statement) {
+        return;
+      }
     }
     m_statementCount++;
   }

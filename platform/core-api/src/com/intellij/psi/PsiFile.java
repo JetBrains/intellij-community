@@ -81,8 +81,7 @@ public interface PsiFile extends PsiFileSystemItem {
    * @deprecated Use {@link FileViewProvider#getAllFiles()} instead.
    */
   @Deprecated
-  @NotNull
-  PsiFile[] getPsiRoots();
+  PsiFile @NotNull [] getPsiRoots();
 
   @NotNull
   FileViewProvider getViewProvider();

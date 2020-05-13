@@ -22,7 +22,7 @@ public abstract class DataValidator<T> {
   public static final ExtensionPointName<KeyedLazyInstanceEP<DataValidator>> EP_NAME =
     ExtensionPointName.create("com.intellij.dataValidator");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
+  private static final Logger LOG = Logger.getInstance(DataValidator.class);
 
   private static final Map<String, DataValidator<?>> ourValidators = new HashMap<>();
   private static final DataValidator<VirtualFile> VIRTUAL_FILE_VALIDATOR = new DataValidator<VirtualFile>() {
@@ -87,7 +87,7 @@ public abstract class DataValidator<T> {
     }
 
     @Override
-    public T[] findInvalid(@NotNull final String dataId, @NotNull T[] array, @NotNull final Object dataSource) {
+    public T[] findInvalid(@NotNull final String dataId, T @NotNull [] array, @NotNull final Object dataSource) {
       for (T element : array) {
         if (element == null) {
           LOG.error("Data isn't valid. " + dataId + "=null Provided by: " + dataSource.getClass().getName() + " (" + dataSource.toString() + ")");

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -16,19 +14,20 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.util.UastExpressionUtils;
 
+import java.text.ChoiceFormat;
+import java.text.Format;
 import java.text.MessageFormat;
 import java.util.*;
 
-/**
- * @author max
- */
 public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER =
     (project, propertiesFiles, key, value, parameters) -> createProperty(project, propertiesFiles, key, value, true);
@@ -49,7 +48,7 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   public static boolean mustBePropertyKey(@NotNull PsiExpression expression, @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
-    PsiElement parent = expression.getParent();
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiVariable) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiVariable)parent, AnnotationUtil.PROPERTY_KEY);
       if (annotation != null) {
@@ -57,10 +56,13 @@ public class JavaI18nUtil extends I18nUtil {
         return true;
       }
     }
-    return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, resourceBundleRef, null);
+    return isPassedToResourceParam(expression, resourceBundleRef);
   }
 
   public static boolean mustBePropertyKey(@NotNull UExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
+    while (expression.getUastParent() instanceof UParenthesizedExpression) {
+      expression = (UParenthesizedExpression)expression.getUastParent();
+    }
     final UElement parent = expression.getUastParent();
     if (parent instanceof UVariable) {
       UAnnotation annotation = ((UVariable)parent).findAnnotation(AnnotationUtil.PROPERTY_KEY);
@@ -78,13 +80,20 @@ public class JavaI18nUtil extends I18nUtil {
     if (parameter == null) return false;
     int paramIndex = ArrayUtil.indexOf(psiMethod.getParameterList().getParameters(), parameter);
     if (paramIndex == -1) return false;
-    return isMethodParameterAnnotatedWith(psiMethod, paramIndex, null, AnnotationUtil.PROPERTY_KEY, null, null);
+    if (resourceBundleRef == null) {
+      return isPropertyKeyParameter(psiMethod, paramIndex, null, null);
+    }
+    @Nullable Ref<PsiAnnotationMemberValue> ref = new Ref<>();
+    boolean isAnnotated = isPropertyKeyParameter(psiMethod, paramIndex, null, ref);
+    PsiAnnotationMemberValue memberValue = ref.get();
+    if (memberValue != null) {
+      resourceBundleRef.set(UastContextKt.toUElementOfExpectedTypes(memberValue, UExpression.class));
+    }
+    return isAnnotated;
   }
 
-  static boolean isPassedToAnnotatedParam(@NotNull PsiExpression expression,
-                                          final String annFqn,
-                                          @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef,
-                                          @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  static boolean isPassedToResourceParam(@NotNull PsiExpression expression,
+                                         @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
     expression = getTopLevelExpression(expression);
     final PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiExpressionList)) return false;
@@ -99,7 +108,7 @@ public class JavaI18nUtil extends I18nUtil {
 
     if (grParent instanceof PsiCall) {
       PsiMethod method = ((PsiCall)grParent).resolveMethod();
-      return method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, resourceBundleRef, nonNlsTargets);
+      return method != null && isPropertyKeyParameter(method, idx, null, resourceBundleRef);
     }
 
     return false;
@@ -119,12 +128,27 @@ public class JavaI18nUtil extends I18nUtil {
     return expression;
   }
 
-  static boolean isMethodParameterAnnotatedWith(final PsiMethod method,
-                                                final int idx,
-                                                @Nullable Collection<? super PsiMethod> processed,
-                                                final String annFqn,
-                                                @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef,
-                                                @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  @NotNull
+  static UExpression getTopLevelExpression(@NotNull UExpression expression) {
+    while (expression.getUastParent() instanceof UExpression) {
+      final UExpression parent = (UExpression)expression.getUastParent();
+      if (parent instanceof UBlockExpression || parent instanceof UReturnExpression) {
+        break;
+      }
+      if (parent instanceof UIfExpression &&
+          UastUtils.isPsiAncestor(((UIfExpression)parent).getCondition(), expression)) {
+        break;
+      }
+      expression = parent;
+      if (UastExpressionUtils.isAssignment(expression)) break;
+    }
+    return expression;
+  }
+
+  static boolean isPropertyKeyParameter(final PsiMethod method,
+                                        final int idx,
+                                        @Nullable Collection<? super PsiMethod> processed,
+                                        @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
     if (processed != null) {
       if (processed.contains(method)) return false;
     }
@@ -136,32 +160,22 @@ public class JavaI18nUtil extends I18nUtil {
     final PsiParameter[] params = method.getParameterList().getParameters();
     PsiParameter param;
     if (idx >= params.length) {
-      if (params.length == 0) {
-        return false;
-      }
-      PsiParameter lastParam = params[params.length - 1];
-      if (lastParam.isVarArgs()) {
-        param = lastParam;
-      }
-      else {
-        return false;
-      }
+      PsiParameter lastParam = ArrayUtil.getLastElement(params);
+      if (lastParam == null || !lastParam.isVarArgs()) return false;
+      param = lastParam;
     }
     else {
       param = params[idx];
     }
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, annFqn);
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, AnnotationUtil.PROPERTY_KEY);
     if (annotation != null) {
       processAnnotationAttributes(resourceBundleRef, annotation);
       return true;
     }
-    if (nonNlsTargets != null) {
-      nonNlsTargets.add(param);
-    }
 
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
-      if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, resourceBundleRef, null)) return true;
+      if (isPropertyKeyParameter(superMethod, idx, processed, resourceBundleRef)) return true;
     }
 
     return false;
@@ -314,11 +328,24 @@ public class JavaI18nUtil extends I18nUtil {
    */
   public static int getPropertyValuePlaceholdersCount(@NotNull final String propertyValue) {
     try {
-      return new MessageFormat(propertyValue).getFormatsByArgumentIndex().length;
+      return countFormatParameters(new MessageFormat(propertyValue));
     }
     catch (final IllegalArgumentException e) {
       return 0;
     }
+  }
+
+  private static int countFormatParameters(MessageFormat mf) {
+    Format[] formats = mf.getFormatsByArgumentIndex();
+    int maxLength = formats.length;
+    for (Format format : formats) {
+      if (format instanceof ChoiceFormat) {
+        for (Object o : ((ChoiceFormat) format).getFormats()) {
+          maxLength = Math.max(maxLength, countFormatParameters(new MessageFormat((String) o)));
+        }
+      }
+    }
+    return maxLength;
   }
 
   /**

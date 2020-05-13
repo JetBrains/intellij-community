@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.lang.folding.CustomFoldingProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -22,6 +24,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.KeyedLazyInstance;
@@ -33,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
+public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
   private final Project myProject;
 
   private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
@@ -65,7 +68,18 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Dispos
             }
           }
         }
-      }, myProject);
+      }, this);
+
+    Runnable listener = () -> {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+        if (fileEditor instanceof TextEditor) {
+          FoldingUpdate.clearFoldingCache(((TextEditor)fileEditor).getEditor());
+        }
+      }
+    };
+    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.addChangeListener(project, listener, this);
+    LanguageInjector.EXTENSION_POINT_NAME.addChangeListener(listener, this);
+    CustomFoldingProvider.EP_NAME.addChangeListener(listener, this);
   }
 
   @Override
@@ -80,14 +94,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Dispos
   @Override
   public void releaseFoldings(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final Project project = editor.getProject();
-    if (project != null && (!project.equals(myProject) || !project.isOpen())) return;
-
-    Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (file == null || !file.getViewProvider().isPhysical() || !file.isValid()) return;
-
-    EditorFoldingInfo.get(editor).dispose();
+    EditorFoldingInfo.disposeForEditor(editor);
   }
 
   @Override
@@ -153,16 +160,14 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Dispos
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
-  private void initFolding(@NotNull final Editor editor) {
+  private void initFolding(@NotNull Editor editor) {
     final Document document = editor.getDocument();
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-      Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-      for (Editor otherEditor : editors) {
-        if (otherEditor == editor || !isFoldingsInitializedInEditor(otherEditor)) continue;
-        documentFoldingInfo.loadFromEditor(otherEditor);
-        break;
-      }
+      EditorFactory.getInstance().editors(document, myProject)
+        .filter(otherEditor -> otherEditor != editor && isFoldingsInitializedInEditor(otherEditor))
+        .findFirst()
+        .ifPresent(documentFoldingInfo::loadFromEditor);
       documentFoldingInfo.setToEditor(editor);
       documentFoldingInfo.clear();
 

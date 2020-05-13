@@ -2,9 +2,8 @@
 package com.intellij.util;
 
 /**
- * @deprecated Please use {@link java.util.function.Supplier}
+ * Deprecated. Use {@link java.util.function.Supplier} instead
  */
-@Deprecated
 @FunctionalInterface
 public interface Producer<T> {
 

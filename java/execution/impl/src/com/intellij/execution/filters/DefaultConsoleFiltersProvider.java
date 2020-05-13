@@ -24,14 +24,12 @@ import java.util.List;
 
 public class DefaultConsoleFiltersProvider implements ConsoleFilterProviderEx {
   @Override
-  @NotNull
-  public Filter[] getDefaultFilters(@NotNull Project project) {
+  public Filter @NotNull [] getDefaultFilters(@NotNull Project project) {
     return getDefaultFilters(project, GlobalSearchScope.allScope(project));
   }
 
-  @NotNull
   @Override
-  public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public Filter @NotNull [] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     List<Filter> filters = ExceptionFilters.getFilters(scope);
     filters.add(new YourkitFilter(project));
     return filters.toArray(Filter.EMPTY_ARRAY);

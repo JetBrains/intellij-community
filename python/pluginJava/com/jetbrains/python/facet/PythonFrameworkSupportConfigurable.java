@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,7 @@ public class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigur
   public PythonFrameworkSupportConfigurable(FrameworkSupportModel model) {
     mySdkComboBox = new PythonSdkComboBox();
     mySdkComboBox.setProject(model.getProject());
-    myMainPanel = LabeledComponent.create(mySdkComboBox, "Python SDK:");
+    myMainPanel = LabeledComponent.create(mySdkComboBox, PyBundle.message("framework.support.python.sdk.combobox.label"));
     ((LabeledComponent)myMainPanel).setLabelLocation(BorderLayout.WEST);
   }
 

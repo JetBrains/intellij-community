@@ -23,8 +23,7 @@ public class PyTryExceptStatementImpl extends PyPartitionedElementImpl implement
   }
 
   @Override
-  @NotNull
-  public PyExceptPart[] getExceptParts() {
+  public PyExceptPart @NotNull [] getExceptParts() {
     return childrenToPsi(EXCEPT_BLOCKS, PyExceptPart.EMPTY_ARRAY);
   }
 

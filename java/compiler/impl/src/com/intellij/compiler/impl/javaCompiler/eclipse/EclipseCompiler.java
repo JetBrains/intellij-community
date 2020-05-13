@@ -16,9 +16,9 @@
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class EclipseCompiler implements BackendCompiler {
   @Override
   @NotNull
   public String getPresentableName() {
-    return CompilerBundle.message("compiler.eclipse.name");
+    return JavaCompilerBundle.message("compiler.eclipse.name");
   }
 
   @Override
@@ -61,7 +61,7 @@ public class EclipseCompiler implements BackendCompiler {
   @NotNull
   @Override
   public Set<FileType> getCompilableFileTypes() {
-    return Collections.singleton(StdFileTypes.JAVA);
+    return Collections.singleton(JavaFileType.INSTANCE);
   }
 
   @NotNull

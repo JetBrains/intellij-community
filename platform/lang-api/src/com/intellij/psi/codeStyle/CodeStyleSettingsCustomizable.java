@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface CodeStyleSettingsCustomizable {
@@ -323,7 +324,7 @@ public interface CodeStyleSettingsCustomizable {
 
   void showAllStandardOptions();
 
-  void showStandardOptions(String... optionNames);
+  void showStandardOptions(@NonNls String... optionNames);
 
   default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                         String fieldName,

@@ -18,14 +18,20 @@ public abstract class AbstractMapForwardIndexAccessor<Key, Value, DataType> exte
 
   @Override
   protected final InputDataDiffBuilder<Key, Value> createDiffBuilder(int inputId, @Nullable DataType inputData) throws IOException {
-    return new MapInputDataDiffBuilder<>(inputId, convertToMap(inputData));
+    Map<Key, Value> map = convertToMap(inputId, inputData);
+    return createDiffBuilderByMap(inputId, map);
+  }
+
+  @NotNull
+  public InputDataDiffBuilder<Key, Value> createDiffBuilderByMap(int inputId, @Nullable Map<Key, Value> map) throws IOException {
+    return new MapInputDataDiffBuilder<>(inputId, map);
   }
 
   @Nullable
-  protected abstract Map<Key, Value> convertToMap(@Nullable DataType inputData) throws IOException;
+  protected abstract Map<Key, Value> convertToMap(int inputId, @Nullable DataType inputData) throws IOException;
 
   @Nullable
-  public Map<Key, Value> convertToInputDataMap(@Nullable ByteArraySequence sequence) throws IOException {
-    return convertToMap(deserializeData(sequence));
+  public Map<Key, Value> convertToInputDataMap(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
+    return convertToMap(inputId, deserializeData(sequence));
   }
 }

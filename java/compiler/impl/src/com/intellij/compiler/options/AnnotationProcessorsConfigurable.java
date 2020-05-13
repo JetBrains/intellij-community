@@ -18,6 +18,7 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -43,7 +44,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
 
   @Override
   public String getDisplayName() {
-    return "Annotation Processors";
+    return JavaCompilerBundle.message("configurable.AnnotationProcessorsConfigurable.display.name");
   }
 
   @Override

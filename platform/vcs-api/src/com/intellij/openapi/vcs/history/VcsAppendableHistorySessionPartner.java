@@ -22,6 +22,9 @@ public interface VcsAppendableHistorySessionPartner {
   void acceptRevision(VcsFileRevision revision);
   void reportException(VcsException exception);
 
+  /**
+   * @deprecated plugins do not need to and should not call this method.
+   */
   @Deprecated
   default void finished() {}
 }

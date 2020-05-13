@@ -20,7 +20,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="checkout.options.checkout.label"/>
+              <text resource-bundle="messages/SvnBundle" key="checkout.options.checkout.label"/>
             </properties>
           </component>
           <component id="1f691" class="javax.swing.JLabel">
@@ -28,7 +28,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="checkout.options.destination.label"/>
+              <text resource-bundle="messages/SvnBundle" key="checkout.options.destination.label"/>
             </properties>
           </component>
           <component id="a1fdf" class="javax.swing.JCheckBox" binding="myExternalsCheckbox">
@@ -37,7 +37,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="checkout.options.externals.label"/>
+              <text resource-bundle="messages/SvnBundle" key="checkout.options.externals.label"/>
             </properties>
           </component>
           <nested-form id="20d59" form-file="org/jetbrains/idea/svn/revision/SvnSelectRevisionPanel.form" binding="svnSelectRevisionPanel">
@@ -56,8 +56,8 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.text"/>
-              <toolTipText resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.description"/>
+              <text resource-bundle="messages/SvnBundle" key="label.depth.text"/>
+              <toolTipText resource-bundle="messages/SvnBundle" key="label.depth.description"/>
             </properties>
           </component>
           <scrollpane id="cd7a3" class="com.intellij.ui.components.JBScrollPane" binding="myScroll">
@@ -85,9 +85,7 @@
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <text value="Label"/>
-            </properties>
+            <properties/>
           </component>
         </children>
       </grid>

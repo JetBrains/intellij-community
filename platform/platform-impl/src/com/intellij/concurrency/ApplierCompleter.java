@@ -107,13 +107,14 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
         doComplete(throwable);
       }
     } : process;
-    ProgressIndicator existing = ProgressManager.getInstance().getProgressIndicator();
+    ProgressManager progressManager = ProgressManager.getInstance();
+    ProgressIndicator existing = progressManager.getProgressIndicator();
     if (existing == progressIndicator) {
       // we are already wrapped in an indicator - most probably because we came here from helper which steals children tasks
       toRun.run();
     }
     else {
-      ProgressManager.getInstance().executeProcessUnderProgress(toRun, progressIndicator);
+      progressManager.executeProcessUnderProgress(toRun, progressIndicator);
     }
   }
 
@@ -152,7 +153,18 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
 
       // traverse the list looking for a task available for stealing
       if (right != null) {
-        throwable = right.tryToExecAllList();
+        // tries to unfork, execute and re-link subtasks
+        ApplierCompleter<T> cur = right;
+        Throwable result = right.throwable;
+        while (cur != null) {
+          ProgressManager.checkCanceled();
+          if (cur.tryUnfork()) {
+            cur.execAndForkSubTasks();
+            result = moreImportant(result, cur.throwable);
+          }
+          cur = cur.next;
+        }
+        throwable = result;
       }
     }
     catch (Throwable e) {
@@ -198,7 +210,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
         //a.onExceptionalCompletion(throwable, child);
         child = a;
         //noinspection unchecked
-        a = (ApplierCompleter)a.getCompleter();
+        a = (ApplierCompleter<T>)a.getCompleter();
         if (a == null) {
           // currently avoid using completeExceptionally since it leaks exceptions via ForkJoinTask.exceptionTable
           child.quietlyComplete();
@@ -215,21 +227,6 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
     if (!progressIndicator.isCanceled()) {
       progressIndicator.cancel();
     }
-  }
-
-  // tries to unfork, execute and re-link subtasks
-  private Throwable tryToExecAllList() {
-    ApplierCompleter<T> right = this;
-    Throwable result = throwable;
-    while (right != null) {
-      ProgressManager.checkCanceled();
-      if (right.tryUnfork()) {
-        right.execAndForkSubTasks();
-        result = moreImportant(result, right.throwable);
-      }
-      right = right.next;
-    }
-    return result;
   }
 
   boolean completeTaskWhichFailToAcquireReadAction() {

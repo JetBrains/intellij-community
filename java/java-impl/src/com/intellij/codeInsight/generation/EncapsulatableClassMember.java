@@ -33,4 +33,11 @@ public interface EncapsulatableClassMember extends ClassMember{
    */
   @Nullable
   GenerationInfo generateSetter() throws IncorrectOperationException;
+
+  /**
+   * @return true if the member is definitely read-only (no setter could be generated); false if it's not known. 
+   */
+  default boolean isReadOnlyMember() {
+    return false;
+  }
 }

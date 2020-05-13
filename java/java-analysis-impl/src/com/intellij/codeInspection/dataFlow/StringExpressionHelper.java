@@ -21,11 +21,11 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CommonProcessors;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 public class StringExpressionHelper {
@@ -61,7 +61,7 @@ public class StringExpressionHelper {
       if (element instanceof PsiMethod) {
         PsiCodeBlock body = ((PsiMethod)element).getBody();
         if (body != null) {
-          final Set<PsiExpression> returns = new java.util.HashSet<>();
+          final Set<PsiExpression> returns = new HashSet<>();
 
           body.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
@@ -120,7 +120,7 @@ public class StringExpressionHelper {
   @Nullable
   private static Pair<PsiElement, String> evaluatePolyadicExpressions(@NotNull PsiElement expression,
                                                                       @NotNull Collection<PsiElement> visited,
-                                                                      @NotNull PsiExpression... operands) {
+                                                                      PsiExpression @NotNull ... operands) {
     StringBuilder sb = new StringBuilder();
     for (PsiExpression operand : operands) {
       Pair<PsiElement, String> pair = evaluateExpression(operand, visited);
@@ -149,7 +149,7 @@ public class StringExpressionHelper {
   public static Set<Pair<PsiElement, String>> searchStringExpressions(@NotNull final PsiMethod psiMethod,
                                                                       @NotNull SearchScope searchScope,
                                                                       int expNum) {
-    Set<Pair<PsiElement, String>> pairs = new java.util.HashSet<>();
+    Set<Pair<PsiElement, String>> pairs = new HashSet<>();
     for (PsiCall methodCallExpression : searchMethodCalls(psiMethod, searchScope)) {
       PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       if (argumentList == null) continue;
@@ -168,7 +168,7 @@ public class StringExpressionHelper {
 
   @NotNull
   public static Set<PsiCall> searchMethodCalls(@NotNull final PsiMethod psiMethod, @NotNull SearchScope searchScope) {
-    final Set<PsiCall> callExpressions = new java.util.HashSet<>();
+    final Set<PsiCall> callExpressions = new HashSet<>();
     final CommonProcessors.CollectUniquesProcessor<PsiReference> consumer = new CommonProcessors.CollectUniquesProcessor<>();
 
     MethodReferencesSearch.search(psiMethod, searchScope, true).forEach(consumer);

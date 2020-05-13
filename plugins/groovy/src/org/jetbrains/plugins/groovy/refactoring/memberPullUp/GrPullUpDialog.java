@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -58,7 +59,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
                         List<PsiClass> superClasses,
                         GrMemberInfoStorage storage,
                         GrPullUpHandler handler) {
-    super(project, typeDefinition, superClasses, storage, GrPullUpHandler.REFACTORING_NAME);
+    super(project, typeDefinition, superClasses, storage, GrPullUpHandler.getRefactoringName());
 
     myCallback = handler;
 
@@ -137,7 +138,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
 
   @Override
   protected void addCustomElementsToCentralPanel(JPanel panel) {
-    myJavaDocPanel = new DocCommentPanel(RefactoringBundle.message("javadoc.for.abstracts"));
+    myJavaDocPanel = new DocCommentPanel(JavaRefactoringBundle.message("javadoc.for.abstracts"));
     myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     boolean hasJavadoc = false;
     for (GrMemberInfo info : myMemberInfos) {

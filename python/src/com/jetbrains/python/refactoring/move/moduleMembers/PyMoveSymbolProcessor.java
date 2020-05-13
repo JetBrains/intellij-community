@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
@@ -127,7 +128,7 @@ public class PyMoveSymbolProcessor {
           PyClassRefactoringUtil.updateUnqualifiedImportOfElement(importStmt, newElement);
         }
         else if (resolvesToLocalStarImport(usage)) {
-          PyClassRefactoringUtil.insertImport(usage, newElement);
+          PyPsiRefactoringUtil.insertImport(usage, newElement);
           myFilesWithStarUsages.add(usageFile);
         }
       }
@@ -167,7 +168,7 @@ public class PyMoveSymbolProcessor {
    */
   private static void insertImportFromAndReplaceReference(@NotNull PsiNamedElement targetElement,
                                                           @NotNull PyQualifiedExpression expression) {
-    PyClassRefactoringUtil.insertImport(expression, targetElement, null, true);
+    PyPsiRefactoringUtil.insertImport(expression, targetElement, null, true);
     final PyElementGenerator generator = PyElementGenerator.getInstance(expression.getProject());
     final PyExpression generated = generator.createExpressionFromText(LanguageLevel.forElement(expression), expression.getReferencedName());
     expression.replace(generated);
@@ -190,7 +191,7 @@ public class PyMoveSymbolProcessor {
     final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
     if (srcFile != expression.getContainingFile()) {
       final QualifiedName qualifier = QualifiedNameFinder.findCanonicalImportPath(srcFile, expression);
-      PyClassRefactoringUtil.insertImport(expression, srcFile, null, false);
+      PyPsiRefactoringUtil.insertImport(expression, srcFile, null, false);
       final String newQualifiedReference = qualifier + "." + expression.getReferencedName();
       expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
     }
@@ -203,7 +204,7 @@ public class PyMoveSymbolProcessor {
     // Don't use PyUtil#multiResolveTopPriority here since it filters out low priority ImportedResolveResults
     final List<PsiElement> resolvedElements = new ArrayList<>();
     if (usage instanceof PyReferenceOwner) {
-      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.defaultContext());
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.implicitContext());
       for (ResolveResult result : reference.multiResolve(false)) {
         resolvedElements.add(result.getElement());
       }

@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
@@ -19,51 +20,29 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 /**
  * Use {@link com.intellij.execution.process.OSProcessUtil} wherever possible.
- *
- * @author traff
  */
-public class UnixProcessManager {
+public final class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
   // https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals
   public static final int SIGINT = 2;
+  public static final int SIGABRT = 6;
   public static final int SIGKILL = 9;
   public static final int SIGTERM = 15;
   public static final int SIGPIPE = getSignalNumber("PIPE");
-
-  private interface CLib extends Library {
-    int getpid();
-    int kill(int pid, int signal);
-  }
-
-  private static final CLib C_LIB;
-  static {
-    CLib lib = null;
-    try {
-      if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
-        lib = Native.load("c", CLib.class);
-      }
-    }
-    catch (Throwable t) {
-      Logger.getInstance(UnixProcessManager.class).warn("Can't load standard library", t);
-    }
-    C_LIB = lib;
-  }
 
   private UnixProcessManager() { }
 
   public static int getProcessId(@NotNull Process process) {
     try {
-      if (SystemInfo.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
+      if (SystemInfoRt.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
         //noinspection JavaReflectionMemberAccess
         return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }
 
-      return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
+      return Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {
       throw new IllegalStateException("Failed to get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
@@ -71,7 +50,7 @@ public class UnixProcessManager {
   }
 
   public static int getCurrentProcessId() {
-    return C_LIB != null ? C_LIB.getpid() : 0;
+    return Java8Helper.C_LIB != null ? Java8Helper.C_LIB.getpid() : 0;
   }
 
   /**
@@ -96,11 +75,11 @@ public class UnixProcessManager {
 
   public static int sendSignal(int pid, int signal) {
     checkCLib();
-    return C_LIB.kill(pid, signal);
+    return Java8Helper.C_LIB.kill(pid, signal);
   }
 
   private static void checkCLib() {
-    if (C_LIB == null) {
+    if (Java8Helper.C_LIB == null) {
       throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfo.OS_NAME + ", isUnix: " + SystemInfo.isUnix);
     }
   }
@@ -126,7 +105,7 @@ public class UnixProcessManager {
   public static boolean sendSignalToProcessTree(int processId, int signal) {
     checkCLib();
 
-    final int ourPid = C_LIB.getpid();
+    int ourPid = Java8Helper.C_LIB.getpid();
     return sendSignalToProcessTree(processId, signal, ourPid);
   }
 
@@ -229,7 +208,7 @@ public class UnixProcessManager {
           errorStr.append(s).append("\n");
         }
         if (throwOnError && errorStr.length() > 0) {
-          throw new IOException("Error reading ps output:" + errorStr.toString());
+          throw new IOException("Error reading ps output:" + errorStr);
         }
       }
     }
@@ -277,5 +256,28 @@ public class UnixProcessManager {
       }
       sendSignal(pid, signal);
     }
+  }
+}
+
+final class Java8Helper {
+  interface CLib extends Library {
+    int getpid();
+
+    int kill(int pid, int signal);
+  }
+
+  static final CLib C_LIB;
+
+  static {
+    CLib lib = null;
+    try {
+      if (SystemInfoRt.isUnix && JnaLoader.isLoaded()) {
+        lib = Native.load("c", CLib.class);
+      }
+    }
+    catch (Throwable t) {
+      Logger.getInstance(UnixProcessManager.class).warn("Can't load standard library", t);
+    }
+    C_LIB = lib;
   }
 }

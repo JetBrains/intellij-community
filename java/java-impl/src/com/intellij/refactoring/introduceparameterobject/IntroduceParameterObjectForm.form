@@ -16,7 +16,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Create new class"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.create.new.class"/>
         </properties>
       </component>
       <grid id="57543" binding="myCreateNewClassPanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -33,7 +33,7 @@
             </constraints>
             <properties>
               <labelFor value="7b1e0"/>
-              <text value="&amp;Name"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.new.class.name"/>
             </properties>
           </component>
           <component id="7b1e0" class="javax.swing.JTextField" binding="classNameField">
@@ -49,7 +49,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Package name"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.new.class.package.name"/>
             </properties>
           </component>
           <component id="90bcb" class="com.intellij.ui.ReferenceEditorComboWithBrowseButton" binding="packageTextField" custom-create="true">
@@ -88,7 +88,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Name"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.existing.class.name"/>
             </properties>
           </component>
           <component id="e03f" class="com.intellij.ui.ReferenceEditorComboWithBrowseButton" binding="existingClassField" custom-create="true">
@@ -102,7 +102,7 @@
               <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Generate accessors"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.generate.accessors.option"/>
             </properties>
           </component>
           <component id="97fed" class="javax.swing.JCheckBox" binding="myEscalateVisibilityCheckBox" default-binding="true">
@@ -110,7 +110,7 @@
               <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Escalate visibility"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.escalate.visibility.option"/>
             </properties>
           </component>
         </children>
@@ -120,7 +120,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Create &amp;inner class"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.create.inner.class"/>
         </properties>
       </component>
       <grid id="9a2f8" binding="myInnerClassPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -137,7 +137,7 @@
             </constraints>
             <properties>
               <labelFor value="29549"/>
-              <text value="&amp;Name"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.inner.class.name"/>
             </properties>
           </component>
           <component id="29549" class="javax.swing.JTextField" binding="myInnerClassNameTextField" default-binding="true">
@@ -155,7 +155,7 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Use existing class"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.parameter.object.use.existing.class"/>
         </properties>
       </component>
     </children>

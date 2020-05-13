@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -41,7 +42,6 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   private JCheckBox myCbVarType;
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
-  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
   private NameSuggestionsField.DataChanged myNameChangedListener;
   private ItemListener myReplaceAllListener;
   private ItemListener myFinalListener;
@@ -60,7 +60,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myValidator = validator;
     myFile = expression.getContainingFile();
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
     init();
   }
 
@@ -134,7 +134,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.weighty = 0;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    JLabel type = new JLabel(RefactoringBundle.message("variable.of.type"));
+    JLabel type = new JLabel(JavaRefactoringBundle.message("variable.of.type"));
     panel.add(type, gbConstraints);
 
     gbConstraints.gridx++;
@@ -195,7 +195,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
       if (myAnyLValueOccurrences) {
         myCbReplaceWrite = new StateRestoringCheckBox();
-        myCbReplaceWrite.setText(RefactoringBundle.message("replace.write.access.occurrences"));
+        myCbReplaceWrite.setText(JavaRefactoringBundle.message("replace.write.access.occurrences"));
         gbConstraints.insets = JBUI.insetsLeft(8);
         gbConstraints.gridy++;
         panel.add(myCbReplaceWrite, gbConstraints);
@@ -204,7 +204,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     }
 
     myCbFinal = new NonFocusableCheckBox();
-    myCbFinal.setText(RefactoringBundle.message("declare.final"));
+    myCbFinal.setText(JavaRefactoringBundle.message("declare.final"));
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     myCbFinalState = createFinals == null ?
                      JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_LOCALS :
@@ -223,7 +223,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     };
     myCbFinal.addItemListener(myFinalListener);
 
-    myCbVarType = new NonFocusableCheckBox(RefactoringBundle.message("declare.var.type"));
+    myCbVarType = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.var.type"));
     boolean toVarType = IntroduceVariableBase.canBeExtractedWithoutExplicitType(myExpression);
     if (toVarType) {
       myTypeSelector.addItemListener(new ItemListener() {
@@ -305,5 +305,9 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   @Override
   protected String getHelpId() {
     return HelpID.INTRODUCE_VARIABLE;
+  }
+
+  private static String getRefactoringName() {
+    return RefactoringBundle.message("introduce.variable.title");
   }
 }

@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.buildout.config.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,13 +11,11 @@ import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class BuildoutCfgFile extends PsiFileBase {
   public BuildoutCfgFile(FileViewProvider viewProvider) {
     super(viewProvider, BuildoutCfgLanguage.INSTANCE);
@@ -59,7 +56,7 @@ public class BuildoutCfgFile extends PsiFileBase {
     if (option == null) {
       return Collections.emptyList();
     }
-    List<String> result = Lists.newArrayList();
+    List<String> result = new ArrayList<>();
     for (String value : option.getValues()) {
       result.addAll(StringUtil.split(value, " "));
     }

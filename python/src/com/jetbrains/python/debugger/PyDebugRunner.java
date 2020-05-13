@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -54,11 +39,13 @@ import com.jetbrains.python.run.DebugAwareConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -66,24 +53,23 @@ import java.util.Map;
  * @author yole
  */
 public class PyDebugRunner extends GenericProgramRunner {
-  public static final String PY_DEBUG_RUNNER = "PyDebugRunner";
+  public static final @NonNls String PY_DEBUG_RUNNER = "PyDebugRunner";
 
+  public static final @NonNls String DEBUGGER_MAIN = "pydev/pydevd.py";
+  public static final @NonNls String CLIENT_PARAM = "--client";
+  public static final @NonNls String PORT_PARAM = "--port";
+  public static final @NonNls String FILE_PARAM = "--file";
+  public static final @NonNls String MODULE_PARAM = "--module";
+  public static final @NonNls String MULTIPROCESS_PARAM = "--multiprocess";
+  public static final @NonNls String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
+  public static final @NonNls String LIBRARY_ROOTS = "LIBRARY_ROOTS";
+  public static final @NonNls String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
   @SuppressWarnings("SpellCheckingInspection")
-  public static final String DEBUGGER_MAIN = "pydev/pydevd.py";
-  public static final String CLIENT_PARAM = "--client";
-  public static final String PORT_PARAM = "--port";
-  public static final String FILE_PARAM = "--file";
-  public static final String MODULE_PARAM = "--module";
-  public static final String MULTIPROCESS_PARAM = "--multiprocess";
-  public static final String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
-  public static final String LIBRARY_ROOTS = "LIBRARY_ROOTS";
-  public static final String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
-  @SuppressWarnings("SpellCheckingInspection")
-  public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
-  public static final String PYDEVD_FILTERS = "PYDEVD_FILTERS";
-  public static final String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
-  public static final String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
-  public static final String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
+  public static final @NonNls String GEVENT_SUPPORT = "GEVENT_SUPPORT";
+  public static final @NonNls String PYDEVD_FILTERS = "PYDEVD_FILTERS";
+  public static final @NonNls String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
+  public static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
+  public static final @NonNls String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
 
   @Override
   @NotNull
@@ -200,7 +186,8 @@ public class PyDebugRunner extends GenericProgramRunner {
                                                                      PythonDebugLanguageConsoleView console,
                                                                      ProcessHandler processHandler, final XDebugSession session) {
     PythonConsoleView pythonConsoleView = console.getPydevConsoleView();
-    PythonDebugConsoleCommunication debugConsoleCommunication = new PythonDebugConsoleCommunication(project, debugProcess);
+    PythonDebugConsoleCommunication debugConsoleCommunication =
+      new PythonDebugConsoleCommunication(project, debugProcess, pythonConsoleView);
 
     pythonConsoleView.setConsoleCommunication(debugConsoleCommunication);
 
@@ -417,7 +404,7 @@ public class PyDebugRunner extends GenericProgramRunner {
 
   private static void addProjectRootsToEnv(@NotNull Project project, @NotNull Map<String, String> environment) {
 
-    List<String> roots = Lists.newArrayList();
+    List<String> roots = new ArrayList<>();
     for (VirtualFile contentRoot : ProjectRootManager.getInstance(project).getContentRoots()) {
       roots.add(contentRoot.getPath());
     }
@@ -429,7 +416,7 @@ public class PyDebugRunner extends GenericProgramRunner {
                                        @NotNull AbstractPythonRunConfiguration runConfiguration) {
     final Sdk sdk = runConfiguration.getSdk();
     if (sdk != null) {
-      List<String> roots = Lists.newArrayList();
+      List<String> roots = new ArrayList<>();
       for (VirtualFile contentRoot : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
         roots.add(contentRoot.getPath());
       }

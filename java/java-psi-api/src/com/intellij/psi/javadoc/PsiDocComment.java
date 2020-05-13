@@ -37,14 +37,12 @@ public interface PsiDocComment extends PsiDocCommentBase {
    * Returns the PSI elements containing the description of the element being documented
    * (all significant tokens up to the first doc comment tag).
    */
-  @NotNull
-  PsiElement[] getDescriptionElements();
+  PsiElement @NotNull [] getDescriptionElements();
 
   /**
    * Returns the list of JavaDoc tags in the comment.
    */
-  @NotNull
-  PsiDocTag[] getTags();
+  PsiDocTag @NotNull [] getTags();
 
   /**
    * Finds the first JavaDoc tag with the specified name.
@@ -58,6 +56,5 @@ public interface PsiDocComment extends PsiDocCommentBase {
    * Finds all JavaDoc tags with the specified name.
    * @param name The name of the tags to find (not including the leading @ character).
    */
-  @NotNull
-  PsiDocTag[] findTagsByName(@NonNls String name);
+  PsiDocTag @NotNull [] findTagsByName(@NonNls String name);
 }

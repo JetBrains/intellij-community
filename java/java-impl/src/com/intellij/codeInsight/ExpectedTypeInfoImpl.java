@@ -128,9 +128,8 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return "ExpectedTypeInfo[type='" + type + "' kind='" + kind + "']";
   }
 
-  @NotNull
   @Override
-  public ExpectedTypeInfo[] intersect(@NotNull ExpectedTypeInfo info) {
+  public ExpectedTypeInfo @NotNull [] intersect(@NotNull ExpectedTypeInfo info) {
     ExpectedTypeInfoImpl info1 = (ExpectedTypeInfoImpl)info;
 
     if (kind == TYPE_STRICTLY) {

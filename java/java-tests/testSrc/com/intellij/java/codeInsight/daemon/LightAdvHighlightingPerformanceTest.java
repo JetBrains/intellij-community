@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -8,9 +8,10 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
@@ -27,8 +28,6 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.IntStreamEx;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -40,12 +39,13 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   protected void setUp() throws Exception {
     super.setUp();
 
-    blockUntil(Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
-    blockUntil(Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
-    blockUntil(ConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
-    blockUntil(getProject().getExtensionArea().getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
+    ExtensionsArea rootArea = ApplicationManager.getApplication().getExtensionArea();
+    blockUntil(rootArea.getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
+    blockUntil(rootArea.getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
+    blockUntil(ConcatenationInjectorManager.EP_NAME.getPoint(getProject()), getTestRootDisposable());
+    blockUntil(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
 
-    IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
+    IntentionManager.getInstance().getAvailableIntentions();  // hack to avoid slowdowns in PyExtensionFactory
     PathManagerEx.getTestDataPath(); // to cache stuff
   }
 
@@ -72,9 +72,9 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, () -> doHighlighting())
+    PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
-      .attempts(10)
+      .reattemptUntilJitSettlesDown()
       .usesAllCPUCores().assertTiming();
 
     return highlightErrors();
@@ -124,7 +124,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 300, () -> {
       getFile().accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           for (int i = 0; i < 10; i++) {
             assertSame(myProject, element.getProject());
           }

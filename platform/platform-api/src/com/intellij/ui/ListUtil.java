@@ -104,7 +104,7 @@ public class ListUtil {
     getExtension(model).addAll(model, items);
   }
 
-  private static <T> List<T> removeIndices(@NotNull JList<T> list, @NotNull int[] indices, @Nullable Condition<? super T> condition) {
+  private static <T> List<T> removeIndices(@NotNull JList<T> list, int @NotNull [] indices, @Nullable Condition<? super T> condition) {
     if (indices.length == 0) {
       return new ArrayList<>(0);
     }

@@ -48,11 +48,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class LibrariesContainerFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory");
+  private static final Logger LOG = Logger.getInstance(LibrariesContainerFactory.class);
   private static final Library[] EMPTY_LIBRARIES_ARRAY = Library.EMPTY_ARRAY;
 
   private LibrariesContainerFactory() {
@@ -125,8 +122,8 @@ public class LibrariesContainerFactory {
     @Override
     public Library createLibrary(@NotNull @NonNls String name,
                                  @NotNull LibraryLevel level,
-                                 @NotNull VirtualFile[] classRoots,
-                                 @NotNull VirtualFile[] sourceRoots) {
+                                 VirtualFile @NotNull [] classRoots,
+                                 VirtualFile @NotNull [] sourceRoots) {
       NewLibraryEditor editor = new NewLibraryEditor();
       editor.setName(name);
       for (VirtualFile classRoot : classRoots) {
@@ -149,8 +146,7 @@ public class LibrariesContainerFactory {
     }
 
     @Override
-    @NotNull
-    public Library[] getAllLibraries() {
+    public Library @NotNull [] getAllLibraries() {
       Library[] libraries = getLibraries(LibraryLevel.GLOBAL);
       Library[] projectLibraries = getLibraries(LibraryLevel.PROJECT);
       if (projectLibraries.length > 0) {
@@ -204,8 +200,7 @@ public class LibrariesContainerFactory {
     }
 
     @Override
-    @NotNull
-    public Library[] getLibraries(@NotNull final LibraryLevel libraryLevel) {
+    public Library @NotNull [] getLibraries(@NotNull final LibraryLevel libraryLevel) {
       if (libraryLevel == LibraryLevel.MODULE && myModule != null) {
         return getModuleLibraries();
       }
@@ -231,8 +226,7 @@ public class LibrariesContainerFactory {
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
+    public VirtualFile @NotNull [] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
       return library.getFiles(rootType);
     }
 
@@ -314,8 +308,7 @@ public class LibrariesContainerFactory {
     }
 
     @Override
-    @NotNull
-    public Library[] getLibraries(@NotNull final LibraryLevel libraryLevel) {
+    public Library @NotNull [] getLibraries(@NotNull final LibraryLevel libraryLevel) {
       LibraryTableModifiableModelProvider provider = getProvider(libraryLevel);
       return provider != null ? provider.getModifiableModel().getLibraries() : EMPTY_LIBRARIES_ARRAY;
     }
@@ -339,8 +332,7 @@ public class LibrariesContainerFactory {
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
+    public VirtualFile @NotNull [] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
       LibrariesModifiableModel projectLibrariesModel = myContext.getProjectLibrariesProvider().getModifiableModel();
       if (projectLibrariesModel.hasLibraryEditor(library)) {
         LibraryEditor libraryEditor = projectLibrariesModel.getLibraryEditor(library);

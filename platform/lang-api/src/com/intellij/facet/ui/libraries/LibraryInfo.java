@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author nik
- */
 public class LibraryInfo {
   public static final LibraryInfo[] EMPTY_ARRAY = new LibraryInfo[0];
 

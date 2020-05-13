@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -263,7 +261,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
   }
 
   public void testAnnoyingScrolling() {
-                                  
+
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject));
 
     final AbstractProjectViewPSIPane pane = myStructure.createPane();
@@ -289,7 +287,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
   }
 
-  class NodeWrapper extends AbstractTreeNode<Object> {
+  static class NodeWrapper extends AbstractTreeNode<Object> {
     String myName;
     List<NodeWrapper> myChildren = new ArrayList<>();
 
@@ -300,7 +298,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     @Override
     @NotNull
-    public Collection<? extends AbstractTreeNode> getChildren() {
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
       return myChildren;
     }
 
@@ -409,12 +407,12 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     return new TreeStructureProvider() {
       @NotNull
       @Override
-      public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
+      public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
 
         if (parent instanceof NodeWrapper) {
           return children;
         }
-        List<AbstractTreeNode> result = new ArrayList<>();
+        List<AbstractTreeNode<?>> result = new ArrayList<>();
         result.add(rootWrapper);
         return result;
       }

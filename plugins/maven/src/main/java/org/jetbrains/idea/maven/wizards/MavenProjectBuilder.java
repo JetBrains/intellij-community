@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -23,13 +22,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
-import icons.MavenIcons;
+import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
 import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
+
 /**
  * Do not use this project import builder directly.
  * <p>
@@ -47,8 +49,7 @@ import java.util.concurrent.TimeoutException;
  * Use {@link com.intellij.ide.actions.ImportModuleAction#doImport} to import (attach) a new project.
  * Use {@link com.intellij.ide.impl.ProjectUtil#openOrImport} to open (import) a new project.
  */
-public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> implements DeprecatedProjectBuilderForImport {
-
+public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> implements DeprecatedProjectBuilderForImport {
   private static final Logger LOG = Logger.getInstance(MavenProjectBuilder.class);
 
   private static class Parameters {
@@ -71,12 +72,12 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
   @Override
   @NotNull
   public String getName() {
-    return ProjectBundle.message("maven.name");
+    return MavenProjectBundle.message("maven.name");
   }
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.MavenLogo;
+    return RepositoryLibraryLogo;
   }
 
   @Override
@@ -186,7 +187,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
-      Promise<List<Module>> promise = manager.scheduleImportAndResolve(true);
+      Promise<List<Module>> promise = manager.scheduleImportAndResolve();
       manager.waitForResolvingCompletion();
       try {
         return promise.blockingGet(0);
@@ -197,9 +198,10 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
     }
 
     boolean isFromUI = model != null;
-    return manager.importProjects(isFromUI
-                                  ? new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel)
-                                  : new IdeModifiableModelsProviderImpl(project));
+    if (isFromUI) {
+      return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
+    }
+    return manager.importProjects();
   }
 
   private static void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
@@ -220,19 +222,18 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
     // We cannot determinate project in non-EDT thread.
     getParameters().myProjectToUpdate = projectToUpdate != null ? projectToUpdate : ProjectManager.getInstance().getDefaultProject();
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-        indicator.setText(ProjectBundle.message("maven.locating.files"));
+        indicator.setText(MavenProjectBundle.message("maven.locating.files"));
 
         getParameters().myImportRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
         if (getParameters().myImportRoot == null) throw new MavenProcessCanceledException();
 
         final VirtualFile file = getRootDirectory();
         if (file == null) throw new MavenProcessCanceledException();
-
         getParameters().myFiles = FileFinder.findPomFiles(file.getChildren(),
-                                                          getImportingSettings().isLookForNested(),
+                                                          LookForNestedToggleAction.isSelected(),
                                                           indicator,
                                                           new ArrayList<>());
 
@@ -247,7 +248,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
       public void run(MavenProgressIndicator indicator) {
         readMavenProjectTree(indicator);
@@ -373,5 +374,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
   @Override
   public Project createProject(String name, String path) {
     return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+  }
+
+  @NotNull
+  @Override
+  public ProjectOpenProcessor getProjectOpenProcessor() {
+    return ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(MavenProjectOpenProcessor.class);
   }
 }

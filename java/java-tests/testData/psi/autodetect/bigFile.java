@@ -980,7 +980,7 @@ public final class XXXXX extends UserDataHolderBase implements EditorEx, Highlig
       }
     });
 
-    UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable.Adapter() {
+    UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable() {
       @Override
       public void showNotify() {
         myGutterComponent.updateSize();

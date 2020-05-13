@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,12 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("default.not.last.case.in.switch.display.name");
-  }
 
   @Override
   @NotNull
@@ -81,7 +76,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Make 'default' the last case";
+        return JavaAnalysisBundle.message("make.default.the.last.case.family.name");
       }
     };
   }

@@ -17,4 +17,10 @@ final class Foo {
   Object throwing() {
     throw new UnsupportedOperationException();
   }
+  
+  @Nullable
+  String s(String foo) {
+    if (!foo.isEmpty()) return foo;
+    return null;
+  }
 }

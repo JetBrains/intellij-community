@@ -24,6 +24,6 @@ public class PyReturnStatementImpl extends PyElementImpl implements PyReturnStat
   @Override
   @Nullable
   public PyExpression getExpression() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 }

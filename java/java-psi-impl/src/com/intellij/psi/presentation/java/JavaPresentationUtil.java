@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.presentation.java;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -123,7 +124,7 @@ public class JavaPresentationUtil {
       result = null;
     }
     if (result != null) {
-      return PsiBundle.message("aux.context.display", result);
+      return JavaPsiBundle.message("aux.context.display", result);
     }
     return null;
   }

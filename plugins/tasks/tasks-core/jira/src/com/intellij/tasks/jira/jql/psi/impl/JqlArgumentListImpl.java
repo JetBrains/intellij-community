@@ -19,9 +19,8 @@ public class JqlArgumentListImpl extends JqlElementImpl implements JqlArgumentLi
     visitor.visitJqlArgumentList(this);
   }
 
-  @NotNull
   @Override
-  public JqlLiteral[] getArguments() {
+  public JqlLiteral @NotNull [] getArguments() {
     return findChildrenByClass(JqlLiteral.class);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
@@ -26,7 +26,6 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,9 +56,6 @@ public class RunDashboardServiceViewContributor
 
   @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
 
-  private static final ExtensionPointName<RunDashboardGroupingRule> EP_NAME =
-    ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
-
   private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
     new SimpleServiceViewDescriptor("Run Dashboard", AllIcons.Actions.Execute) {
       @Override
@@ -70,6 +66,11 @@ public class RunDashboardServiceViewContributor
       @Override
       public ActionGroup getPopupActions() {
         return RunDashboardServiceViewContributor.getPopupActions();
+      }
+
+      @Override
+      public DataProvider getDataProvider() {
+        return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id) ? new RunDashboardServiceViewDeleteProvider() : null;
       }
     };
 
@@ -86,7 +87,7 @@ public class RunDashboardServiceViewContributor
     return ContainerUtil.map(runDashboardManager.getRunConfigurations(),
                              value -> new RunConfigurationContributor(
                                new RunConfigurationNode(project, value,
-                                                        runDashboardManager.getCustomizers(value.getSettings(), value.getDescriptor()))));
+                                                        RunDashboardManagerImpl.getCustomizers(value.getSettings(), value.getDescriptor()))));
   }
 
   @NotNull
@@ -100,7 +101,7 @@ public class RunDashboardServiceViewContributor
   public List<GroupingNode> getGroups(@NotNull RunConfigurationContributor contributor) {
     List<GroupingNode> result = new ArrayList<>();
     GroupingNode parentGroupNode = null;
-    for (RunDashboardGroupingRule groupingRule : EP_NAME.getExtensions()) {
+    for (RunDashboardGroupingRule groupingRule : RunDashboardManagerImpl.GROUPING_RULE_EP_NAME.getExtensions()) {
       RunDashboardGroup group = groupingRule.getGroup(contributor.asService());
       if (group != null) {
         GroupingNode node = new GroupingNode(contributor.asService().getProject(),
@@ -515,7 +516,7 @@ public class RunDashboardServiceViewContributor
     }
   }
 
-  static class RunConfigurationContributor implements ServiceViewProvidingContributor<AbstractTreeNode, RunConfigurationNode> {
+  static class RunConfigurationContributor implements ServiceViewProvidingContributor<AbstractTreeNode<?>, RunConfigurationNode> {
     private final RunConfigurationNode myNode;
 
     RunConfigurationContributor(@NotNull RunConfigurationNode node) {
@@ -536,7 +537,7 @@ public class RunDashboardServiceViewContributor
 
     @NotNull
     @Override
-    public List<AbstractTreeNode> getServices(@NotNull Project project) {
+    public List<AbstractTreeNode<?>> getServices(@NotNull Project project) {
       return new ArrayList<>(myNode.getChildren());
     }
 

@@ -18,9 +18,6 @@ import java.util.Arrays;
 
 import static org.jetbrains.plugins.groovy.util.LibrariesUtil.SOME_GROOVY_CLASS;
 
-/**
- * @author nik
- */
 public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
   public static final LibraryKind GROOVY_KIND = LibraryKind.create("groovy");
 

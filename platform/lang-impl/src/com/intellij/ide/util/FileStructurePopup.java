@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
@@ -18,6 +19,10 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
+import com.intellij.internal.statistic.eventLog.EventFields;
+import com.intellij.lang.LangBundle;
+import com.intellij.lang.Language;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -30,6 +35,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -92,7 +99,7 @@ import java.util.function.BiPredicate;
  * @author Konstantin Bulenkov
  */
 public class FileStructurePopup implements Disposable, TreeActionsOwner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
+  private static final Logger LOG = Logger.getInstance(FileStructurePopup.class);
   private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
   private final Project myProject;
@@ -292,7 +299,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         myTreeHasBuilt.setRejected();
       }
     });
-    myTree.getEmptyText().setText("Loading...");
+    myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
@@ -318,7 +325,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       public void run() {
         alarm.cancelAllRequests();
         String prefix = mySpeedSearch.getEnteredPrefix();
-        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Structure is empty" : "'" + prefix + "' not found");
+        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? LangBundle.message("status.text.structure.empty")
+                                                                 : "'" + prefix + "' " +
+                                                                   LangBundle.message("status.text.structure.empty.not.found"));
         if (prefix == null) prefix = "";
 
         if (!filter.equals(prefix)) {
@@ -753,7 +762,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
 
       IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
-    }, "Navigate", null);
+    }, LangBundle.message("command.name.navigate"), null);
     return succeeded.get();
   }
 
@@ -774,7 +783,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     checkBox.setSelected(selected);
     boolean isRevertedStructureFilter = action instanceof FileStructureFilter && ((FileStructureFilter)action).isReverted();
     myTreeActionsOwner.setActionIncluded(action, isRevertedStructureFilter != selected);
-    checkBox.addActionListener(__ -> {
+    checkBox.addActionListener(actionEvent -> {
+      logFileStructureCheckboxClick(action);
+
       boolean state = checkBox.isSelected();
       if (!myAutoClicked.contains(checkBox)) {
         saveState(action, state);
@@ -793,10 +804,27 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       DumbAwareAction.create(e -> checkBox.doClick())
         .registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myTree);
     }
-    checkBox.setText(StringUtil.capitalize(StringUtil.trimStart(text.trim(), "Show ")));
+    checkBox.setText(text);
     panel.add(checkBox);
 
     myCheckBoxes.put(action.getClass(), checkBox);
+  }
+
+  private void logFileStructureCheckboxClick(TreeAction action) {
+    Language language = null;
+    FileType fileType = myFileEditor.getFile().getFileType();
+    if (fileType instanceof LanguageFileType) {
+      language = ((LanguageFileType) fileType).getLanguage();
+    }
+
+    ActionsEventLogGroup.ACTION_INVOKED.log(
+      myProject,
+      EventFields.PluginInfoFromInstance.with(action),
+      EventFields.ActionPlace.with(ActionPlaces.FILE_STRUCTURE_POPUP),
+      EventFields.CurrentFile.with(language),
+      ActionsEventLogGroup.ACTION_CLASS.with(action.getClass().getName()),
+      ActionsEventLogGroup.ACTION_ID.with(action.getClass().getName())
+    );
   }
 
   @NotNull
@@ -809,7 +837,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   @NotNull
   private Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
-    myStructureTreeModel.getInvoker().runOrInvokeLater(() -> {
+    myStructureTreeModel.getInvoker().invoke(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
         myStructureTreeModel.invalidate().onSuccess(
@@ -832,8 +860,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     return result;
   }
 
-  @NotNull
-  static Shortcut[] extractShortcutFor(@NotNull TreeAction action) {
+  static Shortcut @NotNull [] extractShortcutFor(@NotNull TreeAction action) {
     if (action instanceof ActionShortcutProvider) {
       String actionId = ((ActionShortcutProvider)action).getActionIdForShortcut();
       return KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
@@ -991,7 +1018,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
 
     @Override
-    public Object findElement(String s) {
+    public Object findElement(@NotNull String s) {
       List<SpeedSearchObjectWithWeight> elements = SpeedSearchObjectWithWeight.findElement(s, this);
       SpeedSearchObjectWithWeight best = ContainerUtil.getFirstItem(elements);
       if (best == null) return null;

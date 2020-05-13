@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +133,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
   @NotNull
   public String getName() {
     return myStart
-           ? XmlErrorMessages.message("rename.start.tag.name.intention", mySourceName, myTargetName)
-           : XmlErrorMessages.message("rename.end.tag.name.intention", mySourceName, myTargetName);
+           ? XmlAnalysisBundle.message("rename.start.tag.name.intention", mySourceName, myTargetName)
+           : XmlAnalysisBundle.message("rename.end.tag.name.intention", mySourceName, myTargetName);
   }
 }

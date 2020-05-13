@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
@@ -28,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,7 +29,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
  */
 @ApiStatus.Internal
 public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
+  private static final Logger LOG = Logger.getInstance(LibraryOrderEntryImpl.class);
   @NotNull
   private final Library myLibrary;
   @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.MODULE_LIBRARY_TYPE;
@@ -68,7 +54,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   ModuleLibraryOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
     super(rootModel, projectRootManager);
-    LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR)));
+    LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(JpsModuleRootModelSerializer.TYPE_ATTRIBUTE)));
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
     myScope = DependencyScope.readExternal(element);
     myLibrary = LibraryTableImplUtil.loadLibrary(element, getRootModel());
@@ -124,7 +110,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
         return PathUtil.toPresentableUrl(url);
       }
       else {
-        return ProjectBundle.message("library.empty.library.item");
+        return ProjectModelBundle.message("library.empty.library.item");
       }
     }
   }
@@ -146,10 +132,10 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   @NotNull
   @Override
-  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+  public OrderEntry cloneEntry(@NotNull ModifiableRootModel rootModel,
                                @NotNull ProjectRootManagerImpl projectRootManager,
                                @NotNull VirtualFilePointerManager filePointerManager) {
-    return new ModuleLibraryOrderEntryImpl(myLibrary, rootModel, myExported, myScope);
+    return new ModuleLibraryOrderEntryImpl(myLibrary, (RootModelImpl)rootModel, myExported, myScope);
   }
 
   @Override
@@ -171,6 +157,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   @Override
   public void setExported(boolean value) {
+    getRootModel().assertWritable();
     myExported = value;
   }
 
@@ -182,6 +169,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   @Override
   public void setScope(@NotNull DependencyScope scope) {
+    getRootModel().assertWritable();
     myScope = scope;
   }
 }

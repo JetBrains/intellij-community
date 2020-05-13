@@ -3,6 +3,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -28,7 +29,7 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 @State(name = "ResourceBundleManager", storages = @Storage("resourceBundles.xml"))
-public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState> {
+public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState>, Disposable {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
@@ -157,7 +158,11 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           }
         }
       }
-    });
+    }, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public static ResourceBundleManager getInstance(final Project project) {

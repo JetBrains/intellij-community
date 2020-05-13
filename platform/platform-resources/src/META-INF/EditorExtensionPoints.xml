@@ -1,0 +1,66 @@
+<idea-plugin>
+  <extensionPoints>
+    <!--@formatter:off-->
+    <extensionPoint name="wordBoundaryFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
+    </extensionPoint>
+    <extensionPoint name="bidiRegionsSeparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
+    </extensionPoint>
+    <extensionPoint name="enterBetweenBracesDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate"/>
+    </extensionPoint>
+    <extensionPoint name="editor.backspaceModeOverride" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.BackspaceModeOverride"/>
+    </extensionPoint>
+
+    <extensionPoint name="extendWordSelectionHandler" interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler" dynamic="true"/>
+    <extensionPoint name="basicWordSelectionFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+    <extensionPoint name="typedHandler" interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="selectionUnquotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
+    <extensionPoint name="selectionDequotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$DequotingFilter" dynamic="true"/>
+    <extensionPoint name="joinLinesHandler" interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate" dynamic="true"/>
+
+    <extensionPoint dynamic="true" name="generalEditorOptionsExtension" beanClass="com.intellij.application.options.editor.GeneralEditorOptionsProviderEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
+
+    <!--quote handlers-->
+    <extensionPoint name="quoteHandler" beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP" dynamic="true">
+      <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
+    </extensionPoint>
+    <extensionPoint name="lang.quoteHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
+    </extensionPoint>
+
+    <!--copy/paste-->
+    <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>
+    <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor" dynamic="true"/>
+    <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor" dynamic="true"/>
+    <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean" dynamic="true"/>
+
+    <extensionPoint name="commentCompleteHandler" interface="com.intellij.codeInsight.editorActions.CommentCompleteHandler" dynamic="true"/>
+    <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover" dynamic="true"/>
+
+    <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler"/>
+    </extensionPoint>
+    <extensionPoint name="codeInsight.fillParagraph" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.fillParagraph.ParagraphFillHandler"/>
+    </extensionPoint>
+    <extensionPoint name="codeBlockProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.CodeBlockProvider"/>
+    </extensionPoint>
+    <extensionPoint name="lang.smartEnterProcessor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor"/>
+    </extensionPoint>
+    <extensionPoint name="moveLeftRightHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler"/>
+    </extensionPoint>
+    <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper"/>
+    </extensionPoint>
+  </extensionPoints>
+</idea-plugin>

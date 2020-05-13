@@ -7,7 +7,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -34,6 +34,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.changes.GitChangeUtils;
 import git4idea.diff.GitSubmoduleContentRevision;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitSubmodule;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.Nls;
@@ -79,7 +80,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                                      leftHash.asString(), rightHash.asString());
       },
                       request -> DiffManager.getInstance().showDiff(myProject, request),
-                      "Calculating Diff for " + chooseNotNull(rightPath, leftPath).getName());
+                      GitBundle.message("git.log.diff.handler.process", chooseNotNull(rightPath, leftPath).getName()));
     }
   }
 
@@ -95,9 +96,11 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
         DiffContent rightDiffContent = createCurrentDiffContent(localPath);
         return new SimpleDiffRequest(getTitle(revisionPath, localPath, DIFF_TITLE_RENAME_SEPARATOR),
                                      leftDiffContent, rightDiffContent,
-                                     revisionHash.asString(), "(Local)");
+                                     revisionHash.asString(),
+                                     "(" + GitBundle.message("git.log.diff.handler.local.version.content.title") + ")");
       },
-                      request -> DiffManager.getInstance().showDiff(myProject, request), "Calculating Diff for " + localPath.getName());
+                      request -> DiffManager.getInstance().showDiff(myProject, request),
+                      GitBundle.message("git.log.diff.handler.process", localPath.getName()));
     }
   }
 
@@ -109,16 +112,16 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     Collection<FilePath> filePaths = affectedPaths != null ? affectedPaths : Collections.singleton(VcsUtil.getFilePath(root));
     loadDiffAndShow(() -> getDiff(root, filePaths, leftRevision, rightRevision),
                     (diff) -> {
-                      String dialogTitle = "Changes between " +
-                                           leftRevision.toShortString() +
-                                           " and " +
-                                           (rightRevision == null ? "local version" : rightRevision.toShortString()) +
-                                           " in " +
-                                           getTitleForPaths(root, affectedPaths);
+                      String rightRevisionTitle = rightRevision == null
+                                                  ? GitBundle.message("git.log.diff.handler.local.version.name")
+                                                  : rightRevision.toShortString();
+                      String dialogTitle = GitBundle.message("git.log.diff.handler.paths.diff.title", leftRevision.toShortString(),
+                                                             rightRevisionTitle,
+                                                             getTitleForPaths(root, affectedPaths));
                       VcsDiffUtil.showChangesDialog(myProject, dialogTitle, new ArrayList<>(diff));
                     },
-                    "Calculating Diff for " +
-                    StringUtil.shortenTextWithEllipsis(StringUtil.join(filePaths, FilePath::getName, ", "), 100, 0));
+                    GitBundle.message("git.log.diff.handler.process",
+                                      StringUtil.shortenTextWithEllipsis(StringUtil.join(filePaths, FilePath::getName, ", "), 100, 0)));
   }
 
   @NotNull
@@ -180,8 +183,9 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
 
         @Override
         public void onThrowable(@NotNull Throwable error) {
-          VcsBalloonProblemNotifier.showOverVersionControlView(myProject, title + " failed\n" +
-                                                                          error.getMessage(), MessageType.ERROR);
+          VcsBalloonProblemNotifier.showOverVersionControlView(myProject,
+                                                               GitBundle.message("git.log.diff.handler.failed.message", title) +
+                                                               "\n" + error.getMessage(), MessageType.ERROR);
         }
       });
     }
@@ -191,8 +195,9 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
         ApplicationManager.getApplication().invokeLater(() -> show.consume(result));
       }
       catch (VcsException e) {
-        VcsBalloonProblemNotifier.showOverVersionControlView(myProject, title + " failed\n" +
-                                                                        e.getMessage(), MessageType.ERROR);
+        VcsBalloonProblemNotifier.showOverVersionControlView(myProject,
+                                                             GitBundle.message("git.log.diff.handler.failed.message", title) +
+                                                             "\n" + e.getMessage(), MessageType.ERROR);
       }
     }
   }
@@ -225,7 +230,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       }
     }
 
-    diffContent.putUserData(DiffUserDataKeysEx.REVISION_INFO, new Pair<>(path, revisionNumber));
+    diffContent.putUserData(DiffVcsDataKeys.REVISION_INFO, new Pair<>(path, revisionNumber));
 
     return diffContent;
   }

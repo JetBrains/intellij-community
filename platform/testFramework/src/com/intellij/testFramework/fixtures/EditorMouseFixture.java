@@ -20,6 +20,7 @@ public class EditorMouseFixture {
   private int myModifiers;
   private int myButton = MouseEvent.BUTTON1;
   private int myLastId;
+  private int myLastClickCount;
   private Component myLastComponent;
 
   public EditorMouseFixture(EditorImpl editor) {
@@ -51,26 +52,23 @@ public class EditorMouseFixture {
                                            myModifiers | getModifiersForButtonPress(myButton),
                                            myX = p.x,
                                            myY = p.y,
-                                           clickCount,
-                                           false,
+                                           myLastClickCount = clickCount,
+                                           false, // Windows behaviour
                                            myButton));
     return this;
   }
 
   public EditorMouseFixture release() {
-    return release(1);
-  }
-
-  private EditorMouseFixture release(int clickCount) {
     int oldLastId = myLastId;
+    int clickCount = myLastId == MouseEvent.MOUSE_PRESSED ? myLastClickCount : 0;
     myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
                                                  myLastId = MouseEvent.MOUSE_RELEASED,
                                                  System.currentTimeMillis(),
                                                  myModifiers | getModifiersForButtonRelease(myButton),
                                                  myX,
                                                  myY,
-                                                 clickCount,
-                                                 false,
+                                                 myLastClickCount = clickCount,
+                                                 myButton == MouseEvent.BUTTON3, // Windows behaviour
                                                  myButton));
     if (oldLastId == MouseEvent.MOUSE_PRESSED) {
       myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
@@ -80,11 +78,15 @@ public class EditorMouseFixture {
                                                    myX,
                                                    myY,
                                                    clickCount,
-                                                   false,
+                                                   false, // Windows behaviour
                                                    myButton));
     }
     myLastComponent = null;
     return this;
+  }
+
+  public EditorMouseFixture clickAtXY(int x, int y) {
+    return pressAtXY(x, y).release();
   }
 
   public EditorMouseFixture clickAt(int visualLine, int visualColumn) {
@@ -92,11 +94,15 @@ public class EditorMouseFixture {
   }
 
   public EditorMouseFixture doubleClickAt(int visualLine, int visualColumn) {
-    return clickAt(visualLine, visualColumn).pressAt(2, getPoint(visualLine, visualColumn)).release(2);
+    return doubleClickNoReleaseAt(visualLine, visualColumn).release();
+  }
+
+  public EditorMouseFixture doubleClickNoReleaseAt(int visualLine, int visualColumn) {
+    return clickAt(visualLine, visualColumn).pressAt(2, getPoint(visualLine, visualColumn));
   }
 
   public EditorMouseFixture tripleClickAt(int visualLine, int visualColumn) {
-    return doubleClickAt(visualLine, visualColumn).pressAt(3, getPoint(visualLine, visualColumn)).release(3);
+    return doubleClickAt(visualLine, visualColumn).pressAt(3, getPoint(visualLine, visualColumn)).release();
   }
 
   public EditorMouseFixture moveTo(int visualLine, int visualColumn) {
@@ -122,7 +128,7 @@ public class EditorMouseFixture {
                                            myModifiers,
                                            myX = x,
                                            myY = y,
-                                           0,
+                                           myLastClickCount = 0,
                                            false,
                                            0));
     return this;
@@ -142,7 +148,7 @@ public class EditorMouseFixture {
                                            myModifiers | getModifiersForButtonPress(myButton),
                                            myX = x,
                                            myY = y,
-                                           1,
+                                           myLastClickCount = 1,
                                            false,
                                            0));
     return this;

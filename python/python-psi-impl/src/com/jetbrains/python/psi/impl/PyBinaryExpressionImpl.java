@@ -114,7 +114,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   @NotNull
   @Override
   public PsiPolyVariantReference getReference() {
-    return getReference(PyResolveContext.noImplicits());
+    return getReference(PyResolveContext.defaultContext());
   }
 
   @NotNull
@@ -140,13 +140,13 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     if (PyNames.CONTAINS.equals(getReferencedName())) return PyBuiltinCache.getInstance(this).getBoolType();
 
     final List<PyCallExpression.PyArgumentsMapping> results =
-      PyCallExpressionHelper.mapArguments(this, PyResolveContext.noImplicits().withTypeEvalContext(context));
+      PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext().withTypeEvalContext(context));
     if (!results.isEmpty()) {
       final List<PyType> types = new ArrayList<>();
       final List<PyType> matchedTypes = new ArrayList<>();
       for (PyCallExpression.PyArgumentsMapping result : results) {
-        final PyCallExpression.PyMarkedCallee markedCallee = result.getMarkedCallee();
-        if (markedCallee == null) continue;
+        final PyCallableType callableType = result.getCallableType();
+        if (callableType == null) continue;
 
         boolean matched = true;
         for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMappedParameters().entrySet()) {
@@ -156,7 +156,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
             matched = false;
           }
         }
-        final PyType type = markedCallee.getCallableType().getCallType(context, this);
+        final PyType type = callableType.getCallType(context, this);
         types.add(type);
         if (matched) {
           matchedTypes.add(type);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
@@ -48,7 +49,7 @@ class ActionStepBuilder {
       myPresentationFactory = new PresentationFactory();
     }
     else {
-      myPresentationFactory = ObjectUtils.notNull(presentationFactory);
+      myPresentationFactory = Objects.requireNonNull(presentationFactory);
     }
     myListModel = new ArrayList<>();
     myDataContext = dataContext;
@@ -58,7 +59,7 @@ class ActionStepBuilder {
     myPrependWithSeparator = false;
     mySeparatorText = null;
     myHonorActionMnemonics = honorActionMnemonics;
-    myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.UNKNOWN);
+    myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.POPUP);
   }
 
   @NotNull

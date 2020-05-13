@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.actions;
 
-public class NextTabAction extends TabNavigationActionBase {
+import com.intellij.ide.lightEdit.LightEditCompatible;
+
+public class NextTabAction extends TabNavigationActionBase implements LightEditCompatible {
   public NextTabAction () { super (NavigationType.NEXT); }
 }

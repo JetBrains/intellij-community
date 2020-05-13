@@ -34,13 +34,6 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "control.flow.statement.without.braces.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "control.flow.statement.without.braces.problem.descriptor", infos);

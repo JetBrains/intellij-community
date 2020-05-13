@@ -17,7 +17,7 @@ public class RegExpFileElementType extends IFileElementType {
   }
 
   @Override
-  public PsiBuilder parseLight(ASTNode chameleon) {
+  protected ASTNode doParseContents(@NotNull ASTNode chameleon, @NotNull PsiElement outerPsi) {
     PsiElement psi = chameleon.getPsi();
     Project project = psi.getProject();
     Language languageForParser = getLanguageForParser(psi);
@@ -27,7 +27,7 @@ public class RegExpFileElementType extends IFileElementType {
     PsiParser parser = definition.createParser(project, capabilities);
     PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, languageForParser, chameleon.getChars());
     ((LightPsiParser)parser).parseLight(this, builder);
-    return builder;
+    return builder.getTreeBuilt().getFirstChildNode();
   }
 
   @NotNull
@@ -37,10 +37,5 @@ public class RegExpFileElementType extends IFileElementType {
     Language language = host == null ? null : host.getLanguage();
     RegExpCapabilitiesProvider provider = language == null ? null : RegExpCapabilitiesProvider.EP.forLanguage(language);
     return provider == null ? capabilities : EnumSet.copyOf(provider.setup(host, capabilities));
-  }
-
-  @Override
-  protected ASTNode doParseContents(@NotNull ASTNode chameleon, @NotNull PsiElement psi) {
-    return parseLight(chameleon).getTreeBuilt().getFirstChildNode();
   }
 }

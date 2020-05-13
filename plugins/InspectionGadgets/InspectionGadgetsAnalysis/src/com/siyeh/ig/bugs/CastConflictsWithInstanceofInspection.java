@@ -31,22 +31,14 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cast.conflicts.with.instanceof.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)infos[0];
     return InspectionGadgetsBundle.message(
       "cast.conflicts.with.instanceof.problem.descriptor",  referenceExpression.getText());
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(final Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(final Object... infos) {
     final String castExpressionType = ((PsiTypeElement)infos[1]).getText();
     final String instanceofType = ((PsiTypeElement)infos[2]).getText();
     return new InspectionGadgetsFix[]{
@@ -216,7 +208,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace cast type";
+      return InspectionGadgetsBundle.message("replace.cast.fix.family.name");
     }
 
     @Override
@@ -238,7 +230,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace instanceOf type";
+      return InspectionGadgetsBundle.message("replace.instanceof.fix.family.name");
     }
 
     @Override

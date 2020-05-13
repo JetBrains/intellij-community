@@ -39,7 +39,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CompositePsiElement extends CompositeElement implements PsiElement, NavigationItem {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositePsiElement");
+  private static final Logger LOG = Logger.getInstance(CompositePsiElement.class);
 
   protected static int ourHC;
 
@@ -57,8 +57,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
@@ -141,8 +140,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 

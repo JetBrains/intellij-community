@@ -25,9 +25,6 @@ import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* @author nik
-*/
 public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensionProperties> {
   private AntArtifactExtensionProperties myExtensionProperties = new AntArtifactExtensionProperties();
   private final boolean myPostProcessing;

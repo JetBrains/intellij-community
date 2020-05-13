@@ -24,18 +24,16 @@ public class MultipleVariablesInDeclarationInspectionMerger extends InspectionEl
     return "MultipleVariablesInDeclaration";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       MULTIPLE_DECLARATION,
       MULTIPLE_TYPED_DECLARATION
     };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] {
       "VariablesOfDifferentTypesInDeclaration",
       "MultipleVariablesInDeclaration"

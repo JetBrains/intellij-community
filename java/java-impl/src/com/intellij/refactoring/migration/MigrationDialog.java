@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -14,7 +14,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 
 public class MigrationDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationDialog");
+  private static final Logger LOG = Logger.getInstance(MigrationDialog.class);
 
   private JPanel myPanel;
   private JComboBox<MigrationMap> myMapComboBox;
@@ -32,9 +32,9 @@ public class MigrationDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myMigrationMapSet = migrationMapSet;
-    setTitle(RefactoringBundle.message("migration.dialog.title"));
+    setTitle(JavaRefactoringBundle.message("migration.dialog.title"));
     setHorizontalStretch(1.2f);
-    setOKButtonText(RefactoringBundle.message("migration.dialog.ok.button.text"));
+    setOKButtonText(JavaRefactoringBundle.message("migration.dialog.ok.button.text"));
     init();
   }
 

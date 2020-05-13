@@ -20,8 +20,8 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
     myFixture.enableInspections(new PluginXmlCapitalizationInspection());
   }
 
-  public void testAction() {
-    myFixture.testHighlighting("pluginXmlCapitalization_Action.xml",
+  public void testActionPluginName() {
+    myFixture.testHighlighting("pluginXmlCapitalization_ActionPluginName.xml",
                                "MyBundle.properties", "MyAction.java");
   }
 

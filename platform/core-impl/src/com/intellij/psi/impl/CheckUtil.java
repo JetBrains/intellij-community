@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,7 +33,7 @@ public class CheckUtil {
     if (!element.isWritable()) {
       if (element instanceof PsiDirectory) {
         String url = ((PsiDirectory)element).getVirtualFile().getPresentableUrl();
-        throw new IncorrectOperationException(PsiBundle.message("cannot.modify.a.read.only.directory", url));
+        throw new IncorrectOperationException(CoreBundle.message("cannot.modify.a.read.only.directory", url));
       }
       else {
         PsiFile file = element.getContainingFile();
@@ -44,20 +44,20 @@ public class CheckUtil {
         if (virtualFile == null) {
           throw new IncorrectOperationException();
         }
-        throw new IncorrectOperationException(PsiBundle.message("cannot.modify.a.read.only.file", virtualFile.getPresentableUrl()));
+        throw new IncorrectOperationException(CoreBundle.message("cannot.modify.a.read.only.file", virtualFile.getPresentableUrl()));
       }
     }
   }
 
   public static void checkDelete(@NotNull final VirtualFile file) throws IncorrectOperationException {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (FileTypeRegistry.getInstance().isFileIgnored(file)) {
           return false;
         }
         if (!file.isWritable()) {
-          throw new IncorrectOperationException(PsiBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
+          throw new IncorrectOperationException(CoreBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
         }
         return true;
       }

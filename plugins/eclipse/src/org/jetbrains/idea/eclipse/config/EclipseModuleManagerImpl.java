@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -52,7 +51,7 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
   }
 
   public static EclipseModuleManagerImpl getInstance(Module module) {
-    return ModuleServiceManager.getService(module, EclipseModuleManagerImpl.class);
+    return module.getService(EclipseModuleManagerImpl.class);
   }
 
   public static boolean isEclipseStorage(@NotNull Module module) {

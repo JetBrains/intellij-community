@@ -3,6 +3,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.icons.AllIcons;
@@ -114,8 +115,8 @@ public class JUnit4Framework extends JavaTestFramework {
       if (AnnotationUtil.isAnnotated(existingMethod, beforeClassAnnotationName, 0)) return existingMethod;
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
-                 Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @Before. Annotate?",
-                                             "Create SetUp",
+                 Messages.showOkCancelDialog(JUnitBundle.message("create.setup.dialog.message", "@Before"),
+                                             JUnitBundle.message("create.setup.dialog.title"),
                                              Messages.getWarningIcon());
       if (exit == Messages.OK) {
         new AddAnnotationFix(beforeAnnotationName, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
@@ -183,11 +184,6 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 Parameters Method.java");
-  }
-
-  @Override
-  public char getMnemonic() {
-    return '4';
   }
 
   @Override

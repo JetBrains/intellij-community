@@ -444,4 +444,33 @@ class FinallyTest
     X xx = new X();
     Stream.of(xx).filter(x -> x.getValue().isPresent()).map(x -> x.getValue().get());
   }
+  
+  void testOptionalChain(String[] testArray) {
+    int test1 = Stream.of(testArray)
+      .filter(string -> string.equals("123"))
+      .findFirst()
+      .<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>()
+      .length();
+    int test11 = Stream.of("foo", "bar", "123")
+      .filter(string -> string.equals("123"))
+      .findFirst()
+      .get() // we know that it's non-empty
+      .length();
+    int test2 = Stream.of(testArray)
+      .filter(string -> string.equals("123"))
+      .findFirst()
+      .map(String::length)
+      .<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>();
+    int test22 = Stream.of("foo", "bar", "123")
+      .filter(string -> string.equals("123"))
+      .findFirst()
+      .map(String::length)
+      .get();
+    int test3 = Stream.of(testArray)
+      .filter(string -> string.equals("123"))
+      .findFirst()
+      .filter(s -> s.length() > 0)
+      .<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>()
+      .length();
+  }
 }

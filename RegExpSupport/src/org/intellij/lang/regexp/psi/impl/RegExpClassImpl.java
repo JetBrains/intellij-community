@@ -36,8 +36,7 @@ public class RegExpClassImpl extends RegExpElementImpl implements RegExpClass {
     }
 
     @Override
-    @NotNull
-    public RegExpClassElement[] getElements() {
+    public RegExpClassElement @NotNull [] getElements() {
         final ASTNode[] nodes = getNode().getChildren(RegExpElementTypes.CLASS_ELEMENTS);
         final RegExpClassElement[] e = new RegExpClassElement[nodes.length];
         for (int i = 0; i < e.length; i++) {

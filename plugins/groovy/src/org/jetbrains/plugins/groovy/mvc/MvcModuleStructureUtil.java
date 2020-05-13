@@ -50,7 +50,7 @@ import java.util.*;
  * @author peter
  */
 public class MvcModuleStructureUtil {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.mvc.MvcModuleStructureUtil");
+  private static final Logger LOG = Logger.getInstance(MvcModuleStructureUtil.class);
   @NonNls public static final String PLUGINS_DIRECTORY = "plugins";
   @NonNls public static final String APPLICATION_PROPERTIES = "application.properties";
   public static final Key<String> LAST_MVC_VERSION = Key.create("LAST_MVC_VERSION");
@@ -271,8 +271,7 @@ public class MvcModuleStructureUtil {
     return Pair.create(actions, facetActions);
   }
 
-  @Nullable
-  private static OrderEntry[] moveupLibrariesFromMavenPlugin(ModuleRootModel moduleRootModel) {
+  private static OrderEntry @Nullable [] moveupLibrariesFromMavenPlugin(ModuleRootModel moduleRootModel) {
     LibraryOrderEntry newestLibrary = null;
     int firstLibraryIndex = 0;
     int newestLibraryIndex = 0;

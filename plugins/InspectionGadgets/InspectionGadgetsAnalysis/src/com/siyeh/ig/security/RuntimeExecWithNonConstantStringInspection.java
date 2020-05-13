@@ -39,12 +39,6 @@ public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("runtime.exec.with.non.constant.string.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("runtime.exec.with.non.constant.string.problem.descriptor");
   }

@@ -143,7 +143,7 @@ public class PyPullUpTest extends PyClassRefactoringTest {
    * Moves methods fromn Child to Parent and make them abstract
    * @param methodNames methods to check
    */
-  private void checkAbstract(@NotNull final String... methodNames) {
+  private void checkAbstract(final String @NotNull ... methodNames) {
     final String[] modules = {"Class", "SuperClass"};
     configureMultiFile(modules);
     doPullUp("Child", "Parent", true, methodNames);
@@ -155,7 +155,7 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     doHelperTestSeveralMembers(className, superClassName, memberName);
   }
 
-  private void doHelperTestSeveralMembers(@NotNull final String className, @NotNull final String superClassName, @NotNull final String... memberNames) {
+  private void doHelperTestSeveralMembers(@NotNull final String className, @NotNull final String superClassName, final String @NotNull ... memberNames) {
     myFixture.configureByFile(getMultiFileBaseName() + ".py");
     doPullUp(className, superClassName, false, memberNames);
     myFixture.checkResultByFile(getMultiFileBaseName() + ".after.py");

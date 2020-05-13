@@ -26,7 +26,7 @@ public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAc
   private static final Logger LOG = Logger.getInstance(PyConvertModuleToPackageAction.class);
 
   @Override
-  protected boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElementsOutsideEditor(PsiElement @NotNull [] elements) {
     if (elements.length == 1) {
       return elements[0] instanceof PyFile && !PyUtil.isPackage((PyFile)elements[0]);
     }
@@ -43,7 +43,7 @@ public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAc
       }
 
       @Override
-      public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+      public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
         createPackageFromModule(((PyFile)elements[0]));
       }
     };

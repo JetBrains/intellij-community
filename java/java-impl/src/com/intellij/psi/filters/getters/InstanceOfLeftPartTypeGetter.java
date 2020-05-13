@@ -21,8 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceOfLeftPartTypeGetter {
-  @NotNull
-  public static PsiType[] getLeftTypes(PsiElement context) {
+  public static PsiType @NotNull [] getLeftTypes(PsiElement context) {
     if((context = FilterUtil.getPreviousElement(context, true)) == null) return PsiType.EMPTY_ARRAY;
     if(!PsiKeyword.INSTANCEOF.equals(context.getText())) return PsiType.EMPTY_ARRAY;
     if((context = FilterUtil.getPreviousElement(context, false)) == null) return PsiType.EMPTY_ARRAY;

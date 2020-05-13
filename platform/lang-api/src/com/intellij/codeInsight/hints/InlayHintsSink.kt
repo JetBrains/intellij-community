@@ -2,11 +2,12 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
+import org.jetbrains.annotations.ApiStatus
 
 interface InlayHintsSink {
   /**
    * Adds inline element to underlying editor.
-   * Note, that single provider may add only one presentation to the given offset. This requirement may be relaxed in future.
    * @see [com.intellij.openapi.editor.InlayModel.addInlineElement]
    */
   fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation)
@@ -15,8 +16,19 @@ interface InlayHintsSink {
    * Adds block element to underlying editor.
    * Offset doesn't affects position of the inlay in the line, it will be drawn in the very beginning of the line.
    * Presentation must shift itself (see com.intellij.openapi.editor.ex.util.EditorUtil#getPlainSpaceWidth)
-   * Note, that single provider may add only one presentation to the given offset. This requirement may be relaxed in future.
    * @see [com.intellij.openapi.editor.InlayModel.addBlockElement]
    */
   fun addBlockElement(offset: Int, relatesToPrecedingText: Boolean, showAbove: Boolean, priority: Int, presentation: InlayPresentation)
+
+  /**
+   * API can be changed in 2020.2!
+   */
+  @ApiStatus.Experimental
+  fun addInlineElement(offset: Int, presentation: RootInlayPresentation<*>, constraints: HorizontalConstraints?)
+
+  /**
+   * API can be changed in 2020.2!
+   */
+  @ApiStatus.Experimental
+  fun addBlockElement(logicalLine: Int, showAbove: Boolean, presentation: RootInlayPresentation<*>, constraints: BlockConstraints?)
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.inspection;
 
 import com.intellij.codeInspection.*;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -26,17 +27,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(FrequentlyUsedInheritorInspection.class);
 
   public static final byte MAX_RESULT = 3;
   private static final int PERCENT_THRESHOLD = SystemProperties.getIntProperty("FrequentlyUsedInheritorInspection.percent.threshold", 20);
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkClass(@NotNull final PsiClass aClass,
-                                        @NotNull final InspectionManager manager,
-                                        final boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull final PsiClass aClass,
+                                                   @NotNull final InspectionManager manager,
+                                                   final boolean isOnTheFly) {
     if (aClass instanceof PsiTypeParameter || aClass.isEnum()) {
       return null;
     }
@@ -85,7 +85,7 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
 
     return new ProblemDescriptor[]{manager
       .createProblemDescriptor(highlightingElement,
-                               "Class can have more common super class",
+                               JavaCompilerBundle.message("class.can.have.more.common.super.class"),
                                isOnTheFly,
                                topInheritorsQuickFix.toArray(LocalQuickFix.EMPTY_ARRAY),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};

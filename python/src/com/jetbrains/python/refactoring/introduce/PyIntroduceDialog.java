@@ -108,7 +108,7 @@ public class PyIntroduceDialog extends DialogWrapper {
     if (myOccurrencesCount > 1) {
       myReplaceAll.setSelected(false);
       myReplaceAll.setEnabled(true);
-      myReplaceAll.setText(myReplaceAll.getText() + " (" + myOccurrencesCount + " occurrences)");
+      myReplaceAll.setText(PyBundle.message("refactoring.occurrences.count", myReplaceAll.getText(), myOccurrencesCount));
     }
     else {
       myReplaceAll.setSelected(false);

@@ -5,8 +5,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class CommonPathRelativizer implements PathRelativizer{
-  protected final String myPath;
+class CommonPathRelativizer implements PathRelativizer {
+  private final String myPath;
   private final String myIdentifier;
 
   CommonPathRelativizer(@Nullable String path, @NotNull String identifier) {

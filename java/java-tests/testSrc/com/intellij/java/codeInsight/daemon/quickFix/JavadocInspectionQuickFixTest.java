@@ -21,9 +21,8 @@ import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class JavadocInspectionQuickFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     JavaDocLocalInspection inspection = new JavaDocLocalInspection();
     inspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS = "param";
     inspection.TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";

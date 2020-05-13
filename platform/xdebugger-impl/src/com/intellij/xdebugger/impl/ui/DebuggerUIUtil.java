@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -22,12 +22,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -48,6 +48,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -59,7 +60,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-public class DebuggerUIUtil {
+public final class DebuggerUIUtil {
   @NonNls public static final String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
 
   private DebuggerUIUtil() {
@@ -111,10 +112,10 @@ public class DebuggerUIUtil {
   public static void showPopupForEditorLine(@NotNull JBPopup popup, @NotNull Editor editor, int line) {
     RelativePoint point = getPositionForPopup(editor, line);
     if (point != null) {
-      popup.addListener(new JBPopupAdapter() {
+      popup.addListener(new JBPopupListener() {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
-          Window window = popup.isDisposed()  ? null : UIUtil.getWindow(popup.getContent());
+          Window window = popup.isDisposed()  ? null : ComponentUtil.getWindow(popup.getContent());
           if (window != null) {
             Point expected = point.getScreenPoint();
             Rectangle screen = ScreenUtil.getScreenRectangle(expected);
@@ -137,7 +138,7 @@ public class DebuggerUIUtil {
   }
 
   public static void showValuePopup(@NotNull XFullValueEvaluator evaluator, @NotNull MouseEvent event, @NotNull Project project, @Nullable Editor editor) {
-    EditorTextField textArea = new TextViewer(XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE, project);
+    EditorTextField textArea = new TextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
     textArea.setBackground(HintUtil.getInformationColor());
 
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
@@ -439,7 +440,7 @@ public class DebuggerUIUtil {
   }
 
   @NotNull
-  public static String getShortcutsAdText(String key, String... actionNames) {
+  public static String getShortcutsAdText(@PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE) String key, String... actionNames) {
     String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull()
       .joining(XDebuggerBundle.message("xdebugger.shortcuts.text.delimiter"));
     return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message(key, text);

@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.html.structureView;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.navigation.LocationPresentation;
@@ -48,7 +48,7 @@ public class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements Lo
   public String getPresentableText() {
     final XmlTag tag = getElement();
     if (tag == null) {
-      return IdeBundle.message("node.structureview.invalid");
+      return StructureViewBundle.message("node.structureview.invalid");
     }
     return HtmlUtil.getTagPresentation(tag);
   }

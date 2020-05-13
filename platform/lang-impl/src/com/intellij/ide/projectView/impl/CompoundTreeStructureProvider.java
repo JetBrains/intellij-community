@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -14,44 +14,40 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 /**
  * This class is intended to combine all providers for batch usages.
- *
- * @author Sergey Malenkov
  */
 public final class CompoundTreeStructureProvider implements TreeStructureProvider {
-  private static final TreeStructureProvider EMPTY = new CompoundTreeStructureProvider(Collections.emptyList());
   private static final Key<TreeStructureProvider> KEY = Key.create("TreeStructureProvider");
   private static final Logger LOG = Logger.getInstance(CompoundTreeStructureProvider.class);
-  private final List<? extends TreeStructureProvider> providers;
+  private final Project myProject;
 
   /**
    * @return a shared instance for the specified project
    */
-  @NotNull
+  @Nullable
   public static TreeStructureProvider get(@Nullable Project project) {
-    if (project == null || project.isDisposed()) return EMPTY;
+    if (project == null || project.isDisposed() || project.isDefault()) return null;
     TreeStructureProvider provider = project.getUserData(KEY);
     if (provider != null) return provider;
-    provider = new CompoundTreeStructureProvider(EP.getExtensions(project));
+    provider = new CompoundTreeStructureProvider(project);
     project.putUserData(KEY, provider);
     return provider;
   }
 
-  public CompoundTreeStructureProvider(@NotNull List<? extends TreeStructureProvider> providers) {
-    this.providers = providers;
+  private CompoundTreeStructureProvider(@NotNull Project project) {
+    myProject = project;
   }
 
   @NotNull
   @Override
-  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
-                                             @NotNull Collection<AbstractTreeNode> children,
-                                             ViewSettings settings) {
-    for (TreeStructureProvider provider : providers) {
+  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                                @NotNull Collection<AbstractTreeNode<?>> children,
+                                                ViewSettings settings) {
+    if (myProject.isDisposed()) return children;
+    for (TreeStructureProvider provider : EP.getExtensions(myProject)) {
       try {
         children = provider.modify(parent, children, settings);
         if (children.stream().anyMatch(Objects::isNull)) {
@@ -75,9 +71,9 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
 
   @Nullable
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode> selection, @NotNull String dataId) {
-    if (dataId != null && !selection.isEmpty()) {
-      for (TreeStructureProvider provider : providers) {
+  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selection, @NotNull String dataId) {
+    if (!myProject.isDisposed() && !selection.isEmpty()) {
+      for (TreeStructureProvider provider : EP.getExtensions(myProject)) {
         try {
           Object data = provider.getData(selection, dataId);
           if (data != null) return data;

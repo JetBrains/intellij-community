@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +32,7 @@ public class PluginInstallOperation {
   private static final Logger LOG = Logger.getInstance(PluginInstallOperation.class);
 
   private final List<PluginNode> myPluginsToInstall;
-  private final List<? extends IdeaPluginDescriptor> myAllPlugins;
+  private final Collection<? extends IdeaPluginDescriptor> myCustomReposPlugins;
   private final PluginManagerMain.PluginEnabler myPluginEnabler;
   private final ProgressIndicator myIndicator;
   private boolean mySuccess = true;
@@ -39,13 +42,25 @@ public class PluginInstallOperation {
   private boolean myRestartRequired = false;
   private boolean myShownErrors;
 
+  /**
+   * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginManagerMain.PluginEnabler, ProgressIndicator)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
-                                List<? extends IdeaPluginDescriptor> allPlugins,
+                                List<? extends IdeaPluginDescriptor> customReposPlugins,
+                                PluginManagerMain.PluginEnabler pluginEnabler,
+                                @NotNull ProgressIndicator indicator) {
+    this(pluginsToInstall, (Collection<? extends IdeaPluginDescriptor>)customReposPlugins, pluginEnabler, indicator);
+  }
+
+  public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
+                                Collection<? extends IdeaPluginDescriptor> customReposPlugins,
                                 PluginManagerMain.PluginEnabler pluginEnabler,
                                 @NotNull ProgressIndicator indicator) {
 
     myPluginsToInstall = pluginsToInstall;
-    myAllPlugins = allPlugins;
+    myCustomReposPlugins = customReposPlugins;
     myPluginEnabler = pluginEnabler;
     myIndicator = indicator;
   }
@@ -89,7 +104,7 @@ public class PluginInstallOperation {
     }
     if (!unknownNodes) return;
 
-    List<String> hosts = ContainerUtil.newSmartList();
+    List<String> hosts = new SmartList<>();
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
     Map<PluginId, IdeaPluginDescriptor> allPlugins = new HashMap<>();
@@ -100,7 +115,8 @@ public class PluginInstallOperation {
           allPlugins.put(descriptor.getPluginId(), descriptor);
         }
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
     }
 
     for (PluginNode node : myPluginsToInstall) {
@@ -117,7 +133,7 @@ public class PluginInstallOperation {
     }
   }
 
-  private boolean prepareToInstall(List<PluginNode> pluginsToInstall) {
+  private boolean prepareToInstall(@NotNull List<PluginNode> pluginsToInstall) {
     List<PluginId> pluginIds = new SmartList<>();
     for (PluginNode pluginNode : pluginsToInstall) {
       pluginIds.add(pluginNode.getPluginId());
@@ -131,7 +147,9 @@ public class PluginInstallOperation {
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
-        Notifications.Bus.notify(new Notification(title, title, pluginNode.getName() + ": " + e.getMessage(), NotificationType.ERROR));
+        Notifications.Bus.notify(
+          new Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, pluginNode.getName() + ": " + e.getMessage(),
+                           NotificationType.ERROR));
         return false;
       }
     }
@@ -140,7 +158,7 @@ public class PluginInstallOperation {
   }
 
 
-  private boolean prepareToInstall(PluginNode pluginNode, List<? extends PluginId> pluginIds) throws IOException {
+  private boolean prepareToInstall(PluginNode pluginNode, List<PluginId> pluginIds) throws IOException {
     myDependant.add(pluginNode);
 
     // check for dependent plugins at first.
@@ -153,6 +171,7 @@ public class PluginInstallOperation {
         PluginId depPluginId = pluginNode.getDepends().get(i);
         if (PluginManagerCore.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
             InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
+            InstalledPluginsState.getInstance().wasInstalledWithoutRestart(depPluginId) ||
             pluginIds != null && pluginIds.contains(depPluginId)) {
           // ignore installed or installing plugins
           continue;
@@ -161,7 +180,7 @@ public class PluginInstallOperation {
         IdeaPluginDescriptor depPluginDescriptor = findPluginInRepo(depPluginId);
         PluginNode depPlugin;
         if (depPluginDescriptor instanceof PluginNode) {
-          depPlugin = (PluginNode) depPluginDescriptor;
+          depPlugin = (PluginNode)depPluginDescriptor;
         }
         else {
           depPlugin = new PluginNode(depPluginId, depPluginId.getIdString(), "-1");
@@ -184,7 +203,8 @@ public class PluginInstallOperation {
             String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
             String deps = getPluginsText(depends);
             String message = IdeBundle.message("plugin.manager.dependencies.detected.message", pluginNode.getName(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, "Install", Messages.NO_BUTTON, Messages.getWarningIcon()) == Messages.YES;
+            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
+                                                  Messages.getWarningIcon()) == Messages.YES;
           }, ModalityState.any());
         }
         catch (Exception e) {
@@ -202,7 +222,8 @@ public class PluginInstallOperation {
             String title = IdeBundle.message("plugin.manager.optional.dependencies.detected.title");
             String deps = getPluginsText(optionalDeps);
             String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", pluginNode.getName(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, "Install", Messages.NO_BUTTON, Messages.getWarningIcon()) == Messages.YES;
+            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
+                                                  Messages.getWarningIcon()) == Messages.YES;
           }, ModalityState.any());
         }
         catch (Exception e) {
@@ -226,7 +247,9 @@ public class PluginInstallOperation {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String title = IdeBundle.message("plugin.manager.obsolete.plugins.detected.title");
           String message = pluginReplacement.getReplacementMessage(oldPlugin, pluginNode);
-          if (Messages.showYesNoDialog(message, title, "Disabled", Messages.NO_BUTTON, Messages.getWarningIcon()) == Messages.YES) {
+          if (Messages
+                .showYesNoDialog(message, title, IdeBundle.message("button.disable"), Messages.getNoButton(), Messages.getWarningIcon()) ==
+              Messages.YES) {
             toDisable.set(oldPlugin);
           }
         }, ModalityState.any());
@@ -237,8 +260,8 @@ public class PluginInstallOperation {
 
     PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
 
-    if (downloader.prepareToInstall(myIndicator)) {
-      IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)downloader.getDescriptor();
+    IdeaPluginDescriptorImpl descriptor = downloader.prepareToInstallAndLoadDescriptor(myIndicator);
+    if (descriptor != null) {
       if (myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
         myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
@@ -275,8 +298,24 @@ public class PluginInstallOperation {
            " and \"" + pluginNodes.get(size - 1) + "\" plugins";
   }
 
+  /**
+   * Searches for plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with bigger version number
+   */
   @Nullable
   private IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId) {
-    return myAllPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
+    IdeaPluginDescriptor pluginFromCustomRepos =
+      myCustomReposPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
+    PluginNode pluginFromMarketplace = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(depPluginId.getIdString());
+    if (pluginFromCustomRepos == null) {
+      return pluginFromMarketplace;
+    }
+    if (pluginFromMarketplace == null) {
+      return pluginFromCustomRepos;
+    }
+    if (StringUtil.compareVersionNumbers(pluginFromCustomRepos.getVersion(), pluginFromMarketplace.getVersion()) > 0) {
+      return pluginFromCustomRepos;
+    } else {
+      return pluginFromMarketplace;
+    }
   }
 }

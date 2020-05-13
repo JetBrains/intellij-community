@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -86,7 +85,7 @@ public class ProjectTemplateList extends JPanel {
   }
 
   public void setTemplates(List<? extends ProjectTemplate> list, boolean preserveSelection) {
-    Collections.sort(list, (o1, o2) -> Comparing.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
+    list.sort((o1, o2) -> Comparing.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
 
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
     myList.setModel(new CollectionListModel<>(list));

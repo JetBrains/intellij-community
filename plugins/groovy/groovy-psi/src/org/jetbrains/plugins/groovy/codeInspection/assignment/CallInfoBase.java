@@ -11,9 +11,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
   private final T myCall;
   private final NullableLazyValue<PsiType[]> myArgTypes = new NullableLazyValue<PsiType[]>() {
-    @Nullable
     @Override
-    protected PsiType[] compute() {
+    protected PsiType @Nullable [] compute() {
       return inferArgTypes();
     }
   };
@@ -22,8 +21,7 @@ public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
     myCall = call;
   }
 
-  @Nullable
-  protected abstract PsiType[] inferArgTypes();
+  protected abstract PsiType @Nullable [] inferArgTypes();
 
   @Nullable
   @Override
@@ -31,9 +29,8 @@ public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
     return myCall.getArgumentList();
   }
 
-  @Nullable
   @Override
-  public PsiType[] getArgumentTypes() {
+  public PsiType @Nullable [] getArgumentTypes() {
     return myArgTypes.getValue();
   }
 

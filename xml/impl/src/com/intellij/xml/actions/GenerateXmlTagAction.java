@@ -51,6 +51,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -83,7 +84,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, Comparator.comparing(PsiMetaData::getName));
       Consumer<XmlElementDescriptor> consumer = (selected) ->
-        WriteCommandAction.writeCommandAction(project, file).withName("Generate XML Tag").run(() -> {
+        WriteCommandAction.writeCommandAction(project, file).withName(XmlBundle.message("generate.xml.tag")).run(() -> {
           if (selected == null) return;
           XmlTag newTag = createTag(contextTag, selected);
 
@@ -111,7 +112,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         JBPopupFactory.getInstance()
           .createPopupChooserBuilder(ContainerUtil.newArrayList(descriptors))
           .setRenderer(new MyListCellRenderer())
-          .setTitle("Choose Tag Name")
+          .setTitle(XmlBundle.message("choose.tag.name"))
           .setItemChosenCallback(consumer)
           .setNamerForFiltering(o -> o.getName())
           .createPopup()
@@ -296,7 +297,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return false;
   }
 
-  private static class MyListCellRenderer implements ListCellRenderer {
+  private static class MyListCellRenderer implements ListCellRenderer<XmlElementDescriptor> {
     private final JPanel myPanel;
     private final JLabel myNameLabel;
     private final JLabel myNSLabel;
@@ -318,16 +319,18 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-
-      XmlElementDescriptor descriptor = (XmlElementDescriptor)value;
+    public Component getListCellRendererComponent(JList<? extends XmlElementDescriptor> list,
+                                                  XmlElementDescriptor value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
       Color backgroundColor = isSelected ? list.getSelectionBackground() : list.getBackground();
 
-      myNameLabel.setText(descriptor.getName());
+      myNameLabel.setText(value.getName());
       myNameLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
       myPanel.setBackground(backgroundColor);
 
-      myNSLabel.setText(getNamespace(descriptor));
+      myNSLabel.setText(getNamespace(value));
       myNSLabel.setForeground(LookupCellRenderer.getGrayedForeground(isSelected));
       myNSLabel.setBackground(backgroundColor);
 

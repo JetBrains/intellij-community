@@ -19,10 +19,8 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,20 +35,13 @@ public class ParameterInfoUtils {
 
   @Nullable
   public static <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
-    return findParentOfTypeWithStopElements(file, offset, parentClass);
+    return ParameterInfoUtilsBase.findParentOfType(file, offset, parentClass);
   }
 
   @SafeVarargs
   @Nullable
-  public static <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, @NotNull Class<? extends PsiElement>... stopAt) {
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
-
-    T parentOfType = PsiTreeUtil.getParentOfType(element, parentClass, true, stopAt);
-    if (element instanceof PsiWhiteSpace) {
-      parentOfType = PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(element), parentClass, true, stopAt);
-    }
-    return parentOfType;
+  public static <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, Class<? extends PsiElement> @NotNull ... stopAt) {
+    return ParameterInfoUtilsBase.findParentOfTypeWithStopElements(file, offset, parentClass, stopAt);
   }
 
   public static int getCurrentParameterIndex(ASTNode argList, int offset, IElementType delimiterType) {
@@ -147,7 +138,7 @@ public class ParameterInfoUtils {
     }
 
     PsiElement listParent = parent.getParent();
-    for(Class c: (Set<Class>)findArgumentListHelper.getArgumentListAllowedParentClasses()) {
+    for(Class c: (Set<Class<?>>)findArgumentListHelper.getArgumentListAllowedParentClasses()) {
       if (c.isInstance(listParent)) return (E)parent;
     }
 

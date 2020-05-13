@@ -21,8 +21,6 @@ import java.util.List;
 
 /**
  * Use {@link DownloadableFileService} to create instances of this interface
- *
- * @author nik
  */
 public interface DownloadableFileSetVersions<F extends DownloadableFileSetDescription> {
   /**

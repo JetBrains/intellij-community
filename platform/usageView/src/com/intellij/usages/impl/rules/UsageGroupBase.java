@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class UsageGroupBase implements UsageGroup {
   private final int myOrder;
 

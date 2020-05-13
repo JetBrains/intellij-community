@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.UserDataHolderEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +34,8 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   Placement getPlacement();
 
   /**
-   * Tells whether this element is valid. Inlay becomes invalid on explicit disposal,
-   * or when a document range fully containing inlay's offset, is deleted.
+   * Tells whether this element is valid. Inlay becomes invalid on explicit disposal, or when a document range fully containing inlay's
+   * offset, is deleted. It also becomes invalid on editor disposal.
    */
   boolean isValid();
 
@@ -46,8 +48,12 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    * Tells whether this element is associated with preceding or following text. This relation defines certain aspects of inlay's behaviour
    * with respect to changes in editor, e.g. when text is inserted at inlay's position, inlay will end up before the inserted text if the
    * returned value is {@code false} and after the text, if the returned value is {@code true}.
-   * Also, when {@link Caret#moveToOffset(int)} or similar offset-based method is invoked, and an inlay exists at the given offset,
+   * <p>
+   * Also, when {@link Caret#moveToOffset(int)} or similar offset-based method is invoked, and an inline inlay exists at the given offset,
    * caret will be positioned to the left of inlay if returned value is {@code true}, and vice versa.
+   * <p>
+   * For block elements this value impacts their visibility on the boundary offsets of collapsed fold region. If the value is {@code true},
+   * the inlay will be visible at the trailing boundary, and if the value is {@code false} - on the leading boundary.
    * <p>
    * The value is determined at element's creation (see {@link InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)
    * or {@link InlayModel#addBlockElement(int, boolean, boolean, EditorCustomElementRenderer)}}.
@@ -75,24 +81,44 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
 
   /**
    * Returns current inlay's width. Width is defined at inlay's creation using information returned by inlay's renderer.
-   * To change width, {@link #updateSize()} method should be called.
+   * To change width, {@link #update()} method should be called.
    */
   int getWidthInPixels();
 
   /**
    * Returns current inlay's width. Width is defined at inlay's creation using information returned by inlay's renderer.
-   * To change height (supported for 'block' elements only), {@link #updateSize()} method should be called.
+   * To change height (supported for 'block' elements only), {@link #update()} method should be called.
    */
   int getHeightInPixels();
 
   /**
-   * Updates inlay's size by querying information from inlay's renderer. Also, repaint the inlay.
+   * Returns {@link GutterIconRenderer} instance defining an icon displayed in gutter, and associated actions (supported for block inlays
+   * at the moment). This provider is defined at inlay's creation using information returned by inlay's renderer. To change it,
+   * {@link #update()} method should be called.
+   *
+   * @see EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  GutterIconRenderer getGutterIconRenderer();
+
+  /**
+   * @deprecated Use {@link #update()} instead.
+   */
+  @Deprecated
+  default void updateSize() {
+    update();
+  }
+
+  /**
+   * Updates inlay properties (width, height, gutter icon renderer) from inlay's renderer. Also, repaints the inlay.
    *
    * @see EditorCustomElementRenderer#calcWidthInPixels(Inlay)
    * @see EditorCustomElementRenderer#calcHeightInPixels(Inlay)
+   * @see EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)
    * @see #repaint()
    */
-  void updateSize();
+  void update();
 
   /**
    * Causes repaint of inlay in editor.

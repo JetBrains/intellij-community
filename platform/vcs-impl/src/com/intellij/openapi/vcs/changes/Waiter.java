@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.concurrency.Semaphore;
@@ -22,7 +23,7 @@ public class Waiter extends Task.Modal {
     super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
     myRunnable = runnable;
     mySemaphore.down();
-    setCancelText("Skip");
+    setCancelText(VcsBundle.message("button.skip"));
   }
 
   @Override
@@ -34,9 +35,7 @@ public class Waiter extends Task.Modal {
       LOG.error("Waiter running under progress being started again.");
     }
     else {
-      while (!mySemaphore.waitFor(500)) {
-        indicator.checkCanceled();
-      }
+      ProgressIndicatorUtils.awaitWithCheckCanceled(mySemaphore, indicator);
     }
   }
 

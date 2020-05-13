@@ -11,7 +11,7 @@ import java.awt.*;
 public class PluginManagerConfigurableProxy extends PluginManagerConfigurable {
   public static void showPluginConfigurable(@Nullable Component parent,
                                             @Nullable Project project,
-                                            @NotNull IdeaPluginDescriptor... descriptors) {
+                                            IdeaPluginDescriptor @NotNull ... descriptors) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     Runnable init = () -> configurable.select(descriptors);
     ShowSettingsUtil util = ShowSettingsUtil.getInstance();

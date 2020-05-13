@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.editor.Editor;
@@ -22,9 +22,6 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author cdr
- */
 public class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
   private final TextPanel myTextPanel = new TextPanel();
 
@@ -65,10 +62,11 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
     if (multicaster instanceof EditorEventMulticasterEx) {
       ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(this, this);
     }
+    updateStatus();
   }
 
   private void updateStatus() {
-    if (!myProject.isDisposed()) return;
+    if (myProject.isDisposed()) return;
     final Editor editor = getFocusedEditor();
     if (editor != null && !isOurEditor(editor)) return;
     if (editor == null || !editor.isColumnMode()) {
@@ -77,7 +75,7 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
     else {
       myTextPanel.setVisible(true);
       myTextPanel.setText(UIBundle.message("status.bar.column.status.text"));
-      myTextPanel.setToolTipText("Column selection mode");
+      myTextPanel.setToolTipText(UIBundle.message("status.bar.column.status.tooltip.text"));
     }
   }
 

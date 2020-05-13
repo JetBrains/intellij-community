@@ -104,7 +104,7 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
       mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
       List<String> classPath = javaParameters.getClassPath().getPathList();
       assertEquals(excludeSpecification,Collections.singletonList("annotations-java5-17.0.0.jar"),
-                   ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
+                   ContainerUtil.map(classPath, path -> new File(path).getName()));
     }
   }
 
@@ -149,7 +149,7 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
     List<String> classPath = javaParameters.getClassPath().getPathList();
     assertEquals(Collections.singletonList("annotations-17.0.0.jar"),
-                 ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
+                 ContainerUtil.map(classPath, path -> new File(path).getName()));
   }
 
   public void testAddClassPath() {
@@ -334,6 +334,65 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     javaParameters.getVMParametersList().add("-ea");
     mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
     assertEquals(asList("-ea", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
+                 javaParameters.getVMParametersList().getList());
+  }
+
+  public void testArgLineRefersAnotherProperty() {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+                                           "<properties>" +
+                                           "  <app.testing.jvm.args>-Xms256m -Xmx1524m -Duser.language=en</app.testing.jvm.args>" +
+                                           "  <argLine>${app.testing.jvm.args}</argLine>" +
+                                           "</properties>" +
+                                           "<build><plugins>" +
+                                           "  <plugin>" +
+                                           "    <groupId>org.apache.maven.plugins</groupId>" +
+                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
+                                           "    <version>2.16</version>" +
+                                           "    <configuration>" +
+                                           "        <argLine>@{argLine}</argLine>" +
+                                           "    </configuration>" +
+                                           "  </plugin>" +
+                                           "</plugins></build>");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.getVMParametersList().add("-ea");
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(asList("-ea", "-Xms256m", "-Xmx1524m", "-Duser.language=en"),
+                 javaParameters.getVMParametersList().getList());
+  }
+
+  public void testArgLineProperty() {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+                                           "<properties>\n" +
+                                           "<argLine>-DsomeProp=Hello</argLine>\n" +
+                                           "</properties>" +
+                                           "<build><plugins>" +
+                                           "  <plugin>" +
+                                           "    <groupId>org.apache.maven.plugins</groupId>" +
+                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
+                                           "    <version>2.16</version>" +
+                                           "    <configuration>" +
+                                           "      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\"</argLine>" +
+                                           "    </configuration>" +
+                                           "  </plugin>" +
+                                           "</plugins></build>");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.getVMParametersList().add("-ea");
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(asList("-ea", "-DsomeProp=Hello", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
                  javaParameters.getVMParametersList().getList());
   }
 

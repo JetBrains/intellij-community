@@ -13,7 +13,7 @@ public abstract class SearchUpDownPopupController extends SearchPopupController 
   private EventHandler mySearchResultEventHandler;
 
   public SearchUpDownPopupController(@NotNull PluginSearchTextField searchTextField) {
-    super(searchTextField, false);
+    super(searchTextField);
   }
 
   public void setEventHandler(@NotNull EventHandler eventHandler) {

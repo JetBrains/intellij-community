@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
+import com.intellij.psi.impl.light.LightRecordMember;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -148,6 +150,14 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           return JavaPsiFacade.getInstance(refElement.getProject()).findClass(qualifiedName, refElement.getResolveScope());
         }
       }
+
+      if (refElement instanceof LightRecordMember) {
+        return ((LightRecordMember)refElement).getRecordComponent();
+      }
+
+      if (refElement instanceof LightRecordCanonicalConstructor) {
+        return ((LightRecordCanonicalConstructor)refElement).getContainingClass();
+      }
     }
     return super.adjustReferenceOrReferencedElement(file, editor, offset, flags, refElement);
   }
@@ -264,8 +274,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     return super.acceptImplementationForReference(reference, element);
   }
 
-  @Nullable
-  private static PsiClass[] getClassesWithMember(final PsiReference reference, final PsiMember member) {
+  private static PsiClass @Nullable [] getClassesWithMember(final PsiReference reference, final PsiMember member) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
       @Override
       public PsiClass[] compute() {

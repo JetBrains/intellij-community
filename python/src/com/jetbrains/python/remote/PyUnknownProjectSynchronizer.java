@@ -51,7 +51,7 @@ final class PyUnknownProjectSynchronizer implements PyProjectSynchronizer {
   public void syncProject(@NotNull final Module module,
                           @NotNull final PySyncDirection syncDirection,
                           @Nullable final Consumer<Boolean> callback,
-                          @NotNull final String... fileNames) {
+                          final String @NotNull ... fileNames) {
     if (callback != null) {
       callback.accept(false);
     }

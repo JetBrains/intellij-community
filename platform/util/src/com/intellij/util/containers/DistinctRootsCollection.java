@@ -34,7 +34,7 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
     addAll(collection);
   }
 
-  public DistinctRootsCollection(@NotNull T[] collection) {
+  public DistinctRootsCollection(T @NotNull [] collection) {
     this(Arrays.asList(collection));
   }
 
@@ -59,15 +59,13 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
     return myCollection.iterator();
   }
 
-  @NotNull
   @Override
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     return myCollection.toArray();
   }
 
-  @NotNull
   @Override
-  public <T> T[] toArray(@NotNull T[] a) {
+  public <T> T @NotNull [] toArray(T @NotNull [] a) {
     return myCollection.toArray(a);
   }
 

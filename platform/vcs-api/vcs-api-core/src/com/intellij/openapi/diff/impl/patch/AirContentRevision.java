@@ -25,8 +25,7 @@ public interface AirContentRevision {
   boolean isBinary();
   @Nullable
   String getContentAsString() throws VcsException;
-  @Nullable
-  byte[] getContentAsBytes() throws VcsException;
+  byte @Nullable [] getContentAsBytes() throws VcsException;
   
   @Nullable
   String getRevisionNumber();

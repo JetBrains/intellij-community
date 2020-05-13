@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class GraphTestCase {
   protected static GraphAlgorithms getAlgorithmsInstance() {
     return new GraphAlgorithmsImpl();

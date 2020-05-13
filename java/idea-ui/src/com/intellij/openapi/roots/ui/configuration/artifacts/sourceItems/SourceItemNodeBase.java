@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTree
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.*;
 import com.intellij.ui.treeStructure.SimpleNode;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +30,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
   private Artifact myArtifact;
   private final ArtifactEditorEx myArtifactEditor;
@@ -72,8 +70,9 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
     return children.isEmpty() ? NO_CHILDREN : children.toArray(new SimpleNode[0]);
   }
 
+  @Contract(pure = true)
   private static boolean isAvailable(@NotNull PackagingSourceItem item, @NotNull ArtifactEditorContext context,
-                                     @NotNull PackagingSourceItemFilter[] filters) {
+                                     PackagingSourceItemFilter @NotNull [] filters) {
     for (PackagingSourceItemFilter filter : filters) {
       if (!filter.isAvailable(item, context)) {
         return false;

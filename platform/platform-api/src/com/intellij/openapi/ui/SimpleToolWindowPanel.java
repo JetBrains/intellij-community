@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -21,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, DataProvider {
-
   private JComponent myToolbar;
   private JComponent myContent;
 
@@ -79,8 +79,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     return myToolbar != null && myToolbar.isVisible();
   }
 
-  @Nullable
-  public JComponent getToolbar() {
+  public @Nullable JComponent getToolbar() {
     return myToolbar;
   }
 
@@ -107,8 +106,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     return QuickActionProvider.KEY.is(dataId) && myProvideQuickActions ? this : null;
   }
 
@@ -118,11 +116,12 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   @Override
-  @NotNull
-  public List<AnAction> getActions(boolean originalProvider) {
+  public @NotNull List<AnAction> getActions(boolean originalProvider) {
     JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class);
-    if (toolbars.size() == 0) return Collections.emptyList();
-    return toolbars.flatten(toolbar -> toolbar.getActions()).toList();
+    if (toolbars.size() == 0) {
+      return Collections.emptyList();
+    }
+    return toolbars.flatten(ActionToolbar::getActions).toList();
   }
 
   @Override
@@ -130,8 +129,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     return this;
   }
 
-  @Nullable
-  public JComponent getContent() {
+  public @Nullable JComponent getContent() {
     return myContent;
   }
 
@@ -159,11 +157,11 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
       g.setColor(JBColor.border());
       if (myVertical) {
         int y = (int)myToolbar.getBounds().getMaxY();
-        UIUtil.drawLine(g, 0, y, getWidth(), y);
+        LinePainter2D.paint((Graphics2D)g, 0, y, getWidth(), y);
       }
       else {
         int x = (int)myToolbar.getBounds().getMaxX();
-        UIUtil.drawLine(g, x, 0, x, getHeight());
+        LinePainter2D.paint((Graphics2D)g, x, 0, x, getHeight());
       }
     }
   }

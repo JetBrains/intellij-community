@@ -33,7 +33,7 @@ public abstract class JsonBySchemaCompletionBaseTest extends BasePlatformTestCas
   protected void testBySchema(@Language("JSON") @NotNull String schema,
                               @NotNull String text,
                               @NotNull String extension,
-                              @NotNull String... variants) throws Exception {
+                              String @NotNull ... variants) throws Exception {
     int position = EditorTestUtil.getCaretPosition(text);
     assertThat(position).isGreaterThan(0);
     String completionText = text.replace("<caret>", "IntelliJIDEARulezzz");

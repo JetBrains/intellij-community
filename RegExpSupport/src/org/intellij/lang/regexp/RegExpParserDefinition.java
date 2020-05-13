@@ -35,7 +35,9 @@ import java.util.EnumSet;
 
 public class RegExpParserDefinition implements ParserDefinition {
 
-    @NotNull
+  public static final IFileElementType REGEXP_FILE = new RegExpFileElementType();
+
+  @NotNull
     public EnumSet<RegExpCapability> getDefaultCapabilities() {
         return RegExpCapability.DEFAULT_CAPABILITIES;
     }
@@ -63,7 +65,7 @@ public class RegExpParserDefinition implements ParserDefinition {
 
     @Override
     public IFileElementType getFileNodeType() {
-        return RegExpElementTypes.REGEXP_FILE;
+        return REGEXP_FILE;
     }
 
     @Override
@@ -122,8 +124,8 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpIntersectionImpl(node);
         } else if (type == RegExpElementTypes.NAMED_GROUP_REF) {
             return new RegExpNamedGroupRefImpl(node);
-        } else if (type == RegExpElementTypes.PY_COND_REF) {
-            return new RegExpPyCondRefImpl(node);
+        } else if (type == RegExpElementTypes.CONDITIONAL) {
+            return new RegExpConditionalImpl(node);
         } else if (type == RegExpElementTypes.POSIX_BRACKET_EXPRESSION) {
             return new RegExpPosixBracketExpressionImpl(node);
         } else if (type == RegExpElementTypes.NUMBER) {

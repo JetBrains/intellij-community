@@ -18,7 +18,7 @@ import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import junit.framework.TestCase
 import org.junit.Test
@@ -67,7 +67,7 @@ class PyTensorFlowTest : PyEnvTestCase() {
 
     private fun loadActualModules(sdk: Sdk): Map<String, String> {
       val script = Paths.get(PythonTestUtil.getTestDataPath(), "tensorflow", "modules.py").toAbsolutePath().toString()
-      val env = PythonSdkType.activateVirtualEnv(sdk)
+      val env = PySdkUtil.activateVirtualEnv(sdk)
       val timeout = TimeUnit.SECONDS.toMillis(30).toInt()
 
       val commandLine = GeneralCommandLine(sdk.homePath).withParameters(script).withEnvironment(env)
@@ -119,7 +119,7 @@ class PyTensorFlowTest : PyEnvTestCase() {
       return ApplicationManager.getApplication().runReadAction(
         Computable {
           val reference = myFixture.file.findElementAt(myFixture.caretOffset - 1)!!.parent as PyReferenceExpression
-          val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.codeAnalysis(project, file))
+          val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(project, file))
           PyUtil.turnDirIntoInit(reference.followAssignmentsChain(resolveContext).element)!!
         }
       )

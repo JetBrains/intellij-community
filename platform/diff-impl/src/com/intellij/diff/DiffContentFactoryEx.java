@@ -35,40 +35,61 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
 
   @NotNull
+  public abstract DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly);
+
+
+  @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @NotNull FilePath filePath);
 
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull byte[] content,
+                                              byte @NotNull [] content,
                                               @NotNull FilePath filePath) throws IOException;
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull byte[] content,
+                                              byte @NotNull [] content,
                                               @NotNull FilePath filePath,
                                               @Nullable Charset defaultCharset) throws IOException;
 
   @Override
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull byte[] content,
+                                              byte @NotNull [] content,
                                               @NotNull VirtualFile highlightFile) throws IOException;
 
 
   @NotNull
   public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                          @NotNull byte[] content,
+                                                          byte @NotNull [] content,
                                                           @NotNull FileType fileType,
                                                           @NotNull String fileName);
 
   @NotNull
   public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                          @NotNull byte[] content,
+                                                          byte @NotNull [] content,
                                                           @NotNull FilePath filePath);
 
   @NotNull
   public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                          @NotNull byte[] content,
+                                                          byte @NotNull [] content,
                                                           @NotNull VirtualFile highlightFile);
+
+
+  public interface DocumentContentBuilder {
+    @NotNull DocumentContentBuilder withFileName(@Nullable String fileName);
+
+    @NotNull DocumentContentBuilder contextByFileType(@Nullable FileType fileType);
+
+    @NotNull DocumentContentBuilder contextByFilePath(@Nullable FilePath filePath);
+
+    @NotNull DocumentContentBuilder contextByHighlightFile(@Nullable VirtualFile file);
+
+    @NotNull DocumentContentBuilder contextByReferent(@Nullable DocumentContent referent);
+
+    @NotNull DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators);
+
+    @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset);
+  }
 }

@@ -23,6 +23,8 @@ interface FeatureUsageUiEvents {
   fun logShowDialog(name: String, context: Class<*>)
 
   fun logCloseDialog(name: String, exitCode: Int, context: Class<*>)
+
+  fun logClickOnHelpDialog(name: String, context: Class<*>)
 }
 
 object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
@@ -39,5 +41,8 @@ object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   }
 
   override fun logCloseDialog(name: String, exitCode: Int, context: Class<*>) {
+  }
+
+  override fun logClickOnHelpDialog(name: String, context: Class<*>) {
   }
 }

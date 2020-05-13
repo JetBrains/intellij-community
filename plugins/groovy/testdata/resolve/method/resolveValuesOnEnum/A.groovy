@@ -2,4 +2,4 @@ enum E {
   a, b, c
 }
 
-print E.val<ref>ues()
+print E.val<caret>ues()

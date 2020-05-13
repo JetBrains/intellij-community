@@ -3,13 +3,13 @@ package com.intellij.util.indexing.snapshot
 
 import com.intellij.util.indexing.ValueContainer
 
-internal class OneRecordValueContainer<V>(private val inputId: Int, private val value: V?): ValueContainer<V>() {
+class OneRecordValueContainer<V>(private val inputId: Int, private val value: V?): ValueContainer<V>() {
   override fun getValueIterator(): ValueIterator<V> = OneRecordValueIterator(inputId, value)
 
   override fun size() = 1
 }
 
-internal object EmptyValueContainer: ValueContainer<Nothing>() {
+object EmptyValueContainer: ValueContainer<Nothing>() {
   override fun getValueIterator(): ValueIterator<Nothing> = EmptyValueIterator
 
   override fun size() = 0

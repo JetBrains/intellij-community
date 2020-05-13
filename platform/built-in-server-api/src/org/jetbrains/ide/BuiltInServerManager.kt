@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.openapi.Disposable
@@ -11,7 +11,7 @@ import java.net.URLConnection
 abstract class BuiltInServerManager {
   companion object {
     @JvmStatic
-    fun getInstance(): BuiltInServerManager = ApplicationManager.getApplication().getComponent(BuiltInServerManager::class.java)
+    fun getInstance(): BuiltInServerManager = ApplicationManager.getApplication().getService(BuiltInServerManager::class.java)
   }
 
   abstract val port: Int

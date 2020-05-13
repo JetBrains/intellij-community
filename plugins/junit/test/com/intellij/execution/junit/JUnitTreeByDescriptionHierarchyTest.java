@@ -487,7 +487,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     final JUnit4TestListener sender = createListener(output);
 
     final Description description = Description.createTestDescription("A", "a");
-    sender.testFailure(new Failure(description, new ComparisonFailure(buf.toString(), buf.toString(), "diff" + buf.toString())));
+    sender.testFailure(new Failure(description, new ComparisonFailure(buf.toString(), buf.toString(), "diff" + buf)));
 
     final String startMessage = "##teamcity[enteredTheMatrix]\n" +
 

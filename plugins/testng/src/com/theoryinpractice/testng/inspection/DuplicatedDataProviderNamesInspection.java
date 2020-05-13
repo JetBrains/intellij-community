@@ -23,9 +23,8 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
   private final static Logger LOG = Logger.getInstance(DuplicatedDataProviderNamesInspection.class);
   private final static String NAME_ATTRIBUTE = "name";
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final String dataProviderFqn = DataProvider.class.getCanonicalName();
 
     final MultiMap<String, PsiMethod> dataProvidersByName = new MultiMap<>();

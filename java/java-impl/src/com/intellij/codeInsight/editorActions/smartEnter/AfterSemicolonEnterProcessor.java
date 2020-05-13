@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class AfterSemicolonEnterProcessor implements EnterProcessor {
   @Override
@@ -59,7 +60,7 @@ public class AfterSemicolonEnterProcessor implements EnterProcessor {
   private static int getErrorElementOffset(PsiElement elt) {
     final int[] offset = { -1 };
     elt.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override public void visitErrorElement(PsiErrorElement element) {
+      @Override public void visitErrorElement(@NotNull PsiErrorElement element) {
         if (offset[0] == -1) offset[0] = element.getTextRange().getStartOffset();
       }
     });

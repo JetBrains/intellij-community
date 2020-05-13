@@ -38,7 +38,7 @@ import java.util.Set;
  */
 public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   public static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureProcessor");
+    Logger.getInstance(GrChangeSignatureProcessor.class);
 
   public GrChangeSignatureProcessor(Project project, GrChangeInfoImpl changeInfo) {
     super(project, changeInfo);
@@ -51,12 +51,12 @@ public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new ChangeSignatureViewDescriptor(getChangeInfo().getMethod());
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
     getChangeInfo().updateMethod((PsiMethod)elements[0]);

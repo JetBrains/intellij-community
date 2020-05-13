@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -78,8 +78,9 @@ public class AstLoadingFilter {
   private AstLoadingFilter() {}
 
   public static void assertTreeLoadingAllowed(@NotNull VirtualFile file) {
-    if (!Registry.is("ast.loading.filter")) return;
-    if (file instanceof VirtualFileWindow) return;
+    if (file instanceof VirtualFileWindow || !Registry.is("ast.loading.filter", false)) {
+      return;
+    }
     Supplier<String> disallowedInfo = myDisallowedInfo.get();
     if (disallowedInfo == null) {
       // loading was not disabled in current thread

@@ -57,9 +57,8 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     return findPsiChildByType(DOC_TAG_NAME);
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getDataElements() {
+  public PsiElement @NotNull [] getDataElements() {
     return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElement.ARRAY_FACTORY);
   }
 

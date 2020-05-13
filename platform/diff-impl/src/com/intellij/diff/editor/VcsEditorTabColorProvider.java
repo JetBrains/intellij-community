@@ -21,9 +21,13 @@ public class VcsEditorTabColorProvider implements EditorTabColorProvider, DumbAw
     }
 
     if (file instanceof DiffVirtualFile) {
-      return FileColorManager.getInstance(project).getColor("Green");
-    }
+      FileColorManager fileColorManager = FileColorManager.getInstance(project);
+      if (file.getName().equals("Shelf")) {
+        return fileColorManager.getColor("Violet");
+      }
 
+      return fileColorManager.getColor("Green");
+    }
 
     return null;
   }

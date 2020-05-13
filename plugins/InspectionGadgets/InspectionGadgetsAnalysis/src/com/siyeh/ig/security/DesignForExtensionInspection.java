@@ -16,26 +16,19 @@
 
 package com.siyeh.ig.security;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeMethodFinalFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DesignForExtensionInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("design.for.extension.display.name");
-  }
 
   @Override
   @NotNull
@@ -52,38 +45,6 @@ public class DesignForExtensionInspection extends BaseInspection {
       return null;
     }
     return new MakeMethodFinalFix(method.getName());
-  }
-
-  private static class MakeMethodFinalFix extends InspectionGadgetsFix {
-
-    private final String myMethodName;
-
-    MakeMethodFinalFix(String methodName) {
-      myMethodName = methodName;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("make.method.final.fix.name", myMethodName);
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Make method 'final'";
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiMethod)) {
-        return;
-      }
-      final PsiMethod method = (PsiMethod)element;
-      final PsiModifierList modifierList = method.getModifierList();
-      modifierList.setModifierProperty(PsiModifier.FINAL, true);
-    }
   }
 
   @Override

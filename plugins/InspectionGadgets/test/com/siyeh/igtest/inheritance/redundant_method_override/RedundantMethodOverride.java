@@ -94,17 +94,6 @@ class MyList<E> extends ArrayList<E> {
 
   void m() {
     removeRange(0, 1);
-    new MyList2().removeRange(0, 0);
-  }
-
-  public boolean add(@NotNull E e) {
-    return super.add(e);
-  }
-}
-class MyList2 extends ArrayList {
-  @Override
-  protected void removeRange(int a, int b) {
-    super.removeRange(a, b);
   }
 }
 ////////////////
@@ -314,32 +303,6 @@ class LocalModelWrapper<T extends LocalModel> extends LocalModelGraphElementWrap
   public T getElement()  { return super.getElement(); }
 }
 interface LocalModel {}
-///////////////
-class X7 {
-  Object x() {
-    return new Object() {
-      void a() {
-        b(); // used before declaration
-      }
-      void b() {
-        a();
-      }
-    };
-  }
-}
-class X8 extends X7 {
-  @java.lang.Override
-  Object <warning descr="Method 'x()' is identical to its super method">x</warning>() {
-    return new Object() {
-      void b(){
-        a();
-      }
-      void a() {
-        b();
-      }
-    };
-  }
-}
 ////////////////
 class X9 {
 

@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation.ui;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.ide.wizard.StepAdapter;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  * @author dsl
  */
 public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass, PsiMember, MemberInfo> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.ui.GenerateEqualsWizard");
+  private static final Logger LOG = Logger.getInstance(GenerateEqualsWizard.class);
 
   private static final MyMemberInfoFilter MEMBER_INFO_FILTER = new MyMemberInfoFilter();
 
@@ -66,7 +66,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         myClassField.setChecked(true);
       }
       if (needEquals) {
-        myEqualsPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.equals.fields.chooser.title"),
+        myEqualsPanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.equals.fields.chooser.title"),
                                                  myClassFields, null);
         myEqualsPanel.getTable().setMemberInfoModel(new EqualsMemberInfoModel());
       }
@@ -83,7 +83,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
           hashCodeMemberInfos = myClassFields;
           myFieldsToHashCode = null;
         }
-        myHashCodePanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.hashcode.fields.chooser.title"), hashCodeMemberInfos, null);
+        myHashCodePanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.hashcode.fields.chooser.title"), hashCodeMemberInfos, null);
         myHashCodePanel.getTable().setMemberInfoModel(new HashCodeMemberInfoModel());
         if (needEquals) {
           updateHashCodeMemberInfos(myClassFields);
@@ -93,7 +93,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         myHashCodePanel = null;
         myFieldsToHashCode = null;
       }
-      myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
+      myNonNullPanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
       for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
         entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()));
@@ -268,15 +268,15 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         @Override
         public String getTooltip(MemberInfo memberInfo) {
           if (checkForProblems(memberInfo) == OK) return null;
-          if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
+          if (!(memberInfo.getMember() instanceof PsiField)) return JavaBundle.message("generate.equals.hashcode.internal.error");
           final PsiField field = (PsiField)memberInfo.getMember();
           if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
             final PsiType type = field.getType();
             if (PsiAdapter.isNestedArray(type)) {
-              return CodeInsightBundle.message("generate.equals.warning.equals.for.nested.arrays.not.supported");
+              return JavaBundle.message("generate.equals.warning.equals.for.nested.arrays.not.supported");
             }
             if (GenerateEqualsHelper.isArrayOfObjects(type)) {
-              return CodeInsightBundle.message("generate.equals.warning.generated.equals.could.be.incorrect");
+              return JavaBundle.message("generate.equals.warning.generated.equals.could.be.incorrect");
             }
           }
           return null;
@@ -315,11 +315,11 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         @Override
         public String getTooltip(MemberInfo memberInfo) {
           if (isMemberEnabled(memberInfo)) return null;
-          if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
+          if (!(memberInfo.getMember() instanceof PsiField)) return JavaBundle.message("generate.equals.hashcode.internal.error");
           final PsiField field = (PsiField)memberInfo.getMember();
           final PsiType type = field.getType();
           if (!(type instanceof PsiArrayType) || JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) return null;
-          return CodeInsightBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");
+          return JavaBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");
         }
       });
 
@@ -341,7 +341,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     private TemplateChooserStep(boolean isFinal, PsiClass psiClass) {
       myPanel = new JPanel(new VerticalFlowLayout());
       final JPanel templateChooserPanel = new JPanel(new BorderLayout());
-      final JLabel templateChooserLabel = new JLabel(CodeInsightBundle.message("generate.equals.hashcode.template"));
+      final JLabel templateChooserLabel = new JLabel(JavaBundle.message("generate.equals.hashcode.template"));
       templateChooserPanel.add(templateChooserLabel, BorderLayout.WEST);
 
 
@@ -361,7 +361,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       templateChooserPanel.add(comboBoxWithBrowseButton, BorderLayout.CENTER);
       myPanel.add(templateChooserPanel);
 
-      final JCheckBox checkbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses"));
+      final JCheckBox checkbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.accept.sublcasses"));
       checkbox.setSelected(!isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
       checkbox.setEnabled(!isFinal);
       checkbox.addActionListener(new ActionListener() {
@@ -371,9 +371,9 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         }
       });
       myPanel.add(checkbox);
-      myPanel.add(new JLabel(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses.explanation")));
+      myPanel.add(new JLabel(JavaBundle.message("generate.equals.hashcode.accept.sublcasses.explanation")));
 
-      final JCheckBox gettersCheckbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.use.getters"));
+      final JCheckBox gettersCheckbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.use.getters"));
       gettersCheckbox.setSelected(CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE);
       gettersCheckbox.addActionListener(new ActionListener() {
         @Override

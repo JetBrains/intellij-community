@@ -1,7 +1,10 @@
 <html>
 <body>
-Reports methods that are too long. Methods that are too long
+Reports methods that have too many statements. Methods that have too many statements
 may be confusing, and are a good sign that refactoring is necessary.
+Empty statements and comments are not counted. Only the contents of block statements are counted.
+The initialization and update statements of a <b>for</b> loop are not counted.
+
 <!-- tooltip end -->
 <p>
 Use the field below to specify the maximum number of non-comment source statements a method is allowed to have.

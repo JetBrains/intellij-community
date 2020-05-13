@@ -21,12 +21,13 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectJdkImpl.class);
   private String myName;
   private String myVersionString;
   private boolean myVersionDefined;
@@ -41,7 +42,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @NonNls private static final String ELEMENT_VERSION = "version";
   @NonNls private static final String ELEMENT_ROOTS = "roots";
   @NonNls private static final String ELEMENT_HOMEPATH = "homePath";
-  @NonNls private static final String ELEMENT_ADDITIONAL = "additional";
+  @NonNls public static final String ELEMENT_ADDITIONAL = "additional";
   private final MyRootProvider myRootProvider = new MyRootProvider();
 
   public ProjectJdkImpl(String name, SdkTypeId sdkType) {
@@ -61,7 +62,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
 
   private static final VirtualFilePointerListener tellAllProjectsTheirRootsAreGoingToChange = new VirtualFilePointerListener() {
     @Override
-    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+    public void beforeValidityChanged(VirtualFilePointer @NotNull [] pointers) {
       //todo check if this sdk is really used in the project
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
@@ -70,7 +71,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     }
 
     @Override
-    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+    public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
       //todo check if this sdk is really used in the project
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
@@ -266,16 +267,21 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     dest.myRootProvider.rootsChanged();
   }
 
+  @ApiStatus.Internal
+  public void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    mySdkType = newType;
+    myAdditionalData = additionalDataElement != null ? mySdkType.loadAdditionalData(this, additionalDataElement) : null;
+  }
+
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
     @Override
-    @NotNull
-    public String[] getUrls(@NotNull OrderRootType rootType) {
+    public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
       return myRoots.getUrls(rootType);
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getFiles(@NotNull final OrderRootType rootType) {
+    public VirtualFile @NotNull [] getFiles(@NotNull final OrderRootType rootType) {
       return myRoots.getFiles(rootType);
     }
 
@@ -315,15 +321,13 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     myAdditionalData = data;
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
+  public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) {
     return myRoots.getFiles(rootType);
   }
 
-  @NotNull
   @Override
-  public String[] getUrls(@NotNull OrderRootType rootType) {
+  public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
     return myRoots.getUrls(rootType);
   }
 

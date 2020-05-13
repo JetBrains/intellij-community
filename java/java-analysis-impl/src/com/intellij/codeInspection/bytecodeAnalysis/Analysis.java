@@ -129,22 +129,6 @@ class AbstractValues {
     return true;
   }
 
-  static boolean equiv(Conf curr, Conf prev) {
-    Frame<BasicValue> currFr = curr.frame;
-    Frame<BasicValue> prevFr = prev.frame;
-    for (int i = currFr.getStackSize() - 1; i >= 0; i--) {
-      if (!equiv(currFr.getStack(i), prevFr.getStack(i))) {
-        return false;
-      }
-    }
-    for (int i = currFr.getLocals() - 1; i >= 0; i--) {
-      if (!equiv(currFr.getLocal(i), prevFr.getLocal(i))) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   static boolean equiv(BasicValue curr, BasicValue prev) {
     if (curr.getClass() == prev.getClass()) {
       if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
@@ -176,6 +160,23 @@ final class Conf {
     }
     fastHashCode = hash;
   }
+
+  boolean equiv(Conf other) {
+    if (this.fastHashCode != other.fastHashCode) return false;
+    Frame<BasicValue> currFr = this.frame;
+    Frame<BasicValue> prevFr = other.frame;
+    for (int i = currFr.getStackSize() - 1; i >= 0; i--) {
+      if (!AbstractValues.equiv(currFr.getStack(i), prevFr.getStack(i))) {
+        return false;
+      }
+    }
+    for (int i = currFr.getLocals() - 1; i >= 0; i--) {
+      if (!AbstractValues.equiv(currFr.getLocal(i), prevFr.getLocal(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 final class State {
@@ -198,6 +199,29 @@ final class State {
     this.taken = taken;
     this.hasCompanions = hasCompanions;
     this.unsure = unsure;
+  }
+
+  boolean equiv(State prev) {
+    if (this.taken != prev.taken) {
+      return false;
+    }
+    if (this.unsure != prev.unsure) {
+      return false;
+    }
+    if (!this.conf.equiv(prev.conf)) {
+      return false;
+    }
+    if (this.history.size() != prev.history.size()) {
+      return false;
+    }
+    for (int i = 0; i < this.history.size(); i++) {
+      Conf curr1 = this.history.get(i);
+      Conf prev1 = prev.history.get(i);
+      if (!curr1.equiv(prev1)) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 
@@ -229,32 +253,6 @@ abstract class Analysis<Res> {
 
   final State createStartState() {
     return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false, false);
-  }
-
-  static boolean stateEquiv(State curr, State prev) {
-    if (curr.taken != prev.taken) {
-      return false;
-    }
-    if (curr.unsure != prev.unsure) {
-      return false;
-    }
-    if (curr.conf.fastHashCode != prev.conf.fastHashCode) {
-      return false;
-    }
-    if (!AbstractValues.equiv(curr.conf, prev.conf)) {
-      return false;
-    }
-    if (curr.history.size() != prev.history.size()) {
-      return false;
-    }
-    for (int i = 0; i < curr.history.size(); i++) {
-      Conf curr1 = curr.history.get(i);
-      Conf prev1 = prev.history.get(i);
-      if (curr1.fastHashCode != prev1.fastHashCode || !AbstractValues.equiv(curr1, prev1)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @NotNull

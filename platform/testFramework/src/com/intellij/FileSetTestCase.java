@@ -38,7 +38,7 @@ public abstract class FileSetTestCase extends TestSuite {
     addAllTests();
   }
 
-  protected FileSetTestCase(@NotNull File[] files) {
+  protected FileSetTestCase(File @NotNull [] files) {
     myFiles = files;
     addAllTests();
   }

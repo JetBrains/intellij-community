@@ -17,9 +17,11 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -29,10 +31,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
-import com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DoubleClickListener
@@ -42,8 +41,10 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -98,7 +99,7 @@ open class MultipleFileMergeDialog(
 
   init {
     StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges()
-    title = mergeDialogCustomizer.multipleFileDialogTitle
+    title = mergeDialogCustomizer.getMultipleFileDialogTitle()
     virtualFileRenderer.font = UIUtil.getListFont()
 
     @Suppress("LeakingThis")
@@ -110,20 +111,21 @@ open class MultipleFileMergeDialog(
     selectFirstFile()
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
+        if (EditSourceOnDoubleClickHandler.isToggleEvent(table.tree, event)) return false
         showMergeDialog()
         return true
       }
-    }.installOn(table)
+    }.installOn(table.tree)
 
     TableSpeedSearch(table, Convertor { (it as? VirtualFile)?.name })
 
     val modalityState = ModalityState.stateForComponent(descriptionLabel)
-    ApplicationManager.getApplication().executeOnPooledThread {
+    BackgroundTaskUtil.executeOnPooledThread(disposable, Runnable {
       val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
       runInEdt(modalityState) {
         descriptionLabel.text = description
       }
-    }
+    })
   }
 
   private fun selectFirstFile() {
@@ -146,7 +148,8 @@ open class MultipleFileMergeDialog(
           table = it
           it.setTreeCellRenderer(virtualFileRenderer)
           it.rowHeight = virtualFileRenderer.preferredSize.height
-        }, growX, growY, pushX, pushY)
+          it.preferredScrollableViewportSize = JBUI.size(600, 300)
+        }).constraints(growX, growY, pushX, pushY)
 
         cell(isVerticalFlow = true) {
           JButton(VcsBundle.message("multiple.file.merge.accept.yours")).also {
@@ -172,7 +175,7 @@ open class MultipleFileMergeDialog(
 
       if (project != null) {
         row {
-          checkBox("Group files by directory", groupByDirectory) { _, component ->
+          checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"), groupByDirectory) { _, component ->
             toggleGroupByDirectory(component.isSelected)
           }
         }
@@ -189,7 +192,7 @@ open class MultipleFileMergeDialog(
 
     val mergeInfoColumns = mergeSession?.mergeInfoColumns
     if (mergeInfoColumns != null) {
-      var customColumnNames = mergeDialogCustomizer.columnNames
+      var customColumnNames = mergeDialogCustomizer.getColumnNames()
       if (customColumnNames != null && customColumnNames.size != mergeInfoColumns.size) {
         LOG.error("Custom column names ($customColumnNames) don't match default columns ($mergeInfoColumns)")
         customColumnNames = null
@@ -241,7 +244,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun getSelectedFiles(): List<VirtualFile> {
-    return TreeUtil.collectSelectedObjectsOfType(table.tree, VirtualFile::class.java)
+    return VcsTreeModelData.selected(table.tree).userObjects(VirtualFile::class.java)
   }
 
   override fun createActions(): Array<Action> {
@@ -372,17 +375,25 @@ open class MultipleFileMergeDialog(
     }
 
     for (file in files) {
+      val filePath = VcsUtil.getFilePath(file)
+
       val conflictData: ConflictData
       try {
         conflictData = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ConflictData, VcsException> {
           val mergeData = mergeProvider.loadRevisions(file)
 
-          val leftTitle = mergeDialogCustomizer.getLeftPanelTitle(file)
-          val baseTitle = mergeDialogCustomizer.getCenterPanelTitle(file)
-          val rightTitle = mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
-          val title = mergeDialogCustomizer.getMergeWindowTitle(file)
+          val title = tryCompute { mergeDialogCustomizer.getMergeWindowTitle(file) }
 
-          ConflictData(mergeData, title, listOf(leftTitle, baseTitle, rightTitle))
+          val conflictTitles = listOf(
+            tryCompute { mergeDialogCustomizer.getLeftPanelTitle(file) },
+            tryCompute { mergeDialogCustomizer.getCenterPanelTitle(file) },
+            tryCompute { mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER) }
+          )
+
+          val titleCustomizer = tryCompute { mergeDialogCustomizer.getTitleCustomizerList(filePath) }
+                                ?: MergeDialogCustomizer.DEFAULT_CUSTOMIZER_LIST
+
+          ConflictData(mergeData, title, conflictTitles, titleCustomizer)
         }, "Loading Revisions...", true, project)
       }
       catch (ex: VcsException) {
@@ -416,7 +427,7 @@ open class MultipleFileMergeDialog(
           request = requestFactory.createMergeRequest(project, file, byteContents, title, contentTitles, callback)
         }
 
-        MergeUtil.putRevisionInfos(request, mergeData)
+        MergeUtils.putRevisionInfos(request, mergeData)
       }
       catch (e: InvalidDiffRequestException) {
         if (e.cause is FileTooBigException) {
@@ -428,13 +439,8 @@ open class MultipleFileMergeDialog(
         }
         break
       }
-      val filePath = VcsUtil.getFilePath(file)
-      mergeDialogCustomizer.run {
-        request.putUserData(EDITORS_TITLE_CUSTOMIZER, listOf(
-          getLeftTitleCustomizer(filePath),
-          getCenterTitleCustomizer(filePath),
-          getRightTitleCustomizer(filePath)
-        ))
+      conflictData.contentTitleCustomizers.run {
+        request.putUserData(EDITORS_TITLE_CUSTOMIZER, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
       }
       DiffManager.getInstance().showMerge(project, request)
     }
@@ -454,12 +460,30 @@ open class MultipleFileMergeDialog(
 
   override fun getPreferredFocusedComponent(): JComponent? = table
 
+  private fun <T> tryCompute(task: () -> T): T? {
+    try {
+      return task()
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+    return null
+  }
 
   companion object {
     private val LOG = Logger.getInstance(MultipleFileMergeDialog::class.java)
   }
 
-  private data class ConflictData(val mergeData: MergeData,
-                                  val title: String,
-                                  val contentTitles: List<String>)
+  private data class ConflictData(
+    val mergeData: MergeData,
+    val title: String?,
+    val contentTitles: List<String?>,
+    val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList
+  )
 }

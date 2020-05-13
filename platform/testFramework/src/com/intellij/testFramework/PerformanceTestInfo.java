@@ -10,6 +10,8 @@ import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PerformanceTestInfo {
   private final ThrowableRunnable<?> test; // runnable to measure
@@ -17,6 +19,7 @@ public class PerformanceTestInfo {
   private ThrowableRunnable<?> setup;      // to run before each test
   private int usedReferenceCpuCores = 1;
   private int attempts = 4;             // number of retries if performance failed
+  private boolean waitForJit;
   private final String what;         // to print on fail
   private boolean adjustForIO = false;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
   private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
@@ -74,6 +77,12 @@ public class PerformanceTestInfo {
     return this;
   }
 
+  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  public PerformanceTestInfo reattemptUntilJitSettlesDown() {
+    this.waitForJit = true;
+    return this;
+  }
+
   /**
    * @deprecated Enables procedure for nonlinear scaling of results between different machines. This was historically enabled, but doesn't
    * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
@@ -89,6 +98,10 @@ public class PerformanceTestInfo {
   public void assertTiming() {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
+    if (waitForJit) {
+      attempts = 100;
+      updateJitUsage();
+    }
 
     if (attempts == 1) {
       //noinspection CallToSystemGC
@@ -132,13 +145,15 @@ public class PerformanceTestInfo {
         }
       }
 
-      if (attempts == 0 || iterationResult == IterationResult.acceptable) {
+      if (iterationResult == IterationResult.acceptable) {
+        return;
+      }
+      if (attempts == 0 || waitForJit && updateJitUsage() == JitUsageResult.definitelyLow) {
         if (testShouldPass) return;
         throw new AssertionFailedError(logMessage);
       }
 
-      // try again
-      String s = "  " + attempts + " attempts remain";
+      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         System.out.println(s);
@@ -160,14 +175,45 @@ public class PerformanceTestInfo {
       "\n  Actual:   %sms (%s)" +
       "\n  Timings:  %s" +
       "\n  Threads:  %s" +
-      "\n  GC stats: %s",
+      "\n  GC stats: %s" +
+      "\n  Process:  %s",
       what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
       expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
       duration, StringUtil.formatDuration(duration),
       Timings.getStatistics(),
       data.getThreadStats(),
-      data.getGcStats());
+      data.getGcStats(),
+      data.getProcessCpuStats());
   }
+
+  private long lastJitUsage;
+  private long lastJitStamp = -1;
+
+  private JitUsageResult updateJitUsage() {
+    long timeNow = System.nanoTime();
+    long jitNow = CpuUsageData.getTotalCompilationMillis();
+
+    long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(timeNow - lastJitStamp);
+    if (lastJitStamp >= 0) {
+      if (elapsedMillis >= 3_000) {
+        if (jitNow - lastJitUsage <= elapsedMillis / 10) {
+          return JitUsageResult.definitelyLow;
+        }
+      } else {
+        // don't update stamps too frequently,
+        // because JIT times are quite discrete: they only change after a compilation is finished,
+        // and some compilations take a second or even more
+        return JitUsageResult.unclear;
+      }
+    }
+
+    lastJitStamp = timeNow;
+    lastJitUsage = jitNow;
+
+    return JitUsageResult.unclear;
+  }
+
+  private enum JitUsageResult {definitelyLow, unclear}
 
   private enum IterationResult { acceptable, borderline, slow }
 

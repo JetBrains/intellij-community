@@ -50,7 +50,8 @@ public class BracesTailType extends TailType {
 
     if (EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, tailOffset, getFileType(editor))) {
       new EnterHandler(EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER))
-        .executeWriteAction(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()));
+        .executeWriteAction(editor, editor.getCaretModel().getCurrentCaret(),
+                            DataManager.getInstance().getDataContext(editor.getContentComponent()));
       return editor.getCaretModel().getOffset();
     }
     return tailOffset;

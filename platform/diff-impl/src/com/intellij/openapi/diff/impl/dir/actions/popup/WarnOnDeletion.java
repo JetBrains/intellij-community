@@ -20,13 +20,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class WarnOnDeletion extends ToggleAction implements DumbAware {
-  private static final String PROPERTY_NAME = "dir.diff.do.not.show.warnings.when.deleting";
+  private static final @NonNls String PROPERTY_NAME = "dir.diff.do.not.show.warnings.when.deleting";
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {

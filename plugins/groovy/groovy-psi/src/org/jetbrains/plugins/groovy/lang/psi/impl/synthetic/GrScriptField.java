@@ -54,9 +54,8 @@ public class GrScriptField extends GrLightField {
     return null;
   }
 
-  @NotNull
   @Override
-  public GrAccessorMethod[] getGetters() {
+  public GrAccessorMethod @NotNull [] getGetters() {
     return GrAccessorMethod.EMPTY_ARRAY;
   }
 

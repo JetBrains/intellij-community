@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ChangesPreprocess {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesPreprocess");
+  private static final Logger LOG = Logger.getInstance(ChangesPreprocess.class);
 
   public static List<Change> preprocessChangesRemoveDeletedForDuplicateMoved(List<? extends Change> list) {
     final List<Change> result = new ArrayList<>();

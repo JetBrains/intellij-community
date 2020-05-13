@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -78,7 +79,7 @@ public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget
         tryShowPopup();
         return true;
       }
-    }.installOn(myComponent);
+    }.installOn(myComponent, true);
   }
 
   private void tryShowPopup() {
@@ -133,7 +134,7 @@ public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget
     else {
       myActionEnabled = true;
       charsetName = largeFileEditorAccess.getCharsetName();
-      toolTipText = "File Encoding: " + charsetName;
+      toolTipText = EditorBundle.message("large.file.editor.tooltip.file.encoding.is.some", charsetName);
       myComponent.setVisible(true);
     }
 

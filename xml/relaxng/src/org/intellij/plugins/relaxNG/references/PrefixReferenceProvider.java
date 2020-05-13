@@ -34,15 +34,15 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PrefixReferenceProvider extends PsiReferenceProvider {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.references.PrefixReferenceProvider");
+  private static final Logger LOG = Logger.getInstance(PrefixReferenceProvider.class);
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue value = (XmlAttributeValue)element;
 
     final String s = value.getValue();
@@ -89,9 +89,8 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
       return super.isReferenceTo(element);
     }
 
-    @Nullable
     @Override
-    public LocalQuickFix[] getQuickFixes() {
+    public LocalQuickFix @Nullable [] getQuickFixes() {
       final PsiElement element = getElement();
       final XmlElementFactory factory = XmlElementFactory.getInstance(element.getProject());
       final String value = ((XmlAttributeValue)element).getValue();
@@ -109,7 +108,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
-      return "Undefined namespace prefix ''{0}''";
+      return RelaxngBundle.message("undefined.namespace.prefix.0");
     }
   }
 }

@@ -1,9 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.InstanceCreator;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -33,10 +32,23 @@ public abstract class PyAbstractPackageCache {
   private static final Logger LOG = Logger.getInstance(PyPIPackageCache.class);
 
   private static final Gson ourGson = new GsonBuilder()
-      // Otherwise, GSON uses natural order comparator even for a final TreeMap field
-    .registerTypeAdapter(new TypeToken<TreeMap<String, PackageInfo>>() { }.getType(),
-                         (InstanceCreator)type -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER))
-    .create();
+          // Otherwise, GSON uses natural order comparator even for a final TreeMap field
+          .registerTypeAdapter(new TypeToken<TreeMap<String, PackageInfo>>() { }.getType(),
+                  (InstanceCreator<TreeMap<String, PackageInfo>>) type -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER))
+          .registerTypeAdapter(PackageInfo.class,
+                  new JsonDeserializer<PackageInfo>() {
+                    final Gson defaultGson = new Gson();
+
+                    @Override
+                    public PackageInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                            throws JsonParseException {
+                      if (json.isJsonObject() && json.getAsJsonObject().size() == 0) {
+                        return PackageInfo.EMPTY;
+                      }
+                      return defaultGson.fromJson(json, typeOfT);
+                    }
+                  })
+          .create();
 
   @SerializedName("packages")
   protected final TreeMap<String, PackageInfo> myPackages = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);

@@ -26,6 +26,7 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,21 +34,23 @@ import java.util.Map;
 
 public class XMLColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.prologue"), XmlHighlighterColors.XML_PROLOGUE),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag"), XmlHighlighterColors.XML_TAG),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.name"), XmlHighlighterColors.XML_TAG_NAME),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.namespace.prefix"), XmlHighlighterColors.XML_NS_PREFIX),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.name"), XmlHighlighterColors.XML_ATTRIBUTE_NAME),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.value"), XmlHighlighterColors.XML_ATTRIBUTE_VALUE),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.data"), XmlHighlighterColors.XML_TAG_DATA),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), XmlHighlighterColors.XML_ENTITY_REFERENCE),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.prologue"), XmlHighlighterColors.XML_PROLOGUE),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag"), XmlHighlighterColors.XML_TAG),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name"), XmlHighlighterColors.XML_TAG_NAME),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.matched.tag.name"), XmlHighlighterColors.MATCHED_TAG_NAME),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.namespace.prefix"), XmlHighlighterColors.XML_NS_PREFIX),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.attribute.name"), XmlHighlighterColors.XML_ATTRIBUTE_NAME),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.attribute.value"), XmlHighlighterColors.XML_ATTRIBUTE_VALUE),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.data"), XmlHighlighterColors.XML_TAG_DATA),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), XmlHighlighterColors.XML_ENTITY_REFERENCE),
+    new AttributesDescriptor(OptionsBundle.message("options.any.color.descriptor.injected.language.fragment"), XmlHighlighterColors.XML_INJECTED_LANGUAGE_FRAGMENT),
   };
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return OptionsBundle.message("options.xml.display.name");
+    return XmlBundle.message("options.xml.display.name");
   }
 
   @Override
@@ -56,14 +59,12 @@ public class XMLColorsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ATTRS;
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;                       
   }
 
@@ -85,6 +86,7 @@ public class XMLColorsPage implements ColorSettingsPage {
            "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
            "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
            "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n" +
+           "   <<matched>indexitem</matched>>Matched tag name</<matched>indexitem</matched>>\n" +
            "   <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>\n" +
            "   <withCData><![CDATA[\n" +
            "          <object class=\"MyClass\" key=\"constant\">\n" +
@@ -99,6 +101,7 @@ public class XMLColorsPage implements ColorSettingsPage {
   @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ContainerUtil.newHashMap(Pair.create("np", XmlHighlighterColors.XML_NS_PREFIX),
-                                    Pair.create("bg", XmlHighlighterColors.XML_TAG));
+                                    Pair.create("bg", XmlHighlighterColors.XML_TAG),
+                                    Pair.create("matched", XmlHighlighterColors.MATCHED_TAG_NAME));
   }
 }

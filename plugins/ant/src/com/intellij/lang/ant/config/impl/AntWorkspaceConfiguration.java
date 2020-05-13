@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildFile;
@@ -7,7 +7,6 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "antWorkspaceConfiguration", storages = {
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 })
 public final class AntWorkspaceConfiguration implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration");
+  private static final Logger LOG = Logger.getInstance(AntWorkspaceConfiguration.class);
 
   private final Project myProject;
   @NonNls private static final String BUILD_FILE = "buildFile";
@@ -90,7 +90,7 @@ public final class AntWorkspaceConfiguration implements PersistentStateComponent
   @Nullable
   private static Element findChildByUrl(Element parentNode, String url) {
     for (Element element : parentNode.getChildren(BUILD_FILE)) {
-      if (Comparing.equal(element.getAttributeValue(URL), url)) {
+      if (Objects.equals(element.getAttributeValue(URL), url)) {
         return element;
       }
     }

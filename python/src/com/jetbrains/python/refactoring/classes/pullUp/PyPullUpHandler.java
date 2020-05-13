@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * @author: Dennis.Ushakov
  */
 public class PyPullUpHandler extends PyClassRefactoringHandler {
-  public static final String REFACTORING_NAME = PyBundle.message("refactoring.pull.up.dialog.title");
-
   @Override
   protected void doRefactorImpl(@NotNull final Project project,
                                 @NotNull final PyClass classUnderRefactoring,
@@ -65,11 +63,15 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
 
   @Override
   protected String getTitle() {
-    return REFACTORING_NAME;
+    return getRefactoringName();
   }
 
   @Override
   protected String getHelpId() {
     return "refactoring.pullMembersUp";
+  }
+
+  public static String getRefactoringName() {
+    return PyBundle.message("refactoring.pull.up.dialog.title");
   }
 }

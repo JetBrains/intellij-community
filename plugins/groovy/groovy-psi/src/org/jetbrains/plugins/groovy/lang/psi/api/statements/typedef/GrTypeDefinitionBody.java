@@ -19,14 +19,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
  */
 public interface GrTypeDefinitionBody extends GrVariableDeclarationOwner {
 
-  @NotNull
-  GrField[] getFields();
+  GrField @NotNull [] getFields();
 
-  @NotNull
-  GrMethod[] getMethods();
+  GrMethod @NotNull [] getMethods();
 
-  @NotNull
-  GrMembersDeclaration[] getMemberDeclarations();
+  GrMembersDeclaration @NotNull [] getMemberDeclarations();
 
   @Nullable
   PsiElement getLBrace();
@@ -34,9 +31,7 @@ public interface GrTypeDefinitionBody extends GrVariableDeclarationOwner {
   @Nullable
   PsiElement getRBrace();
 
-  @NotNull
-  GrClassInitializer[] getInitializers();
+  GrClassInitializer @NotNull [] getInitializers();
 
-  @NotNull
-  GrTypeDefinition[] getInnerClasses();
+  GrTypeDefinition @NotNull [] getInnerClasses();
 }

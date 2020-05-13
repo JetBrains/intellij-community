@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,23 +25,24 @@ import java.awt.*;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.ClosedFileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.regex.Pattern;
 
-@SuppressWarnings("HardCodedStringLiteral")
 public final class JDOMUtil {
   private static final String X = "x";
   private static final String Y = "y";
   private static final String WIDTH = "width";
   private static final String HEIGHT = "height";
 
-  private static final Predicate<Attribute> NOT_EMPTY_VALUE_CONDITION = attribute -> !StringUtil.isEmpty(attribute.getValue());
+  //xpointer($1)
+  public static final Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
+  public static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace("xi", "http://www.w3.org/2001/XInclude");
+  // /$1(/$2)?/*
+  public static final Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
 
   private static final String XML_INPUT_FACTORY_KEY = "javax.xml.stream.XMLInputFactory";
   private static final String XML_INPUT_FACTORY_IMPL = "com.sun.xml.internal.stream.XMLInputFactoryImpl";
@@ -95,13 +96,11 @@ public final class JDOMUtil {
 
   private JDOMUtil() { }
 
-  @NotNull
-  public static List<Element> getChildren(@Nullable Element parent) {
+  public static @NotNull List<Element> getChildren(@Nullable Element parent) {
     return parent == null ? Collections.emptyList() : parent.getChildren();
   }
 
-  @NotNull
-  public static List<Element> getChildren(@Nullable Element parent, @NotNull String name) {
+  public static @NotNull List<Element> getChildren(@Nullable Element parent, @NotNull String name) {
     if (parent != null) {
       return parent.getChildren(name);
     }
@@ -109,7 +108,7 @@ public final class JDOMUtil {
   }
 
   private static class LoggerHolder {
-    private static final Logger ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
+    private static final Logger ourLogger = Logger.getInstance(JDOMUtil.class);
   }
 
   private static Logger getLogger() {
@@ -128,9 +127,32 @@ public final class JDOMUtil {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;
 
-    return Comparing.equal(e1.getName(), e2.getName())
+    return Objects.equals(e1.getName(), e2.getName())
            && isAttributesEqual(getAttributes(e1), getAttributes(e2), ignoreEmptyAttrValues)
-           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
+           && areElementContentsEqual(e1, e2, ignoreEmptyAttrValues);
+  }
+
+  /**
+   * Returns hash code which is consistent with {@link #areElementsEqual(Element, Element, boolean)}
+   */
+  public static int hashCode(@Nullable Element e, boolean ignoreEmptyAttrValues) {
+    if (e == null) return 0;
+    int hashCode = e.getName().hashCode();
+    for (Attribute attribute : getAttributes(e)) {
+      String value = attribute.getValue();
+      if (!ignoreEmptyAttrValues || (value != null && !value.isEmpty())) {
+        hashCode = hashCode * 31 * 31 + attribute.getName().hashCode() * 31 + value.hashCode();
+      }
+    }
+    for (Content content : e.getContent(CONTENT_FILTER)) {
+      int contentHash = content instanceof Element ? hashCode((Element)content, ignoreEmptyAttrValues) : e.getValue().hashCode();
+      hashCode = hashCode * 31 + contentHash;
+    }
+    return hashCode;
+  }
+
+  public static boolean areElementContentsEqual(@NotNull Element e1, @NotNull Element e2, boolean ignoreEmptyAttrValues) {
+    return contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
   }
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
@@ -138,20 +160,17 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link Element#getChildren} instead
    */
-  @NotNull
   @Deprecated
-  public static Element[] getElements(@NotNull Element m) {
+  public static Element @NotNull [] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[0]);
   }
 
-  @NotNull
-  public static String legalizeText(@NotNull String str) {
+  public static @NotNull String legalizeText(@NotNull String str) {
     return legalizeChars(str).toString();
   }
 
-  @NotNull
-  public static CharSequence legalizeChars(@NotNull CharSequence str) {
+  public static @NotNull CharSequence legalizeChars(@NotNull CharSequence str) {
     StringBuilder result = new StringBuilder(str.length());
     for (int i = 0, len = str.length(); i < len; i++) {
       appendLegalized(result, str.charAt(i));
@@ -205,24 +224,43 @@ public final class JDOMUtil {
                                            @NotNull List<? extends Attribute> l2,
                                            boolean ignoreEmptyAttrValues) {
     if (ignoreEmptyAttrValues) {
-      l1 = l1.isEmpty() ? Collections.emptyList() : l1.stream().filter(NOT_EMPTY_VALUE_CONDITION).collect(Collectors.toList());
-      l2 = l2.isEmpty() ? Collections.emptyList() : l2.stream().filter(NOT_EMPTY_VALUE_CONDITION).collect(Collectors.toList());
+      l1 = getNotEmptyAttributes(l1);
+      l2 = getNotEmptyAttributes(l2);
     }
     if (l1.size() != l2.size()) {
       return false;
     }
     for (int i = 0; i < l1.size(); i++) {
-      if (!attEqual(l1.get(i), l2.get(i))) return false;
+      if (!attributesEqual(l1.get(i), l2.get(i))) {
+        return false;
+      }
     }
     return true;
   }
 
-  private static boolean attEqual(@NotNull Attribute a1, @NotNull Attribute a2) {
+  private static @NotNull List<? extends Attribute> getNotEmptyAttributes(@NotNull List<? extends Attribute> list) {
+    if (list.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Attribute> result = null;
+    for (Attribute attribute : list) {
+      String s = attribute.getValue();
+      if (s != null && !s.isEmpty()) {
+        if (result == null) {
+          result = new ArrayList<>(list.size());
+        }
+        result.add(attribute);
+      }
+    }
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  private static boolean attributesEqual(@NotNull Attribute a1, @NotNull Attribute a2) {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
   }
 
-  @NotNull
-  private static Document loadDocumentUsingStaX(@NotNull Reader reader) throws JDOMException, IOException {
+  private static @NotNull Document loadDocumentUsingStaX(@NotNull Reader reader) throws JDOMException, IOException {
     try {
       XMLStreamReader xmlStreamReader = getXmlInputFactory().createXMLStreamReader(reader);
       try {
@@ -240,8 +278,7 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  private static Element loadUsingStaX(@NotNull Reader reader, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
+  private static @NotNull Element loadUsingStaX(@NotNull Reader reader, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     try {
       XMLStreamReader xmlStreamReader = getXmlInputFactory().createXMLStreamReader(reader);
       try {
@@ -264,14 +301,12 @@ public final class JDOMUtil {
    * <p>
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
-  @NotNull
   @Deprecated
-  public static Document loadDocument(@NotNull CharSequence seq) throws IOException, JDOMException {
+  public static @NotNull Document loadDocument(@NotNull CharSequence seq) throws IOException, JDOMException {
     return loadDocument(new CharSequenceReader(seq));
   }
 
-  @NotNull
-  public static Element load(@NotNull CharSequence seq) throws IOException, JDOMException {
+  public static @NotNull Element load(@NotNull CharSequence seq) throws IOException, JDOMException {
     return load(new CharSequenceReader(seq));
   }
 
@@ -280,34 +315,44 @@ public final class JDOMUtil {
    * <p>
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
-  @NotNull
   @Deprecated
-  public static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
+  public static @NotNull Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
     return loadDocumentUsingStaX(reader);
   }
 
-  @NotNull
-  public static Document loadDocument(@NotNull File file) throws JDOMException, IOException {
-    return loadDocumentUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)));
+  public static @NotNull Document loadDocument(@NotNull File file) throws JDOMException, IOException {
+    return loadDocumentUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file))), StandardCharsets.UTF_8));
   }
 
-  @NotNull
-  public static Element load(@NotNull File file) throws JDOMException, IOException {
+  public static @NotNull Element load(@NotNull File file) throws JDOMException, IOException {
     return load(file, null);
   }
 
-  @NotNull
-  public static Element load(@NotNull Path file) throws JDOMException, IOException {
-    return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), null);
+  public static @NotNull Element load(@NotNull Path file) throws JDOMException, IOException {
+    try {
+      return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), null);
+    }
+    catch (ClosedFileSystemException e) {
+      throw new IOException("Cannot read file from closed file system: " + file, e);
+    }
   }
 
   /**
    * Internal use only.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
+  public static @NotNull Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file))), StandardCharsets.UTF_8), factory);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Element load(@NotNull Path file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
+    try {
+      return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), factory);
+    }
+    catch (ClosedFileSystemException e) {
+      throw new IOException("Cannot read file from closed file system: " + file, e);
+    }
   }
 
   /**
@@ -316,8 +361,7 @@ public final class JDOMUtil {
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
-  @NotNull
-  public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
+  public static @NotNull Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     return loadDocumentUsingStaX(new InputStreamReader(stream, StandardCharsets.UTF_8));
   }
 
@@ -335,13 +379,11 @@ public final class JDOMUtil {
    * Internal use only.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static Element load(@NotNull InputStream stream, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
+  public static @NotNull Element load(@NotNull InputStream stream, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     return loadUsingStaX(new InputStreamReader(stream, StandardCharsets.UTF_8), factory);
   }
 
-  @NotNull
-  public static Element load(@NotNull Class<?> clazz, @NotNull String resource) throws JDOMException, IOException {
+  public static @NotNull Element load(@NotNull Class<?> clazz, @NotNull String resource) throws JDOMException, IOException {
     InputStream stream = clazz.getResourceAsStream(resource);
     if (stream == null) {
       throw new FileNotFoundException(resource);
@@ -355,13 +397,11 @@ public final class JDOMUtil {
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
-  @NotNull
-  public static Document loadDocument(@NotNull URL url) throws JDOMException, IOException {
+  public static @NotNull Document loadDocument(@NotNull URL url) throws JDOMException, IOException {
     return loadDocument(URLUtil.openStream(url));
   }
 
-  @NotNull
-  public static Element load(@NotNull URL url) throws JDOMException, IOException {
+  public static @NotNull Element load(@NotNull URL url) throws JDOMException, IOException {
     return load(URLUtil.openStream(url));
   }
 
@@ -370,14 +410,12 @@ public final class JDOMUtil {
    * <p>
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
-  @NotNull
   @Deprecated
-  public static Document loadResourceDocument(@NotNull URL url) throws JDOMException, IOException {
+  public static @NotNull Document loadResourceDocument(@NotNull URL url) throws JDOMException, IOException {
     return loadDocument(URLUtil.openResourceStream(url));
   }
 
-  @NotNull
-  public static Element loadResource(@NotNull URL url) throws JDOMException, IOException {
+  public static @NotNull Element loadResource(@NotNull URL url) throws JDOMException, IOException {
     return load(URLUtil.openResourceStream(url));
   }
 
@@ -436,8 +474,7 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static String writeDocument(@NotNull Document document, String lineSeparator) {
+  public static @NotNull String writeDocument(@NotNull Document document, String lineSeparator) {
     try {
       final StringWriter writer = new StringWriter();
       writeDocument(document, writer, lineSeparator);
@@ -449,13 +486,11 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static String write(@NotNull Element element) {
+  public static @NotNull String write(@NotNull Element element) {
     return writeElement(element);
   }
 
-  @NotNull
-  public static String write(@NotNull Parent element, String lineSeparator) {
+  public static @NotNull String write(@NotNull Parent element, String lineSeparator) {
     try {
       final StringWriter writer = new StringWriter();
       write(element, writer, lineSeparator);
@@ -489,13 +524,11 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static String writeElement(@NotNull Element element) {
+  public static @NotNull String writeElement(@NotNull Element element) {
     return writeElement(element, "\n");
   }
 
-  @NotNull
-  public static String writeElement(@NotNull Element element, String lineSeparator) {
+  public static @NotNull String writeElement(@NotNull Element element, String lineSeparator) {
     try {
       final StringWriter writer = new StringWriter();
       writeElement(element, writer, lineSeparator);
@@ -506,8 +539,7 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static String writeChildren(@NotNull final Element element, @NotNull final String lineSeparator) throws IOException {
+  public static @NotNull String writeChildren(final @NotNull Element element, final @NotNull String lineSeparator) throws IOException {
     final StringWriter writer = new StringWriter();
     for (Element child : element.getChildren()) {
       writeElement(child, writer, lineSeparator);
@@ -527,8 +559,7 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static Format createFormat(@Nullable String lineSeparator) {
+  public static @NotNull Format createFormat(@Nullable String lineSeparator) {
     return Format.getCompactFormat()
       .setIndent("  ")
       .setTextMode(Format.TextMode.TRIM)
@@ -538,16 +569,14 @@ public final class JDOMUtil {
       .setLineSeparator(lineSeparator);
   }
 
-  @NotNull
-  public static XMLOutputter createOutputter(String lineSeparator) {
+  public static @NotNull XMLOutputter createOutputter(String lineSeparator) {
     return new MyXMLOutputter(createFormat(lineSeparator));
   }
 
   /**
    * Returns null if no escapement necessary.
    */
-  @Nullable
-  private static String escapeChar(char c, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
+  private static @Nullable String escapeChar(char c, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     switch (c) {
       case '\n':
         return escapeLineEnds ? "&#10;" : null;
@@ -571,18 +600,15 @@ public final class JDOMUtil {
     return null;
   }
 
-  @NotNull
-  public static String escapeText(@NotNull String text) {
+  public static @NotNull String escapeText(@NotNull String text) {
     return escapeText(text, false, false);
   }
 
-  @NotNull
-  public static String escapeText(@NotNull String text, boolean escapeSpaces, boolean escapeLineEnds) {
+  public static @NotNull String escapeText(@NotNull String text, boolean escapeSpaces, boolean escapeLineEnds) {
     return escapeText(text, false, escapeSpaces, escapeLineEnds);
   }
 
-  @NotNull
-  public static String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
+  public static @NotNull String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     StringBuilder buffer = null;
     for (int i = 0; i < text.length(); i++) {
       final char ch = text.charAt(i);
@@ -595,20 +621,18 @@ public final class JDOMUtil {
     return buffer == null ? text : buffer.toString();
   }
 
-  private final static class MyXMLOutputter extends XMLOutputter {
+  private static final class MyXMLOutputter extends XMLOutputter {
     MyXMLOutputter(@NotNull Format format) {
       super(format);
     }
 
     @Override
-    @NotNull
-    public String escapeAttributeEntities(@NotNull String str) {
+    public @NotNull String escapeAttributeEntities(@NotNull String str) {
       return escapeText(str, false, true);
     }
 
     @Override
-    @NotNull
-    public String escapeElementEntities(@NotNull String str) {
+    public @NotNull String escapeElementEntities(@NotNull String str) {
       return escapeText(str, false, false);
     }
   }
@@ -630,8 +654,7 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  private static ElementInfo getElementInfo(@NotNull Element element) {
+  private static @NotNull ElementInfo getElementInfo(@NotNull Element element) {
     boolean hasNullAttributes = false;
     StringBuilder buf = new StringBuilder(element.getName());
     List<Attribute> attributes = getAttributes(element);
@@ -655,9 +678,9 @@ public final class JDOMUtil {
     return new ElementInfo(buf, hasNullAttributes);
   }
 
-  public static void updateFileSet(@NotNull File[] oldFiles,
-                                   @NotNull String[] newFilePaths,
-                                   @NotNull Document[] newFileDocuments,
+  public static void updateFileSet(File @NotNull [] oldFiles,
+                                   String @NotNull [] newFilePaths,
+                                   Document @NotNull [] newFileDocuments,
                                    String lineSeparator)
     throws IOException {
     getLogger().assertTrue(newFilePaths.length == newFileDocuments.length);
@@ -701,7 +724,7 @@ public final class JDOMUtil {
   }
 
   private static class ElementInfo {
-    @NotNull final CharSequence name;
+    final @NotNull CharSequence name;
     final boolean hasNullAttributes;
 
     private ElementInfo(@NotNull CharSequence name, boolean attributes) {
@@ -732,14 +755,12 @@ public final class JDOMUtil {
     return element == null || getAttributes(element).size() == attributeCount && element.getContent().isEmpty();
   }
 
-  @NotNull
-  public static List<Attribute> getAttributes(@NotNull Element e) {
+  public static @NotNull List<Attribute> getAttributes(@NotNull Element e) {
     // avoid AttributeList creation if no attributes
     return e.hasAttributes() ? e.getAttributes() : Collections.emptyList();
   }
 
-  @Nullable
-  public static Element merge(@Nullable Element to, @Nullable Element from) {
+  public static @Nullable Element merge(@Nullable Element to, @Nullable Element from) {
     if (from == null) {
       return to;
     }
@@ -760,8 +781,7 @@ public final class JDOMUtil {
     return to;
   }
 
-  @NotNull
-  public static Element deepMerge(@NotNull Element to, @NotNull Element from) {
+  public static @NotNull Element deepMerge(@NotNull Element to, @NotNull Element from) {
     for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
       Element child = iterator.next();
       iterator.remove();
@@ -828,8 +848,7 @@ public final class JDOMUtil {
    * - is immutable (all modifications methods like setName(), setParent() etc will throw)<br/>
    * - has {@code clone()} method which will return modifiable org.jdom.Element copy.<br/>
    */
-  @NotNull
-  public static Element internElement(@NotNull Element element) {
+  public static @NotNull Element internElement(@NotNull Element element) {
     return JDOMInterner.INSTANCE.internElement(element);
   }
 
@@ -838,8 +857,7 @@ public final class JDOMUtil {
    *
    * @see XmlStringUtil#escapeIllegalXmlChars(String)
    */
-  @NotNull
-  public static String removeControlChars(@NotNull String text) {
+  public static @NotNull String removeControlChars(@NotNull String text) {
     StringBuilder result = null;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -859,13 +877,11 @@ public final class JDOMUtil {
   }
 
 
-  @Nullable
-  public static Point getLocation(@Nullable Element element) {
+  public static @Nullable Point getLocation(@Nullable Element element) {
     return element == null ? null : getLocation(element, X, Y);
   }
 
-  @Nullable
-  public static Point getLocation(@NotNull Element element, @NotNull String x, @NotNull String y) {
+  public static @Nullable Point getLocation(@NotNull Element element, @NotNull String x, @NotNull String y) {
     String sX = element.getAttributeValue(x);
     if (sX == null) return null;
     String sY = element.getAttributeValue(y);
@@ -878,26 +894,22 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static Element setLocation(@NotNull Element element, @NotNull Point location) {
+  public static @NotNull Element setLocation(@NotNull Element element, @NotNull Point location) {
     return setLocation(element, X, Y, location);
   }
 
-  @NotNull
-  public static Element setLocation(@NotNull Element element, @NotNull String x, @NotNull String y, @NotNull Point location) {
+  public static @NotNull Element setLocation(@NotNull Element element, @NotNull String x, @NotNull String y, @NotNull Point location) {
     return element
       .setAttribute(x, Integer.toString(location.x))
       .setAttribute(y, Integer.toString(location.y));
   }
 
 
-  @Nullable
-  public static Dimension getSize(@Nullable Element element) {
+  public static @Nullable Dimension getSize(@Nullable Element element) {
     return element == null ? null : getSize(element, WIDTH, HEIGHT);
   }
 
-  @Nullable
-  public static Dimension getSize(@NotNull Element element, @NotNull String width, @NotNull String height) {
+  public static @Nullable Dimension getSize(@NotNull Element element, @NotNull String width, @NotNull String height) {
     String sWidth = element.getAttributeValue(width);
     if (sWidth == null) return null;
     String sHeight = element.getAttributeValue(height);
@@ -914,30 +926,26 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static Element setSize(@NotNull Element element, @NotNull Dimension size) {
+  public static @NotNull Element setSize(@NotNull Element element, @NotNull Dimension size) {
     return setSize(element, WIDTH, HEIGHT, size);
   }
 
-  @NotNull
-  public static Element setSize(@NotNull Element element, @NotNull String width, @NotNull String height, @NotNull Dimension size) {
+  public static @NotNull Element setSize(@NotNull Element element, @NotNull String width, @NotNull String height, @NotNull Dimension size) {
     return element
       .setAttribute(width, Integer.toString(size.width))
       .setAttribute(height, Integer.toString(size.height));
   }
 
 
-  @Nullable
-  public static Rectangle getBounds(@Nullable Element element) {
+  public static @Nullable Rectangle getBounds(@Nullable Element element) {
     return element == null ? null : getBounds(element, X, Y, WIDTH, HEIGHT);
   }
 
-  @Nullable
-  public static Rectangle getBounds(@NotNull Element element,
-                                    @NotNull String x,
-                                    @NotNull String y,
-                                    @NotNull String width,
-                                    @NotNull String height) {
+  public static @Nullable Rectangle getBounds(@NotNull Element element,
+                                              @NotNull String x,
+                                              @NotNull String y,
+                                              @NotNull String width,
+                                              @NotNull String height) {
     String sX = element.getAttributeValue(x);
     if (sX == null) return null;
     String sY = element.getAttributeValue(y);
@@ -958,22 +966,56 @@ public final class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static Element setBounds(@NotNull Element element, @NotNull Rectangle bounds) {
+  public static @NotNull Element setBounds(@NotNull Element element, @NotNull Rectangle bounds) {
     return setBounds(element, X, Y, WIDTH, HEIGHT, bounds);
   }
 
-  @NotNull
-  public static Element setBounds(@NotNull Element element,
-                                  @NotNull String x,
-                                  @NotNull String y,
-                                  @NotNull String width,
-                                  @NotNull String height,
-                                  @NotNull Rectangle bounds) {
+  public static @NotNull Element setBounds(@NotNull Element element,
+                                           @NotNull String x,
+                                           @NotNull String y,
+                                           @NotNull String width,
+                                           @NotNull String height,
+                                           @NotNull Rectangle bounds) {
     return element
       .setAttribute(x, Integer.toString(bounds.x))
       .setAttribute(y, Integer.toString(bounds.y))
       .setAttribute(width, Integer.toString(bounds.width))
       .setAttribute(height, Integer.toString(bounds.height));
+  }
+
+  /**
+   * Copies attributes and elements from {@code source} node to {@code target}
+   * node if they are not present in the latter one.
+   * <p>
+   * Preserves {@code target} element's name.
+   *
+   * @param source the source element to copy from
+   * @param target the target element to copy to
+   */
+  public static void copyMissingContent(@NotNull Element source, @NotNull Element target) {
+    Element targetClone = target.clone();
+    for (Attribute attribute : source.getAttributes()) {
+      if (!hasAttribute(targetClone, attribute.getName())) {
+        target.setAttribute(attribute.clone());
+      }
+    }
+    for (Content content : source.getContent()) {
+      if (!hasContent(targetClone, content)) {
+        target.addContent(content.clone());
+      }
+    }
+  }
+
+  private static boolean hasAttribute(@NotNull Element element, @NotNull String name) {
+    return element.getAttribute(name) != null;
+  }
+
+  private static boolean hasContent(@NotNull Element element, @NotNull Content content) {
+    if (content instanceof Element) {
+      return !element.getChildren(((Element)content).getName()).isEmpty();
+    }
+    else {
+      return false;
+    }
   }
 }

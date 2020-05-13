@@ -27,9 +27,6 @@ import org.jetbrains.jps.incremental.CompileContext;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class TargetOutputIndexImpl implements TargetOutputIndex {
   private final Map<File, List<BuildTarget<?>>> myOutputToTargets;
 

@@ -1,51 +1,65 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
+import com.intellij.openapi.editor.impl.EditorImpl
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
-class GHPRTwosideDiffViewerReviewThreadsHandler(viewer: TwosideTextDiffViewer,
-                                                reviewService: GHPRReviewServiceAdapter,
-                                                componentFactory: GHPREditorReviewCommentsComponentFactory)
-  : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>() {
+class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
+                                                commentableRangesModel: SingleValueModel<List<Range>?>,
+                                                reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
+                                                viewer: TwosideTextDiffViewer,
+                                                componentsFactory: GHPRDiffEditorReviewComponentsFactory)
+  : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
-  private val editorsThreads: Map<Side, GHPREditorReviewThreadsModel>
-  private val editorsCommentableRanges: Map<Side, SingleValueModel<List<GHPRDiffRangeMapping>>>
+  private val commentableRangesLeft = SingleValueModel<List<LineRange>>(emptyList())
+  private val editorThreadsLeft = GHPREditorReviewThreadsModel()
+
+  private val commentableRangesRight = SingleValueModel<List<LineRange>>(emptyList())
+  private val editorThreadsRight = GHPREditorReviewThreadsModel()
 
   override val viewerReady = true
 
   init {
-    val editorThreadsLeft = GHPREditorReviewThreadsModel()
-    val editorCommentableRangesLeft = SingleValueModel<List<GHPRDiffRangeMapping>>(emptyList())
-    GHPREditorReviewThreadsController(editorThreadsLeft, editorCommentableRangesLeft,
-                                      reviewService, componentFactory, viewer.editor1)
+    val inlaysManagerLeft = EditorComponentInlaysManager(viewer.editor1 as EditorImpl)
 
-    val editorThreadsRight = GHPREditorReviewThreadsModel()
-    val editorCommentableRangesRight = SingleValueModel<List<GHPRDiffRangeMapping>>(emptyList())
-    GHPREditorReviewThreadsController(editorThreadsRight, editorCommentableRangesRight,
-                                      reviewService, componentFactory, viewer.editor2)
+    val gutterIconRendererFactoryLeft = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManagerLeft,
+                                                                                    componentsFactory) {
+      Side.LEFT to it
+    }
 
-    editorsThreads = mapOf(Side.LEFT to editorThreadsLeft, Side.RIGHT to editorThreadsRight)
-    editorsCommentableRanges = mapOf(Side.LEFT to editorCommentableRangesLeft, Side.RIGHT to editorCommentableRangesRight)
+    GHPREditorCommentableRangesController(commentableRangesLeft, gutterIconRendererFactoryLeft, viewer.editor1)
+    GHPREditorReviewThreadsController(editorThreadsLeft, componentsFactory, inlaysManagerLeft)
+
+    val inlaysManagerRight = EditorComponentInlaysManager(viewer.editor2 as EditorImpl)
+
+    val gutterIconRendererFactoryRight = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManagerRight,
+                                                                                     componentsFactory) {
+      Side.RIGHT to it
+    }
+
+    GHPREditorCommentableRangesController(commentableRangesRight, gutterIconRendererFactoryRight, viewer.editor2)
+    GHPREditorReviewThreadsController(editorThreadsRight, componentsFactory, inlaysManagerRight)
   }
 
-  override fun updateCommentableRanges(ranges: List<GHPRDiffRangeMapping>) {
-    ranges.groupBy { it.side }.forEach { (side, ranges) ->
-      editorsCommentableRanges[side]?.value = ranges
-    }
+  override fun markCommentableRanges(ranges: List<Range>?) {
+    commentableRangesLeft.value = ranges?.let { GHPRCommentsUtil.getLineRanges(it, Side.LEFT) }.orEmpty()
+    commentableRangesRight.value = ranges?.let { GHPRCommentsUtil.getLineRanges(it, Side.RIGHT) }.orEmpty()
   }
 
-  override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {
-    mappings.groupBy { it.side }.forEach { (side, mappings) ->
-      editorsThreads[side]?.update(mappings.groupBy { it.fileLineIndex })
-    }
+  override fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?) {
+    editorThreadsLeft.update(threads
+                               ?.filter { it.diffSide == Side.LEFT }
+                               ?.groupBy({ it.fileLineIndex }, { it.thread }).orEmpty())
+    editorThreadsRight.update(threads
+                                ?.filter { it.diffSide == Side.RIGHT }
+                                ?.groupBy({ it.fileLineIndex }, { it.thread }).orEmpty())
   }
 }
 

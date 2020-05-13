@@ -39,7 +39,7 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
     assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
   }
 
-  MapBackedFMap(@NotNull int[] keys, int newKey, @NotNull Object[] values, @NotNull Object newValue) {
+  MapBackedFMap(int @NotNull [] keys, int newKey, Object @NotNull [] values, @NotNull Object newValue) {
     super(keys.length + 1);
     for (int i = 0; i < keys.length; i++) {
       int key = keys[i];
@@ -92,9 +92,8 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
     return (V)get(key.hashCode());
   }
 
-  @NotNull
   @Override
-  public Key[] getKeys() {
+  public Key @NotNull [] getKeys() {
     return getKeysByIndices(keys());
   }
 
@@ -134,6 +133,6 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
         return true;
       }
     });
-    return "[" + s.toString() + "]";
+    return "[" + s + "]";
   }
 }

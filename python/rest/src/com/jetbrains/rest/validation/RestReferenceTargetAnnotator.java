@@ -15,6 +15,7 @@
  */
 package com.jetbrains.rest.validation;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.rest.RestBundle;
 import com.jetbrains.rest.RestFile;
@@ -35,7 +36,7 @@ public class RestReferenceTargetAnnotator extends RestAnnotator {
     String name = node.getReferenceName(false);
     if (targets != null) {
       if ("__".equals(name) && !node.hasReference()) {
-        getHolder().createWarningAnnotation(node, RestBundle.message("ANN.unusable.anonymous.target"));
+        getHolder().newAnnotation(HighlightSeverity.WARNING, RestBundle.message("ANN.unusable.anonymous.target")).create();
       }
       for (RestReferenceTarget element : targets) {
         if ((element.getReferenceName().equalsIgnoreCase(name) || element.getReferenceName(false).equalsIgnoreCase(name) ||

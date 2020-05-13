@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public abstract class RemoteContentProvider {
   public abstract boolean canProvideContent(@NotNull Url url);
 

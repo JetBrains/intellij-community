@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class CloseProjectAction extends AnAction implements DumbAware {
   public CloseProjectAction() {
-    getTemplatePresentation().setText(IdeUICustomization.getInstance().getCloseProjectActionText());
+    getTemplatePresentation().setText(IdeUICustomization.getInstance().projectMessage("action.close.project.text"));
   }
 
   @Override
@@ -43,10 +43,10 @@ public final class CloseProjectAction extends AnAction implements DumbAware {
     Project project = event.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     if (ProjectAttachProcessor.canAttachToProject() && project != null && ModuleManager.getInstance(project).getModules().length > 1) {
-      presentation.setText(IdeBundle.message("action.close.projects.in.current.window"));
+      presentation.setText(IdeBundle.messagePointer("action.close.projects.in.current.window"));
     }
     else {
-      presentation.setText(IdeUICustomization.getInstance().getCloseProjectActionText());
+      presentation.setText(IdeUICustomization.getInstance().projectMessage("action.close.project.text"));
     }
   }
 }

@@ -53,13 +53,6 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection extends
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "before.class.or.after.class.is.public.static.void.no.arg.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "before.class.or.after.class.is.public.static.void.no.arg.problem.descriptor", infos[1]);

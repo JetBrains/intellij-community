@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.java.testutil.MavenDependencyUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -24,6 +23,7 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;

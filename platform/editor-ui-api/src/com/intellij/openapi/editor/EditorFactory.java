@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileTypes.FileType;
@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Stream;
 
 /**
  * Provides services for creating document and editor instances.
@@ -23,7 +25,7 @@ public abstract class EditorFactory {
    * @return the editor factory instance.
    */
   public static EditorFactory getInstance() {
-    return ServiceManager.getService(EditorFactory.class);
+    return ApplicationManager.getApplication().getService(EditorFactory.class);
   }
 
   /**
@@ -36,7 +38,7 @@ public abstract class EditorFactory {
    * Creates a document from the specified text specified as an array of characters.
    */
   @NotNull
-  public abstract Document createDocument(@NotNull char[] text);
+  public abstract Document createDocument(char @NotNull [] text);
 
   /**
    * Creates an editor for the specified document. Must be invoked in EDT.
@@ -121,28 +123,39 @@ public abstract class EditorFactory {
   public abstract void releaseEditor(@NotNull Editor editor);
 
   /**
-   * Returns the list of editors for the specified document associated with the specified project.
+   * Returns the stream of editors for the specified document associated with the specified project.
    *
    * @param document the document for which editors are requested.
    * @param project  the project with which editors should be associated, or null if any editors
    *                 for this document should be returned.
    */
-  @NotNull
-  public abstract Editor[] getEditors(@NotNull Document document, @Nullable Project project);
+  public abstract @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project);
 
   /**
-   * Returns the list of all editors for the specified document.
+   * Returns the stream of all editors for the specified document.
    */
-  @NotNull
-  public Editor[] getEditors(@NotNull Document document) {
+  public final @NotNull Stream<Editor> editors(@NotNull Document document) {
+    return editors(document, null);
+  }
+
+  /**
+   * Consider using {@link #editors(Document, Project)}.
+   */
+  public final Editor @NotNull [] getEditors(@NotNull Document document, @Nullable Project project) {
+    return editors(document, project).toArray(Editor[]::new);
+  }
+
+  /**
+   * Consider using {@link #editors(Document)}.
+   */
+  public final Editor @NotNull [] getEditors(@NotNull Document document) {
     return getEditors(document, null);
   }
 
   /**
    * Returns the list of all currently open editors.
    */
-  @NotNull
-  public abstract Editor[] getAllEditors();
+  public abstract Editor @NotNull [] getAllEditors();
 
   /**
    * Registers a listener for receiving notifications when editor instances are created

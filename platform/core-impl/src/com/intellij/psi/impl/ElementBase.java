@@ -31,7 +31,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
+  private static final Logger LOG = Logger.getInstance(ElementBase.class);
 
   public static final int FLAGS_LOCKED = 0x800;
   private static final Function<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
@@ -151,7 +151,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @NotNull
-  public static Icon overlayIcons(@NotNull Icon ... icons) {
+  public static Icon overlayIcons(Icon @NotNull ... icons) {
     final LayeredIcon icon = new LayeredIcon(icons.length);
     int i = 0;
     for (Icon ic : icons) {
@@ -239,6 +239,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return flags;
   }
 
+  /**
+   * @deprecated use {@link IconManager#registerIconLayer(int, Icon)}
+   */
   @Deprecated
   public static void registerIconLayer(int flagMask, @NotNull Icon icon) {
     IconManager.getInstance().registerIconLayer(flagMask, icon);

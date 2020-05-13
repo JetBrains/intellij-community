@@ -24,9 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class ExcessiveLambdaUsageInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new ExcessiveLambdaUsageInspection()
     };

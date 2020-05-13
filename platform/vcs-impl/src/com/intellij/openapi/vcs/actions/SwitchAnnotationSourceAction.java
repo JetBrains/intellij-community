@@ -17,8 +17,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 class SwitchAnnotationSourceAction extends AnAction implements DumbAware {
-  private final static String ourShowMerged = VcsBundle.message("annotation.switch.to.merged.text");
-  private final static String ourHideMerged = VcsBundle.message("annotation.switch.to.original.text");
   private final AnnotationSourceSwitcher mySwitcher;
   private final List<Consumer<AnnotationSource>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myShowMerged;
@@ -34,7 +32,7 @@ class SwitchAnnotationSourceAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setText(myShowMerged ? ourHideMerged : ourShowMerged);
+    e.getPresentation().setText(myShowMerged ? getHideMerged() : getShowMerged());
   }
 
   @Override
@@ -47,5 +45,13 @@ class SwitchAnnotationSourceAction extends AnAction implements DumbAware {
     }
 
     AnnotateActionGroup.revalidateMarkupInAllEditors();
+  }
+
+  private static String getShowMerged() {
+    return VcsBundle.message("annotation.switch.to.merged.text");
+  }
+
+  private static String getHideMerged() {
+    return VcsBundle.message("annotation.switch.to.original.text");
   }
 }

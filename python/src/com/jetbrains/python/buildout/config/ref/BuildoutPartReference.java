@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.buildout.config.ref;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
@@ -12,11 +11,9 @@ import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgSection;
 import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class BuildoutPartReference extends PsiReferenceBase<PsiElement> {
   private final String myPartName;
   private final int myOffsetInElement;
@@ -43,9 +40,8 @@ public class BuildoutPartReference extends PsiReferenceBase<PsiElement> {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
-    List<String> res = Lists.newArrayList();
+  public Object @NotNull [] getVariants() {
+    List<String> res = new ArrayList<>();
     BuildoutCfgFile file = PsiTreeUtil.getParentOfType(myElement, BuildoutCfgFile.class);
     if (file != null) {
       for (BuildoutCfgSection sec : file.getSections()) {

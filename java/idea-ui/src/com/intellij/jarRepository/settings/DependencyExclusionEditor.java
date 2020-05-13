@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.settings;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckboxTreeBase;
@@ -57,7 +58,7 @@ class DependencyExclusionEditor {
     TreeUtil.expandAll(myDependenciesTree);
     DialogBuilder dialogBuilder =
       new DialogBuilder(myMainPanel)
-        .title("Include Transitive Dependencies")
+        .title(JavaUiBundle.message("dialog.title.include.transitive.dependencies"))
         .centerPanel(new JBScrollPane(myDependenciesTree));
     dialogBuilder.setPreferredFocusComponent(myDependenciesTree);
 

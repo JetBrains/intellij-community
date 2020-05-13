@@ -20,13 +20,14 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameHandler");
+  private static final Logger LOG = Logger.getInstance(XmlTagRenameHandler.class);
 
 
   @Override
@@ -52,7 +53,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
 
   @Override
   public String getActionTitle() {
-    return "Rename XML tag";
+    return XmlBundle.message("rename.xml.tag");
   }
 
   private static boolean isInplaceRenameAvailable(final Editor editor) {
@@ -131,7 +132,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, @Nullable final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, @Nullable final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) {
       element = getElement(dataContext);

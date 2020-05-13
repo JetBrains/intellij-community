@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class ChangeUtil {
 
@@ -65,12 +66,9 @@ public class ChangeUtil {
       child = child.getTreeNext();
     }
 
-    for (TreeCopyHandler handler : TreeCopyHandler.EP_NAME.getExtensionList()) {
-      final TreeElement handled = handler.decodeInformation(element, state);
-      if (handled != null) return handled;
-    }
-
-    return element;
+    return TreeCopyHandler.EP_NAME.getExtensionList().stream()
+      .map(handler -> handler.decodeInformation(element, state))
+      .filter(Objects::nonNull).findFirst().orElse(element);
   }
 
   @NotNull
@@ -132,13 +130,9 @@ public class ChangeUtil {
     if (SourceTreeToPsiMap.hasTreeElement(original)) {
       return copyElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(original), table);
     }
-    else {
-      for (TreeGenerator generator : TreeGenerator.EP_NAME.getExtensionList()) {
-        final TreeElement element = generator.generateTreeFor(original, table, manager);
-        if (element != null) return element;
-      }
-      return null;
-    }
+    return TreeGenerator.EP_NAME.getExtensionList().stream()
+      .map(generator -> generator.generateTreeFor(original, table, manager))
+      .filter(Objects::nonNull).findFirst().orElse(null);
   }
 
   public static void prepareAndRunChangeAction(@NotNull ChangeAction action, @NotNull TreeElement changedElement){

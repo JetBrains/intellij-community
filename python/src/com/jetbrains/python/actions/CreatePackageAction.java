@@ -30,7 +30,7 @@ import javax.swing.*;
 import java.util.function.Consumer;
 
 public final class CreatePackageAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.actions.CreatePackageAction");
+  private static final Logger LOG = Logger.getInstance(CreatePackageAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

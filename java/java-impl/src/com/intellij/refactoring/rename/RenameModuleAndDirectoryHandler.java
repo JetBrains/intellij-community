@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TitledHandler;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -17,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
 
   @Override
   public String getActionTitle() {
-    return RefactoringBundle.message("rename.module.directory.title");
+    return JavaRefactoringBundle.message("rename.module.directory.title");
   }
 
   /**
@@ -69,7 +69,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
     final PsiElement element = elements.length == 1 ? elements[0] : PsiElementRenameHandler.getElement(dataContext);
@@ -123,7 +123,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
           ) {
 
             @Override
-            public void performRefactoring(@NotNull UsageInfo[] usages) {
+            public void performRefactoring(UsageInfo @NotNull [] usages) {
               renameModule(myModule, newName);
               super.performRefactoring(usages);
             }
@@ -131,7 +131,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
             @NotNull
             @Override
             protected String getCommandName() {
-              return RefactoringBundle.message("rename.module.directory.command", newName);
+              return JavaRefactoringBundle.message("rename.module.directory.command", newName);
             }
           };
         }

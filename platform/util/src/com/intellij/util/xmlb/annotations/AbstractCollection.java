@@ -4,6 +4,7 @@
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.Constants;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,8 +28,8 @@ public @interface AbstractCollection {
    */
   boolean sortOrderedSet() default true;
 
-  String elementTag() default Constants.OPTION;
-  String elementValueAttribute() default Constants.VALUE;
+  @NonNls String elementTag() default Constants.OPTION;
+  @NonNls String elementValueAttribute() default Constants.VALUE;
 
   Class[] elementTypes() default {};
 }

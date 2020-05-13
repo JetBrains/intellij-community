@@ -33,13 +33,17 @@ public abstract class CopyPasteManager {
     return ServiceManager.getService(CopyPasteManager.class);
   }
 
+  /**
+   * @deprecated Please use overload with parent disposable
+   */
+  @Deprecated
   public abstract void addContentChangedListener(@NotNull ContentChangedListener listener);
 
   public abstract void addContentChangedListener(@NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void removeContentChangedListener(@NotNull ContentChangedListener listener);
 
-  public abstract boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors);
+  public abstract boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors);
 
   @Nullable
   public abstract Transferable getContents();
@@ -47,8 +51,7 @@ public abstract class CopyPasteManager {
   @Nullable
   public abstract <T> T getContents(@NotNull DataFlavor flavor);
 
-  @NotNull
-  public abstract Transferable[] getAllContents();
+  public abstract Transferable @NotNull [] getAllContents();
 
   public abstract void setContents(@NotNull Transferable content);
 

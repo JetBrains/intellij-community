@@ -24,12 +24,6 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyWarnArrayDimensions = false;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("multiple.declaration.display.name");
-  }
-
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
@@ -89,7 +83,7 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
             hasMultipleTypes = true;
           }
         }
-        highlightType = !hasMultipleTypes ? ProblemHighlightType.INFORMATION : ProblemHighlightType.WARNING;
+        highlightType = hasMultipleTypes ? ProblemHighlightType.WARNING : ProblemHighlightType.INFORMATION;
       }
       else {
         highlightType = ProblemHighlightType.WARNING;
@@ -116,7 +110,7 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
         return;
       }
       if (DeclarationSearchUtils.findFirstFieldInDeclaration(field) != field) {
-        if (InspectionProjectProfileManager.isInformationLevel(getShortName(), field)) {
+        if (!isVisibleHighlight(field)) {
           registerError(field);
         }
         return;
@@ -124,10 +118,9 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
       else if (DeclarationSearchUtils.findNextFieldInDeclaration(field) == null) {
         return;
       }
-      final boolean informationLevel = InspectionProjectProfileManager.isInformationLevel(getShortName(), field);
-      final ProblemHighlightType highlightType;
+      final boolean isVisibleHighlight = isVisibleHighlight(field);
       if (onlyWarnArrayDimensions) {
-        if (!informationLevel) {
+        if (isVisibleHighlight) {
           PsiField nextField = DeclarationSearchUtils.findNextFieldInDeclaration(field);
           final PsiType baseType = field.getType();
           while (nextField != null) {
@@ -138,18 +131,16 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
             nextField = DeclarationSearchUtils.findNextFieldInDeclaration(nextField);
           }
         }
-        highlightType = ProblemHighlightType.INFORMATION;
+        if (!isOnTheFly()) return;
+        registerError(field, ProblemHighlightType.INFORMATION);
       }
       else {
-        highlightType = ProblemHighlightType.WARNING;
-      }
-      if (informationLevel || highlightType == ProblemHighlightType.INFORMATION) {
-        if (isOnTheFly()) {
-          registerError(field, highlightType);
+        if (!isVisibleHighlight) {
+          registerError(field);
         }
-      }
-      else {
-        registerError(field.getNameIdentifier(), highlightType);
+        else {
+          registerVariableError(field);
+        }
       }
     }
   }

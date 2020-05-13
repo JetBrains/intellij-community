@@ -45,7 +45,7 @@ public class TagComponent extends LinkComponent {
     }
     else if ("Paid".equals(name)) {
       myColor = PAID_BACKGROUND;
-      tooltip = "The plugin license should be activated after\nthe plugin installation. The 30-day trial is available.";
+      tooltip = "Activate the plugin license after installation or use the 30-day trial.";
     }
 
     super.setText(name);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
@@ -18,6 +18,7 @@ import org.jetbrains.uast.UParameter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
   @NonNls public static final String CLASS = "class";
@@ -73,9 +74,11 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @NotNull
   @Override
   public Collection<Language> getLanguages() {
-    ArrayList<Language> languages = new ArrayList<>(Language.findInstance(UastMetaLanguage.class).getMatchingLanguages());
+    List<Language> languages = new ArrayList<>(Language.findInstance(UastMetaLanguage.class).getMatchingLanguages());
     // TODO uast is not implemented in case of groovy
     languages.removeIf(l -> l.isKindOf("Groovy"));
+    // Scala uast is also too experimental
+    languages.removeIf(l -> l.isKindOf("Scala"));
 
     // TODO enable it in production when will be ready
     if (!Registry.is("batch.jvm.inspections") && !ApplicationManager.getApplication().isUnitTestMode()) {

@@ -36,7 +36,6 @@ import java.util.List;
  */
 public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog.Callback, ElementsHandler {
   private static final Logger LOG = Logger.getInstance(GrPullUpHandler.class);
-  public static final String REFACTORING_NAME = RefactoringBundle.message("pull.members.up.title");
 
   private PsiClass mySubclass;
   private Project myProject;
@@ -51,7 +50,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
         return;
       }
 
@@ -69,7 +68,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;
@@ -90,8 +89,9 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass == null) {
       String message =
-        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
+                                                                             getRefactoringName()));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -107,7 +107,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
 
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -175,5 +175,9 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass;
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("pull.members.up.title");
   }
 }

@@ -370,7 +370,7 @@ class RefCountHolder {
     }
   }
 
-  private static void log(@NonNls @NotNull Object... info) {
+  private static void log(@NonNls Object @NotNull ... info) {
     FileStatusMap.log(info);
   }
 

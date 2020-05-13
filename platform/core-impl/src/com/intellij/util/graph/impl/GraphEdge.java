@@ -3,9 +3,6 @@ package com.intellij.util.graph.impl;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 class GraphEdge<Node> {
   private final Node myStart;
   private final Node myFinish;

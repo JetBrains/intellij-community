@@ -20,9 +20,6 @@ import org.jetbrains.intellij.build.impl.TestingTasksImpl
 
 import java.util.function.Predicate
 
-/**
- * @author nik
- */
 @CompileStatic
 abstract class TestingTasks {
   /**

@@ -23,7 +23,6 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -479,23 +478,21 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-16688
   public void testPkgResourcesNamespace() {
-    myFixture.copyDirectoryToProject("pkgResourcesNamespace", "");
-    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
-      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
-      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
-      assertInstanceOf(ref, PsiPolyVariantReference.class);
-      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
-      assertEquals(1, elements.size());
-      PsiFile root1 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root1/pkg/__init__.py"));
-      PsiFile root2 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root2/pkg/__init__.py"));
-      assertNotParsed(root1);
-      assertNotParsed(root2);
-    });
+    doTestResolveInNamespacePackage(getTestName(true));
   }
 
   // PY-23087
   public void testPkgutilNamespace() {
-    myFixture.copyDirectoryToProject("pkgutilNamespace", "");
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-38434
+  public void testPkgutilNamespaceWithComments() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  private void doTestResolveInNamespacePackage(String namespace) {
+    myFixture.copyDirectoryToProject(namespace, "");
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
@@ -573,7 +570,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiFile context = myFixture.configureByText("a.py", "");
 
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), context);
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
 
     final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);
@@ -597,30 +594,23 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/__init__.py");
   }
 
-  // PY-28764
-  public void testOsAttributesFromPosixPathAndNTPath() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-
-    runWithSourceRoots(
-      Collections.singletonList(myFixture.findFileInTempDir("lib")),
-      () -> {
-        final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.configureByFile("a.py"));
-        assertInstanceOf(reference, PsiPolyVariantReference.class);
-
-        final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)reference);
-        assertEquals(1, elements.size());
-
-        final PsiElement element = elements.get(0);
-        assertInstanceOf(element, PyFile.class);
-
-        final VirtualFile file = ((PyFile)element).getVirtualFile();
-        assertEquals("ntpath.py", file.getName());
-      }
-    );
-  }
-
   // EA-121262
   public void testIncompleteFromImport() {
     assertUnresolved();
+  }
+
+  // PY-38322
+  public void testDunderAllDynamicallyBuiltInHelperFunction() {
+    assertResolvesTo(PyTargetExpression.class, "bar");
+  }
+
+  // PY-38322 PY-39171
+  public void testImportOfNestedBinarySubModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        assertResolvesTo(PyFunction.class, "func");
+      });
+    });
   }
 }

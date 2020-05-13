@@ -1,5 +1,5 @@
-class A {
+class X {
   def f1
 }
 
-print new A().ge<ref>tF1()
+print new X().ge<ref>tF1()

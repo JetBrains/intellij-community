@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -12,7 +12,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
@@ -189,11 +188,6 @@ public abstract class UsefulTestCase extends TestCase {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
-      () -> {
-        if (isIconRequired()) {
-          //IconManager.deactivate();
-        }
-      },
       () -> disposeRootDisposable(),
       () -> cleanupSwingDataStructures(),
       () -> cleanupDeleteOnExitHookList(),
@@ -216,8 +210,8 @@ public abstract class UsefulTestCase extends TestCase {
           }
         }
       },
-      () -> UIUtil.removeLeakingAppleListeners(),
-      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
+      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
+      () -> clearFields(this)
     ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
 
@@ -397,11 +391,17 @@ public abstract class UsefulTestCase extends TestCase {
         logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
       }
       catch (Throwable tearingDown) {
-        if (exception == null) exception = tearingDown;
-        else exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
+        if (exception == null) {
+          exception = tearingDown;
+        }
+        else {
+          exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
+        }
       }
     }
-    if (exception != null) throw exception;
+    if (exception != null) {
+      throw exception;
+    }
   }
 
   /**
@@ -421,18 +421,18 @@ public abstract class UsefulTestCase extends TestCase {
     System.out.println("Setup costs");
     long totalSetup = 0;
     for (Map.Entry<String, Long> entry : TOTAL_SETUP_COST_MILLIS.entrySet()) {
-      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
       totalSetup += entry.getValue();
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
     for (Map.Entry<String, Long> entry : TOTAL_TEARDOWN_COST_MILLIS.entrySet()) {
-      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
       totalTeardown += entry.getValue();
     }
-    System.out.println(String.format("Total overhead: setup %d ms, teardown %d ms", totalSetup, totalTeardown));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']", totalSetup));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']", totalTeardown));
+    System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']%n", totalSetup);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']%n", totalTeardown);
   }
 
   @Override
@@ -483,16 +483,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(@NotNull T[] actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(T @NotNull [] actual, T @NotNull ... expected) {
     assertOrderedEquals(Arrays.asList(actual), expected);
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, T @NotNull ... expected) {
     assertOrderedEquals("", actual, expected);
   }
 
-  public static void assertOrderedEquals(@NotNull byte[] actual, @NotNull byte[] expected) {
+  public static void assertOrderedEquals(byte @NotNull [] actual, byte @NotNull [] expected) {
     assertEquals(expected.length, actual.length);
     for (int i = 0; i < actual.length; i++) {
       byte a = actual[i];
@@ -501,7 +501,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  public static void assertOrderedEquals(@NotNull int[] actual, @NotNull int[] expected) {
+  public static void assertOrderedEquals(int @NotNull [] actual, int @NotNull [] expected) {
     if (actual.length != expected.length) {
       fail("Expected size: "+expected.length+"; actual: "+actual.length+"\nexpected: "+Arrays.toString(expected)+"\nactual  : "+Arrays.toString(actual));
     }
@@ -513,7 +513,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(@NotNull String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(@NotNull String errorMsg, @NotNull Iterable<? extends T> actual, T @NotNull ... expected) {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
@@ -553,7 +553,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedCollection(@NotNull T[] collection, @NotNull Consumer<T>... checkers) {
+  public static <T> void assertOrderedCollection(T @NotNull [] collection, Consumer<T> @NotNull ... checkers) {
     assertOrderedCollection(Arrays.asList(collection), checkers);
   }
 
@@ -561,7 +561,7 @@ public abstract class UsefulTestCase extends TestCase {
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
   @SafeVarargs
-  public static <T> void assertSameElements(@NotNull T[] actual, @NotNull T... expected) {
+  public static <T> void assertSameElements(T @NotNull [] actual, T @NotNull ... expected) {
     assertSameElements(Arrays.asList(actual), expected);
   }
 
@@ -569,7 +569,7 @@ public abstract class UsefulTestCase extends TestCase {
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
   @SafeVarargs
-  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull T... expected) {
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, T @NotNull ... expected) {
     assertSameElements(actual, Arrays.asList(expected));
   }
 
@@ -590,7 +590,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
+  public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
     assertContainsOrdered(collection, Arrays.asList(expected));
   }
 
@@ -612,7 +612,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
+  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
     assertContainsElements(collection, Arrays.asList(expected));
   }
 
@@ -623,12 +623,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  public static String toString(@NotNull Object[] collection, @NotNull String separator) {
+  public static String toString(Object @NotNull [] collection, @NotNull String separator) {
     return toString(Arrays.asList(collection), separator);
   }
 
   @SafeVarargs
-  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull T... notExpected) {
+  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
     assertDoesntContain(collection, Arrays.asList(notExpected));
   }
 
@@ -655,7 +655,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedCollection(@NotNull Collection<? extends T> collection, @NotNull Consumer<T>... checkers) {
+  public static <T> void assertOrderedCollection(@NotNull Collection<? extends T> collection, Consumer<T> @NotNull ... checkers) {
     if (collection.size() != checkers.length) {
       Assert.fail(toString(collection));
     }
@@ -674,12 +674,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertUnorderedCollection(@NotNull T[] collection, @NotNull Consumer<T>... checkers) {
+  public static <T> void assertUnorderedCollection(T @NotNull [] collection, Consumer<T> @NotNull ... checkers) {
     assertUnorderedCollection(Arrays.asList(collection), checkers);
   }
 
   @SafeVarargs
-  public static <T> void assertUnorderedCollection(@NotNull Collection<? extends T> collection, @NotNull Consumer<T>... checkers) {
+  public static <T> void assertUnorderedCollection(@NotNull Collection<? extends T> collection, Consumer<T> @NotNull ... checkers) {
     if (collection.size() != checkers.length) {
       Assert.fail(toString(collection));
     }
@@ -736,13 +736,13 @@ public abstract class UsefulTestCase extends TestCase {
     return t;
   }
 
-  public static <T> T assertOneElement(@NotNull T[] ts) {
+  public static <T> T assertOneElement(T @NotNull [] ts) {
     Assert.assertEquals(Arrays.asList(ts).toString(), 1, ts.length);
     return ts[0];
   }
 
   @SafeVarargs
-  public static <T> void assertOneOf(T value, @NotNull T... values) {
+  public static <T> void assertOneOf(T value, T @NotNull ... values) {
     for (T v : values) {
       if (Objects.equals(value, v)) {
         return;
@@ -755,7 +755,7 @@ public abstract class UsefulTestCase extends TestCase {
     PerformanceWatcher.dumpThreadsToConsole("Thread dump:");
   }
 
-  public static void assertEmpty(@NotNull Object[] array) {
+  public static void assertEmpty(Object @NotNull [] array) {
     assertOrderedEquals(array);
   }
 
@@ -781,7 +781,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(errorMsg, collection, Collections.emptyList());
   }
 
-  public static void assertSize(int expectedSize, @NotNull Object[] array) {
+  public static void assertSize(int expectedSize, Object @NotNull [] array) {
     if (array.length != expectedSize) {
       assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
     }
@@ -869,7 +869,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
-    if (!Comparing.equal(expected, actual)) {
+    if (!Objects.equals(expected, actual)) {
       throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
@@ -986,12 +986,12 @@ public abstract class UsefulTestCase extends TestCase {
    * If expected error message is null it will not be checked.
    *
    * @param exceptionClass   Expected exception type
-   * @param expectedErrorMsg expected error message, of any
+   * @param expectedErrorMsgPart expected error message, of any
    * @param runnable         Block annotated with some exception type
    */
   @SuppressWarnings({"unchecked", "SameParameterValue"})
   public static <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
-                                                        @Nullable String expectedErrorMsg,
+                                                        @Nullable String expectedErrorMsgPart,
                                                         @NotNull ThrowableRunnable<T> runnable) {
     assertExceptionOccurred(true, new AbstractExceptionCase() {
       @Override
@@ -1003,7 +1003,7 @@ public abstract class UsefulTestCase extends TestCase {
       public void tryClosure() throws Throwable {
         runnable.run();
       }
-    }, expectedErrorMsg);
+    }, expectedErrorMsgPart);
   }
 
   /**
@@ -1028,7 +1028,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static <T extends Throwable> void assertExceptionOccurred(boolean shouldOccur,
                                                                     @NotNull AbstractExceptionCase<T> exceptionCase,
-                                                                    String expectedErrorMsg) throws T {
+                                                                    String expectedErrorMsgPart) throws T {
     boolean wasThrown = false;
     try {
       exceptionCase.tryClosure();
@@ -1041,10 +1041,9 @@ public abstract class UsefulTestCase extends TestCase {
 
       if (shouldOccur) {
         wasThrown = true;
-        final String errorMessage = exceptionCase.getAssertionErrorMessage();
-        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
-        if (expectedErrorMsg != null) {
-          assertEquals("Compare error messages", expectedErrorMsg, cause.getMessage());
+        assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
+        if (expectedErrorMsgPart != null) {
+          assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }
       }
       else if (exceptionCase.getExpectedExceptionClass().equals(cause.getClass())) {
@@ -1063,7 +1062,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     finally {
       if (shouldOccur && !wasThrown) {
-        fail(exceptionCase.getAssertionErrorMessage());
+        fail(exceptionCase.getExpectedExceptionClass().getName() + " must be thrown.");
       }
     }
   }
@@ -1112,7 +1111,7 @@ public abstract class UsefulTestCase extends TestCase {
       if (app != null && !app.isDisposed()) {
         FileBasedIndexImpl index = (FileBasedIndexImpl)app.getServiceIfCreated(FileBasedIndex.class);
         if (index != null) {
-          index.waitForVfsEventsExecuted(timeout, timeUnit);
+          index.getChangedFilesCollector().waitForVfsEventsExecuted(timeout, timeUnit);
         }
 
         DocumentCommitThread commitThread = (DocumentCommitThread)app.getServiceIfCreated(DocumentCommitProcessor.class);

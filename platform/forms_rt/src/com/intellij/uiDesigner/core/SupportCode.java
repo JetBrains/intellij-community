@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
 import javax.swing.*;
@@ -26,22 +12,23 @@ public final class SupportCode {
    * Parses text that might contain mnemonic and returns structure which contains
    * plain text and index of mnemonic char (if any)
    */
-  public static TextWithMnemonic parseText(final String textWithMnemonic){
-    if(textWithMnemonic == null){
+  public static TextWithMnemonic parseText(String textWithMnemonic) {
+    if (textWithMnemonic == null) {
       throw new IllegalArgumentException("textWithMnemonic cannot be null");
     }
+
     // Parsing is copied from Presentation.setText(String, boolean)
     int index = -1;
-    final StringBuffer plainText = new StringBuffer();
-    for(int i = 0; i < textWithMnemonic.length(); i++){
+    final StringBuilder plainText = new StringBuilder();
+    for (int i = 0; i < textWithMnemonic.length(); i++) {
       char ch = textWithMnemonic.charAt(i);
-      if (ch == '&'){
+      if (ch == '&') {
         i++;
-        if (i >= textWithMnemonic.length()){
+        if (i >= textWithMnemonic.length()) {
           break;
         }
         ch = textWithMnemonic.charAt(i);
-        if (ch != '&'){
+        if (ch != '&') {
           index = plainText.length();
         }
       }
@@ -51,7 +38,7 @@ public final class SupportCode {
     return new TextWithMnemonic(plainText.toString(), index);
   }
 
-  public static final class TextWithMnemonic{
+  public static final class TextWithMnemonic {
     /**
      * Plain text
      */
@@ -61,19 +48,19 @@ public final class SupportCode {
      */
     public final int myMnemonicIndex;
 
-    private TextWithMnemonic(final String text, final int index){
-      if(text == null){
+    private TextWithMnemonic(final String text, final int index) {
+      if (text == null) {
         throw new IllegalArgumentException("text cannot be null");
       }
-      if(index != -1 && (index < 0 || index >= text.length() )){
+      if (index != -1 && (index < 0 || index >= text.length())) {
         throw new IllegalArgumentException("wrong index: " + index + "; text = '" + text + "'");
       }
       myText = text;
       myMnemonicIndex = index;
     }
 
-    public char getMnemonicChar(){
-      if(myMnemonicIndex == -1){
+    public char getMnemonicChar() {
+      if (myMnemonicIndex == -1) {
         throw new IllegalStateException("text doesn't contain mnemonic");
       }
       return Character.toUpperCase(myText.charAt(myMnemonicIndex));
@@ -86,9 +73,9 @@ public final class SupportCode {
    */
   public static void setDisplayedMnemonicIndex(JComponent component, int index) {
     try {
-      Method method = component.getClass().getMethod("setDisplayedMnemonicIndex", new Class[]{int.class});
+      Method method = component.getClass().getMethod("setDisplayedMnemonicIndex", int.class);
       method.setAccessible(true);
-      method.invoke(component, new Object[]{new Integer(index)});
+      method.invoke(component, Integer.valueOf(index));
     }
     catch (Exception e) {
       // JDK earlier than 1.4 - do nothing

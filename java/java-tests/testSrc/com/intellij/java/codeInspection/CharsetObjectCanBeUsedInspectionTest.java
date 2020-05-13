@@ -9,9 +9,8 @@ import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class CharsetObjectCanBeUsedInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new CharsetObjectCanBeUsedInspection()};
   }
 

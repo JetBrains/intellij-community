@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.browser.SuiteBrowser;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nls;
@@ -41,13 +42,6 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Undeclared test";
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {
@@ -55,10 +49,9 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull final PsiClass aClass,
-                                        @NotNull final InspectionManager manager,
-                                        final boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull final PsiClass aClass,
+                                                   @NotNull final InspectionManager manager,
+                                                   final boolean isOnTheFly) {
     if (TestNGUtil.hasTest(aClass) && PsiClassUtil.isRunnableClass(aClass, true)) {
       final Project project = aClass.getProject();
       final String qName = aClass.getQualifiedName();
@@ -99,7 +92,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
       }
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       LOG.assertTrue(nameIdentifier != null);
-      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier, "Undeclared test \'" + aClass.getName() + "\'",
+      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier, TestngBundle.message("inspection.undeclared.test.problem.descriptor", aClass.getName()),
                                                                      isOnTheFly, new LocalQuickFix[]{new RegisterClassFix(aClass),
                                                                        new CreateTestngFix()},
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
@@ -117,13 +110,13 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getName() {
-      return "Register \'" + myClassName + "\'";
+      return TestngBundle.message("inspection.undeclared.test.register", myClassName);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Register test";
+      return TestngBundle.message("inspection.undeclared.test.register.test");
     }
 
     @Override
@@ -175,7 +168,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Create suite";
+      return TestngBundle.message("inspection.undeclared.test.create.suite.fix");
     }
 
     @Override

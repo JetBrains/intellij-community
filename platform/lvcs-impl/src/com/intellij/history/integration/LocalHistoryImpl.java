@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,6 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private LocalHistoryEventDispatcher myEventDispatcher;
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
-  private Runnable myShutdownTask;
 
   @NotNull
   public static LocalHistoryImpl getInstanceImpl() {
@@ -57,8 +57,11 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
       return;
     }
 
-    myShutdownTask = () -> doDispose();
-    ShutDownTracker.getInstance().registerShutdownTask(myShutdownTask);
+    // initialize persistent f
+    @SuppressWarnings("unused")
+    PersistentFS instance = PersistentFS.getInstance();
+
+    ShutDownTracker.getInstance().registerShutdownTask(() -> doDispose());
 
     initHistory();
     isInitialized.set(true);
@@ -114,8 +117,6 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     myChangeList.purgeObsolete(period);
     myChangeList.close();
     LocalHistoryLog.LOG.debug("Local history storage successfully closed.");
-
-    ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
   }
 
   @TestOnly
@@ -171,9 +172,8 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     };
   }
 
-  @Nullable
   @Override
-  public byte[] getByteContent(final VirtualFile f, final FileRevisionTimestampComparator c) {
+  public byte @Nullable [] getByteContent(final VirtualFile f, final FileRevisionTimestampComparator c) {
     if (!isInitialized()) return null;
     if (!myGateway.areContentChangesVersioned(f)) return null;
     return ReadAction.compute(() -> new ByteContentRetriever(myGateway, myVcs, f, c).getResult());

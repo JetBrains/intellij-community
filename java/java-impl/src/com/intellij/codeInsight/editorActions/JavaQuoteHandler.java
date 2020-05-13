@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -101,17 +102,18 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   @Override
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
     if (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      Document document = iterator.getDocument();
-      if (document != null) {
-        String text = document.getText();
-        boolean hasOpenQuotes = StringUtil.equals(text.substring(iterator.getStart(), offset + 1), "\"\"\"");
-        if (hasOpenQuotes) {
-          boolean hasCloseQuotes = StringUtil.contains(text.substring(offset + 1, iterator.getEnd()), "\"\"\"");
-          if (!hasCloseQuotes) return true;
-          // check if parser interpreted next text block start quotes as end quotes for the current one
-          int nTextBlockQuotes = StringUtil.getOccurrenceCount(text.substring(iterator.getEnd()), "\"\"\"");
-          return nTextBlockQuotes % 2 != 0;
-        }
+      Document document = editor.getDocument();
+      Project project = editor.getProject();
+      PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file == null || !HighlightingFeature.TEXT_BLOCKS.isAvailable(file)) return false;
+      String text = document.getText();
+      boolean hasOpenQuotes = StringUtil.equals(text.substring(iterator.getStart(), offset + 1), "\"\"\"");
+      if (hasOpenQuotes) {
+        boolean hasCloseQuotes = StringUtil.contains(text.substring(offset + 1, iterator.getEnd()), "\"\"\"");
+        if (!hasCloseQuotes) return true;
+        // check if parser interpreted next text block start quotes as end quotes for the current one
+        int nTextBlockQuotes = StringUtil.getOccurrenceCount(text.substring(iterator.getEnd()), "\"\"\"");
+        return nTextBlockQuotes % 2 != 0;
       }
     }
     return super.hasNonClosedLiteral(editor, iterator, offset);

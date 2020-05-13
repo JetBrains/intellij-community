@@ -34,7 +34,7 @@ public @interface ExtendClass {
   /**
    * @return qualified name of the base class
    */
-  String value() default "";
+  String[] value() default "";
 
   /**
    * @return states that the class should be concrete and have public default constructor.

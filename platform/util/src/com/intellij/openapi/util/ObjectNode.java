@@ -15,7 +15,7 @@ import java.util.List;
 final class ObjectNode {
   private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
+  private static final Logger LOG = Logger.getInstance(ObjectNode.class);
 
   private final ObjectTree myTree;
 
@@ -23,7 +23,7 @@ final class ObjectNode {
   private final Disposable myObject;
 
   private List<ObjectNode> myChildren; // guarded by myTree.treeLock
-  private final Throwable myTrace;
+  private Throwable myTrace;
 
   ObjectNode(@NotNull ObjectTree tree,
              @Nullable ObjectNode parentNode,
@@ -67,16 +67,19 @@ final class ObjectNode {
     }
   }
 
-  void execute(@NotNull List<? super Throwable> exceptions) {
+  void execute(@NotNull List<? super Throwable> exceptions, boolean onlyChildren) {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), each -> {
-      if (myTree.getDisposalInfo(myObject) != null) return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
-      try {
-        if (myObject instanceof Disposable.Parent) {
+      if (myTree.getDisposalInfo(myObject) != null) {
+        return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+      }
+
+      if (!onlyChildren && myObject instanceof Disposable.Parent) {
+        try {
           ((Disposable.Parent)myObject).beforeTreeDispose();
         }
-      }
-      catch (Throwable t) {
-        LOG.error(t);
+        catch (Throwable t) {
+          LOG.error(t);
+        }
       }
 
       ObjectNode[] childrenArray;
@@ -89,7 +92,7 @@ final class ObjectNode {
       for (int i = childrenArray.length - 1; i >= 0; i--) {
         try {
           ObjectNode childNode = childrenArray[i];
-          childNode.execute(exceptions);
+          childNode.execute(exceptions, false);
           synchronized (myTree.treeLock) {
             childNode.myParent = null;
           }
@@ -97,6 +100,10 @@ final class ObjectNode {
         catch (Throwable e) {
           exceptions.add(e);
         }
+      }
+
+      if (onlyChildren) {
+        return;
       }
 
       try {
@@ -133,6 +140,10 @@ final class ObjectNode {
 
   Throwable getTrace() {
     return myTrace;
+  }
+
+  void clearTrace() {
+    myTrace = null;
   }
 
   @TestOnly

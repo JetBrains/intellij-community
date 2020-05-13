@@ -16,13 +16,13 @@
 package com.jetbrains.python.debugger.settings;
 
 import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.table.TableModelEditor;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +39,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   private JPanel mySteppingPanel;
   private JBCheckBox myLibrariesFilterCheckBox;
   private JBCheckBox myStepFilterEnabledCheckBox;
+  private JBCheckBox myAlwaysDoSmartStepIntoCheckBox;
   private TableModelEditor<PySteppingFilter> myPySteppingFilterEditor;
 
   public PyDebuggerSteppingConfigurableUi() {
@@ -52,7 +53,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
   private void createUIComponents() {
     TableModelEditor.DialogItemEditor<PySteppingFilter> itemEditor = new DialogEditor();
-    myPySteppingFilterEditor = new TableModelEditor<>(COLUMNS, itemEditor, "No script filters configured");
+    myPySteppingFilterEditor = new TableModelEditor<>(COLUMNS, itemEditor, PyBundle.message("debugger.stepping.no.script.filters"));
     mySteppingPanel = new JPanel(new BorderLayout());
     mySteppingPanel.add(myPySteppingFilterEditor.createComponent());
   }
@@ -61,6 +62,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   public void reset(@NotNull PyDebuggerSettings settings) {
     myLibrariesFilterCheckBox.setSelected(settings.isLibrariesFilterEnabled());
     myStepFilterEnabledCheckBox.setSelected(settings.isSteppingFiltersEnabled());
+    myAlwaysDoSmartStepIntoCheckBox.setSelected(settings.isAlwaysDoSmartStepInto());
     myPySteppingFilterEditor.reset(settings.getSteppingFilters());
     myPySteppingFilterEditor.enabled(myStepFilterEnabledCheckBox.isSelected());
   }
@@ -69,13 +71,15 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   public boolean isModified(@NotNull PyDebuggerSettings settings) {
     return myLibrariesFilterCheckBox.isSelected() != settings.isLibrariesFilterEnabled()
            || myStepFilterEnabledCheckBox.isSelected() != settings.isSteppingFiltersEnabled()
+           || myAlwaysDoSmartStepIntoCheckBox.isSelected() != settings.isAlwaysDoSmartStepInto()
            || myPySteppingFilterEditor.isModified();
   }
 
   @Override
-  public void apply(@NotNull PyDebuggerSettings settings) throws ConfigurationException {
+  public void apply(@NotNull PyDebuggerSettings settings) {
     settings.setLibrariesFilterEnabled(myLibrariesFilterCheckBox.isSelected());
     settings.setSteppingFiltersEnabled(myStepFilterEnabledCheckBox.isSelected());
+    settings.setAlwaysDoSmartStepIntoEnabled(myAlwaysDoSmartStepIntoCheckBox.isSelected());
     if (myPySteppingFilterEditor.isModified()) {
       settings.setSteppingFilters(myPySteppingFilterEditor.apply());
     }
@@ -138,8 +142,8 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
     @Override
     public void edit(@NotNull PySteppingFilter item, @NotNull Function<PySteppingFilter, PySteppingFilter> mutator, boolean isAdd) {
       String pattern = Messages.showInputDialog(myPanel,
-                                                "Specify glob pattern ('*', '?' and '[seq]' allowed, semicolon ';' as name separator):",
-                                                "Stepping Filter", null, item.getFilter(),
+                                                PyBundle.message("debugger.stepping.filter.specify.pattern"),
+                                                PyBundle.message("debugger.stepping.filter"), null, item.getFilter(),
                                                 new NonEmptyInputValidator());
       if (pattern != null) {
         mutator.fun(item).setFilter(pattern);

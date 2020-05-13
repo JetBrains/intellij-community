@@ -29,13 +29,6 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.final.static.variable.initialization.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.static.variable.initialization.problem.descriptor");

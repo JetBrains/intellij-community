@@ -16,6 +16,7 @@
 
 package com.intellij.junit4;
 
+import com.intellij.rt.execution.TestListenerProtocol;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.Ignore;
@@ -27,24 +28,22 @@ import org.junit.runner.notification.RunListener;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.annotation.Annotation;
 import java.util.*;
 
 public class JUnit4TestListener extends RunListener {
   public static final String EMPTY_SUITE_NAME = "junit.framework.TestSuite$1";
   public static final String EMPTY_SUITE_WARNING = "warning";
-  public static final String CLASS_CONFIGURATION = "Class Configuration";
 
-  private final List myStartedSuites = new ArrayList();
-  private final Map   myParents = new HashMap();
-  private final Map   myMethodNames = new HashMap();
+  private final List<Description> myStartedSuites = new ArrayList<Description>();
+  private final Map<Description, List<List<Description>>> myParents = new HashMap<Description, List<List<Description>>>();
+  private final Map<Description, String> myMethodNames = new HashMap<Description, String>();
   private final PrintStream myPrintStream;
   private String myRootName;
   private long myCurrentTestStart;
 
   private Description myCurrentTest;
-  private final Map myWaitingQueue = new LinkedHashMap();
-  private static final JUnitNodeNamesManager NODE_NAMES_MANAGER = getNodeNamesManager();
+  private final Map<Description, TestEvent> myWaitingQueue = new LinkedHashMap<Description, TestEvent>();
+  private static final JUnitTestTreeNodeManager NODE_NAMES_MANAGER = getTestTreeNodeManager();
 
 
   public JUnit4TestListener() {
@@ -60,14 +59,13 @@ public class JUnit4TestListener extends RunListener {
     return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
   }
 
-  public void testRunStarted(Description description) throws Exception {
+  public void testRunStarted(Description description) {
     if (myRootName != null && !myRootName.startsWith("[")) {
-      JUnitNodeNamesManager.TestNodePresentation rootNodePresentation = NODE_NAMES_MANAGER.getRootNodePresentation(myRootName);
+      JUnitTestTreeNodeManager.TestNodePresentation rootNodePresentation = NODE_NAMES_MANAGER.getRootNodePresentation(myRootName);
 
-      myPrintStream.println("##teamcity[rootName name = \'" + escapeName(rootNodePresentation.getName()) +
-                            (rootNodePresentation.getComment() != null ? ("\' comment = \'" + escapeName(rootNodePresentation.getComment())) : "") + "\'" +
-                            " location = \'java:suite://" + escapeName(myRootName) +
-                            "\']");
+      myPrintStream.println("##teamcity[rootName name = '" + escapeName(rootNodePresentation.getName()) +
+                            (rootNodePresentation.getComment() != null ? ("' comment = '" + escapeName(rootNodePresentation.getComment())) : "") +
+                            "' location = 'java:suite://" + escapeName(myRootName) + "']");
       myRootName = getShortName(myRootName);
     }
   }
@@ -78,9 +76,9 @@ public class JUnit4TestListener extends RunListener {
     }
     finally {
       for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
-        String className = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
+        String className = JUnit4ReflectionUtil.getClassName(myStartedSuites.get(i));
         if (!className.equals(myRootName)) {
-          myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(className)) + "\']");
+          myPrintStream.println("##teamcity[testSuiteFinished name='" + escapeName(getShortName(className)) + "']");
         }
       }
       myStartedSuites.clear();
@@ -92,8 +90,8 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private void testStarted(Description description, String methodName) {
-    final List parents = (List)myParents.get(description);
-    if (myCurrentTest != null && (parents == null || parents.isEmpty() || !((List)parents.get(0)).contains(myCurrentTest))) {
+    final List<List<Description>> parents = myParents.get(description);
+    if (myCurrentTest != null && (parents == null || parents.isEmpty() || !parents.get(0).contains(myCurrentTest))) {
       if (!myWaitingQueue.containsKey(description)) {
         myWaitingQueue.put(description, new TestEvent());
         return;
@@ -105,18 +103,18 @@ public class JUnit4TestListener extends RunListener {
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
 
-    List parentsHierarchy = new ArrayList();
+    List<Description> parentsHierarchy = new ArrayList<Description>();
     if (parents != null && !parents.isEmpty()) {
-      parentsHierarchy = (List)parents.remove(0);
+      parentsHierarchy = parents.remove(0);
     }
 
     if (parentsHierarchy.isEmpty()) {
-      parentsHierarchy = Collections.singletonList(Description.createSuiteDescription(classFQN, new Annotation[0]));
+      parentsHierarchy = Collections.singletonList(Description.createSuiteDescription(classFQN));
     }
 
     if (methodName == null) {
       methodName = getFullMethodName(description, parentsHierarchy.isEmpty() ? null
-                                                                             : (Description)parentsHierarchy.get(parentsHierarchy.size() - 1));
+                                                                             : parentsHierarchy.get(parentsHierarchy.size() - 1));
       if (methodName == null) return;
     }
 
@@ -124,8 +122,8 @@ public class JUnit4TestListener extends RunListener {
     Description currentClass;
     Description currentParent;
     while (idx < myStartedSuites.size() && idx < parentsHierarchy.size()) {
-      currentClass = (Description)myStartedSuites.get(idx);
-      currentParent = (Description)parentsHierarchy.get(parentsHierarchy.size() - 1 - idx);
+      currentClass = myStartedSuites.get(idx);
+      currentParent = parentsHierarchy.get(parentsHierarchy.size() - 1 - idx);
       if (isHierarchyDifferent(parents, currentClass, currentParent)) {
         break;
       }
@@ -133,26 +131,28 @@ public class JUnit4TestListener extends RunListener {
     }
 
     for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
-      currentClass = (Description)myStartedSuites.remove(i);
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(currentClass))) + "\']");
+      currentClass = myStartedSuites.remove(i);
+      myPrintStream.println(
+        "##teamcity[testSuiteFinished name='" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(currentClass))) + "']");
     }
 
     for (int i = idx; i < parentsHierarchy.size(); i++) {
-      final Description descriptionFromHistory = (Description)parentsHierarchy.get(parentsHierarchy.size() - 1 - i);
+      final Description descriptionFromHistory = parentsHierarchy.get(parentsHierarchy.size() - 1 - i);
       final String fqName = JUnit4ReflectionUtil.getClassName(descriptionFromHistory);
       final String className = getShortName(fqName);
       if (!className.equals(myRootName)) {
-        myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + getSuiteLocation(descriptionFromHistory, description, fqName) + "]");
+        myPrintStream.println("##teamcity[testSuiteStarted name='" + escapeName(className) +
+                              "'" + getSuiteLocation(descriptionFromHistory, description, fqName) + "]");
       }
       myStartedSuites.add(descriptionFromHistory);
     }
 
-    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + 
-                          getTestMethodLocation(methodName, classFQN) + "]");
+    myPrintStream.println("##teamcity[testStarted name='" + escapeName(methodName.replaceFirst("/", ".")) + "' " +
+                          NODE_NAMES_MANAGER.getTestLocation(description, classFQN, methodName) + "]");
     myCurrentTestStart = currentTime();
   }
 
-  private static boolean isHierarchyDifferent(List parents, 
+  private static boolean isHierarchyDifferent(List<?> parents, 
                                               Description currentClass, 
                                               Description currentParent) {
     if (parents == null) {
@@ -169,7 +169,7 @@ public class JUnit4TestListener extends RunListener {
 
   public void testFinished(Description description) {
     if (startedInParallel(description)) {
-      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+      TestEvent testEvent = myWaitingQueue.get(description);
       testEvent.setFinished(true);
       return;
     }
@@ -195,8 +195,8 @@ public class JUnit4TestListener extends RunListener {
   private void testFinishedNoDumping(final String methodName) {
     if (methodName != null) {
       final long duration = currentTime() - myCurrentTestStart;
-      myPrintStream.println("##teamcity[testFinished name=\'" + escapeName(methodName.replaceFirst("/", ".")) +
-                            (duration > 0 ? "\' duration=\'" + duration : "") + "\']");
+      myPrintStream.println("##teamcity[testFinished name='" + escapeName(methodName.replaceFirst("/", ".")) +
+                            (duration > 0 ? "' duration='" + duration : "") + "']");
     }
     myCurrentTest = null;
   }
@@ -211,12 +211,11 @@ public class JUnit4TestListener extends RunListener {
     if (methodName == null) { //class setUp/tearDown failed
       if (!isIgnored) {
         classConfigurationStarted(description);
-        testFailure(failure, description, messageName, CLASS_CONFIGURATION);
+        testFailure(failure, description, messageName, TestListenerProtocol.CLASS_CONFIGURATION);
         classConfigurationFinished(description);
       }
       if (myStartedSuites.isEmpty() || !description.equals(myStartedSuites.get(myStartedSuites.size() - 1))) {
-        for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-          Description next = (Description)iterator.next();
+        for (Description next : description.getChildren()) {
           testStarted(next);
           testFailure(isIgnored ? failure : null, next, MapSerializerUtil.TEST_IGNORED);
           testFinished(next);
@@ -230,31 +229,32 @@ public class JUnit4TestListener extends RunListener {
 
   private void classConfigurationFinished(Description description) {
     if (startedInParallel(description)) {
-      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+      TestEvent testEvent = myWaitingQueue.get(description);
       testEvent.setFinished(true);
       return;
     }
 
-    myPrintStream.println("##teamcity[testFinished name=\'" + escapeName(CLASS_CONFIGURATION) + "\']");
+    myPrintStream.println("##teamcity[testFinished name='" + escapeName(TestListenerProtocol.CLASS_CONFIGURATION) + "']");
     myCurrentTest = null;
   }
 
   private void classConfigurationStarted(Description description) {
     if (myCurrentTest != null) {
       TestEvent value = new TestEvent();
-      value.setMethodName(CLASS_CONFIGURATION);
+      value.setMethodName(TestListenerProtocol.CLASS_CONFIGURATION);
       myWaitingQueue.put(description, value);
       return;
     }
 
     myCurrentTest = description;
-    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(CLASS_CONFIGURATION) + "\'" + getSuiteLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
+    myPrintStream.println("##teamcity[testStarted name='" + escapeName(TestListenerProtocol.CLASS_CONFIGURATION) +
+                          "'" + getSuiteLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
   }
 
   private void testFailure(Failure failure, Description description, String messageName, String methodName) {
     final boolean isIgnored = MapSerializerUtil.TEST_IGNORED.equals(messageName);
     if (startedInParallel(description)) {
-      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+      TestEvent testEvent = myWaitingQueue.get(description);
       if (testEvent == null) {
         testEvent = new TestEvent();
         myWaitingQueue.put(description, testEvent);
@@ -264,7 +264,7 @@ public class JUnit4TestListener extends RunListener {
       return;
     }
 
-    final Map attrs = new LinkedHashMap();
+    final Map<String, String> attrs = new LinkedHashMap<String, String>();
     attrs.put("name", methodName);
     final long duration = currentTime() - myCurrentTestStart;
     if (duration > 0) {
@@ -308,7 +308,7 @@ public class JUnit4TestListener extends RunListener {
   private String getFullMethodName(Description description,
                                    Description parent,
                                    boolean acceptNull) {
-    String methodName = (String)myMethodNames.get(description);
+    String methodName = myMethodNames.get(description);
     if (methodName == null) {
       methodName = JUnit4ReflectionUtil.getMethodName(description);
       if (methodName != null && (parent == null || !isParameter(parent))) {
@@ -328,8 +328,7 @@ public class JUnit4TestListener extends RunListener {
   public void testIgnored(Description description) {
     final String methodName = getFullMethodName(description);
     if (methodName == null) {
-      for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-        final Description testDescription = (Description)iterator.next();
+      for (final Description testDescription : description.getChildren()) {
         testIgnored(testDescription, getFullMethodName(testDescription));//todo
       }
     }
@@ -340,9 +339,9 @@ public class JUnit4TestListener extends RunListener {
 
   private void testIgnored(Description description, String methodName) {
     testStarted(description);
-    Map attrs = new HashMap();
+    Map<String, String> attrs = new HashMap<String, String>();
     try {
-      final Ignore ignoredAnnotation = (Ignore)description.getAnnotation(Ignore.class);
+      final Ignore ignoredAnnotation = description.getAnnotation(Ignore.class);
       if (ignoredAnnotation != null) {
         final String val = ignoredAnnotation.value();
         if (val != null) {
@@ -356,7 +355,7 @@ public class JUnit4TestListener extends RunListener {
     attrs.put("name", methodName);
 
     if (startedInParallel(description)) {
-      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+      TestEvent testEvent = myWaitingQueue.get(description);
       if (testEvent == null) {
         testEvent = new TestEvent();
         myWaitingQueue.put(description, testEvent);
@@ -371,9 +370,9 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private void dumpQueue(boolean acceptUnfinished) {
-    for (Iterator iterator = myWaitingQueue.keySet().iterator(); iterator.hasNext(); ) {
-      Description description = (Description)iterator.next();
-      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+    for (Iterator<Description> iterator = myWaitingQueue.keySet().iterator(); iterator.hasNext(); ) {
+      Description description = iterator.next();
+      TestEvent testEvent = myWaitingQueue.get(description);
       if (acceptUnfinished || testEvent.isFinished()) {
         testStarted(description, testEvent.getMethodName());
 
@@ -381,7 +380,7 @@ public class JUnit4TestListener extends RunListener {
 
         Failure failure = testEvent.getFailure();
         if (testEvent.isIgnored()) {
-          Map attrs = testEvent.getAttrs();
+          Map<String, String> attrs = testEvent.getAttrs();
           if (attrs == null) {
             testFailure(failure, description, MapSerializerUtil.TEST_IGNORED);
           }
@@ -403,7 +402,7 @@ public class JUnit4TestListener extends RunListener {
     private Failure myFailure;
     private boolean myIgnored;
     private boolean myFinished;
-    private Map myAttrs;
+    private Map<String, String> myAttrs;
     private String myMethodName;
 
     public Failure getFailure() {
@@ -430,11 +429,11 @@ public class JUnit4TestListener extends RunListener {
       myIgnored = ignored;
     }
 
-    public void setAttrs(Map attrs) {
+    public void setAttrs(Map<String, String> attrs) {
       myAttrs = attrs;
     }
 
-    public Map getAttrs() {
+    public Map<String, String> getAttrs() {
       return myAttrs;
     }
 
@@ -447,8 +446,8 @@ public class JUnit4TestListener extends RunListener {
     }
   }
 
-  private void sendTree(Description description, Description parent, List currentParents) {
-    List pParents = new ArrayList(3);
+  private void sendTree(Description description, Description parent, List<Description> currentParents) {
+    List<Description> pParents = new ArrayList<Description>(3);
     pParents.addAll(currentParents);
     if (parent != null) {
       final String parentClassName = JUnit4ReflectionUtil.getClassName(parent);
@@ -457,42 +456,44 @@ public class JUnit4TestListener extends RunListener {
       }
     }
 
-    List parents = (List)myParents.get(description);
+    List<List<Description>> parents = myParents.get(description);
     if (parents == null) {
-      parents = new ArrayList(1);
+      parents = new ArrayList<List<Description>>(1);
       myParents.put(description, parents);
     }
     parents.add(pParents);
 
     String className = JUnit4ReflectionUtil.getClassName(description);
     if (description.isTest()) {
-      final String methodName = getFullMethodName((Description)description, parent, true);
+      final String methodName = getFullMethodName(description, parent, true);
       if (methodName != null ) {
         if (isWarning(methodName, className) && parent != null) {
           className = JUnit4ReflectionUtil.getClassName(parent);
         }
-        myPrintStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + getTestMethodLocation(methodName, className) + "]");
+        myPrintStream.println("##teamcity[suiteTreeNode name='" + escapeName(methodName.replaceFirst("/", ".")) +
+                              "' " + NODE_NAMES_MANAGER.getTestLocation(description, className, methodName) + "]");
       }
       else {
-        myPrintStream.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) + "\' locationHint=\'java:suite://" + escapeName(className) + "\']");
-        myPrintStream.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(className)) + "\']");
+        myPrintStream.println("##teamcity[suiteTreeStarted name='" + escapeName(getShortName(className)) +
+                              "' locationHint='java:suite://" + escapeName(className) + "']");
+        myPrintStream.println("##teamcity[suiteTreeEnded name='" + escapeName(getShortName(className)) + "']");
       }
       return;
     }
    
-    List tests = description.getChildren();
+    List<Description> tests = description.getChildren();
     boolean pass = false;
-    for (Iterator iterator = tests.iterator(); iterator.hasNext(); ) {
-      final Object next = iterator.next();
-      final Description nextDescription = (Description)next;
+    for (final Description nextDescription : tests) {
       if ((myRootName == null || !myRootName.equals(className)) && !pass) {
         pass = true;
-        myPrintStream.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) + "\'" + getSuiteLocation(description, nextDescription, className) + "]");
+        myPrintStream.println("##teamcity[suiteTreeStarted name='" + escapeName(getShortName(className)) + "'" +
+                              getSuiteLocation(description, nextDescription, className) + "]");
       }
       sendTree(nextDescription, description, pParents);
     }
     if (pass) {
-      myPrintStream.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName((Description)description))) + "\']");
+      myPrintStream.println(
+        "##teamcity[suiteTreeEnded name='" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(description))) + "']");
     }
   }
 
@@ -512,15 +513,11 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private static String getSuiteLocation(String locationHint) {
-    return " locationHint=\'java:suite://" + escapeName(locationHint) + "\'";
+    return " locationHint='java:suite://" + escapeName(locationHint) + "'";
   }
 
   private static boolean isWarning(String methodName, String className) {
     return EMPTY_SUITE_WARNING.equals(methodName) && EMPTY_SUITE_NAME.equals(className);
-  }
-
-  private static String getTestMethodLocation(String methodName, String className) {
-    return "locationHint=\'java:test://" + escapeName(className + "/" + getShortName(methodName, true)) + "\'";
   }
 
   private static boolean isParameter(Description description) {
@@ -529,8 +526,8 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void sendTree(Description description) {
-    myRootName = JUnit4ReflectionUtil.getClassName((Description)description);
-    sendTree(description, null, new ArrayList());
+    myRootName = JUnit4ReflectionUtil.getClassName(description);
+    sendTree(description, null, new ArrayList<Description>());
     myPrintStream.println("##teamcity[treeEnded]");
   }
 
@@ -542,11 +539,25 @@ public class JUnit4TestListener extends RunListener {
     return NODE_NAMES_MANAGER.getNodeName(fqName, splitBySlash);
   }
 
-  private static JUnitNodeNamesManager getNodeNamesManager() {
-    String junitNodeNamesManagerClassName = System.getProperty(JUnitNodeNamesManager.JUNIT_NODE_NAMES_MANAGER_ARGUMENT);
-    if (JUnitNodeNamesManager.TEXT_NODE_NAMES_MANAGER_NAME.equals(junitNodeNamesManagerClassName)) {
-      return JUnitNodeNamesManager.SIMPLE_NODE_NAMES_MANAGER;
+  private static JUnitTestTreeNodeManager getTestTreeNodeManager() {
+    String junitNodeNamesManagerClassName = System.getProperty(JUnitTestTreeNodeManager.JUNIT_TEST_TREE_NODE_MANAGER_ARGUMENT);
+
+    JUnitTestTreeNodeManager result = JUnitTestTreeNodeManager.JAVA_NODE_NAMES_MANAGER;
+    if (junitNodeNamesManagerClassName != null) {
+      try {
+        Class<? extends JUnitTestTreeNodeManager> junitNodeNamesManagerClass = Class.forName(junitNodeNamesManagerClassName)
+          .asSubclass(JUnitTestTreeNodeManager.class);
+        result = junitNodeNamesManagerClass.newInstance();
+      }
+      catch (ClassCastException ignored) {
+      }
+      catch (IllegalAccessException ignored) {
+      }
+      catch (InstantiationException ignored) {
+      }
+      catch (ClassNotFoundException ignored) {
+      }
     }
-    return JUnitNodeNamesManager.JAVA_NODE_NAMES_MANAGER;
+    return result;
   }
 }

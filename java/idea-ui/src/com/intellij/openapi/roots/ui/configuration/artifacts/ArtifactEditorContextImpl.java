@@ -47,9 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   private final ArtifactsStructureConfigurableContext myParent;
   private final ArtifactEditorEx myEditor;

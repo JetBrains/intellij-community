@@ -42,8 +42,7 @@ class PsiJvmConversionHelper {
     MODIFIERS = Collections.unmodifiableMap(modifiers);
   }
 
-  @NotNull
-  static PsiAnnotation[] getListAnnotations(@NotNull PsiModifierListOwner modifierListOwner) {
+  static PsiAnnotation @NotNull [] getListAnnotations(@NotNull PsiModifierListOwner modifierListOwner) {
     PsiModifierList list = modifierListOwner.getModifierList();
     return list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
   }
@@ -92,8 +91,7 @@ class PsiJvmConversionHelper {
     return extendsTypes[0];
   }
 
-  @NotNull
-  static JvmReferenceType[] getClassInterfaces(@NotNull PsiClass psiClass) {
+  static JvmReferenceType @NotNull [] getClassInterfaces(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassType.resolve();

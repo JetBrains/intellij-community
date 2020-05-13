@@ -60,13 +60,19 @@ public abstract class FilterModel<Filter> {
 
   protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,
                                                            @NotNull Function<FilterObject, F> getter,
-                                                           @Nullable FilterObject currentFilter,
                                                            @NotNull String name) {
-    F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
     F newFilter = filter == null ? null : getter.apply(filter);
-    if (!ObjectUtils.equals(oldFilter, newFilter) && newFilter != null) {
+    if (newFilter != null) {
       triggerFilterSet(name);
     }
+  }
+
+  protected static <FilterObject, F> boolean filterDiffers(@Nullable FilterObject filter,
+                                                           @NotNull Function<FilterObject, F> getter,
+                                                           @Nullable FilterObject currentFilter) {
+    F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
+    F newFilter = filter == null ? null : getter.apply(filter);
+    return !ObjectUtils.equals(oldFilter, newFilter);
   }
 
   public static abstract class SingleFilterModel<Filter extends VcsLogFilter> extends FilterModel<Filter> {
@@ -85,7 +91,11 @@ public abstract class FilterModel<Filter> {
 
     @Override
     public void setFilter(@Nullable Filter filter) {
-      if (!ObjectUtils.equals(myFilter, filter) && filter != null) triggerFilterSet(myFilterKey.getName());
+      if (ObjectUtils.equals(myFilter, filter)) return;
+
+      if (filter != null) {
+        triggerFilterSet(myFilterKey.getName());
+      }
 
       super.setFilter(filter);
     }
@@ -135,10 +145,21 @@ public abstract class FilterModel<Filter> {
 
     @Override
     public void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
-      triggerFilterSet(filter, FilterPair::getFilter1, myFilter, myFilterKey1.getName());
-      triggerFilterSet(filter, FilterPair::getFilter2, myFilter, myFilterKey2.getName());
+      if (filter != null && filter.isEmpty()) filter = null;
 
-      super.setFilter(filter);
+      boolean anyFiltersDiffers = false;
+      if (filterDiffers(filter, FilterPair::getFilter1, myFilter)) {
+        triggerFilterSet(filter, FilterPair::getFilter1, myFilterKey1.getName());
+        anyFiltersDiffers = true;
+      }
+      if (filterDiffers(filter, FilterPair::getFilter2, myFilter)) {
+        triggerFilterSet(filter, FilterPair::getFilter2, myFilterKey2.getName());
+        anyFiltersDiffers = true;
+      }
+
+      if (anyFiltersDiffers) {
+        super.setFilter(filter);
+      }
     }
 
     public void updateFilterFromProperties() {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.codeInsight.completion.BaseCompletionLookupArranger;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -101,6 +102,7 @@ public class MavenDependencyCompletionUtil {
   public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info, String presentableText) {
     LookupElementBuilder elementBuilder = LookupElementBuilder.create(info, getLookupString(info.getItems()[0]))
       .withPresentableText(presentableText);
+    elementBuilder.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, new Object());
     if (info.getItems().length == 1) {
       return elementBuilder.withIcon(getIcon(info.getItems()[0].getType()));
     }
@@ -111,8 +113,7 @@ public class MavenDependencyCompletionUtil {
     if (info.getItems().length == 1) {
       return getLookupString(info.getItems()[0]);
     }
-    String key = "maven.dependency.completion.presentable";
-    return IndicesBundle.message(key, info.getGroupId(), info.getArtifactId());
+    return IndicesBundle.message("maven.dependency.completion.presentable", info.getGroupId(), info.getArtifactId());
   }
 
   @Nullable

@@ -47,9 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
   public static final String EXPORTED_ATTRIBUTE = "exported";
   public static final String SCOPE_ATTRIBUTE = "scope";
@@ -363,8 +360,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       }
       LanguageLevel level = extension.getLanguageLevel();
       componentTag.setAttribute(LANGUAGE_LEVEL_ATTRIBUTE, level.name());
-      componentTag.setAttribute("assert-keyword", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_4) >= 0));
-      componentTag.setAttribute("jdk-15", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_5) >= 0));
     }
   }
 

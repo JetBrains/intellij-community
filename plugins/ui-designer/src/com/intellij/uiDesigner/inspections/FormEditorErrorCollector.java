@@ -58,7 +58,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
   @Override
   public void addError(@NotNull final String inspectionId, @NotNull final IComponent component, @Nullable IProperty prop,
                        @NotNull String errorMessage,
-                       @NotNull EditorQuickFixProvider... editorQuickFixProviders) {
+                       EditorQuickFixProvider @NotNull ... editorQuickFixProviders) {
     if (myResults == null) {
       myResults = new ArrayList<>();
     }

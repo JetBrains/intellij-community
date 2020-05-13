@@ -80,7 +80,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     Ref<Boolean> completeVersion = Ref.create(false);
     psiFile.accept(new PsiRecursiveElementVisitor(true) {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         if (!completeDependency.get() && element.getParent() instanceof XmlTag &&
             "dependency".equals(((XmlTag)element.getParent()).getName())) {
@@ -199,8 +199,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.LatestVersionId));
   }
 
-  @NotNull
-  private static PsiReference[] getReferences(PsiElement psiElement) {
+  private static PsiReference @NotNull [] getReferences(PsiElement psiElement) {
     return psiElement instanceof XmlText ? psiElement.getParent().getReferences() : psiElement.getReferences();
   }
 

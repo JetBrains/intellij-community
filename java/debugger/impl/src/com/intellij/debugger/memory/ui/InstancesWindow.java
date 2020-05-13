@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
@@ -44,9 +45,8 @@ public class InstancesWindow extends InstancesWindowBase {
     return comp;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    return new Action[]{new DialogWrapperExitAction("Close", CLOSE_EXIT_CODE)};
+  protected Action @NotNull [] createActions() {
+    return new Action[]{new DialogWrapperExitAction(CommonBundle.message("action.text.close"), CLOSE_EXIT_CODE)};
   }
 }

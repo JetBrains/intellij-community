@@ -18,6 +18,7 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.lexer.DelegateLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
@@ -30,6 +31,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBuilding.ScanWordProcessor {
+  private static final Logger LOG = Logger.getInstance(BaseFilterLexer.class);
+
   private final OccurrenceConsumer myOccurrenceConsumer;
 
   private int myTodoScannedBound = 0;
@@ -91,12 +94,17 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
       if (matcher == null) continue;
       matcher.reset(input);
 
-      while (matcher.find()) {
-        int start = matcher.start();
-        if (start != matcher.end() && todoScanningState.myOccurences.indexOf(start) == -1) {
-          consumer.incTodoOccurrence(todoScanningState.myPatterns[i]);
-          todoScanningState.myOccurences.add(start);
+      try {
+        while (matcher.find()) {
+          int start = matcher.start();
+          if (start != matcher.end() && todoScanningState.myOccurences.indexOf(start) == -1) {
+            consumer.incTodoOccurrence(todoScanningState.myPatterns[i]);
+            todoScanningState.myOccurences.add(start);
+          }
         }
+      }
+      catch (StackOverflowError error) {
+        LOG.error(error); // do not reindex file, just ignore it
       }
     }
 
@@ -104,7 +112,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   }
 
   @Override
-  public final void run(CharSequence chars, @Nullable char[] charsArray, int start, int end) {
+  public final void run(CharSequence chars, char @Nullable [] charsArray, int start, int end) {
     myOccurrenceConsumer.addOccurrence(chars, charsArray, start, end, myOccurenceMask);
   }
 

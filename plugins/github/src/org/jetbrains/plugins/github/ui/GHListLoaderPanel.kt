@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.ComponentWithEmptyText
@@ -10,7 +12,11 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
+import org.jetbrains.plugins.github.util.getName
+import java.awt.event.ActionEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -33,7 +39,10 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
 
   protected val infoPanel = HtmlInfoPanel()
 
-  protected open val loadingText = "Loading..."
+  protected open val loadingText
+    get() = ApplicationBundle.message("label.loading.page.please.wait")
+
+  var errorHandler: GHLoadingErrorHandler? = null
 
   init {
     addToCenter(createCenterPanel(simplePanel(scrollPane).addToTop(infoPanel).apply {
@@ -79,13 +88,15 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   private fun displayErrorStatus(emptyText: StatusText, error: Throwable) {
     emptyText.appendText(getErrorPrefix(!listLoader.hasLoadedItems), SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-      .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { listLoader.reset() }
+
+    errorHandler?.getActionForError(error)?.let {
+      emptyText.appendSecondaryText(" ${it.getName()}", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, it)
+    }
   }
 
   protected open fun displayEmptyStatus(emptyText: StatusText) {
-    emptyText.text = "List is empty "
-    emptyText.appendSecondaryText("Refresh", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+    emptyText.text = GithubBundle.message("list.empty")
+    emptyText.appendSecondaryText(CommonBundle.message("action.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       listLoader.reset()
     }
   }
@@ -93,14 +104,28 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   protected open fun updateInfoPanel() {
     val error = listLoader.error
     if (error != null && listLoader.hasLoadedItems) {
-      infoPanel.setInfo("<html><body>${getErrorPrefix(!listLoader.hasLoadedItems)}<br/>" +
-                        "${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>",
-                        HtmlInfoPanel.Severity.ERROR) { listLoader.reset() }
+      val errorPrefix = getErrorPrefix(!listLoader.hasLoadedItems)
+      val errorText = getLoadingErrorText(error, "<br/>")
+      val action = errorHandler?.getActionForError(error)
+      if (action != null) {
+        //language=HTML
+        infoPanel.setInfo("""<html><body>$errorPrefix<br/>$errorText<a href=''>&nbsp;${action.getName()}</a></body></html>""",
+                          HtmlInfoPanel.Severity.ERROR) {
+          action.actionPerformed(ActionEvent(infoPanel, ActionEvent.ACTION_PERFORMED, it.eventType.toString()))
+        }
+
+      }
+      else {
+        //language=HTML
+        infoPanel.setInfo("""<html><body>$errorPrefix<br/>$errorText</body></html>""",
+                          HtmlInfoPanel.Severity.ERROR)
+      }
     }
     else infoPanel.setInfo(null)
   }
 
-  protected open fun getErrorPrefix(listEmpty: Boolean) = if (listEmpty) "Can't load list" else "Can't load full list"
+  protected open fun getErrorPrefix(listEmpty: Boolean) = if (listEmpty) GithubBundle.message("cannot.load.list")
+  else GithubBundle.message("cannot.load.full.list")
 
   private fun potentiallyLoadMore() {
     if (listLoader.canLoadMore() && ((userScrolled && loadAllAfterFirstScroll) || isScrollAtThreshold())) {
@@ -129,13 +154,15 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
         if (githubError.errors.isNotEmpty()) {
           builder.append(": ").append(newLineSeparator)
           for (e in githubError.errors) {
-            builder.append(e.message ?: "${e.code} error in ${e.resource} field ${e.field}").append(newLineSeparator)
+
+            builder.append(e.message ?: GithubBundle.message("gql.error.in.field", e.code, e.resource, e.field.orEmpty())).append(
+              newLineSeparator)
           }
         }
         return builder.toString()
       }
 
-      return error.message?.let { addDotIfNeeded(it) } ?: "Unknown loading error."
+      return error.message?.let { addDotIfNeeded(it) } ?: GithubBundle.message("unknown.loading.error")
     }
 
     private fun addDotIfNeeded(line: String) = if (line.endsWith('.')) line else "$line."

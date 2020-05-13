@@ -32,11 +32,11 @@ import java.util.Set;
  * @author yole
  */
 class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
-  private final JList myList;
-  private final PopupChooserBuilder myBuilder;
-  private ListWithFilter myListWithFilter;
+  private final JList<T> myList;
+  private final PopupChooserBuilder<T> myBuilder;
+  private ListWithFilter<T> myListWithFilter;
 
-  PopupListAdapter(PopupChooserBuilder builder, JList list) {
+  PopupListAdapter(PopupChooserBuilder<T> builder, JList<T> list) {
     myBuilder = builder;
     myList = list;
   }
@@ -47,16 +47,16 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setRenderer(ListCellRenderer renderer) {
+  public void setRenderer(ListCellRenderer<? super T> renderer) {
     myList.setCellRenderer(renderer);
   }
 
   @Override
   public void setItemChosenCallback(Consumer<? super T> callback) {
     myBuilder.setItemChoosenCallback(() -> {
-      Object selectedValue = myList.getSelectedValue();
+      T selectedValue = myList.getSelectedValue();
       if (selectedValue != null) {
-        callback.consume((T)selectedValue);
+        callback.consume(selectedValue);
       }
     });
   }
@@ -87,7 +87,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
 
   @Override
   public JComponent buildFinalComponent() {
-    myListWithFilter = (ListWithFilter)ListWithFilter.wrap(myList, new MyListWrapper(myList), myBuilder.getItemsNamer());
+    myListWithFilter = (ListWithFilter<T>)ListWithFilter.wrap(myList, new MyListWrapper(myList), myBuilder.getItemsNamer());
     myListWithFilter.setAutoPackHeight(myBuilder.isAutoPackHeightOnFiltering());
     return myListWithFilter;
   }
@@ -99,7 +99,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
 
   @Override
   public void autoSelect() {
-    JList list = myList;
+    JList<T> list = myList;
     if (list.getSelectedIndex() == -1) {
       list.setSelectedIndex(0);
     }
@@ -118,8 +118,8 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   @Override
   public void setItemSelectedCallback(Consumer<? super T> c) {
     myList.addListSelectionListener(e -> {
-      Object selectedValue = myList.getSelectedValue();
-      c.consume((T)selectedValue);
+      T selectedValue = myList.getSelectedValue();
+      c.consume(selectedValue);
     });
   }
 
@@ -134,9 +134,9 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   private class MyListWrapper extends JBScrollPane implements DataProvider {
-    private final JList myList;
+    private final JList<T> myList;
 
-    private MyListWrapper(final JList list) {
+    private MyListWrapper(final JList<T> list) {
       super(-1);
       list.setVisibleRowCount(myBuilder.getVisibleRowCount());
       setViewportView(list);

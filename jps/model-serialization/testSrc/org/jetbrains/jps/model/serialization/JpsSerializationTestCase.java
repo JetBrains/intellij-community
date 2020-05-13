@@ -32,9 +32,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   private String myProjectHomePath;
 

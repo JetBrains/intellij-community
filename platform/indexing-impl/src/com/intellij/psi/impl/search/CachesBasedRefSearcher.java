@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -16,9 +16,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public CachesBasedRefSearcher() {
     super(true);
@@ -36,8 +33,8 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
         String fileNameWithoutExtension = vFile.getNameWithoutExtension();
         text = fileNameWithoutExtension.isEmpty() ? vFile.getName() : fileNameWithoutExtension;
       }
-      // We must not look for file references with the file language's case-sensitivity, 
-      // since case-sensitivity of the references themselves depends either on file system 
+      // We must not look for file references with the file language's case-sensitivity,
+      // since case-sensitivity of the references themselves depends either on file system
       // or on the rules of the language of reference
       caseSensitive = false;
     }

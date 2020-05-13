@@ -50,9 +50,8 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     return "Type definition body";
   }
 
-  @NotNull
   @Override
-  public GrField[] getFields() {
+  public GrField @NotNull [] getFields() {
     GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyStubElementTypes.VARIABLE_DECLARATION, GrVariableDeclaration.ARRAY_FACTORY);
     List<GrField> result = new ArrayList<>();
     for (GrVariableDeclaration declaration : declarations) {
@@ -67,15 +66,13 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     return result.toArray(GrField.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public GrMethod[] getMethods() {
+  public GrMethod @NotNull [] getMethods() {
     return getStubOrPsiChildren(TokenSets.METHOD_DEFS, GrMethod.ARRAY_FACTORY);
   }
 
-  @NotNull
   @Override
-  public GrMembersDeclaration[] getMemberDeclarations() {
+  public GrMembersDeclaration @NotNull [] getMemberDeclarations() {
     return findChildrenByClass(GrMembersDeclaration.class);
   }
 
@@ -92,14 +89,12 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   }
 
   @Override
-  @NotNull
-  public GrClassInitializer[] getInitializers() {
+  public GrClassInitializer @NotNull [] getInitializers() {
     return findChildrenByClass(GrClassInitializer.class);
   }
 
-  @NotNull
   @Override
-  public GrTypeDefinition[] getInnerClasses() {
+  public GrTypeDefinition @NotNull [] getInnerClasses() {
     return getStubOrPsiChildren(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
   }
 
@@ -175,17 +170,15 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
       return getStubOrPsiChild(GroovyEmptyStubElementTypes.ENUM_CONSTANTS);
     }
 
-    @NotNull
     @Override
-    public GrEnumConstant[] getEnumConstants() {
+    public GrEnumConstant @NotNull [] getEnumConstants() {
       GrEnumConstantList list = getEnumConstantList();
       if (list != null) return list.getEnumConstants();
       return GrEnumConstant.EMPTY_ARRAY;
     }
 
-    @NotNull
     @Override
-    public GrField[] getFields() {
+    public GrField @NotNull [] getFields() {
       GrField[] bodyFields = super.getFields();
       GrEnumConstant[] enumConstants = getEnumConstants();
       if (bodyFields.length == 0) return enumConstants;

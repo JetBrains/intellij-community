@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -11,9 +11,9 @@ import com.intellij.psi.search.searches.ClassesWithAnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ScopedQueryExecutor;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,7 +24,7 @@ public class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase<PsiCl
   public void processQuery(@NotNull ClassesWithAnnotatedMembersSearch.Parameters queryParameters,
                            @NotNull final Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
-    for (QueryExecutor executor : ClassesWithAnnotatedMembersSearch.EP_NAME.getExtensionList()) {
+    for (QueryExecutor<PsiClass, ClassesWithAnnotatedMembersSearch.Parameters> executor : ClassesWithAnnotatedMembersSearch.EP_NAME.getExtensionList()) {
       if (executor instanceof ScopedQueryExecutor) {
         scope = scope.intersectWith(GlobalSearchScope.notScope(((ScopedQueryExecutor) executor).getScope(queryParameters)));
       }

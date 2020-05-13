@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -15,6 +14,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.PowerStatus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,17 +25,14 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
-public class AffectedTestsInChangeListPainter implements ChangeListDecorator, ProjectComponent {
+public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
   private final Project myProject;
-  private final ChangeListManager myChangeListManager;
-  private final ChangeListAdapter myChangeListListener;
   private final Alarm myAlarm;
   private final AtomicReference<Set<String>> myChangeListsToShow = new AtomicReference<>(Collections.emptySet());
 
-  public AffectedTestsInChangeListPainter(@NotNull Project project, ChangeListManager changeListManager) {
+  public AffectedTestsInChangeListPainter(@NotNull Project project) {
     myProject = project;
-    myChangeListManager = changeListManager;
-    myChangeListListener = new ChangeListAdapter() {
+    ChangeListListener changeListListener = new ChangeListAdapter() {
       @Override
       public void changeListsChanged() {
         scheduleUpdate();
@@ -57,24 +54,9 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
       }
     };
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-    myChangeListManager.addChangeListListener(myChangeListListener);
-  }
-
-  @Override
-  public void projectOpened() {
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ChangeListListener.TOPIC, changeListListener);
     DumbService.getInstance(myProject).runWhenSmart(() -> scheduleUpdate());
-  }
-
-  @Override
-  public void projectClosed() {
-    disposeComponent();
-  }
-
-  @Override
-  public void disposeComponent() {
-    myAlarm.cancelAllRequests();
-    myChangeListsToShow.set(Collections.emptySet());
-    myChangeListManager.removeChangeListListener(myChangeListListener);
   }
 
   private void scheduleRefresh() {
@@ -88,8 +70,8 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
   }
 
   @Override
-  public void decorateChangeList(LocalChangeList changeList,
-                                 ColoredTreeCellRenderer renderer,
+  public void decorateChangeList(@NotNull LocalChangeList changeList,
+                                 @NotNull ColoredTreeCellRenderer renderer,
                                  boolean selected,
                                  boolean expanded,
                                  boolean hasFocus) {
@@ -117,7 +99,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
 
   private void update() {
     myChangeListsToShow.set(
-      myChangeListManager.getChangeLists().stream()
+      ChangeListManager.getInstance(myProject).getChangeLists().stream()
         .filter(list -> !list.getChanges().isEmpty())
         .map(list -> {
           Collection<Change> changes = list.getChanges();

@@ -171,7 +171,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param editors editors to enable/disable border
    * @param enable  whether border should be enabled
    */
-  private static void configureLeftBorder(final boolean enable, @NotNull final EditorEx... editors) {
+  private static void configureLeftBorder(final boolean enable, final EditorEx @NotNull ... editors) {
     for (final EditorEx editor : editors) {
       final Color backgroundColor = editor.getBackgroundColor(); // Border have the same color console background has
       final int thickness = enable ? BORDER_SIZE_PX : 0;

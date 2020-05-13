@@ -1,22 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.serviceContainer.ServiceManagerImpl
+import com.intellij.serviceContainer.processAllImplementationClasses
+import com.intellij.serviceContainer.processComponentInstancesOfType
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
-import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.isEmpty
 import com.intellij.util.write
-import gnu.trove.THashMap
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Element
 import java.nio.file.Path
 import kotlin.collections.component1
@@ -86,9 +87,9 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
     return
   }
 
-  val storageNameToComponentNames = THashMap<String, MutableSet<String>>()
-  val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
-  val ignoredComponentNames = THashSet<String>()
+  val storageNameToComponentNames = Object2ObjectOpenHashMap<String, MutableSet<String>>()
+  val workspaceComponentNames = ObjectOpenHashSet(listOf("GradleLocalSettings"))
+  val ignoredComponentNames = ObjectOpenHashSet<String>()
   storageNameToComponentNames.put("workspace.xml", workspaceComponentNames)
 
   fun processComponents(aClass: Class<*>) {
@@ -106,22 +107,23 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
         // ignore - this data should be not copied
         ignoredComponentNames.add(stateAnnotation.name)
       }
-      else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { THashSet() }.add(stateAnnotation.name)
+      else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { ObjectOpenHashSet() }.add(stateAnnotation.name)
     }
   }
 
-  @Suppress("DEPRECATION")
-  defaultProject.getComponentInstancesOfType(PersistentStateComponent::class.java).forEachGuaranteed {
-    processComponents(it.javaClass)
+  processComponentInstancesOfType(defaultProject.picoContainer, PersistentStateComponent::class.java) {
+    LOG.runAndLogException {
+      processComponents(it.javaClass)
+    }
   }
 
-  ServiceManagerImpl.processAllImplementationClasses(defaultProject) { aClass, _ ->
+  processAllImplementationClasses(defaultProject.picoContainer) { aClass, _ ->
     processComponents(aClass)
     true
   }
 
   // fileResolver may return the same file for different storage names (e.g. for IPR project)
-  val storagePathToComponentStates = THashMap<Path, MutableList<Element>>()
+  val storagePathToComponentStates = Object2ObjectOpenHashMap<Path, MutableList<Element>>()
   val iterator = componentElements.iterator()
   cI@ for (componentElement in iterator) {
     iterator.remove()

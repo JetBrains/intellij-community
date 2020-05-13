@@ -219,6 +219,10 @@ public class ValidateXmlTest extends JavaCodeInsightTestCase {
     perform("instances/enumerations.xml", "");
   }
 
+  public void testResolveBaseFileForInclude() throws Throwable {
+    perform("mytest.xml", "");
+  }
+
   private void perform(String fileName, String message) throws Throwable {
     perform(fileName,message,null,null, false);
   }

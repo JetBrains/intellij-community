@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import java.awt.*;
 
 public class SingleCheckboxOptionsPanel extends JPanel {
 
-    public SingleCheckboxOptionsPanel(@NotNull String label,
+    public SingleCheckboxOptionsPanel(@NotNull @NlsContexts.Checkbox String label,
                                       @NotNull InspectionProfileEntry owner,
                                       @NonNls String property) {
         super(new GridBagLayout());

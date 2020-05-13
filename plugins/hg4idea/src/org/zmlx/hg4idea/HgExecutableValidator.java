@@ -20,8 +20,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 public class HgExecutableValidator extends ExecutableValidator {
   public HgExecutableValidator(@NotNull Project project) {
     super(project,
-          HgVcsMessages.message("hg4idea.executable.notification.title"),
-          HgVcsMessages.message("hg4idea.executable.notification.description"));
+          HgBundle.message("hg4idea.executable.notification.title"),
+          HgBundle.message("hg4idea.executable.notification.description"));
   }
 
   @Override
@@ -32,7 +32,7 @@ public class HgExecutableValidator extends ExecutableValidator {
   @NotNull
   @Override
   protected String getConfigurableDisplayName() {
-    return HgProjectConfigurable.DISPLAY_NAME;
+    return HgProjectConfigurable.getDISPLAY_NAME();
   }
 
   @Override

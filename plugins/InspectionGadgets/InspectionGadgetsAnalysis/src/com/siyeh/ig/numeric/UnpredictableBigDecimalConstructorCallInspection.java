@@ -25,13 +25,6 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unpredictable.big.decimal.constructor.call.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unpredictable.big.decimal.constructor.call.problem.descriptor");
@@ -95,7 +88,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'BigDecimal.valueOf()'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "BigDecimal.valueOf()");
     }
 
     @Override

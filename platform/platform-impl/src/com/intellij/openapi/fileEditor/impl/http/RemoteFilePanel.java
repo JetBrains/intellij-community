@@ -2,9 +2,11 @@
 package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -16,7 +18,6 @@ import com.intellij.openapi.vfs.impl.http.FileDownloadingListener;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -31,11 +32,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author nik
- */
 public class RemoteFilePanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.http.RemoteFilePanel");
+  private static final Logger LOG = Logger.getInstance(RemoteFilePanel.class);
   @NonNls private static final String ERROR_CARD = "error";
   @NonNls private static final String DOWNLOADING_CARD = "downloading";
   @NonNls private static final String EDITOR_CARD = "editor";
@@ -124,7 +122,7 @@ public class RemoteFilePanel {
 
   private void switchEditor() {
     LOG.debug("Switching editor...");
-    AppUIUtil.invokeOnEdt(() -> {
+    AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> {
       TextEditor textEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myVirtualFile);
       textEditor.addPropertyChangeListener(myPropertyChangeListener);
       myEditorPanel.removeAll();
@@ -132,7 +130,7 @@ public class RemoteFilePanel {
       myFileEditor = textEditor;
       showCard(EDITOR_CARD);
       LOG.debug("Editor for downloaded file opened.");
-    }, myProject.getDisposed());
+    });
   }
 
   @Nullable
@@ -183,7 +181,7 @@ public class RemoteFilePanel {
           showCard(EDITOR_CARD);
         }
         else {
-          myErrorLabel.setText("Downloading cancelled");
+          myErrorLabel.setText(IdeBundle.message("label.downloading.cancelled"));
           showCard(ERROR_CARD);
         }
       });

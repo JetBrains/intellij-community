@@ -29,7 +29,8 @@ public class KotlinDslGradleJavaFrameworkSupportProvider extends KotlinDslGradle
       @NotNull
       @Override
       public String getPresentableName() {
-        return "Java";
+        //noinspection HardCodedStringLiteral
+        return "Java"; //NON-NLS
       }
 
       @NotNull
@@ -48,7 +49,6 @@ public class KotlinDslGradleJavaFrameworkSupportProvider extends KotlinDslGradle
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("java")
-      .addOther("configure<JavaPluginConvention> {\n    sourceCompatibility = JavaVersion.VERSION_1_8\n}")
       .addRepositoriesDefinition("mavenCentral()")
       .addDependencyNotation("testCompile(\"junit\", \"junit\", \"4.12\")");
   }

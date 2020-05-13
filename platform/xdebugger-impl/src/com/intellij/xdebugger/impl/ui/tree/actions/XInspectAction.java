@@ -23,9 +23,6 @@ import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XInspectAction extends XDebuggerTreeActionBase {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull final String nodeName, AnActionEvent e) {

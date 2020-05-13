@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,6 +79,17 @@ public class RestFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
     }
     else if (lang == RestLanguage.INSTANCE) {
       return def.createFile(this);
+    }
+    return null;
+  }
+
+  @Override
+  public IElementType getContentElementType(@NotNull Language language) {
+    if (language == getTemplateDataLanguage()) {
+      return RestPythonElementTypes.PYTHON_BLOCK_DATA;
+    }
+    else if (language.getID().equals("DjangoTemplate")) {
+      return RestPythonElementTypes.DJANGO_BLOCK_DATA;
     }
     return null;
   }

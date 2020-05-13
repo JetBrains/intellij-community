@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -19,15 +21,14 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Blank line between subject and body";
+    return VcsBundle.message("inspection.SubjectBodySeparationInspection.display.name");
   }
 
-  @Nullable
   @Override
-  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
-                                          @NotNull Document document,
-                                          @NotNull InspectionManager manager,
-                                          boolean isOnTheFly) {
+  protected ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file,
+                                                     @NotNull Document document,
+                                                     @NotNull InspectionManager manager,
+                                                     boolean isOnTheFly) {
     ProblemDescriptor descriptor = document.getLineCount() > 1
                                    ? checkRightMargin(file, document, manager, isOnTheFly, 1, 0,
                                                       "Missing blank line between subject and body", new AddBlankLineQuickFix(),
@@ -48,8 +49,9 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
   }
 
   protected static class AddBlankLineQuickFix extends BaseCommitMessageQuickFix {
-    protected AddBlankLineQuickFix() {
-      super("Add blank line");
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return VcsBundle.getString("settings.commit.message.body.add.blank.line.fix");
     }
 
     @Override

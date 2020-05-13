@@ -5,6 +5,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -74,7 +75,8 @@ public class PruneEmptyDirectoriesAction extends AnAction {
         System.out.println("Deleted: " + file.getPresentableUrl());
       }
       catch (IOException e) {
-        Messages.showErrorDialog("Cannot delete '" + file.getPresentableUrl() + "', " + e.getLocalizedMessage(), "IOException");
+        //noinspection HardCodedStringLiteral
+        Messages.showErrorDialog(IdeBundle.message("message.cannot.delete.0.1", file.getPresentableUrl(), e.getLocalizedMessage()), "IOException");
       }
     });
   }

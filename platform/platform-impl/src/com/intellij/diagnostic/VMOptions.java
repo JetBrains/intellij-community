@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VMOptions {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.VMOptions");
+  private static final Logger LOG = Logger.getInstance(VMOptions.class);
 
   public enum MemoryKind {
     HEAP("Xmx", ""), MIN_HEAP("Xms", ""), PERM_GEN("XX:MaxPermSize", "="), METASPACE("XX:MaxMetaspaceSize", "="), CODE_CACHE("XX:ReservedCodeCacheSize", "=");

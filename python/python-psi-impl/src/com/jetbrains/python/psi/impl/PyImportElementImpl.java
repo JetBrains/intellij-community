@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The "import foo" or "import foo as bar" parts.
@@ -44,7 +44,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   @Override
   @Nullable
   public PyReferenceExpression getImportReferenceExpression() {
-    final ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getReferenceExpressionTokens());
+    final ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens());
     return node == null ? null : (PyReferenceExpression) node.getPsi();
   }
 
@@ -202,7 +202,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   private List<RatedResolveResult> getElementsNamed(@NotNull String name, boolean resolveImportElement) {
     String asName = getAsName();
     if (asName != null) {
-      if (!Comparing.equal(name, asName)) {
+      if (!Objects.equals(name, asName)) {
         return Collections.emptyList();
       }
       if (resolveImportElement) {

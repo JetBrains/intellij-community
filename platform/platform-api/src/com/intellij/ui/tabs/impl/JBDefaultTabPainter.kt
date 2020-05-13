@@ -8,7 +8,6 @@ import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme
 import com.intellij.ui.tabs.impl.themes.TabTheme
-import com.jetbrains.rd.swing.fillRect
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point

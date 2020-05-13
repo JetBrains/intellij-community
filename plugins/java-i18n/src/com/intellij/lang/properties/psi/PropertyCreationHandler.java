@@ -23,15 +23,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public interface PropertyCreationHandler {
 
   void createProperty(@NotNull Project project,
                       @NotNull Collection<PropertiesFile> propertiesFiles,
                       @NotNull String key,
                       @NotNull String value,
-                      @NotNull PsiExpression[] parameters) throws IncorrectOperationException;
+                      PsiExpression @NotNull [] parameters) throws IncorrectOperationException;
 
 }

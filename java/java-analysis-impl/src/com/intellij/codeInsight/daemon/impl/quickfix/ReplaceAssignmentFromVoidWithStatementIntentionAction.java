@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -45,7 +46,7 @@ public class ReplaceAssignmentFromVoidWithStatementIntentionAction implements In
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Remove left side of assignment";
+    return JavaAnalysisBundle.message("remove.left.side.of.assignment");
   }
 
   @Override

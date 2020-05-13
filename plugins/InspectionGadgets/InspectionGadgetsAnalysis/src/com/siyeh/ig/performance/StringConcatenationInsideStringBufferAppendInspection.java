@@ -35,12 +35,6 @@ import org.jetbrains.annotations.NotNull;
 public class StringConcatenationInsideStringBufferAppendInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.concatenation.inside.string.buffer.append.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

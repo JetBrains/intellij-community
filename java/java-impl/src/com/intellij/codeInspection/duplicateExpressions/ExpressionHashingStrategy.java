@@ -73,7 +73,7 @@ class ExpressionHashingStrategy implements TObjectHashingStrategy<PsiExpression>
     return 0;
   }
 
-  private int computeHashCode(@NotNull IElementType tokenType, @NotNull PsiExpression... operands) {
+  private int computeHashCode(@NotNull IElementType tokenType, PsiExpression @NotNull ... operands) {
     int hash = tokenType.hashCode();
     for (PsiExpression operand : operands) {
       hash = hash * 31 + computeHashCode(operand);
@@ -81,7 +81,7 @@ class ExpressionHashingStrategy implements TObjectHashingStrategy<PsiExpression>
     return hash;
   }
 
-  private int computeHashCode(@Nullable String name, @Nullable PsiExpression expression, @NotNull PsiExpression... operands) {
+  private int computeHashCode(@Nullable String name, @Nullable PsiExpression expression, PsiExpression @NotNull ... operands) {
     int hash = name != null ? name.hashCode() : 0;
     hash = hash * 31 + computeHashCode(expression);
     for (PsiExpression operand : operands) {

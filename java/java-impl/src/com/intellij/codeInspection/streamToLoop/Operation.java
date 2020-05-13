@@ -54,7 +54,7 @@ abstract class Operation {
   public void preprocessVariables(StreamToLoopReplacementContext context, ChainVariable inVar, ChainVariable outVar) {}
 
   @Nullable
-  static Operation createIntermediate(@NotNull String name, @NotNull PsiExpression[] args,
+  static Operation createIntermediate(@NotNull String name, PsiExpression @NotNull [] args,
                                       @NotNull ChainVariable outVar, @NotNull PsiType inType, boolean supportUnknownSources) {
     if(name.equals("distinct") && args.length == 0) {
       return new DistinctOperation();

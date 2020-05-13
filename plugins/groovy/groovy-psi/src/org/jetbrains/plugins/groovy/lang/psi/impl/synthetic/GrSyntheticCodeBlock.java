@@ -47,9 +47,8 @@ public class GrSyntheticCodeBlock extends LightElement implements PsiCodeBlock {
     return "code block wrapper to represent java codeBlock";
   }
 
-  @NotNull
   @Override
-  public PsiStatement[] getStatements() {
+  public PsiStatement @NotNull [] getStatements() {
     return PsiStatement.EMPTY_ARRAY; //todo return statements
   }
 

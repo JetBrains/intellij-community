@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil
@@ -19,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Alarm
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import gnu.trove.THashSet
@@ -103,9 +103,9 @@ class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable
   }
 
   private fun runSearchRequest(key: String, pattern: Pattern) =
-    updateQueue.queue(object : Update(key) {
+    updateQueue.queue(object : DisposableUpdate(project, key) {
       override fun canEat(update: Update) = true
-      override fun run() = runUnderDisposeAwareIndicator { cache.put(key, doSearch(pattern)) }
+      override fun doRun() = cache.put(key, doSearch(pattern))
     })
 
   private fun doSearch(pattern: Pattern): THashSet<VirtualFile> {
@@ -128,9 +128,6 @@ class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable
     }
     return files
   }
-
-  private inline fun runUnderDisposeAwareIndicator(crossinline action: () -> Unit) =
-    BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, Runnable { action() })
 
   companion object {
     @JvmStatic

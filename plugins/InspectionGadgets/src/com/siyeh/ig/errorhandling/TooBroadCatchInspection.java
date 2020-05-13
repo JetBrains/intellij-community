@@ -48,9 +48,8 @@ public class TooBroadCatchInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreThrown = false;
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[1];
     final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(context.getProject());
     final List<PsiType> maskedTypes = (List<PsiType>)infos[0];
@@ -83,12 +82,6 @@ public class TooBroadCatchInspection extends BaseInspection {
   @NotNull
   public String getID() {
     return "OverlyBroadCatchBlock";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("too.broad.catch.display.name");
   }
 
   @Override
@@ -138,7 +131,7 @@ public class TooBroadCatchInspection extends BaseInspection {
   }
 
   private static class AddCatchSectionFix extends InspectionGadgetsFix {
-
+    @SafeFieldForPreview
     private final SmartTypePointer myThrown;
     private final String myText;
 
@@ -156,7 +149,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Add 'catch' clause";
+      return InspectionGadgetsBundle.message("add.catch.section.fix.family.name");
     }
 
     @Override

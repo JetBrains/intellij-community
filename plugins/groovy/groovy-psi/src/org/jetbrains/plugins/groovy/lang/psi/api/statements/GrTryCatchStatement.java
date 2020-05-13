@@ -18,8 +18,7 @@ public interface GrTryCatchStatement extends GroovyPsiElement, GrStatement {
   @Nullable
   GrOpenBlock getTryBlock();
 
-  @NotNull
-  GrCatchClause[] getCatchClauses();
+  GrCatchClause @NotNull [] getCatchClauses();
 
   @Nullable
   GrFinallyClause getFinallyClause();

@@ -15,12 +15,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchWorker;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,43 +50,39 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
   @Override
   public void copyChangesFromBranch(@NotNull List<? extends Change> changes,
                                     boolean swapSides) throws VcsException {
-    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myProject);
 
-    MultiMap<Repository, FilePath> toCheckout = MultiMap.createSet();
-    MultiMap<Repository, FilePath> toDelete = MultiMap.createSet();
+    MultiMap<VirtualFile, FilePath> toCheckout = MultiMap.createSet();
+    MultiMap<VirtualFile, FilePath> toDelete = MultiMap.createSet();
 
     for (Change change : changes) {
       FilePath currentPath = swapSides ? ChangesUtil.getAfterPath(change) : ChangesUtil.getBeforePath(change);
       FilePath branchPath = !swapSides ? ChangesUtil.getAfterPath(change) : ChangesUtil.getBeforePath(change);
       assert currentPath != null || branchPath != null;
-
-      Repository repository = repositoryManager.getRepositoryForFile(ObjectUtils.chooseNotNull(currentPath, branchPath));
+      VirtualFile root = GitUtil.getRootForFile(myProject, ObjectUtils.chooseNotNull(currentPath, branchPath));
       if (currentPath != null && branchPath != null) {
         if (!Comparing.equal(currentPath, branchPath)) {
-          toDelete.putValue(repository, currentPath);
+          toDelete.putValue(root, currentPath);
         }
-        toCheckout.putValue(repository, branchPath);
+        toCheckout.putValue(root, branchPath);
       }
       else if (currentPath != null) {
-        toDelete.putValue(repository, currentPath);
+        toDelete.putValue(root, currentPath);
       }
       else {
-        toCheckout.putValue(repository, branchPath);
+        toCheckout.putValue(root, branchPath);
       }
     }
 
-    for (Map.Entry<Repository, Collection<FilePath>> entry : toDelete.entrySet()) {
-      Repository repository = entry.getKey();
+    for (Map.Entry<VirtualFile, Collection<FilePath>> entry : toDelete.entrySet()) {
+      VirtualFile root = entry.getKey();
       Collection<FilePath> rootPaths = entry.getValue();
-      VirtualFile root = repository.getRoot();
 
       GitFileUtils.deletePaths(myProject, root, rootPaths);
     }
 
-    for (Map.Entry<Repository, Collection<FilePath>> entry : toCheckout.entrySet()) {
-      Repository repository = entry.getKey();
+    for (Map.Entry<VirtualFile, Collection<FilePath>> entry : toCheckout.entrySet()) {
+      VirtualFile root = entry.getKey();
       Collection<FilePath> rootPaths = entry.getValue();
-      VirtualFile root = repository.getRoot();
 
       for (List<String> paths : VcsFileUtil.chunkPaths(root, rootPaths)) {
         GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);

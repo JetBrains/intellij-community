@@ -34,8 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class AntDomDefaultTargetConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
     return new PsiReference[] {new AntDomTargetReference(element)};
   }
 

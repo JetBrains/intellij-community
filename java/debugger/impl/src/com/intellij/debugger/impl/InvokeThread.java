@@ -17,7 +17,7 @@ import java.util.concurrent.*;
  * @author lex
  */
 public abstract class InvokeThread<E extends PrioritizedTask> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.InvokeThread");
+  private static final Logger LOG = Logger.getInstance(InvokeThread.class);
 
   private static final ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<>();
 
@@ -122,38 +122,39 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
     try {
-      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
-      while(true) {
-        try {
-          if(threadRequest.isStopRequested()) {
+      DumbService.getInstance(myProject).runWithAlternativeResolveEnabled(() -> {
+        while(true) {
+          try {
+            if(threadRequest.isStopRequested()) {
+              break;
+            }
+
+            final WorkerThreadRequest currentRequest = getCurrentRequest();
+            if(currentRequest != threadRequest) {
+              reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed()));
+              break; // ensure events are processed by one thread at a time
+            }
+
+            processEvent(myEvents.get());
+          }
+          catch (VMDisconnectedException ignored) {
             break;
           }
-
-          final WorkerThreadRequest currentRequest = getCurrentRequest();
-          if(currentRequest != threadRequest) {
-            reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed()));
-            break; // ensure events are processed by one thread at a time
-          }
-
-          processEvent(myEvents.get());
-        }
-        catch (VMDisconnectedException ignored) {
-          break;
-        }
-        catch (EventQueueClosedException ignored) {
-          break;
-        }
-        catch (ProcessCanceledException ignored) {}
-        catch (RuntimeException e) {
-          if(e.getCause() instanceof InterruptedException) {
+          catch (EventQueueClosedException ignored) {
             break;
           }
-          reportCommandError(e);
+          catch (ProcessCanceledException ignored) {}
+          catch (RuntimeException e) {
+            if(e.getCause() instanceof InterruptedException) {
+              break;
+            }
+            reportCommandError(e);
+          }
+          catch (Throwable e) {
+            reportCommandError(e);
+          }
         }
-        catch (Throwable e) {
-          reportCommandError(e);
-        }
-      }
+      });
     }
     finally {
       // ensure that all scheduled events are processed
@@ -168,7 +169,6 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
 
       LOG.debug("Request " + toString() + " exited");
-      DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
     }
   }
 

@@ -15,7 +15,7 @@
  */
 package com.jetbrains.commandInterface.commandLine;
 
-import com.intellij.lang.documentation.DocumentationProviderEx;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -41,7 +41,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineDocumentationProvider extends DocumentationProviderEx {
+public final class CommandLineDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
@@ -72,10 +72,11 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
                                                   @NotNull final PsiFile file,
-                                                  @Nullable final PsiElement contextElement) {
+                                                  @Nullable final PsiElement contextElement,
+                                                  int targetOffset) {
 
     // First we try to find required parent for context element. Then, for element to the left of caret to support case "command<caret>"
-    for (final PsiElement element : Arrays.asList(contextElement, file.findElementAt(editor.getCaretModel().getOffset() - 1))) {
+    for (final PsiElement element : Arrays.asList(contextElement, file.findElementAt(targetOffset - 1))) {
       final CommandLineElement commandLineElement = PsiTreeUtil.getParentOfType(element, CommandLineElement.class);
       if (commandLineElement != null) {
         return commandLineElement;

@@ -16,6 +16,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/PlatformLangPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.all"/>
+  <module value="com.intellij.modules.jsp.base"/>
 
   <xi:include href="/META-INF/RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
@@ -29,9 +30,6 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/RegExpPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/SpellCheckerPlugin.xml" xpointer="xpointer(/idea-plugin/*)">

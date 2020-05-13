@@ -27,9 +27,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class LibrariesValidatorContextImpl implements LibrariesValidatorContext {
   private final Module myModule;
   private final LibrariesContainer myLibrariesContainer;

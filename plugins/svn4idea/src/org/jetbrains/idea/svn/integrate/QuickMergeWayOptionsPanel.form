@@ -13,7 +13,7 @@
           <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Merge All"/>
+          <text resource-bundle="messages/SvnBundle" key="quick.merge.variants.merge.all"/>
         </properties>
       </component>
       <vspacer id="66429">
@@ -31,7 +31,7 @@
           <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Quick Manual Select"/>
+          <text resource-bundle="messages/SvnBundle" key="quick.merge.variants.quick.select"/>
         </properties>
       </component>
       <component id="76374" class="javax.swing.JButton" binding="mySelectWithPreFilterButton" default-binding="true">
@@ -39,7 +39,7 @@
           <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Select With Pre-Filter"/>
+          <text resource-bundle="messages/SvnBundle" key="quick.merge.variants.pre.select"/>
         </properties>
       </component>
       <component id="e43e9" class="javax.swing.JButton" binding="myCancelButton" default-binding="true">
@@ -47,7 +47,7 @@
           <grid row="6" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Cancel"/>
+          <text resource-bundle="messages/CommonBundle" key="button.cancel"/>
         </properties>
       </component>
       <component id="54a5b" class="javax.swing.JLabel" binding="myAllNotMergedRevisionsLabel">
@@ -55,7 +55,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="quick.merge.variants.merge.all.explanation"/>
+          <text resource-bundle="messages/SvnBundle" key="quick.merge.variants.merge.all.explanation"/>
         </properties>
       </component>
       <component id="18321" class="javax.swing.JLabel" binding="myShowsAllRevisionsFromLabel">
@@ -63,7 +63,7 @@
           <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="quick.merge.variants.quick.select.explanation"/>
+          <text resource-bundle="messages/SvnBundle" key="quick.merge.variants.quick.select.explanation"/>
         </properties>
       </component>
       <component id="f8a4d" class="javax.swing.JLabel" binding="myFindsWhereOneOfLabel">
@@ -71,7 +71,7 @@
           <grid row="5" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="quick.merge.variants.pre.select.explanation"/>
+          <text resource-bundle="messages/SvnBundle" key="quick.merge.variants.pre.select.explanation"/>
         </properties>
       </component>
       <hspacer id="3de54">

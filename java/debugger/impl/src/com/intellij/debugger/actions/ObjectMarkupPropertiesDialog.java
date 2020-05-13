@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialogBase;
@@ -44,8 +45,7 @@ public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialogB
                                       @NotNull Collection<ValueMarkup> markups) {
     super(parent, defaultText, markups);
     mySuggestAdditionalMarkup = suggestAdditionalMarkup;
-    myDescriptionLabel.setText("If the value is referenced by a constant field of an abstract class,\n" +
-                               "IDEA could additionally mark all values referenced from this class with the names of referencing fields.");
+    myDescriptionLabel.setText(JavaDebuggerBundle.message("if.the.value.is.referenced.by.a.constant.field"));
     myCbMarkAdditionalFields.setSelected(PropertiesComponent.getInstance().getBoolean(MARK_ALL_REFERENCED_VALUES_KEY, MARK_ALL_REFERENCED_VALUES_DEFAULT_VALUE));
     init();
   }

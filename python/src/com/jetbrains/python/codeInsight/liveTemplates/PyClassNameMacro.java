@@ -38,7 +38,7 @@ public class PyClassNameMacro extends Macro {
 
   @Nullable
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     PyClass pyClass = PsiTreeUtil.getParentOfType(place, PyClass.class);
     if (pyClass == null) {

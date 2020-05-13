@@ -21,9 +21,8 @@ public class PyTargetReference extends PyReferenceImpl {
     super(element, context);
   }
 
-  @NotNull
   @Override
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final ResolveResult[] results = super.multiResolve(incompleteCode);
     boolean shadowed = false;
     for (ResolveResult result : results) {
@@ -41,9 +40,8 @@ public class PyTargetReference extends PyReferenceImpl {
     return new ResolveResult[] { new PsiElementResolveResult(myElement) };
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final PyImportElement importElement = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
     // reference completion is useless in 'as' part of import statement (PY-2384)
     if (importElement != null && myElement == importElement.getAsNameElement()) {

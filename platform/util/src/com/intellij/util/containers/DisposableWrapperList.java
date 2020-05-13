@@ -40,12 +40,12 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @Override
-  public boolean add(E element) {
+  public boolean add(@NotNull E element) {
     return myWrappedList.add(new DisposableWrapper(element));
   }
 
   @Override
-  public void add(int index, E element) {
+  public void add(int index, @NotNull E element) {
     myWrappedList.add(index, new DisposableWrapper(element));
   }
 
@@ -58,7 +58,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
    *     the list. Conversely, removal of the element from the list triggers disposal of its disposable object.
    */
   @NotNull
-  public Disposable add(E element, @NotNull Disposable parentDisposable) {
+  public Disposable add(@NotNull E element, @NotNull Disposable parentDisposable) {
     DisposableWrapper disposableWrapper = createDisposableWrapper(element, parentDisposable);
     myWrappedList.add(disposableWrapper);
     return disposableWrapper;
@@ -74,7 +74,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
    *     the list. Conversely, removal of the element from the list triggers disposal of its disposable object.
    */
   @NotNull
-  public Disposable add(int index, E element, @NotNull Disposable parentDisposable) {
+  public Disposable add(int index, @NotNull E element, @NotNull Disposable parentDisposable) {
     DisposableWrapper disposableWrapper = createDisposableWrapper(element, parentDisposable);
     myWrappedList.add(index, disposableWrapper);
     return disposableWrapper;
@@ -167,8 +167,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @Override
-  @NotNull
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     Object[] elements = myWrappedList.toArray();
     if (elements.length == 0) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
@@ -180,8 +179,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @Override
-  @NotNull
-  public <T> T[] toArray(@NotNull T[] array) {
+  public <T> T @NotNull [] toArray(T @NotNull [] array) {
     Object[] elements = myWrappedList.toArray();
     int len = elements.length;
     if (array.length < len) {
@@ -250,7 +248,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @NotNull
-  private DisposableWrapper createDisposableWrapper(E element, @NotNull Disposable parentDisposable) {
+  private DisposableWrapper createDisposableWrapper(@NotNull E element, @NotNull Disposable parentDisposable) {
     DisposableWrapper disposableWrapper = new DisposableWrapper(element, true);
     Disposer.register(parentDisposable, disposableWrapper);
     return disposableWrapper;
@@ -334,7 +332,18 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
         return false;
       }
       DisposableWrapper other = (DisposableWrapper)obj;
-      return delegate.equals(other.delegate) && !isUnique() && !other.isUnique();
+      try {
+        return delegate.equals(other.delegate) && !isUnique() && !other.isUnique();
+      }
+      catch (ClassCastException e) {
+        throw new RuntimeException("failed DisposableWrapper.equals(" + classInfo(other.delegate)
+                                   + "; this.delegate=" + classInfo(delegate) + ". Whole list=" + myWrappedList, e);
+      }
+    }
+
+    @NotNull
+    private String classInfo(@NotNull E o) {
+      return o + " (" + o.getClass() + "; super interfaces: " + Arrays.toString(o.getClass().getInterfaces()) +")";
     }
   }
 

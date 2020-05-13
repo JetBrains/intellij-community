@@ -2,21 +2,26 @@
 package org.zmlx.hg4idea.status;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
+import org.zmlx.hg4idea.status.ui.HgWidgetUpdater;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -24,75 +29,64 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class HgRemoteStatusUpdater implements HgUpdater {
-
-  private final AbstractVcs myVcs;
-  private final HgChangesetStatus myIncomingStatus;
-  private final HgChangesetStatus myOutgoingStatus;
-  private final HgProjectSettings myProjectSettings;
+public class HgRemoteStatusUpdater implements Disposable {
+  private final Project myProject;
+  private final HgVcs myVcs;
+  private final HgChangesetStatus myIncomingStatus = new HgChangesetStatus(HgBundle.message("hg4idea.changesets.in"));
+  private final HgChangesetStatus myOutgoingStatus = new HgChangesetStatus(HgBundle.message("hg4idea.changesets.out"));
   private final AtomicBoolean myUpdateStarted = new AtomicBoolean();
 
-  private MessageBusConnection busConnection;
-
-  private ScheduledFuture<?> changesUpdaterScheduledFuture;
-
-
-  public HgRemoteStatusUpdater(@NotNull HgVcs vcs,
-                               HgChangesetStatus incomingStatus,
-                               HgChangesetStatus outgoingStatus,
-                               HgProjectSettings projectSettings) {
+  public HgRemoteStatusUpdater(@NotNull HgVcs vcs) {
+    myProject = vcs.getProject();
     myVcs = vcs;
-    myIncomingStatus = incomingStatus;
-    myOutgoingStatus = outgoingStatus;
-    myProjectSettings = projectSettings;
-  }
 
-  public void update(final Project project) {
-    update(project, null);
+    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+    busConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateInBackground(root));
+    busConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
+      @Override
+      public void updateVisibility() {
+        updateInBackground(null);
+      }
+    });
+
+    int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
+    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateInBackground(null), 5,
+                                                                                   checkIntervalSeconds, TimeUnit.SECONDS);
+    Disposer.register(this, () -> future.cancel(true));
   }
 
   @Override
-  public void update(final Project project, @Nullable final VirtualFile root) {
-    if (!isCheckingEnabled() || myUpdateStarted.get()) {
-      return;
-    }
-    myUpdateStarted.set(true);
-    ApplicationManager.getApplication().invokeLater(() -> new Task.Backgroundable(project, getProgressTitle(), true) {
+  public void dispose() {
+  }
+
+  public HgChangesetStatus getStatus(boolean isIncoming) {
+    return isIncoming ? myIncomingStatus : myOutgoingStatus;
+  }
+
+  private void updateInBackground(@Nullable VirtualFile root) {
+    if (!isCheckingEnabled(myProject)) return;
+    if (!myUpdateStarted.compareAndSet(false, true)) return;
+    new Task.Backgroundable(myProject, getProgressTitle(), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (project.isDisposed()) return;
-        final VirtualFile[] roots =
-          root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
-        updateChangesStatusSynchronously(project, roots, myIncomingStatus, true);
-        updateChangesStatusSynchronously(project, roots, myOutgoingStatus, false);
+        if (myProject.isDisposed()) return;
+        final VirtualFile[] roots = root != null ? new VirtualFile[]{root}
+                                                 : ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
+        updateChangesStatusSynchronously(myProject, roots, myIncomingStatus, true);
+        updateChangesStatusSynchronously(myProject, roots, myOutgoingStatus, false);
 
-        BackgroundTaskUtil.syncPublisher(project, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
+        BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
+      }
 
-        indicator.stop();
+      @Override
+      public void onFinished() {
         myUpdateStarted.set(false);
       }
-    }.queue());
+    }.queue();
   }
 
-
-  public void activate() {
-    busConnection = myVcs.getProject().getMessageBus().connect();
-    busConnection.subscribe(HgVcs.REMOTE_TOPIC, this);
-
-    int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
-    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> update(myVcs.getProject()), 5, checkIntervalSeconds, TimeUnit.SECONDS);
-  }
-
-  public void deactivate() {
-    busConnection.disconnect();
-
-    if (changesUpdaterScheduledFuture != null) {
-      changesUpdaterScheduledFuture.cancel(true);
-    }
-  }
-
-  private void updateChangesStatusSynchronously(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
-    if (!myProjectSettings.isCheckIncomingOutgoing()) return;
+  private static void updateChangesStatusSynchronously(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
+    if (!isCheckingEnabled(project)) return;
     final List<HgRevisionNumber> changesets = new LinkedList<>();
     for (VirtualFile root : roots) {
       if (incoming) {
@@ -106,11 +100,14 @@ public class HgRemoteStatusUpdater implements HgUpdater {
   }
 
   private static String getProgressTitle() {
-    return "Checking Incoming and Outgoing Changes";
+    return HgBundle.message("hg4idea.changesets.checking.progress");
   }
 
-  protected boolean isCheckingEnabled() {
-    return myProjectSettings.isCheckIncomingOutgoing();
+  public static boolean isCheckingEnabled(@NotNull Project project) {
+    HgVcs hgVcs = HgVcs.getInstance(project);
+    if (hgVcs == null) return false;
+    if (HgUtil.getRepositoryManager(project).getRepositories().isEmpty()) return false;
+    return hgVcs.getProjectSettings().isCheckIncomingOutgoing();
   }
 
   private static final class ChangesetFormatter implements HgChangesetStatus.ChangesetWriter {

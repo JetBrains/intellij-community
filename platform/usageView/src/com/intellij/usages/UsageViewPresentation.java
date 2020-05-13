@@ -1,35 +1,25 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
-import com.intellij.openapi.util.Comparing;
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
+import java.util.Objects;
+import java.util.regex.Pattern;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Pattern;
-
-/**
- * @author max
- */
 public class UsageViewPresentation {
+
+  private static final Logger LOG = Logger.getInstance(UsageViewPresentation.class);
+
   private String myTabText;
   private String myScopeText = ""; // Default value. to be overwritten in most cases.
-  private String myContextText = "";
   private String myUsagesString;
+  private String mySearchString;
   private String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
   private String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
@@ -69,15 +59,6 @@ public class UsageViewPresentation {
     myScopeText = scopeText;
   }
 
-  @NotNull
-  public String getContextText() {
-    return myContextText;
-  }
-
-  public void setContextText(@NotNull String contextText) {
-    myContextText = contextText;
-  }
-
   public boolean isShowReadOnlyStatusAsRed() {
     return myShowReadOnlyStatusAsRed;
   }
@@ -86,12 +67,37 @@ public class UsageViewPresentation {
     myShowReadOnlyStatusAsRed = showReadOnlyStatusAsRed;
   }
 
+  /**
+   * @deprecated use {@link #getSearchString}
+   */
+  @Deprecated
   public String getUsagesString() {
     return myUsagesString;
   }
 
+  /**
+   * @deprecated use {@link #setSearchString}
+   */
+  @Deprecated
   public void setUsagesString(String usagesString) {
     myUsagesString = usagesString;
+  }
+
+  public @Nls(capitalization = Title) @NotNull String getSearchString() {
+    String searchString = mySearchString;
+    if (searchString != null) {
+      return searchString;
+    }
+    String usagesString = myUsagesString;
+    if (usagesString != null) {
+      return StringUtil.capitalize(myUsagesString);
+    }
+    LOG.error("search string must be set");
+    return "";
+  }
+
+  public void setSearchString(@Nls(capitalization = Title) @NotNull String searchString) {
+    mySearchString = searchString;
   }
 
   @Nullable("null means the targets node must not be visible")
@@ -246,49 +252,37 @@ public class UsageViewPresentation {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof UsageViewPresentation)) return false;
-
+    if (o == null || getClass() != o.getClass()) return false;
     UsageViewPresentation that = (UsageViewPresentation)o;
-
-    if (myCodeUsages != that.myCodeUsages) return false;
-    if (myDetachedMode != that.myDetachedMode) return false;
-    if (myMergeDupLinesAvailable != that.myMergeDupLinesAvailable) return false;
-    if (myOpenInNewTab != that.myOpenInNewTab) return false;
-    if (myShowCancelButton != that.myShowCancelButton) return false;
-    if (myShowReadOnlyStatusAsRed != that.myShowReadOnlyStatusAsRed) return false;
-    if (myUsageTypeFilteringAvailable != that.myUsageTypeFilteringAvailable) return false;
-    if (myExcludeAvailable != that.myExcludeAvailable) return false;
-    if (myCodeUsagesString != null ? !myCodeUsagesString.equals(that.myCodeUsagesString) : that.myCodeUsagesString != null) return false;
-    if (myDynamicCodeUsagesString != null
-        ? !myDynamicCodeUsagesString.equals(that.myDynamicCodeUsagesString)
-        : that.myDynamicCodeUsagesString != null) {
-      return false;
-    }
-    if (myNonCodeUsagesString != null ? !myNonCodeUsagesString.equals(that.myNonCodeUsagesString) : that.myNonCodeUsagesString != null) {
-      return false;
-    }
-    if (myScopeText != null ? !myScopeText.equals(that.myScopeText) : that.myScopeText != null) return false;
-    if (myTabName != null ? !myTabName.equals(that.myTabName) : that.myTabName != null) return false;
-    if (myTabText != null ? !myTabText.equals(that.myTabText) : that.myTabText != null) return false;
-    if (myTargetsNodeText != null ? !myTargetsNodeText.equals(that.myTargetsNodeText) : that.myTargetsNodeText != null) return false;
-    if (myToolwindowTitle != null ? !myToolwindowTitle.equals(that.myToolwindowTitle) : that.myToolwindowTitle != null) return false;
-    if (myUsagesInGeneratedCodeString != null
-        ? !myUsagesInGeneratedCodeString.equals(that.myUsagesInGeneratedCodeString)
-        : that.myUsagesInGeneratedCodeString != null) {
-      return false;
-    }
-    if (myUsagesString != null ? !myUsagesString.equals(that.myUsagesString) : that.myUsagesString != null) return false;
-    if (myUsagesWord != null ? !myUsagesWord.equals(that.myUsagesWord) : that.myUsagesWord != null) return false;
-    if (!arePatternsEqual(mySearchPattern, that.mySearchPattern)) return false;
-    if (!arePatternsEqual(myReplacePattern, that.myReplacePattern)) return false;
-
-    return true;
+    return myCodeUsages == that.myCodeUsages
+           && myDetachedMode == that.myDetachedMode
+           && myMergeDupLinesAvailable == that.myMergeDupLinesAvailable
+           && myOpenInNewTab == that.myOpenInNewTab
+           && myShowCancelButton == that.myShowCancelButton
+           && myShowReadOnlyStatusAsRed == that.myShowReadOnlyStatusAsRed
+           && myUsageTypeFilteringAvailable == that.myUsageTypeFilteringAvailable
+           && myExcludeAvailable == that.myExcludeAvailable
+           && myReplaceMode == that.myReplaceMode
+           && Objects.equals(myCodeUsagesString, that.myCodeUsagesString)
+           && Objects.equals(myDynamicCodeUsagesString, that.myDynamicCodeUsagesString)
+           && Objects.equals(myNonCodeUsagesString, that.myNonCodeUsagesString)
+           && Objects.equals(myScopeText, that.myScopeText)
+           && Objects.equals(myTabName, that.myTabName)
+           && Objects.equals(myTabText, that.myTabText)
+           && Objects.equals(myTargetsNodeText, that.myTargetsNodeText)
+           && Objects.equals(myToolwindowTitle, that.myToolwindowTitle)
+           && Objects.equals(myUsagesInGeneratedCodeString, that.myUsagesInGeneratedCodeString)
+           && Objects.equals(myUsagesString, that.myUsagesString)
+           && Objects.equals(mySearchString, that.mySearchString)
+           && Objects.equals(myUsagesWord, that.myUsagesWord)
+           && arePatternsEqual(mySearchPattern, that.mySearchPattern)
+           && arePatternsEqual(myReplacePattern, that.myReplacePattern);
   }
 
   public static boolean arePatternsEqual(Pattern p1, Pattern p2) {
     if (p1 == null) return p2 == null;
     if (p2 == null) return false;
-    return Comparing.equal(p1.pattern(), p2.pattern()) && p1.flags() == p2.flags();
+    return Objects.equals(p1.pattern(), p2.pattern()) && p1.flags() == p2.flags();
   }
 
   public static int getHashCode(Pattern pattern) {
@@ -297,30 +291,33 @@ public class UsageViewPresentation {
     return (s != null ? s.hashCode() : 0) * 31 + pattern.flags();
   }
 
-
   @Override
   public int hashCode() {
-    int result = myTabText != null ? myTabText.hashCode() : 0;
-    result = 31 * result + (myScopeText != null ? myScopeText.hashCode() : 0);
-    result = 31 * result + (myUsagesString != null ? myUsagesString.hashCode() : 0);
-    result = 31 * result + (myTargetsNodeText != null ? myTargetsNodeText.hashCode() : 0);
-    result = 31 * result + (myNonCodeUsagesString != null ? myNonCodeUsagesString.hashCode() : 0);
-    result = 31 * result + (myCodeUsagesString != null ? myCodeUsagesString.hashCode() : 0);
-    result = 31 * result + (myUsagesInGeneratedCodeString != null ? myUsagesInGeneratedCodeString.hashCode() : 0);
-    result = 31 * result + (myShowReadOnlyStatusAsRed ? 1 : 0);
-    result = 31 * result + (myShowCancelButton ? 1 : 0);
-    result = 31 * result + (myOpenInNewTab ? 1 : 0);
-    result = 31 * result + (myCodeUsages ? 1 : 0);
-    result = 31 * result + (myUsageTypeFilteringAvailable ? 1 : 0);
-    result = 31 * result + (myExcludeAvailable ? 1 : 0);
-    result = 31 * result + (myUsagesWord != null ? myUsagesWord.hashCode() : 0);
+    int result = Objects.hash(
+      myTabText,
+      myScopeText,
+      myUsagesString,
+      mySearchString,
+      myTargetsNodeText,
+      myNonCodeUsagesString,
+      myCodeUsagesString,
+      myUsagesInGeneratedCodeString,
+      myShowReadOnlyStatusAsRed,
+      myShowCancelButton,
+      myOpenInNewTab,
+      myCodeUsages,
+      myUsageTypeFilteringAvailable,
+      myExcludeAvailable,
+      myUsagesWord,
+      myTabName,
+      myToolwindowTitle,
+      myDetachedMode,
+      myDynamicCodeUsagesString,
+      myMergeDupLinesAvailable,
+      myReplaceMode
+    );
     result = 31 * result + getHashCode(mySearchPattern);
     result = 31 * result + getHashCode(myReplacePattern);
-    result = 31 * result + (myTabName != null ? myTabName.hashCode() : 0);
-    result = 31 * result + (myToolwindowTitle != null ? myToolwindowTitle.hashCode() : 0);
-    result = 31 * result + (myDetachedMode ? 1 : 0);
-    result = 31 * result + (myDynamicCodeUsagesString != null ? myDynamicCodeUsagesString.hashCode() : 0);
-    result = 31 * result + (myMergeDupLinesAvailable ? 1 : 0);
     return result;
   }
 
@@ -328,8 +325,8 @@ public class UsageViewPresentation {
     UsageViewPresentation copyInstance = new UsageViewPresentation();
     copyInstance.myTabText = myTabText;
     copyInstance.myScopeText = myScopeText;
-    copyInstance.myContextText = myContextText;
     copyInstance.myUsagesString = myUsagesString;
+    copyInstance.mySearchString = mySearchString;
     copyInstance.myTargetsNodeText = myTargetsNodeText;
     copyInstance.myNonCodeUsagesString = myNonCodeUsagesString;
     copyInstance.myCodeUsagesString = myCodeUsagesString;
@@ -352,4 +349,3 @@ public class UsageViewPresentation {
     return copyInstance;
   }
 }
-

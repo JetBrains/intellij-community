@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("Promises")
 package org.jetbrains.concurrency
 
@@ -9,14 +9,14 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.toMutableSmartList
-import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
-val obsoleteError by lazy { MessageError("Obsolete", false) }
+private val obsoleteError: RuntimeException by lazy { MessageError("Obsolete", false) }
 
 val Promise<*>.isRejected: Boolean
   get() = state == Promise.State.REJECTED
@@ -24,12 +24,19 @@ val Promise<*>.isRejected: Boolean
 val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
 
-private val REJECTED: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(createError("rejected"))) }
+private val REJECTED: Promise<*> by lazy {
+  DonePromise<Any?>(PromiseValue.createRejected(createError("rejected")))
+}
+
+@Suppress("RemoveExplicitTypeArguments")
+private val fulfilledPromise: CancellablePromise<Any?> by lazy {
+  DonePromise<Any?>(PromiseValue.createFulfilled(null))
+}
 
 @Suppress("UNCHECKED_CAST")
-fun <T> resolvedPromise(): Promise<T> = InternalPromiseUtil.FULFILLED_PROMISE.value as Promise<T>
+fun <T> resolvedPromise(): Promise<T> = fulfilledPromise as Promise<T>
 
-fun nullPromise(): Promise<*> = InternalPromiseUtil.FULFILLED_PROMISE.value
+fun nullPromise(): Promise<*> = fulfilledPromise
 
 /**
  * Creates a promise that is resolved with the given value.
@@ -42,8 +49,8 @@ fun <T> resolvedPromise(result: T): Promise<T> = resolvedCancellablePromise(resu
 fun <T> resolvedCancellablePromise(result: T): CancellablePromise<T> {
   @Suppress("UNCHECKED_CAST")
   return when (result) {
-    null -> InternalPromiseUtil.FULFILLED_PROMISE.value as CancellablePromise<T>
-    else -> DonePromise(InternalPromiseUtil.PromiseValue.createFulfilled(result))
+    null -> fulfilledPromise as CancellablePromise<T>
+    else -> DonePromise(PromiseValue.createFulfilled(result))
   }
 }
 
@@ -53,18 +60,22 @@ fun <T> resolvedCancellablePromise(result: T): CancellablePromise<T> {
  */
 fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
 
-fun <T> rejectedPromise(error: String): Promise<T> = DonePromise(InternalPromiseUtil.PromiseValue.createRejected(createError(error, true)))
+fun <T> rejectedPromise(error: String): Promise<T> = rejectedCancellablePromise(error)
 
 fun <T> rejectedPromise(error: Throwable?): Promise<T> {
   @Suppress("UNCHECKED_CAST")
   return when (error) {
     null -> REJECTED as Promise<T>
-    else -> DonePromise(InternalPromiseUtil.PromiseValue.createRejected(error))
+    else -> DonePromise(PromiseValue.createRejected(error))
   }
 }
 
+fun <T> rejectedCancellablePromise(error: String): CancellablePromise<T> =
+  DonePromise(PromiseValue.createRejected(createError(error, true)))
+
+@Suppress("RemoveExplicitTypeArguments")
 private val CANCELLED_PROMISE: Promise<Any?> by lazy {
-  DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(obsoleteError))
+  DonePromise(PromiseValue.createRejected<Any?>(obsoleteError))
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -121,7 +132,7 @@ inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler
   })
 }
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>): Promise<Any?> = thenAsync(Function<T, Promise<Any?>> { param ->
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>): Promise<Any?> = thenAsync(Function { param ->
   @Suppress("UNCHECKED_CAST")
   (return@Function handler(param) as Promise<Any?>)
 })
@@ -147,7 +158,7 @@ fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = fals
 
   val result = AsyncPromise<List<T>>()
   val latch = AtomicInteger(size)
-  val list = Collections.synchronizedList(Collections.nCopies<T?>(size, null).toMutableSmartList())
+  val list = Collections.synchronizedList(Collections.nCopies<T?>(size, null).toMutableList())
 
   fun arrive() {
     if (latch.decrementAndGet() == 0) {
@@ -301,4 +312,89 @@ fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
     promise.onError(rejected)
   }
   return totalPromise
+}
+
+private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, Future<T>, CancellablePromise<T> {
+  /**
+   * The same as @{link Future[Future.isDone]}.
+   * Completion may be due to normal termination, an exception, or cancellation -- in all of these cases, this method will return true.
+   */
+  override fun isDone() = true
+
+  override fun getState() = value.state
+
+  override fun isCancelled() = this.value.isCancelled
+
+  override fun get() = blockingGet(-1)
+
+  override fun get(timeout: Long, unit: TimeUnit) = blockingGet(timeout.toInt(), unit)
+
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+    if (state == Promise.State.PENDING) {
+      cancel()
+      return true
+    }
+    else {
+      return false
+    }
+  }
+
+  override fun onSuccess(handler: Consumer<in T?>): CancellablePromise<T> {
+    if (value.error != null) {
+      return this
+    }
+
+    if (!isHandlerObsolete(handler)) {
+      handler.accept(value.result)
+    }
+    return this
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun processed(child: Promise<in T?>): Promise<T> {
+    if (child is CompletablePromise<*>) {
+      (child as CompletablePromise<T>).setResult(value.result)
+    }
+    return this
+  }
+
+  override fun onProcessed(handler: Consumer<in T?>): CancellablePromise<T> {
+    if (value.error == null) {
+      onSuccess(handler)
+    }
+    else if (!isHandlerObsolete(handler)) {
+      handler.accept(null)
+    }
+    return this
+  }
+
+  override fun onError(handler: Consumer<in Throwable?>): CancellablePromise<T> {
+    if (value.error != null && !isHandlerObsolete(handler)) {
+      handler.accept(value.error)
+    }
+    return this
+  }
+
+  override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
+    @Suppress("UNCHECKED_CAST")
+    return when {
+      value.error != null -> this as Promise<SUB_RESULT>
+      isHandlerObsolete(done) -> cancelledPromise()
+      else -> DonePromise(PromiseValue.createFulfilled(done.`fun`(value.result)))
+    }
+  }
+
+  override fun <SUB_RESULT : Any?> thenAsync(done: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
+    if (value.error == null) {
+      return done.`fun`(value.result)
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
+      return this as Promise<SUB_RESULT>
+    }
+  }
+
+  override fun blockingGet(timeout: Int, timeUnit: TimeUnit) = value.getResultOrThrowError()
+
+  override fun cancel() {}
 }

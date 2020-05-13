@@ -5,6 +5,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.ide.util.PlatformPackageUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class MoveClassesOrPackagesImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl");
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesImpl.class);
 
   public static void doMove(Project project, PsiElement[] adjustedElements, PsiElement initialTargetElement, MoveCallback moveCallback) {
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
@@ -50,8 +51,7 @@ public class MoveClassesOrPackagesImpl {
     ).show();
   }
 
-  @Nullable
-  public static PsiElement[] adjustForMove(final Project project, final PsiElement[] elements, final PsiElement targetElement) {
+  public static PsiElement @Nullable [] adjustForMove(final Project project, final PsiElement[] elements, final PsiElement targetElement) {
     final PsiElement[] psiElements = new PsiElement[elements.length];
     List<String> names = new ArrayList<>();
     for (int idx = 0; idx < elements.length; idx++) {
@@ -60,7 +60,7 @@ public class MoveClassesOrPackagesImpl {
         PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
         LOG.assertTrue(aPackage != null);
         if (aPackage.getQualifiedName().isEmpty()) { //is default package
-          String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
+          String message = JavaRefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
@@ -76,12 +76,12 @@ public class MoveClassesOrPackagesImpl {
       else if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
         if (aClass instanceof PsiAnonymousClass) {
-          String message = RefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
+          String message = JavaRefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
         if (isClassInnerOrLocal(aClass)) {
-          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
+          String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("moving.local.classes.is.not.supported"));
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
@@ -95,7 +95,7 @@ public class MoveClassesOrPackagesImpl {
 
         if (names.contains(name)) {
           String message = RefactoringBundle
-            .getCannotRefactorMessage(RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
+            .getCannotRefactorMessage(JavaRefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
@@ -130,7 +130,7 @@ public class MoveClassesOrPackagesImpl {
       if (directories.length > 1) {
         DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, aPackage.getQualifiedName(), directories);
         message.append("\n\n");
-        String report = RefactoringBundle
+        String report = JavaRefactoringBundle
           .message("all.these.directories.will.be.moved.and.all.references.to.0.will.be.changed", aPackage.getQualifiedName());
         message.append(report);
       }
@@ -154,7 +154,7 @@ public class MoveClassesOrPackagesImpl {
       if (curPackage.equals(srcPackage)) {
         if (showError) {
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"),
-                                                 RefactoringBundle.message("cannot.move.package.into.itself"),
+                                                 JavaRefactoringBundle.message("cannot.move.package.into.itself"),
                                                  HelpID.getMoveHelpID(srcPackage), project);
         }
         return false;
@@ -286,7 +286,7 @@ public class MoveClassesOrPackagesImpl {
 
     List<PsiDirectory> sourceRootDirectories = buildRearrangeTargetsList(project, directories);
     DirectoryChooser chooser = new DirectoryChooser(project);
-    chooser.setTitle(RefactoringBundle.message("select.source.root.chooser.title"));
+    chooser.setTitle(JavaRefactoringBundle.message("select.source.root.chooser.title"));
     chooser.fillList(sourceRootDirectories.toArray(PsiDirectory.EMPTY_ARRAY), null, project, "");
     if (!chooser.showAndGet()) {
       return;
@@ -297,7 +297,7 @@ public class MoveClassesOrPackagesImpl {
     final Runnable analyzeConflicts = () -> ApplicationManager.getApplication().runReadAction(() -> RefactoringConflictsUtil
       .analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts));
     if (!ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(analyzeConflicts, "Analyze Module Conflicts...", true, project)) {
+      .runProcessWithProgressSynchronously(analyzeConflicts, JavaRefactoringBundle.message("analyze.module.conflicts"), true, project)) {
       return;
     }
     if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;

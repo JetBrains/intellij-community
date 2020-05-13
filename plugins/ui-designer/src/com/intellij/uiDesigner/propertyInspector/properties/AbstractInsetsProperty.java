@@ -37,8 +37,7 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
   }
 
   @Override
-  @NotNull
-  public final Property[] getChildren(final RadComponent component) {
+  public final Property @NotNull [] getChildren(final RadComponent component) {
     return myChildren;
   }
 

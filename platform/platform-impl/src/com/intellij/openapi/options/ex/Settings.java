@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -16,9 +16,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class Settings {
   public static final DataKey<Settings> KEY = DataKey.create("settings.editor");
 
@@ -31,12 +28,12 @@ public abstract class Settings {
 
   @Nullable
   public final <T extends Configurable> T find(@NotNull Class<T> type) {
-    return unwrap(new ConfigurableVisitor.ByType(type).find(myGroups), type);
+    return unwrap(ConfigurableVisitor.findByType(type, myGroups), type);
   }
 
   @Nullable
   public final Configurable find(@NotNull String id) {
-    return unwrap(new ConfigurableVisitor.ByID(id).find(myGroups), Configurable.class);
+    return unwrap(ConfigurableVisitor.findById(id, myGroups), Configurable.class);
   }
 
   @NotNull
@@ -74,4 +71,8 @@ public abstract class Settings {
    * Used to handle programmatic settings changes when no UI events are sent.
    */
   public void revalidate() {}
+
+  public void reload() {
+    myMap.clear();
+  }
 }

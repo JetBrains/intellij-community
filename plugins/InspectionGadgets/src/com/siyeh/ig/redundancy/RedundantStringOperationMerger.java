@@ -35,9 +35,8 @@ public class RedundantStringOperationMerger extends InspectionElementsMergerBase
           return OLD_MERGER_NAME;
         }
 
-        @NotNull
         @Override
-        public String[] getSourceToolNames() {
+        public String @NotNull [] getSourceToolNames() {
           return ArrayUtilRt.toStringArray(OLD_SOURCE_NAMES);
         }
 
@@ -63,9 +62,8 @@ public class RedundantStringOperationMerger extends InspectionElementsMergerBase
     return null;
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       "StringToString",
       "SubstringZero",
@@ -75,9 +73,8 @@ public class RedundantStringOperationMerger extends InspectionElementsMergerBase
     };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] {
       "StringToString", "RedundantStringToString",
       "SubstringZero", "ConstantStringIntern",

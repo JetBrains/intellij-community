@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -46,11 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class LibraryEditingUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil");
+  private static final Logger LOG = Logger.getInstance(LibraryEditingUtil.class);
 
   private LibraryEditingUtil() {
   }
@@ -174,11 +171,11 @@ public class LibraryEditingUtil {
 
   public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final ParameterizedRunnable<? super LibraryType> action) {
-    return new BaseListPopupStep<LibraryType>(IdeBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
+    return new BaseListPopupStep<LibraryType>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
           @NotNull
           @Override
           public String getTextFor(LibraryType value) {
-            return value != null ? value.getCreateActionName() : IdeBundle.message("create.default.library.type.action.name");
+            return value != null ? value.getCreateActionName() : JavaUiBundle.message("create.default.library.type.action.name");
           }
 
           @Override

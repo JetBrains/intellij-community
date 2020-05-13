@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,17 +34,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.CreateClassUtil;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author peter
  */
 public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix");
+  private static final Logger LOG = Logger.getInstance(CreateClassOrPackageFix.class);
   private final List<? extends PsiDirectory> myWritableDirectoryList;
   private final String myPresentation;
 
@@ -106,9 +110,9 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message(
-      myClassKind == ClassKind.INTERFACE ? "create.interface.text" : myClassKind != null ? "create.class.text" : "create.package.text",
-      myPresentation);
+    return CommonQuickFixBundle.message("fix.create.title.x",
+                                        (myClassKind == null ? JavaElementKind.PACKAGE : myClassKind.getElementKind()).object(),
+                                        myPresentation);
   }
 
   @Override

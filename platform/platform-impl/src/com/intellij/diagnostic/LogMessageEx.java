@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.IdeaReportingEvent.TextBasedThrowable;
@@ -12,14 +12,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/** @deprecated use {@link LogMessage} (to be removed in IDEA 2020) */
+/** @deprecated use {@link LogMessage} */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
 public class LogMessageEx extends LogMessage {
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} or {@link LogMessage} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} or {@link LogMessage} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public LogMessageEx(IdeaLoggingEvent event, String title, String notificationText) {
     super(event.getThrowable(), event.getMessage(), attachments(event));
   }
@@ -34,38 +34,38 @@ public class LogMessageEx extends LogMessage {
     return data instanceof AbstractMessage ? ((AbstractMessage)data).getAllAttachments() : Collections.emptyList();
   }
 
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static IdeaLoggingEvent createEvent(String message, String details, Attachment... attachments) {
     return createEvent(new TextBasedThrowable(details), message, attachments);
   }
 
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static IdeaLoggingEvent createEvent(String message, String details, String title, String notificationText, Attachment attachment) {
     return createEvent(new TextBasedThrowable(details), message, attachment);
   }
 
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static IdeaLoggingEvent createEvent(String message, String details, String title, String notificationText, Collection<Attachment> attachments) {
     Attachment[] array = attachments != null ? attachments.toArray(Attachment.EMPTY_ARRAY) : Attachment.EMPTY_ARRAY;
     return createEvent(new TextBasedThrowable(details), message, array);
   }
 
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} and {@link AttachmentFactory#createContext} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} and {@link AttachmentFactory#createContext} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
-  public static void error(@NotNull Logger logger, @NotNull String message, @NotNull String... attachmentText) {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static void error(@NotNull Logger logger, @NotNull String message, String @NotNull ... attachmentText) {
     error(logger, message, new Throwable(), attachmentText);
   }
 
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} and {@link AttachmentFactory#createContext} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} and {@link AttachmentFactory#createContext} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void error(Logger logger, String message, Throwable cause, String... attachmentText) {
     StringBuilder detailsBuffer = new StringBuilder();
     for (String detail : attachmentText) {

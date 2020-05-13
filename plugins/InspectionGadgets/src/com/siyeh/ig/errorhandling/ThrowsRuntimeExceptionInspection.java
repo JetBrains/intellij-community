@@ -30,14 +30,12 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrowsRuntimeExceptionInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final String exceptionName = (String)infos[0];
     if (MoveExceptionToJavadocFix.isApplicable((PsiJavaCodeReferenceElement)infos[1])) {
       return new InspectionGadgetsFix[] {
@@ -46,13 +44,6 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
       };
     }
     return new InspectionGadgetsFix[] {new ThrowsRuntimeExceptionFix(exceptionName)};
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("throws.runtime.exception.display.name");
   }
 
   @NotNull
@@ -83,7 +74,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Move to Javadoc '@throws'";
+      return InspectionGadgetsBundle.message("move.exception.to.javadoc.fix.family.name");
     }
 
     @Override
@@ -182,7 +173,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove from \"throws\" clause";
+      return InspectionGadgetsBundle.message("throws.runtime.exception.fix.family.name");
     }
 
     @Override

@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.jetbrains.python.inspections.PyNonAsciiCharInspection;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
@@ -277,7 +278,7 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.enableInspections(PySingleQuotedDocstringInspection.class); 
     myFixture.enableInspections(PyByteLiteralInspection.class); 
     myFixture.enableInspections(PyMandatoryEncodingInspection.class); 
-    myFixture.enableInspections(PyNonAsciiCharInspection.class); 
+    myFixture.enableInspections(PyNonAsciiCharInspection.class);
 
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     myFixture.checkHighlighting(true, false, true);

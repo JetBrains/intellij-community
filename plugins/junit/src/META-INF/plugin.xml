@@ -28,6 +28,7 @@
         </ul>
       ]]>
    </description>
+  <category>Test Tools</category>
   <depends>com.intellij.modules.java</depends>
   <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
@@ -61,13 +62,10 @@
     <stacktrace.fold substring="at com.intellij.junit3."/>
     <stacktrace.fold substring="at com.intellij.junit4."/>
     <stacktrace.fold substring="at com.intellij.junit5."/>
+    <stacktrace.fold substring="at com.intellij.rt.junit."/>
     <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
     <stacktrace.fold substring="at junit.framework.TestCase.run"/>
     <stacktrace.fold substring="at junit.framework.TestResult"/>
-    <stacktrace.fold substring="at org.junit.jupiter.api.AssertionUtils.fail("/>
-    <stacktrace.fold substring="at org.junit.jupiter.api.AssertEquals.failNotEqual("/>
-    <stacktrace.fold substring="at org.junit.jupiter.api.AssertEquals.assertEquals("/>
-    <stacktrace.fold substring="at org.junit.jupiter.api.Assertions.assertEquals("/>
     <stacktrace.fold substring="at org.junit.platform."/>
     <stacktrace.fold substring="at org.junit.jupiter."/>
     <stacktrace.fold substring="at org.junit.vintage."/>
@@ -82,16 +80,16 @@
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
     <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedParameterized" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedParameterized" bundle="messages.JUnitBundle"
                      key="junit5.valid.parameterized.configuration.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedRepeated" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedRepeated" bundle="messages.JUnitBundle"
                      key="junit5.malformed.repeated.test.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
 
-    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedNestedClass" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedNestedClass" bundle="messages.JUnitBundle"
                      key="junit5.nested.test.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
@@ -101,19 +99,20 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener"/>
-    <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer"/>
+    <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer" dynamic="true"/>
   </extensionPoints>
 
   <actions>
-    <group>
-      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" text="Exclude from suite" id="excludeFromSuite"/>
+    <group id="junit.exclude.group">
+      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" id="excludeFromSuite"/>
       <separator/>
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
-    <group>
-      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to JUnit pattern suite"/>
+    <group id="junit.add.to.pattern.group">
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite"/>
       <add-to-group anchor="last" group-id="RunContextGroup"/>
     </group>
   </actions>
+  <resource-bundle>messages.JUnitBundle</resource-bundle>
 </idea-plugin>

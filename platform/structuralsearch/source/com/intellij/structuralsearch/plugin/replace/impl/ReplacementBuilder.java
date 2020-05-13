@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.structuralsearch.MalformedPatternException;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.StructuralSearchProfile;
-import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
@@ -21,6 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -90,10 +88,9 @@ public final class ReplacementBuilder {
       try {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           options.getReplacement(),
-          PatternTreeContext.Block,
+          new PatternContextInfo(PatternTreeContext.Block, options.getMatchOptions().getPatternContext()),
           fileType,
           options.getMatchOptions().getDialect(),
-          options.getMatchOptions().getPatternContext(),
           project,
           false
         );
@@ -101,7 +98,7 @@ public final class ReplacementBuilder {
           final PsiElement patternNode = elements[0].getParent();
           patternNode.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
-            public void visitElement(PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
               final String text = element.getText();
               if (StructuralSearchUtil.isTypedVariable(text)) {
                 final Collection<ParameterInfo> infos = findParameterization(Replacer.stripTypedVariableDecoration(text));
@@ -134,7 +131,7 @@ public final class ReplacementBuilder {
     assert profile != null;
 
     List<ParameterInfo> sorted = new SmartList<>(parameterizations.values());
-    Collections.sort(sorted, Comparator.comparingInt(ParameterInfo::getStartIndex).reversed());
+    sorted.sort(Comparator.comparingInt(ParameterInfo::getStartIndex).reversed());
     for (ParameterInfo info : sorted) {
       final MatchResult r = replacementInfo.getNamedMatchResult(info.getName());
       if (info.isReplacementVariable()) {

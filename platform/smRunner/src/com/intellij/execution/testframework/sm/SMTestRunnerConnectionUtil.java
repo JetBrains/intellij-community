@@ -52,7 +52,7 @@ public class SMTestRunnerConnectionUtil {
    *   // ...
    *
    *   @Override
-   *   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+   *   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
    *     ProcessHandler processHandler = startProcess();
    *     RunConfiguration runConfiguration = getConfiguration();
    *     ExecutionEnvironment environment = getEnvironment();
@@ -300,14 +300,17 @@ public class SMTestRunnerConnectionUtil {
     return consoleView;
   }
 
-  @SuppressWarnings({"deprecation", "rawtypes"})
+  /**
+   * @deprecated should be removed with createConsoleWithCustomLocator()
+   */
+  @SuppressWarnings("rawtypes")
+  @ApiStatus.ScheduledForRemoval()
+  @Deprecated
   private static class CompositeTestLocationProvider implements SMTestLocator {
     private final TestLocationProvider myPrimaryLocator;
-    private final List<TestLocationProvider> myLocators;
 
     private CompositeTestLocationProvider(@Nullable TestLocationProvider primaryLocator) {
       myPrimaryLocator = primaryLocator;
-      myLocators = TestLocationProvider.EP_NAME.getExtensionList();
     }
 
     @NotNull
@@ -329,7 +332,7 @@ public class SMTestRunnerConnectionUtil {
         }
       }
 
-      for (TestLocationProvider provider : myLocators) {
+      for (TestLocationProvider provider : TestLocationProvider.EP_NAME.getExtensionList()) {
         if (!isDumbMode || DumbService.isDumbAware(provider)) {
           List<Location> locations = provider.getLocation(protocol, path, project);
           if (!locations.isEmpty()) {

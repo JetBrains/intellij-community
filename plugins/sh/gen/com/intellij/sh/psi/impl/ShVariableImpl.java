@@ -33,7 +33,6 @@ public class ShVariableImpl extends ShLiteralImpl implements ShVariable {
   }
 
   @Override
-  @NotNull
   public PsiReference[] getReferences() {
     return ShPsiImplUtil.getReferences(this);
   }

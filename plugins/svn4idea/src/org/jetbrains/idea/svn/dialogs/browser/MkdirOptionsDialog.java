@@ -16,6 +16,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.dialogs.browser.CopyOptionsDialog.configureRecentMessagesComponent;
@@ -34,14 +35,18 @@ public class MkdirOptionsDialog extends DialogWrapper {
   public MkdirOptionsDialog(Project project, @NotNull Url url) {
     super(project, true);
     myOriginalURL = url;
+
+    String newFolderName = message("value.new.folder.name");
     try {
-      myURL = append(url, "NewFolder");
+      myURL = append(url, newFolderName);
     }
     catch (SvnBindException ignore) {
     }
-    setTitle("New Remote Folder");
+    setTitle(message("dialog.title.new.remote.folder"));
     init();
     myURLLabel.setText(myURL.toDecodedString());
+
+    myNameField.setText(newFolderName);
     myNameField.selectAll();
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

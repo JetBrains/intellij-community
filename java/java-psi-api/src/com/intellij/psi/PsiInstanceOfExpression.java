@@ -37,4 +37,10 @@ public interface PsiInstanceOfExpression extends PsiExpression {
    */
   @Nullable
   PsiTypeElement getCheckType();
+
+  /**
+   * @return pattern against which operand will be matched
+   */
+  @Nullable
+  PsiPattern getPattern();
 }

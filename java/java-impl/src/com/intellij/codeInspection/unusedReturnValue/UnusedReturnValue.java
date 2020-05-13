@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnreferencedFilter;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
@@ -38,9 +24,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 
-/**
- * @author max
- */
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
   @PsiModifier.ModifierConstant
@@ -49,12 +32,11 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext,
-                                                @NotNull ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext,
+                                                           @NotNull ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 
@@ -82,8 +64,8 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   }
 
   static boolean canIgnoreReturnValue(PsiMethod psiMethod) {
-    return AnnotationUtil.isAnnotated(psiMethod, 
-                                      Collections.singleton("com.google.errorprone.annotations.CanIgnoreReturnValue"), 
+    return AnnotationUtil.isAnnotated(psiMethod,
+                                      Collections.singleton("com.google.errorprone.annotations.CanIgnoreReturnValue"),
                                       AnnotationUtil.CHECK_HIERARCHY);
   }
 
@@ -97,13 +79,12 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Ignore simple setters", "IGNORE_BUILDER_PATTERN");
-    LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
-                                                                                                                  highestModifier,
-                                                                                                                  (newModifier) -> highestModifier = newModifier),
-                                                                                    "Maximal reported method visibility:",
-                                                                                    BorderLayout.WEST);
-    panel.addComponent(component);
+    panel.addCheckbox(JavaBundle.message("checkbox.ignore.simple.setters"), "IGNORE_BUILDER_PATTERN");
+    VisibilityModifierChooser modifierChooser = new VisibilityModifierChooser(() -> true,
+                                                                              highestModifier,
+                                                                              (newModifier) -> highestModifier = newModifier);
+    panel.addComponent(LabeledComponent.create(modifierChooser, JavaBundle.message("label.maximal.reported.method.visibility"),
+                                               BorderLayout.WEST));
     return panel;
   }
 
@@ -134,14 +115,8 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.unused.return.value.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
@@ -168,7 +143,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                    @Nullable ProblemDescriptionsProcessor processor,
                                                    boolean isNative, boolean isOnTheFly) {
     return manager.createProblemDescriptor(psiMethod.getNameIdentifier(),
-                                           InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
+                                           JavaBundle.message("inspection.unused.return.value.problem.descriptor"),
                                            isNative ? null : new MakeVoidQuickFix(processor),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                            isOnTheFly);

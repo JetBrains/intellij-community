@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.ValidatingComponent;
 import com.intellij.ui.table.JBTable;
@@ -27,7 +28,7 @@ import java.util.List;
  * @author dsl
  */
 public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.AutomaticRenamingDialog");
+  private static final Logger LOG = Logger.getInstance(AutomaticRenamingDialog.class);
   private static final int CHECK_COLUMN = 0;
   private static final int OLD_NAME_COLUMN = 1;
   private static final int NEW_NAME_COLUMN = 2;
@@ -370,7 +371,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     public String getColumnName(int column) {
       switch(column) {
         case OLD_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.enity.name.column", myRenamer.getEntityName());
+          return RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.getEntityName());
         case NEW_NAME_COLUMN:
           return RefactoringBundle.message("automatic.renamer.rename.to.column");
         default:

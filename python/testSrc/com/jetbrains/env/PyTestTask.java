@@ -1,16 +1,17 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.Producer;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author traff
- */
 public abstract class PyTestTask {
   private String myScriptName;
   private String myScriptParameters;
@@ -71,6 +72,14 @@ public abstract class PyTestTask {
     return myScriptParameters;
   }
 
+
+ public static<T> T getUnderEdt(@NotNull Producer<T> producer) {
+    final Ref<T> ref = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ref.set(producer.produce());
+    });
+    return ref.get();
+  }
 
   /**
    * @return tags this task needs to exist on interpreter to run

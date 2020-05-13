@@ -102,7 +102,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
    * not to erase log categories from the super class.
    * (e.g. by calling `super.getDebugLogCategories().plus(additionalCategories)`.
    */
-  protected open fun getDebugLogCategories(): Collection<String> = emptyList()
+  protected open fun getDebugLogCategories(): Collection<String> = Collections.singletonList("#" + UsefulTestCase::class.java.name)
 
   override fun getProjectDirOrFile(): Path {
     val projectRoot = File(testRoot, "project")

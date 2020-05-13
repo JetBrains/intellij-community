@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -16,13 +15,13 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.LightFilePointer;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
@@ -31,12 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 
 public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService {
-
-  private static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
   @NotNull
   @Override
@@ -46,7 +42,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
-        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : NO_JDK);
+        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : JavaUiBundle.message("jdk.missing.item"));
       }
       return forJdk(jdk, false, selected, true);
     }
@@ -89,55 +85,21 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
     final String[] files = library.getUrls(OrderRootType.CLASSES);
     if (files.length == 0) {
-      return SimpleTextCellAppearance.invalid(ProjectBundle.message("library.empty.library.item"), PlatformIcons.LIBRARY_ICON);
+      return SimpleTextCellAppearance.invalid(ProjectModelBundle.message("library.empty.library.item"), PlatformIcons.LIBRARY_ICON);
     }
     else if (files.length == 1) {
       return forVirtualFilePointer(new LightFilePointer(files[0]));
     }
 
     final String url = StringUtil.trimEnd(files[0], JarFileSystem.JAR_SEPARATOR);
-    String text = ProjectBundle.message("library.unnamed.text", PathUtil.getFileName(url), files.length - 1);
+    String text = JavaUiBundle.message("library.unnamed.text", PathUtil.getFileName(url), files.length - 1);
     return SimpleTextCellAppearance.regular(text, PlatformIcons.LIBRARY_ICON);
   }
 
   @NotNull
   @Override
   public CellAppearanceEx forJdk(@Nullable final Sdk jdk, final boolean isInComboBox, final boolean selected, final boolean showVersion) {
-    if (jdk == null) {
-      return FileAppearanceService.getInstance().forInvalidUrl(NO_JDK);
-    }
-
-    String name = jdk.getName();
-    CompositeAppearance appearance = new CompositeAppearance();
-    SdkType sdkType = (SdkType)jdk.getSdkType();
-    appearance.setIcon(sdkType.getIcon());
-    SimpleTextAttributes attributes = getTextAttributes(sdkType.sdkHasValidPath(jdk), selected);
-    CompositeAppearance.DequeEnd ending = appearance.getEnding();
-    ending.addText(name, attributes);
-
-    if (showVersion) {
-      String versionString = jdk.getVersionString();
-      if (versionString != null && !versionString.equals(name)) {
-        SimpleTextAttributes textAttributes = isInComboBox && !selected ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES :
-                                              SystemInfo.isMac && selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                                                                                        Color.WHITE) : SimpleTextAttributes.GRAY_ATTRIBUTES;
-        ending.addComment(versionString, textAttributes);
-      }
-    }
-
-    return ending.getAppearance();
-  }
-
-  private static SimpleTextAttributes getTextAttributes(final boolean valid, final boolean selected) {
-    if (!valid) {
-      return SimpleTextAttributes.ERROR_ATTRIBUTES;
-    }
-    else if (selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))) {
-      return SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES;
-    }
-    else {
-      return SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
-    }
+    return SdkAppearanceService.getInstance().forSdk(jdk, isInComboBox, selected, showVersion);
   }
 
   @NotNull

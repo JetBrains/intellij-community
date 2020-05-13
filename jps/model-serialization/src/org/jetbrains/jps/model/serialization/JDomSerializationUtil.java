@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class JDomSerializationUtil {
   @NonNls public static final String COMPONENT_ELEMENT = "component";
   @NonNls protected static final String OPTION_ELEMENT = "option";

@@ -40,15 +40,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public class LeafPsiElement extends LeafElement implements PsiElement, NavigationItem {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
+  private static final Logger LOG = Logger.getInstance(LeafPsiElement.class);
 
   public LeafPsiElement(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -135,8 +134,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 

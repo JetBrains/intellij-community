@@ -35,13 +35,6 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "literal.as.arg.to.string.equals.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final String methodName = (String)infos[0];
     return InspectionGadgetsBundle.message(
@@ -78,7 +71,7 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Flip method call";
+      return InspectionGadgetsBundle.message("swap.equals.fix.family.name");
     }
 
     @Override

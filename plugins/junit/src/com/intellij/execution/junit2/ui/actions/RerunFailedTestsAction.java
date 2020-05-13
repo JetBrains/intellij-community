@@ -37,8 +37,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
     final TestMethods testMethods = new TestMethods(configuration, environment, getFailedTests(configuration.getProject()));
     return new MyRunProfile(configuration) {
       @Override
-      @NotNull
-      public Module[] getModules() {
+      public Module @NotNull [] getModules() {
         return testMethods.getModulesToCompile();
       }
 

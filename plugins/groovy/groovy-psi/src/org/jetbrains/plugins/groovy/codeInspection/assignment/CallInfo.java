@@ -13,8 +13,7 @@ public interface CallInfo<Call extends GroovyPsiElement> {
   @Nullable
   GrArgumentList getArgumentList();
 
-  @Nullable
-  PsiType[] getArgumentTypes();
+  PsiType @Nullable [] getArgumentTypes();
 
   @Nullable
   GrExpression getInvokedExpression();

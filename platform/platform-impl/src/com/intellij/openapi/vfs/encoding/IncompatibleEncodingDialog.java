@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -31,7 +33,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     this.charset = charset;
     this.safeToReload = safeToReload;
     this.safeToConvert = safeToConvert;
-    setTitle(virtualFile.getName() + ": Reload or Convert to "+charset.displayName());
+    setTitle(IdeBundle.message("dialog.title.0.reload.or.convert.to.1", virtualFile.getName(), charset.displayName()));
     init();
   }
 
@@ -48,10 +50,9 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     return label;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    DialogWrapperAction reloadAction = new DialogWrapperAction("Reload") {
+  protected Action @NotNull [] createActions() {
+    DialogWrapperAction reloadAction = new DialogWrapperAction(IdeBundle.message("button.reload")) {
       @Override
       protected void doAction(ActionEvent e) {
         if (safeToReload == EncodingUtil.Magic8.NO_WAY) {
@@ -64,17 +65,16 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
                                (current.isNull() ? "" : "Current encoding: '" + current.get().displayName() + "'");
           if (bom != null) {
             Messages.showErrorDialog(XmlStringUtil.wrapInHtml(
-                          "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding." +
-                          explanation),
-                               "Incompatible Encoding: " + charset.displayName());
+              IdeBundle.message("dialog.title.file.0.can.t.be.reloaded", virtualFile.getName(), charset.displayName(), explanation)),
+                                     IdeBundle.message("dialog.title.incompatible.encoding.0", charset.displayName()));
             res = -1;
           }
           else {
             res = Messages.showDialog(XmlStringUtil.wrapInHtml(
-                "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
-                explanation),
-                        "Incompatible Encoding: " + charset.displayName(), new String[]{"Reload anyway", "Cancel"}, 1,
-                        AllIcons.General.WarningDialog);
+              IdeBundle.message("dialog.title.file.0.most.likely.isn.t.stored", virtualFile.getName(), charset.displayName(), explanation)),
+                                      IdeBundle.message("dialog.title.incompatible.encoding.0", charset.displayName()),
+                                      new String[]{IdeBundle.message("button.reload.anyway"), CommonBundle.getCancelButtonText()}, 1,
+                                      AllIcons.General.WarningDialog);
           }
           if (res != 0) {
             doCancelAction();
@@ -88,7 +88,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
       reloadAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning);
     }
     reloadAction.putValue(Action.MNEMONIC_KEY, (int)'R');
-    DialogWrapperAction convertAction = new DialogWrapperAction("Convert") {
+    DialogWrapperAction convertAction = new DialogWrapperAction(IdeBundle.message("button.convert")) {
       @Override
       protected void doAction(ActionEvent e) {
         if (safeToConvert == EncodingUtil.Magic8.NO_WAY) {
@@ -99,7 +99,8 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
               (error == null
                ? "Encoding '" + charset.displayName() + "' does not support some characters from the text."
                : EncodingUtil.reasonToString(error, virtualFile))),
-            "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
+            IdeBundle.message("dialog.title.incompatible.encoding.0", charset.displayName()),
+            new String[]{IdeBundle.message("button.convert.anyway"), CommonBundle.getCancelButtonText()}, 1,
             AllIcons.General.WarningDialog);
           if (res != 0) {
             doCancelAction();

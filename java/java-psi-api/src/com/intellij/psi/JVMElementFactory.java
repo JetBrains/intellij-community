@@ -5,7 +5,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +96,7 @@ public interface JVMElementFactory {
    * @throws IncorrectOperationException if some of the parameter names or types are invalid.
    */
   @NotNull
-  PsiParameterList createParameterList(@NotNull String[] names, @NotNull PsiType[] types) throws IncorrectOperationException;
+  PsiParameterList createParameterList(String @NotNull [] names, PsiType @NotNull [] types) throws IncorrectOperationException;
 
   @NotNull
   PsiMethod createMethodFromText(String text, @Nullable PsiElement context);
@@ -124,7 +123,7 @@ public interface JVMElementFactory {
    * Creates new type parameter with the specified name and super types.
    */
   @NotNull
-  PsiTypeParameter createTypeParameter(@NotNull String name, @NotNull PsiClassType[] superTypes);
+  PsiTypeParameter createTypeParameter(@NotNull String name, PsiClassType @NotNull [] superTypes);
 
   /**
    * Creates a class type for the specified class.
@@ -170,16 +169,6 @@ public interface JVMElementFactory {
    */
   @NotNull
   PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel);
-
-  /**
-   * @deprecated use {@link PsiType#annotate(TypeAnnotationProvider)} (to be removed in IDEA 2020.1)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  PsiClassType createType(@NotNull PsiClass resolve,
-                          @NotNull PsiSubstitutor substitutor,
-                          @NotNull LanguageLevel languageLevel,
-                          @NotNull PsiAnnotation[] annotations);
 
   @NotNull
   PsiClassType createType(@NotNull PsiClass aClass, PsiType parameters);

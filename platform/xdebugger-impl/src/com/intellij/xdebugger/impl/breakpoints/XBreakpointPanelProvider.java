@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
   @Override
   public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {

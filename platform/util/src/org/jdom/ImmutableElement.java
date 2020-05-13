@@ -1,19 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jdom;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 import org.jdom.filter.ElementFilter;
 import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 class ImmutableElement extends Element {
   private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtilRt.EMPTY_STRING_ARRAY, null,
@@ -306,7 +310,7 @@ class ImmutableElement extends Element {
 
   public static boolean attributesEqual(Attribute a1, Attribute a2) {
     return a1.getName().equals(a2.getName()) &&
-           Comparing.equal(a1.getValue(), a2.getValue()) &&
+           Objects.equals(a1.getValue(), a2.getValue()) &&
            a1.getAttributeType() == a2.getAttributeType() &&
            a1.getNamespace().equals(a2.getNamespace());
   }

@@ -1,30 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
-import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
@@ -59,7 +45,7 @@ public abstract class MetaAnnotationUtil {
 
     @Override
     public boolean equals(PsiClass o1, PsiClass o2) {
-      return Comparing.equal(o1.getQualifiedName(), o2.getQualifiedName());
+      return Objects.equals(o1.getQualifiedName(), o2.getQualifiedName());
     }
   };
 
@@ -143,10 +129,18 @@ public abstract class MetaAnnotationUtil {
 
   @NotNull
   private static GlobalSearchScope searchForAnnotationInheritorsInOtherLanguages(Project project) {
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     Set<VirtualFile> allAnnotationFiles = new HashSet<>();
     for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project)
-      .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, GlobalSearchScope.allScope(project))) {
-      DirectClassInheritorsSearch.search(javaLangAnnotation, new NonJavaScope(project), false).forEach(annotationClass -> {
+      .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, allScope)) {
+      DirectClassInheritorsSearch.SearchParameters parameters =
+        new DirectClassInheritorsSearch.SearchParameters(javaLangAnnotation, allScope, false, true) {
+          @Override
+          public boolean shouldSearchInLanguage(@NotNull Language language) {
+            return language != JavaLanguage.INSTANCE;
+          }
+        };
+      DirectClassInheritorsSearch.search(parameters).forEach(annotationClass -> {
         ProgressManager.checkCanceled();
         ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
         return true;
@@ -191,35 +185,6 @@ public abstract class MetaAnnotationUtil {
     }
   }
 
-  private static class NonJavaScope extends GlobalSearchScope {
-    NonJavaScope(Project project) {
-      super(project);
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return true;
-    }
-
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      if (FileTypeManager.getInstance().isFileOfType(file, StdFileTypes.JAVA)) {
-        return false;
-      }
-
-      if (FileTypeManager.getInstance().isFileOfType(file, StdFileTypes.CLASS)) {
-        return ClassFileDecompilers.find(file) instanceof ClassFileDecompilers.Full;
-      }
-
-      return true;
-    }
-  }
-
   private static void collectClassWithChildren(PsiClass psiClass, Set<? super PsiClass> classes, GlobalSearchScope scope) {
     classes.add(psiClass);
 
@@ -251,6 +216,12 @@ public abstract class MetaAnnotationUtil {
   public static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
                                                    @NotNull Collection<String> annotations) {
     return isMetaAnnotatedInHierarchy(listOwner, annotations, new HashSet<>());
+  }
+
+  public static boolean hasMetaAnnotatedMethods(@NotNull PsiClass psiClass,
+                                                @NotNull Collection<String> annotations) {
+    return Stream.of(psiClass.getMethods())
+        .anyMatch(psiMethod -> isMetaAnnotated(psiMethod, annotations));
   }
 
   private static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,

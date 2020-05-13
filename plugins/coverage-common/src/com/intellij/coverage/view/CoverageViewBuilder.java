@@ -1,5 +1,7 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.ide.commander.AbstractListBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -31,7 +33,7 @@ public class CoverageViewBuilder extends AbstractListBuilder {
                       final AbstractTreeStructure treeStructure, final JBTable table) {
     super(project, list, model, treeStructure, AlphaComparator.INSTANCE, false);
     myTable = table;
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building coverage report...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, CoverageBundle.message("coverage.report.building")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         buildRoot();
@@ -57,13 +59,7 @@ public class CoverageViewBuilder extends AbstractListBuilder {
     myCoverageViewExtension = ((CoverageViewTreeStructure)myTreeStructure).myData
       .getCoverageEngine().createCoverageViewExtension(myProject, ((CoverageViewTreeStructure)myTreeStructure).myData,
                                                        ((CoverageViewTreeStructure)myTreeStructure).myStateBean);
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-  }
-
-  @Override
-  public void dispose() {
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-    super.dispose();
+    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, this);
   }
 
   @Override
@@ -82,8 +78,8 @@ public class CoverageViewBuilder extends AbstractListBuilder {
   }
 
   @Override
-  protected List<AbstractTreeNode> getAllAcceptableNodes(Object[] childElements, VirtualFile file) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<>();
+  protected List<AbstractTreeNode<?>> getAllAcceptableNodes(Object[] childElements, VirtualFile file) {
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>();
 
     for (Object childElement1 : childElements) {
       CoverageListNode childElement = (CoverageListNode)childElement1;

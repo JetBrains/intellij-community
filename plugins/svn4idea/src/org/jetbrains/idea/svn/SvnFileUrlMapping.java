@@ -30,8 +30,7 @@ public interface SvnFileUrlMapping extends AbstractVcs.RootsConvertor {
   @NotNull
   List<RootUrlInfo> getErrorRoots();
 
-  @NotNull
-  VirtualFile[] getNotFilteredRoots();
+  VirtualFile @NotNull [] getNotFilteredRoots();
 
   boolean isEmpty();
 }

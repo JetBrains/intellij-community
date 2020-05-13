@@ -131,19 +131,17 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
   }
 
   private static class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element) {
       String name = element instanceof XmlAttributeValue ? ((XmlAttributeValue)element).getValue()
                                                          : ((XmlTag)element).getName();
       return getReferencesByString(name, element, 1);
     }
 
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByString(String str,
-                                                @NotNull final PsiElement position,
-                                                int offsetInPosition) {
+    public PsiReference @NotNull [] getReferencesByString(String str,
+                                                          @NotNull final PsiElement position,
+                                                          int offsetInPosition) {
       if (str.length() == 0) return PsiReference.EMPTY_ARRAY;
       final PsiReference[] references = super.getReferencesByString(str, position, offsetInPosition);
       final int offset = position instanceof XmlTag ? 1 : 0;
@@ -254,8 +252,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
       }
 
       @Override
-      @NotNull
-      public Object[] getVariants() {
+      public Object @NotNull [] getVariants() {
         return myReference.getVariants();
       }
 

@@ -2,13 +2,14 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.internal.statistic.utils.StatisticsUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,6 +17,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.search.FileTypeIndex;
@@ -32,15 +34,18 @@ import java.util.*;
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "file.types";
-  }
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 3);
+
+  private final EventId3<Object, String, Integer> FILE_IN_PROJECT = GROUP.registerEvent(
+    "file.in.project",
+    EventFields.PluginInfoFromInstance,
+    EventFields.String("file_type").withCustomRule("file_type"),
+    EventFields.Int("count")
+  );
 
   @Override
-  public int getVersion() {
-    return 2;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -59,16 +64,21 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
       }
       promises.add(ReadAction.nonBlocking(() -> {
         IProjectStore stateStore = ProjectKt.getStateStore(project);
+        Ref<Integer> counter = new Ref<>(0);
         FileTypeIndex.processFiles(fileType, file -> {
           ProgressManager.checkCanceled();
           //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
           if (!stateStore.isProjectFile(file)) {
-            events.add(new MetricEvent("file.in.project", newFeatureUsageData(fileType)));
-            return false;
+            counter.set(counter.get() + 1);
           }
           return true;
         }, GlobalSearchScope.projectScope(project));
-      }).cancelWith(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
+
+        Integer count = counter.get();
+        if (count != 0) {
+          events.add(FILE_IN_PROJECT.metric(fileType, getSafeFileTypeName(fileType), StatisticsUtil.getNextPowerOfTwo(count)));
+        }
+      }).wrapProgress(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
     return ((CancellablePromise<Set<MetricEvent>>)Promises.all(promises).then(o -> events));
   }
@@ -78,8 +88,13 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     final FeatureUsageData data = new FeatureUsageData();
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(type.getClass());
     data.addPluginInfo(info);
-    data.addData("file_type", info.isDevelopedByJetBrains() ? type.getName() : DEFAULT_ID);
+    data.addData("file_type", getSafeFileTypeName(type));
     return data;
+  }
+
+  public static String getSafeFileTypeName(@NotNull FileType fileType) {
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(fileType.getClass());
+    return info.isDevelopedByJetBrains() ? fileType.getName() : DEFAULT_ID;
   }
 
   public static class ValidationRule extends CustomWhiteListRule {

@@ -17,6 +17,7 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -103,11 +104,11 @@ public class PullUpConflictsUtil {
       if (!newAbstractMethods.isEmpty()) {
         final PsiAnnotation annotation = AnnotationUtil.findAnnotation(superClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
         if (annotation != null) {
-          conflicts.putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
+          conflicts.putValue(annotation, JavaRefactoringBundle.message("functional.interface.broken"));
         } else {
           final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(superClass).findFirst();
           if (functionalExpression != null) {
-            conflicts.putValue(functionalExpression, RefactoringBundle.message("functional.interface.broken"));
+            conflicts.putValue(functionalExpression, JavaRefactoringBundle.message("functional.interface.broken"));
           }
           ClassInheritorsSearch.search(superClass).forEach(sClass -> {
             if (!sClass.isInheritor(subclass, true) && !sClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -221,14 +222,14 @@ public class PullUpConflictsUtil {
         if (!member.hasModifierProperty(PsiModifier.STATIC)
             && !(member instanceof PsiClass && ((PsiClass)member).isInterface())) {
           String message =
-            RefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", RefactoringUIUtil.getDescription(member, false));
+            JavaRefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", RefactoringUIUtil.getDescription(member, false));
           message = CommonRefactoringUtil.capitalize(message);
           conflictsList.putValue(member, message);
         }
       }
 
       if (member instanceof PsiField && ((PsiField)member).getInitializer() == null) {
-        String message = RefactoringBundle.message("0.is.not.initialized.in.declaration.such.fields.are.not.allowed.in.interfaces",
+        String message = JavaRefactoringBundle.message("0.is.not.initialized.in.declaration.such.fields.are.not.allowed.in.interfaces",
                                                    RefactoringUIUtil.getDescription(member, false));
         conflictsList.putValue(member, CommonRefactoringUtil.capitalize(message));
       }

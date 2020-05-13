@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.repo;
 
 import com.google.common.io.BaseEncoding;
@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.io.FileUtilRt.doIOOperation;
-import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Reads information about the Hg repository from Hg service files located in the {@code .hg} folder.
@@ -117,8 +116,7 @@ public class HgRepositoryReader {
     }
   }
 
-  @NotNull
-  private static byte[] readHashBytesFromFile(@NotNull File file) throws IOException {
+  private static byte @NotNull [] readHashBytesFromFile(@NotNull File file) throws IOException {
     try (FileInputStream stream = doIOOperation(lastAttempt -> {
       try {
         return new FileInputStream(file);
@@ -128,7 +126,7 @@ public class HgRepositoryReader {
         return null;
       }
     })) {
-      return FileUtil.loadBytes(notNull(stream), 20);
+      return FileUtil.loadBytes(Objects.requireNonNull(stream), 20);
     }
   }
 

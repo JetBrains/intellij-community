@@ -40,14 +40,10 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   private JLabel resultSchemaFileNameText;
   private JTextField resultSchemaFileName;
 
-  static final String LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES = XmlBundle.message("local.elements.global.complex.types.option.name");
-  static final String LOCAL_ELEMENTS_TYPES = XmlBundle.message("local.elements.types.option.name");
-  static final String GLOBAL_ELEMENTS_LOCAL_TYPES = XmlBundle.message("global.elements.local.types.option.name");
-
   private static final List<String> designTypes = Arrays.asList(
-    LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES,
-    LOCAL_ELEMENTS_TYPES,
-    GLOBAL_ELEMENTS_LOCAL_TYPES
+    getLocalElementsGlobalComplexTypes(),
+    getLocalElementsTypes(),
+    getGlobalElementsLocalTypes()
   );
 
   static final String STRING_TYPE = "string";
@@ -196,6 +192,10 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
       return XmlBundle.message("instance.document.file.is.not.exist");
     }
 
+    if (!generateFromUrl.getText().endsWith(".xml")) {
+      return XmlBundle.message("instance.document.file.should.have.xml.extension");
+    }
+
     try {
       int i = Integer.parseInt(getEnumerationsLimit());
       if (i < 0) return XmlBundle.message("negative.number.validation.problem");
@@ -213,5 +213,17 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   @NotNull
   protected String getHelpId() {
     return "webservices.GenerateSchemaFromInstanceDocument";
+  }
+
+  static String getLocalElementsGlobalComplexTypes() {
+    return XmlBundle.message("local.elements.global.complex.types.option.name");
+  }
+
+  static String getLocalElementsTypes() {
+    return XmlBundle.message("local.elements.types.option.name");
+  }
+
+  static String getGlobalElementsLocalTypes() {
+    return XmlBundle.message("global.elements.local.types.option.name");
   }
 }

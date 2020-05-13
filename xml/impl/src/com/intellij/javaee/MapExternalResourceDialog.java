@@ -22,6 +22,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.config.ConfigFileSearcher;
 import com.intellij.xml.config.ConfigFilesTreeBuilder;
 import com.intellij.xml.index.IndexedRelevantResource;
@@ -50,7 +51,8 @@ import java.util.Set;
  */
 public class MapExternalResourceDialog extends DialogWrapper {
 
-  private static final FileChooserDescriptor FILE_CHOOSER_DESCRIPTOR = new FileChooserDescriptor(true, false, false, false, true, false).withTitle("Choose Schema File");
+  private static final FileChooserDescriptor FILE_CHOOSER_DESCRIPTOR = new FileChooserDescriptor(true, false, false, false, true, false).withTitle(
+    XmlBundle.message("choose.schema.file"));
 
   private JTextField myUri;
   private JPanel myMainPanel;
@@ -61,7 +63,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
   public MapExternalResourceDialog(String uri, @Nullable Project project, @Nullable PsiFile file, @Nullable String location) {
     super(project);
-    setTitle("Map External Resource");
+    setTitle(XmlBundle.message("map.external.resource"));
     myUri.setText(uri);
     myUri.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

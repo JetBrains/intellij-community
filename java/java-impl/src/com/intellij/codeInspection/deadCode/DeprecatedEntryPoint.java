@@ -4,6 +4,7 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
@@ -25,7 +26,7 @@ public class DeprecatedEntryPoint extends EntryPoint {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Deprecated members";
+    return JavaBundle.message("checkbox.deprecated.members");
   }
 
   @Override

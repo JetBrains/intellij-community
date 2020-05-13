@@ -280,12 +280,11 @@ public class MethodParameterInjection extends BaseInjection {
     final String methodSignature;
     @NotNull
     final String methodName;
-    @NotNull
-    final boolean[] paramFlags;
+    final boolean @NotNull [] paramFlags;
 
     boolean returnFlag;
 
-    public MethodInfo(@NotNull final String methodSignature, @NotNull final boolean[] paramFlags, final boolean returnFlag) {
+    public MethodInfo(@NotNull final String methodSignature, final boolean @NotNull [] paramFlags, final boolean returnFlag) {
       this.methodSignature = methodSignature;
       this.paramFlags = paramFlags;
       this.returnFlag = returnFlag;
@@ -310,8 +309,7 @@ public class MethodParameterInjection extends BaseInjection {
       return methodName;
     }
 
-    @NotNull
-    public boolean[] getParamFlags() {
+    public boolean @NotNull [] getParamFlags() {
       return paramFlags;
     }
 

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladimir Kondratyev
  */
 public final class CreateClassToBindFix extends QuickFix{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.quickFixes.CreateClassToBindFix");
+  private static final Logger LOG = Logger.getInstance(CreateClassToBindFix.class);
 
   private final String myClassName;
 

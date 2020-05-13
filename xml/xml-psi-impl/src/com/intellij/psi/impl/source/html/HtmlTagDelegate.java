@@ -18,8 +18,7 @@ public abstract class HtmlTagDelegate extends XmlTagDelegate {
   }
 
   @Override
-  @NotNull
-  protected XmlTag[] findSubTags(@NotNull String name, String namespace) {
+  protected XmlTag @NotNull [] findSubTags(@NotNull String name, String namespace) {
     final XmlTag[] subTags = myTag.getSubTags();
     List<XmlTag> result = null;
 

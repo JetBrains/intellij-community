@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.project.DumbService;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.IconWithToolTip;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
@@ -57,14 +58,15 @@ public final class ElementPresentationUtil implements PlatformIcons {
 
   private static final int CLASS_KIND_INTERFACE     = 10;
   private static final int CLASS_KIND_ANNOTATION    = 20;
-  public static final int CLASS_KIND_CLASS         = 30;
+  public static final int CLASS_KIND_CLASS          = 30;
   private static final int CLASS_KIND_ANONYMOUS     = 40;
   private static final int CLASS_KIND_ENUM          = 50;
   private static final int CLASS_KIND_ASPECT        = 60;
-  public static final int CLASS_KIND_JSP           = 70;
-  public static final int CLASS_KIND_EXCEPTION = 80;
-  private static final int CLASS_KIND_JUNIT_TEST = 90;
-  private static final int CLASS_KIND_RUNNABLE = 100;
+  public static final int CLASS_KIND_JSP            = 70;
+  public static final int CLASS_KIND_EXCEPTION      = 80;
+  private static final int CLASS_KIND_JUNIT_TEST    = 90;
+  private static final int CLASS_KIND_RUNNABLE      = 100;
+  private static final int CLASS_KIND_RECORD        = 110;
 
   private static final int FLAGS_ABSTRACT = 0x100;
   private static final int FLAGS_STATIC = 0x200;
@@ -79,6 +81,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
 
     if (aClass.isAnnotationType()) return CLASS_KIND_ANNOTATION;
     if (aClass.isEnum()) return CLASS_KIND_ENUM;
+    if (aClass.isRecord()) return CLASS_KIND_RECORD;
     if (aClass.isInterface()) return CLASS_KIND_INTERFACE;
     if (aClass instanceof PsiAnonymousClass) return CLASS_KIND_ANONYMOUS;
 
@@ -109,6 +112,9 @@ public final class ElementPresentationUtil implements PlatformIcons {
     if (aClass.isEnum()) {
       return CLASS_KIND_ENUM;
     }
+    if (aClass.isRecord()) {
+      return CLASS_KIND_RECORD;
+    }
     if (aClass.isInterface()) {
       return CLASS_KIND_INTERFACE;
     }
@@ -137,7 +143,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
 
   private static final TIntObjectHashMap<Icon> BASE_ICON = new TIntObjectHashMap<>(20);
   static {
-    BASE_ICON.put(CLASS_KIND_CLASS, CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_CLASS, IconWithToolTip.tooltipOnlyIfComposite(CLASS_ICON));
     BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_ANNOTATION, ANNOTATION_TYPE_ICON);
     BASE_ICON.put(CLASS_KIND_ANNOTATION | FLAGS_ABSTRACT, ANNOTATION_TYPE_ICON);
@@ -149,10 +155,11 @@ public final class ElementPresentationUtil implements PlatformIcons {
     BASE_ICON.put(CLASS_KIND_ENUM | FLAGS_ABSTRACT, ENUM_ICON);
     BASE_ICON.put(CLASS_KIND_EXCEPTION, EXCEPTION_CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, AllIcons.Nodes.AbstractException);
-    BASE_ICON.put(CLASS_KIND_INTERFACE, INTERFACE_ICON);
-    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, INTERFACE_ICON);
-    BASE_ICON.put(CLASS_KIND_JUNIT_TEST, CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_INTERFACE, IconWithToolTip.tooltipOnlyIfComposite(INTERFACE_ICON));
+    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, IconWithToolTip.tooltipOnlyIfComposite(INTERFACE_ICON));
+    BASE_ICON.put(CLASS_KIND_JUNIT_TEST, IconWithToolTip.tooltipOnlyIfComposite(CLASS_ICON));
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_RECORD, RECORD_ICON);
     BASE_ICON.put(CLASS_KIND_RUNNABLE, CLASS_ICON);
   }
 
@@ -164,8 +171,8 @@ public final class ElementPresentationUtil implements PlatformIcons {
   public static String getDescription(PsiModifierListOwner member) {
     String noun;
     if (member instanceof PsiClass) noun = getClassNoun((PsiClass)member);
-    else if (member instanceof PsiMethod) noun = CodeInsightBundle.message("node.method.tooltip");
-    else if (member instanceof PsiField) noun = CodeInsightBundle.message("node.field.tooltip");
+    else if (member instanceof PsiMethod) noun = JavaPsiBundle.message("node.method.tooltip");
+    else if (member instanceof PsiField) noun = JavaPsiBundle.message("node.field.tooltip");
     else return null;
     String adj = getFlagsDescription(member);
     return (adj + " " + noun).trim();
@@ -175,15 +182,16 @@ public final class ElementPresentationUtil implements PlatformIcons {
     String noun;
     int kind = getClassKind(aClass);
     switch (kind) {
-      case CLASS_KIND_ANNOTATION: noun = CodeInsightBundle.message("node.annotation.tooltip"); break;
-      case CLASS_KIND_ANONYMOUS: noun = CodeInsightBundle.message("node.anonymous.class.tooltip"); break;
-      case CLASS_KIND_ENUM: noun = CodeInsightBundle.message("node.enum.tooltip"); break;
-      case CLASS_KIND_EXCEPTION: noun = CodeInsightBundle.message("node.exception.tooltip"); break;
-      case CLASS_KIND_INTERFACE: noun = CodeInsightBundle.message("node.interface.tooltip"); break;
-      case CLASS_KIND_JUNIT_TEST: noun = CodeInsightBundle.message("node.junit.test.tooltip"); break;
-      case CLASS_KIND_RUNNABLE: noun = CodeInsightBundle.message("node.runnable.class.tooltip"); break;
+      case CLASS_KIND_ANNOTATION: noun = JavaPsiBundle.message("node.annotation.tooltip"); break;
+      case CLASS_KIND_ANONYMOUS: noun = JavaPsiBundle.message("node.anonymous.class.tooltip"); break;
+      case CLASS_KIND_ENUM: noun = JavaPsiBundle.message("node.enum.tooltip"); break;
+      case CLASS_KIND_RECORD: noun = JavaPsiBundle.message("node.record.tooltip"); break;
+      case CLASS_KIND_EXCEPTION: noun = JavaPsiBundle.message("node.exception.tooltip"); break;
+      case CLASS_KIND_INTERFACE: noun = JavaPsiBundle.message("node.interface.tooltip"); break;
+      case CLASS_KIND_JUNIT_TEST: noun = JavaPsiBundle.message("node.junit.test.tooltip"); break;
+      case CLASS_KIND_RUNNABLE: noun = JavaPsiBundle.message("node.runnable.class.tooltip"); break;
       default:
-      case CLASS_KIND_CLASS: noun = CodeInsightBundle.message("node.class.tooltip"); break;
+      case CLASS_KIND_CLASS: noun = JavaPsiBundle.message("node.class.tooltip"); break;
     }
     return noun;
   }
@@ -196,14 +204,14 @@ public final class ElementPresentationUtil implements PlatformIcons {
         adj.append(" ").append(provider.getLayerDescription());
       }
     }
-    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj.append(" ").append(CodeInsightBundle.message("node.abstract.flag.tooltip"));
-    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj.append(" ").append(CodeInsightBundle.message("node.final.flag.tooltip"));
-    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj.append(" ").append(CodeInsightBundle.message("node.static.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj.append(" ").append(JavaPsiBundle.message("node.abstract.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj.append(" ").append(JavaPsiBundle.message("node.final.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj.append(" ").append(JavaPsiBundle.message("node.static.flag.tooltip"));
     PsiModifierList list = aClass.getModifierList();
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
       if (level != PsiUtil.ACCESS_LEVEL_PUBLIC) {
-        adj.append(" ").append(StringUtil.capitalize(PsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level))));
+        adj.append(" ").append(StringUtil.capitalize(JavaPsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level))));
       }
     }
     return adj.toString();

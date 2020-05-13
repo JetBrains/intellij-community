@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,13 +144,15 @@ public class ClassUtils {
   }
 
   public static boolean isImmutableClass(@NotNull PsiClass aClass) {
-    String qualifiedName = aClass.getQualifiedName();
-    return qualifiedName != null && (immutableTypes.contains(qualifiedName) ||
-                                     qualifiedName.startsWith("com.google.common.collect.Immutable"));
+    if (aClass.isRecord()) {
+      return true;
+    }
+    final String qualifiedName = aClass.getQualifiedName();
+    return qualifiedName != null &&
+           (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"));
   }
 
-  public static boolean inSamePackage(@Nullable PsiElement element1,
-                                      @Nullable PsiElement element2) {
+  public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {
     if (element1 == null || element2 == null) {
       return false;
     }
@@ -363,8 +365,7 @@ public class ClassUtils {
     return Objects.equals(toCmp1, toCmp2);
   }
 
-  @NotNull
-  private static PsiMethod[] getIfOnlyInvisibleConstructors(PsiClass aClass) {
+  private static PsiMethod @NotNull [] getIfOnlyInvisibleConstructors(PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
       return PsiMethod.EMPTY_ARRAY;

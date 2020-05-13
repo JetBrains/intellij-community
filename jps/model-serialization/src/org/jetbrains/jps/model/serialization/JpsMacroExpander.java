@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsMacroExpander {
   private final ExpandMacroToPathMap myExpandMacroMap;
 

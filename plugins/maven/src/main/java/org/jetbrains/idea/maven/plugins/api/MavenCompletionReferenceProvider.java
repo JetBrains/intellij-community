@@ -25,9 +25,8 @@ public abstract class MavenCompletionReferenceProvider implements MavenParamRefe
           return null;
         }
 
-        @NotNull
         @Override
-        public Object[] getVariants() {
+        public Object @NotNull [] getVariants() {
           return MavenCompletionReferenceProvider.this.getVariants(this);
         }
       }

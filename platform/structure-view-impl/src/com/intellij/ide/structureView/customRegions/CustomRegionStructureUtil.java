@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.customRegions;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +81,7 @@ public class CustomRegionStructureUtil {
                          !isInsideRanges(element, ranges))
       .iterator();
 
-    List<CustomRegionTreeElement> customRegions = ContainerUtil.newSmartList();
+    List<CustomRegionTreeElement> customRegions = new SmartList<>();
     CustomRegionTreeElement currRegionElement = null;
     CustomFoldingProvider provider = null;
     while (iterator.hasNext()) {

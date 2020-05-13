@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class PsiPackageBase extends PsiElementBase implements PsiDirectoryContainer, Queryable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageBase");
+  private static final Logger LOG = Logger.getInstance(PsiPackageBase.class);
 
   private final PsiManager myManager;
   private final String myQualifiedName;
@@ -60,15 +60,13 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  @NotNull
-  public PsiDirectory[] getDirectories() {
+  public PsiDirectory @NotNull [] getDirectories() {
     final Collection<PsiDirectory> collection = getAllDirectories();
     return collection.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override
-  @NotNull
-  public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
+  public PsiDirectory @NotNull [] getDirectories(@NotNull GlobalSearchScope scope) {
     List<PsiDirectory> result = null;
     final boolean includeLibrarySources = scope.isForceSearchingInLibrarySources();
     final Collection<PsiDirectory> directories = getAllDirectories(includeLibrarySources);
@@ -131,8 +129,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     LOG.error("method not implemented in " + getClass());
     return PsiElement.EMPTY_ARRAY;
   }
@@ -182,8 +179,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return ArrayUtilRt.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 

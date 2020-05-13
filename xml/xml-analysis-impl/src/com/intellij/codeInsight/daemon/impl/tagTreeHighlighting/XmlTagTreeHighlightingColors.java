@@ -33,8 +33,7 @@ public class XmlTagTreeHighlightingColors {
   private XmlTagTreeHighlightingColors() {
   }
 
-  @NotNull
-  public static synchronized ColorKey[] getColorKeys() {
+  public static synchronized ColorKey @NotNull [] getColorKeys() {
     final int levelCount = WebEditorOptions.getInstance().getTagTreeHighlightingLevelCount();
 
     if (ourColorKeys == null || ourColorKeys.length != levelCount) {

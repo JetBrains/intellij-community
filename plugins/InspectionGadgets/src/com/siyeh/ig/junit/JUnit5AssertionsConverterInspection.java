@@ -47,12 +47,6 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("junit5.assertions.converter.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     String name = (String)infos[0];
     String targetClassName = (String)infos[1];

@@ -29,7 +29,7 @@ public abstract class ParamHintProcessor extends SignatureHintProcessor {
   @Override
   public List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
                                                  @NotNull PsiSubstitutor substitutor,
-                                                 @NotNull String[] options) {
+                                                 String @NotNull [] options) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (myParam < parameters.length) {
       PsiParameter parameter = parameters[myParam];

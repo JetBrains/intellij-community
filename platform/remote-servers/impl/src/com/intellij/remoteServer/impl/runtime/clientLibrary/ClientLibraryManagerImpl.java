@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryDescription;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.download.*;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -97,7 +98,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
   public void checkConfiguration(@NotNull final ClientLibraryDescription description, final @Nullable Project project,
                                  final @Nullable JComponent component) throws RuntimeConfigurationError {
     if (!isDownloaded(description)) {
-      throw new RuntimeConfigurationError("Client libraries were not downloaded", () -> download(description, project, component));
+      throw new RuntimeConfigurationError(CloudBundle.message("dialog.message.client.libraries.were.downloaded"), () -> download(description, project, component));
     }
   }
 
@@ -123,7 +124,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
         catch (IOException e) {
           exc.set(e);
         }
-      }, "Downloading Client Libraries", false, project, component);
+      }, CloudBundle.message("progress.title.downloading.client.libraries"), false, project, component);
     if (exc.isNull()) {
       myEventDispatcher.getMulticaster().downloaded();
     }

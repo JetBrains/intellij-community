@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -26,7 +15,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,40 +28,44 @@ import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.Notifica
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION;
 
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
-  private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
-  public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
-  private final List<NotificationInfo> myOptimizerNotifications = ContainerUtil.newSmartList();
+  /**
+   * @deprecated Use {@link #getCommandName()} instead
+   */
+  @Deprecated
+  public static final String COMMAND_NAME = "Optimize Imports";
+
+  private final List<NotificationInfo> myOptimizerNotifications = new SmartList<>();
 
   public OptimizeImportsProcessor(@NotNull Project project) {
-    super(project, COMMAND_NAME, PROGRESS_TEXT, false);
+    super(project, getCommandName(), getProgressText(), false);
   }
 
   public OptimizeImportsProcessor(@NotNull Project project, Module module) {
-    super(project, module, COMMAND_NAME, PROGRESS_TEXT, false);
+    super(project, module, getCommandName(), getProgressText(), false);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiDirectory directory, boolean includeSubdirs) {
-    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, false);
+  public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiDirectory directory, boolean includeSubdirs) {
+    super(project, directory, includeSubdirs, getProgressText(), getCommandName(), false);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
-    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, processOnlyVcsChangedFiles);
+  public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
+    super(project, directory, includeSubdirs, getProgressText(), getCommandName(), processOnlyVcsChangedFiles);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiFile file) {
-    super(project, file, PROGRESS_TEXT, COMMAND_NAME, false);
+  public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiFile file) {
+    super(project, file, getProgressText(), getCommandName(), false);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiFile[] files, Runnable postRunnable) {
-    this(project, files, COMMAND_NAME, postRunnable);
+  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, Runnable postRunnable) {
+    this(project, files, getCommandName(), postRunnable);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiFile[] files, String commandName, Runnable postRunnable) {
-    super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
+  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull String commandName, Runnable postRunnable) {
+    super(project, files, getProgressText(), commandName, postRunnable, false);
   }
 
   public OptimizeImportsProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
-    super(processor, COMMAND_NAME, PROGRESS_TEXT);
+    super(processor, getCommandName(), getProgressText());
   }
 
   @Override
@@ -81,7 +74,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     if (DumbService.isDumb(file.getProject())) {
       return new FutureTask<>(EmptyRunnable.INSTANCE, true);
     }
-    
+
     final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
     final List<Runnable> runnables = new ArrayList<>();
     List<PsiFile> files = file.getViewProvider().getAllFiles();
@@ -93,34 +86,37 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     }
 
-    Runnable runnable = !runnables.isEmpty() ? () -> {
+    List<HintAction> hints = ShowAutoImportPass.getImportHints(file);
+
+    Runnable writeTask = runnables.isEmpty() ? EmptyRunnable.getInstance() : () -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
       try {
         for (Runnable runnable1 : runnables) {
           runnable1.run();
-          retrieveAndStoreNotificationInfo(runnable1);
+          myOptimizerNotifications.add(getNotificationInfo(runnable1));
         }
         putNotificationInfoIntoCollector();
+        ShowAutoImportPass.fixAllImportsSilently(file, hints);
       }
       finally {
         CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
       }
-    } : EmptyRunnable.getInstance();
-      
-    return new FutureTask<>(runnable, true);
+    };
+
+    return new FutureTask<>(writeTask, true);
   }
 
-  private void retrieveAndStoreNotificationInfo(@NotNull Runnable runnable) {
+  @NotNull
+  private static NotificationInfo getNotificationInfo(@NotNull Runnable runnable) {
     if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
       String optimizerMessage = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
-      myOptimizerNotifications.add(optimizerMessage != null ? new NotificationInfo(optimizerMessage) : NOTHING_CHANGED_NOTIFICATION);
+      return optimizerMessage == null ? NOTHING_CHANGED_NOTIFICATION : new NotificationInfo(optimizerMessage);
     }
-    else if (runnable == EmptyRunnable.getInstance()) {
-      myOptimizerNotifications.add(NOTHING_CHANGED_NOTIFICATION);
+    if (runnable == EmptyRunnable.getInstance()) {
+      return NOTHING_CHANGED_NOTIFICATION;
     }
-    else {
-      myOptimizerNotifications.add(SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION);
-    }
+    return SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION;
   }
 
   private void putNotificationInfoIntoCollector() {
@@ -142,8 +138,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   static class NotificationInfo {
-    public static final NotificationInfo NOTHING_CHANGED_NOTIFICATION = new NotificationInfo(false, null);
-    public static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
+    static final NotificationInfo NOTHING_CHANGED_NOTIFICATION = new NotificationInfo(false, null);
+    static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
 
     private final boolean mySomethingChanged;
     private final String myMessage;
@@ -164,5 +160,13 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       mySomethingChanged = isSomethingChanged;
       myMessage = message;
     }
+  }
+
+  private static @NotNull String getProgressText() {
+    return CodeInsightBundle.message("progress.text.optimizing.imports");
+  }
+
+  public static @NotNull String getCommandName() {
+    return CodeInsightBundle.message("process.optimize.imports");
   }
 }

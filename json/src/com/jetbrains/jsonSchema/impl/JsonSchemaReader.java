@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 
+import com.intellij.json.JsonBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,7 +33,7 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 1/13/2017.
  */
 public class JsonSchemaReader {
-  private static final int MAX_SCHEMA_LENGTH = FileUtilRt.MEGABYTE;
+  private static final int MAX_SCHEMA_LENGTH = FileUtilRt.LARGE_FOR_CONTENT_LOADING;
   public static final Logger LOG = Logger.getInstance(JsonSchemaReader.class);
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
 
@@ -53,13 +55,13 @@ public class JsonSchemaReader {
   @NotNull
   public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile file) throws Exception {
     if (!file.isValid()) {
-      throw new Exception(String.format("Can not load JSON Schema file '%s'", file.getName()));
+      throw new Exception(JsonBundle.message("schema.reader.cant.load.file", file.getName()));
     }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     JsonSchemaObject object = psiFile == null ? null : new JsonSchemaReader(file).read(psiFile);
     if (object == null) {
-      throw new Exception(String.format("Can not load code model for JSON Schema file '%s'", file.getName()));
+      throw new Exception(JsonBundle.message("schema.reader.cant.load.model", file.getName()));
     }
     return object;
   }
@@ -69,15 +71,15 @@ public class JsonSchemaReader {
     final long length = file.getLength();
     final String fileName = file.getName();
     if (length > MAX_SCHEMA_LENGTH) {
-      return String.format("JSON schema was not loaded from '%s' because it's too large (file size is %d bytes).", fileName, length);
+      return JsonBundle.message("schema.reader.file.too.large", fileName, length);
     }
     if (length == 0) {
-      return String.format("JSON schema was not loaded from '%s'. File is empty.", fileName);
+      return JsonBundle.message("schema.reader.file.empty", fileName);
     }
     try {
       readFromFile(project, file);
     } catch (Exception e) {
-      final String message = String.format("JSON Schema not found or contain error in '%s': %s", fileName, e.getMessage());
+      final String message = JsonBundle.message("schema.reader.file.not.found.or.error", fileName, e.getMessage());
       LOG.info(message);
       return message;
     }
@@ -163,6 +165,7 @@ public class JsonSchemaReader {
   }
 
   private static void fillMap() {
+    READERS_MAP.put("$anchor", createFromStringValue((object, s) -> object.setId(s)));
     READERS_MAP.put("$id", createFromStringValue((object, s) -> object.setId(s)));
     READERS_MAP.put("id", createFromStringValue((object, s) -> object.setId(s)));
     READERS_MAP.put("$schema", createFromStringValue((object, s) -> object.setSchema(s)));
@@ -170,15 +173,24 @@ public class JsonSchemaReader {
     // non-standard deprecation property used by VSCode
     READERS_MAP.put("deprecationMessage", createFromStringValue((object, s) -> object.setDeprecationMessage(s)));
     READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_HTML_DESCRIPTION, createFromStringValue((object, s) -> object.setHtmlDescription(s)));
-    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION, createFromStringValue((object, s) -> object.setLanguageInjection(s)));
+    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION, (element, object, queue, virtualFile) -> readInjectionMetadata(element, object));
+    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_ENUM_METADATA, (element, object, queue, virtualFile) -> readEnumMetadata(element, object));
     READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_CASE_INSENSITIVE, (element, object, queue, virtualFile) -> {
       if (element.isBooleanLiteral()) object.setForceCaseInsensitive(getBoolean(element));
     });
     READERS_MAP.put("title", createFromStringValue((object, s) -> object.setTitle(s)));
     READERS_MAP.put("$ref", createFromStringValue((object, s) -> object.setRef(s)));
+    READERS_MAP.put("$recursiveRef", createFromStringValue((object, s) -> {
+      object.setRef(s);
+      object.setRefRecursive(true);
+    }));
+    READERS_MAP.put("$recursiveAnchor", (element, object, queue, virtualFile) -> {
+      if (element.isBooleanLiteral()) object.setRecursiveAnchor(true);
+    });
     READERS_MAP.put("default", createDefault());
     READERS_MAP.put("format", createFromStringValue((object, s) -> object.setFormat(s)));
     READERS_MAP.put(JsonSchemaObject.DEFINITIONS, createDefinitionsConsumer());
+    READERS_MAP.put(JsonSchemaObject.DEFINITIONS_v9, createDefinitionsConsumer());
     READERS_MAP.put(JsonSchemaObject.PROPERTIES, createPropertiesConsumer());
     READERS_MAP.put("multipleOf", createFromNumber((object, i) -> object.setMultipleOf(i)));
     READERS_MAP.put("maximum", createFromNumber((object, i) -> object.setMaximum(i)));
@@ -223,10 +235,67 @@ public class JsonSchemaReader {
     READERS_MAP.put("typeof", ((element, object, queue, virtualFile) -> object.setShouldValidateAgainstJSType()));
   }
 
+  private static void readEnumMetadata(JsonValueAdapter element, JsonSchemaObject object) {
+    if (!(element instanceof JsonObjectValueAdapter)) return;
+    Map<String, Map<String, String>> metadataMap = new HashMap<>();
+    for (JsonPropertyAdapter adapter : ((JsonObjectValueAdapter)element).getPropertyList()) {
+      String name = adapter.getName();
+      if (name == null) continue;
+      Collection<JsonValueAdapter> values = adapter.getValues();
+      if (values.size() != 1) continue;
+      JsonValueAdapter valueAdapter = values.iterator().next();
+      if (valueAdapter.isStringLiteral()) {
+        metadataMap.put(name, Collections.singletonMap("description", getString(valueAdapter)));
+      }
+      else if (valueAdapter instanceof JsonObjectValueAdapter) {
+        Map<String, String> valueMap = new HashMap<>();
+        for (JsonPropertyAdapter propertyAdapter : ((JsonObjectValueAdapter)valueAdapter).getPropertyList()) {
+          String adapterName = propertyAdapter.getName();
+          if (adapterName == null) continue;
+          Collection<JsonValueAdapter> adapterValues = propertyAdapter.getValues();
+          if (adapterValues.size() != 1) continue;
+          JsonValueAdapter next = adapterValues.iterator().next();
+          if (next.isStringLiteral()) {
+            valueMap.put(adapterName, getString(next));
+          }
+        }
+        metadataMap.put(name, valueMap);
+      }
+    }
+    object.setEnumMetadata(metadataMap);
+  }
+
+  private static void readInjectionMetadata(JsonValueAdapter element, JsonSchemaObject object) {
+    if (element.isStringLiteral()) {
+      object.setLanguageInjection(getString(element));
+    }
+    else if (element instanceof JsonObjectValueAdapter) {
+      for (JsonPropertyAdapter adapter : ((JsonObjectValueAdapter)element).getPropertyList()) {
+        String lang = readSingleProp(adapter, "language", JsonSchemaReader::getString);
+        if (lang != null) object.setLanguageInjection(lang);
+        String prefix = readSingleProp(adapter, "prefix", JsonSchemaReader::getString);
+        if (prefix != null) object.setLanguageInjectionPrefix(prefix);
+        String postfix = readSingleProp(adapter, "suffix", JsonSchemaReader::getString);
+        if (postfix != null) object.setLanguageInjectionPostfix(postfix);
+      }
+    }
+  }
+
+  @Nullable
+  private static <T> T readSingleProp(JsonPropertyAdapter adapter, String propName, Function<JsonValueAdapter, T> getterFunc) {
+    if (propName.equals(adapter.getName())) {
+      Collection<JsonValueAdapter> values = adapter.getValues();
+      if (values.size() == 1) {
+        return getterFunc.apply(values.iterator().next());
+      }
+    }
+    return null;
+  }
+
   private static MyReader createFromStringValue(PairConsumer<JsonSchemaObject, String> propertySetter) {
     return (element, object, queue, virtualFile) -> {
       if (element.isStringLiteral()) {
-        propertySetter.consume(object, StringUtil.unquoteString(element.getDelegate().getText()));
+        propertySetter.consume(object, getString(element));
       }
     };
   }
@@ -328,6 +397,10 @@ public class JsonSchemaReader {
         object.setEnum(objects);
       }
     };
+  }
+
+  private static String getString(@NotNull JsonValueAdapter value) {
+    return StringUtil.unquoteString(value.getDelegate().getText());
   }
 
   private static boolean getBoolean(@NotNull JsonValueAdapter value) {

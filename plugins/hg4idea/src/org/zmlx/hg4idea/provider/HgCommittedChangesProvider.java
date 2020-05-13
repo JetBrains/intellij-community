@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
-import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -58,6 +57,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     myVcs = vcs;
   }
 
+  @NotNull
   @Override
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new HgVersionFilterComponent(showDateFilter);
@@ -65,7 +65,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
 
   @Override
   @Nullable
-  public RepositoryLocation getLocationFor(FilePath filePath) {
+  public RepositoryLocation getLocationFor(@NotNull FilePath filePath) {
     VirtualFile repo = VcsUtil.getVcsRootFor(project, filePath);
     if (repo == null) {
       return null;
@@ -74,17 +74,10 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   }
 
   @Override
-  @Nullable
-  public VcsCommittedListsZipper getZipper() {
-    return null;
-  }
-
-  @Override
   public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
-                                   RepositoryLocation repositoryLocation,
+                                   @NotNull RepositoryLocation repositoryLocation,
                                    int maxCount,
-                                   final AsynchConsumer<? super CommittedChangeList> consumer) {
-
+                                   @NotNull AsynchConsumer<? super CommittedChangeList> consumer) {
     try {
       List<CommittedChangeList> results = getCommittedChanges(changeBrowserSettings, repositoryLocation, maxCount);
       for (CommittedChangeList result : results) {
@@ -96,9 +89,10 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     }
   }
 
+  @NotNull
   @Override
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
-                                                       RepositoryLocation repositoryLocation,
+                                                       @NotNull RepositoryLocation repositoryLocation,
                                                        int maxCount) {
     VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
 
@@ -162,13 +156,17 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   }
 
   @Override
-  public ChangeListColumn[] getColumns() {
+  public ChangeListColumn @NotNull [] getColumns() {
     return new ChangeListColumn[]{BRANCH_COLUMN, ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 
   @Override
-  public VcsCommittedViewAuxiliary createActions(DecoratorManager decoratorManager, RepositoryLocation repositoryLocation) {
-    AnAction copyHashAction = new DumbAwareAction("Copy &Hash", "Copy hash to clipboard", PlatformIcons.COPY_ICON) {
+  @NotNull
+  public VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
+    AnAction copyHashAction = new DumbAwareAction(
+      HgBundle.messagePointer("action.DumbAware.HgCommittedChangesProvider.text.copy.hash"),
+      HgBundle.messagePointer("action.DumbAware.HgCommittedChangesProvider.description.copy.hash.to.clipboard"),
+      PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
@@ -187,8 +185,9 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return -1;
   }
 
+  @Nullable
   @Override
-  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) {
+  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, @NotNull VcsRevisionNumber number) {
     final ChangeBrowserSettings settings = createDefaultSettings();
     settings.USE_CHANGE_AFTER_FILTER = true;
     settings.USE_CHANGE_BEFORE_FILTER = true;
@@ -204,11 +203,6 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     if (list != null) {
       return new Pair<>(list, filePath);
     }
-    return null;
-  }
-
-  @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
     return null;
   }
 
@@ -263,7 +257,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
     @Override
     public String getTitle() {
-      return HgVcsMessages.message("hg4idea.changelist.column.branch");
+      return HgBundle.message("hg4idea.changelist.column.branch");
     }
 
     @Override

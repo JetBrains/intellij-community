@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.diff.DiffContentFactory;
@@ -15,6 +15,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Range;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -36,7 +37,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.ExtractMethodSnapshot;
@@ -53,12 +53,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.refactoring.extractMethod.ExtractMethodHandler.REFACTORING_NAME;
-
 /**
  * @author Pavel.Dolgov
  */
-class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewTreeListener {
+final class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewTreeListener {
   private final Project myProject;
   private final PreviewTree myTree;
   private final List<SmartPsiElementPointer<PsiElement>> myPattern;
@@ -95,22 +93,23 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     PsiElement[] pattern = getPatternElements();
     if (pattern.length == 0) {
       // todo suggest re-running the refactoring
-      CommonRefactoringUtil.showErrorHint(myProject, null, RefactoringBundle.message("refactoring.extract.method.preview.failed"),
-                                          REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+      CommonRefactoringUtil.showErrorHint(myProject, null, JavaRefactoringBundle.message("refactoring.extract.method.preview.failed"),
+                                          ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD);
       return;
     }
-    JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(pattern, REFACTORING_NAME);
+    JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(pattern,
+                                                                                              ExtractMethodHandler.getRefactoringName());
     if (!processor.prepareFromSnapshot(mySnapshot, true)) {
       return;
     }
 
-    WriteCommandAction.runWriteCommandAction(myProject, REFACTORING_NAME, null,
+    WriteCommandAction.runWriteCommandAction(myProject, ExtractMethodHandler.getRefactoringName(), null,
                                              () -> doExtractImpl(processor, enabledNodes), pattern[0].getContainingFile());
   }
 
   public void initLater() {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
-                                                              RefactoringBundle.message("refactoring.extract.method.preview.preparing")) {
+                                                              JavaRefactoringBundle.message("refactoring.extract.method.preview.preparing")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         updateLaterImpl(indicator, false);
@@ -120,7 +119,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
   public void updateLater() {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
-                                                              RefactoringBundle.message("refactoring.extract.method.preview.updating")) {
+                                                              JavaRefactoringBundle.message("refactoring.extract.method.preview.updating")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         updateLaterImpl(indicator, true);
@@ -143,7 +142,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     ExtractMethodSnapshot copySnapshot = ReadAction.compute(() -> new ExtractMethodSnapshot(mySnapshot, pattern, patternCopy));
 
     ExtractMethodProcessor copyProcessor = ReadAction.compute(() -> {
-      JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(patternCopy, REFACTORING_NAME);
+      JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(patternCopy,
+                                                                                                ExtractMethodHandler.getRefactoringName());
       return processor.prepareFromSnapshot(copySnapshot, true) ? processor : null;
     });
     if (copyProcessor == null) return;
@@ -210,7 +210,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     }
   }
 
-  private void initDiff(@NotNull PsiElement[] pattern,
+  private void initDiff(PsiElement @NotNull [] pattern,
                         @NotNull ElementsRange patternReplacement,
                         @NotNull Document refactoredDocument,
                         @NotNull MethodNode methodNode,
@@ -299,8 +299,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
                      getLineNumberAfter(refactoredDocument, refactoredRange));
   }
 
-  @NotNull
-  private static TextRange getLinesRange(@NotNull TextRange textRange, @NotNull Document document) {
+  private static @NotNull TextRange getLinesRange(@NotNull TextRange textRange, @NotNull Document document) {
     int startLine = document.getLineNumber(textRange.getStartOffset());
     int endLine = document.getLineNumber(Math.min(textRange.getEndOffset(), document.getTextLength()));
     return new TextRange(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine));
@@ -352,18 +351,16 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     }
   }
 
-  @NotNull
-  private static Map<DuplicateNode, Match> findSelectedDuplicates(@NotNull ExtractMethodProcessor processor,
-                                                                  @NotNull List<? extends DuplicateNode> selectedNodes) {
+  private static @NotNull Map<DuplicateNode, Match> findSelectedDuplicates(@NotNull ExtractMethodProcessor processor,
+                                                                           @NotNull List<? extends DuplicateNode> selectedNodes) {
     Set<TextRange> textRanges = ContainerUtil.map2SetNotNull(selectedNodes, FragmentNode::getTextRange);
     processor.previewRefactoring(textRanges);
     List<Match> duplicates = processor.getAnyDuplicates();
     return filterSelectedDuplicates(selectedNodes, duplicates);
   }
 
-  @NotNull
-  private static Map<DuplicateNode, Match> filterSelectedDuplicates(@NotNull Collection<? extends DuplicateNode> selectedNodes,
-                                                                    @Nullable List<Match> allDuplicates) {
+  private static @NotNull Map<DuplicateNode, Match> filterSelectedDuplicates(@NotNull Collection<? extends DuplicateNode> selectedNodes,
+                                                                             @Nullable List<Match> allDuplicates) {
     if (ContainerUtil.isEmpty(allDuplicates)) {
       return Collections.emptyMap();
     }
@@ -385,8 +382,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     return selectedDuplicates;
   }
 
-  @NotNull
-  private static DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<? extends Range> ranges) {
+  private static @NotNull DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<? extends Range> ranges) {
     return (text1, text2, policy, innerChanges, indicator) -> {
       InnerFragmentsPolicy fragmentsPolicy = innerChanges ? InnerFragmentsPolicy.WORDS : InnerFragmentsPolicy.NONE;
       LineOffsets offsets1 = LineOffsetsUtil.create(text1);
@@ -419,11 +415,11 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
         }
       }
     }
-    Messages.showErrorDialog(myProject, "Can't restore context for method extraction", "Failed to Re-Run Refactoring");
+    Messages.showErrorDialog(myProject, JavaRefactoringBundle.message("can.t.restore.context.for.method.extraction"),
+                             JavaRefactoringBundle.message("failed.to.re.run.refactoring"));
   }
 
-  @NotNull
-  private PsiElement[] getPatternElements() {
+  private PsiElement @NotNull [] getPatternElements() {
     PsiElement[] elements = ContainerUtil.map2Array(myPattern, PsiElement.EMPTY_ARRAY, SmartPsiElementPointer::getElement);
     if (ArrayUtil.contains(null, elements)) {
       return PsiElement.EMPTY_ARRAY;
@@ -431,20 +427,17 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     return elements;
   }
 
-  @Nullable
-  private static Editor getEditor(@NotNull PsiFile psiFile, boolean canCreate) {
+  private static @Nullable Editor getEditor(@NotNull PsiFile psiFile, boolean canCreate) {
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     Document document = FileDocumentManager.getInstance().getDocument(vFile);
     if (document == null) {
       return null;
     }
-    EditorFactory factory = EditorFactory.getInstance();
+
     Project project = psiFile.getProject();
-    Editor[] editors = factory.getEditors(document, project);
-    if (editors.length != 0) {
-      return editors[0];
-    }
-    return canCreate ? EditorFactory.getInstance().createEditor(document, project) : null;
+    return EditorFactory.getInstance().editors(document, project)
+      .findFirst()
+      .orElseGet(() -> canCreate ? EditorFactory.getInstance().createEditor(document, project) : null);
   }
 
   boolean isModified() {

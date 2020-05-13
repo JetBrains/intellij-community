@@ -1,0 +1,55 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="languageInjector" interface="com.intellij.psi.LanguageInjector" dynamic="true"/>
+    <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
+    </extensionPoint>
+
+    <extensionPoint name="gotoDeclarationHandler" interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"
+                    dynamic="true"/>
+    <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper" dynamic="true"/>
+    <extensionPoint name="completion.ignoringDumbnessAllowed" beanClass="com.intellij.codeInsight.completion.CompletionIgnoreDumbnessEP"
+                    dynamic="true"/>
+    <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
+    </extensionPoint>
+    <extensionPoint name="lang.documentationProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.documentation.DocumentationProvider"/>
+    </extensionPoint>
+    <extensionPoint name="highlightErrorFilter" interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="codeInsight.containerProvider"
+                    interface="com.intellij.codeInsight.ContainerProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider" dynamic="true"/>
+
+    <extensionPoint name="codeInsight.signatureHelp" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.signatureHelp.SignatureHelpProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="localInspection" beanClass="com.intellij.codeInspection.LocalInspectionEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
+    </extensionPoint>
+
+    <extensionPoint name="globalInspection" beanClass="com.intellij.codeInspection.InspectionEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.GlobalInspectionTool"/>
+    </extensionPoint>
+
+    <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
+    <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory" dynamic="true"/>
+    <extensionPoint name="inspectionsReportConverter" interface="com.intellij.codeInspection.InspectionsReportConverter" dynamic="true"/>
+
+    <extensionPoint name="lang.inspectionSuppressor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.InspectionSuppressor"/>
+    </extensionPoint>
+
+    <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean" dynamic="true">
+      <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.completion.InternalCompletionSettings"/>
+  </extensions>
+</idea-plugin>

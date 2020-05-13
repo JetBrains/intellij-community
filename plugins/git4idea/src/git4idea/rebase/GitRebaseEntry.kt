@@ -1,48 +1,37 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
-internal class GitRebaseEntry(var action: Action, val commit: String, val subject: String) {
+import com.intellij.vcs.log.VcsCommitMetadata
+import git4idea.i18n.GitBundle
+import java.util.function.Supplier
 
+internal open class GitRebaseEntry(val action: Action, val commit: String, val subject: String) {
   constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
 
-  sealed class Action(val name: String, val mnemonic: Char) {
-    object PICK : Action("pick", 'p')
-    object EDIT : Action("edit", 'e')
-    object DROP : Action("drop", 'd')
-    object SQUASH : Action("squash", 's')
-    object REWORD : Action("reword", 'r')
-    object FIXUP : Action("fixup", 'f')
+  override fun toString() = "$action $commit $subject"
 
-    class Other(name: String) : Action(name, '?')
+  sealed class Action(private val command: String, val visibleName: Supplier<String>) {
+    object PICK : Action("pick", GitBundle.messagePointer("rebase.entry.action.name.pick"))
+    object EDIT : Action("edit", GitBundle.messagePointer("rebase.entry.action.name.edit"))
+    object DROP : Action("drop", GitBundle.messagePointer("rebase.entry.action.name.drop"))
+    object REWORD : Action("reword", GitBundle.messagePointer("rebase.entry.action.name.reword"))
+    object SQUASH : Action("squash", GitBundle.messagePointer("rebase.entry.action.name.squash"))
+    object FIXUP : Action("fixup", GitBundle.messagePointer("rebase.entry.action.name.fixup"))
+    class Other(command: String) : Action(command, GitBundle.messagePointer("rebase.entry.action.name.unknown"))
 
-    override fun toString(): String {
-      return name
-    }
+    val mnemonic: Int = command.capitalize().first().toInt()
+
+    override fun toString(): String = command
 
     companion object {
-      @JvmStatic
-      val knownActions = listOf(PICK, EDIT, DROP, SQUASH, REWORD, FIXUP)
-
-      @JvmStatic
-      fun getKnownActionsArray(): Array<Action> = knownActions.toTypedArray()
-
-      internal fun fromString(actionName: String): Action {
-        return knownActions.find { it.name == actionName } ?: Other(actionName)
+      private val KNOWN_ACTIONS: List<Action> by lazy {
+        listOf(PICK, EDIT, DROP, SQUASH, REWORD, FIXUP)
       }
+
+      fun fromString(action: String): Action = KNOWN_ACTIONS.find { it.command == action } ?: Other(action)
     }
   }
 }
+
+internal open class GitRebaseEntryWithDetails(val entry: GitRebaseEntry, val commitDetails: VcsCommitMetadata) :
+  GitRebaseEntry(entry.action, entry.commit, entry.subject)

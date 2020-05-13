@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -42,8 +43,8 @@ class RepositoryLibraryRootsComponentDescriptor extends LibraryRootsComponentDes
   @Override
   public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle("Attach External Annotations");
-    descriptor.setDescription("Select directory where external annotations are located");
+    descriptor.setTitle(JavaUiBundle.message("chooser.title.attach.external.annotations"));
+    descriptor.setDescription(JavaUiBundle.message("chooser.description.select.directory.where.external.annotations.are.located"));
     return descriptor;
   }
 

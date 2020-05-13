@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +55,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     void dispose();
 
     void setTitle(String title);
-
-    void releaseFrame();
 
     void updateView();
 
@@ -150,13 +149,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   }
 
   void doDispose() {
-    super.dispose();
-  }
-
-  void releaseFrame() {
-    if (myFrameHelper != null) {
-      myFrameHelper.releaseFrame();
-    }
+    UIUtil.invokeLaterIfNeeded(() -> super.dispose());
   }
 
   protected final class AccessibleIdeFrameImpl extends AccessibleJFrame {

@@ -44,10 +44,6 @@ public class MavenSettingsTest extends MavenTestCase {
     MavenImportingSettings s = new MavenImportingSettings();
     s.addListener(new MavenImportingSettings.Listener() {
       @Override
-      public void autoImportChanged() {
-      }
-
-      @Override
       public void createModuleGroupsChanged() {
       }
 

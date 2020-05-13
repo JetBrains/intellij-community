@@ -4,11 +4,11 @@ package com.intellij.codeInsight.hints.presentation
 /**
  * Presentation, that may be in two states and can preserve state type between passes.
  */
-class BiStatePresentation(
+open class BiStatePresentation(
   val first: () -> InlayPresentation,
   val second: () -> InlayPresentation,
-  initialState: Boolean
-) : StatefulPresentation<BiStatePresentation.State>(State(initialState), STATE_MARK) {
+  initiallyFirstEnabled: Boolean
+) : StatefulPresentation<BiStatePresentation.State>(State(initiallyFirstEnabled), STATE_MARK) {
   override fun getPresentation(): InlayPresentation {
     return when (state.currentFirst) {
       true -> first()
@@ -18,6 +18,14 @@ class BiStatePresentation(
 
   fun flipState() {
     state = State(!state.currentFirst)
+  }
+
+  fun setFirst() {
+    state = State(true)
+  }
+
+  fun setSecond() {
+    state = State(false)
   }
 
   override fun toString(): String = currentPresentation.toString()

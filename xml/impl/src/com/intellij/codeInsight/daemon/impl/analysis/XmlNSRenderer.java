@@ -28,7 +28,7 @@ import java.awt.*;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlNSRenderer extends ColoredListCellRenderer {
+public class XmlNSRenderer<T> extends ColoredListCellRenderer<T> {
 
   public static final XmlNSRenderer INSTANCE = new XmlNSRenderer();
 
@@ -38,8 +38,8 @@ public class XmlNSRenderer extends ColoredListCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(@NotNull final JList list,
-                                       final Object value,
+  protected void customizeCellRenderer(@NotNull final JList<? extends T> list,
+                                       final T value,
                                        final int index,
                                        final boolean selected,
                                        final boolean hasFocus) {

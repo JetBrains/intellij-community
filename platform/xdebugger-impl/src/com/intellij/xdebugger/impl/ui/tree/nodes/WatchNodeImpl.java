@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-/**
- * @author nik
- */
 public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   private final XExpression myExpression;
 

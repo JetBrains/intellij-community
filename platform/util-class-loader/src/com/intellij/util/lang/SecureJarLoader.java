@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -16,12 +16,12 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-class SecureJarLoader extends JarLoader {
+final class SecureJarLoader extends JarLoader {
   private @Nullable ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
-  SecureJarLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
-    super(url, index, configuration);
+  SecureJarLoader(@NotNull URL url, @NotNull String filePath, int index, @NotNull ClassPath configuration) throws IOException {
+    super(url, filePath, index, configuration);
   }
 
   @NotNull
@@ -36,7 +36,7 @@ class SecureJarLoader extends JarLoader {
     return new JarFile(path);
   }
 
-  private class MySecureResource extends JarLoader.MyResource {
+  private final class MySecureResource extends JarLoader.MyResource {
     MySecureResource(@NotNull URL url, @NotNull JarEntry entry) throws IOException {
       super(url, entry);
     }

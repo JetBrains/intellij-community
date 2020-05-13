@@ -20,6 +20,7 @@ import com.intellij.find.FindManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,11 +32,11 @@ public class ReplacePromptDialog extends DialogWrapper {
   private final boolean myIsMultiple;
   @Nullable private final FindManager.MalformedReplacementStringException myException;
 
-  public ReplacePromptDialog(boolean isMultipleFiles, String title, Project project) {
+  public ReplacePromptDialog(boolean isMultipleFiles, @NlsContexts.DialogTitle String title, Project project) {
     this(isMultipleFiles, title, project, null);
   }
 
-  public ReplacePromptDialog(boolean isMultipleFiles, String title, Project project, @Nullable FindManager.MalformedReplacementStringException exception) {
+  public ReplacePromptDialog(boolean isMultipleFiles, @NlsContexts.DialogTitle String title, Project project, @Nullable FindManager.MalformedReplacementStringException exception) {
     super(project, true);
     myIsMultiple = isMultipleFiles;
     myException = exception;
@@ -44,9 +45,8 @@ public class ReplacePromptDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions(){
+  protected Action @NotNull [] createActions(){
     DoAction replaceAction = new DoAction(UIBundle.message("replace.prompt.replace.button"), FindManager.PromptResult.OK);
     replaceAction.putValue(DEFAULT_ACTION,Boolean.TRUE);
     if (myException == null) {

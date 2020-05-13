@@ -52,7 +52,7 @@ import java.util.Collection;
  */
 public class IgnoreFileAction extends AnAction implements DumbAware {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.IgnoreFileAction");
+  private static final Logger LOG = Logger.getInstance(IgnoreFileAction.class);
 
   private final CvsActionVisibility myVisibility = new CvsActionVisibility();
 
@@ -162,8 +162,7 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
   private static CvsContextAdapter createContext(final Collection<VirtualFile> createdCvsIgnoreFiles, final CvsContext context) {
     return new CvsContextAdapter() {
       @Override
-      @NotNull
-      public VirtualFile[] getSelectedFiles() {
+      public VirtualFile @NotNull [] getSelectedFiles() {
         return VfsUtil.toVirtualFileArray(createdCvsIgnoreFiles);
       }
 

@@ -11,7 +11,7 @@ class pycharm_test(test.test):
         import unittest
 
         loader_ep = EntryPoint.parse("x=" + self.test_loader)
-        loader_class = loader_ep.load(require=False)
+        loader_class = loader_ep.resolve()
         unittest.main(
             None, None, [unittest.__file__] + self.test_args,
             testRunner=TeamcityTestRunner,

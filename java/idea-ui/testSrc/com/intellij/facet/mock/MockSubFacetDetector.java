@@ -20,9 +20,6 @@ import java.util.Set;
 
 import static com.intellij.patterns.StandardPatterns.string;
 
-/**
- * @author nik
- */
 public class MockSubFacetDetector extends FacetBasedFrameworkDetector<Facet, MockFacetConfiguration> {
   public MockSubFacetDetector() {
     super("mock-sub-facet-detector");

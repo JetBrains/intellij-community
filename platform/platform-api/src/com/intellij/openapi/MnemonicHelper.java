@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +26,6 @@ import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.IntPredicate;
 
 /**
@@ -35,7 +34,7 @@ import java.util.function.IntPredicate;
  *
  * @author lesya
  */
-public class MnemonicHelper extends ComponentTreeWatcher {
+public final class MnemonicHelper extends ComponentTreeWatcher {
   private static final Logger LOG = Logger.getInstance(MnemonicHelper.class);
 
   public static final Key<IntPredicate> MNEMONIC_CHECKER = Key.create("MNEMONIC_CHECKER");
@@ -60,7 +59,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     }
   };
 
-  private Map<Integer, String> myMnemonics;
+  private Int2ObjectOpenHashMap<String> myMnemonics;
 
   /**
    * @see #init(Component)
@@ -137,12 +136,12 @@ public class MnemonicHelper extends ComponentTreeWatcher {
 
   public void checkForDuplicateMnemonics(int mnemonic, String text) {
     if (mnemonic == 0) return;
-    if (myMnemonics == null) myMnemonics = new HashMap<>();
-    final String other = myMnemonics.get(Integer.valueOf(mnemonic));
+    if (myMnemonics == null) myMnemonics = new Int2ObjectOpenHashMap<>();
+    final String other = myMnemonics.get(mnemonic);
     if (other != null && !other.equals(text)) {
       LOG.error("conflict: multiple components with mnemonic '" + (char)mnemonic + "' seen on '" + text + "' and '" + other + "'");
     }
-    myMnemonics.put(Integer.valueOf(mnemonic), text);
+    myMnemonics.put(mnemonic, text);
   }
 
   /**
@@ -162,7 +161,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
    * @param component the root component of the hierarchy
    */
   public static void init(Component component) {
-    if (Registry.is("ide.mnemonic.helper.old", false) || Registry.is("ide.checkDuplicateMnemonics", false)) {
+    if (Registry.is("ide.checkDuplicateMnemonics", false)) {
       new MnemonicHelper().register(component);
     }
     else {
@@ -190,11 +189,16 @@ public class MnemonicHelper extends ComponentTreeWatcher {
 
   private static final MnemonicFixer ourMnemonicFixer = new MnemonicFixer();
 
-  private static class MnemonicFixer implements ContainerListener {
+  private static final class MnemonicFixer implements ContainerListener {
     void addTo(Component component) {
       for (Component c : UIUtil.uiTraverser(component)) {
-        if (c instanceof Container) ((Container)c).addContainerListener(this);
-        if (c instanceof ActionButtonComponent) fixMacMnemonicKeyStroke((JComponent)c, null);
+        if (c instanceof Container) {
+          ((Container)c).addContainerListener(this);
+        }
+        if (c instanceof ActionButtonComponent) {
+          assert c instanceof JComponent;
+          fixMacMnemonicKeyStroke((JComponent)c, null);
+        }
         MnemonicWrapper.getWrapper(c);
       }
     }

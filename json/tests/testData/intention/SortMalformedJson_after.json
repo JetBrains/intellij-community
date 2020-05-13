@@ -32,40 +32,40 @@
     ]
   },
   {
-  ",<caret>,
-  ".*credentials.*",
-  ": ",
-  Keys
-  Keys
-  be
-  be
-  can
-  "defaultValue": [
-    ,
-  "description": ""
-  ends
-  expressions.
-  "key"
-  "name": "endpoints.env.keys-to-sanitize"
-  or
-  property
-  ption
-  regex
-  sanitized.
-  "secret"
-  should
-  simple
-  "sourceType": "org.springframework.boot.actuate.endpoint.EnvironmentEndpoint"
-  strings
-  that
-  that
-  the,
-  "token",
-  "type": "java.lang.String[]",
-  "vcap_services",
-  with
-]
-},
+    ",<caret>,
+    ".*credentials.*",
+    ": ",
+    Keys
+    Keys
+    be
+    be
+    can
+    "defaultValue": [
+      ,
+    "description": ""
+    ends
+    expressions.
+    "key"
+    "name": "endpoints.env.keys-to-sanitize"
+    or
+    property
+    ption
+    regex
+    sanitized.
+    "secret"
+    should
+    simple
+    "sourceType": "org.springframework.boot.actuate.endpoint.EnvironmentEndpoint"
+    strings
+    that
+    that
+    the,
+    "token",
+    "type": "java.lang.String[]",
+    "vcap_services",
+    with
+  ]
+  },
   {
     "name": "endpoints.metrics.filter.enabled",
     "type": "java.lang.Boolean",

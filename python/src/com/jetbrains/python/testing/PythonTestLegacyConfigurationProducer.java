@@ -234,12 +234,12 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
   protected boolean isTestClass(@NotNull final PyClass pyClass,
                                 @Nullable final AbstractPythonLegacyTestRunConfiguration configuration,
                                 @Nullable final TypeEvalContext context) {
-    return PythonUnitTestUtil.isTestClass(pyClass, ThreeState.UNSURE, context);
+    return PythonUnitTestDetectorsBasedOnSettings.isTestClass(pyClass, ThreeState.UNSURE, context);
   }
 
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
                                    @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
-    return PythonUnitTestUtil.isTestFunction(pyFunction, ThreeState.UNSURE, null);
+    return PythonUnitTestDetectorsBasedOnSettings.isTestFunction(pyFunction, ThreeState.UNSURE, null);
   }
 
   protected boolean isTestFile(@NotNull final PyFile file) {
@@ -267,7 +267,7 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
   protected List<PyStatement> getTestCaseClassesFromFile(@NotNull final PyFile pyFile) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(pyFile.getProject(), pyFile);
     return pyFile.getTopLevelClasses().stream()
-      .filter(o -> PythonUnitTestUtil.isTestClass(o, ThreeState.UNSURE, context))
+      .filter(o -> PythonUnitTestDetectorsBasedOnSettings.isTestClass(o, ThreeState.UNSURE, context))
       .collect(Collectors.toList());
   }
 }

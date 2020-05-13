@@ -15,7 +15,8 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.io.exists
@@ -133,32 +134,24 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     storageManager.addStreamProvider(ApplicationLevelProvider(), first = true)
   }
 
-  fun beforeApplicationLoaded(application: Application) {
+  fun beforeApplicationLoaded(app: Application) {
     isRepositoryActive = repositoryManager.isRepositoryExists()
 
-    application.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
+    app.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
 
-    val messageBusConnection = application.messageBus.connect()
+    val messageBusConnection = app.messageBus.connect()
     messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
       override fun appWillBeClosed(isRestart: Boolean) {
-        runBlocking {
-          autoSyncManager.autoSync(true)
-        }
+        autoSyncManager.autoSync(true)
       }
     })
-    messageBusConnection.subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
-      override fun beforeProjectLoaded(project: Project) {
-        if (project.isDefault) {
-          return
-        }
-
+    messageBusConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectOpened(project: Project) {
         autoSyncManager.registerListeners(project)
       }
 
-      override fun afterProjectClosed(project: Project) {
-        runBlocking {
-          autoSyncManager.autoSync()
-        }
+      override fun projectClosed(project: Project) {
+        autoSyncManager.autoSync()
       }
     })
   }
@@ -259,9 +252,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
       if (migrateSchemes || migrateKeyMaps || removeOtherXml) {
         // schedule push to avoid merge conflicts
         application.invokeLater {
-          runBlocking {
-            icsManager.autoSyncManager.autoSync(force = true)
-          }
+          icsManager.autoSyncManager.autoSync(force = true)
         }
       }
     }

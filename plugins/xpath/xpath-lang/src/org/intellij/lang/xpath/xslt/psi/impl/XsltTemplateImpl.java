@@ -74,8 +74,7 @@ public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
     }
 
     @Override
-    @NotNull
-    public XsltParameter[] getParameters() {
+    public XsltParameter @NotNull [] getParameters() {
         final PsiElement[] elements = ResolveUtil.collect(new ParamMatcher(getTag(), null));
 
         final XsltParameter[] xsltParameters = new XsltParameter[elements.length];

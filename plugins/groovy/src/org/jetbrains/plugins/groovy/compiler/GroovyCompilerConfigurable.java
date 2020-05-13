@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.compiler;
 
@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
@@ -30,9 +29,9 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -42,6 +41,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -62,7 +62,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     myConfig = GroovyCompilerConfiguration.getInstance(project);
     myExcludes = createExcludedConfigurable(project);
 
-    myExcludesPanel.setBorder(IdeBorderFactory.createTitledBorder("Exclude from stub generation:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myExcludesPanel.setBorder(IdeBorderFactory.createTitledBorder(GroovyBundle.message("settings.compiler.exclude.from.stub.generation"), false, JBUI.insetsTop(8)).setShowLine(false));
   }
 
   public ExcludedEntriesConfigurable getExcludes() {
@@ -92,9 +92,8 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Groovy Compiler";
+    return GroovyBundle.message("configurable.GroovyCompilerConfigurable.display.name");
   }
 
   @Override
@@ -110,7 +109,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(myConfig.getConfigScript(), getExternalizableConfigScript()) ||
+    return !Objects.equals(myConfig.getConfigScript(), getExternalizableConfigScript()) ||
            myInvokeDynamicSupportCB.isSelected() != myConfig.isInvokeDynamic() ||
            myExcludes.isModified();
   }
@@ -148,12 +147,12 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
 
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
     myConfigScriptPath = new TextFieldWithBrowseButton();
-    myConfigScriptPath.addBrowseFolderListener(null, "Select path to Groovy compiler configscript", null, descriptor);
+    myConfigScriptPath.addBrowseFolderListener(null, GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript"), null, descriptor);
 
     myPathPanel.add(createTopLabel(), gb.nextLine());
-    myPathPanel.add(UI.PanelFactory.panel(myConfigScriptPath).withLabel("Path to &configscript:").createPanel(), gb.nextLine().insetTop(13));
+    myPathPanel.add(UI.PanelFactory.panel(myConfigScriptPath).withLabel(GroovyBundle.message("settings.compiler.path.to.configscript")).createPanel(), gb.nextLine().insetTop(13));
 
-    String cbText = "Invoke &dynamic support";
+    String cbText = GroovyBundle.message("settings.compiler.invoke.dynamic.support");
     myInvokeDynamicSupportCB = new JBCheckBox(UIUtil.removeMnemonic(cbText));
     myInvokeDynamicSupportCB.setDisplayedMnemonicIndex(UIUtil.getDisplayMnemonicIndex(cbText));
     myPathPanel.add(myInvokeDynamicSupportCB, gb.nextLine().insetTop(8));
@@ -181,7 +180,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     }
 
     tipComponent.setCaretPosition(0);
-    tipComponent.setText("Alternatively, you can specify Groovy-Eclipse compiler at <a href=\"#\">Java Compiler page</a>");
+    tipComponent.setText(GroovyBundle.message("settings.compiler.alternative"));
     tipComponent.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(tipComponent));

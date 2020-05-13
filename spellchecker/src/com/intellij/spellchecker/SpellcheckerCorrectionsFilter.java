@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class SpellcheckerCorrectionsFilter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellcheckerCorrectionsFilter");
+  private static final Logger LOG = Logger.getInstance(SpellcheckerCorrectionsFilter.class);
   private static final String DICT = "excluded.dic";
   private Dictionary excludedCorrections;
 

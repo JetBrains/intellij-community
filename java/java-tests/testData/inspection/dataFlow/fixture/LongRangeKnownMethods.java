@@ -38,7 +38,7 @@ public class LongRangeKnownMethods {
   }
 
   void test(String s) {
-    if (<warning descr="Condition 's.isEmpty() && s.length() > 2' is always 'false'">s.isEmpty() && <warning descr="Condition 's.length() > 2' is always 'false' when reached">s.length() > 2</warning></warning>) {
+    if (<warning descr="Condition 's.isEmpty() && s.length() > 2' is always 'false'">s.isEmpty() && <warning descr="Condition 's.length() > 2' is always 'false' when reached"><warning descr="Result of 's.length()' is always '0'">s.length()</warning> > 2</warning></warning>) {
       System.out.println("Never");
     }
   }
@@ -115,7 +115,7 @@ public class LongRangeKnownMethods {
 
   void testMin(long x, long y) {
     if (x < 10 && y > 10) {
-      y = Long.min(x, y);
+      y = Long.<warning descr="Result of min is the same as the first argument making the call meaningless.">min</warning>(x, y);
       if (<warning descr="Condition 'y > 20' is always 'false'">y > 20</warning>) {
         System.out.println("Impossible");
       }

@@ -22,4 +22,6 @@ public interface VcsActions {
   @NonNls String ACTION_COPY_REVISION_NUMBER = "Vcs.CopyRevisionNumberAction";
   @NonNls String VCS_LOG_CHANGES_BROWSER_TOOLBAR = "Vcs.Log.ChangesBrowser.Toolbar";
   @NonNls String VCS_OPERATIONS_POPUP = "Vcs.Operations.Popup";
+  @NonNls String DIFF_BEFORE_WITH_LOCAL = "Vcs.ShowDiffWithLocal.Before";
+  @NonNls String DIFF_AFTER_WITH_LOCAL = "Vcs.ShowDiffWithLocal";
 }

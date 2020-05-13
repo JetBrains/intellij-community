@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Maps;
@@ -11,9 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author traff
- */
 public class TerminalShellCommandTest extends TestCase {
   public void testDontAddAnything() {
     if (SystemInfo.isUnix) {
@@ -44,19 +41,17 @@ public class TerminalShellCommandTest extends TestCase {
   }
 
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {
-    List<String> res = Arrays.asList(
-      LocalTerminalDirectRunner.getCommand(path, envs, true));
+    List<String> res = LocalTerminalDirectRunner.getCommand(path, envs, true);
     assertEquals("--rcfile", res.get(1));
     assertTrue(res.get(2).contains(configName));
   }
 
   private static void doTest(String[] expected, String path, Map<String, String> envs) {
-    assertEquals(Arrays.asList(expected), Arrays.asList(
-      LocalTerminalDirectRunner.getCommand(path, envs, true)));
+    assertEquals(Arrays.asList(expected), LocalTerminalDirectRunner.getCommand(path, envs, true));
   }
 
   private static void contains(@NotNull String shellPath, boolean shellIntegration, Map<String, String> envs, String... item) {
-    List<String> result = Arrays.asList(LocalTerminalDirectRunner.getCommand(shellPath, envs, shellIntegration));
+    List<String> result = LocalTerminalDirectRunner.getCommand(shellPath, envs, shellIntegration);
     for (String i : item) {
       assertTrue(i + " isn't in " + StringUtil.join(result, " "), result.contains(i));
     }

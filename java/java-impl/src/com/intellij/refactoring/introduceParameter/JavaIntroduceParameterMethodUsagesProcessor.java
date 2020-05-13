@@ -16,7 +16,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.lang.Language;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,6 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -49,12 +48,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
   private static final Logger LOG =
-    Logger.getInstance("#com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor");
-  private static final JavaLanguage myLanguage = Language.findInstance(JavaLanguage.class);
+    Logger.getInstance(JavaIntroduceParameterMethodUsagesProcessor.class);
 
   private static boolean isJavaUsage(UsageInfo usage) {
     PsiElement e = usage.getElement();
-    return e != null && e.getLanguage().is(myLanguage);
+    return e != null && e.getLanguage().is(JavaLanguage.INSTANCE);
   }
 
   @Override
@@ -185,7 +183,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
       if (element instanceof PsiMethodReferenceExpression && !ApplicationManager.getApplication().isUnitTestMode()) {
-        conflicts.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
+        conflicts.putValue(element, JavaRefactoringBundle.message("expand.method.reference.warning"));
       }
       if (!isMethodUsage(usage)) continue;
       final PsiCall call = RefactoringUtil.getCallExpressionByMethodReference(element);

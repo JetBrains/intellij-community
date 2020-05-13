@@ -8,9 +8,6 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XSetValueAction extends XDebuggerTreeActionBase {
   @Override
   public void update(@NotNull final AnActionEvent e) {

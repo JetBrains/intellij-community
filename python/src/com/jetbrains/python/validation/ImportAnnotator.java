@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyClass;
@@ -28,7 +29,7 @@ public class ImportAnnotator extends PyAnnotator {
   @Override
   public void visitPyFromImportStatement(final PyFromImportStatement node) {
     if (node.isStarImport() && PsiTreeUtil.getParentOfType(node, PyFunction.class, PyClass.class) != null) {
-      getHolder().createWarningAnnotation(node, PyPsiBundle.message("ANN.star.import.at.top.only"));
+      getHolder().newAnnotation(HighlightSeverity.WARNING, PyPsiBundle.message("ANN.star.import.at.top.only")).create();
     }
   }
 }

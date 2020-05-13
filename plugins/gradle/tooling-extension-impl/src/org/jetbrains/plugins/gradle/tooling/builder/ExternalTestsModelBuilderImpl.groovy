@@ -15,8 +15,6 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 
-import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize
-
 @CompileStatic
 class ExternalTestsModelBuilderImpl implements ModelBuilderService {
   @Override
@@ -39,9 +37,9 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
 
   private static List<ExternalTestSourceMapping> getMapping(Project project) {
     def taskToClassesDirs = new LinkedHashMap<Test, Set<String>>()
-    for (task in project.tasks.withType(Test.class)) {
+    project.tasks.withType(Test.class, { Test task ->
       taskToClassesDirs.put(task, getClassesDirs(task))
-    }
+    })
 
     def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSetContainer == null) return Collections.emptyList()
@@ -67,12 +65,9 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
         for (folder in storedSourceFolders) sourceFolders.add(folder)
       }
       def task = entry.key
-      def taskProjectPath = task.project.path == ":" ? "" : task.project.path
-      def cleanTestTaskName = "clean" + capitalize(task.name)
       def defaultExternalTestSourceMapping = new DefaultExternalTestSourceMapping()
       defaultExternalTestSourceMapping.testName = task.name
       defaultExternalTestSourceMapping.testTaskPath = task.path
-      defaultExternalTestSourceMapping.cleanTestTaskPath = taskProjectPath + ":" + cleanTestTaskName
       defaultExternalTestSourceMapping.sourceFolders = sourceFolders
       testSourceMappings.add(defaultExternalTestSourceMapping)
     }

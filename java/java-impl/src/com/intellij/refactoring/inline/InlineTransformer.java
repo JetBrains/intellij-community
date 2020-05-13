@@ -31,7 +31,7 @@ public interface InlineTransformer {
    * @param returnType substituted method return type
    * @return result variable or null if unnecessary
    */
-  PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType);
+  PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference callSite, PsiType returnType);
 
   /**
    * @return true if this transformer is a fallback transformer which may significantly rewrite the method body
@@ -43,9 +43,11 @@ public interface InlineTransformer {
   class NormalTransformer implements InlineTransformer {
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference callSite, PsiType returnType) {
       if (returnType == null || PsiType.VOID.equals(returnType) ||
-          callSite.getParent() instanceof PsiMethodCallExpression && ExpressionUtils.isVoidContext((PsiExpression)callSite.getParent())) {
+          callSite.getElement().getParent() instanceof PsiMethodCallExpression &&
+          ExpressionUtils.isVoidContext((PsiExpression)callSite.getElement().getParent())) {
+        
         InlineUtil.extractReturnValues(methodCopy, false);
         return null;
       }
@@ -78,8 +80,10 @@ public interface InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
-      if (callSite.getParent() instanceof PsiMethodCallExpression && ExpressionUtils.isVoidContext((PsiExpression)callSite.getParent())) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference callSite, PsiType returnType) {
+      if (callSite.getElement().getParent() instanceof PsiMethodCallExpression &&
+          ExpressionUtils.isVoidContext((PsiExpression)callSite.getElement().getParent())) {
+        
         InlineUtil.extractReturnValues(methodCopy, false);
         returnType = PsiType.VOID;
       }

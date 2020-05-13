@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.util.io.StreamUtil
@@ -141,6 +141,34 @@ object GithubApiRequests {
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubBranch>(url).withOperationName("get branches")
+
+      @JvmStatic
+      fun getProtection(repository: GHRepositoryCoordinates, branchName: String): GithubApiRequest<GHBranchProtectionRules> =
+        Get.json(getUrl(repository, urlSuffix, "/$branchName", "/protection"), "application/vnd.github.luke-cage-preview+json")
+    }
+
+    object Commits : Entity("/commits") {
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, ref: String) =
+        object : Get<String>(getUrl(repository, urlSuffix, "/$ref"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              StreamUtil.readText(it, Charsets.UTF_8)
+            })
+          }
+        }.withOperationName("get diff for ref")
+
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, refA: String, refB: String) =
+        object : Get<String>(getUrl(repository, "/compare/$refA...$refB"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              StreamUtil.readText(it, Charsets.UTF_8)
+            })
+          }
+        }.withOperationName("get diff between refs")
     }
 
     object Forks : Entity("/forks") {
@@ -256,9 +284,15 @@ object GithubApiRequests {
 
       object Comments : Entity("/comments") {
         @JvmStatic
+        fun create(repository: GHRepositoryCoordinates, issueId: Long, body: String) =
+          create(repository.serverPath, repository.repositoryPath.owner, repository.repositoryPath.repository, issueId.toString(), body)
+
+        @JvmStatic
         fun create(server: GithubServerPath, username: String, repoName: String, issueId: String, body: String) =
-          Post.json<GithubIssueComment>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
-                                        GithubCreateIssueCommentRequest(body))
+          Post.json<GithubIssueCommentWithHtml>(
+            getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
+            GithubCreateIssueCommentRequest(body),
+            GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
 
         @JvmStatic
         fun pages(server: GithubServerPath, username: String, repoName: String, issueId: String) =
@@ -331,21 +365,21 @@ object GithubApiRequests {
       @JvmStatic
       fun merge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                 commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.merge))
           .withOperationName("merge pull request ${number}")
 
       @JvmStatic
       fun squashMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.squash))
           .withOperationName("squash and merge pull request ${number}")
 
       @JvmStatic
       fun rebaseMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRebaseRequest(headSha))
           .withOperationName("rebase and merge pull request ${number}")
 
@@ -358,14 +392,16 @@ object GithubApiRequests {
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
-        fun add(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+        fun add(server: GithubServerPath, username: String, repoName: String, number: Long,
+                reviewers: Collection<String>, teamReviewers: List<String>) =
           Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                          GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+                          GithubReviewersCollectionRequest(reviewers, teamReviewers))
 
         @JvmStatic
-        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long,
+                   reviewers: Collection<String>, teamReviewers: List<String>) =
           Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                            GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+                            GithubReviewersCollectionRequest(reviewers, teamReviewers))
       }
 
       object Commits : Entity("/commits") {

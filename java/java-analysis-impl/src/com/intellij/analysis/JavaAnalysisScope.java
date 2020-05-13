@@ -16,6 +16,7 @@
 
 package com.intellij.analysis;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -86,7 +87,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   @Override
   public String getShortenName() {
     if (myType == PACKAGE) {
-      return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
+      return JavaAnalysisBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
     }
     return super.getShortenName();
   }
@@ -95,7 +96,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   @Override
   public String getDisplayName() {
     if (myType == PACKAGE) {
-      return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
+      return JavaAnalysisBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
     }
     return super.getDisplayName();
   }

@@ -1,20 +1,20 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('A=x')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('A')
+        PsiElement(param_separator)('=')
+        PsiElement(word)('x')
+        PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('A:=x')
-            PsiElement(})('}')
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('A')
+        PsiElement(param_separator)(':=')
+        PsiElement(word)('x')
+        PsiElement(})('}')

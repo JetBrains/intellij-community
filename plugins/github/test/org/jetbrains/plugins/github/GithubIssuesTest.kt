@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubIssue
@@ -135,18 +136,26 @@ class GithubIssuesTest : GithubTest() {
   }
 
   private fun loadAndCheck(expected: List<Long>, withClosed: Boolean, maximum: Int = 100, assignee: String? = null) {
-    val issues = GithubIssuesLoadingHelper.load(mainAccount.executor, indicator, mainAccount.account.server,
-                                                secondaryAccount.username, repoName, withClosed, maximum, assignee).map {
-      it.number
+    retry(LOG) {
+      val issues = GithubIssuesLoadingHelper.load(mainAccount.executor, indicator, mainAccount.account.server,
+                                                  secondaryAccount.username, repoName, withClosed, maximum, assignee).map {
+        it.number
+      }
+      assertSameElements(issues, expected)
     }
-    assertSameElements(issues, expected)
   }
 
   private fun queryAndCheck(expected: List<Long>, withClosed: Boolean, assignee: String? = null, query: String? = null) {
-    val issues = GithubIssuesLoadingHelper.search(mainAccount.executor, indicator, mainAccount.account.server,
-                                                  secondaryAccount.username, repoName, withClosed, assignee, query).map {
-      it.number
+    retry(LOG) {
+      val issues = GithubIssuesLoadingHelper.search(mainAccount.executor, indicator, mainAccount.account.server,
+                                                    secondaryAccount.username, repoName, withClosed, assignee, query).map {
+        it.number
+      }
+      assertSameElements(issues, expected)
     }
-    assertSameElements(issues, expected)
+  }
+
+  companion object {
+    private val LOG = logger<GithubIssuesTest>()
   }
 }

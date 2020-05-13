@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -27,7 +27,6 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -107,7 +106,7 @@ public class CopiesPanel {
           }
           myCurrentInfoList = newList;
         }
-        Collections.sort(infoList, WCComparator.getInstance());
+        infoList.sort(WCComparator.getInstance());
         updateList(infoList, supportedFormats);
         myRefreshLabel.setEnabled(true);
         showErrorNotification(hasErrors);
@@ -173,12 +172,13 @@ public class CopiesPanel {
       final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(wcInfo.getPath()));
       final VirtualFile root = (vf == null) ? wcInfo.getVcsRoot() : vf;
 
-      final JEditorPane editorPane = new JEditorPane(UIUtil.HTML_MIME, "");
-      editorPane.setEditable(false);
-      editorPane.setFocusable(true);
-      editorPane.setBackground(UIUtil.getPanelBackground());
-      editorPane.setOpaque(false);
-      editorPane.addHyperlinkListener(new HyperlinkListener() {
+      WorkingCopyInfoPanel infoPanel = new WorkingCopyInfoPanel();
+      infoPanel.setInfo(wcInfo);
+      infoPanel.setUpgradeFormats(upgradeFormats);
+      infoPanel.setFocusable(true);
+      infoPanel.setBorder(null);
+      infoPanel.update();
+      infoPanel.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -200,7 +200,7 @@ public class CopiesPanel {
               changeFormat(wcInfo, upgradeFormats);
             } else if (MERGE_FROM.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Merge From")) return;
-              mergeFrom(wcInfo, root, editorPane);
+              mergeFrom(wcInfo, root, infoPanel);
             } else if (CLEANUP.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Cleanup")) return;
               new CleanupWorker(myVcs, singletonList(root)).execute();
@@ -216,8 +216,6 @@ public class CopiesPanel {
           return true;
         }
       });
-      editorPane.setBorder(null);
-      editorPane.setText(formatWc(wcInfo, upgradeFormats));
 
       final JPanel copyPanel = new JPanel(new GridBagLayout());
 
@@ -234,7 +232,7 @@ public class CopiesPanel {
       contForCopy.add(copyPanel, BorderLayout.WEST);
       myPanel.add(contForCopy, gb);
 
-      copyPanel.add(editorPane, gb1);
+      copyPanel.add(infoPanel, gb1);
       gb1.insets = nullIndent;
     }
 
@@ -242,10 +240,8 @@ public class CopiesPanel {
     myPanel.repaint();
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
-  private String formatWc(@NotNull WCInfo info, @NotNull Collection<WorkingCopyFormat> upgradeFormats) {
-    final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
-      .append("</head><body><table bgColor=\"").append(ColorUtil.toHex(UIUtil.getPanelBackground())).append("\">");
+  static String formatWc(@NotNull WCInfo info, @NotNull Collection<WorkingCopyFormat> upgradeFormats) {
+    final StringBuilder sb = new StringBuilder().append("<table>");
 
     sb.append("<tr valign=\"top\"><td colspan=\"3\"><b>").append(info.getPath()).append("</b></td></tr>");
     if (info.hasError()) {
@@ -284,7 +280,7 @@ public class CopiesPanel {
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CONFIGURE_BRANCHES).append("\">Configure Branches</a></td></tr>");
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(MERGE_FROM).append("\"><b>Merge From...</b></a></i></td></tr>");
 
-      sb.append("</table></body></html>");
+      sb.append("</table>");
     }
     return sb.toString();
   }
@@ -490,7 +486,7 @@ public class CopiesPanel {
       if (val1 == null || val2 == null || val1.getClass() != val2.getClass()) return false;
 
       if (! Comparing.equal(val1.getFormat(), val2.getFormat())) return false;
-      if (! Comparing.equal(val1.getPath(), val2.getPath())) return false;
+      if (!Objects.equals(val1.getPath(), val2.getPath())) return false;
       if (! Comparing.equal(val1.getStickyDepth(), val2.getStickyDepth())) return false;
       if (! Comparing.equal(val1.getType(), val2.getType())) return false;
       if (! Comparing.equal(val1.getUrl(), val2.getUrl())) return false;
@@ -531,10 +527,9 @@ public class CopiesPanel {
 
     private static final String FIX_ACTION = "FIX";
     private static final String TITLE = "";
-    private static final String DESCRIPTION = SvnBundle.message("subversion.roots.detection.errors.found.description");
 
     private ErrorsFoundNotification(@NotNull final Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(), TITLE, DESCRIPTION, NotificationType.ERROR, createListener(project));
+      super(NOTIFICATION_GROUP.getDisplayId(), TITLE, getDescription(), NotificationType.ERROR, createListener(project));
     }
 
     private static NotificationListener.Adapter createListener(@NotNull final Project project) {
@@ -546,6 +541,10 @@ public class CopiesPanel {
           }
         }
       };
+    }
+
+    private static String getDescription() {
+      return SvnBundle.message("subversion.roots.detection.errors.found.description");
     }
   }
 }

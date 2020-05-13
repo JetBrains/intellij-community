@@ -181,7 +181,7 @@ public class Factory {
     myFixture.addFileToProject "mod2/Usage.java", '''
 public class Usage {
   {
-    <error descr="Cannot access Class0">Factory.create</error>();
+    Factory.create();
   }
 }
 '''

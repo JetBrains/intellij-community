@@ -7,7 +7,6 @@ package com.jetbrains.python.psi.resolve
 import com.google.common.base.Preconditions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -19,7 +18,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
-import com.intellij.util.Consumer
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
 import com.jetbrains.python.codeInsight.typing.isInStubPackage
@@ -34,6 +32,7 @@ import com.jetbrains.python.psi.impl.PyImportResolver
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
+import java.util.*
 import java.util.regex.Pattern
 
 /**
@@ -68,7 +67,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   if (mayCache) {
     val cachedResults = cache?.get(key)
     if (cachedResults != null) {
-      return relativeResults + cachedResults
+      return (relativeResults + cachedResults).distinct()
     }
   }
 
@@ -271,9 +270,7 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
 
   when {
     context.visitAllModules -> {
-      ModuleManager.getInstance(context.project).modules.forEach {
-        RootVisitorHost.visitRoots(it, true, visitor)
-      }
+      RootVisitorHost.visitRootsInAllModules(context.project, visitor)
       when {
         sdk != null ->
           RootVisitorHost.visitSdkRoots(sdk, visitor)
@@ -353,24 +350,31 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
   if (resolved.isEmpty()) return emptyList()
 
   val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
+  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList<PsiElement>()
 
-  if (groupedResults.containsKey(Priority.NAMESPACE_PACKAGE) &&
-      groupedResults.headMap(Priority.NAMESPACE_PACKAGE).isEmpty()) return groupedResults[Priority.NAMESPACE_PACKAGE]!!
-
+  if (groupedResults.topResultIs(Priority.NAMESPACE_PACKAGE)) return groupedResults[Priority.NAMESPACE_PACKAGE]!! + skeletons
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)
 
-  return if (groupedResults.containsKey(Priority.STUB_PACKAGE) && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty()) {
-    // stub packages + next by priority
-    // because stub packages could be partial
-
-    val stub = groupedResults[Priority.STUB_PACKAGE]!!.first()
-    val nextByPriority = groupedResults.tailMap(Priority.STUB_PACKAGE).values.asSequence().drop(1).take(1).flatten().firstOrNull()
-
-    listOfNotNull(stub, nextByPriority)
+  val priorityResults =  when {
+    groupedResults.isEmpty() -> emptyList()
+    // stub packages can be partial
+    groupedResults.topResultIs(Priority.STUB_PACKAGE) -> firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
+    // third party sdk should not overwrite packages from the same vendor
+    groupedResults.topResultIs(Priority.THIRD_PARTY_SDK) -> firstResultWithFallback(groupedResults, Priority.THIRD_PARTY_SDK)
+    else -> listOf(groupedResults.values.first().first())
   }
-  else {
-    listOf(groupedResults.values.first().first())
-  }
+  return priorityResults + skeletons
+}
+
+private fun SortedMap<Priority, MutableList<PsiElement>>.topResultIs(priority: Priority): Boolean {
+  return containsKey(priority) && headMap(priority).isEmpty()
+}
+
+private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<PsiElement>>, priority: Priority): List<PsiElement> {
+  val first = results[priority]!!.first()
+  val nextByPriority = results.tailMap(priority).values.asSequence().drop(1).take(1).flatten().firstOrNull()
+
+  return listOfNotNull(first, nextByPriority)
 }
 
 /**
@@ -381,34 +385,48 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?) = when
   isUserFile(element, module) -> if (PyiUtil.isPyiFileOfPackage(element)) Priority.USER_STUB else Priority.USER_CODE
   isInStubPackage(element) -> Priority.STUB_PACKAGE
   isInTypeShed(element) -> Priority.TYPESHED
+  isInSkeletons(element) -> Priority.SKELETON
   PyiUtil.isPyiFileOfPackage(element) -> Priority.PROVIDED_STUB
   isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
+  isInProvidedSdk(element) -> Priority.THIRD_PARTY_SDK
   else -> Priority.OTHER
 }
 
+fun isInSkeletons(element: PsiElement): Boolean {
+  val sdk = PythonSdkUtil.findPythonSdk(element) ?: return false
+  val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false
+  return PythonSdkUtil.isFileInSkeletons(vFile, sdk)
+}
+
+private fun isInProvidedSdk(element: PsiElement): Boolean =
+  PyThirdPartySdkDetector.EP_NAME.extensions().anyMatch { it.isInThirdPartySdk(element) }
+
 private fun isNamespacePackage(element: PsiElement): Boolean {
   if (element is PsiDirectory) {
-    val level = PyUtil.getLanguageLevelForVirtualFile(element.project, element.virtualFile)
+    val level = LanguageLevel.forElement(element)
     val initFile = PyUtil.turnDirIntoInit(element) ?: return !level.isPython2
-    val initText = initFile.text ?: return false
-    return isNamespaceDeclaration(initText, pkgutilsInitPatterns) || isNamespaceDeclaration(initText, pkgResourcesInitPatterns)
+    val initLines = initFile.text.lineSequence()
+      .filterNot { line -> line.trim().let { it.isEmpty() || it.startsWith("#") } }
+      .take(2)
+      .toList()
+    return when (initLines.size) {
+      1 -> oneLineNamespaceDeclarations.any { it.matcher(initLines.first()).matches() }
+      2 -> multilineNamespaceDeclarations.any { it[0].matcher(initLines[0]).matches() && it[1].matcher(initLines[1]).matches() }
+      else -> false
+    }
   }
   return false
 }
 
-private val pkgResourcesInitPatterns = listOf(
-  Pattern.compile("^__import__\\(['\"]pkg_resources['\"]\\).declare_namespace\\(__name__\\)\\s*\$"),
-  Pattern.compile("^from pkg_resources import declare_namespace\\Rdeclare_namespace\\(__name__\\)\\s*\$"),
-  Pattern.compile("^import pkg_resources\\Rpkg_resources.declare_namespace\\(__name__\\)\\s*\$"))
+private val oneLineNamespaceDeclarations = listOf(
+  Pattern.compile("^__path__[ ]?=[ ]?__import__\\(['\"]pkgutil['\"]\\).extend_path\\(__path__, __name__\\).*"),
+  Pattern.compile("^__import__\\(['\"]pkg_resources['\"]\\).declare_namespace\\(__name__\\).*"))
 
-
-private val pkgutilsInitPatterns = listOf(
-  Pattern.compile("^__path__[ ]?=[ ]?__import__\\(['\"]pkgutil['\"]\\).extend_path\\(__path__, __name__\\)\\s*\$"),
-  Pattern.compile("^from pkgutil import extend_path\\R__path__[ ]?=[ ]?extend_path\\(__path__,[ ]?__name__\\)\\s*\$"),
-  Pattern.compile("^import pkgutil\\R__path__[ ]?=[ ]?pkgutil\\.extend_path\\(__path__,[ ]?__name__\\)\\s*\$"))
-
-private fun isNamespaceDeclaration(text: String, initTextPatterns: List<Pattern>): Boolean =
-  initTextPatterns.asSequence().map { it.matcher(text) }.any { it.matches() }
+private val multilineNamespaceDeclarations = listOf(
+  listOf(Pattern.compile("^from pkgutil import extend_path.*"), Pattern.compile("^__path__[ ]?=[ ]?extend_path\\(__path__,[ ]?__name__\\).*")),
+  listOf(Pattern.compile("^import pkgutil.*"), Pattern.compile("^__path__[ ]?=[ ]?pkgutil\\.extend_path\\(__path__,[ ]?__name__\\).*")),
+  listOf(Pattern.compile("^from pkg_resources import declare_namespace.*"), Pattern.compile("^declare_namespace\\(__name__\\).*")),
+  listOf(Pattern.compile("^import pkg_resources.*"), Pattern.compile("^pkg_resources.declare_namespace\\(__name__\\).*")))
 
 
 private fun isUserFile(element: PsiElement, module: Module?) =
@@ -430,6 +448,8 @@ private enum class Priority {
   STUB_PACKAGE, // pyi file located in some stub package
   INLINE_PACKAGE, // py file located in some inline package
   TYPESHED, // pyi file located in typeshed
+  THIRD_PARTY_SDK, // project-specific sdk, e.g Google App Engine one
   OTHER, // other cases, e.g. py file located inside installed lib
-  NAMESPACE_PACKAGE // namespace packag e has the lowest priority
+  NAMESPACE_PACKAGE, // namespace package but may contain several entries in resolve result
+  SKELETON // generated skeletons have lowest priority but are always included in the resolve result as a fallback
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,6 @@ public class UnnecessaryReturnInspection extends BaseInspection {
   @NotNull
   public String getID() {
     return "UnnecessaryReturnStatement";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.return.display.name");
   }
 
   @Override
@@ -133,7 +127,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     if (codeBlock == null) {
       return false;
     }
-    if (!ControlFlowUtils.blockCompletesWithStatement(codeBlock, statement)) {
+    if (!ControlFlowUtils.blockCompletesWithStatement(codeBlock, statement) || ControlFlowUtils.isInFinallyBlock(statement)) {
       return false;
     }
     if (ignoreInThenBranch && isInThenBranch(statement)) {
@@ -142,7 +136,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     return true;
   }
 
-  private static boolean isInThenBranch(PsiStatement statement) {
+  static boolean isInThenBranch(PsiStatement statement) {
     final PsiIfStatement ifStatement =
       PsiTreeUtil.getParentOfType(statement, PsiIfStatement.class, true, PsiMethod.class, PsiLambdaExpression.class);
     if (ifStatement == null) {

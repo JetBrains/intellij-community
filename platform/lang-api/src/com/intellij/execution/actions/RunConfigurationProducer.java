@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -105,7 +106,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
       LOG.error(getConfigurationFactory() + " produced wrong type", e);
       return null;
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException | IndexNotReadyException e) {
       throw e;
     }
     catch (Throwable e) {

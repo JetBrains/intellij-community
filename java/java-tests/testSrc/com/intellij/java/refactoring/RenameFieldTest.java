@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,6 +95,10 @@ public class RenameFieldTest extends LightRefactoringTestCase {
                                                                          .ELEMENT_NAME_ACCEPTED |
                                                                           TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
-    new RenameProcessor(getProject(), element, newName, false, false).run();
+    RenameProcessor processor = new RenameProcessor(getProject(), element, newName, false, false);
+    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
+      processor.addRenamerFactory(factory);
+    }
+    processor.run();
   }
 }

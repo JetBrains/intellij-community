@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.BuildModelConsumer;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.ProjectModelConsumer;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
+import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.Exceptions;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
@@ -55,7 +56,7 @@ import java.util.*;
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
   private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new THashSet<ProjectImportModelProvider>();
   private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new THashSet<ProjectImportModelProvider>();
-  private final Set<Class> myTargetTypes = new THashSet<Class>();
+  private final Set<Class<?>> myTargetTypes = new THashSet<Class<?>>();
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private final boolean myUseCustomSerialization;
@@ -90,7 +91,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  public void addTargetTypes(@NotNull Set<Class> targetTypes) {
+  public void addTargetTypes(@NotNull Set<Class<?>> targetTypes) {
     myTargetTypes.addAll(targetTypes);
   }
 
@@ -139,14 +140,17 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         addBuildModels(mySerializer, controller, myAllModels, includedBuild, isProjectsLoadedAction);
       }
     }
-    return isProjectsLoadedAction && myAllModels.hasModels() ? null : myAllModels;
+    if (isProjectsLoadedAction) {
+      controller.getModel(TurnOffDefaultTasks.class);
+    }
+    return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
 
   @NotNull
   private static Build convert(@NotNull GradleBuild build) {
-    DefaultBuild rootProject = new DefaultBuild(build.getBuildIdentifier().getRootDir());
+    DefaultBuild rootProject = new DefaultBuild(build.getRootProject().getName(), build.getBuildIdentifier().getRootDir());
     for (BasicGradleProject project : build.getProjects()) {
-      rootProject.addProject(project.getProjectIdentifier());
+      rootProject.addProject(project.getName(), project.getProjectIdentifier());
     }
     return rootProject;
   }
@@ -308,7 +312,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       addModel(ideaProject, IdeaProject.class);
     }
 
+    /**
+     * @deprecated use {@link #getModel(Class<IdeaProject>)}
+     */
     @NotNull
+    @Deprecated
     public IdeaProject getIdeaProject() {
       IdeaProject ideaProject = getModel(IdeaProject.class);
       assert ideaProject != null;
@@ -435,10 +443,19 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   private final static class DefaultBuild implements Build, Serializable {
+    private final String myName;
     private final DefaultBuildIdentifier myBuildIdentifier;
-    private final Collection<ProjectModel> myProjects = new ArrayList<ProjectModel>(0);
+    private final Collection<Project> myProjects = new ArrayList<Project>(0);
 
-    private DefaultBuild(File rootDir) {myBuildIdentifier = new DefaultBuildIdentifier(rootDir);}
+    private DefaultBuild(String name, File rootDir) {
+      myName = name;
+      myBuildIdentifier = new DefaultBuildIdentifier(rootDir);
+    }
+
+    @Override
+    public String getName() {
+      return myName;
+    }
 
     @Override
     public BuildIdentifier getBuildIdentifier() {
@@ -446,22 +463,29 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     @Override
-    public Collection<ProjectModel> getProjects() {
+    public Collection<Project> getProjects() {
       return myProjects;
     }
 
-    private void addProject(final ProjectIdentifier projectIdentifier) {
+    private void addProject(String name, final ProjectIdentifier projectIdentifier) {
       final String projectPath = projectIdentifier.getProjectPath();
       File rootDir = myBuildIdentifier.getRootDir();
       assert rootDir.getPath().equals(projectIdentifier.getBuildIdentifier().getRootDir().getPath());
-      myProjects.add(new DefaultProjectModel(rootDir, projectPath));
+      myProjects.add(new DefaultProjectModel(name, rootDir, projectPath));
     }
 
-    private final static class DefaultProjectModel implements ProjectModel, Serializable {
+    private final static class DefaultProjectModel implements Project, Serializable {
+      private final String myName;
       private final DefaultProjectIdentifier myProjectIdentifier;
 
-      private DefaultProjectModel(@NotNull File rootDir, @NotNull String projectPath) {
+      private DefaultProjectModel(@NotNull String name, @NotNull File rootDir, @NotNull String projectPath) {
+        myName = name;
         myProjectIdentifier = new DefaultProjectIdentifier(rootDir, projectPath);
+      }
+
+      @Override
+      public String getName() {
+        return myName;
       }
 
       @Override
@@ -474,10 +498,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private final static class MyBuildController implements BuildController {
     private final BuildController myDelegate;
     private final GradleBuild myMainGradleBuild;
+    private final Model myMyMainGradleBuildRootProject;
 
     private MyBuildController(@NotNull BuildController buildController, @NotNull GradleBuild mainGradleBuild) {
       myDelegate = buildController;
       myMainGradleBuild = mainGradleBuild;
+      myMyMainGradleBuildRootProject = myMainGradleBuild.getRootProject();
     }
 
     @Override
@@ -486,7 +512,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         //noinspection unchecked
         return (T)myMainGradleBuild;
       }
-      return myDelegate.getModel(aClass);
+      return myDelegate.getModel(myMyMainGradleBuildRootProject, aClass);
     }
 
     @Override
@@ -495,7 +521,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         //noinspection unchecked
         return (T)myMainGradleBuild;
       }
-      return myDelegate.findModel(aClass);
+      return myDelegate.findModel(myMyMainGradleBuildRootProject, aClass);
     }
 
     @Override
@@ -526,12 +552,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @Override
     public <T, P> T getModel(Class<T> aClass, Class<P> aClass1, Action<? super P> action)
       throws UnsupportedVersionException {
-      return myDelegate.getModel(aClass, aClass1, action);
+      return myDelegate.getModel(myMyMainGradleBuildRootProject, aClass, aClass1, action);
     }
 
     @Override
     public <T, P> T findModel(Class<T> aClass, Class<P> aClass1, Action<? super P> action) {
-      return myDelegate.findModel(aClass, aClass1, action);
+      return myDelegate.findModel(myMyMainGradleBuildRootProject, aClass, aClass1, action);
     }
 
     @Override

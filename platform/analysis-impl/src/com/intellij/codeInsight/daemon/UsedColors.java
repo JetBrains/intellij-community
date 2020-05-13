@@ -101,7 +101,7 @@ public class UsedColors {
   }
 
   @Contract(pure = true)
-  private static int indexOfMin(@NotNull int[] values, int start, int end) {
+  private static int indexOfMin(int @NotNull [] values, int start, int end) {
     int min = Integer.MAX_VALUE;
     int minIndex = start;
     for (int i = start; i < end; i++) {

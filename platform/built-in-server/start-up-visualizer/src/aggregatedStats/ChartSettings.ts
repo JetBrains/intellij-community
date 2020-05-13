@@ -5,10 +5,13 @@ export class ChartSettings {
   serverUrl: string = "https://ij-perf.labs.jb.gg"
 
   selectedProduct: string = ""
+  selectedProject: string = ""
   selectedMachine: Array<string> = []
 
   aggregationOperator: "median" | "min" | "max" | "quantile" = DEFAULT_AGGREGATION_OPERATOR
   quantile: number = 50
+
+  granularity: "as is" | "2 hour" | "day" | "week" | "month" = "2 hour"
 
   showScrollbarXPreview: boolean = false
 }

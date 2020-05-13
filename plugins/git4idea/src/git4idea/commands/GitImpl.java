@@ -55,7 +55,7 @@ public class GitImpl extends GitImplBase {
    */
   @NotNull
   @Override
-  public GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners) {
+  public GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, GitLineHandlerListener @NotNull ... listeners) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
@@ -193,7 +193,7 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult clone(@NotNull final Project project, @NotNull final File parentDirectory, @NotNull final String url,
-                                @NotNull final String clonedDirectoryName, @NotNull final GitLineHandlerListener... listeners) {
+                                @NotNull final String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
       GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
       handler.setSilent(false);
@@ -257,7 +257,7 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   @Override
-  public GitCommandResult stashPop(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+  public GitCommandResult stashPop(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.STASH);
     handler.addParameters("pop");
     addListeners(handler, listeners);
@@ -267,7 +267,7 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge,
-                                @Nullable List<String> additionalParams, @NotNull GitLineHandlerListener... listeners) {
+                                @Nullable List<String> additionalParams, GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler mergeHandler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.MERGE);
     mergeHandler.setSilent(false);
     mergeHandler.addParameters(branchToMerge);
@@ -292,7 +292,7 @@ public class GitImpl extends GitImplBase {
                                    @Nullable String newBranch,
                                    boolean force,
                                    boolean detach,
-                                   @NotNull GitLineHandlerListener... listeners) {
+                                   GitLineHandlerListener @NotNull ... listeners) {
     return checkout(repository, reference, newBranch, force, detach, false, listeners);
   }
 
@@ -310,7 +310,7 @@ public class GitImpl extends GitImplBase {
                                    boolean force,
                                    boolean detach,
                                    boolean withReset,
-                                   @NotNull GitLineHandlerListener... listeners) {
+                                   GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
@@ -368,7 +368,7 @@ public class GitImpl extends GitImplBase {
   @Override
   public GitCommandResult deleteTag(@NotNull GitRepository repository,
                                     @NotNull String tagName,
-                                    @NotNull GitLineHandlerListener... listeners) {
+                                    GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.TAG);
     h.setSilent(false);
     h.addParameters("-d");
@@ -387,7 +387,7 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult branchDelete(@NotNull GitRepository repository,
                                        @NotNull String branchName,
                                        boolean force,
-                                       @NotNull GitLineHandlerListener... listeners) {
+                                       GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
@@ -426,7 +426,7 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult renameBranch(@NotNull GitRepository repository,
                                        @NotNull String currentName,
                                        @NotNull String newName,
-                                       @NotNull GitLineHandlerListener... listeners) {
+                                       GitLineHandlerListener @NotNull ... listeners) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
@@ -437,7 +437,7 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
-                                @NotNull GitLineHandlerListener... listeners) {
+                                GitLineHandlerListener @NotNull ... listeners) {
     return reset(repository, mode.getArgument(), target, listeners);
   }
 
@@ -449,7 +449,7 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   private GitCommandResult reset(@NotNull GitRepository repository, @NotNull String argument, @Nullable String target,
-                                 @NotNull GitLineHandlerListener... listeners) {
+                                 GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.RESET);
     handler.addParameters(argument);
     if (target != null) {
@@ -479,7 +479,7 @@ public class GitImpl extends GitImplBase {
                                @Nullable String url,
                                @NotNull String spec,
                                boolean updateTracking,
-                               @NotNull GitLineHandlerListener... listeners) {
+                               GitLineHandlerListener @NotNull ... listeners) {
     return doPush(repository, remote, singleton(url), spec, false, updateTracking, false, Collections.emptyList(), null, listeners);
   }
 
@@ -503,7 +503,7 @@ public class GitImpl extends GitImplBase {
                                   final boolean skipHook,
                                   final List<? extends GitPushParams.ForceWithLease> forceWithLease,
                                   @Nullable final String tagMode,
-                                  @NotNull final GitLineHandlerListener... listeners) {
+                                  final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
       final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
       h.setUrls(remoteUrls);
@@ -546,7 +546,7 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   @Override
-  public GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params) {
+  public GitCommandResult show(@NotNull GitRepository repository, String @NotNull ... params) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.SHOW);
     handler.addParameters(params);
     return runCommand(handler);
@@ -555,7 +555,7 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
-                                     @NotNull GitLineHandlerListener... listeners) {
+                                     GitLineHandlerListener @NotNull ... listeners) {
     return cherryPick(repository, hash, autoCommit, true, listeners);
   }
 
@@ -565,7 +565,7 @@ public class GitImpl extends GitImplBase {
                                      @NotNull String hash,
                                      boolean autoCommit,
                                      boolean addCherryPickedFromSuffix,
-                                     @NotNull GitLineHandlerListener... listeners) {
+                                     GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHERRY_PICK);
     if (addCherryPickedFromSuffix) {
       handler.addParameters("-x");
@@ -705,7 +705,7 @@ public class GitImpl extends GitImplBase {
   @Override
   public GitRebaseCommandResult rebase(@NotNull GitRepository repository,
                                        @NotNull GitRebaseParams parameters,
-                                       @NotNull GitLineHandlerListener... listeners) {
+                                       GitLineHandlerListener @NotNull ... listeners) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE, REBASE_CONFIG_PARAMS);
@@ -724,7 +724,7 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   @Override
-  public GitRebaseCommandResult rebaseAbort(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+  public GitRebaseCommandResult rebaseAbort(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners) {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REBASE);
     handler.addParameters("--abort");
     addListeners(handler, listeners);
@@ -733,20 +733,20 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   @Override
-  public GitRebaseCommandResult rebaseContinue(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+  public GitRebaseCommandResult rebaseContinue(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners) {
     return rebaseResume(repository, GitRebaseResumeMode.CONTINUE, listeners);
   }
 
   @NotNull
   @Override
-  public GitRebaseCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+  public GitRebaseCommandResult rebaseSkip(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners) {
     return rebaseResume(repository, GitRebaseResumeMode.SKIP, listeners);
   }
 
   @NotNull
   private GitRebaseCommandResult rebaseResume(@NotNull GitRepository repository,
                                               @NotNull GitRebaseResumeMode rebaseMode,
-                                              @NotNull GitLineHandlerListener[] listeners) {
+                                              GitLineHandlerListener @NotNull [] listeners) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE, REBASE_CONFIG_PARAMS);
@@ -783,7 +783,7 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult revert(@NotNull GitRepository repository,
                                  @NotNull String commit,
                                  boolean autoCommit,
-                                 @NotNull GitLineHandlerListener... listeners) {
+                                 GitLineHandlerListener @NotNull ... listeners) {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REVERT);
     handler.addParameters(commit);
     if (!autoCommit) {
@@ -858,7 +858,7 @@ public class GitImpl extends GitImplBase {
     }
   }
 
-  private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
+  private static void addListeners(@NotNull GitLineHandler handler, GitLineHandlerListener @NotNull ... listeners) {
     addListeners(handler, asList(listeners));
   }
 

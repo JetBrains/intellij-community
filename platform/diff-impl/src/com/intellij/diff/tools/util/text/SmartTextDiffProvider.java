@@ -30,7 +30,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,8 +94,8 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                 @NotNull Runnable rediff,
                                 @NotNull Disposable disposable,
                                 @NotNull DiffIgnoredRangeProvider ignoredRangeProvider,
-                                @NotNull IgnorePolicy[] ignorePolicies,
-                                @NotNull HighlightPolicy[] highlightPolicies) {
+                                IgnorePolicy @NotNull [] ignorePolicies,
+                                HighlightPolicy @NotNull [] highlightPolicies) {
     super(settings, rediff, disposable, ignorePolicies, highlightPolicies);
     myProject = project;
     myContent1 = content1;
@@ -166,7 +165,6 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
   private static DiffIgnoredRangeProvider getIgnoredRangeProvider(@Nullable Project project,
                                                                   @NotNull DiffContent content1,
                                                                   @NotNull DiffContent content2) {
-    if (!Registry.is("diff.smart.ignore.enabled")) return null;
     for (DiffIgnoredRangeProvider provider : DiffIgnoredRangeProvider.EP_NAME.getExtensions()) {
       if (provider.accepts(project, content1) &&
           provider.accepts(project, content2)) {

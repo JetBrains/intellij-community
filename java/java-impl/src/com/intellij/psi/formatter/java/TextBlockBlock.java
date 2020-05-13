@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -6,10 +6,10 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +50,9 @@ public class TextBlockBlock extends AbstractJavaBlock {
 
   @NotNull
   private List<TextRange> extractLinesRanges() {
-    PsiLiteralExpressionImpl literal = ObjectUtils.tryCast(myNode.getPsi(), PsiLiteralExpressionImpl.class);
-    if (literal == null || literal.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL) return Collections.emptyList();
-    int indent = literal.getTextBlockIndent();
+    PsiLiteralExpression literal = ObjectUtils.tryCast(myNode.getPsi(), PsiLiteralExpression.class);
+    if (literal == null || !literal.isTextBlock()) return Collections.emptyList();
+    int indent = PsiLiteralUtil.getTextBlockIndent(literal);
     if (indent == -1) return Collections.emptyList();
     String text = myNode.getText();
 

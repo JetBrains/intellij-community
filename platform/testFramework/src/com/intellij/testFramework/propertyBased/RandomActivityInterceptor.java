@@ -2,10 +2,12 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,15 @@ class RandomActivityInterceptor extends UiInterceptors.UiInterceptor<Object> {
     UiInterceptors.register(this);
     if (component instanceof JBPopup) {
       JBPopup popup = (JBPopup)component;
+
+      // effective there is a chain of 3 nonBlockingRead actions
+      for (int i = 0; i < 3; i++) {
+        JBLoadingPanel loadingPanel = popup.isDisposed() ? null : UIUtil.findComponentOfType(popup.getContent(), JBLoadingPanel.class);
+        if (loadingPanel == null) break;
+        UIUtil.dispatchAllInvocationEvents();
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      }
+
       JBList<?> content = popup.isDisposed() ? null : UIUtil.findComponentOfType(popup.getContent(), JBList.class);
       if (content == null) {
         fail("JBList not found under " + popup.getContent());

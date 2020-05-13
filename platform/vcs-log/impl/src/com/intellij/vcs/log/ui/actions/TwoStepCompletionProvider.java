@@ -41,12 +41,12 @@ public abstract class TwoStepCompletionProvider<T> extends ValuesCompletionProvi
 
     while (true) {
       try {
+        ProgressManager.checkCanceled();
         List<? extends T> moreValues = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
         if (moreValues != null) {
           addValues(result, moreValues);
           break;
         }
-        ProgressManager.checkCanceled();
       }
       catch (InterruptedException | CancellationException e) {
         break;

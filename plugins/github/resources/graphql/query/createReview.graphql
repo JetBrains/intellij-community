@@ -1,0 +1,5 @@
+mutation ($pullRequestId: ID!, $event: PullRequestReviewEvent!, $body: String){
+    addPullRequestReview(input: {pullRequestId: $pullRequestId, event: $event, body: $body}) {
+        __typename
+    }
+}

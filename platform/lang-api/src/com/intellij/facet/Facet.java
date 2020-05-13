@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents a specific instance of facet
  *
  * @see FacetType
- *
- * @author nik
  */
 public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable, ProjectModelElement {
   public static final Facet[] EMPTY_ARRAY = new Facet[0];

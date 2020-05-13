@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.*;
@@ -265,10 +265,10 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
 
     @NotNull
     @Override
-    public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
-                                               @NotNull Collection<AbstractTreeNode> children,
+    public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                               @NotNull Collection<AbstractTreeNode<?>> children,
                                                ViewSettings settings) {
-      ArrayList<AbstractTreeNode> result = new ArrayList<>();
+      ArrayList<AbstractTreeNode<?>> result = new ArrayList<>();
 
       for (final AbstractTreeNode child : children) {
         ProjectViewNode treeNode = (ProjectViewNode)child;
@@ -279,7 +279,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
           treeNode = new ProjectViewNode<PsiFileSystemItem>(myProject, (PsiFileSystemItem)o, settings) {
             @Override
             @NotNull
-            public Collection<AbstractTreeNode> getChildren() {
+            public Collection<AbstractTreeNode<?>> getChildren() {
               return child.getChildren();
             }
 

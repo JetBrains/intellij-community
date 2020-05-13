@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsProject;
 
-/**
- * @author nik
- */
 public abstract class JpsProjectExtensionSerializer extends JpsElementExtensionSerializerBase<JpsProject> {
   public static final String WORKSPACE_FILE = "workspace.xml";
 

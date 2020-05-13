@@ -82,7 +82,8 @@ public abstract class CodeStyleManager  {
    * @throws IncorrectOperationException if the file to reformat is read-only.
    * @see #reformatText(PsiFile, int, int)
    */
-  @NotNull public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
+  @NotNull
+  public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
   /**
    * Reformats part of the contents of the specified PSI element, enforces braces
@@ -113,9 +114,9 @@ public abstract class CodeStyleManager  {
    * @see #reformatText(PsiFile, int, int)
    */
   public abstract PsiElement reformatRange(@NotNull PsiElement element,
-                                           int startOffset,
-                                           int endOffset,
-                                           boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
+                                  int startOffset,
+                                  int endOffset,
+                                  boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
   /**
    * Delegates to the {@link #reformatText(PsiFile, Collection)} with the single range defined by the given offsets.

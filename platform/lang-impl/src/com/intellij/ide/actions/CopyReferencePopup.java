@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
@@ -17,6 +19,7 @@ import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,12 +57,13 @@ public class CopyReferencePopup extends DumbAwareAction {
 
     DataContext dataContext = cloneDataContext(e);
     ListPopup popup =
-      new PopupFactoryImpl.ActionGroupPopup("Copy", actionGroup, e.getDataContext(), true, true, false, true, null, -1, null,
-                                            COPY_REFERENCE_POPUP_PLACE) {
+      new PopupFactoryImpl.ActionGroupPopup(LangBundle.message("popup.title.copy"), actionGroup, e.getDataContext(), true, true, false,
+                                            true, null, -1, null, COPY_REFERENCE_POPUP_PLACE) {
       @Override
       protected ListCellRenderer<PopupFactoryImpl.ActionItem> getListElementRenderer() {
         return new PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
           private JLabel myInfoLabel;
+          private JLabel myShortcutLabel;
 
           @Override
           protected JComponent createItemComponent() {
@@ -69,8 +73,16 @@ public class CopyReferencePopup extends DumbAwareAction {
             myInfoLabel = new JLabel();
             myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
 
+            myShortcutLabel = new JLabel();
+            myShortcutLabel.setBorder(JBUI.Borders.emptyLeft(DEFAULT_HGAP));
+            myShortcutLabel.setForeground(UIUtil.getContextHelpForeground());
+
             JPanel textPanel = new JPanel(new BorderLayout());
-            textPanel.add(myTextLabel, BorderLayout.WEST);
+            JPanel titlePanel = new JPanel(new BorderLayout());
+            titlePanel.add(myTextLabel, BorderLayout.WEST);
+            titlePanel.add(myShortcutLabel, BorderLayout.CENTER);
+
+            textPanel.add(titlePanel, BorderLayout.WEST);
             textPanel.add(myInfoLabel, BorderLayout.CENTER);
             return layoutComponent(textPanel);
           }
@@ -93,13 +105,15 @@ public class CopyReferencePopup extends DumbAwareAction {
             java.util.List<PsiElement> elements = CopyReferenceUtil.getElementsToCopy(editor, dataContext);
             String qualifiedName = null;
             if (action instanceof CopyPathProvider) {
-              qualifiedName = ((CopyPathProvider)action).getQualifiedName(getProject(), elements, editor);
+              qualifiedName = ((CopyPathProvider)action).getQualifiedName(getProject(), elements, editor, dataContext);
             }
 
             if (qualifiedName != null) {
               myInfoLabel.setText(qualifiedName);
             }
-            myInfoLabel.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+            Color foreground = isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor();
+            myInfoLabel.setForeground(foreground);
+            myShortcutLabel.setForeground(foreground);
 
             MnemonicNavigationFilter<Object> filter = myStep.getMnemonicNavigationFilter();
             int pos = filter == null ? -1 : filter.getMnemonicPos(actionItem);
@@ -108,6 +122,11 @@ public class CopyReferencePopup extends DumbAwareAction {
               text = text.substring(0, pos) + text.substring(pos + 1);
               myTextLabel.setText(text);
               myTextLabel.setDisplayedMnemonicIndex(pos);
+            }
+
+            if (action instanceof CopyPathProvider) {
+              Shortcut shortcut = ArrayUtil.getFirstElement(action.getShortcutSet().getShortcuts());
+              myShortcutLabel.setText(shortcut != null ? KeymapUtil.getShortcutText(shortcut) : null);
             }
           }
         };

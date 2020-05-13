@@ -39,16 +39,8 @@ public class ClassWithTooManyTransitiveDependenciesInspection
   @SuppressWarnings({"PublicField"})
   public int limit = 35;
 
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.with.too.many.transitive.dependencies.display.name");
-  }
-
-  @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,

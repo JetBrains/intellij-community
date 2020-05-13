@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutableValidator;
@@ -6,7 +6,10 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -21,7 +24,8 @@ import org.jetbrains.idea.svn.api.CmdVersionClient;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class SvnExecutableChecker extends ExecutableValidator {
+@Service
+public final class SvnExecutableChecker extends ExecutableValidator implements Disposable {
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 
   public static final String SVN_EXECUTABLE_LOCALE_REGISTRY_KEY = "svn.executable.locale";
@@ -32,16 +36,20 @@ public final class SvnExecutableChecker extends ExecutableValidator {
 
   @NotNull private final SvnVcs myVcs;
 
-  public SvnExecutableChecker(@NotNull SvnVcs vcs) {
-    super(vcs.getProject(), getNotificationTitle(), getWrongPathMessage());
+  public SvnExecutableChecker(@NotNull Project project) {
+    super(project, getNotificationTitle(), getWrongPathMessage());
 
-    myVcs = vcs;
-    Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener.Adapter() {
+    myVcs = SvnVcs.getInstance(project);
+    Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         myVcs.checkCommandLineVersion();
       }
-    }, myProject);
+    }, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override

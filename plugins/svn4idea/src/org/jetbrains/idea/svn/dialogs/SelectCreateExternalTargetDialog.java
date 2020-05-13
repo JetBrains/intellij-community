@@ -69,8 +69,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[] {getOKAction(), getCancelAction()};
   }
   @Override
@@ -87,7 +86,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   @Override
   protected JPopupMenu createPopup(boolean toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
-    DefaultActionGroup newGroup = new DefaultActionGroup("_New", true);
+    DefaultActionGroup newGroup = DefaultActionGroup.createPopupGroup(() -> "_New");
     final RepositoryBrowserComponent browser = getRepositoryBrowser();
     newGroup.add(new AddLocationAction(browser));
     newGroup.add(new MkDirAction(browser));

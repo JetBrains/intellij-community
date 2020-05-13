@@ -32,8 +32,7 @@ public abstract class PsiActionSupportFactory {
   }
 
   public interface PsiElementSelector {
-    @NotNull
-    PsiElement[] getSelectedElements();
+    PsiElement @NotNull [] getSelectedElements();
   }
 
   public abstract CopyPasteSupport createPsiBasedCopyPasteSupport(Project project, JComponent keyReceiver, PsiElementSelector dataSelector);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoriesScope;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,10 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author egor
- */
-public class AlternativeJreClassFinder extends NonClasspathClassFinder {
+public final class AlternativeJreClassFinder extends NonClasspathClassFinder {
   public AlternativeJreClassFinder(Project project) {
     super(project);
 
@@ -47,7 +44,7 @@ public class AlternativeJreClassFinder extends NonClasspathClassFinder {
     if (sessions.isEmpty()) {
       return Collections.emptyList();
     }
-    List<VirtualFile> res = ContainerUtil.newSmartList();
+    List<VirtualFile> res = new SmartList<>();
     for (DebuggerSession session : sessions) {
       Sdk jre = session.getAlternativeJre();
       if (jre != null) {

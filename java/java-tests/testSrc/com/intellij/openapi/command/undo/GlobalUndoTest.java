@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.IncorrectOperationException;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.concurrent.FutureTask;
 
 public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   private TestDialog myOldTestDialogValue;
@@ -125,6 +123,18 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     checkAllFilesDeleted();
   }
 
+  public void testUndoFileCopy() throws Exception {
+    VirtualFile file = createFile("a.txt", "").getVirtualFile();
+
+    VirtualFile dir = file.getParent();
+    VirtualFile copy = WriteCommandAction.writeCommandAction(myProject).compute(() -> file.copy(this, dir, "b.txt"));
+
+    globalUndo();
+
+    assertTrue(file.isValid());
+    assertFalse(copy.isValid());
+  }
+
   public void testUndoRenameClass() {
     String firstClassName = "Class1";
     String secondClassName = "Class223467234678234678236478263478";
@@ -169,23 +179,9 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     createClass("foo");
     final PsiFile file = myContainingFile;
     final Editor editor = openEditor("foo.java");
-    reformatFile(file);
+    new ReformatCodeProcessor(myProject, file, null, false).run();
     undo(editor);
     assertFileDoesNotExist("foo", myRoot);
-  }
-
-  private void reformatFile(final PsiFile file) throws IncorrectOperationException {
-    final Runnable r = new ReformatCodeProcessor(myProject, file, null, false) {
-      @Override
-      @NotNull
-      public FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly)
-        throws IncorrectOperationException {
-        return super.preprocessFile(file, false);
-      }
-    }.preprocessFile(file, false);
-
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(r), "Reformat", null,
-                                                  UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
 
   public void testUndoMoveFile() {
@@ -1046,7 +1042,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   public void testUndoRedoFileMoveAndDeleteWithChangedDocument() throws Exception {
-    final String[] path = new String[1];
     final VirtualFile[] dir = new VirtualFile[1];
     final VirtualFile[] f = new VirtualFile[1];
 
@@ -1055,7 +1050,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       f[0] = createChildData(myRoot, "foo.txt");
       setBinaryContent(f[0], "initial".getBytes(Charsets.UTF_8));
       setDocumentText(f[0], "document");
-      path[0] = f[0].getPath();
     });
     executeCommand(() -> {
       move(f[0], dir[0]);
@@ -1244,8 +1238,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     final Document document1 = FileDocumentManager.getInstance().getDocument(file1);
     final Document document2 = FileDocumentManager.getInstance().getDocument(file2);
 
-    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor();
-    fileEditor.DOCUMENTS = new Document[]{document1, document2};
+    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2);
 
     UndoManager undoManager = UndoManager.getInstance(myProject);
 
@@ -1392,8 +1385,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     UndoManager undoManager = UndoManager.getInstance(myProject);
 
-    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor();
-    fileEditor.DOCUMENTS = new Document[]{document1, document2};
+    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2);
 
     assertTrue(undoManager.isUndoAvailable(fileEditor));
 

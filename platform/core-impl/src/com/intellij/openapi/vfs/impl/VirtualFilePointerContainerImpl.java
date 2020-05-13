@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -33,7 +33,7 @@ import java.util.function.Predicate;
  * @author dsl
  */
 public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
+  private static final Logger LOG = Logger.getInstance(VirtualFilePointerContainer.class);
   private static final int UNINITIALIZED = -1;
   @NotNull private final ConcurrentList<VirtualFilePointer> myList = ContainerUtil.createConcurrentList();
   @NotNull private final ConcurrentList<VirtualFilePointer> myJarDirectories = ContainerUtil.createConcurrentList();
@@ -91,7 +91,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
                                    @NotNull Element element,
                                    boolean recursive) {
     List<VirtualFilePointer> jarDirectories = new ArrayList<>(myJarDirectories);
-    Collections.sort(jarDirectories, Comparator.comparing(VirtualFilePointer::getUrl, String.CASE_INSENSITIVE_ORDER));
+    jarDirectories.sort(Comparator.comparing(VirtualFilePointer::getUrl, String.CASE_INSENSITIVE_ORDER));
     for (VirtualFilePointer pointer : jarDirectories) {
       String url = pointer.getUrl();
       final Element jarDirElement = new Element(JAR_DIRECTORY_ELEMENT);
@@ -188,8 +188,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   }
 
   @Override
-  @NotNull
-  public String[] getUrls() {
+  public String @NotNull [] getUrls() {
     if (myTimeStampOfCachedThings == UNINITIALIZED) {
       // optimization: when querying urls, and nothing was cached yet, do not access disk (in cacheThings()) - can be expensive
       return myList.stream().map(VirtualFilePointer::getUrl).toArray(String[]::new);
@@ -257,7 +256,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
           // getFiles() must return files under jar directories but must not return jarDirectories themselves
           cachedDirectories.remove(jarDirectory);
 
-          VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor() {
+          VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor<Void>() {
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
               if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {
@@ -289,14 +288,12 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getFiles() {
+  public VirtualFile @NotNull [] getFiles() {
     return getOrCache().second;
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getDirectories() {
+  public VirtualFile @NotNull [] getDirectories() {
     return getOrCache().third;
   }
 

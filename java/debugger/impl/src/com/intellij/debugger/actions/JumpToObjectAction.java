@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JumpToObjectAction extends DebuggerAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JumpToObjectAction");
+  private static final Logger LOG = Logger.getInstance(JumpToObjectAction.class);
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());

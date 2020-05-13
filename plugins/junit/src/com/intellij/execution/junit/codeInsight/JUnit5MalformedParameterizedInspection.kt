@@ -11,6 +11,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit.codeInsight.references.MethodSourceReference
 import com.intellij.lang.jvm.JvmModifier
@@ -23,22 +24,17 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
-import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.TestUtils
-import org.jetbrains.annotations.Nls
 import java.util.*
 
 class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTool() {
   private object Annotations {
     val EXTENDS_WITH = listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
   }
-
-  @Nls
-  override fun getDisplayName(): String = InspectionGadgetsBundle.message("junit5.valid.parameterized.configuration.display.name")
-
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val file = holder.file
@@ -54,7 +50,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         if (parameterizedAnnotation.isNotEmpty()) {
           if (testAnnotation.isNotEmpty() && method.parameterList.parametersCount > 0) {
             holder.registerProblem(testAnnotation[0],
-                                   "Suspicious combination @Test and @ParameterizedTest",
+                                   JUnitBundle.message("junit5.malformed.parameterized.inspection.description.suspicious.combination.test.and.parameterizedtest"),
                                    DeleteElementFix(testAnnotation[0]))
           }
 
@@ -97,16 +93,17 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
           if (noMultiArgsProvider) {
             if (source == null) {
-              holder.registerProblem(parameterizedAnnotation[0], "No sources are provided, the suite would be empty")
+              holder.registerProblem(parameterizedAnnotation[0],
+                                     JUnitBundle.message("junit5.malformed.parameterized.inspection.description.no.sources.are.provided"))
             }
             else if (hasMultipleParameters(method)) {
-              holder.registerProblem(source!!, "Multiple parameters are not supported by this source")
+              holder.registerProblem(source!!, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.multiple.parameters.are.not.supported.by.this.source"))
             }
           }
         }
         else if (testAnnotation.isNotEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS)) {
           holder.registerProblem(testAnnotation[0],
-                                 "Suspicious combination @Test and parameterized source",
+                                 JUnitBundle.message("junit5.malformed.parameterized.inspection.description.suspicious.combination"),
                                  ChangeAnnotationFix(testAnnotation[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
         }
       }
@@ -117,7 +114,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         if (value is PsiClassObjectAccessExpression) {
           val enumType = value.operand.type
           checkSourceTypeAndParameterTypeAgree(method, value, enumType)
-          checkEnumConstants(enumSource, enumType)
+          checkEnumConstants(enumSource, enumType, method)
         }
       }
 
@@ -134,16 +131,15 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
           "classes" to PsiType.getJavaLangClass(method.manager, method.resolveScope))
 
         for (valueKey in possibleValues.keys) {
-          processArrayInAnnotationParameter(valuesSource.findDeclaredAttributeValue(valueKey),
-                                            { value -> checkSourceTypeAndParameterTypeAgree(method, value, possibleValues[valueKey]!!) })
+          processArrayInAnnotationParameter(valuesSource.findDeclaredAttributeValue(valueKey)) { value -> checkSourceTypeAndParameterTypeAgree(method, value, possibleValues[valueKey]!!) }
         }
 
         val attributesNumber = valuesSource.parameterList.attributes.size
         if (attributesNumber > 1) {
-          holder.registerProblem(valuesSource, "Exactly one type of input must be provided")
+          holder.registerProblem(getElementToHighlight(valuesSource, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.exactly.one.type.of.input.must.be.provided"))
         }
         else if (attributesNumber == 0) {
-          holder.registerProblem(valuesSource, "No value source is defined")
+          holder.registerProblem(getElementToHighlight(valuesSource, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.no.value.source.is.defined"))
         }
       }
 
@@ -154,7 +150,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
             if (ref.isSoft) continue
             if (ref is FileReference && ref.multiResolve(false).isEmpty()) {
               holder.registerProblem(ref.element, ref.rangeInElement,
-                                     "Cannot resolve file source: \'${attributeValue.text}\'", *ref.quickFixes)
+                                     JUnitBundle.message("junit5.malformed.parameterized.inspection.description.file.source", attributeValue.text), *ref.quickFixes)
             }
           }
         }
@@ -168,20 +164,20 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
           val providerName = method.name
           val methods = containingClass.findMethodsBySignature(
             JavaPsiFacade.getElementFactory(method.project).createMethodFromText("void $providerName()", method), false)
-          if (!methods.isEmpty()) {
+          if (methods.isNotEmpty()) {
             doCheckSourceProvider(methods[0], containingClass, methodSource, method)
           }
           else {
-            highlightAbsentSourceProvider(containingClass, methodSource, providerName)
+            highlightAbsentSourceProvider(containingClass, methodSource, providerName, method)
           }
         }
         else {
-          processArrayInAnnotationParameter(annotationMemberValue, { attributeValue ->
+          processArrayInAnnotationParameter(annotationMemberValue) { attributeValue ->
             for (reference in attributeValue.references) {
               if (reference is MethodSourceReference) {
                 val resolve = reference.resolve()
                 if (resolve !is PsiMethod) {
-                  highlightAbsentSourceProvider(containingClass, attributeValue, reference.value)
+                  highlightAbsentSourceProvider(containingClass, attributeValue, reference.value, method)
                 }
                 else {
                   val sourceProvider : PsiMethod = resolve
@@ -189,22 +185,23 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                 }
               }
             }
-          })
+          }
         }
       }
 
       private fun highlightAbsentSourceProvider(containingClass: PsiClass,
                                                 attributeValue: PsiElement,
-                                                sourceProviderName: String) {
+                                                sourceProviderName: String,
+                                                method: PsiMethod) {
         var createFix: CreateMethodQuickFix? = null
         if (holder.isOnTheFly) {
           val staticModifier = if (!TestUtils.testInstancePerClass(containingClass)) " static" else ""
           createFix = CreateMethodQuickFix.createFix(containingClass,
-                                                     "private$staticModifier Object[][] $sourceProviderName()",
-                                                     "return new Object[][] {};")
+                                                     "private$staticModifier java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> $sourceProviderName()",
+                                                     "return null;")
         }
-        holder.registerProblem(attributeValue,
-                               "Cannot resolve target method source: \'$sourceProviderName\'",
+        holder.registerProblem(getElementToHighlight(attributeValue, method),
+                               JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.unresolved", sourceProviderName),
                                createFix)
       }
 
@@ -216,23 +213,23 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
         if (!sourceProvider.hasModifierProperty(PsiModifier.STATIC) &&
             containingClass != null && !TestUtils.testInstancePerClass(containingClass)) {
-          holder.registerProblem(attributeValue, "Method source \'$providerName\' must be static",
+          holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.static", providerName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  QuickFixFactory.getInstance().createModifierListFix(sourceProvider, PsiModifier.STATIC, true, false))
         }
         else if (sourceProvider.parameterList.parametersCount != 0) {
-          holder.registerProblem(attributeValue, "Method source \'$providerName\' should have no parameters")
+          holder.registerProblem(getElementToHighlight(attributeValue, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.no.params", providerName))
         }
         else {
           val componentType = getComponentType(sourceProvider.returnType, method)
           if (componentType == null) {
-            holder.registerProblem(attributeValue,
-                                   "Method source \'$providerName\' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]")
+            holder.registerProblem(getElementToHighlight(attributeValue, method),
+                                   JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.return.type", providerName))
           }
           else if (hasMultipleParameters(method) && !isArgumentsInheritor(componentType) &&
                    !componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
                    !componentType.deepComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-            holder.registerProblem(attributeValue, "Multiple parameters have to be wrapped in Arguments")
+            holder.registerProblem(getElementToHighlight(attributeValue, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.wrapped.in.arguments"))
           }
         }
       }
@@ -249,7 +246,9 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         }
       }
 
-      private fun checkEnumConstants(enumSource: PsiAnnotation, enumType: PsiType) {
+      private fun checkEnumConstants(enumSource: PsiAnnotation,
+                                     enumType: PsiType,
+                                     method: PsiMethod) {
         val mode = enumSource.findAttributeValue("mode")
         if (mode is PsiReferenceExpression && ("INCLUDE" == mode.referenceName || "EXCLUDE" == mode.referenceName)) {
           val allEnumConstants = (PsiUtil.resolveClassInClassTypeOnly(enumType) ?: return).fields
@@ -262,10 +261,10 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
               val value = name.value
               if (value is String) {
                 if (!allEnumConstants.contains(value)) {
-                  holder.registerProblem(name, "Can't resolve enum constant reference.")
+                  holder.registerProblem(getElementToHighlight(name, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.unresolve.enum"))
                 }
                 else if (!definedConstants.add(value)) {
-                  holder.registerProblem(name, "Duplicate enum constant name")
+                  holder.registerProblem(getElementToHighlight(name, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.duplicated.enum"))
                 }
               }
             }
@@ -291,7 +290,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                 val qualifiedName = psiClass.qualifiedName
                 if (qualifiedName != null) {
                   if (qualifiedName.startsWith("java.time.")) return
-                  if (qualifiedName.equals("java.nio.file.Path")) return
+                  if (qualifiedName == "java.nio.file.Path") return
                 }
 
                 val factoryMethod: (PsiMethod) -> Boolean = {
@@ -304,9 +303,13 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                 if (psiClass.methods.find { it.hasModifier(JvmModifier.STATIC) && factoryMethod(it) } != null) return
               }
             }
+            else if (componentType.equalsToText("org.junit.jupiter.params.provider.NullEnum")) {
+              val psiClass = PsiUtil.resolveClassInClassTypeOnly(paramType)
+              if (psiClass != null && psiClass.isEnum) return
+            }
             if (AnnotationUtil.isAnnotated(parameters[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH, 0)) return
-            holder.registerProblem(attributeValue,
-                                   "No implicit conversion found to convert object of type ${componentType.presentableText} to ${paramType.presentableText}")
+            holder.registerProblem(getElementToHighlight(attributeValue, method, parameters[0]),
+                                   JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.assignable", componentType.presentableText, paramType.presentableText))
           }
         }
       }
@@ -335,6 +338,11 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
     }
   }
 
+  private fun getElementToHighlight(attributeValue: PsiElement,
+                                    method: PsiMethod,
+                                    default: PsiNameIdentifierOwner = method) =
+    if (PsiTreeUtil.isAncestor(method, attributeValue, true)) attributeValue else default.nameIdentifier ?: default
+
   private fun hasMultipleParameters(method: PsiMethod): Boolean {
     val containingClass = method.containingClass
     return containingClass != null &&
@@ -350,14 +358,14 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 }
 
 
-class ChangeAnnotationFix(testAnnotation: PsiAnnotation, val targetAnnotation: String) : LocalQuickFixAndIntentionActionOnPsiElement(testAnnotation) {
-  override fun getFamilyName(): String = "Replace annotation"
+class ChangeAnnotationFix(testAnnotation: PsiAnnotation, private val targetAnnotation: String) : LocalQuickFixAndIntentionActionOnPsiElement(testAnnotation) {
+  override fun getFamilyName(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.family.name")
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
     val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$targetAnnotation", startElement)
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(annotation))
   }
 
-  override fun getText(): String = "Change to " + StringUtil.getShortName(targetAnnotation)
+  override fun getText(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.text", StringUtil.getShortName(targetAnnotation))
 
 }

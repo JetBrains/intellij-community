@@ -71,11 +71,8 @@ private static getWorldType(stepFile) {
     List<TextRange> readUsages = handler.readUsages
     assertEquals(usages.length, readUsages.size())
 
-    final List<String> textUsages = readUsages.collect { fileTextOfRange(it) }
+    final List<String> textUsages = readUsages.collect { myFixture.file.text.substring(it.startOffset, it.endOffset) }
     assertSameElements(Arrays.asList(usages), textUsages)
   }
 
-  protected String fileTextOfRange(TextRange textRange) {
-    return myFixture.file.text.substring(textRange.startOffset, textRange.endOffset)
-  }
 }

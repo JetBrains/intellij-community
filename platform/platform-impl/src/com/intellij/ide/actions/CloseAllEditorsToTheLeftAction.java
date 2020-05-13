@@ -45,7 +45,7 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
     super.update(event);
     int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
     if (tabPlacement == SwingConstants.LEFT || tabPlacement == SwingConstants.RIGHT) {
-      event.getPresentation().setText(IdeBundle.message(getAlternativeTextKey()));
+      event.getPresentation().setText(IdeBundle.messagePointer(getAlternativeTextKey()));
     }
   }
 

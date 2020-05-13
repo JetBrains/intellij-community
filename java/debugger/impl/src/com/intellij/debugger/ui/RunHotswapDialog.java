@@ -4,7 +4,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.ide.util.ElementsChooser;
@@ -46,11 +46,11 @@ public class RunHotswapDialog extends OptionsDialog {
     myPanel.add(myElementsChooser, BorderLayout.CENTER);
     //myPanel.add(new JLabel("Choose debug sessions to reload classes:"), BorderLayout.NORTH);
     if(sessions.size() == 1) {
-      setTitle(DebuggerBundle.message("hotswap.dialog.title.with.session", sessions.get(0).getSessionName()));
+      setTitle(JavaDebuggerBundle.message("hotswap.dialog.title.with.session", sessions.get(0).getSessionName()));
       myPanel.setVisible(false);
     }
     else {
-      setTitle(DebuggerBundle.message("hotswap.dialog.title"));
+      setTitle(JavaDebuggerBundle.message("hotswap.dialog.title"));
     }
     setButtonsAlignment(SwingConstants.CENTER);
     this.init();
@@ -82,8 +82,7 @@ public class RunHotswapDialog extends OptionsDialog {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions(){
+  protected Action @NotNull [] createActions(){
     setOKButtonText(CommonBundle.getYesButtonText());
     setCancelButtonText(CommonBundle.getNoButtonText());
     return new Action[]{getOKAction(), getCancelAction()};
@@ -91,14 +90,15 @@ public class RunHotswapDialog extends OptionsDialog {
 
   @Override
   protected JComponent createNorthPanel() {
-    JLabel label = new JLabel(DebuggerBundle.message("hotswap.dialog.run.prompt"));
+    JLabel label = new JLabel(JavaDebuggerBundle.message("hotswap.dialog.run.prompt"));
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(label, BorderLayout.CENTER);
     Icon icon = UIUtil.getQuestionIcon();
     label.setIcon(icon);
     label.setIconTextGap(7);
     if (myDisplayHangWarning) {
-      final JLabel warningLabel = new JLabel("WARNING! " + DebuggerBundle.message("hotswap.dialog.hang.warning"));
+      final JLabel warningLabel = new JLabel(
+        JavaDebuggerBundle.message("warning.0", JavaDebuggerBundle.message("hotswap.dialog.hang.warning")));
       warningLabel.setUI(new MultiLineLabelUI());
       panel.add(warningLabel, BorderLayout.SOUTH);
     }

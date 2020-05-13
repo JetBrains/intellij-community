@@ -16,6 +16,7 @@ import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.editor.TextMateEditorUtils;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
+import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +40,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
   private CharSequence myRootScope;
   private TextMateSyntaxTable mySyntaxTable;
 
-  @Parameterized.Parameter()
+  @Parameterized.Parameter
   public String myFileName;
   @Parameterized.Parameter(1)
   public File myFile;
@@ -58,7 +59,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     if (files == null) return Collections.emptyList();
     return ContainerUtil.mapNotNull(files, file -> {
       String fileName = PathUtil.getFileName(file.getPath());
-      return !fileName.contains("_after.") ? new Object[]{fileName, file} : null;
+      return !fileName.contains("_after.") && !fileName.endsWith("_after") ? new Object[]{fileName, file} : null;
     });
   }
 
@@ -69,7 +70,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     CharSequence scope = null;
     Bundle bundle = TestUtil.getBundle(getBundleName());
     for (File grammarFile : bundle.getGrammarFiles()) {
-      Plist plist = TestUtil.PLIST_READER.read(grammarFile);
+      Plist plist = new CompositePlistReader().read(grammarFile);
       final CharSequence rootScope = mySyntaxTable.loadSyntax(plist, myInterner);
       Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
       for (String extension : extensions) {
@@ -84,7 +85,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     final List<String> extraBundleNames = getExtraBundleNames();
     for (String bundleName : extraBundleNames) {
       for (File grammarFile : TestUtil.getBundle(bundleName).getGrammarFiles()) {
-        mySyntaxTable.loadSyntax(TestUtil.PLIST_READER.read(grammarFile), myInterner);
+        mySyntaxTable.loadSyntax(new CompositePlistReader().read(grammarFile), myInterner);
       }
     }
     mySyntaxTable.compact();
@@ -102,8 +103,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
 
     StringBuilder output = new StringBuilder();
     String text = sourceData.replaceAll("$(\\n+)", "");
-    TextMateLanguageDescriptor languageDescriptor = new TextMateLanguageDescriptor(myRootScope, mySyntaxTable.getSyntax(myRootScope));
-    Lexer lexer = new TextMateHighlightingLexer(languageDescriptor.getScopeName(), languageDescriptor.getRootSyntaxNode());
+    Lexer lexer = new TextMateHighlightingLexer(new TextMateLanguageDescriptor(myRootScope, mySyntaxTable.getSyntax(myRootScope)), -1);
     lexer.start(text);
     while (lexer.getTokenType() != null) {
       final int s = lexer.getTokenStart();
@@ -114,8 +114,9 @@ abstract public class LexerTestCase extends UsefulTestCase {
       lexer.advance();
     }
 
-    String expectedFilePath = myFile.getParent() + "/" +
-                              FileUtilRt.getNameWithoutExtension(myFileName) + "_after." + getExtension(myFileName);
+    String extension = getExtension(myFileName);
+    String suffix = extension.isEmpty() ? "" : "." + extension;
+    String expectedFilePath = myFile.getParent() + "/" + FileUtilRt.getNameWithoutExtension(myFileName) + "_after" + suffix;
     assertSameLinesWithFile(expectedFilePath, output.toString().trim());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -16,9 +16,6 @@ import org.jetbrains.plugins.terminal.TerminalTabState;
 import org.jetbrains.plugins.terminal.TerminalUtil;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
-/**
- * @author traff
- */
 public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {

@@ -36,12 +36,11 @@ public abstract class FileIncludeProvider {
   @NotNull
   public abstract String getId();
 
-  public abstract boolean acceptFile(VirtualFile file);
+  public abstract boolean acceptFile(@NotNull VirtualFile file);
 
-  public abstract void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
+  public abstract void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
 
-  @NotNull
-  public abstract FileIncludeInfo[] getIncludeInfos(FileContent content);
+  public abstract FileIncludeInfo @NotNull [] getIncludeInfos(@NotNull FileContent content);
 
   /**
    * If all providers return {@code null} then {@code FileIncludeInfo} is resolved in a standard way using {@code FileReferenceSet}

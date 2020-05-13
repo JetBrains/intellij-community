@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,9 +25,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author max
- */
 class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
@@ -42,15 +41,15 @@ class RefreshSessionImpl extends RefreshSession {
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private volatile RefreshWorker myWorker;
   private volatile boolean myCancelled;
-  private final TransactionId myTransaction;
+  private final ModalityState myModality;
   private boolean myLaunched;
 
-  RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState context) {
+  RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modality) {
     myIsAsync = async;
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
-    myTransaction = ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(context);
-    LOG.assertTrue(context == ModalityState.NON_MODAL || context != ModalityState.any(), "Refresh session should have a specific modality");
+    myModality = modality;
+    TransactionGuard.getInstance().assertWriteSafeContext(modality);
     myStartTrace = rememberStartTrace();
   }
 
@@ -175,9 +174,15 @@ class RefreshSessionImpl extends RefreshSession {
 
   void fireEvents(@NotNull List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     try {
-      if ((myFinishRunnable != null || !events.isEmpty()) && !ApplicationManager.getApplication().isDisposed()) {
+      ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+      if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
-        WriteAction.run(() -> fireEventsInWriteAction(events, appliers));
+        WriteAction.run(() -> {
+          app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
+            indicator.setText(IdeBundle.message("progress.text.processing.detected.file.changes", events.size()));
+            fireEventsInWriteAction(events, appliers);
+          });
+        });
       }
     }
     finally {
@@ -214,18 +219,18 @@ class RefreshSessionImpl extends RefreshSession {
     mySemaphore.waitFor();
   }
 
-  @Nullable
-  TransactionId getTransaction() {
-    return myTransaction;
-  }
-
-  @Override
-  public String toString() {
-    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in queue.";
+  @NotNull
+  ModalityState getModality() {
+    return myModality;
   }
 
   @NotNull
   List<? extends VFileEvent> getEvents() {
     return new ArrayList<>(new LinkedHashSet<>(myEvents));
+  }
+
+  @Override
+  public String toString() {
+    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in the queue.";
   }
 }

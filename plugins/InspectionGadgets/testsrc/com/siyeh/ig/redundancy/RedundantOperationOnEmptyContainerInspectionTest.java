@@ -23,6 +23,15 @@ public class RedundantOperationOnEmptyContainerInspectionTest extends LightJavaI
   public void testStaticInitializer() {
     doTest();
   }
+  public void testEmptyCollectionReturnThis() { 
+    doTest();
+  }
+  public void testTernaryInQualifier() { 
+    doTest();
+  }
+  public void testAnonymousClass() { 
+    doTest();
+  }
 
   @Nullable
   @Override

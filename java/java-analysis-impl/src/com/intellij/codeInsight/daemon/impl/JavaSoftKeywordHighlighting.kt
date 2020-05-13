@@ -36,7 +36,7 @@ private class JavaSoftKeywordHighlightingPass(private val file: PsiJavaFile, doc
   }
 
   override fun doApplyInformationToEditor() {
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument!!, 0, file.textLength, results, colorsScheme, id)
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, results, colorsScheme, id)
   }
 }
 

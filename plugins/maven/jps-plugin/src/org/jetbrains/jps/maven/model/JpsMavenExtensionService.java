@@ -8,9 +8,6 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-/**
- * @author nik
- */
 public abstract class JpsMavenExtensionService {
   public static JpsMavenExtensionService getInstance() {
     return JpsServiceManager.getInstance().getService(JpsMavenExtensionService.class);

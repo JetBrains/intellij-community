@@ -46,11 +46,6 @@ public class NoLabelForInspection extends BaseFormInspection {
     super("NoLabelFor");
   }
 
-  @NotNull
-  @Override public String getDisplayName() {
-    return UIDesignerBundle.message("inspection.no.label.for");
-  }
-
   @Override
   protected void checkComponentProperties(final Module module, @NotNull final IComponent component, FormErrorCollector collector) {
     ComponentItem item = Palette.getInstance(module.getProject()).getItem(component.getComponentClassName());

@@ -3,6 +3,15 @@ import java.util.*;
 class GetClass {
   native void unknown();
 
+  public static void testIntClass() {
+    Class<?> cls = someIntClass();
+    System.out.println(Object.class.isAssignableFrom(cls));
+  }
+
+  public static Class<?> someIntClass() {
+    return int.class;
+  }
+
   void testStability(Object obj, Class<?> c) {
     if (obj.getClass().equals(c)) {
       unknown();
@@ -45,6 +54,17 @@ class GetClass {
     if (c == Number.class || c == CharSequence.class) {
       if (<warning descr="Condition 'obj.getClass() == c' is always 'false'">obj.getClass() == c</warning>) {}
     }
+  }
+  
+  void testPrimitive(Object obj) {
+    Class<?> c = int.class;
+    if (<warning descr="Condition 'obj.getClass() == c' is always 'false'">obj.getClass() == c</warning>) {}
+    if (<warning descr="Condition 'obj.getClass() == void.class' is always 'false'">obj.getClass() == void.class</warning>) {}
+    if (obj.getClass() == int[].class) {}
+  }
+  
+  void testVoidType(Object obj) {
+    if (<warning descr="Condition 'obj.getClass() == Void.class' is always 'false'">obj.getClass() == Void.class</warning>) {}
   }
 
   void testIntermediateVar(Object obj) {

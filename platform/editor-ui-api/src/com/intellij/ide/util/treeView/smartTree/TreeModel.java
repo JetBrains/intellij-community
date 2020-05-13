@@ -24,8 +24,7 @@ public interface TreeModel {
    * @return the array of grouping actions.
    * @see Grouper#EMPTY_ARRAY
    */
-  @NotNull
-  Grouper[] getGroupers();
+  Grouper @NotNull [] getGroupers();
 
   /**
    * Returns the array of actions for sorting items in the tree.
@@ -33,8 +32,7 @@ public interface TreeModel {
    * @return the array of sorting actions.
    * @see Sorter#EMPTY_ARRAY
    */
-  @NotNull
-  Sorter[] getSorters();
+  Sorter @NotNull [] getSorters();
 
   /**
    * Returns the array of actions for filtering items in the tree.
@@ -42,6 +40,5 @@ public interface TreeModel {
    * @return the array of filtering actions.
    * @see Filter#EMPTY_ARRAY
    */
-  @NotNull
-  Filter[] getFilters();
+  Filter @NotNull [] getFilters();
 }

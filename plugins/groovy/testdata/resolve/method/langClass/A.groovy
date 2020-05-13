@@ -1,1 +1,1 @@
-Integer.<ref>methods.each { println it.name }
+Integer.<caret>methods.each { println it.name }

@@ -4,7 +4,8 @@ class TextBlockMigration {
 
   void escapeSequence() {
     String oneLineTextBlock = """
-        \u005c"this is one "line"\n text <caret>block\134\u005c\\"
+        \u005c"this is one "line"\n\s\
+        text <caret>block\134\u005c\\"
         """;
   }
 

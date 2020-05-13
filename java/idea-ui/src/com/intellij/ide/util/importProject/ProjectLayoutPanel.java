@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.actionSystem.*;
@@ -163,7 +165,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   }
 
   private List<T> alphaSortList(final List<T> entries) {
-    Collections.sort(entries, COMPARATOR);
+    entries.sort(COMPARATOR);
     return entries;
   }
 
@@ -315,7 +317,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class MergeAction extends AnAction {
     private MergeAction() {
-      super("Merge", "", AllIcons.Modules.Merge); // todo
+      super(CommonBundle.messagePointer("action.text.merge"), () -> "", AllIcons.Vcs.Merge); // todo
     }
 
     @Override
@@ -324,8 +326,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       if (elements.size() > 1) {
         final String newName = Messages.showInputDialog(
           ProjectLayoutPanel.this,
-          "Enter new name for merge result:",
-          "Merge",
+          JavaUiBundle.message("label.enter.new.name.for.merge.result"),
+          JavaUiBundle.message("dialog.title.merge.module.or.library"),
           Messages.getQuestionIcon(), getElementName(elements.get(0)), getValidator());
         if (newName != null) {
           final T merged = merge(elements);
@@ -349,7 +351,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class SplitAction extends AnAction {
     private SplitAction() {
-      super("Split", "", AllIcons.Modules.Split); // todo
+      super(CommonBundle.messagePointer("action.text.split"), () -> "", AllIcons.Modules.Split); // todo
     }
 
     @Override
@@ -386,7 +388,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class RenameAction extends AnAction {
     private RenameAction() {
-      super("Rename", "", IconUtil.getEditIcon()); // todo
+      super(CommonBundle.messagePointer("action.text.rename"), () -> "", IconUtil.getEditIcon()); // todo
     }
 
     @Override
@@ -394,11 +396,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       if (elements.size() == 1) {
         final T element = elements.get(0);
-        final String newName = Messages.showInputDialog(ProjectLayoutPanel.this, "New name for " + getElementTypeName() + " '" + getElementName(element) + "':",
-          "Rename " + StringUtil.capitalize(getElementTypeName()),
-          Messages.getQuestionIcon(),
-          getElementName(element),
-          getValidator()
+        final String newName = Messages.showInputDialog(ProjectLayoutPanel.this,
+                                                        JavaUiBundle.message("label.new.name.for.0.1", getElementTypeName(), getElementName(element)),
+                                                        JavaUiBundle.message("dialog.title.rename.module.or.library.0", StringUtil.capitalize(getElementTypeName())),
+                                                        Messages.getQuestionIcon(),
+                                                        getElementName(element),
+                                                        getValidator()
         );
         if (newName != null) {
           setElementName(element, newName);
@@ -430,7 +433,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     private SplitDialog(final Collection<File> files) {
       super(myEntriesChooser, true);
-      setTitle("Split " + StringUtil.capitalize(getElementTypeName()));
+      setTitle(JavaUiBundle.message("dialog.title.split.module.or.library.0", StringUtil.capitalize(getElementTypeName())));
 
       myNameField = new JTextField();
       myChooser = new ElementsChooser<File>(true) {
@@ -483,7 +486,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     @Nullable
     protected JComponent createCenterPanel() {
       FormBuilder builder = FormBuilder.createFormBuilder().setVertical(true);
-      builder.addLabeledComponent("&Name:", myNameField);
+      builder.addLabeledComponent(JavaUiBundle.message("label.project.layout.panel.name"), myNameField);
       builder.addLabeledComponent(getSplitDialogChooseFilesPrompt(), myChooser);
       myChooser.setPreferredSize(JBUI.size(450, 300));
       return builder.getPanel();

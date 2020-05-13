@@ -15,9 +15,9 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeBorderFactory;
@@ -52,7 +52,7 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
     }
     options.isSkipPackageStatements = false;
     options.isSkipImportStatements = false;
-    FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindPackageUsages", createFeatureUsageData(options));
+    FUCounterUsageLogger.getInstance().logEvent(EVENT_LOG_GROUP, "find.package.started", createFeatureUsageData(options));
   }
 
   @Override
@@ -65,11 +65,11 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
   @Override
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
-    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
+    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
-    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), getFindUsagesOptions().isUsages, findWhatPanel, true);
-    myCbClassesUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.of.classes.and.interfaces"), getFindUsagesOptions().isClassesUsages, findWhatPanel, true);
+    myCbUsages = addCheckboxToPanel(JavaBundle.message("find.what.usages.checkbox"), getFindUsagesOptions().isUsages, findWhatPanel, true);
+    myCbClassesUsages = addCheckboxToPanel(JavaBundle.message("find.what.usages.of.classes.and.interfaces"), getFindUsagesOptions().isClassesUsages, findWhatPanel, true);
 
     return findWhatPanel;
   }

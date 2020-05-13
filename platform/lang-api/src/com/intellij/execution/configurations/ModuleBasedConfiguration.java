@@ -186,8 +186,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   @Override
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     Module module = ReadAction.compute(() -> getConfigurationModule().getModule());
     return module == null ? Module.EMPTY_ARRAY : new Module[]{module};
   }

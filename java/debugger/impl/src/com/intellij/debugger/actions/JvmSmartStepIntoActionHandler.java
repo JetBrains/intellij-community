@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -60,7 +60,7 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
 
   @Override
   public String getPopupTitle(@NotNull XSourcePosition position) {
-    return DebuggerBundle.message("title.smart.step.popup");
+    return JavaDebuggerBundle.message("title.smart.step.popup");
   }
 
   @Override

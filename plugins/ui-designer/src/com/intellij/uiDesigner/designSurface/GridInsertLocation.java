@@ -34,7 +34,7 @@ import java.awt.*;
  * @author yole
  */
 public class GridInsertLocation extends GridDropLocation {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertLocation");
+  private static final Logger LOG = Logger.getInstance(GridInsertLocation.class);
 
   public static final int INSERT_ARROW_SIZE = 3;
   public static final int INSERT_RECT_MIN_SIZE = 15;  // should be larger than the insets increase on Shift
@@ -357,7 +357,7 @@ public class GridInsertLocation extends GridDropLocation {
   @Override
   public void processDrop(final GuiEditor editor,
                           final RadComponent[] components,
-                          @Nullable final GridConstraints[] constraintsToAdjust,
+                          final GridConstraints @Nullable [] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
     int row = getRow();
     int col = getColumn();
@@ -414,7 +414,7 @@ public class GridInsertLocation extends GridDropLocation {
     return cell;
   }
 
-  private static void checkAdjustConstraints(@Nullable final GridConstraints[] constraintsToAdjust,
+  private static void checkAdjustConstraints(final GridConstraints @Nullable [] constraintsToAdjust,
                                              final boolean isRow,
                                              final int index, final int count) {
     if (constraintsToAdjust != null) {

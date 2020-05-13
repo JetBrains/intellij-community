@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.parser.declarationParsing;
 
 import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.pom.java.LanguageLevel;
 
 public class ClassParsingTest extends JavaParsingTestCase {
   public ClassParsingTest() {
@@ -56,4 +43,22 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testErrors3() { doTest(true); }
   public void testErrors4() { doTest(true); }
   public void testErrors5() { doTest(true); }
+
+  public void testRecord() { doTest(true); }
+  public void testRecordWithComponents() { doTest(true); }
+  public void testRecordNoClosingParenthesis() { doTest(true); }
+  public void testRecordNoComponents() { doTest(true); }
+  public void testRecordWithTypeParameters() { doTest(true); }
+  public void testRecordNoClosingTypeBracket() { doTest(true); }
+  public void testRecordWithModifiers() { doTest(true); }
+  public void testRecordInCodeBlock() { doTest(true); }
+  public void testLocalRecord() { doTest(true); }
+  public void testLocalRecordWithTypeParams() { doTest(true); }
+  public void testLocalRecordWithoutParens() { doTest(true); }
+  public void testCompactConstructor0() { doTest(true); }
+  public void testCompactConstructor1() { doTest(true); }
+  public void testRecordTypeInOlderJava() {
+    setLanguageLevel(LanguageLevel.JDK_13);
+    doTest(true);
+  }
 }

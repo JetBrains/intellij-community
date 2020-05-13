@@ -237,7 +237,7 @@ public final class CommentTracker {
    *
    * @param elements elements to delete (all not null)
    */
-  public void delete(@NotNull PsiElement... elements) {
+  public void delete(PsiElement @NotNull ... elements) {
     for (PsiElement element : elements) {
       delete(element);
     }

@@ -28,7 +28,7 @@
             </constraints>
             <properties>
               <labelFor value="27a52"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.cvs.root.method"/>
+              <text resource-bundle="messages/CvsBundle" key="label.cvs.root.method"/>
             </properties>
           </component>
           <component id="d3264" class="javax.swing.JLabel">
@@ -37,7 +37,7 @@
             </constraints>
             <properties>
               <labelFor value="b4fb9"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.cvs.root.user"/>
+              <text resource-bundle="messages/CvsBundle" key="label.cvs.root.user"/>
             </properties>
           </component>
           <component id="b4fb9" class="javax.swing.JTextField" binding="myUser">
@@ -54,7 +54,7 @@
             </constraints>
             <properties>
               <labelFor value="fc2d8"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.cvs.root.host"/>
+              <text resource-bundle="messages/CvsBundle" key="label.cvs.root.host"/>
             </properties>
           </component>
           <component id="fc2d8" class="javax.swing.JTextField" binding="myHost">
@@ -71,7 +71,7 @@
             </constraints>
             <properties>
               <labelFor value="1c52b"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.cvs.root.repository"/>
+              <text resource-bundle="messages/CvsBundle" key="label.cvs.root.repository"/>
             </properties>
           </component>
           <component id="1c52b" class="javax.swing.JTextField" binding="myRepository">
@@ -88,7 +88,7 @@
             </constraints>
             <properties>
               <labelFor value="87758"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.cvs.root.port"/>
+              <text resource-bundle="messages/CvsBundle" key="label.cvs.root.port"/>
             </properties>
           </component>
           <component id="87758" class="javax.swing.JTextField" binding="myPort">

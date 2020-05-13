@@ -15,8 +15,8 @@
  */
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
@@ -70,7 +70,7 @@ public class Java15FormInspection extends BaseFormInspection {
                              final FormErrorCollector collector,
                              final IProperty prop,
                              @NonNls final String api) {
-    collector.addError(getID(), component, prop, InspectionsBundle.message("inspection.1.5.problem.descriptor", api),
+    collector.addError(getID(), component, prop, JavaBundle.message("inspection.1.5.problem.descriptor", api),
                        (EditorQuickFixProvider)(editor, component1) -> new RemovePropertyFix(editor, component1, (Property)prop));
   }
 

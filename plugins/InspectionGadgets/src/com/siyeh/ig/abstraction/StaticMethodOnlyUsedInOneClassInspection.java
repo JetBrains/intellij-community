@@ -51,12 +51,6 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
 
   static final Key<SmartPsiElementPointer<PsiClass>> MARKER = Key.create("STATIC_METHOD_USED_IN_ONE_CLASS");
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.display.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
@@ -68,12 +62,11 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     return panel;
   }
 
-  @Nullable
   @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext) {
     if (!(refEntity instanceof RefMethod) && !(refEntity instanceof RefField)) {
       return null;
     }

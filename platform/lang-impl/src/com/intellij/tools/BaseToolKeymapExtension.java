@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tools;
 
 import com.intellij.icons.AllIcons;
@@ -23,56 +9,37 @@ import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import java.util.HashMap;
 
-import java.util.Arrays;
+import java.util.List;
 
-/**
- * @author traff
- */
 public abstract class BaseToolKeymapExtension implements KeymapExtension {
 
   @Override
   public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(getActionIdPrefix());
-    Arrays.sort(ids);
-    Group group = new Group(getGroupName(), AllIcons.Nodes.KeymapTools);
+    Group rootGroup = new Group(getRootGroupName(), getRootGroupId(), AllIcons.Nodes.KeymapTools);
+    List<ToolsGroup<Tool>> groups = ToolManager.getInstance().getGroups();
 
-
-    HashMap<String, Group> toolGroupNameToGroup = new HashMap<>();
-
-    for (String id : ids) {
-      if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;
-      String groupName = getGroupByActionId(id);
-
-      if (groupName != null && groupName.trim().length() == 0) {
-        groupName = null;
+    for (ToolsGroup<Tool> toolsGroup : groups) {
+      String groupName = toolsGroup.getName();
+      Group group = new Group(groupName, getGroupIdPrefix() + groupName, null);
+      List<? extends Tool> tools = getToolsIdsByGroupName(groupName);
+      for (Tool tool : tools) {
+        if (filtered != null && !filtered.value(actionManager.getActionOrStub(tool.getActionId()))) continue;
+        group.addGroup(new Group(tool.getName(), tool.getActionId(), null));
       }
-
-      Group subGroup = toolGroupNameToGroup.get(groupName);
-      if (subGroup == null) {
-        subGroup = new Group(groupName, null, null);
-        toolGroupNameToGroup.put(groupName, subGroup);
-        if (groupName != null) {
-          group.addGroup(subGroup);
-        }
-      }
-
-      subGroup.addActionId(id);
+      rootGroup.addGroup(group);
     }
-
-    Group subGroup = toolGroupNameToGroup.get(null);
-    if (subGroup != null) {
-      group.addAll(subGroup);
-    }
-
-    return group;
+    return rootGroup;
   }
+
+  protected abstract String getGroupIdPrefix();
 
   protected abstract String getActionIdPrefix();
 
-  protected abstract String getGroupByActionId(String id);
+  protected abstract List<? extends Tool> getToolsIdsByGroupName(String groupName);
 
-  protected abstract String getGroupName();
+  protected abstract String getRootGroupName();
+
+  protected abstract String getRootGroupId();
 }

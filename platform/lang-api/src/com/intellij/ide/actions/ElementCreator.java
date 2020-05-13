@@ -27,6 +27,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -43,16 +44,17 @@ import java.util.List;
  * @author peter
  */
 public abstract class ElementCreator implements WriteActionAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ElementCreator");
+  private static final Logger LOG = Logger.getInstance(ElementCreator.class);
   private final Project myProject;
   private final String myErrorTitle;
 
-  protected ElementCreator(Project project, String errorTitle) {
+  protected ElementCreator(Project project, @NlsContexts.DialogTitle String errorTitle) {
     myProject = project;
     myErrorTitle = errorTitle;
   }
 
   protected abstract PsiElement[] create(@NotNull String newName) throws Exception;
+  @NlsContexts.Command
   protected abstract String getActionName(String newName);
 
   public PsiElement[] tryCreate(@NotNull final String inputString) {

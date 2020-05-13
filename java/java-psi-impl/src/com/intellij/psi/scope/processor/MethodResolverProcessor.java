@@ -27,34 +27,29 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
   private boolean myStopAcceptingCandidates;
 
   public MethodResolverProcessor(@NotNull PsiMethodCallExpression place, @NotNull PsiFile placeFile) {
-    this(place, place.getArgumentList(), placeFile);
-  }
-
-  public MethodResolverProcessor(@NotNull PsiCallExpression place,
-                                 @NotNull PsiExpressionList argumentList, 
-                                 @NotNull PsiFile placeFile){
-    this(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(placeFile))});
-    setArgumentList(argumentList);
+    this(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(place.getArgumentList(), null,
+                                                                                     PsiUtil.getLanguageLevel(placeFile), placeFile)});
+    setArgumentList(place.getArgumentList());
     obtainTypeArguments(place);
   }
 
   public MethodResolverProcessor(PsiClass classConstr, @NotNull PsiExpressionList argumentList, @NotNull PsiElement place, @NotNull PsiFile placeFile) {
-    super(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList,
-                                                                                      PsiUtil.getLanguageLevel(placeFile))},
+    super(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList, null,
+                                                                                      PsiUtil.getLanguageLevel(placeFile), placeFile)},
           new SmartList<>());
     setIsConstructor(true);
     setAccessClass(classConstr);
     setArgumentList(argumentList);
   }
 
-  public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull PsiConflictResolver[] resolvers) {
+  public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, PsiConflictResolver @NotNull [] resolvers) {
     super(place, placeFile, resolvers, new SmartList<>());
   }
 
   @Override
   public void handleEvent(@NotNull Event event, Object associated) {
-    if (event == JavaScopeProcessorEvent.CHANGE_LEVEL) {
-      if (myHasAccessibleStaticCorrectCandidate) myStopAcceptingCandidates = true;
+    if (event == JavaScopeProcessorEvent.CHANGE_LEVEL && myHasAccessibleStaticCorrectCandidate) {
+      myStopAcceptingCandidates = true;
     }
     super.handleEvent(event, associated);
   }

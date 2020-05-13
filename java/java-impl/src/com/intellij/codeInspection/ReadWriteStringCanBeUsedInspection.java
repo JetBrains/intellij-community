@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -41,7 +42,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
           if (STRING_GET_BYTES.test(bytesExpression) && bytesExpression.getMethodExpression().getQualifierExpression() != null) {
             // Do not suggest for UTF-8 before Java 12 due to JDK-8209576
             ProblemHighlightType highlight;
-            String message = "Can be replaced with 'Files.writeString()'";
+            String message = JavaBundle.message("inspection.message.can.be.replaced.with.files.writestring");
             if (level.isAtLeast(LanguageLevel.JDK_12) || isNonUtf8Charset(bytesExpression.getArgumentList().getExpressions()[0])) {
               highlight = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
             } else {
@@ -59,7 +60,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
               PsiExpression[] args = expressionList.getExpressions();
               if (args.length == 2 && PsiTreeUtil.isAncestor(args[0], call, false) &&
                   TypeUtils.typeEquals("java.nio.charset.Charset", args[1].getType())) {
-                holder.registerProblem(newExpression, "Can be replaced with 'Files.readString()'",
+                holder.registerProblem(newExpression, JavaBundle.message("inspection.message.can.be.replaced.with.files.readstring"),
                                        new ReplaceWithReadStringFix());
               }
             }
@@ -110,7 +111,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return myMayNotWork ? getFamilyName() + " (may not work before JDK 11.0.2)" : getFamilyName();
+      return myMayNotWork ? JavaBundle.message("quickfix.text.0.may.not.work.before.jdk.11.0.2", getFamilyName()) : getFamilyName();
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)

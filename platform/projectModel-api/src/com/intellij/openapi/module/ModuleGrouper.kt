@@ -22,8 +22,6 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Use this class to determine how modules show by organized in a tree. It supports the both ways of module grouping: the old one where
  * groups are specified explicitly and the new one where modules are grouped accordingly to their qualified names.
- *
- * @author nik
  */
 @ApiStatus.Experimental
 abstract class ModuleGrouper {

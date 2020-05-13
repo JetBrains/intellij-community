@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.impl;
 
@@ -9,12 +9,12 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -38,12 +38,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.BitUtil;
-import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -56,6 +55,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
@@ -63,14 +64,15 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 /**
  * @author Eugene Belyaev
  */
-public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
+public final class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
+  public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class);
   private static final Logger LOG = Logger.getInstance(StructureViewWrapperImpl.class);
   private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
   private static final int REFRESH_TIME = 100; // time to check if a context file selection is changed or not
   private static final int REBUILD_TIME = 100; // time to wait and merge requests to rebuild a tree model
 
   private final Project myProject;
-  private final ToolWindowEx myToolWindow;
+  private final ToolWindow myToolWindow;
 
   private VirtualFile myFile;
 
@@ -85,7 +87,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private boolean myFirstRun = true;
   private int myActivityCount;
 
-  public StructureViewWrapperImpl(@NotNull Project project, @NotNull ToolWindowEx toolWindow) {
+  public StructureViewWrapperImpl(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
     JComponent component = toolWindow.getComponent();
@@ -95,7 +97,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       LOG.error("StructureViewWrapperImpl must be not created for light project.");
     }
 
-    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component);
+    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component)
+      .usePassThroughInUnitTestMode();
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     // to check on the next turn
@@ -139,7 +142,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         }
       }
     });
-    myToolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
+    myToolWindow.getContentManager().addContentManagerListener(new ContentManagerListener() {
       @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
         if (myStructureView instanceof StructureViewComposite) {
@@ -155,16 +158,18 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     });
     Disposer.register(myToolWindow.getContentManager(), this);
 
-    PsiStructureViewFactory.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<KeyedLazyInstance<PsiStructureViewFactory>>() {
-      @Override
-      public void extensionListChanged() {
-        StructureViewComponent.clearStructureViewState(myProject);
-        if (myStructureView != null) {
-          myStructureView.disableStoreState();
-        }
-        rebuild();
-      }
-    }, this);
+    PsiStructureViewFactory.EP_NAME.addChangeListener(this::clearCaches, this);
+
+    StructureViewBuilder.EP_NAME.addChangeListener(this::clearCaches, this);
+    getApplication().getMessageBus().connect(this).subscribe(STRUCTURE_CHANGED, this::clearCaches);
+  }
+
+  private void clearCaches() {
+    StructureViewComponent.clearStructureViewState(myProject);
+    if (myStructureView != null) {
+      myStructureView.disableStoreState();
+    }
+    scheduleRebuild();
   }
 
   private void checkUpdate() {
@@ -370,7 +375,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
           return UIUtil.getTreeBackground();
         }
       };
-      panel.getEmptyText().setText("No structure");
+      panel.getEmptyText().setText(LangBundle.message("panel.empty.text.no.structure"));
       createSinglePanel(panel);
     }
 
@@ -396,12 +401,13 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void updateHeaderActions(@Nullable StructureView structureView) {
-    AnAction[] titleActions = AnAction.EMPTY_ARRAY;
+    List<AnAction> titleActions = Collections.emptyList();
     if (structureView instanceof StructureViewComponent) {
       JTree tree = ((StructureViewComponent)structureView).getTree();
-      titleActions = new AnAction[]{
-        CommonActionsManager.getInstance().createExpandAllHeaderAction(tree),
-        CommonActionsManager.getInstance().createCollapseAllHeaderAction(tree)};
+      CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
+      titleActions = Arrays.asList(
+        commonActionManager.createExpandAllHeaderAction(tree),
+        commonActionManager.createCollapseAllHeaderAction(tree));
     }
     myToolWindow.setTitleActions(titleActions);
   }

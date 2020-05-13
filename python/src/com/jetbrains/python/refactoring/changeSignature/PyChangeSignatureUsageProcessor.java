@@ -27,12 +27,14 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.*;
@@ -55,12 +57,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @Override
   public UsageInfo[] findUsages(ChangeInfo info) {
     if (info instanceof PyChangeInfo) {
-      final List<UsageInfo> usages = PyCodeFragmentUtil.findUsages(((PyChangeInfo)info).getMethod(), true);
-      final Query<PyFunction> search = PyOverridingMethodsSearch.search(((PyChangeInfo)info).getMethod(), true);
-      final Collection<PyFunction> functions = search.findAll();
-      for (PyFunction function : functions) {
-        usages.add(new UsageInfo(function));
-        usages.addAll(PyCodeFragmentUtil.findUsages(function, true));
+      final PyFunction targetFunction = ((PyChangeInfo)info).getMethod();
+      final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(targetFunction, true);
+      if (!PyUtil.isInitOrNewMethod(targetFunction)) {
+        final Query<PyFunction> search = PyOverridingMethodsSearch.search(targetFunction, true);
+        for (PyFunction override : search.findAll()) {
+          usages.add(new UsageInfo(override));
+          usages.addAll(PyPsiIndexUtil.findUsages(override, true));
+        }
       }
       return usages.toArray(UsageInfo.EMPTY_ARRAY);
     }
@@ -112,7 +116,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
         final PyExpression newCall;
         if (call instanceof PyDecorator) {
-          newCall = elementGenerator.createDecoratorList("@" + builder.toString()).getDecorators()[0];
+          newCall = elementGenerator.createDecoratorList("@" + builder).getDecorators()[0];
         }
         else {
           newCall = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());
@@ -122,7 +126,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         return true;
       }
     }
-    else if (element instanceof PyFunction) {
+    else if (element instanceof PyFunction && element != changeInfo.getMethod()) {
       processFunctionDeclaration((PyChangeInfo)changeInfo, (PyFunction)element);
     }
     return false;
@@ -161,36 +165,49 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     assert oldParamIndexToArgs.keySet().stream().allMatch(index -> index >= 0);
 
-    PyParameterInfo[] newParamInfos = changeInfo.getNewParameters();
+    List<PyParameterInfo> newParamInfos = Arrays.asList(changeInfo.getNewParameters());
     
-    final int posVarargIndex = JBIterable.of(newParamInfos).indexOf(info -> isPositionalVarargName(info.getName()));
-    final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos[posVarargIndex].getOldIndex()).isEmpty();
-    for (int paramIndex = 0; paramIndex < newParamInfos.length; paramIndex++) {
-      PyParameterInfo info = newParamInfos[paramIndex];
+    final int posVarargIndex = ContainerUtil.indexOf(newParamInfos, info -> isPositionalVarargName(info.getName()));
+    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> "/".equals(info.getName()));
+    final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos.get(posVarargIndex).getOldIndex()).isEmpty();
+    List<PyExpression> notInsertedVariadicKeywordArgs = ContainerUtil.filter(call.getArguments(), a -> {
+      return a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword();
+    });
+    boolean variadicKeywordArgsUsed = false;
+    final int implicitCount = mapping.getImplicitParameters().size();
+    for (int paramIndex = implicitCount; paramIndex < newParamInfos.size(); paramIndex++) {
+      PyParameterInfo info = newParamInfos.get(paramIndex);
       final String paramName = info.getName();
       final boolean isKeywordVararg = isKeywordVarargName(paramName);
       final boolean isPositionalVararg = isPositionalVarargName(paramName);
-      if (paramName.equals(PyNames.CANONICAL_SELF)) {
-        continue;
-      }
+      final boolean beforePositionalOnlyMarker = paramIndex < posOnlyMarkerIndex;
+      final boolean defaultShouldBeInlined = beforePositionalOnlyMarker &&
+                                             ContainerUtil.exists(newParamInfos.subList(paramIndex + 1, posOnlyMarkerIndex),
+                                                                  i -> !i.isNew() && !oldParamIndexToArgs.get(i.getOldIndex()).isEmpty());
       if (paramName.equals("*")) {
         keywordArgsRequired = true;
+        continue;
+      }
+      if (paramName.equals("/")) {
         continue;
       }
       final String paramDefault = StringUtil.notNullize(info.getDefaultValue());
       final int oldIndex = info.getOldIndex();
       if (oldIndex < 0) {
-        if (!info.getDefaultInSignature()) {
-          newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
+        if (info.getDefaultInSignature() && !defaultShouldBeInlined) {
+          // If the next argument was passed by position it would match with this new default.
+          // Imagine "def f(x, y=None): ..." -> "def f(x, foo=None, y=None): ..." and a call "f(1, 2)"
+          keywordArgsRequired = true;
         }
         else {
-          // If the next argument was passed by position it would match with this new default. 
-          // Imagine "def f(x, y=None): ..." -> "def f(x, foo=None, y=None): ..." and a call "f(1, 2)" 
-          keywordArgsRequired = true;
+          newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
         }
       }
       else {
         final Collection<PyExpression> existingArgs = oldParamIndexToArgs.get(oldIndex);
+        final PyCallableParameter oldParam = allOrigParams.get(oldIndex);
+        final boolean usesValueFromVariadic = mapping.getParametersMappedToVariadicKeywordArguments().contains(oldParam);
+        variadicKeywordArgsUsed |= usesValueFromVariadic;
         if (!existingArgs.isEmpty()) {
           for (PyExpression arg : existingArgs) {
             PyExpression argValue;
@@ -203,8 +220,9 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
               argValue = arg;
               argName = "";
             }
+            notInsertedVariadicKeywordArgs.remove(argValue);
             // Keep format of existing keyword arguments unless it's illegal in their new position
-            if (!argName.isEmpty() && !(paramIndex < posVarargIndex && !posVarargEmpty)) {
+            if (!argName.isEmpty() && !(paramIndex < posVarargIndex && !posVarargEmpty) && !beforePositionalOnlyMarker) {
               keywordArgsRequired = true;
             }
             assert !(isPositionalVararg && keywordArgsRequired);
@@ -213,8 +231,13 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             newArguments.add(formatArgument(newArgumentName, argValueText, keywordArgsRequired));
           }
         }
-        else if (!info.getDefaultInSignature() && !isPositionalVararg && !isKeywordVararg) {
-          // Existing ordinary parameter without default value. Perhaps, the default value was propagated to calls 
+        // Parameter receives its default value from the signature, all subsequent arguments must use keyword form
+        else if (info.getDefaultInSignature() && !defaultShouldBeInlined) {
+          keywordArgsRequired = true;
+        }
+        else if (!isPositionalVararg && !isKeywordVararg && !usesValueFromVariadic) {
+          // Existing ordinary parameter with neither a default value in the signature, not a corresponding argument.
+          // Most likely its default was propagated from the signature down to calls.
           newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
         }
       }
@@ -223,6 +246,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         keywordArgsRequired = true;
       }
     }
+    if (variadicKeywordArgsUsed) {
+      newArguments.addAll(ContainerUtil.map(notInsertedVariadicKeywordArgs, PsiElement::getText));
+    }
+
     return newArguments;
   }
 
@@ -236,7 +263,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @NotNull
   private static String formatArgument(@NotNull String name, @NotNull String value, boolean keywordArgument) {
-    if (keywordArgument) {
+    if (keywordArgument && !value.startsWith("*")) {
       return name + "=" + value;
     }
     else {

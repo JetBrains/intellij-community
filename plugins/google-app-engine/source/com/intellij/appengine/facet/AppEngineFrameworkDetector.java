@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineFrameworkDetector extends FacetBasedFrameworkDetector<AppEngineFacet,  AppEngineFacetConfiguration> {
   public AppEngineFrameworkDetector() {
     super("appengine-java");
@@ -46,7 +43,7 @@ public class AppEngineFrameworkDetector extends FacetBasedFrameworkDetector<AppE
   }
 
   @Override
-  public FrameworkType getFrameworkType() {
+  public @NotNull FrameworkType getFrameworkType() {
     return AppEngineFrameworkType.getFrameworkType();
   }
 

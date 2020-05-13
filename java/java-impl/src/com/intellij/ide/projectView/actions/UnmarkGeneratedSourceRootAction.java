@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
@@ -29,9 +30,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.Locale;
 
-/**
- * @author nik
- */
 public class UnmarkGeneratedSourceRootAction extends MarkRootActionBase {
   public UnmarkGeneratedSourceRootAction() {
     Presentation presentation = getTemplatePresentation();
@@ -41,8 +39,8 @@ public class UnmarkGeneratedSourceRootAction extends MarkRootActionBase {
     if (handler == null) return;
 
     String typeName = handler.getFullRootTypeName();
-    presentation.setText("Unmark Generated " + typeName);
-    presentation.setDescription("Mark directory as an ordinary " + typeName.toLowerCase(Locale.getDefault()));
+    presentation.setText(JavaBundle.message("action.text.unmark.generated.0", typeName));
+    presentation.setDescription(JavaBundle.message("action.description.mark.directory.as.an.ordinary.0", typeName.toLowerCase(Locale.getDefault())));
   }
 
   @Override

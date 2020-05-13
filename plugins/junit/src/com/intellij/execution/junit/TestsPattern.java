@@ -9,6 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -42,6 +43,11 @@ public class TestsPattern extends TestPackage {
   @Override
   protected boolean filterOutputByDirectoryForJunit5(Set<Location<?>> classNames) {
     return super.filterOutputByDirectoryForJunit5(classNames) && classNames.isEmpty();
+  }
+
+  @Override
+  protected boolean requiresSmartMode() {
+    return true;
   }
 
   @Override
@@ -175,17 +181,17 @@ public class TestsPattern extends TestPackage {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     if (patterns.isEmpty()) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.pattern.error.message"));
+      throw new RuntimeConfigurationWarning(JUnitBundle.message("no.pattern.error.message"));
     }
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getConfiguration().getProject());
     for (String pattern : patterns) {
       final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
       final PsiClass psiClass = JavaExecutionUtil.findMainClass(getConfiguration().getProject(), className, searchScope);
       if (psiClass != null && !JUnitUtil.isTestClass(psiClass)) {
-        throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.not.test.error.message", className));
+        throw new RuntimeConfigurationWarning(JUnitBundle.message("class.not.test.error.message", className));
       }
       if (psiClass == null && !pattern.contains("*")) {
-        throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.not.found.error.message", className));
+        throw new RuntimeConfigurationWarning(JavaBundle.message("class.not.found.error.message", className));
       }
     }
   }

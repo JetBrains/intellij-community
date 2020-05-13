@@ -1,32 +1,25 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.rename.naming.AutomaticGetterSetterRenamer;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaVariableProcessor");
+  private static final Logger LOG = Logger.getInstance(RenameJavaVariableProcessor.class);
 
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
@@ -48,7 +41,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   @Override
   public void renameElement(@NotNull final PsiElement psiElement,
                             @NotNull final String newName,
-                            @NotNull final UsageInfo[] usages,
+                            final UsageInfo @NotNull [] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiVariable variable = (PsiVariable) psiElement;
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<>();
@@ -126,154 +119,27 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<PsiElement, String> allRenames) {
-    if (element instanceof PsiField && JavaLanguage.INSTANCE.equals(element.getLanguage())) {
-      prepareFieldRenaming((PsiField)element, newName, allRenames);
-    }
-  }
+    if (element instanceof PsiRecordComponent) {
+      PsiClass containingClass = ((PsiRecordComponent)element).getContainingClass();
+      if (containingClass != null) {
+        String name = ((PsiRecordComponent)element).getName();
+        if (name != null) {
+          PsiMethod explicitGetter = ContainerUtil
+            .find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
 
-  private static void prepareFieldRenaming(PsiField field, String newName, final Map<PsiElement, String> allRenames) {
-    // search for getters/setters
-    PsiClass aClass = field.getContainingClass();
+          if (explicitGetter != null) {
+            AutomaticGetterSetterRenamer
+              .addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()), allRenames);
+          }
 
-    Project project = field.getProject();
-    final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
-
-    final String propertyName = PropertyUtilBase.suggestPropertyName(field, field.getName());
-    final String newPropertyName = PropertyUtilBase.suggestPropertyName(field, newName);
-
-    boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-
-    PsiMethod[] getters = GetterSetterPrototypeProvider.findGetters(aClass, propertyName, isStatic);
-
-    PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, propertyName, isStatic, false);
-
-    boolean shouldRenameSetterParameter = false;
-
-    if (setter != null) {
-      shouldRenameSetterParameter = shouldRenameSetterParameter(manager, propertyName, setter);
-    }
-
-    if (getters != null) {
-      List<PsiMethod> validGetters = new ArrayList<>();
-      for (PsiMethod getter : getters) {
-        String newGetterName = GetterSetterPrototypeProvider.suggestNewGetterName(propertyName, newPropertyName, getter);
-        String getterId = null;
-        if (newGetterName == null) {
-          getterId = getter.getName();
-          newGetterName = PropertyUtilBase.suggestGetterName(newPropertyName, field.getType(), getterId);
-        }
-        if (newGetterName.equals(getterId)) {
-          continue;
-        }
-        else {
-          boolean valid = true;
-          for (PsiMethod method : getter.findDeepestSuperMethods()) {
-            if (method instanceof PsiCompiledElement) {
-              valid = false;
-              break;
+          PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
+          if (canonicalConstructor != null) {
+            PsiParameter parameter = ContainerUtil.find(canonicalConstructor.getParameterList().getParameters(), p -> name.equals(p.getName()));
+            if (parameter != null) {
+              allRenames.put(parameter, newName);
             }
           }
-          if (!valid) continue;
         }
-        validGetters.add(getter);
-      }
-      getters = validGetters.isEmpty() ? null : validGetters.toArray(PsiMethod.EMPTY_ARRAY);
-    }
-
-    String newSetterName = "";
-    if (setter != null) {
-      newSetterName = PropertyUtilBase.suggestSetterName(newPropertyName);
-      final String newSetterParameterName = manager.propertyNameToVariableName(newPropertyName, VariableKind.PARAMETER);
-      if (newSetterName.equals(setter.getName())) {
-        setter = null;
-        newSetterName = null;
-        shouldRenameSetterParameter = false;
-      }
-      else if (newSetterParameterName.equals(setter.getParameterList().getParameters()[0].getName())) {
-        shouldRenameSetterParameter = false;
-      } else {
-        for (PsiMethod method : setter.findDeepestSuperMethods()) {
-          if (method instanceof PsiCompiledElement) {
-            setter = null;
-            shouldRenameSetterParameter = false;
-            break;
-          }
-        }
-      }
-    }
-
-    if ((getters != null || setter != null) && askToRenameAccesors(getters != null ? getters[0] : null, setter, newName, project)) {
-      getters = null;
-      setter = null;
-      shouldRenameSetterParameter = false;
-    }
-
-    if (getters != null) {
-      for (PsiMethod getter : getters) {
-        String newGetterName = GetterSetterPrototypeProvider.suggestNewGetterName(propertyName, newPropertyName, getter);
-        if (newGetterName == null) {
-          newGetterName = PropertyUtilBase.suggestGetterName(newPropertyName, field.getType(), getter.getName());
-        }
-        addOverriddenAndImplemented(getter, newGetterName, null, propertyName, manager, allRenames);
-      }
-    }
-
-    if (setter != null) {
-      addOverriddenAndImplemented(setter, newSetterName, shouldRenameSetterParameter ? newPropertyName : null, propertyName, manager, allRenames);
-    }
-  }
-
-  private static boolean shouldRenameSetterParameter(JavaCodeStyleManager manager, String propertyName, PsiMethod setter) {
-    boolean shouldRenameSetterParameter;
-    String parameterName = manager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
-    PsiParameter setterParameter = setter.getParameterList().getParameters()[0];
-    shouldRenameSetterParameter = parameterName.equals(setterParameter.getName());
-    return shouldRenameSetterParameter;
-  }
-
-  private static boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName, final Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
-    boolean physicalGetter = getter != null && getter.isPhysical();
-    boolean physicalSetter = setter != null && setter.isPhysical();
-    if (!physicalGetter && !physicalSetter) return false;
-    String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
-    return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != Messages.YES;
-  }
-
-  private static void addOverriddenAndImplemented(@NotNull final PsiMethod methodPrototype,
-                                                  @NotNull final String newName,
-                                                  @Nullable final String newPropertyName,
-                                                  @NotNull final String oldParameterName,
-                                                  @NotNull final JavaCodeStyleManager manager,
-                                                  @NotNull final Map<PsiElement, String> allRenames) {
-    PsiMethod[] methods = methodPrototype.findDeepestSuperMethods();
-    if (methods.length == 0) {
-      methods = new PsiMethod[] {methodPrototype};
-    }
-    for (PsiMethod method : methods) {
-      addGetterOrSetterWithParameter(method, newName, newPropertyName, oldParameterName, manager, allRenames);
-      OverridingMethodsSearch.search(method).forEach(psiMethod -> {
-        RenameProcessor.assertNonCompileElement(psiMethod);
-        addGetterOrSetterWithParameter(psiMethod, newName, newPropertyName, oldParameterName, manager, allRenames);
-        return true;
-      });
-    }
-  }
-
-  public static void addGetterOrSetterWithParameter(@NotNull PsiMethod methodPrototype,
-                                                    @NotNull String newName,
-                                                    @Nullable String newPropertyName,
-                                                    @NotNull String oldParameterName,
-                                                    @NotNull JavaCodeStyleManager manager,
-                                                    @NotNull Map<PsiElement, String> allRenames) {
-
-    allRenames.put(methodPrototype, newName);
-    if (newPropertyName != null) {
-      final PsiParameter[] parameters = methodPrototype.getParameterList().getParameters();
-      LOG.assertTrue(parameters.length > 0, methodPrototype.getName());
-      PsiParameter parameter = parameters[0];
-      if (shouldRenameSetterParameter(manager, oldParameterName , methodPrototype)) {
-        allRenames.put(parameter, manager.propertyNameToVariableName(newPropertyName, VariableKind.PARAMETER));
       }
     }
   }

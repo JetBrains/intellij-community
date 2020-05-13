@@ -16,7 +16,6 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.project.Project;
@@ -38,15 +37,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author traff
- */
 public class PyDocstringGenerator {
   public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
   public static final String TRIPLE_SINGLE_QUOTES = "'''";
 
-  private final List<DocstringParam> myAddedParams = Lists.newArrayList();
-  private final List<DocstringParam> myRemovedParams = Lists.newArrayList();
+  private final List<DocstringParam> myAddedParams = new ArrayList<>();
+  private final List<DocstringParam> myRemovedParams = new ArrayList<>();
   private final String myDocStringText;
   // Updated after buildAndInsert()
   @Nullable private final PyDocStringOwner myDocStringOwner;
@@ -244,7 +240,7 @@ public class PyDocstringGenerator {
     //  signature = PySignatureCacheManager.getInstance(myDocStringOwner.getProject()).findSignature((PyFunction)myDocStringOwner);
     //}
     final DocStringFormat format = myDocStringFormat;
-    final ArrayList<DocstringParam> filtered = Lists.newArrayList();
+    final ArrayList<DocstringParam> filtered = new ArrayList<>();
     final Set<Pair<String, Boolean>> processed = Sets.newHashSet();
     for (DocstringParam param : myAddedParams) {
       final Pair<String, Boolean> paramCoordinates = Pair.create(param.getName(), param.isReturnValue());

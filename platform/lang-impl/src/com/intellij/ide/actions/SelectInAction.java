@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -15,13 +14,16 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.DirtyUI;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class SelectInAction extends AnAction implements DumbAware {
+public final class SelectInAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.select.in");
@@ -52,7 +54,7 @@ public class SelectInAction extends AnAction implements DumbAware {
   }
 
   private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context) {
-    final List<SelectInTarget> targetVector = Arrays.asList(getSelectInManager(context.getProject()).getTargets());
+    List<SelectInTarget> targetVector = SelectInManager.getInstance(context.getProject()).getTargetList();
     ListPopup popup;
     if (targetVector.isEmpty()) {
       DefaultActionGroup group = new DefaultActionGroup();
@@ -67,11 +69,11 @@ public class SelectInAction extends AnAction implements DumbAware {
     popup.showInBestPositionFor(dataContext);
   }
 
-  private static class SelectInActionsStep extends BaseListPopupStep<SelectInTarget> {
+  private static final class SelectInActionsStep extends BaseListPopupStep<SelectInTarget> {
     private final SelectInContext mySelectInContext;
     private final List<SelectInTarget> myVisibleTargets;
 
-    SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
+    SelectInActionsStep(@NotNull Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
       myVisibleTargets = new ArrayList<>(targetVector);
       List<Icon> icons = fillInIcons(targetVector, selectInContext);
@@ -83,8 +85,8 @@ public class SelectInAction extends AnAction implements DumbAware {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(selectInContext.getProject());
       List<Icon> list = new ArrayList<>();
       for (SelectInTarget target : targets) {
-        String id = target.getMinorViewId() != null ? null : target.getToolWindowId();
-        ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
+        String id = target.getMinorViewId() == null ? target.getToolWindowId() : null;
+        ToolWindow toolWindow = id == null ? null : toolWindowManager.getToolWindow(id);
         Icon icon = toolWindow != null ? toolWindow.getIcon() : EmptyIcon.ICON_13;
         list.add(icon);
       }
@@ -104,6 +106,7 @@ public class SelectInAction extends AnAction implements DumbAware {
       return numberingText(n, text);
     }
 
+    @DirtyUI
     @Override
     public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
       if (finalChoice) {
@@ -114,7 +117,7 @@ public class SelectInAction extends AnAction implements DumbAware {
       if (target instanceof CompositeSelectInTarget) {
         final ArrayList<SelectInTarget> subTargets = new ArrayList<>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
         if (subTargets.size() > 0) {
-          Collections.sort(subTargets, new SelectInManager.SelectInTargetComparator());
+          subTargets.sort(new SelectInManager.SelectInTargetComparator());
           return new SelectInActionsStep(subTargets, mySelectInContext);
         }
       }
@@ -127,6 +130,7 @@ public class SelectInAction extends AnAction implements DumbAware {
              ((CompositeSelectInTarget)selectedValue).getSubTargets(mySelectInContext).size() > 1;
     }
 
+    @DirtyUI
     @Override
     public boolean isSelectable(final SelectInTarget target) {
       if (DumbService.isDumb(mySelectInContext.getProject()) && !DumbService.isDumbAware(target)) {
@@ -154,13 +158,9 @@ public class SelectInAction extends AnAction implements DumbAware {
     return text;
   }
 
-  private static SelectInManager getSelectInManager(Project project) {
-    return SelectInManager.getInstance(project);
-  }
-
-  private static class NoTargetsAction extends AnAction {
+  private static final class NoTargetsAction extends AnAction {
     NoTargetsAction() {
-      super(IdeBundle.message("message.no.targets.available"));
+      super(IdeBundle.messagePointer("message.no.targets.available"));
     }
 
     @Override

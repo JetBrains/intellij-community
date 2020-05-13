@@ -42,6 +42,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.GradleConnectorService;
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -162,16 +163,9 @@ public class GradleExecutionHelper {
       String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
       LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
 
-      // filter nulls, empty strings and '--args' arguments
-      for (Iterator<String> iterator = settings.getArguments().iterator(); iterator.hasNext(); ) {
-        String arg = iterator.next();
-        if(StringUtil.isEmpty(arg)) continue;
-        if("--args".equals(arg) && iterator.hasNext()) {
-          iterator.next();
-        } else {
-          filteredArgs.add(arg);
-        }
-      }
+      // filter nulls and empty strings
+      filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
+
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
     }
@@ -197,8 +191,6 @@ public class GradleExecutionHelper {
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     operation.addProgressListener(gradleProgressListener,
-                                  OperationType.GENERIC,
-                                  OperationType.PROJECT_CONFIGURATION,
                                   OperationType.TASK,
                                   OperationType.TEST);
     operation.setStandardOutput(standardOutput);
@@ -272,7 +264,8 @@ public class GradleExecutionHelper {
       catch (Exception ignore) {
       }
     }
-    ProjectConnection connection = getConnection(projectDir, settings);
+    GradleConnector connector = GradleConnectorService.getConnector(projectPath, taskId);
+    ProjectConnection connection = getConnection(connector, projectDir, settings);
     try {
       workaroundJavaVersionIssueIfNeeded(connection, taskId, listener, cancellationTokenSource);
       return f.fun(connection);
@@ -281,7 +274,7 @@ public class GradleExecutionHelper {
       throw e;
     }
     catch (Throwable e) {
-      LOG.debug("Gradle execution error", e);
+      LOG.warn("Gradle execution error", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);
       ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
       externalSystemException.initCause(e);
@@ -296,7 +289,7 @@ public class GradleExecutionHelper {
         connection.close();
       }
       catch (Throwable e) {
-        LOG.debug("Gradle connection close error", e);
+        LOG.warn("Gradle connection close error", e);
       }
     }
   }
@@ -315,7 +308,8 @@ public class GradleExecutionHelper {
     }
 
     final long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
-    ProjectConnection connection = getConnection(projectPath, settings);
+    GradleConnector connector = GradleConnectorService.getConnector(projectPath, id);
+    ProjectConnection connection = getConnection(connector, projectPath, settings);
     try {
       settings.setRemoteProcessIdleTtlInMs(100);
       try {
@@ -451,17 +445,18 @@ public class GradleExecutionHelper {
   /**
    * Allows to retrieve gradle api connection to use for the given project.
    *
+   * @param connector   Gradle TAPI connector
    * @param projectPath target project path
    * @param settings    execution settings to use
    * @return connection to use
    * @throws IllegalStateException if it's not possible to create the connection
    */
   @NotNull
-  private static ProjectConnection getConnection(@NotNull String projectPath,
+  private static ProjectConnection getConnection(@NotNull GradleConnector connector,
+                                                 @NotNull String projectPath,
                                                  @Nullable GradleExecutionSettings settings)
     throws IllegalStateException {
     File projectDir = new File(projectPath);
-    GradleConnector connector = GradleConnector.newConnector();
     int ttl = -1;
 
     if (settings != null) {
@@ -511,7 +506,7 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class> toolingExtensionClasses) {
+  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class<?>> toolingExtensionClasses) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
     try {
       if (stream == null) {
@@ -699,7 +694,7 @@ public class GradleExecutionHelper {
   }
 
   @NotNull
-  public static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
+  public static String getToolingExtensionsJarPaths(@NotNull Set<Class<?>> toolingExtensionClasses) {
     final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
       String path = PathManager.getJarPathForClass(aClass);
       if (path != null) {

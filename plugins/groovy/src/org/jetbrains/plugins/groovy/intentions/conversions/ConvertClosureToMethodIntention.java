@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,9 +31,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.SignaturesKt;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class ConvertClosureToMethodIntention extends Intention {
   private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertClosureToMethodIntention");
+    Logger.getInstance(ConvertClosureToMethodIntention.class);
 
   @NotNull
   @Override
@@ -94,9 +94,9 @@ public class ConvertClosureToMethodIntention extends Intention {
     final GrExpression initializer = field.getInitializerGroovy();
     LOG.assertTrue(initializer != null);
     final PsiType type = initializer.getType();
-    LOG.assertTrue(type instanceof GrClosureType);
-    final List<MethodSignature> signatures = GrClosureSignatureUtil.generateAllMethodSignaturesBySignature(
-      fieldName, ((GrClosureType)type).getSignatures()
+    LOG.assertTrue(type instanceof GroovyClosureType);
+    final List<MethodSignature> signatures = SignaturesKt.generateAllMethodSignaturesBySignature(
+      fieldName, ((GroovyClosureType)type).getSignatures()
     );
     for (MethodSignature s : signatures) {
       final PsiMethod method = MethodSignatureUtil.findMethodBySignature(containingClass, s, true);

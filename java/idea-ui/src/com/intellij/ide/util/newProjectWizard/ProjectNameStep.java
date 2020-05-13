@@ -2,6 +2,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
@@ -33,8 +34,8 @@ public class ProjectNameStep extends ModuleWizardStep {
     myNamePathComponent = new NamePathComponent(
       IdeBundle.message("label.project.name"),
       IdeBundle.message("label.project.files.location"),
-      IdeBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
-      IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      JavaUiBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
+      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
       true, false
     );
     final String baseDir = myWizardContext.getProjectFileDirectory();
@@ -49,7 +50,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.insets(10, 0, 20, 0), 0, 0));
 
     if (myWizardContext.isCreatingNewProject()) {
-      myNamePathComponent.add(new JLabel("Project format:"),
+      myNamePathComponent.add(new JLabel(JavaUiBundle.message("label.project.format")),
                               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
                                                      GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
       myNamePathComponent.add(myFormatPanel.getStorageFormatComboBox(),

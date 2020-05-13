@@ -1,4 +1,5 @@
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
 
 
 class WithRepeatedInfoAndTest {
@@ -33,7 +34,7 @@ class WithRepeatedAndTests {
 
 class WithParameterized {
   @ParameterizedTest
-  void testaccidentalRepetitionInfo(Object s, RepetitionInfo repetitionInfo) { }
+  void testaccidentalRepetitionInfo(Object s, RepetitionInfo <warning descr="RepetitionInfo is injected for @RepeatedTest only">repetitionInfo</warning>) { }
 }
 class WithRepeatedAndCustomNames {
   @RepeatedTest(value = 1, name = "{displayName} {currentRepetition}/{totalRepetitions}")

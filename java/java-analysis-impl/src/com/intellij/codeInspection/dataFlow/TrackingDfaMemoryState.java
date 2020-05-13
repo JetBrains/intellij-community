@@ -5,10 +5,12 @@ import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,15 +52,26 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   private Map<DfaVariableValue, Set<Relation>> getRelations() {
     Map<DfaVariableValue, Set<Relation>> result = new HashMap<>();
-    for (EqClass eqClass : getNonTrivialEqClasses()) {
-      DfaConstValue constant = eqClass.findConstant();
-      List<DfaVariableValue> vars = eqClass.getVariables(false);
-      for (DfaVariableValue var : vars) {
-        Set<Relation> set = result.computeIfAbsent(var, k -> new HashSet<>());
-        if (constant != null) {
-          set.add(new Relation(RelationType.EQ, constant));
+    forRecordedVariableTypes((var, type) -> {
+      if (type instanceof DfConstantType) {
+        result.computeIfAbsent(var, k -> new HashSet<>()).add(new Relation(RelationType.EQ, getFactory().fromDfType(type)));
+      }
+      if (type instanceof DfAntiConstantType) {
+        Set<?> notValues = ((DfAntiConstantType<?>)type).getNotValues();
+        PsiType varType = var.getType();
+        if (!notValues.isEmpty() && varType != null) {
+          for (Object notValue : notValues) {
+            result.computeIfAbsent(var, k -> new HashSet<>()).add(
+              new Relation(RelationType.NE, getFactory().fromDfType(DfTypes.constant(notValue, varType))));
+          }
         }
-        for (DfaVariableValue eqVar : vars) {
+      }
+    });
+    
+    for (EqClass eqClass : getNonTrivialEqClasses()) {
+      for (DfaVariableValue var : eqClass) {
+        Set<Relation> set = result.computeIfAbsent(var, k -> new HashSet<>());
+        for (DfaVariableValue eqVar : eqClass) {
           if (eqVar != var) {
             set.add(new Relation(RelationType.EQ, eqVar));
           }
@@ -72,24 +85,10 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       RelationType plain = classPair.isOrdered() ? RelationType.LT : RelationType.NE;
       RelationType flipped = Objects.requireNonNull(plain.getFlipped());
 
-      List<DfaVariableValue> firstVars = first.getVariables(false);
-      List<DfaVariableValue> secondVars = second.getVariables(false);
-      for (DfaVariableValue var1 : firstVars) {
-        for (DfaVariableValue var2 : secondVars) {
+      for (DfaVariableValue var1 : first) {
+        for (DfaVariableValue var2 : second) {
           result.computeIfAbsent(var1, k -> new HashSet<>()).add(new Relation(plain, var2));
           result.computeIfAbsent(var2, k -> new HashSet<>()).add(new Relation(flipped, var1));
-        }
-      }
-      DfaConstValue firstConst = first.findConstant();
-      if (firstConst != null) {
-        for (DfaVariableValue var2 : secondVars) {
-          result.computeIfAbsent(var2, k -> new HashSet<>()).add(new Relation(flipped, firstConst));
-        }
-      }
-      DfaConstValue secondConst = second.findConstant();
-      if (secondConst != null) {
-        for (DfaVariableValue var1 : firstVars) {
-          result.computeIfAbsent(var1, k -> new HashSet<>()).add(new Relation(plain, secondConst));
         }
       }
     }
@@ -100,7 +99,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   void recordChange(Instruction instruction, TrackingDfaMemoryState previous) {
     Map<DfaVariableValue, Change> result = getChangeMap(previous);
-    DfaValue value = isEmptyStack() ? DfaUnknownValue.getInstance() : peek();
+    DfaValue value = isEmptyStack() ? getFactory().getUnknown() : peek();
     myHistory = MemoryStateChange.create(myHistory, instruction, result, value);
   }
 
@@ -108,25 +107,13 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   private Map<DfaVariableValue, Change> getChangeMap(TrackingDfaMemoryState previous) {
     Map<DfaVariableValue, Change> changeMap = new HashMap<>();
     Set<DfaVariableValue> varsToCheck = new HashSet<>();
-    previous.forVariableStates((value, state) -> varsToCheck.add(value));
-    forVariableStates((value, state) -> varsToCheck.add(value));
+    previous.forRecordedVariableTypes((value, state) -> varsToCheck.add(value));
+    forRecordedVariableTypes((value, state) -> varsToCheck.add(value));
     for (DfaVariableValue value : varsToCheck) {
-      DfaFactMap newMap = getVariableState(value).myFactMap;
-      DfaFactMap oldMap = previous.getVariableState(value).myFactMap;
-      if (!newMap.equals(oldMap)) {
-        DfaFactMap added = DfaFactMap.EMPTY;
-        DfaFactMap removed = DfaFactMap.EMPTY;
-        for (DfaFactType<?> type : DfaFactType.getTypes()) {
-          Object oldVal = oldMap.get(type);
-          Object newVal = newMap.get(type);
-          if (!Objects.equals(oldVal, newVal)) {
-            //noinspection unchecked
-            added = added.with((DfaFactType<Object>)type, newVal);
-            //noinspection unchecked
-            removed = removed.with((DfaFactType<Object>)type, oldVal);
-          }
-        }
-        changeMap.put(value, new Change(Collections.emptySet(), Collections.emptySet(), removed, added));
+      DfType newType = getDfType(value);
+      DfType oldType = previous.getDfType(value);
+      if (!newType.equals(oldType)) {
+        changeMap.put(value, new Change(Collections.emptySet(), Collections.emptySet(), oldType, newType));
       }
     }
     Map<DfaVariableValue, Set<Relation>> oldRelations = previous.getRelations();
@@ -144,8 +131,8 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         removed.removeAll(newValueRelations);
         changeMap.compute(
           value, (v, change) -> change == null
-                                ? Change.create(removed, added, DfaFactMap.EMPTY, DfaFactMap.EMPTY)
-                                : Change.create(removed, added, change.myRemovedFacts, change.myAddedFacts));
+                                ? Change.create(removed, added, DfTypes.BOTTOM, DfTypes.BOTTOM)
+                                : Change.create(removed, added, change.myOldType, change.myNewType));
       }
     }
     return changeMap;
@@ -228,24 +215,24 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   }
 
   static class Change {
-    final Set<Relation> myRemovedRelations;
-    final Set<Relation> myAddedRelations;
-    final DfaFactMap myRemovedFacts;
-    final DfaFactMap myAddedFacts;
+    final @NotNull Set<Relation> myRemovedRelations;
+    final @NotNull Set<Relation> myAddedRelations;
+    final @NotNull DfType myOldType;
+    final @NotNull DfType myNewType;
 
-    private Change(Set<Relation> removedRelations, Set<Relation> addedRelations, DfaFactMap removedFacts, DfaFactMap addedFacts) {
+    private Change(@NotNull Set<Relation> removedRelations, @NotNull Set<Relation> addedRelations, @NotNull DfType oldType, @NotNull DfType newType) {
       myRemovedRelations = removedRelations.isEmpty() ? Collections.emptySet() : removedRelations;
       myAddedRelations = addedRelations.isEmpty() ? Collections.emptySet() : addedRelations;
-      myRemovedFacts = removedFacts;
-      myAddedFacts = addedFacts;
+      myOldType = oldType;
+      myNewType = newType;
     }
 
     @Nullable
-    static Change create(Set<Relation> removedRelations, Set<Relation> addedRelations, DfaFactMap removedFacts, DfaFactMap addedFacts) {
-      if (removedRelations.isEmpty() && addedRelations.isEmpty() && removedFacts == DfaFactMap.EMPTY && addedFacts == DfaFactMap.EMPTY) {
+    static Change create(Set<Relation> removedRelations, Set<Relation> addedRelations, DfType oldType, DfType newType) {
+      if (removedRelations.isEmpty() && addedRelations.isEmpty() && oldType == DfTypes.BOTTOM && newType == DfTypes.BOTTOM) {
         return null;
       }
-      return new Change(removedRelations, addedRelations, removedFacts, addedFacts);
+      return new Change(removedRelations, addedRelations, oldType, newType);
     }
 
     /**
@@ -257,16 +244,19 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     Change unite(Change other) {
       Set<Relation> added = new HashSet<>(ContainerUtil.intersection(myAddedRelations, other.myAddedRelations));
       Set<Relation> removed = new HashSet<>(ContainerUtil.intersection(myRemovedRelations, other.myRemovedRelations));
-      DfaFactMap addedFacts = myAddedFacts.unite(other.myAddedFacts);
-      DfaFactMap removedFacts = myRemovedFacts.unite(other.myRemovedFacts);
-      return create(removed, added, removedFacts, addedFacts);
+      DfType oldType = myOldType.join(other.myOldType);
+      DfType newType = myNewType.join(other.myNewType);
+      if (oldType.equals(newType)) {
+        oldType = newType = DfTypes.BOTTOM;
+      }
+      return create(removed, added, oldType, newType);
     }
 
     @Override
     public String toString() {
-      String removed = StreamEx.of(myRemovedRelations).map(Object::toString).append(myRemovedFacts.toString())
+      String removed = StreamEx.of(myRemovedRelations).map(Object::toString).append(myOldType.toString())
         .without("").joining(", ");
-      String added = StreamEx.of(myAddedRelations).map(Object::toString).append(myAddedFacts.toString())
+      String added = StreamEx.of(myAddedRelations).map(Object::toString).append(myNewType.toString())
         .without("").joining(", ");
       return (removed.isEmpty() ? "" : "-{" + removed + "} ") + (added.isEmpty() ? "" : "+{" + added + "}");
     }
@@ -341,21 +331,32 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     }
     
     @NotNull
-    <T> FactDefinition<T> findFact(DfaValue value, DfaFactType<T> type) {
+    <T> FactDefinition<T> findFact(DfaValue value, FactExtractor<T> extractor) {
       if (value instanceof DfaVariableValue) {
         for (MemoryStateChange change = this; change != null; change = change.getPrevious()) {
-          FactDefinition<T> factPair = factFromChange(type, change, change.myChanges.get(value));
+          FactDefinition<T> factPair = factFromChange(extractor, change, change.myChanges.get(value));
           if (factPair != null) return factPair;
-          factPair = factFromChange(type, change, change.myBridgeChanges.get(value));
-          if (factPair != null) return factPair;
+          if (!(change.myInstruction instanceof ConditionalGotoInstruction)) {
+            factPair = factFromChange(extractor, change, change.myBridgeChanges.get(value));
+            if (factPair != null) return factPair;
+          }
           if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value && change.getPrevious() != null) {
-            FactDefinition<T> fact = change.getPrevious().findFact(value, type);
+            FactDefinition<T> fact = change.getPrevious().findFact(value, extractor);
             return new FactDefinition<>(change, fact.myFact);
           }
         }
-        return new FactDefinition<>(null, ((DfaVariableValue)value).getInherentFacts().get(type));
+        return new FactDefinition<>(null, extractor.extract(((DfaVariableValue)value).getInherentType()));
       }
-      return new FactDefinition<>(null, type.fromDfaValue(value));
+      if (value instanceof DfaBinOpValue) {
+        FactDefinition<T> left = findFact(((DfaBinOpValue)value).getLeft(), extractor);
+        FactDefinition<T> right = findFact(((DfaBinOpValue)value).getRight(), extractor);
+        if (left.myFact instanceof LongRangeSet && right.myFact instanceof LongRangeSet) {
+          @SuppressWarnings("unchecked") T result = (T)((LongRangeSet)left.myFact).binOpFromToken(
+            ((DfaBinOpValue)value).getTokenType(), ((LongRangeSet)right.myFact), PsiType.LONG.equals(value.getType()));
+          return new FactDefinition<>(null, Objects.requireNonNull(result));
+        }
+      }
+      return new FactDefinition<>(null, extractor.extract(value.getDfType()));
     }
 
     @Nullable
@@ -370,14 +371,12 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     }
 
     @Nullable
-    private static <T> FactDefinition<T> factFromChange(DfaFactType<T> type, MemoryStateChange change, Change varChange) {
+    private static <T> FactDefinition<T> factFromChange(FactExtractor<T> extractor, MemoryStateChange change, Change varChange) {
       if (varChange != null) {
-        T added = varChange.myAddedFacts.get(type);
-        if (added != null) {
-          return new FactDefinition<>(change, added); 
-        }
-        if (varChange.myRemovedFacts.get(type) != null) {
-          return new FactDefinition<>(change, null);
+        T newFact = extractor.extract(varChange.myNewType);
+        T oldFact = extractor.extract(varChange.myOldType);
+        if (!newFact.equals(oldFact)) {
+          return new FactDefinition<>(change, newFact);
         }
       }
       return null;
@@ -396,8 +395,8 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     @Nullable
     PsiExpression getExpression() {
       if (myInstruction instanceof ExpressionPushingInstruction &&
-          ((ExpressionPushingInstruction)myInstruction).getExpressionRange() == null) {
-        return ((ExpressionPushingInstruction)myInstruction).getExpression();
+          ((ExpressionPushingInstruction<?>)myInstruction).getExpressionRange() == null) {
+        return ((ExpressionPushingInstruction<?>)myInstruction).getExpression();
       }
       if (myInstruction instanceof ConditionalGotoInstruction) {
         return ObjectUtils.tryCast(((ConditionalGotoInstruction)myInstruction).getPsiAnchor(), PsiExpression.class);
@@ -422,7 +421,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       if (previous.size() == 1) {
         return previous.iterator().next();
       }
-      return new MemoryStateChange(new ArrayList<>(previous), new MergeInstruction(), Collections.emptyMap(), DfaUnknownValue.getInstance(),
+      return new MemoryStateChange(new ArrayList<>(previous), new MergeInstruction(), Collections.emptyMap(), myTopOfStack.getFactory().getUnknown(),
                                    Collections.emptyMap());
     }
 
@@ -433,7 +432,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
           instruction = myInstruction;
         } else {
           return new MemoryStateChange(
-            Collections.singletonList(this), instruction, Collections.emptyMap(), DfaUnknownValue.getInstance(), bridge);
+            Collections.singletonList(this), instruction, Collections.emptyMap(), myTopOfStack.getFactory().getUnknown(), bridge);
         }
       }
       assert myBridgeChanges.isEmpty();
@@ -445,7 +444,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
                                     @NotNull Instruction instruction,
                                     @NotNull Map<DfaVariableValue, Change> result,
                                     @NotNull DfaValue value) {
-      if (result.isEmpty() && value == DfaUnknownValue.getInstance()) {
+      if (result.isEmpty() && DfaTypeValue.isUnknown(value)) {
         return previous;
       }
       return new MemoryStateChange(ContainerUtil.createMaybeSingletonList(previous), instruction, result, value, Collections.emptyMap());
@@ -485,22 +484,32 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   
   static class FactDefinition<T> {
     final @Nullable MemoryStateChange myChange;
-    final @Nullable T myFact;
+    final @NotNull T myFact;
 
-    FactDefinition(@Nullable MemoryStateChange change, @Nullable T fact) {
+    FactDefinition(@Nullable MemoryStateChange change, @NotNull T fact) {
       myChange = change;
       myFact = fact;
-    }
-
-    @Nullable
-    @Contract("!null -> !null")
-    T getFact(T defaultFact) {
-      return myFact == null ? defaultFact : myFact;
     }
 
     @Override
     public String toString() {
       return myFact + " @ " + myChange;
+    }
+  }
+  
+  interface FactExtractor<T> {
+    @NotNull T extract(DfType type);
+    
+    static FactExtractor<DfaNullability> nullability() {
+      return DfaNullability::fromDfType;
+    }
+    
+    static FactExtractor<TypeConstraint> constraint() {
+      return TypeConstraint::fromDfType;
+    }
+    
+    static FactExtractor<LongRangeSet> range() {
+      return DfLongType::extractRange;
     }
   }
 }

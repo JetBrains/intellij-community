@@ -36,8 +36,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
 
   @Override
-  @NotNull
-  public FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public FileEditorProvider @NotNull [] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
     List<FileEditorProvider> sharedProviders = new ArrayList<>();
     boolean hideDefaultEditor = false;
@@ -92,21 +91,21 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
   private final Map<String, String> mySelectedProviders = new HashMap<>();
 
-  void providerSelected(EditorComposite composite) {
+  void providerSelected(@NotNull EditorComposite composite) {
     FileEditorProvider[] providers = composite.getProviders();
     if (providers.length < 2) return;
     mySelectedProviders.put(computeKey(providers),
                             composite.getSelectedWithProvider().getProvider().getEditorTypeId());
   }
 
-  private static String computeKey(FileEditorProvider[] providers) {
+  private static @NotNull String computeKey(FileEditorProvider[] providers) {
     return StringUtil.join(ContainerUtil.map(providers, FileEditorProvider::getEditorTypeId), ",");
   }
 
   @Nullable
-  FileEditorProvider getSelectedFileEditorProvider(EditorHistoryManager editorHistoryManager,
-                                                   VirtualFile file,
-                                                   FileEditorProvider[] providers) {
+  FileEditorProvider getSelectedFileEditorProvider(@NotNull EditorHistoryManager editorHistoryManager,
+                                                   @NotNull VirtualFile file,
+                                                   FileEditorProvider @NotNull [] providers) {
     FileEditorProvider provider = editorHistoryManager.getSelectedProvider(file);
     if (provider != null || providers.length < 2) {
       return provider;
@@ -142,9 +141,8 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
     @Override
     public int compare(FileEditorProvider provider1, FileEditorProvider provider2) {
-      final int i1 = provider1.getPolicy().ordinal();
-      final int i2 = provider2.getPolicy().ordinal();
-      if (i1 != i2) return i1 - i2;
+      int c = provider1.getPolicy().compareTo(provider2.getPolicy());
+      if (c != 0) return c;
       final double value = getWeight(provider1) - getWeight(provider2);
       return value > 0 ? 1 : value < 0 ? -1 : 0;
     }

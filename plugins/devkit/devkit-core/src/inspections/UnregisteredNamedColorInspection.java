@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory;
 import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
@@ -36,8 +35,6 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
 
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isPluginProject(holder.getProject())) return PsiElementVisitor.EMPTY_VISITOR;
-
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitExpression(@NotNull UExpression node) {

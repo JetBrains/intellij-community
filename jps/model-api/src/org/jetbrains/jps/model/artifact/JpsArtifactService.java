@@ -23,9 +23,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class JpsArtifactService {
 
   public static JpsArtifactService getInstance() {
