@@ -223,6 +223,9 @@ public abstract class XmlExtension {
     return false;
   }
 
+  /**
+   * @return list of files containing char entity definitions to be used for completion and resolution within a specified XML file
+   */
   public @NotNull List<@NotNull XmlFile> getCharEntitiesDTDs(@NotNull XmlFile file) {
     XmlDocument document = file.getDocument();
     if (HtmlUtil.isHtml5Document(document)) {
