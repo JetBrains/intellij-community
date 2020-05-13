@@ -5,6 +5,7 @@ class StringBuilderToStringAssign {
   public static final String CONST_STRING_VAL = "Hello";
 
   static String str() { return ""; }
+  static <T> T gen(T a) { return a; }
 
   static void stringBuilderToStringAssign(StringBuilder sb) {
     String s1 = sb + "Hello";
@@ -83,7 +84,24 @@ class StringBuilderToStringAssign {
     String s104 = ("Hello" + sb + (sb.toString() + ((sb.toString()))));
     String s105 = ("Hello" + sb + (sb + ((sb) + "Hello")));
     String s106 = ("Hello" + sb + (sb + ((sb.toString()) + 42)));
+
+    String s107 = ((("Hello")) + sb + (sb + ((sb.toString()) + 42)));
+
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      String s181 = gen("Hello") + /* 1 */sb/* 5 */;
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      String s182 = /* 1 */sb/* 5 */ + gen("Hello");
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      String s183 = gen("Hello") + /* 1 */sb/* 5 */ + gen("Hello");
+
+    String s191 = gen(42) + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */;
+    String s192 = /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + gen(42);
+    String s193 = gen(42) + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + gen(42);
   }
-
 }
-

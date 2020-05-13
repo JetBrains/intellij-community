@@ -284,7 +284,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           if (((PsiPolyadicExpression)parent).getOperationTokenType() != JavaTokenType.PLUS) return null;
 
           final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-          final PsiExpression[] operands = polyadicExpression.getOperands();
+          final PsiExpression @NotNull[] operands = polyadicExpression.getOperands();
 
           final boolean hasStringOperand = Arrays.stream(operands)
             .filter(operand -> operand != call)
@@ -301,39 +301,15 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       return getProblem(call, "inspection.redundant.string.call.message");
     }
 
-    @Contract("null -> false")
-    private static boolean isOperandOfStringType(final PsiExpression op) {
-      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(op);
+    private static boolean isOperandOfStringType(@NotNull final PsiExpression operand) {
+      if (STRING_BUILDER_TO_STRING.matches(operand)) return false;
 
-      if (operand == null) return false;
+      if (operand.getType() != null && operand.getType().equalsToText(String.class.getName())) {
+        return true;
+      }
 
-      if (operand instanceof PsiReferenceExpression) {
-        if (operand.getType() != null && operand.getType().equalsToText(String.class.getName())) {
-          return true;
-        }
-      }
-      else if (operand instanceof PsiMethodCallExpression) {
-        if (STRING_BUILDER_TO_STRING.matches(operand)) return false;
-
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
-        final PsiMethod method = methodCallExpression.resolveMethod();
-        if (method != null && method.getReturnType() != null && method.getReturnType().equalsToText(String.class.getName())) {
-          return true;
-        }
-      }
-      else if (operand instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression expression = (PsiPolyadicExpression)operand;
-        if (expression.getType() != null && expression.getType().equalsToText(String.class.getName())) {
-          return true;
-        }
-      }
-      else {
-        final String value = tryCast(ExpressionUtils.computeConstantExpression(operand), String.class);
-        if (value != null) {
-          return true;
-        }
-      }
-      return false;
+      final String value = tryCast(ExpressionUtils.computeConstantExpression(operand), String.class);
+      return value != null;
     }
 
     @Nullable
