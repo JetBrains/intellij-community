@@ -16,14 +16,18 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.text.nullize
+import gnu.trove.THashMap
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.collectResults
@@ -125,6 +129,8 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
     }
 
+    val commandLineWrapperClass = commandLineWrapperClass()
+
     if (dynamicClasspath) {
       val cs = StandardCharsets.UTF_8 // todo detect JNU charset from VM options?
       if (javaParameters.isArgFile) {
@@ -133,13 +139,11 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
       else if (!vmParameters.isExplicitClassPath() && javaParameters.jarPath == null && commandLineWrapperClass != null) {
         if (javaParameters.isUseClasspathJar) {
-          setClasspathJarParams(javaParameters, vmParameters, commandLineWrapperClass!!,
+          setClasspathJarParams(javaParameters, vmParameters, commandLineWrapperClass,
                                 dynamicVMOptions, dynamicParameters)
         }
         else if (javaParameters.isClasspathFile) {
-          JdkUtil.setCommandLineWrapperParams(this, commandLine, request, classPathVolume,
-                                              languageRuntime, javaParameters,
-                                              vmParameters, commandLineWrapperClass, dynamicVMOptions, dynamicParameters, cs)
+          setCommandLineWrapperParams(javaParameters, vmParameters, commandLineWrapperClass, dynamicVMOptions, dynamicParameters, cs)
         }
       }
       else {
@@ -265,6 +269,102 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     }
 
     appendModulePath(javaParameters, vmParameters)
+  }
+
+  @Throws(CantRunException::class)
+  private fun setCommandLineWrapperParams(javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
+                                          commandLineWrapper: Class<*>,
+                                          dynamicVMOptions: Boolean,
+                                          dynamicParameters: Boolean,
+                                          cs: Charset) {
+    try {
+      val pseudoUniquePrefix = Random().nextInt(Int.MAX_VALUE)
+
+      var vmParamsFile: File? = null
+      if (dynamicVMOptions) {
+        val toWrite: MutableList<String> = ArrayList()
+        for (param in vmParameters.list) {
+          if (JdkUtil.isUserDefinedProperty(param)) {
+            toWrite.add(param)
+          }
+          else {
+            appendVmParameter(param)
+          }
+        }
+        if (!toWrite.isEmpty()) {
+          vmParamsFile = FileUtil.createTempFile("idea_vm_params$pseudoUniquePrefix", null)
+          commandLine.addFileToDeleteOnTermination(vmParamsFile)
+          CommandLineWrapperUtil.writeWrapperFile(vmParamsFile, toWrite, platform.lineSeparator, cs)
+        }
+      }
+      else {
+        appendVmParameters(vmParameters)
+      }
+
+      appendEncoding(javaParameters, vmParameters)
+
+      var appParamsFile: File? = null
+      if (dynamicParameters) {
+        appParamsFile = FileUtil.createTempFile("idea_app_params$pseudoUniquePrefix", null)
+        commandLine.addFileToDeleteOnTermination(appParamsFile)
+        CommandLineWrapperUtil.writeWrapperFile(appParamsFile, javaParameters.programParametersList.list, platform.lineSeparator, cs)
+      }
+
+      val classpathFile = FileUtil.createTempFile("idea_classpath$pseudoUniquePrefix", null)
+      commandLine.addFileToDeleteOnTermination(classpathFile)
+      val classPathParameters = getClassPathValues(javaParameters, javaParameters.classPath)
+
+      classPathParameters.map { it.targetValue }.collectResults().onSuccess { pathList ->
+        CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, platform.lineSeparator, cs)
+      }
+
+      val classpath: MutableSet<TargetValue<String>> = LinkedHashSet()
+      classpath.add(classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)))
+
+      if (vmParameters.isUrlClassloader()) {
+        if (request !is LocalTargetEnvironmentRequest) {
+          throw CantRunException("Cannot run application with UrlClassPath on the remote target.")
+        }
+
+        // since request is known to be local we will simplify to TargetValue.fixed below
+        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(UrlClassLoader::class.java)))
+        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(StringUtilRt::class.java)))
+        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(THashMap::class.java)))
+
+        //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
+        //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
+        javaParameters.jdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.forEach {
+          val path = PathUtil.getLocalPath(it)
+          if (StringUtil.isNotEmpty(path)) {
+            classpath.add(TargetValue.fixed(path))
+          }
+        }
+      }
+
+      commandLine.addParameter("-classpath")
+      commandLine.addParameter(composePathsList(classpath))
+
+      commandLine.addParameter(commandLineWrapper.name)
+      val classPathParameter = classPathVolume.createUpload(classpathFile.absolutePath)
+      commandLine.addParameter(classPathParameter)
+      rememberFileContentAfterUpload(classpathFile, classPathParameter)
+
+      if (vmParamsFile != null) {
+        commandLine.addParameter("@vm_params")
+        val vmParamsParameter = classPathVolume.createUpload(vmParamsFile.absolutePath)
+        commandLine.addParameter(vmParamsParameter)
+        rememberFileContentAfterUpload(vmParamsFile, vmParamsParameter)
+      }
+      if (appParamsFile != null) {
+        commandLine.addParameter("@app_params")
+        val appParamsParameter = classPathVolume.createUpload(appParamsFile.absolutePath)
+        commandLine.addParameter(appParamsParameter)
+        rememberFileContentAfterUpload(appParamsFile, appParamsParameter)
+      }
+    }
+    catch (e: IOException) {
+      JdkUtil.throwUnableToCreateTempFile(e)
+    }
   }
 
   @JvmName("getMainClassParams")
@@ -421,16 +521,15 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
 
   companion object {
     private const val JAVAAGENT = "-javaagent"
-    private const val WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper"
 
     private val LOG by lazy { Logger.getInstance(JdkCommandLineSetup::class.java) }
 
-    private val commandLineWrapperClass by lazy {
+    private fun commandLineWrapperClass(): Class<*>? {
       try {
-        Class.forName(WRAPPER_CLASS)
+        return Class.forName("com.intellij.rt.execution.CommandLineWrapper")
       }
       catch (e: ClassNotFoundException) {
-        null
+        return null
       }
     }
 

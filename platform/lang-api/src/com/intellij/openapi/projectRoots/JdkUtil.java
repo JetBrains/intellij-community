@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
@@ -10,37 +9,25 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
-import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
-import com.intellij.execution.target.value.TargetValue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Map;
 import java.util.jar.Attributes;
 
 public final class JdkUtil {
@@ -171,114 +158,7 @@ public final class JdkUtil {
   }
 
 
-  /*make private*/
-  static void setCommandLineWrapperParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
-                                          TargetEnvironmentRequest request,
-                                          TargetEnvironmentRequest.Volume classPathVolume,
-                                          @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                          SimpleJavaParameters javaParameters,
-                                          ParametersList vmParameters,
-                                          Class<?> commandLineWrapper,
-                                          boolean dynamicVMOptions,
-                                          boolean dynamicParameters,
-                                          Charset cs) throws CantRunException {
-    try {
-      String lineSeparator = request.getTargetPlatform().getPlatform().lineSeparator;
-      int pseudoUniquePrefix = new Random().nextInt(Integer.MAX_VALUE);
-      File vmParamsFile = null;
-      if (dynamicVMOptions) {
-        List<String> toWrite = new ArrayList<>();
-        for (String param : vmParameters.getList()) {
-          if (isUserDefinedProperty(param)) {
-            toWrite.add(param);
-          }
-          else {
-            setup.appendVmParameter(param);
-          }
-        }
-        if (!toWrite.isEmpty()) {
-          vmParamsFile = FileUtil.createTempFile("idea_vm_params" + pseudoUniquePrefix, null);
-          commandLine.addFileToDeleteOnTermination(vmParamsFile);
-          CommandLineWrapperUtil.writeWrapperFile(vmParamsFile, toWrite, lineSeparator, cs);
-        }
-      }
-      else {
-        setup.appendVmParameters(vmParameters);
-      }
 
-      setup.appendEncoding(javaParameters, vmParameters);
-
-      File appParamsFile = null;
-      if (dynamicParameters) {
-        appParamsFile = FileUtil.createTempFile("idea_app_params" + pseudoUniquePrefix, null);
-        commandLine.addFileToDeleteOnTermination(appParamsFile);
-        CommandLineWrapperUtil.writeWrapperFile(appParamsFile, javaParameters.getProgramParametersList().getList(), lineSeparator, cs);
-      }
-
-      File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
-      commandLine.addFileToDeleteOnTermination(classpathFile);
-
-      Collection<TargetValue<String>> classPathParameters = setup.getClassPathValues(javaParameters, javaParameters.getClassPath());
-      Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(pathList -> {
-        try {
-          CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, lineSeparator, cs);
-        }
-        catch (IOException e) {
-          //todo[remoteServers]: interrupt preparing environment
-        }
-      });
-
-      Set<TargetValue<String>> classpath = new LinkedHashSet<>();
-
-      classpath.add(classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)));
-      if (isUrlClassloader(vmParameters)) {
-        if (!(request instanceof LocalTargetEnvironmentRequest)) {
-          throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
-        }
-        // since request is known to be local we will simplify to TargetValue.fixed below
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(UrlClassLoader.class)));
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(StringUtilRt.class)));
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(THashMap.class)));
-        //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
-        //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
-        Sdk jdk = javaParameters.getJdk();
-        if (jdk != null) {
-          for (VirtualFile file : jdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-            String path = PathUtil.getLocalPath(file);
-            if (StringUtil.isNotEmpty(path)) {
-              classpath.add(TargetValue.fixed(path));
-            }
-          }
-        }
-      }
-
-      commandLine.addParameter("-classpath");
-      commandLine.addParameter(setup.composePathsList(classpath));
-
-      commandLine.addParameter(commandLineWrapper.getName());
-
-      TargetValue<String> classPathParameter = classPathVolume.createUpload(classpathFile.getAbsolutePath());
-      commandLine.addParameter(classPathParameter);
-      setup.rememberFileContentAfterUpload(classpathFile, classPathParameter);
-
-      if (vmParamsFile != null) {
-        commandLine.addParameter("@vm_params");
-        TargetValue<String> vmParamsParameter = classPathVolume.createUpload(vmParamsFile.getAbsolutePath());
-        commandLine.addParameter(vmParamsParameter);
-        setup.rememberFileContentAfterUpload(vmParamsFile, vmParamsParameter);
-      }
-
-      if (appParamsFile != null) {
-        commandLine.addParameter("@app_params");
-        TargetValue<String> appParamsParameter = classPathVolume.createUpload(appParamsFile.getAbsolutePath());
-        commandLine.addParameter(appParamsParameter);
-        setup.rememberFileContentAfterUpload(appParamsFile, appParamsParameter);
-      }
-    }
-    catch (IOException e) {
-      throwUnableToCreateTempFile(e);
-    }
-  }
 
 
 
