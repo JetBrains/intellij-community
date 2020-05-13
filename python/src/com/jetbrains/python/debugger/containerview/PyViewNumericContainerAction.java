@@ -71,8 +71,12 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
           e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
           e.getPresentation().setVisible(true);
         }
-        else if (("DataFrame".equals(nodeType))) {
+        else if ("DataFrame".equals(nodeType) || "GeoDataFrame".equals(nodeType)) {
           e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.dataframe"));
+          e.getPresentation().setVisible(true);
+        }
+        else if ("Series".equals(nodeType) || "GeoSeries".equals(nodeType)) {
+          e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.series"));
           e.getPresentation().setVisible(true);
         }
         else {

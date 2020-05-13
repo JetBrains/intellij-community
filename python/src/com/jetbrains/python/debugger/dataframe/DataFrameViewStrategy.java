@@ -10,7 +10,22 @@ import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
 import org.jetbrains.annotations.NotNull;
 
 public class DataFrameViewStrategy extends DataViewStrategy {
-  private static final String DATA_FRAME = "DataFrame";
+
+  private final String myTypeName;
+
+  @NotNull
+  public static DataFrameViewStrategy createInstanceForDataFrame(){
+    return new DataFrameViewStrategy("DataFrame");
+  }
+
+  @NotNull
+  public static DataFrameViewStrategy createInstanceForGeoDataFrame(){
+    return new DataFrameViewStrategy("GeoDataFrame");
+  }
+
+  protected DataFrameViewStrategy(@NotNull final String typeName){
+    this.myTypeName = typeName;
+  }
 
   @Override
   public AsyncArrayTableModel createTableModel(int rowCount, int columnCount, @NotNull PyDataViewerPanel dataProvider, @NotNull PyDebugValue debugValue) {
@@ -30,6 +45,6 @@ public class DataFrameViewStrategy extends DataViewStrategy {
   @NotNull
   @Override
   public String getTypeName() {
-    return DATA_FRAME;
+    return myTypeName;
   }
 }

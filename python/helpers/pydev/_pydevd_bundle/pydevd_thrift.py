@@ -611,8 +611,13 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
     return array_headers
 
 
-TYPE_TO_THRIFT_STRUCT_CONVERTERS = {"ndarray": array_to_thrift_struct, "DataFrame": dataframe_to_thrift_struct,
-                                    "Series": dataframe_to_thrift_struct}
+TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
+    "ndarray": array_to_thrift_struct,
+    "DataFrame": dataframe_to_thrift_struct,
+    "Series": dataframe_to_thrift_struct,
+    "GeoDataFrame": dataframe_to_thrift_struct,
+    "GeoSeries": dataframe_to_thrift_struct
+}
 
 
 def table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):

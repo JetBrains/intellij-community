@@ -18,10 +18,19 @@ package com.jetbrains.python.debugger.dataframe;
 import org.jetbrains.annotations.NotNull;
 
 public class SeriesViewStrategy extends DataFrameViewStrategy {
+
+  protected SeriesViewStrategy(@NotNull final String typeName){
+    super(typeName);
+  }
+
   @NotNull
-  @Override
-  public String getTypeName() {
-    return "Series";
+  public static SeriesViewStrategy createInstanceForSeries(){
+    return new SeriesViewStrategy("Series");
+  }
+
+  @NotNull
+  public static SeriesViewStrategy createInstanceForGeoSeries(){
+    return new SeriesViewStrategy("GeoSeries");
   }
 
   @Override

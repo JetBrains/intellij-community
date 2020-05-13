@@ -30,7 +30,13 @@ import java.util.Set;
 
 public abstract class DataViewStrategy {
   private static class StrategyHolder {
-    private static final Set<DataViewStrategy> STRATEGIES = ImmutableSet.of(new ArrayViewStrategy(), new DataFrameViewStrategy(), new SeriesViewStrategy());
+    private static final Set<DataViewStrategy> STRATEGIES = ImmutableSet.of(
+      new ArrayViewStrategy(),
+      DataFrameViewStrategy.createInstanceForDataFrame(),
+      DataFrameViewStrategy.createInstanceForGeoDataFrame(),
+      SeriesViewStrategy.createInstanceForSeries(),
+      SeriesViewStrategy.createInstanceForGeoSeries()
+    );
   }
 
   public abstract AsyncArrayTableModel createTableModel(int rowCount, int columnCount, @NotNull PyDataViewerPanel panel, @NotNull PyDebugValue debugValue);
