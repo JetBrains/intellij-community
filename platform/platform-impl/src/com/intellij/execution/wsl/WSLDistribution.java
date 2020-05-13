@@ -3,6 +3,7 @@ package com.intellij.execution.wsl;
 
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialPromptDialog;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -203,7 +205,8 @@ public class WSLDistribution {
       commandLineString.append(realParamsList.get(1));
     }
     else {
-      commandLineString.append(commandLine.getCommandLineString());
+      List<String> bashParameters = ContainerUtil.prepend(realParamsList, commandLine.getExePath());
+      commandLineString.append(StringUtil.join(bashParameters, CommandLineUtil::posixQuote, " "));
     }
 
     if (askForSudo) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
