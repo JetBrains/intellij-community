@@ -271,14 +271,18 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     int counter = propertiesComponent.getInt(COUNTER_PROPERTY, 0);
     if (counter < 3) {
-      LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(XDebuggerBundle.message("message.smart.step")));
-      JComponent component = HintManagerImpl.getExternalComponent(editor);
-      Point convertedPoint = SwingUtilities.convertPoint(editor.getContentComponent(), data.myCurrentVariant.myStartPoint, component);
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, convertedPoint, HintManager.HIDE_BY_TEXT_CHANGE |
-                                                                                     HintManager.HIDE_BY_SCROLLING,
-                                                       0, false, HintManager.ABOVE);
+      showHint(editor, XDebuggerBundle.message("message.smart.step"), data.myCurrentVariant);
       propertiesComponent.setValue(COUNTER_PROPERTY, counter + 1, 0);
     }
+  }
+
+  private static <V extends XSmartStepIntoVariant> void showHint(Editor editor, String message, SmartStepData<V>.VariantInfo myCurrentVariant) {
+    LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
+    JComponent component = HintManagerImpl.getExternalComponent(editor);
+    Point convertedPoint = SwingUtilities.convertPoint(editor.getContentComponent(), myCurrentVariant.myStartPoint, component);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, convertedPoint, HintManager.HIDE_BY_TEXT_CHANGE |
+        HintManager.HIDE_BY_SCROLLING,
+      0, false, HintManager.ABOVE);
   }
 
   static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
@@ -351,6 +355,11 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_TARGET);
       myCurrentVariant = variant;
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_SELECTION);
+
+      String tooltip = variant.myVariant.getTooltip();
+      if (tooltip != null) {
+        showHint(myEditor, tooltip, variant);
+      }
     }
 
     private void setCurrentVariantHighlighterAttributes(TextAttributesKey attributesKey) {

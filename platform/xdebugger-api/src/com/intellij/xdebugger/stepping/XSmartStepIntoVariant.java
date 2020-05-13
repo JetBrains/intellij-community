@@ -21,4 +21,9 @@ public abstract class XSmartStepIntoVariant {
   public TextRange getHighlightRange() {
     return null;
   }
+
+  @Nullable
+  public String getTooltip() {
+    return null;
+  }
 }
