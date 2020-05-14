@@ -14,14 +14,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class DumbModeTask implements Disposable {
   private final Object myEquivalenceObject;
 
-  /**
-   * @deprecated using of that constructor likely disables merging
-   * of similar tasks in the {@link DumbService#queueTask(DumbModeTask)}.
-   * Use the {@link DumbModeTask#DumbModeTask(Object)} to specify equivalence
-   * clearly.
-   * @see #getEquivalenceObject() for details
-   */
-  @Deprecated
   public DumbModeTask() {
     myEquivalenceObject = this;
   }
