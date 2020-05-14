@@ -48,7 +48,7 @@ while [[ -n "$1" ]]; do
   shift
 done
 
-BNUM="${BUILD_NUMBER/P/-}"  # for AB presubmit: satisfy Integer.parseInt in BuildNumber.parseBuildNumber
+BNUM="${BUILD_NUMBER/P/0}"  # for AB presubmit: satisfy Integer.parseInt in BuildNumber.parseBuildNumber
 BNUM="${BNUM:-SNAPSHOT}"
 OUT="${OUT_DIR:-out/studio}"
 DIST="${DIST_DIR:-"${OUT}/dist"}"

@@ -241,17 +241,16 @@ class StudioTests(unittest.TestCase):
     kotlin_plugin_count = sum(name.endswith("kotlin-plugin.jar") for name in mac_zip.namelist())
     self.assertEqual(kotlin_plugin_count, 1)
 
-  @unittest.skip("b/156424581")
   def test_kotlin_binary_compatibility(self):
     dist_all = os.path.join(out_dir, "dist.all")
 
-    for output_dir in glob.glob("verification-*"):
+    for output_dir in glob.glob("plugin-verifier*"):
         shutil.rmtree(output_dir)
 
     args = [
         os.path.join(java_home, "bin", "java"),
         "-Dplugin.verifier.home.dir=plugin-verifier",
-        "-jar", "prebuilts/tools/common/intellij-plugin-verifier/verifier-cli-1.191-all.jar",
+        "-jar", "prebuilts/tools/common/intellij-plugin-verifier/verifier-cli-1.240-all.jar",
         "-ignored-problems", "tools/idea/studio/kotlin_known_problems.txt",
         "-verification-reports-dir", "plugin-verifier/reports",
         "-runtime-dir", java_home,
@@ -260,13 +259,12 @@ class StudioTests(unittest.TestCase):
     ]
     subprocess.check_call(args)
 
-    output_dirs = glob.glob("verification-*")
+    output_dirs = glob.glob("plugin-verifier/reports/*/plugins/org.jetbrains.kotlin/*")
     self.assertEqual(len(output_dirs), 1, msg="should be exactly one output dir")
-    verification_verdicts = glob.glob(output_dirs[0] + "/*/plugins/org.jetbrains.kotlin/*/verification-verdict.txt")
-    problems_files = glob.glob(output_dirs[0] + "/*/plugins/org.jetbrains.kotlin/*/compatibility-problems.txt")
-    self.assertEqual(len(verification_verdicts), 1, msg="should be exactly one verification verdict")
-    if problems_files:
-        shutil.copyfile(problems_files[0], os.path.join(dist_dir, "compatibility-problems.txt"))
+    shutil.copytree(output_dirs[0], os.path.join(dist_dir, "plugin-verifier-report"))
+
+    problems_file = glob.glob(output_dirs[0] + "/compatibility-problems.txt")
+    if problems_file:
         self.fail(msg="See compatibility-problems.txt")
 
 if __name__ == '__main__':
