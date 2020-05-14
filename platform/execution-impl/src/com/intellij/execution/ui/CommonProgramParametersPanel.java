@@ -10,7 +10,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.EditorMacro;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacrosDialog;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -26,13 +25,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -179,13 +176,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   }
 
   protected @NotNull Map<String, String> getPathMacros() {
-    final HashMap<String, String> macros = new HashMap<>(PathMacros.getInstance().getUserMacros());
-    if (myModuleContext != null || myHasModuleMacro) {
-      macros.put(PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacros.getInstance().getValue(PathMacroUtil.MODULE_DIR_MACRO_NAME));
-      macros.put(ProgramParametersConfigurator.MODULE_WORKING_DIR,
-                 PathMacros.getInstance().getValue(PathMacroUtil.MODULE_WORKING_DIR_NAME));
-    }
-    return macros;
+    return MacrosDialog.getPathMacros(myModuleContext != null || myHasModuleMacro);
   }
 
   protected void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {

@@ -2,13 +2,16 @@
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
@@ -23,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -32,6 +36,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -66,6 +71,14 @@ public final class MacrosDialog extends DialogWrapper {
     textField.addExtension(ExtendableTextComponent.Extension.create(
       AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
       () -> show(textField, macroFilter, userMacros)));
+  }
+
+  public static void addMacroSupport(@NotNull ExtendableTextField textField,
+                                     @NotNull Predicate<? super Macro> macroFilter,
+                                     Computable<Boolean> hasModule) {
+    textField.addExtension(ExtendableTextComponent.Extension.create(
+      AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
+      () -> show(textField, macroFilter, getPathMacros(hasModule.compute()))));
   }
 
   public static void show(@NotNull JTextComponent textComponent) {
@@ -221,6 +234,17 @@ public final class MacrosDialog extends DialogWrapper {
     panel.setPreferredSize(JBUI.size(400, 500));
 
     return panel;
+  }
+
+  @NotNull
+  public static HashMap<String, String> getPathMacros(boolean addModuleMacros) {
+    final HashMap<String, String> macros = new HashMap<>(PathMacros.getInstance().getUserMacros());
+    if (addModuleMacros) {
+      macros.put(PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacros.getInstance().getValue(PathMacroUtil.MODULE_DIR_MACRO_NAME));
+      macros.put(ProgramParametersConfigurator.MODULE_WORKING_DIR,
+                 PathMacros.getInstance().getValue(PathMacroUtil.MODULE_WORKING_DIR_NAME));
+    }
+    return macros;
   }
 
   /**

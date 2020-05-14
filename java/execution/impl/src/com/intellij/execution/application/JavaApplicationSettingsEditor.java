@@ -4,8 +4,10 @@ package com.intellij.execution.application;
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.*;
+import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 
@@ -26,11 +28,15 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
   @Override
   protected Collection<SettingsEditorFragment<ApplicationConfiguration, ?>> createFragments() {
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
-    fragments.add(CommonTags.parallelRun());
-    fragments.add(CommonParameterFragments.createRedirectFragment());
 
-    fragments.addAll(new CommonParameterFragments<ApplicationConfiguration>(myProject).getFragments());
     SettingsEditorFragment<ApplicationConfiguration, LabeledComponent<ModuleDescriptionsComboBox>> moduleClasspath = CommonJavaFragments.moduleClasspath(myProject);
+    Computable<Boolean> hasModule = () -> moduleClasspath.component().getComponent().getSelectedModule() != null;
+
+    fragments.add(CommonTags.parallelRun());
+    fragments.add(CommonParameterFragments.createRedirectFragment(hasModule));
+
+    CommonParameterFragments<ApplicationConfiguration> commonParameterFragments = new CommonParameterFragments<>(myProject, hasModule);
+    fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun());
     fragments.add(CommonJavaFragments.createEnvParameters());
 
@@ -38,7 +44,9 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(myProject));
 
-    LabeledComponent<RawCommandLineEditor> vmParams = LabeledComponent.create(new RawCommandLineEditor(),
+    RawCommandLineEditor commandLineEditor = new RawCommandLineEditor();
+    MacrosDialog.addMacroSupport(commandLineEditor.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
+    LabeledComponent<RawCommandLineEditor> vmParams = LabeledComponent.create(commandLineEditor,
                                                                               ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
     vmParams.setLabelLocation(BorderLayout.WEST);
     String group = ExecutionBundle.message("group.java.options");

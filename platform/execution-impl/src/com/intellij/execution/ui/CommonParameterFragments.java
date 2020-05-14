@@ -4,13 +4,16 @@ package com.intellij.execution.ui;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
+import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -23,9 +26,10 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
 
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
 
-  public CommonParameterFragments(@NotNull Project project) {
+  public CommonParameterFragments(@NotNull Project project, Computable<Boolean> hasModule) {
     RawCommandLineEditor commandLineEditor = new RawCommandLineEditor();
     commandLineEditor.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.program.hint"));
+    MacrosDialog.addMacroSupport(commandLineEditor.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, commandLineEditor,
                                                  100,
                                                  (settings, component) -> component.setText(settings.getProgramParameters()),
@@ -37,6 +41,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                     project,
                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor(),
                                                     TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    MacrosDialog.addMacroSupport((ExtendableTextField)workingDirectoryField.getTextField(), MacrosDialog.Filters.DIRECTORY_PATH, hasModule);
     LabeledComponent<TextFieldWithBrowseButton> field = LabeledComponent.create(workingDirectoryField,
                                                                                      ExecutionBundle.message(
                                                                                        "run.configuration.working.directory.label"));
@@ -51,12 +56,13 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     return myFragments;
   }
 
-  public static <S extends InputRedirectAware> SettingsEditorFragment<S, ?> createRedirectFragment() {
+  public static <S extends InputRedirectAware> SettingsEditorFragment<S, ?> createRedirectFragment(Computable<Boolean> hasModule) {
 
     TextFieldWithBrowseButton inputFile = new TextFieldWithBrowseButton();
     inputFile.addBrowseFolderListener(null, null, null,
                                       FileChooserDescriptorFactory.createSingleFileDescriptor(),
                                       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    MacrosDialog.addMacroSupport((ExtendableTextField)inputFile.getTextField(), MacrosDialog.Filters.ALL, hasModule);
     LabeledComponent<TextFieldWithBrowseButton> labeledComponent =
       LabeledComponent.create(inputFile, ExecutionBundle.message("redirect.input.from"));
     labeledComponent.setLabelLocation(BorderLayout.WEST);
