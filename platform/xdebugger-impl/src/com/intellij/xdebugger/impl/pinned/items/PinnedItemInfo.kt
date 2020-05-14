@@ -4,15 +4,15 @@ package com.intellij.xdebugger.impl.pinned.items
 import com.intellij.util.xmlb.annotations.Attribute
 
 data class PinnedItemInfo(
-    @Attribute("typeName") var typeName: String,
-    @Attribute("fieldName") var fieldName: String) {
+    @Attribute("parentTag") var parentTag: String,
+    @Attribute("memberName") var memberName: String) {
 
     companion object {
-        fun getKey(typeName: String, fieldName: String) = "$typeName:$fieldName"
+        fun getKey(parentTag: String, memberName: String) = "$parentTag:$memberName"
     }
 
     @Suppress("unused")
     constructor() : this("", "")
 
-    fun getKey() = getKey(typeName, fieldName)
+    fun getKey() = getKey(parentTag, memberName)
 }
