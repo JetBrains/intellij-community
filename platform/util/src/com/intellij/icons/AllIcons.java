@@ -204,6 +204,11 @@ public class AllIcons {
 
   }
 
+  public final static class CodeWithMe {
+    /** 16x16 */ public static final @NotNull Icon Users = load("/codeWithMe/users.svg");
+
+  }
+
   public final static class Debugger {
     /** 16x16 */ public static final @NotNull Icon AddToWatch = load("/debugger/addToWatch.svg");
     /** 16x16 */ public static final @NotNull Icon AttachToProcess = load("/debugger/attachToProcess.svg");
