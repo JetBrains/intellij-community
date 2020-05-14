@@ -54,7 +54,7 @@ object UpdateInfoPanelUI {
 
     val updateHighlightsComponent = object : JEditorPane("text/html", "") {}
       .also {
-        val cssFontDeclaration = UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), null, null, null)
+        val cssFontDeclaration = UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())
         val updateHighlightsContent = updateHighlightsContent(appNames, patches, testPatch, newBuild, updatedChannel)
         it.text = """<html><head>$cssFontDeclaration</head><body>$updateHighlightsContent</body></html>"""
         it.addHyperlinkListener(HyperlinkListener { event: HyperlinkEvent ->
