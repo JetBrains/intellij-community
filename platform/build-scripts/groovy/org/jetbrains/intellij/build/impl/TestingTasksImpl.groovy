@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -454,7 +455,7 @@ class TestingTasksImpl extends TestingTasks {
    * For description of this Ant option refer to: https://ant.apache.org/manual/Tasks/junit.html
    */
   private static boolean isShowAntJunitOutput() {
-    return "true" == System.getProperty("intellij.test.show.ant.junit.output", "true")
+    return SystemProperties.getBooleanProperty("intellij.test.show.ant.junit.output", true)
   }
 
   /**
