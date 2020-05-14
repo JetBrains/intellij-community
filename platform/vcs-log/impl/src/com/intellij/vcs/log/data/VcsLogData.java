@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -97,8 +98,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       // and can not shut down ide because of this
       // so use memory storage (probably leading to out of memory at some point) + no index
 
-      LOG.error("Could not delete " + PersistentUtil.LOG_CACHE + "\nDelete it manually and restart IDEA.");
-      myFatalErrorsConsumer.displayFatalErrorMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE));
+      LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
+      myFatalErrorsConsumer.displayFatalErrorMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
+                                                                          ApplicationNamesInfo.getInstance().getFullProductName()));
       myStorage = new InMemoryStorage();
       myIndex = new EmptyIndex();
     }
