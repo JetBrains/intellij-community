@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -40,6 +41,20 @@ public class DebuggerUtilsAsync {
       return schedule((SuspendContextImpl)context, ((ObjectReferenceImpl)value).typeAsync());
     }
     return CompletableFuture.completedFuture(value.type());
+  }
+
+  public static CompletableFuture<Value> getValue(ObjectReference ref, Field field, @Nullable SuspendContext context) {
+    if (ref instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
+      return schedule((SuspendContextImpl)context, ((ObjectReferenceImpl)ref).getValueAsync(field));
+    }
+    return CompletableFuture.completedFuture(ref.getValue(field));
+  }
+
+  public static CompletableFuture<Map<Field, Value>> getValues(ObjectReference ref, List<Field> fields, @Nullable SuspendContext context) {
+    if (ref instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
+      return schedule((SuspendContextImpl)context, ((ObjectReferenceImpl)ref).getValuesAsync(fields));
+    }
+    return CompletableFuture.completedFuture(ref.getValues(fields));
   }
 
   // Reader thread

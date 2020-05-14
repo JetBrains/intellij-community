@@ -12,7 +12,6 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +25,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.jetbrains.jdi.StringReferenceImpl;
 import com.sun.jdi.*;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -170,53 +169,63 @@ public class ClassRenderer extends NodeRendererImpl{
     // default ObjectReference processing
     DebuggerUtilsAsync.allFields(refType, evaluationContext.getSuspendContext()).thenAccept(
       fields -> {
-        List<DebuggerTreeNode> children = new ArrayList<>();
-        if (!fields.isEmpty()) {
-          Set<String> names = new HashSet<>();
-          List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
-          int loaded = 0, total = fieldsToShow.size();
-          Map<Field, Value> cachedValues = null;
-          for (int i = 0; i < total; i++) {
-            Field field = fieldsToShow.get(i);
-            // load values in chunks
-            if (i > loaded || cachedValues == null) {
-              int chunkSize = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, total - loaded);
-              try {
-                cachedValues = objRef.getValues(fieldsToShow.subList(loaded, loaded + chunkSize));
-              }
-              catch (Exception e) {
-                LOG.error(e);
-                cachedValues = null;
-              }
-              loaded += chunkSize;
-            }
-
-            FieldDescriptorImpl fieldDescriptor =
-              (FieldDescriptorImpl)createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);
-            if (cachedValues != null) {
-              fieldDescriptor.setValue(cachedValues.get(field));
-            }
-            String name = fieldDescriptor.getName();
-            if (names.contains(name)) {
-              fieldDescriptor.putUserData(FieldDescriptor.SHOW_DECLARING_TYPE, Boolean.TRUE);
-            }
-            else {
-              names.add(name);
-            }
-            children.add(nodeManager.createNode(fieldDescriptor, evaluationContext));
-          }
-
-          if (children.isEmpty()) {
-            children.add(nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display")));
-          }
-
+        if (fields.isEmpty()) {
+          builder.setChildren(Collections.singletonList(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel())));
+          return;
         }
-        else {
-          children.add(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel()));
+
+        List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
+        if (fieldsToShow.isEmpty()) {
+          builder.setChildren(Collections.singletonList(
+            nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display"))));
+          return;
         }
-        builder.setChildren(children);
+
+        List<List<Field>> chunks = partition(fieldsToShow, XCompositeNode.MAX_CHILDREN_TO_SHOW);
+        Set<String> names = Collections.synchronizedSet(new HashSet<>());
+        //noinspection unchecked
+        CompletableFuture<List<DebuggerTreeNode>>[] futures = chunks.stream()
+          .map(l -> createNodes(l, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, objRef, names))
+          .toArray(CompletableFuture[]::new);
+        CompletableFuture.allOf(futures)
+          .thenAccept(__ -> builder.setChildren(StreamEx.of(futures).flatCollection(CompletableFuture::join).toList()));
       }
     );
+  }
+
+  static <T> List<List<T>> partition(List<T> list, int size) {
+    List<List<T>> res = new ArrayList<>();
+    int loaded = 0, total = list.size();
+    while (loaded < total) {
+      int chunkSize = Math.min(size, total - loaded);
+      res.add(list.subList(loaded, loaded + chunkSize));
+      loaded += chunkSize;
+    }
+    return res;
+  }
+
+  private CompletableFuture<List<DebuggerTreeNode>> createNodes(List<Field> fields,
+                                                                EvaluationContext evaluationContext,
+                                                                ValueDescriptorImpl parentDescriptor,
+                                                                NodeManager nodeManager,
+                                                                NodeDescriptorFactory nodeDescriptorFactory,
+                                                                ObjectReference objRef,
+                                                                Set<String> names) {
+    return DebuggerUtilsAsync.getValues(objRef, fields, evaluationContext.getSuspendContext()).thenApply(cachedValues -> {
+      List<DebuggerTreeNode> res = new ArrayList<>(fields.size());
+      for (Field field : fields) {
+        FieldDescriptorImpl fieldDescriptor =
+          (FieldDescriptorImpl)createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);
+        if (cachedValues != null) {
+          fieldDescriptor.setValue(cachedValues.get(field));
+        }
+        if (!names.add(fieldDescriptor.getName())) {
+          fieldDescriptor.putUserData(FieldDescriptor.SHOW_DECLARING_TYPE, Boolean.TRUE);
+        }
+        res.add(nodeManager.createNode(fieldDescriptor, evaluationContext));
+      }
+      return res;
+    });
   }
 
   @NotNull

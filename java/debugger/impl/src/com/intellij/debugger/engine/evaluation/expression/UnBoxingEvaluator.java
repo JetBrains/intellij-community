@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.CommonClassNames;
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Eugene Zhuravlev
@@ -65,7 +68,7 @@ public class UnBoxingEvaluator implements Evaluator {
   private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
     // for speedup first try value field
-    Value primitiveValue = getInnerPrimitiveValue(value);
+    Value primitiveValue = getInnerPrimitiveValue(value, null).join();
     if (primitiveValue != null) {
       return primitiveValue;
     }
@@ -79,19 +82,21 @@ public class UnBoxingEvaluator implements Evaluator {
     return context.getDebugProcess().invokeMethod(context, value, method, Collections.emptyList());
   }
 
-  @Nullable
-  public static PrimitiveValue getInnerPrimitiveValue(@Nullable ObjectReference value) {
+  public static CompletableFuture<PrimitiveValue> getInnerPrimitiveValue(@Nullable ObjectReference value,
+                                                                         @Nullable SuspendContext context) {
     if (value != null) {
       ReferenceType type = value.referenceType();
       Field valueField = type.fieldByName("value");
       if (valueField != null) {
-        Value primitiveValue = value.getValue(valueField);
-        if (primitiveValue instanceof PrimitiveValue) {
-          LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
-          return (PrimitiveValue)primitiveValue;
-        }
+        return DebuggerUtilsAsync.getValue(value, valueField, context).thenApply(primitiveValue -> {
+          if (primitiveValue instanceof PrimitiveValue) {
+            LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
+            return (PrimitiveValue)primitiveValue;
+          }
+          return null;
+        });
       }
     }
-    return null;
+    return CompletableFuture.completedFuture(null);
   }
 }

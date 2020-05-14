@@ -16,9 +16,18 @@ public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
   public UnboxableTypeRenderer(String className) {
     super(StringUtil.getShortName(className), new LabelRenderer() {
       @Override
-      public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
-        throws EvaluateException {
-        return DebuggerUtils.getValueAsString(evaluationContext, UnBoxingEvaluator.getInnerPrimitiveValue((ObjectReference)descriptor.getValue()));
+      public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
+        UnBoxingEvaluator.getInnerPrimitiveValue((ObjectReference)descriptor.getValue(), evaluationContext.getSuspendContext())
+          .thenAccept(r -> {
+            try {
+              descriptor.setValueLabel(DebuggerUtils.getValueAsString(evaluationContext, r));
+            }
+            catch (EvaluateException e) {
+              descriptor.setValueLabelFailed(e);
+            }
+            labelListener.labelChanged();
+          });
+        return "";
       }
 
       @Override
