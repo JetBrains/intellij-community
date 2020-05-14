@@ -416,6 +416,7 @@ public class JBCefClient implements JBCefDisposable {
           });
         }
 
+        @Nullable
         @Override
         public CefResourceRequestHandler getResourceRequestHandler(CefBrowser browser,
                                                                    CefFrame frame,
@@ -425,7 +426,7 @@ public class JBCefClient implements JBCefDisposable {
                                                                    String requestInitiator,
                                                                    BoolRef disableDefaultHandling)
         {
-          return myRequestHandler.handleNotNull(browser, handler -> {
+          return myRequestHandler.handle(browser, handler -> {
             return handler.getResourceRequestHandler(browser, frame, request, isNavigation, isDownload, requestInitiator, disableDefaultHandling);
           });
         }
