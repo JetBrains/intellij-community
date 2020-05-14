@@ -5,6 +5,7 @@ import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.impl.ProjectUtil;
@@ -17,7 +18,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -26,10 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -49,6 +46,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,12 +69,16 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
   private static final Color TEXT_COLOR = JBColor.namedColor("Notification.foreground", DEFAULT_TEXT_COLOR);
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
+
+  private final Queue<Notification> myEarlyNotifications = new LinkedBlockingQueue<>();
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -87,6 +89,19 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           notification.hideBalloon();
         }
         TooltipController.getInstance().resetCurrent();
+      }
+    });
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appUiReady() {
+        if (!myEarlyNotifications.isEmpty()) {
+          Condition<?> disposed = ApplicationManager.getApplication().getDisposed();
+          Notification notification;
+          while ((notification = myEarlyNotifications.poll()) != null) {
+            Notification _notification = notification;
+            GuiUtils.invokeLaterIfNeeded(() -> showNotification(_notification, null), ModalityState.any(), disposed);
+          }
+        }
       }
     });
   }
@@ -116,7 +131,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return ArrayUtil.toObjectArray(result, klass);
   }
 
-  private static void doNotify(Notification notification, @Nullable Project project) {
+  private void doNotify(Notification notification, @Nullable Project project) {
     NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
     if (!configuration.isRegistered(notification.getGroupId())) {
       configuration.register(notification.getGroupId(), NotificationDisplayType.BALLOON);
@@ -134,12 +149,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
       Runnable runnable = () -> showNotification(notification, project);
       if (project == null) {
-        if (LoadingState.APP_STARTED.isOccurred()) {
-          GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
-        }
-        else {
-          Logger.getInstance(NotificationsManagerImpl.class).error("Notification posted too early (no window to display): " + notification);
-        }
+        GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
       else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(runnable);
@@ -147,7 +157,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static void showNotification(Notification notification, @Nullable Project project) {
+  @CalledInAwt
+  private void showNotification(Notification notification, @Nullable Project project) {
+    if (!LoadingState.APP_STARTED.isOccurred()) {
+      myEarlyNotifications.add(notification);
+      return;
+    }
+
     String groupId = notification.getGroupId();
     NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
@@ -1076,7 +1092,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     @Override
     public void notify(@NotNull Notification notification) {
-      doNotify(notification, myProject);
+      ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).doNotify(notification, myProject);
     }
   }
 

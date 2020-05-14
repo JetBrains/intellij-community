@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
@@ -16,7 +15,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +23,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.lang.JavaVersion;
-import com.intellij.util.messages.MessageBusConnection;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +30,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -178,19 +174,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     });
     notification.setImportant(true);
 
-    if (LoadingState.APP_STARTED.isOccurred()) {
-      ApplicationManager.getApplication().invokeLater(() -> Notifications.Bus.notify(notification));
-    }
-    else {
-      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-        @Override
-        public void appUiReady() {
-          Notifications.Bus.notify(notification);
-          connection.disconnect();
-        }
-      });
-    }
+    Notifications.Bus.notify(notification);
   }
 
   private static final class MyNotification extends Notification implements NotificationFullContent {
