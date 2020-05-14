@@ -32,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * User : catherine
@@ -66,7 +66,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
 
         boolean hasNonAscii = false;
 
-        CharsetEncoder asciiEncoder = Charset.forName("US-ASCII").newEncoder();
+        CharsetEncoder asciiEncoder = StandardCharsets.US_ASCII.newEncoder();
         int length = value.length();
         char c = 0;
         for (int i = 0; i < length; ++i) {

@@ -35,6 +35,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -142,7 +143,7 @@ public class HgCommandExecutor {
     boolean success = executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions, listener);
     List<String> errors = StringUtil.split(listener.getErrorOutput().toString(), SystemProperties.getLineSeparator());
     if (success && HgErrorUtil.isUnknownEncodingError(errors)) {
-      setCharset(Charset.forName("utf8"));
+      setCharset(StandardCharsets.UTF_8);
       return executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions, listener);
     }
     return success;

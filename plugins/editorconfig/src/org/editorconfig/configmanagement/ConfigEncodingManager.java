@@ -34,7 +34,7 @@ public class ConfigEncodingManager implements FileDocumentManagerListener {
 
   static {
     Map<String, Charset> map = new HashMap<>();
-    map.put("latin1", Charset.forName("ISO-8859-1"));
+    map.put("latin1", StandardCharsets.ISO_8859_1);
     map.put("utf-8", StandardCharsets.UTF_8);
     map.put(UTF8_BOM_ENCODING, StandardCharsets.UTF_8);
     map.put("utf-16be", CharsetToolkit.UTF_16BE_CHARSET);
