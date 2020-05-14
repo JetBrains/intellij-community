@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VirtualFileFilteringListener
 import com.intellij.util.containers.ContainerUtil
+import git4idea.i18n.GitBundle
 
 private const val PROTOCOL = "gitIndexFs"
 
@@ -27,7 +28,10 @@ class GitIndexFileSystem : VirtualFileSystem() {
   override fun refreshAndFindFileByPath(path: String): VirtualFile? = findFileByPath(path)
   override fun refresh(asynchronous: Boolean) {}
 
-  override fun extractPresentableUrl(path: String): String = "Staged: " + super.extractPresentableUrl(path)
+  override fun extractPresentableUrl(path: String): String {
+    val extractPresentableUrl = GitIndexVirtualFile.extractPresentableUrl(path)
+    return GitBundle.message("stage.vfs.presentable.file.name", extractPresentableUrl)
+  }
 
   override fun addVirtualFileListener(listener: VirtualFileListener) {
     val wrapper: VirtualFileListener = VirtualFileFilteringListener(listener, this)

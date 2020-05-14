@@ -15,6 +15,7 @@
 
     <vcs.baseContentProvider implementation="git4idea.index.vfs.GitIndexVirtualFileBaseContentProvider"/>
     <editorNotificationProvider implementation="git4idea.index.vfs.GitIndexVirtualFileEditorNotificationProvider"/>
+    <editorTabTitleProvider implementation="git4idea.index.vfs.GitIndexVirtualFileTabTitleProvider"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
   </extensions>

@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.util.LocalTimeCounter
 import com.intellij.vcs.log.Hash
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 class GitIndexVirtualFile(private val project: Project,
                           val root: VirtualFile,
-                          val filePath: FilePath) : VirtualFile() {
+                          val filePath: FilePath) : VirtualFile(), VirtualFilePathWrapper {
   private val refresher: GitIndexFileSystemRefresher get() = GitIndexFileSystemRefresher.getInstance(project)
 
   private val cachedData: AtomicReference<CachedData?> = AtomicReference()
@@ -56,7 +57,10 @@ class GitIndexVirtualFile(private val project: Project,
   override fun isDirectory(): Boolean = false
   override fun isValid(): Boolean = cachedData.get() != null
   override fun getName(): String = filePath.name
+  override fun getPresentableName(): String = GitBundle.message("stage.vfs.presentable.file.name", filePath.name)
   override fun getPath(): String = encode(project, root, filePath)
+  override fun getPresentablePath(): String = filePath.path
+  override fun enforcePresentableName(): Boolean = true
   override fun getLength(): Long = cachedData.get()?.length ?: 0
   override fun getTimeStamp(): Long = 0
   override fun getModificationStamp(): Long = modificationStamp
@@ -195,6 +199,10 @@ class GitIndexVirtualFile(private val project: Project,
       val filePath = VcsUtil.getFilePath(StringUtil.unescapeChar(components[2], SEPARATOR))
 
       return Triple(project, root, filePath)
+    }
+
+    fun extractPresentableUrl(path: String): String {
+      return path.substringAfterLast(SEPARATOR).replace('/', File.separatorChar)
     }
   }
 
