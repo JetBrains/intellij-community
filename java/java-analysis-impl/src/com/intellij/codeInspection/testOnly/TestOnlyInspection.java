@@ -112,7 +112,8 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
     if (vft == null && !isAnnotatedAsTestOnly(member)) {
       return true;
     }
-    if (isInsideTestOnlyMethod(place) || isInsideTestOnlyField(place) || isInsideTestClass(place) || isUnderTestSources(place)) {
+    if (isInsideTestOnlyMethod(place) || isInsideTestOnlyField(place) || isInsideTestClass(place) || isUnderTestSources(place)
+        || isGenericType(place, member)) {
       return true;
     }
 
@@ -185,6 +186,11 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
   private static boolean isInsideTestClass(PsiElement e) {
     PsiClass c = getTopLevelParentOfType(e, PsiClass.class);
     return c != null && TestFrameworks.getInstance().isTestClass(c);
+  }
+
+  private static boolean isGenericType(@NotNull PsiElement place, @NotNull PsiMember member) {
+    PsiClass parent = PsiTreeUtil.getParentOfType(place, PsiClass.class);
+    return member.equals(parent);
   }
 
   private static <T extends PsiElement> T getTopLevelParentOfType(PsiElement e, Class<T> c) {

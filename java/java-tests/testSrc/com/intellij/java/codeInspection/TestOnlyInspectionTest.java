@@ -80,6 +80,10 @@ public class TestOnlyInspectionTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  public void testGenericType() {
+    doTest();
+  }
+
   private void doTest() {
     TestOnlyInspection i = new TestOnlyInspection();
     doTest("testOnly/" + getTestName(true), new LocalInspectionToolWrapper(i));
