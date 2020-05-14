@@ -63,6 +63,11 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     ourShortNameOpenedBuilderCacheKey = Key.create("project's.short.file.name.opened.builder");
   private static final UniqueNameBuilder<VirtualFile> ourEmptyBuilder = new UniqueNameBuilder<>(null, null, -1);
 
+  @NotNull
+  private static String getName(@NotNull VirtualFile file) {
+    return file instanceof VirtualFilePathWrapper ? file.getPresentableName() : file.getName();
+  }
+
   private static String getUniqueVirtualFilePath(Project project,
                                                  VirtualFile file,
                                                  boolean skipNonOpenedFiles,
@@ -74,7 +79,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     if (builder != null) {
       return builder.getShortPath(file);
     }
-    return file instanceof VirtualFilePathWrapper ? file.getPresentableName() : file.getName();
+    return getName(file);
   }
 
   @Nullable
@@ -102,7 +107,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       valueMap = ConcurrencyUtil.cacheOrGet(scope2ValueMap, scope, ContainerUtil.createConcurrentSoftValueMap());
     }
 
-    final String fileName = file.getName();
+    final String fileName = getName(file);
     UniqueNameBuilder<VirtualFile> uniqueNameBuilderForShortName = valueMap.get(fileName);
 
     if (uniqueNameBuilderForShortName == null) {
@@ -135,13 +140,13 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     THashSet<VirtualFile> setOfFilesWithTheSameName = new THashSet<>(filesWithSameName);
     // add open files out of project scope
     for (VirtualFile openFile : FileEditorManager.getInstance(project).getOpenFiles()) {
-      if (openFile.getName().equals(fileName)) {
+      if (getName(openFile).equals(fileName)) {
         setOfFilesWithTheSameName.add(openFile);
       }
     }
     if (!skipNonOpenedFiles) {
       for (VirtualFile recentlyEditedFile : EditorHistoryManager.getInstance(project).getFileList()) {
-        if (recentlyEditedFile.getName().equals(fileName)) {
+        if (getName(recentlyEditedFile).equals(fileName)) {
           setOfFilesWithTheSameName.add(recentlyEditedFile);
         }
       }
@@ -170,7 +175,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       // get data as is
       Collection<VirtualFile> rawDataFromIndex = disableIndexUpToDateCheckInEdt(() -> FilenameIndex.getVirtualFilesByName(project, fileName, scope));
       // filter only suitable files, we can miss some files but it's ok for presentation reasons
-      return ContainerUtil.filter(rawDataFromIndex, f -> fileName.equals(f.getName()));
+      return ContainerUtil.filter(rawDataFromIndex, f -> fileName.equals(getName(f)));
     }
     else {
       Ref<Collection<VirtualFile>> filesFromIndex = Ref.create();
