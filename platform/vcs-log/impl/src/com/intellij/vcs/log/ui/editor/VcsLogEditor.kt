@@ -90,8 +90,10 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
 }
 
 class VcsLogEditorTabTitleProvider : EditorTabTitleProvider {
-  override fun getEditorTabTitle(project: Project, file: VirtualFile): String? =
-    file.getUserData(VCS_LOG_FILE_DISPLAY_NAME_GENERATOR)
-      ?.let { displayNameGenerator -> (file as? VcsLogFile)?.logUis?.run(displayNameGenerator) }
-    ?: file.name
+  override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
+    if (file !is VcsLogFile) return null
+    return file.getUserData(VCS_LOG_FILE_DISPLAY_NAME_GENERATOR)
+             ?.let { displayNameGenerator -> (file as? VcsLogFile)?.logUis?.run(displayNameGenerator) }
+           ?: file.name
+  }
 }
