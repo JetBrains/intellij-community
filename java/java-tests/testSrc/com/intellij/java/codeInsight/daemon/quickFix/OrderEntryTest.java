@@ -48,7 +48,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents(); // startup activities
 
     setUpJdk();
-    myModule = ModuleManager.getInstance(getProject()).getModules()[0];
+    myModule = ModuleManager.getInstance(getProject()).findModuleByName("A");
   }
 
   @Override
