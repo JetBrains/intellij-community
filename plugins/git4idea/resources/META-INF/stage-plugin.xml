@@ -13,6 +13,8 @@
     <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>
 
+    <vcs.baseContentProvider implementation="git4idea.index.vfs.GitIndexVirtualFileBaseContentProvider"/>
+
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
   </extensions>
 

@@ -148,7 +148,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
     Change change = changeListManager.getChange(file);
     if (change != null) {
       ContentRevision beforeRevision = change.getBeforeRevision();
-      return beforeRevision == null ? null : new BaseContentImpl(myProject, beforeRevision);
+      return beforeRevision == null ? null : createBaseContent(myProject, beforeRevision);
     }
 
     FileStatus status = changeListManager.getStatus(file);
@@ -176,6 +176,11 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
 
   private boolean isHandledByVcs(@NotNull VirtualFile file) {
     return file.isInLocalFileSystem() && ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) != null;
+  }
+
+  @NotNull
+  public static BaseContent createBaseContent(@NotNull Project project, @NotNull ContentRevision contentRevision) {
+    return new BaseContentImpl(project, contentRevision);
   }
 
   private static class BaseContentImpl implements BaseContent {

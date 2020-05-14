@@ -93,7 +93,7 @@ class GitStageTracker(val project: Project) : Disposable {
 
   private fun scheduleUpdateDocument(document: Document) {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
-    val root = getRoot(file) ?: return
+    val root = getRoot(project, file) ?: return
     singleTaskController.request(Request.RefreshFiles(mutableMapOf(Pair(root, setOf(file.filePath()))), emptyMap()))
   }
 
@@ -103,14 +103,6 @@ class GitStageTracker(val project: Project) : Disposable {
     }.map { it.root }
     val files = events.mapNotNull { it.file as? GitIndexVirtualFile }.map { Pair(it.root, it.filePath) }.toMapOfSets()
     singleTaskController.sendRequests(refreshRoots(roots), refreshFiles(files))
-  }
-
-  private fun getRoot(file: VirtualFile): VirtualFile? {
-    return when {
-      file is GitIndexVirtualFile -> file.root
-      file.isInLocalFileSystem -> ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file)
-      else -> null
-    }
   }
 
   fun addListener(listener: GitStageTrackerListener, disposable: Disposable) {
@@ -259,7 +251,7 @@ class GitStageTracker(val project: Project) : Disposable {
       for (document in FileDocumentManager.getInstance().unsavedDocuments) {
         val file = FileDocumentManager.getInstance().getFile(document) ?: continue
         if (!file.isValid || !FileDocumentManager.getInstance().isFileModified(file)) continue
-        val root = getRoot(file) ?: continue
+        val root = getRoot(project, file) ?: continue
         if (scopes[root]?.belongsTo(root, file.filePath()) == true) {
           unsaved.getOrPut(root) { mutableSetOf() }.add(file)
         }
@@ -338,4 +330,18 @@ interface GitStageTrackerListener : EventListener {
   fun update()
   fun progressStarted() = Unit
   fun progressStopped() = Unit
+}
+
+private fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
+  return when {
+    file is GitIndexVirtualFile -> file.root
+    file.isInLocalFileSystem -> ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file)
+    else -> null
+  }
+}
+
+fun GitStageTracker.status(file: VirtualFile): GitFileStatus? {
+  val root = getRoot(project, file) ?: return null
+  val rootState = state.rootStates[root] ?: return null
+  return rootState.statuses[file.filePath()]
 }
