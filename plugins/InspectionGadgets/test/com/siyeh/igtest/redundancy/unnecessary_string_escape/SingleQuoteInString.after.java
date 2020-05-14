@@ -4,4 +4,5 @@ class X {
   String t = "\\'";
   String u = "'";
   String v = "Escape  ''{0}''";
+  String w = "''\\'";
 }

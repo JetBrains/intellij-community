@@ -104,14 +104,18 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
           newExpression.append(text.substring(offset));
         }
         else {
-          int index = text.indexOf("\\'");
-          int offset = 0;
-          while (index > 0) {
-            newExpression.append(text, offset, index);
-            offset = index + 1;
-            index = text.indexOf("\\'", offset);
+          boolean escaped = false;
+          final int length = text.length();
+          for (int i = 0; i < length; i++) {
+            final char c = text.charAt(i);
+            if (escaped) {
+              if (c != '\'') newExpression.append('\\');
+              newExpression.append(c);
+              escaped = false;
+            }
+            else if (c == '\\') escaped = true;
+            else newExpression.append(c);
           }
-          newExpression.append(text.substring(offset));
         }
         PsiReplacementUtil.replaceExpression(literalExpression, newExpression.toString());
       }
