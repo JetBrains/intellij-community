@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.Notification
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vcs.Executor
 import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
@@ -196,6 +197,12 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
           You must edit all merge conflicts
           and then mark them as resolved using git add
           """)
+  }
+
+  protected fun keepCommitMessageAfterConflict() {
+    dialogManager.onDialog(GitUnstructuredEditor::class.java) {
+      DialogWrapper.OK_EXIT_CODE
+    }
   }
 
   inner class LocalChange(val repository: GitRepository, private val filePath: String, val content: String = "Some content") {

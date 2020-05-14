@@ -135,6 +135,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     refresh()
     updateChangeListManager()
+    keepCommitMessageAfterConflict()
 
     var facedConflictInUltimate = false
     var facedConflictInCommunity = false
@@ -198,6 +199,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     refresh()
     updateChangeListManager()
+    keepCommitMessageAfterConflict()
 
     `do nothing on merge`()
     rebase("master")

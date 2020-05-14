@@ -92,6 +92,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
         repo.assertConflict("c.txt")
       repo.resolveConflicts()
     }
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -106,6 +107,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     vcsHelper.onMerge {
         repo.resolveConflicts()
     }
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -346,6 +348,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test unresolved conflict should lead to conflict resolver with continue rebase`() {
     repo.`prepare simple conflict`()
     `do nothing on merge`()
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
     repo.assertConflict("c.txt")
