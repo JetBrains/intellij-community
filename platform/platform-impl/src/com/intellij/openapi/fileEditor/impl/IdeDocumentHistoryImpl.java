@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorEventListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
@@ -58,6 +60,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
 
 @State(name = "IdeDocumentHistory", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
@@ -158,6 +161,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     multicaster.addCaretListener(listener, this);
 
     myRecentFilesTimestampsMap = initRecentFilesTimestampMap(project);
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
+      @Override
+      public void extensionRemoved(@NotNull FileEditorProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        String editorTypeId = provider.getEditorTypeId();
+        Predicate<PlaceInfo> clearStatePredicate = e -> editorTypeId.equals(e.getEditorTypeId());
+        myChangePlaces.removeIf(clearStatePredicate);
+        myBackPlaces.removeIf(clearStatePredicate);
+        myForwardPlaces.removeIf(clearStatePredicate);
+      }
+    }, this);
   }
 
   protected FileEditorManagerEx getFileEditorManager() {
