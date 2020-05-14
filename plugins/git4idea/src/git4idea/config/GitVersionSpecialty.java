@@ -153,6 +153,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CAN_USE_SCHANNEL {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 14, 0, 0));
+    }
+  },
+
   FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY { // for some reason, even with "simplify-merges", it used to show a lot of merges in history
 
     @Override

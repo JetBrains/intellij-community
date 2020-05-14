@@ -132,6 +132,14 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
         }
       }
     });
+
+    boolean useSchannel = SystemInfo.isWindows &&
+                          GitVersionSpecialty.CAN_USE_SCHANNEL.existsIn(myVersion) &&
+                          Registry.is("git.use.schannel.on.windows");
+    if (useSchannel) {
+      myHandler.overwriteConfig("http.sslBackend=schannel");
+    }
+
   }
 
   private void cleanupHttpAuth() {
