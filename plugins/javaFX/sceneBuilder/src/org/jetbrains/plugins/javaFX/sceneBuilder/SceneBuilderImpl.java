@@ -267,6 +267,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     catch (IOException e) {
       LOG.info(e);
     }
+    myCustomComponents = null;
+    Thread.currentThread().setUncaughtExceptionHandler(null);
   }
 
   private void loadFile() {
