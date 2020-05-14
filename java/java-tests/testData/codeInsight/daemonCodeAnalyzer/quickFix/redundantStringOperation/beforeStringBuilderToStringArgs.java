@@ -47,7 +47,7 @@ class StringBuilderToStringArgs {
     System.out.println(("Hello" + sb.toString() + (sb.toString() + ((sb.toString()) + "Hello"))));
     System.out.println(("Hello" + sb.toString() + (sb.toString() + ((sb.toString()) + 42))));
 
-    System.out.println((("Hello")) + sb.toString() + (sb.toString() + ((sb.toString()) + 42))));
+    System.out.println((("Hello")) + sb.toString() + (sb.toString() + ((sb.toString()) + 42)));
 
     System.out.println(gen("Hello") + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */);
     System.out.println(/* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + gen("Hello"));

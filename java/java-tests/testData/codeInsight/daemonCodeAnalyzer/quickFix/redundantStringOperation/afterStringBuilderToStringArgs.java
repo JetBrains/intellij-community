@@ -86,7 +86,7 @@ class StringBuilderToStringArgs {
     System.out.println(("Hello" + sb + (sb + ((sb) + "Hello"))));
     System.out.println(("Hello" + sb + (sb + ((sb.toString()) + 42))));
 
-    System.out.println((("Hello")) + sb + (sb + ((sb.toString()) + 42))));
+    System.out.println((("Hello")) + sb + (sb + ((sb.toString()) + 42)));
 
       /* 2 */
       /* 3 */
