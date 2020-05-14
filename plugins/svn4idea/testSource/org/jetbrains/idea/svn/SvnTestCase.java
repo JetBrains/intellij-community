@@ -186,18 +186,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @After
   public void tearDown() throws Exception {
     new RunAll(
-      this::waitChangeListManager,
+      () -> changeListManager.waitEverythingDoneInTestMode(),
       () -> runInEdtAndWait(this::tearDownProject),
       this::tearDownTempDirectoryFixture,
       () -> resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY)
     ).run();
-  }
-
-  private void waitChangeListManager() {
-    if (changeListManager != null) {
-      changeListManager.forceStopInTestMode();
-      changeListManager.waitEverythingDoneInTestMode();
-    }
   }
 
   private void tearDownTempDirectoryFixture() throws Exception {
