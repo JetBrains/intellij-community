@@ -61,6 +61,7 @@ class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, Maven
       writer.write(TokenReader.PREFIX + MavenRemoteObjectWrapper.ourToken);
       writer.write(System.lineSeparator());
       writer.flush();
+      MavenLog.LOG.info("Sent token to maven server");
     }
     catch (IOException e) {
       MavenLog.LOG.warn("Cannot send token to maven server", e);
