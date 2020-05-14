@@ -25,9 +25,5 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/statistics/uploader:intellij.platform.statistics.uploader[module]",
-        "//tools/analytics-library/tracker:analytics-tracker[module]",
-        "//tools/analytics-library/shared:analytics-shared[module]",
-        "//tools/analytics-library/publisher:analytics-publisher[module]",
-        "//tools/base/common:studio.android.sdktools.common[module]",
     ],
 )

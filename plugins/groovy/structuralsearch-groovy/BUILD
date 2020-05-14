@@ -7,12 +7,13 @@ iml_module(
     iml_files = ["intellij.groovy.structuralSearch.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
-        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
-        "//tools/idea:intellij.java.ui.tests",
-        "//tools/idea/plugins/testng:intellij.testng",
-        "//tools/idea/java/manifest:intellij.java.manifest",
         "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
+        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
+        "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
+        "//tools/idea/java/typeMigration:intellij.java.typeMigration",
+        "//tools/idea/java/manifest:intellij.java.manifest",
+        "//tools/idea/plugins/testng:intellij.testng",
+        "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/plugins/coverage:intellij.java.coverage",
         "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
         "//tools/idea/plugins/eclipse:intellij.eclipse",

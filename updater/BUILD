@@ -1,12 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
-load("//tools/base/bazel:coverage.bzl", "coverage_java_test")
 
 # managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.updater",
     srcs = ["src"],
     iml_files = ["intellij.platform.updater.iml"],
-    test_class = "com.android.studio.updater.UpdaterTestSuite",
     test_data = glob(["testData/**"]),
     # do not sort: must match IML order
     test_runtime_deps = [
@@ -33,12 +31,10 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
+        "//tools/idea/.idea/libraries:javax.annotation-api",
     ],
     test_srcs = ["testSrc"],
-    test_tags = [
-        "no_test_mac",  # b/127274100
-        "no_test_windows",  # b/123974530
-    ],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
     # do not sort: must match IML order
@@ -49,26 +45,20 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar",
-        "//tools/base/common:studio.android.sdktools.common[module]",
-        "//tools/analytics-library/shared:analytics-shared[module]",
-        "//tools/analytics-library/tracker:analytics-tracker[module]",
-        "//tools/idea/.idea/libraries:studio-analytics-proto",
-        "//tools/idea/.idea/libraries:protobuf",
-        "//tools/base/testutils:studio.android.sdktools.testutils[module, test]",
-        "//tools/idea/.idea/libraries:Guava[test]",
-        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
     ],
 )
 
 java_binary(
     name = "updater",
     main_class = "com.intellij.updater.Runner",
+    visibility = ["//visibility:public"],
     # This uses the jar rather than the iml_module to avoid packaging jdk langtools
     # TODO(b/124044861): switch to using the below java_binary with deploy_env once we are on a bazel that supports it.
     runtime_deps = [
         ":intellij.platform.updater.jar",
         "//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar",
         "//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar",
+        "//tools/adt/idea/studio-updater:intellij.android.updater.studio-updater",  # Adds analytics to the updater
         "//tools/analytics-library/shared:analytics-shared.jar",
         "//tools/analytics-library/tracker:analytics-tracker.jar",
         "//tools/base/annotations:studio.android.sdktools.android-annotations.jar",
@@ -81,12 +71,4 @@ java_binary(
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:studio-analytics-proto",
     ],
-)
-
-coverage_java_test(
-    name = "integration_test",
-    data = [":updater_deploy.jar"],
-    tags = ["no_test_windows"],  # b/77288863
-    test_class = "com.android.studio.updater.StudioPatchUpdaterIntegrationTest",
-    runtime_deps = [":intellij.platform.updater_testlib"],
 )

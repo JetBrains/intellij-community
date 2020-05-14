@@ -27,8 +27,6 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/.idea/libraries:Guava",
-        "//tools/idea/.idea/libraries:studio-analytics-proto",
-        "//tools/analytics-library/tracker:analytics-tracker[module]",
         "//tools/idea/.idea/libraries:HdrHistogram",
         "//tools/idea/.idea/libraries:protobuf",
     ],

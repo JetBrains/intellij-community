@@ -67,6 +67,7 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
+        "//tools/idea/.idea/libraries:javax.annotation-api",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
