@@ -379,7 +379,7 @@ class SliceUtil {
         }
       }
 
-      return processIfInForeignLanguage(builder.withIndexNesting(0), processor, element);
+      return processIfInForeignLanguage(builder.dropNesting(), processor, element);
     });
   }
 

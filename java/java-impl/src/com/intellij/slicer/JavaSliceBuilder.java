@@ -45,13 +45,6 @@ final class JavaSliceBuilder {
   }
 
   @Contract(pure = true)
-  @NotNull JavaSliceBuilder withIndexNesting(@Range(from = 0, to = Integer.MAX_VALUE) int indexNesting) {
-    if (indexNesting == myIndexNesting) return this;
-    return new JavaSliceBuilder(myParent, mySubstitutor, indexNesting, mySyntheticField, myAnalysisParams)
-      .withFilter(null);
-  }
-
-  @Contract(pure = true)
   @NotNull JavaSliceBuilder withSyntheticField(@NotNull String syntheticField) {
     if (syntheticField.equals(mySyntheticField)) return this;
     return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting, syntheticField, myAnalysisParams);
@@ -60,6 +53,13 @@ final class JavaSliceBuilder {
   @Contract(pure = true)
   @NotNull JavaSliceBuilder dropSyntheticField() {
     return withSyntheticField("");
+  }
+
+  @Contract(pure = true)
+  @NotNull JavaSliceBuilder dropNesting() {
+    if (myIndexNesting == 0) return this;
+    return new JavaSliceBuilder(myParent, mySubstitutor, 0, mySyntheticField, myAnalysisParams)
+      .withFilter(null);
   }
 
   @Contract(pure = true)
@@ -82,23 +82,35 @@ final class JavaSliceBuilder {
 
   /**
    * Update nesting level from flow annotation
-   * @param anno
-   * @return
+   * @param anno flow annotation
+   * @return slice builder with updated nesting level
    */
   @Contract(pure = true)
   @NotNull JavaSliceBuilder updateNesting(@NotNull Flow anno) {
     int nestingDelta = (anno.sourceIsContainer() ? 1 : 0) - (anno.targetIsContainer() ? 1 : 0);
-    return withIndexNesting(myIndexNesting + nestingDelta);
+    if (nestingDelta > 0) {
+      return incrementNesting();
+    }
+    if (nestingDelta < 0) {
+      return decrementNesting();
+    }
+    return this;
   }
 
   @Contract(pure = true)
   @NotNull JavaSliceBuilder incrementNesting() {
-    return withIndexNesting(myIndexNesting + 1);
+    SliceValueFilter filter = myAnalysisParams.valueFilter;
+    filter = filter instanceof JavaDfaSliceValueFilter ? ((JavaDfaSliceValueFilter)filter).wrap() : null;
+    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting + 1, mySyntheticField, myAnalysisParams)
+      .withFilter(filter);
   }
 
   @Contract(pure = true)
   @NotNull JavaSliceBuilder decrementNesting() {
-    return withIndexNesting(myIndexNesting - 1);
+    SliceValueFilter filter = myAnalysisParams.valueFilter;
+    filter = filter instanceof JavaDfaSliceValueFilter ? ((JavaDfaSliceValueFilter)filter).unwrap() : null;
+    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting - 1, mySyntheticField, myAnalysisParams)
+      .withFilter(filter);
   }
 
   boolean hasNesting() {

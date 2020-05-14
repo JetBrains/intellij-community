@@ -93,5 +93,6 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testAppend() throws Exception { doTest();}
   public void testRequireNonNull() throws Exception { doTest();}
   public void testFilterIntRange() throws Exception { doTest(">=0");}
+  public void testFilterIntRangeArray() throws Exception { doTest(">=0");}
   public void testFilterNull() throws Exception { doTest("null");}
 }

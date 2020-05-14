@@ -6,15 +6,31 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class JavaDfaSliceValueFilter implements SliceValueFilter {
+  private final @Nullable JavaDfaSliceValueFilter myNextFilter;
   private final @NotNull DfType myDfType;
 
-  public JavaDfaSliceValueFilter(@NotNull DfType type) {
+  private JavaDfaSliceValueFilter(@Nullable JavaDfaSliceValueFilter nextFilter, @NotNull DfType type) {
+    myNextFilter = nextFilter;
     myDfType = type;
+  }
+  
+  public JavaDfaSliceValueFilter(@NotNull DfType type) {
+    this(null, type);
+  }
+  
+  JavaDfaSliceValueFilter wrap() {
+    return new JavaDfaSliceValueFilter(this, DfTypes.TOP);
+  }
+  
+  JavaDfaSliceValueFilter unwrap() {
+    return myNextFilter;
   }
 
   @Override
@@ -42,6 +58,9 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
 
   @Override
   public @NotNull String toString() {
+    if (myDfType == DfTypes.TOP) {
+      return InspectionGadgetsBundle.message("none");
+    }
     return myDfType.toString();
   }
 }
