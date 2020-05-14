@@ -323,17 +323,6 @@ object GithubApiRequests {
     object PullRequests : Entity("/pulls") {
 
       @JvmStatic
-      fun getDiff(repository: GHRepositoryCoordinates, number: Long) =
-        object : Get<String>(getUrl(repository, urlSuffix, "/$number"),
-                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
-          override fun extractResult(response: GithubApiResponse): String {
-            return response.handleBody(ThrowableConvertor {
-              StreamUtil.readText(it, Charsets.UTF_8)
-            })
-          }
-        }.withOperationName("get pull request diff file")
-
-      @JvmStatic
       fun create(server: GithubServerPath,
                  username: String, repoName: String,
                  title: String, description: String, head: String, base: String) =
@@ -402,25 +391,6 @@ object GithubApiRequests {
                    reviewers: Collection<String>, teamReviewers: List<String>) =
           Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
                             GithubReviewersCollectionRequest(reviewers, teamReviewers))
-      }
-
-      object Commits : Entity("/commits") {
-        @JvmStatic
-        fun pages(repository: GHRepositoryCoordinates, number: Long) =
-          GithubApiPagesLoader.Request(get(repository, number), ::get)
-
-        @JvmStatic
-        fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
-
-        @JvmStatic
-        fun get(repository: GHRepositoryCoordinates, number: Long,
-                pagination: GithubRequestPagination? = null) =
-          get(getUrl(repository, PullRequests.urlSuffix, "/$number", urlSuffix,
-                     GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
-
-        @JvmStatic
-        fun get(url: String) = Get.jsonPage<GithubCommit>(url)
-          .withOperationName("get commits for pull request")
       }
     }
   }
