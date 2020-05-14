@@ -15,6 +15,8 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -158,25 +160,25 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   public void testKeywordOnlyParams() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "param", null, false),
-                                              new PyParameterInfo(NEW_PARAMETER, "*", null, false),
+                                              new PyParameterInfo(NEW_PARAMETER, PySingleStarParameter.TEXT, null, false),
                                               new PyParameterInfo(NEW_PARAMETER, "a", "2", false)), LanguageLevel.PYTHON34);
   }
 
   public void testKeywordOnlyParamRemoveDefaultValue() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "my", "None", false),
-                                              new PyParameterInfo(1, "*", null, false),
+                                              new PyParameterInfo(1, PySingleStarParameter.TEXT, null, false),
                                               new PyParameterInfo(2, "param", null, false)), LanguageLevel.PYTHON34);
   }
 
   public void testKeywordOnlyParamRemoveDefaultValue1() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "my", "None", false),
-                                              new PyParameterInfo(1, "*", null, false),
+                                              new PyParameterInfo(1, PySingleStarParameter.TEXT, null, false),
                                               new PyParameterInfo(2, "param", "1", true)), LanguageLevel.PYTHON34);
   }
 
   public void testKeywordOnlyParamRemoveDefaultValue2() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "my", "None", true),
-                                              new PyParameterInfo(1, "*", null, false),
+                                              new PyParameterInfo(1, PySingleStarParameter.TEXT, null, false),
                                               new PyParameterInfo(2, "param", "1", false)), LanguageLevel.PYTHON34);
   }
 
@@ -204,7 +206,7 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   public void testKeywordOnlyMove() {
     doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(2, "param2", null, false),
-                                             new PyParameterInfo(0, "*", null, false),
+                                             new PyParameterInfo(0, PySingleStarParameter.TEXT, null, false),
                                              new PyParameterInfo(1, "param1", null, false)), LanguageLevel.PYTHON34);
   }
 
@@ -464,7 +466,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testPositionalOnlyMarkerTurnsKeywordArgumentIntoPositional() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
-                                                new PyParameterInfo(NEW_PARAMETER, "/", null, false),
+                                                new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false),
                                                 new PyParameterInfo(1, "b", null, false)));
     });
   }
@@ -474,7 +476,7 @@ public class PyChangeSignatureTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", "None", true),
                                                 new PyParameterInfo(1, "b", "None", true),
-                                                new PyParameterInfo(NEW_PARAMETER, "/", null, false)));
+                                                new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)));
     });
   }
 
@@ -483,13 +485,13 @@ public class PyChangeSignatureTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "None", true),
                                                 new PyParameterInfo(0, "b", "None", true),
-                                                new PyParameterInfo(1, "/", null, false)));
+                                                new PyParameterInfo(1, PySlashParameter.TEXT, null, false)));
     });
   }
 
   public void testPositionalOnlyMarkerAsFirstParameter() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "/", null, false),
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false),
                                            new PyParameterInfo(0, "a", null, false)),
                        PyPsiBundle.message("ANN.named.parameters.before.slash"));
     });
@@ -498,9 +500,9 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testDuplicatedPositionalOnlyMarker() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
-                                           new PyParameterInfo(1, "/", null, false),
+                                           new PyParameterInfo(1, PySlashParameter.TEXT, null, false),
                                            new PyParameterInfo(2, "b", null, false),
-                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                                           new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)),
                        PyPsiBundle.message("ANN.multiple.slash"));
     });
   }
@@ -508,7 +510,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testPositionalOnlyMarkerAfterPositionalVararg() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "*args", null, false),
-                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                                           new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)),
                        PyPsiBundle.message("ANN.slash.param.after.vararg"));
     });
   }
@@ -516,9 +518,9 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testPositionalOnlyMarkerAfterKeywordOnlyMarker() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
-                                           new PyParameterInfo(1, "*", null, false),
+                                           new PyParameterInfo(1, PySingleStarParameter.TEXT, null, false),
                                            new PyParameterInfo(2, "b", null, false),
-                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                                           new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)),
                        PyPsiBundle.message("ANN.slash.param.after.vararg"));
     });
   }
@@ -526,7 +528,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testPositionalOnlyMarkerAfterKeywordVararg() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "**kwargs", null, false),
-                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                                           new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)),
                        PyPsiBundle.message("ANN.slash.param.after.keyword"));
     });
   }
@@ -534,9 +536,9 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testDuplicatedKeywordOnlyMarker() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
-                                           new PyParameterInfo(1, "*", null, false),
+                                           new PyParameterInfo(1, PySingleStarParameter.TEXT, null, false),
                                            new PyParameterInfo(2, "b", null, false),
-                                           new PyParameterInfo(NEW_PARAMETER, "*", null, false)),
+                                           new PyParameterInfo(NEW_PARAMETER, PySingleStarParameter.TEXT, null, false)),
                        PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
     });
   }
@@ -605,7 +607,7 @@ public class PyChangeSignatureTest extends PyTestCase {
       }
 
       final String validationError = dialog.validateAndCommitData();
-      assertTrue(validationError, validationError == null);
+      assertNull(validationError);
 
       final BaseRefactoringProcessor baseRefactoringProcessor = dialog.createRefactoringProcessor();
       assert baseRefactoringProcessor instanceof PyChangeSignatureProcessor;

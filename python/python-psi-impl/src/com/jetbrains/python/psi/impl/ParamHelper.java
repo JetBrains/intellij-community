@@ -109,13 +109,13 @@ public class ParamHelper {
 
         @Override
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
-          result.append('/');
+          result.append(PySlashParameter.TEXT);
           if (!last) result.append(", ");
         }
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          result.append('*');
+          result.append(PySingleStarParameter.TEXT);
           if (!last) result.append(", ");
         }
 

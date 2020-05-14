@@ -32,10 +32,11 @@ import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
-import com.jetbrains.python.*;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ public class PyChangeSignatureDialog extends
       final PyParameterTableModelItem info = parameters.get(index);
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
-      final boolean isMarkerParameter = name.equals("/") || name.equals("*");
+      final boolean isMarkerParameter = name.equals(PySlashParameter.TEXT) || name.equals(PySingleStarParameter.TEXT);
       if (!isMarkerParameter) {
         final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
         if (parameterNames.contains(nameWithoutStars)) {
@@ -136,7 +137,7 @@ public class PyChangeSignatureDialog extends
         parameterNames.add(nameWithoutStars);
       }
 
-      if (name.equals("*")) {
+      if (name.equals(PySingleStarParameter.TEXT)) {
         if (hadSingleStar) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
         }
@@ -145,7 +146,7 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.named.parameters.after.star");
         }
       }
-      else if (name.equals("/")) {
+      else if (name.equals(PySlashParameter.TEXT)) {
         if (hadSlash) {
           return PyPsiBundle.message("ANN.multiple.slash");
         }
@@ -160,7 +161,7 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.named.parameters.before.slash");
         }
       }
-      else if (name.startsWith("*") && !name.startsWith("**")) {
+      else if (name.startsWith(PySingleStarParameter.TEXT) && !name.startsWith("**")) {
         if (hadKeywordContainer) {
           return PyPsiBundle.message("ANN.starred.param.after.kwparam");
         }
@@ -208,7 +209,7 @@ public class PyChangeSignatureDialog extends
         }
       }
       if (parameter.getOldIndex() < 0) {
-        if (!name.startsWith("*") && !name.equals("/")) {
+        if (!name.startsWith("*") && !name.equals(PySlashParameter.TEXT)) {
           if (StringUtil.isEmpty(info.defaultValueCodeFragment.getText())) {
             return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
           }
@@ -305,7 +306,9 @@ public class PyChangeSignatureDialog extends
             add(defaultValueCheckBox);
 
             final String nameText = myNameEditor.getText();
-            final boolean specialParameter = nameText.startsWith("*") || nameText.equals("/") || CANONICAL_SELF.equals(nameText);
+            final boolean specialParameter = nameText.startsWith("*") ||
+                                             nameText.equals(PySlashParameter.TEXT) ||
+                                             CANONICAL_SELF.equals(nameText);
             myDefaultValueEditor.setEnabled(!specialParameter);
             myDefaultInSignature.setEnabled(!specialParameter);
           }
@@ -364,7 +367,7 @@ public class PyChangeSignatureDialog extends
               @Override
               public void documentChanged(@NotNull DocumentEvent event) {
                 final String paramName = myNameEditor.getText();
-                final boolean specialParameter = paramName.startsWith("*") || paramName.equals("/");
+                final boolean specialParameter = paramName.startsWith("*") || paramName.equals(PySlashParameter.TEXT);
                 myDefaultValueEditor.setEnabled(!specialParameter);
                 myDefaultInSignature.setEnabled(!specialParameter);
               }

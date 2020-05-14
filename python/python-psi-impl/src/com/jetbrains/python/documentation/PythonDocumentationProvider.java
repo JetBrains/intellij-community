@@ -252,11 +252,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         }
       }
       else if (parameter.getParameter() instanceof PySlashParameter) {
-        paramName = "/";
+        paramName = PySlashParameter.TEXT;
         showType = false;
       }
       else if (parameter.getParameter() instanceof PySingleStarParameter) {
-        paramName = "*";
+        paramName = PySingleStarParameter.TEXT;
         showType = false;
       }
       else {
