@@ -62,7 +62,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
 
     if (!(element instanceof PsiExpression || element instanceof PsiVariable)) return null;
     SliceUsage newUsage = parent != null
-                        ? new JavaSliceUsage(element, parent, PsiSubstitutor.EMPTY, 0, "")
+                        ? new JavaSliceUsage(element, parent, PsiSubstitutor.EMPTY)
                         : createRootUsage(element, usage.params);
     return Collections.singletonList(newUsage);
   }
