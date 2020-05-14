@@ -57,6 +57,13 @@ public class DebuggerUtilsAsync {
     return CompletableFuture.completedFuture(ref.getValues(fields));
   }
 
+  public static CompletableFuture<Map<Field, Value>> getValues(ReferenceType type, List<Field> fields, @Nullable SuspendContext context) {
+    if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi") && context != null) {
+      return schedule((SuspendContextImpl)context, ((ReferenceTypeImpl)type).getValuesAsync(fields));
+    }
+    return CompletableFuture.completedFuture(type.getValues(fields));
+  }
+
   // Reader thread
   public static CompletableFuture<List<InterfaceType>> superinterfaces(InterfaceType iface) {
     if (iface instanceof InterfaceTypeImpl && Registry.is("debugger.async.jdi")) {

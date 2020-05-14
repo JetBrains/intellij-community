@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -316,5 +317,16 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
     }
     return JavaSdkUtil.getIdeaRtJarPath();
+  }
+
+  public static <T> List<List<T>> partition(List<T> list, int size) {
+    List<List<T>> res = new ArrayList<>();
+    int loaded = 0, total = list.size();
+    while (loaded < total) {
+      int chunkSize = Math.min(size, total - loaded);
+      res.add(list.subList(loaded, loaded + chunkSize));
+      loaded += chunkSize;
+    }
+    return res;
   }
 }

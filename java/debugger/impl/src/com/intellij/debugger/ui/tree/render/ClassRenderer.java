@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -181,7 +182,7 @@ public class ClassRenderer extends NodeRendererImpl{
           return;
         }
 
-        List<List<Field>> chunks = partition(fieldsToShow, XCompositeNode.MAX_CHILDREN_TO_SHOW);
+        List<List<Field>> chunks = DebuggerUtilsImpl.partition(fieldsToShow, XCompositeNode.MAX_CHILDREN_TO_SHOW);
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
         //noinspection unchecked
         CompletableFuture<List<DebuggerTreeNode>>[] futures = chunks.stream()
@@ -191,17 +192,6 @@ public class ClassRenderer extends NodeRendererImpl{
           .thenAccept(__ -> builder.setChildren(StreamEx.of(futures).flatCollection(CompletableFuture::join).toList()));
       }
     );
-  }
-
-  static <T> List<List<T>> partition(List<T> list, int size) {
-    List<List<T>> res = new ArrayList<>();
-    int loaded = 0, total = list.size();
-    while (loaded < total) {
-      int chunkSize = Math.min(size, total - loaded);
-      res.add(list.subList(loaded, loaded + chunkSize));
-      loaded += chunkSize;
-    }
-    return res;
   }
 
   private CompletableFuture<List<DebuggerTreeNode>> createNodes(List<Field> fields,
