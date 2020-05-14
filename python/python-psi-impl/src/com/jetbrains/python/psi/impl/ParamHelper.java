@@ -131,6 +131,32 @@ public class ParamHelper {
     return result.toString();
   }
 
+  @NotNull
+  public static String getNameInSignature(@NotNull PyCallableParameter parameter) {
+    final StringBuilder sb = new StringBuilder();
+
+    if (parameter.isPositionalContainer()) sb.append("*");
+    else if (parameter.isKeywordContainer()) sb.append("**");
+
+    final String name = parameter.getName();
+    sb.append(name != null ? name : "...");
+
+    return sb.toString();
+  }
+
+  @NotNull
+  public static String getNameInSignature(@NotNull PyNamedParameter parameter) {
+    final StringBuilder sb = new StringBuilder();
+
+    if (parameter.isPositionalContainer()) sb.append("*");
+    else if (parameter.isKeywordContainer()) sb.append("**");
+
+    final String name = parameter.getName();
+    sb.append(name != null ? name : "...");
+
+    return sb.toString();
+  }
+
   @Nullable
   public static String getDefaultValueText(@Nullable PyExpression defaultValue) {
     if (defaultValue instanceof PyStringLiteralExpression) {

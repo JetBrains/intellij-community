@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,11 +170,7 @@ public class PyCallableParameterImpl implements PyCallableParameter {
     if (myElement instanceof PyNamedParameter || myElement == null) {
       final StringBuilder sb = new StringBuilder();
 
-      if (isPositionalContainer()) sb.append("*");
-      else if (isKeywordContainer()) sb.append("**");
-
-      final String name = getName();
-      sb.append(name != null ? name : "...");
+      sb.append(ParamHelper.getNameInSignature(this));
 
       if (context != null) {
         final PyType argumentType = getArgumentType(context);
