@@ -5,10 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewDataProvider {
@@ -25,8 +25,14 @@ interface GHPRReviewDataProvider {
   fun resetReviewThreads()
 
   @CalledInAwt
-  fun submitReview(progressIndicator: ProgressIndicator, reviewId: String?, event: GHPullRequestReviewEvent, body: String? = null)
+  fun submitReview(progressIndicator: ProgressIndicator, reviewId: String, event: GHPullRequestReviewEvent, body: String? = null)
     : CompletableFuture<out Any?>
+
+  @CalledInAwt
+  fun createReview(progressIndicator: ProgressIndicator,
+                   event: GHPullRequestReviewEvent? = null, body: String? = null,
+                   commitSha: String? = null, comments: List<GHPullRequestDraftReviewComment>? = null)
+    : CompletableFuture<GHPullRequestPendingReview>
 
   @CalledInAwt
   fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?>
@@ -38,15 +44,11 @@ interface GHPRReviewDataProvider {
   fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
 
   @CalledInAwt
-  fun addComment(progressIndicator: ProgressIndicator, body: String, replyToCommentId: Long)
-    : CompletableFuture<GithubPullRequestCommentWithHtml>
+  fun addComment(progressIndicator: ProgressIndicator, reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int)
+    : CompletableFuture<out GHPullRequestReviewComment>
 
   @CalledInAwt
-  fun addComment(progressIndicator: ProgressIndicator, body: String, commitSha: String, fileName: String, diffLine: Int)
-    : CompletableFuture<GithubPullRequestCommentWithHtml>
-
-  @CalledInAwt
-  fun addComment(progressIndicator: ProgressIndicator, reviewId: String?, body: String, commitSha: String, fileName: String, diffLine: Int)
+  fun addComment(progressIndicator: ProgressIndicator, replyToCommentId: String, body: String)
     : CompletableFuture<out GHPullRequestReviewComment>
 
   @CalledInAwt

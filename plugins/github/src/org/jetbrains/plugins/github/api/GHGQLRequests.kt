@@ -12,6 +12,7 @@ import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 
 object GHGQLRequests {
   object Organization {
@@ -138,12 +139,17 @@ object GHGQLRequests {
 
     object Review {
 
-      fun create(server: GithubServerPath, pullRequestId: String, event: GHPullRequestReviewEvent, body: String?): GQLQuery<Any> =
+      fun create(server: GithubServerPath, pullRequestId: String,
+                 event: GHPullRequestReviewEvent?, body: String?, commitSha: String?,
+                 comments: List<GHPullRequestDraftReviewComment>?): GQLQuery<GHPullRequestPendingReview> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.createReview,
                                  mapOf("pullRequestId" to pullRequestId,
                                        "event" to event,
+                                       "commitOid" to commitSha,
+                                       "comments" to comments,
                                        "body" to body),
-                                 Any::class.java)
+                                 GHPullRequestPendingReview::class.java,
+                                 "addPullRequestReview", "pullRequestReview")
 
       fun submit(server: GithubServerPath, reviewId: String, event: GHPullRequestReviewEvent, body: String?): GQLQuery<Any> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.submitReview,
@@ -168,16 +174,27 @@ object GHGQLRequests {
         GHNodes<GHPullRequestPendingReview>(nodes)
 
       fun addComment(server: GithubServerPath,
-                     pullRequestId: String?, reviewId: String?,
+                     reviewId: String,
                      body: String, commitSha: String, fileName: String, diffLine: Int)
         : GQLQuery<GHPullRequestReviewCommentWithPendingReview> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addReviewComment,
-                                 mapOf("pullRequestId" to pullRequestId,
-                                       "reviewId" to reviewId,
+                                 mapOf("reviewId" to reviewId,
                                        "body" to body,
                                        "commit" to commitSha,
                                        "file" to fileName,
                                        "position" to diffLine),
+                                 GHPullRequestReviewCommentWithPendingReview::class.java,
+                                 "addPullRequestReviewComment", "comment")
+
+      fun addComment(server: GithubServerPath,
+                     reviewId: String,
+                     inReplyTo: String,
+                     body: String)
+        : GQLQuery<GHPullRequestReviewCommentWithPendingReview> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addReviewComment,
+                                 mapOf("reviewId" to reviewId,
+                                       "inReplyTo" to inReplyTo,
+                                       "body" to body),
                                  GHPullRequestReviewCommentWithPendingReview::class.java,
                                  "addPullRequestReviewComment", "comment")
 

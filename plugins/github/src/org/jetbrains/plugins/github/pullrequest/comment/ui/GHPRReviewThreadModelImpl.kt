@@ -18,7 +18,6 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     private set
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
-  override val firstCommentDatabaseId = thread.firstCommentDatabaseId
 
   private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 

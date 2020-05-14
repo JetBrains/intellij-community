@@ -13,7 +13,6 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val isResolved: Boolean
   val filePath: String
   val diffHunk: String
-  val firstCommentDatabaseId: Long
 
   fun update(thread: GHPullRequestReviewThread)
   fun addComment(comment: GHPRReviewCommentModel)

@@ -132,7 +132,13 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
         commentButton.isEnabled = false
         discardButton?.isEnabled = false
 
-        reviewDataProvider.submitReview(EmptyProgressIndicator(), pendingReview?.id, event, editor.text).successOnEdt {
+        val reviewId = pendingReview?.id
+        if (reviewId == null) {
+          reviewDataProvider.createReview(EmptyProgressIndicator(), event, editor.text)
+        }
+        else {
+          reviewDataProvider.submitReview(EmptyProgressIndicator(), reviewId, event, editor.text)
+        }.successOnEdt {
           cancelActionListener.actionPerformed(e)
           runWriteAction { document.setText("") }
         }

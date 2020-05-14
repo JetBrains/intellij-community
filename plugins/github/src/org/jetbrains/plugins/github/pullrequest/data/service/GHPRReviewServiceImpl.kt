@@ -7,12 +7,12 @@ import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
-import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentWithPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
@@ -41,11 +41,14 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
 
   override fun createReview(progressIndicator: ProgressIndicator,
                             pullRequestId: GHPRIdentifier,
-                            event: GHPullRequestReviewEvent,
-                            body: String?): CompletableFuture<out Any?> =
+                            event: GHPullRequestReviewEvent?,
+                            body: String?,
+                            commitSha: String?,
+                            comments: List<GHPullRequestDraftReviewComment>?): CompletableFuture<GHPullRequestPendingReview> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(progressIndicator,
-                              GHGQLRequests.PullRequest.Review.create(repository.serverPath, pullRequestId.id, event, body))
+                              GHGQLRequests.PullRequest.Review.create(repository.serverPath, pullRequestId.id, event, body,
+                                                                      commitSha, comments))
     }.logError(LOG, "Error occurred while creating review")
 
   override fun submitReview(progressIndicator: ProgressIndicator,
@@ -73,32 +76,24 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           pullRequestId: GHPRIdentifier,
-                          body: String,
-                          replyToCommentId: Long): CompletableFuture<GithubPullRequestCommentWithHtml> =
+                          reviewId: String,
+                          replyToCommentId: String,
+                          body: String): CompletableFuture<GHPullRequestReviewCommentWithPendingReview> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(
-        GithubApiRequests.Repos.PullRequests.Comments.createReply(repository, pullRequestId.number, replyToCommentId, body))
+        GHGQLRequests.PullRequest.Review.addComment(repository.serverPath,
+                                                    reviewId,
+                                                    replyToCommentId,
+                                                    body))
     }.logError(LOG, "Error occurred while adding review thread reply")
 
-  override fun addComment(progressIndicator: ProgressIndicator,
-                          pullRequestId: GHPRIdentifier,
-                          body: String,
-                          commitSha: String,
-                          fileName: String,
-                          diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> =
-    progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(
-        GithubApiRequests.Repos.PullRequests.Comments.create(repository, pullRequestId.number, commitSha, fileName, diffLine, body))
-    }.logError(LOG, "Error occurred while creating single comment review")
-
-  override fun addComment(progressIndicator: ProgressIndicator,
-                          pullRequestId: GHPRIdentifier, reviewId: String?,
+  override fun addComment(progressIndicator: ProgressIndicator, reviewId: String,
                           body: String, commitSha: String, fileName: String, diffLine: Int)
     : CompletableFuture<GHPullRequestReviewCommentWithPendingReview> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.addComment(repository.serverPath,
-                                                                          pullRequestId.id, reviewId,
+                                                                          reviewId,
                                                                           body, commitSha, fileName,
                                                                           diffLine))
     }.logError(LOG, "Error occurred while adding review comment")

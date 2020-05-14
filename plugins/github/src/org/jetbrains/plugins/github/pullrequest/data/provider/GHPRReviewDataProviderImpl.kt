@@ -8,10 +8,11 @@ import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.GHNodes
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.util.*
@@ -38,15 +39,25 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
 
   override fun resetReviewThreads() = reviewThreadsRequestValue.drop()
 
+  override fun createReview(progressIndicator: ProgressIndicator,
+                            event: GHPullRequestReviewEvent?,
+                            body: String?,
+                            commitSha: String?,
+                            comments: List<GHPullRequestDraftReviewComment>?): CompletableFuture<GHPullRequestPendingReview> {
+    val future = reviewService.createReview(progressIndicator, pullRequestId, event, body, commitSha, comments).notifyReviews()
+    if (event == null) {
+      pendingReviewRequestValue.overrideProcess(future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { it })
+    }
+    return if (comments.isNullOrEmpty()) future else future.dropReviews()
+  }
+
   override fun submitReview(progressIndicator: ProgressIndicator,
-                            reviewId: String?,
+                            reviewId: String,
                             event: GHPullRequestReviewEvent,
                             body: String?): CompletableFuture<out Any?> {
-    val future = if (reviewId != null) reviewService.submitReview(progressIndicator, pullRequestId, reviewId, event, body)
-    else reviewService.createReview(progressIndicator, pullRequestId, event, body)
-
+    val future = reviewService.submitReview(progressIndicator, pullRequestId, reviewId, event, body)
     pendingReviewRequestValue.overrideProcess(future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { null })
-    return future.notifyReviews()
+    return future.dropReviews().notifyReviews()
   }
 
   override fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?> {
@@ -64,27 +75,41 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     reviewService.getCommentMarkdownBody(progressIndicator, commentId)
 
   override fun addComment(progressIndicator: ProgressIndicator,
-                          body: String,
-                          commitSha: String,
-                          fileName: String,
-                          diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> =
-    reviewService.addComment(progressIndicator, pullRequestId, body, commitSha, fileName, diffLine).dropReviews()
-
-  override fun addComment(progressIndicator: ProgressIndicator,
-                          reviewId: String?,
+                          reviewId: String,
                           body: String,
                           commitSha: String,
                           fileName: String,
                           diffLine: Int): CompletableFuture<out GHPullRequestReviewComment> {
     val future =
-      reviewService.addComment(progressIndicator, pullRequestId, reviewId, body, commitSha, fileName, diffLine)
+      reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, diffLine)
 
     pendingReviewRequestValue.overrideProcess(future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { it.pullRequestReview })
     return future.dropReviews().notifyReviews()
   }
 
-  override fun addComment(progressIndicator: ProgressIndicator, body: String, replyToCommentId: Long) =
-    reviewService.addComment(progressIndicator, pullRequestId, body, replyToCommentId).dropReviews()
+  override fun addComment(progressIndicator: ProgressIndicator,
+                          replyToCommentId: String,
+                          body: String): CompletableFuture<out GHPullRequestReviewComment> {
+    return pendingReviewRequestValue.value.thenCompose {
+      val reviewId = it?.id
+      if (reviewId == null) {
+        createReview(progressIndicator).thenCompose { review ->
+          reviewService.addComment(progressIndicator, pullRequestId, review.id, replyToCommentId, body).thenCompose { comment ->
+            submitReview(progressIndicator, review.id, GHPullRequestReviewEvent.COMMENT, null).thenApply {
+              comment
+            }
+          }.dropReviews().notifyReviews()
+        }
+      }
+      else {
+        val future = reviewService.addComment(progressIndicator, pullRequestId, reviewId, replyToCommentId, body)
+        pendingReviewRequestValue.overrideProcess(
+          future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { it.pullRequestReview })
+        future.dropReviews().notifyReviews()
+      }
+    }
+  }
+
 
   override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<out Any> {
     val future = reviewService.deleteComment(progressIndicator, pullRequestId, commentId)

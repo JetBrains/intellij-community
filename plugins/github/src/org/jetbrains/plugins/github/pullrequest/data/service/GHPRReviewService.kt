@@ -4,11 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentWithPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.concurrent.CompletableFuture
 
@@ -27,8 +27,10 @@ interface GHPRReviewService {
   @CalledInAny
   fun createReview(progressIndicator: ProgressIndicator,
                    pullRequestId: GHPRIdentifier,
-                   event: GHPullRequestReviewEvent,
-                   body: String?): CompletableFuture<out Any?>
+                   event: GHPullRequestReviewEvent? = null,
+                   body: String? = null,
+                   commitSha: String? = null,
+                   comments: List<GHPullRequestDraftReviewComment>? = null): CompletableFuture<GHPullRequestPendingReview>
 
   @CalledInAny
   fun submitReview(progressIndicator: ProgressIndicator,
@@ -44,20 +46,15 @@ interface GHPRReviewService {
   fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
 
   @CalledInAny
-  fun addComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, body: String, replyToCommentId: Long)
-    : CompletableFuture<GithubPullRequestCommentWithHtml>
-
-  @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator,
                  pullRequestId: GHPRIdentifier,
-                 body: String,
-                 commitSha: String,
-                 fileName: String,
-                 diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml>
+                 reviewId: String,
+                 replyToCommentId: String,
+                 body: String)
+    : CompletableFuture<GHPullRequestReviewCommentWithPendingReview>
 
   @CalledInAny
-  fun addComment(progressIndicator: ProgressIndicator,
-                 pullRequestId: GHPRIdentifier, reviewId: String?,
+  fun addComment(progressIndicator: ProgressIndicator, reviewId: String,
                  body: String, commitSha: String, fileName: String, diffLine: Int)
     : CompletableFuture<GHPullRequestReviewCommentWithPendingReview>
 

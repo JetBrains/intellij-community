@@ -45,15 +45,7 @@ object GHPRReviewThreadComponent {
     panel.add(
       GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(thread, reviewDataProvider, avatarIconsProvider)))
 
-    var pending = thread.state == GHPullRequestReviewCommentState.PENDING
-    if (!pending) getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser)?.let { panel.add(it) }
-    thread.addStateChangeListener {
-      if (pending && thread.state != GHPullRequestReviewCommentState.PENDING) {
-        getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser)?.let { panel.add(it) }
-      }
-      pending = thread.state == GHPullRequestReviewCommentState.PENDING
-    }
-
+    panel.add(getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser))
     return panel
   }
 
@@ -64,11 +56,8 @@ object GHPRReviewThreadComponent {
     if (reviewDataProvider.canComment()) {
       val toggleModel = SingleValueModel(false)
       val textFieldModel = GHPRSubmittableTextField.Model { text ->
-        reviewDataProvider.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
-          thread.addComment(
-            GHPRReviewCommentModel(it.nodeId, GHPullRequestReviewCommentState.SUBMITTED, it.createdAt, it.bodyHtml, it.user.login,
-                                   it.user.htmlUrl, it.user.avatarUrl,
-                                   true, true))
+        reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
+          thread.addComment(GHPRReviewCommentModel.convert(it))
           toggleModel.value = false
         }
       }
@@ -117,8 +106,8 @@ object GHPRReviewThreadComponent {
                                            resolveLink: LinkLabel<Any>,
                                            unresolveLink: LinkLabel<Any>): JComponent {
     fun update() {
-      resolveLink.isVisible = !model.isResolved
-      unresolveLink.isVisible = model.isResolved
+      resolveLink.isVisible = model.state != GHPullRequestReviewCommentState.PENDING && !model.isResolved
+      unresolveLink.isVisible = model.state != GHPullRequestReviewCommentState.PENDING && model.isResolved
     }
 
     model.addStateChangeListener(::update)

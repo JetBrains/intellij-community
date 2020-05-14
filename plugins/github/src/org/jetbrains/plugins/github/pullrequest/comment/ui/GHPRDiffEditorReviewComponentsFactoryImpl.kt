@@ -8,7 +8,9 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
@@ -50,7 +52,8 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
       val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
       val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-      reviewDataProvider.addComment(EmptyProgressIndicator(), it, commitSha, filePath, diffLine).successOnEdt {
+      reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha,
+                                      listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
         hideCallback()
       }
     }
@@ -63,7 +66,8 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
       val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
       val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-      reviewDataProvider.addComment(EmptyProgressIndicator(), null, it, commitSha, filePath, diffLine).successOnEdt {
+      reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha,
+                                      listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
         hideCallback()
       }
     }
