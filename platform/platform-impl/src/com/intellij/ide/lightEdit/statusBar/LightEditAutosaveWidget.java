@@ -6,6 +6,7 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.ide.lightEdit.LightEditorManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -75,7 +76,10 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
   @NotNull
   @Override
   public String getText() {
-    return "Autosave: " + (LightEditService.getInstance().isAutosaveMode() ? "on" : "off");
+    return ApplicationBundle.message("light.edit.autosave.widget.text",
+                                     (LightEditService.getInstance().isAutosaveMode() ?
+                                      ApplicationBundle.message("light.edit.autosave.widget.on") :
+                                      ApplicationBundle.message("light.edit.autosave.widget.off")));
   }
 
   @Override
@@ -105,14 +109,14 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
       c.gridx = 1;
       c.gridy = 0;
       c.insets = JBUI.insetsLeft(10);
-      add(new JLabel("Save changes automatically"), c);
+      add(new JLabel(ApplicationBundle.message("light.edit.autosave.widget.popup.title")), c);
       c.fill = GridBagConstraints.NONE;
       c.gridx = 1;
       c.gridy = 1;
       c.gridwidth = 1;
       c.insets = JBUI.insets(5, 10, 0, 0);
       final JLabel label =
-        new JLabel("<html>All open files are saved on tab/window close<br>or on window deactivation.</html>");
+        new JLabel(ApplicationBundle.message("light.edit.autosave.widget.popup.text"));
       label.setForeground(JBColor.GRAY);
       add(label, c);
 
