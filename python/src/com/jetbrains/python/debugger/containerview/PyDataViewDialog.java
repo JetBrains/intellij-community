@@ -18,7 +18,7 @@ package com.jetbrains.python.debugger.containerview;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
@@ -26,11 +26,12 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class PyDataViewDialog extends DialogWrapper {
-  private final JSplitPane myMainPanel;
+  private final JPanel myMainPanel;
   private static final int TABLE_DEFAULT_WIDTH = 700;
   private static final int TABLE_DEFAULT_HEIGHT = 500;
 
@@ -39,12 +40,12 @@ public class PyDataViewDialog extends DialogWrapper {
     setModal(false);
     setCancelButtonText(PyBundle.message("debugger.data.view.close"));
     setCrossClosesWindow(true);
-    myMainPanel = new JSplitPane();
-    myMainPanel.setOrientation(JSplitPane.VERTICAL_SPLIT);
+    myMainPanel = new JPanel(new GridBagLayout());
     final PyDataViewerPanel panel = new PyDataViewerPanel(project, value.getFrameAccessor());
     panel.apply(value);
     panel.setPreferredSize(JBUI.size(TABLE_DEFAULT_WIDTH, TABLE_DEFAULT_HEIGHT));
-    myMainPanel.add(panel, JSplitPane.TOP);
+    myMainPanel.add(panel, createDataViewPanelConstraints());
+    panel.setBorder(BorderFactory.createLineBorder(JBColor.GRAY));
     final JBCheckBox colored = new JBCheckBox(PyBundle.message("debugger.data.view.colored.cells"));
     final JBCheckBox resize = new JBCheckBox(PyBundle.message("debugger.data.view.resize.automatically"));
     resize.setSelected(PropertiesComponent.getInstance(project).getBoolean(PyDataView.AUTO_RESIZE, true));
@@ -63,10 +64,11 @@ public class PyDataViewDialog extends DialogWrapper {
         panel.updateUI();
       }
     });
-    JPanel buttonsPanel = new JPanel(new VerticalFlowLayout());
-    buttonsPanel.add(colored);
-    buttonsPanel.add(resize);
-    myMainPanel.add(buttonsPanel, JSplitPane.BOTTOM);
+    GridBagConstraints checkBoxConstraints = createCheckBoxConstraints();
+    checkBoxConstraints.gridy = 1;
+    myMainPanel.add(colored, checkBoxConstraints);
+    checkBoxConstraints.gridy = 2;
+    myMainPanel.add(resize, checkBoxConstraints);
     setTitle(value.getFullName());
     init();
   }
@@ -79,5 +81,20 @@ public class PyDataViewDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
+  }
+
+  private static GridBagConstraints createDataViewPanelConstraints() {
+    GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.BOTH;
+    c.weightx = 0.9;
+    c.weighty = 0.9;
+    return c;
+  }
+
+  private static GridBagConstraints createCheckBoxConstraints() {
+    GridBagConstraints c = new GridBagConstraints();
+    c.weighty = 0.05;
+    c.anchor = GridBagConstraints.LINE_START;
+    return c;
   }
 }
