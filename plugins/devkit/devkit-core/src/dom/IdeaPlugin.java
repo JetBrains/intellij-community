@@ -100,7 +100,6 @@ public interface IdeaPlugin extends DomElement {
   Dependency addDependency();
 
   @NotNull
-  @Stubbed
   @SubTagList("incompatible-with")
   List<GenericDomValue<String>> getIncompatibilities();
 
