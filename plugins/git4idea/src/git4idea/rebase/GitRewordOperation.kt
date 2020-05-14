@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.branch.GitRebaseParams
@@ -242,8 +241,7 @@ internal class GitRewordOperation(
   private inner class RewordProcess(spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
     var succeeded = false
 
-    override fun notifySuccess(successful: MutableMap<GitRepository, GitSuccessfulRebase>,
-                               skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) {
+    override fun notifySuccess() {
       succeeded = true
     }
   }

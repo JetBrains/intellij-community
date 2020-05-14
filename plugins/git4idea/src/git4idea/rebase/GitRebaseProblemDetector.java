@@ -37,6 +37,7 @@ public class GitRebaseProblemDetector implements GitLineHandlerListener {
     "You must edit all merge conflicts",
     "Failed to merge in the changes",
     "could not apply"};
+  // since git 2.26 rebase backend changed to merge, git doesn't print this error
   private static final String REBASE_NO_CHANGE_INDICATOR = "No changes - did you forget to use 'git add'?";
   private static final String[] DIRTY_TREE_INDICATORS = {
     "you have unstaged changes",

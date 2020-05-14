@@ -5,11 +5,9 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 class GitSuccessfulRebase extends GitRebaseStatus {
-  GitSuccessfulRebase(@NotNull Collection<GitRebaseUtils.CommitInfo> skippedCommits) {
-    super(Type.SUCCESS, skippedCommits);
+  GitSuccessfulRebase() {
+    super(Type.SUCCESS);
   }
 
   @NotNull
