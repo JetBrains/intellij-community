@@ -80,7 +80,7 @@ public class TestOnlyInspectionTest extends JavaInspectionTestCase {
     doTest();
   }
 
-  public void testGenericType() {
+  public void testInsideTestOnlyClass() {
     doTest();
   }
 
