@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInspection.SmartHashMap;
@@ -62,7 +62,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     labelListener.labelChanged();
   }
 
-  protected void updateRepresentationNoNotify(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
+  public void updateRepresentationNoNotify(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
     try {
       try {
         myEvaluateException = null;

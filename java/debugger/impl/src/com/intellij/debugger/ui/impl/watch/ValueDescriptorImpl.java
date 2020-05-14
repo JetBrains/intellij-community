@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
   protected final Project myProject;
@@ -283,11 +284,22 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   @Override
-  protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
+  protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    NodeRenderer renderer = getRenderer(debugProcess);
+    getRendererAsync(debugProcess, context.getSuspendContext())
+      .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer));
+
+    return "";
+  }
+
+  @NotNull
+  private String calcRepresentation(EvaluationContextImpl context,
+                                    DescriptorLabelListener labelListener,
+                                    DebugProcessImpl debugProcess,
+                                    NodeRenderer renderer) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
 
     EvaluateException valueException = myValueException;
     myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) &&
@@ -323,6 +335,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
 
     setValueLabel(label);
+    labelListener.labelChanged();
 
     return ""; // we have overridden getLabel
   }
@@ -428,14 +441,22 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return OnDemandRenderer.isOnDemandForced(debugProcess) ? DebugProcessImpl.getDefaultRenderer(getValue()) : getRenderer(debugProcess);
   }
 
-  public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
+  public CompletableFuture<NodeRenderer> getRendererAsync(DebugProcessImpl debugProcess, SuspendContext context) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    Type type = getType();
-    if(type != null && myRenderer != null && myRenderer.isApplicable(type)) {
+    return getTypeAsync(context).thenApply(type -> getRenderer(type, debugProcess));
+  }
+
+  public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
+    return getRenderer(getType(), debugProcess);
+  }
+
+  private NodeRenderer getRenderer(Type type, DebugProcessImpl debugProcess) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (type != null && myRenderer != null && myRenderer.isApplicable(type)) {
       return myRenderer;
     }
 
-    myAutoRenderer = debugProcess.getAutoRenderer(this);
+    myAutoRenderer = debugProcess.getAutoRenderer(type);
     return myAutoRenderer;
   }
 

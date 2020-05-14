@@ -175,7 +175,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         if (!myContextSet) {
           myValueDescriptor.setContext(myEvaluationContext);
         }
-        myValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
+        myValueDescriptor.updateRepresentationNoNotify(myEvaluationContext, new DescriptorLabelListener() {
           @Override
           public void labelChanged() {
             Icon nodeIcon = place == XValuePlace.TOOLTIP

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.BooleanValue;
+import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -65,8 +67,10 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
         evaluationContext.createEvaluationContext(value), parentDescriptor
       );
 
-      NodeRenderer renderer = getChildrenRenderer(childrenValue, parentDescriptor);
-      renderer.buildChildren(childrenValue, builder, evaluationContext);
+      DebuggerUtilsAsync.type(childrenValue, evaluationContext.getSuspendContext()).thenAccept(type -> {
+        NodeRenderer renderer = getChildrenRenderer(type, parentDescriptor);
+        renderer.buildChildren(childrenValue, builder, evaluationContext);
+      });
     }
     catch (final EvaluateException e) {
       List<DebuggerTreeNode> errorChildren = new ArrayList<>();
@@ -126,7 +130,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression"));
     }
 
-    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue, (ValueDescriptor) node.getParent().getDescriptor());
+    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue.type(), (ValueDescriptor) node.getParent().getDescriptor());
 
     PsiExpression childrenPsiExpression = myChildrenExpression.getPsiExpression(node.getProject());
     if (childrenPsiExpression == null) {
@@ -138,10 +142,10 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
       expressionValue);
   }
 
-  private static NodeRenderer getChildrenRenderer(Value childrenValue, ValueDescriptor parentDescriptor) {
+  private static NodeRenderer getChildrenRenderer(Type type, ValueDescriptor parentDescriptor) {
     NodeRenderer renderer = getLastChildrenRenderer(parentDescriptor);
-    if (renderer == null || childrenValue == null || !renderer.isApplicable(childrenValue.type())) {
-      renderer = DebugProcessImpl.getDefaultRenderer(childrenValue != null ? childrenValue.type() : null);
+    if (renderer == null || type == null || !renderer.isApplicable(type)) {
+      renderer = DebugProcessImpl.getDefaultRenderer(type);
       setPreferableChildrenRenderer(parentDescriptor, renderer);
     }
     return renderer;

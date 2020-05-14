@@ -195,9 +195,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    Type type = descriptor.getType();
+    return getAutoRenderer(descriptor.getType());
+  }
 
+  @NotNull
+  public NodeRenderer getAutoRenderer(Type type) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     // in case evaluation is not possible, force default renderer
     if (!isEvaluationPossible()) {
       return getDefaultRenderer(type);

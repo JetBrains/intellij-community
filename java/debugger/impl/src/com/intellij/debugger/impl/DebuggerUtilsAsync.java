@@ -5,13 +5,11 @@ import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.openapi.util.registry.Registry;
-import com.jetbrains.jdi.ClassTypeImpl;
-import com.jetbrains.jdi.InterfaceTypeImpl;
-import com.jetbrains.jdi.ReferenceTypeImpl;
-import com.jetbrains.jdi.StringReferenceImpl;
+import com.jetbrains.jdi.*;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,6 +30,16 @@ public class DebuggerUtilsAsync {
       return schedule((SuspendContextImpl)context, ((ReferenceTypeImpl)type).allFieldsAsync());
     }
     return CompletableFuture.completedFuture(type.allFields());
+  }
+
+  public static CompletableFuture<? extends Type> type(@Nullable Value value, SuspendContext context) {
+    if (value == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+    if (value instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi")) {
+      return schedule((SuspendContextImpl)context, ((ObjectReferenceImpl)value).typeAsync());
+    }
+    return CompletableFuture.completedFuture(value.type());
   }
 
   // Reader thread
