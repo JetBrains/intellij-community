@@ -65,17 +65,20 @@ fun <U : VcsLogUiEx> createAndOpenLogFile(project: Project,
 
 internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean {
   if (editorTabIds.isEmpty()) return true
+  val tabsToClose = editorTabIds.toMutableSet()
 
   val editorManager = FileEditorManager.getInstance(project)
 
-  val logEditors = editorManager.allEditors.filter { editorTabIds.containsAll(getLogIds(it))  }
-  if (logEditors.isEmpty()) return false
+  val editorsToIdsMap = editorManager.allEditors.asIterable().associateWith {
+    getLogIds(it).intersect(tabsToClose)
+  }.filterValues { logIds -> logIds.isNotEmpty() }
 
-  for (logEditor in logEditors) {
+  for ((logEditor, ids) in editorsToIdsMap) {
     val logFile = logEditor.file ?: return false
 
     (logEditor as? VcsLogEditor)?.beforeEditorClose()
     ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logFile) }, ModalityState.NON_MODAL, { project.isDisposed })
+    tabsToClose.removeAll(ids)
   }
-  return true
+  return tabsToClose.isEmpty()
 }
