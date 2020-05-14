@@ -26,7 +26,8 @@ import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -185,26 +186,16 @@ public class ResizeableMappedFile implements Forceable {
 
   private long readLength() {
     Path lengthFile = getLengthFile();
-    DataInputStream stream = null;
     if (!Files.exists(lengthFile)) return 0;
-    try {
-      stream = new DataInputStream(Files.newInputStream(lengthFile, StandardOpenOption.READ));
+
+    try (DataInputStream stream = new DataInputStream(Files.newInputStream(lengthFile, StandardOpenOption.READ))) {
       return stream.readLong();
     }
     catch (IOException e) {
       long realSize = realSize();
       writeLength(realSize);
+      LOG.error(e);
       return realSize;
-    }
-    finally {
-      if (stream != null) {
-        try {
-          stream.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
     }
   }
 
