@@ -55,10 +55,11 @@ public class MavenServerConnector implements @NotNull Disposable {
   }
 
   public boolean isSettingsStillValid(MavenWorkspaceSettings settings) {
-    if (myProject.isDefault()) {
+    VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir == null) { //for default projects and unit tests backward-compatibility
       return true;
     }
-    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(myProject.getBaseDir());
+    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
     if (distributionUrl != null && !distributionUrl.equals(myDistribution.getName())) { //new maven url in maven-wrapper.properties
       return false;
     }
@@ -84,7 +85,8 @@ public class MavenServerConnector implements @NotNull Disposable {
   }
 
   private static MavenDistribution findMavenDistribution(Project project, MavenWorkspaceSettings settings) {
-    if (project.isDefault()) {
+    VirtualFile baseDir = project.getBaseDir();
+    if (baseDir == null) {
       return MavenServerManager.resolveEmbeddedMavenHome();
     }
     //in future we should get rid of Project and create connector per each root maven project,
@@ -92,7 +94,7 @@ public class MavenServerConnector implements @NotNull Disposable {
 
     MavenSyncConsole console = MavenProjectsManager.getInstance(project).getSyncConsole();
     //noinspection deprecation
-    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(project.getBaseDir());
+    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
 
     if (distributionUrl == null) {
       MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());

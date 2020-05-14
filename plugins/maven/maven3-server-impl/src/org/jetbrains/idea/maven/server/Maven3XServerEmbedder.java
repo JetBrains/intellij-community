@@ -696,6 +696,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             }
 
             List<Exception> exceptions = new ArrayList<Exception>();
+            if (buildingResult.getProblems() != null) {
+              for (ModelProblem problem : buildingResult.getProblems()) {
+                if (problem.getException() != null) {
+                  exceptions.add(problem.getException());
+                }
+                else {
+                  exceptions.add(new RuntimeException(problem.getMessage()));
+                }
+              }
+            }
+
             loadExtensions(project, exceptions);
 
             //Artifact projectArtifact = project.getArtifact();

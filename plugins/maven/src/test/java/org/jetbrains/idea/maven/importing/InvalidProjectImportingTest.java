@@ -157,7 +157,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project", "foo");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Packaging 'jar' is invalid. Aggregator projects require 'pom' as packaging.");
+    assertProblems(root, "'packaging' with value 'jar' is invalid. Aggregator projects require 'pom' as packaging.`1");
   }
 
   public void testInvalidModuleModel() {
