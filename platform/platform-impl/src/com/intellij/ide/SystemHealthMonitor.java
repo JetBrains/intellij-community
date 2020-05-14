@@ -115,7 +115,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
     if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < MIN_RESERVED_CODE_CACHE_SIZE) {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
-      NotificationAction action = new NotificationAction(IdeBundle.message("vm.options.edit.action")) {
+      NotificationAction action = new NotificationAction(IdeBundle.message("vm.options.edit.action.cap")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
           notification.expire();
