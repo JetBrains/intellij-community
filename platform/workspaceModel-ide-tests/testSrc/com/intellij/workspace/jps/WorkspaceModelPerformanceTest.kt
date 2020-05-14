@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.jps
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
@@ -15,6 +16,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -25,8 +27,10 @@ import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.addModuleEntity
 import com.intellij.workspace.ide.NonPersistentEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
-import org.junit.*
 import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
@@ -52,6 +56,8 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   private lateinit var project: Project
 
+  private var disposerDebugMode = true
+
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
@@ -60,11 +66,21 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   @Before
   fun prepareProject() {
+    ApplicationInfoImpl.setInStressTest(true)
+
+    disposerDebugMode = Disposer.isDebugMode()
+    Disposer.setDebugMode(false)
+
     val projectDir = temporaryDirectoryRule.newPath("project").toFile()
     logExecutionTimeInMillis("Project generation") {
       generateProject(projectDir)
     }
     project = loadTestProject(projectDir, disposableRule)
+  }
+
+  fun tearDown() {
+    ApplicationInfoImpl.setInStressTest(false)
+    Disposer.setDebugMode(disposerDebugMode)
   }
 
   @Test
@@ -76,64 +92,98 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     val moduleManager = ModuleManager.getInstance(project)
 
     val modules = mutableListOf<Module>()
-    logExecutionTimeInMillis("Hundred modules creation") {
-      (1..100).forEach {
-        val modifiableModel = moduleManager.modifiableModel
-        modules.add(modifiableModel.newModule(File(project.basePath, "$TEST_MODULE_PREFIX$it.iml").path, EmptyModuleType.getInstance().id))
-        modifiableModel.commit()
-      }
-    }
+    logExecutionTimeInMillis("Hundred modules creation") { hundredModulesCreation(moduleManager, modules) }
     assertEquals(modulesCount + 100, moduleManager.modules.size)
 
     val library = createProjectLibrary(mavenLibName)
-    logExecutionTimeInMillis("Add project library at hundred modules") {
-      modules.forEach { module ->
-        ModuleRootManager.getInstance(module).modifiableModel.let {
-          it.addLibraryEntry(library)
-          it.commit()
-        }
-      }
-    }
+    logExecutionTimeInMillis("Add project library at hundred modules") { addProjectLibraryToHundredModules(modules, library) }
 
     logExecutionTimeInMillis("Add module library at hundred modules") {
-      modules.forEach { module -> ModuleRootModificationUtil.addModuleLibrary(module, antLibName, listOf(), emptyList()) }
+      addModuleLibraryToHunredModules(modules, antLibName)
     }
 
     logExecutionTimeInMillis("Loop through the contentRoots of all modules") {
-      moduleManager.modules.forEach { ModuleRootManager.getInstance(it).contentRoots.forEach { entry -> entry.canonicalFile } }
+      loopThroughContentRootsOfAllModules(moduleManager)
     }
 
     logExecutionTimeInMillis("Loop through the orderEntries of all modules") {
-      moduleManager.modules.forEach { ModuleRootManager.getInstance(it).orderEntries.forEach { entry -> entry.isValid }}
+      loopThroughOrderEntriesOfAllModules(moduleManager)
     }
 
     logExecutionTimeInMillis("Find and remove project library from hundred modules") {
-      modules.forEach { module ->
-        ModuleRootManager.getInstance(module).modifiableModel.let {
-          it.removeOrderEntry(it.findLibraryOrderEntry(library)!!)
-          it.commit()
-        }
-      }
+      findAndRemoveProjectLibFromHundredModules(modules, library)
     }
 
     logExecutionTimeInMillis("Find and remove module library from hundred modules") {
-      modules.forEach { module ->
-        ModuleRootManager.getInstance(module).modifiableModel.let {
-          val moduleLibrary = it.moduleLibraryTable.getLibraryByName(antLibName)!!
-          it.removeOrderEntry(it.findLibraryOrderEntry(moduleLibrary)!!)
-          it.commit()
-        }
-      }
+      findAndRemoveLibFromHundredModules(modules, antLibName)
     }
 
     logExecutionTimeInMillis("Hundred modules remove") {
-      modules.forEach {
-        val modifiableModel = moduleManager.modifiableModel
-        modifiableModel.disposeModule(it)
-        modifiableModel.commit()
-      }
+      hundredModulesRemove(modules, moduleManager)
     }
     assertEquals(modulesCount, moduleManager.modules.size)
+  }
+
+  private fun hundredModulesRemove(modules: MutableList<Module>,
+                                   moduleManager: ModuleManager) {
+    modules.forEach {
+      val modifiableModel = moduleManager.modifiableModel
+      modifiableModel.disposeModule(it)
+      modifiableModel.commit()
+    }
+  }
+
+  private fun findAndRemoveLibFromHundredModules(modules: MutableList<Module>,
+                                                 antLibName: String) {
+    modules.forEach { module ->
+      ModuleRootManager.getInstance(module).modifiableModel.let {
+        val moduleLibrary = it.moduleLibraryTable.getLibraryByName(antLibName)!!
+        it.removeOrderEntry(it.findLibraryOrderEntry(moduleLibrary)!!)
+        it.commit()
+      }
+    }
+  }
+
+  private fun findAndRemoveProjectLibFromHundredModules(modules: MutableList<Module>,
+                                                        library: Library) {
+    modules.forEach { module ->
+      ModuleRootManager.getInstance(module).modifiableModel.let {
+        it.removeOrderEntry(it.findLibraryOrderEntry(library)!!)
+        it.commit()
+      }
+    }
+  }
+
+  private fun loopThroughOrderEntriesOfAllModules(moduleManager: ModuleManager) {
+    moduleManager.modules.forEach { ModuleRootManager.getInstance(it).orderEntries.forEach { entry -> entry.isValid } }
+  }
+
+  private fun loopThroughContentRootsOfAllModules(moduleManager: ModuleManager) {
+    moduleManager.modules.forEach { ModuleRootManager.getInstance(it).contentRoots.forEach { entry -> entry.canonicalFile } }
+  }
+
+  private fun addModuleLibraryToHunredModules(modules: MutableList<Module>,
+                                              antLibName: String) {
+    modules.forEach { module -> ModuleRootModificationUtil.addModuleLibrary(module, antLibName, listOf(), emptyList()) }
+  }
+
+  private fun addProjectLibraryToHundredModules(modules: MutableList<Module>,
+                                                library: Library) {
+    modules.forEach { module ->
+      ModuleRootManager.getInstance(module).modifiableModel.let {
+        it.addLibraryEntry(library)
+        it.commit()
+      }
+    }
+  }
+
+  private fun hundredModulesCreation(moduleManager: ModuleManager,
+                                     modules: MutableList<Module>) {
+    (1..100).forEach {
+      val modifiableModel = moduleManager.modifiableModel
+      modules.add(modifiableModel.newModule(File(project.basePath, "$TEST_MODULE_PREFIX$it.iml").path, EmptyModuleType.getInstance().id))
+      modifiableModel.commit()
+    }
   }
 
   @Test
