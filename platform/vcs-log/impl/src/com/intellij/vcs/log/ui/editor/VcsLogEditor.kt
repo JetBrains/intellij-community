@@ -66,10 +66,12 @@ class VcsLogEditor(file: VcsLogFile) : FileEditorBase() {
   }
 
   fun beforeEditorClose() {
+    val logUis = vcsLogFile?.logUis
+
     container.removeAll()
     vcsLogFile = null
 
-    vcsLogFile?.logUis?.forEach(Disposer::dispose)
+    logUis?.forEach(Disposer::dispose)
   }
 
   override fun getComponent(): JComponent = container
