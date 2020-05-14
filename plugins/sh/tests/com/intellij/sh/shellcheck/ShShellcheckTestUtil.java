@@ -26,10 +26,6 @@ import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 class ShShellcheckTestUtil {
   protected static final Logger LOG = Logger.getInstance(ShShellcheckTestUtil.class);
 
-  private static final String CACHE_SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/" +
-                                                     "intellij-third-party-dependencies/" +
-                                                     "org/jetbrains/intellij/deps/shellcheck/";
-
   static void downloadShellcheck() {
     String downloadPath = getShellcheckTestDir();
     File directory = new File(downloadPath);
@@ -81,8 +77,7 @@ class ShShellcheckTestUtil {
 
   private static String getShellcheckDistributionLink() {
     String platform = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
-    String shellcheckUrl = IS_UNDER_TEAMCITY ? CACHE_SHELLCHECK_URL : SHELLCHECK_URL;
-    return shellcheckUrl + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
+    return SHELLCHECK_URL + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
   }
 
   @NotNull
