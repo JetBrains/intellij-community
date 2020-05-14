@@ -296,14 +296,13 @@ public class GenericsUtil {
     return type.getInternalCanonicalText().equals(type.getCanonicalText());
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null->!null")
   public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type) {
-    return getVariableTypeByExpressionType(type, true);
+    return type == null ? null : getVariableTypeByExpressionType(type, true);
   }
 
-  @Contract("null, _ -> null")
-  public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type, final boolean openCaptured) {
-    if (type == null) return null;
+  @NotNull
+  public static PsiType getVariableTypeByExpressionType(@NotNull PsiType type, final boolean openCaptured) {
     PsiClass refClass = PsiUtil.resolveClassInType(type);
     if (refClass instanceof PsiAnonymousClass) {
       type = ((PsiAnonymousClass)refClass).getBaseClassType();
@@ -401,7 +400,7 @@ public class GenericsUtil {
       }
     });
 
-    PsiType componentType = transformed != null ? transformed.getDeepComponentType() : null;
+    PsiType componentType = transformed.getDeepComponentType();
     if (componentType instanceof PsiWildcardType) {
       componentType = ((PsiWildcardType)componentType).getExtendsBound();
       return PsiTypesUtil.createArrayType(componentType, transformed.getArrayDimensions());

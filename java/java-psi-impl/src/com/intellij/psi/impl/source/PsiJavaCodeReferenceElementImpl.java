@@ -384,9 +384,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
       if (result.length == 0 && (kind == Kind.CLASS_OR_PACKAGE_NAME_KIND || kind == Kind.CLASS_NAME_KIND)) {
         String qualifiedName = referenceElement.getClassNameText();
-        if (qualifiedName != null) {
-          result = tryClassResult(qualifiedName, referenceElement);
-        }
+        result = tryClassResult(qualifiedName, referenceElement);
       }
 
       JavaResolveUtil.substituteResults(referenceElement, result);
@@ -906,7 +904,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           PsiClass aClass = PsiUtil.resolveClassInType(type);
           if (aClass != null) {
             AndFilter filter = new AndFilter(ElementClassFilter.CLASS, new ModifierFilter(PsiModifier.STATIC, false));
-            aClass.processDeclarations(new FilterScopeProcessor(filter, processor), ResolveState.initial(), null, this);
+            aClass.processDeclarations(new FilterScopeProcessor<>(filter, processor), ResolveState.initial(), null, this);
           }
         }
         return;
@@ -915,7 +913,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
 
     OrFilter filter = new OrFilter(filters.toArray(ElementFilter.EMPTY_ARRAY));
-    FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
+    FilterScopeProcessor<PsiTypeParameter> proc = new FilterScopeProcessor<>(filter, processor);
 
     for (PsiTypeParameter typeParameter : getUnfinishedMethodTypeParameters()) {
       if (!proc.execute(typeParameter, ResolveState.initial())) {

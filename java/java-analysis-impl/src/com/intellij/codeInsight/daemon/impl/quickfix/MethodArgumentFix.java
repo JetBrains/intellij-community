@@ -33,6 +33,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
   protected final PsiExpressionList myArgList;
   protected final int myIndex;
   protected final ArgumentFixerActionFactory myArgumentFixerActionFactory;
+  @NotNull
   protected final PsiType myToType;
 
   protected MethodArgumentFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull ArgumentFixerActionFactory fixerActionFactory) {
@@ -44,7 +45,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myToType != null && myToType.isValid() && myArgList.isValid() && PsiTypesUtil.allTypeParametersResolved(myArgList, myToType)) {
+    if (myToType.isValid() && myArgList.isValid() && PsiTypesUtil.allTypeParametersResolved(myArgList, myToType)) {
       PsiExpression[] args = myArgList.getExpressions();
       return args.length > myIndex && args[myIndex] != null && args[myIndex].isValid();
     }

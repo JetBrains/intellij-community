@@ -1266,7 +1266,7 @@ public class TypeConversionUtil {
   public static PsiType erasure(@Nullable PsiType type, @NotNull PsiSubstitutor beforeSubstitutor) {
     if (type == null) return null;
     return type.accept(new PsiTypeVisitor<PsiType>() {
-      @Nullable
+      @NotNull
       @Override
       public PsiType visitType(@NotNull PsiType type) {
         return type;

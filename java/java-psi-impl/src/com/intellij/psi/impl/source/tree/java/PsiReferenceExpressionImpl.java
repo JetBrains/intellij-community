@@ -353,7 +353,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   private static class TypeEvaluator implements NullableFunction<PsiReferenceExpressionImpl, PsiType> {
     @Override
-    public PsiType fun(PsiReferenceExpressionImpl expr) {
+    public PsiType fun(@NotNull PsiReferenceExpressionImpl expr) {
       PsiFile file = expr.getContainingFile();
       Project project = file.getProject();
       ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(expr, OurGenericsResolver.INSTANCE, true, false, file);
@@ -379,7 +379,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       if (resolve instanceof PsiVariable) {
         PsiType type = ((PsiVariable)resolve).getType();
         ret = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
-        if (ret != null && !ret.isValid()) {
+        if (!ret.isValid()) {
           PsiUtil.ensureValidType(ret, "invalid type of " + resolve + " of class " + resolve.getClass() + ", valid=" + resolve.isValid());
         }
         if (resolve instanceof PsiField && !((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) {

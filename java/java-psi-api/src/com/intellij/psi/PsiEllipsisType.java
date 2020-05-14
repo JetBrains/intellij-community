@@ -49,6 +49,7 @@ public class PsiEllipsisType extends PsiArrayType {
    * @return the array type instance.
    */
   @Contract(pure = true)
+  @NotNull
   public PsiType toArrayType() {
     return new PsiArrayType(getComponentType(), getAnnotationProvider());
   }

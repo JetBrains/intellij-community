@@ -35,6 +35,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -255,7 +256,7 @@ class InlineToAnonymousConstructorProcessor {
                          myElementFactory.createType(outerClass), myNewExpression.getQualifier());
   }
 
-  private PsiVariable generateLocal(final String baseName, final PsiType type, final PsiExpression initializer) {
+  private PsiVariable generateLocal(final String baseName, @NotNull PsiType type, final PsiExpression initializer) {
     final Project project = myClass.getProject();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 

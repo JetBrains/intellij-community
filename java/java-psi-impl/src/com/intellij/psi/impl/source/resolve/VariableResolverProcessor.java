@@ -51,7 +51,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   @Override
-  protected boolean stopAtFoundResult(JavaResolveResult cachedResult) {
+  protected boolean stopAtFoundResult(@NotNull JavaResolveResult cachedResult) {
     if (super.stopAtFoundResult(cachedResult)) {
       if (myPlaceFile instanceof JavaCodeFragment) {
         JavaCodeFragment.VisibilityChecker visibilityChecker = ((JavaCodeFragment)myPlaceFile).getVisibilityChecker();

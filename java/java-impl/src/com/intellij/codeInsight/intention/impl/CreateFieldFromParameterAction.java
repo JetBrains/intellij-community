@@ -22,6 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
@@ -29,7 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 public class CreateFieldFromParameterAction extends CreateFieldFromParameterActionBase {
 
   @Override
-  protected boolean isAvailable(PsiParameter psiParameter) {
+  protected boolean isAvailable(@NotNull PsiParameter psiParameter) {
     final PsiType type = getSubstitutedType(psiParameter);
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
     return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass, false) &&
@@ -37,7 +38,7 @@ public class CreateFieldFromParameterAction extends CreateFieldFromParameterActi
   }
 
   @Override
-  protected PsiType getSubstitutedType(PsiParameter parameter) {
+  protected PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
     return FieldFromParameterUtils.getSubstitutedType(parameter);
   }
 
