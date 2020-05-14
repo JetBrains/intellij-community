@@ -283,7 +283,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
   }
 
   public void testDownloadBuildExtensionsOnResolve() {
-    File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon/1.0-alpha-6/wagon-1.0-alpha-6.pom");
+    File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom");
     assertFalse(f.exists());
 
     importProject("<groupId>test</groupId>" +
@@ -294,8 +294,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                   "  <extensions>" +
                   "    <extension>" +
                   "      <groupId>org.apache.maven.wagon</groupId>" +
-                  "      <artifactId>wagon</artifactId>" +
-                  "      <version>1.0-alpha-6</version>" +
+                  "      <artifactId>wagon-ftp</artifactId>" +
+                  "      <version>2.10</version>" +
                   "    </extension>" +
                   "  </extensions>" +
                   "</build>");
