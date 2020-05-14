@@ -46,7 +46,6 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.merge.GitDefaultMergeDialogCustomizerKt;
 import git4idea.merge.GitMergeProvider;
-import git4idea.rebase.GitSuccessfulRebase.SuccessType;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.stash.GitChangesSaver;
@@ -259,7 +258,7 @@ public class GitRebaseProcess {
           return new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, skippedCommits);
         }
         LOG.debug("Successfully rebased " + repoName);
-        return GitSuccessfulRebase.parseFromOutput(result.getOutput(), skippedCommits);
+        return new GitSuccessfulRebase(skippedCommits);
       }
       else if (rebaseDetector.isDirtyTree() && customMode == null && !retryWhenDirty) {
         // if the initial dirty tree check doesn't find all local changes, we are still ready to stash-on-demand,
@@ -349,8 +348,7 @@ public class GitRebaseProcess {
   }
 
   private static boolean shouldBeRefreshed(@NotNull GitRebaseStatus rebaseStatus) {
-    return rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS ||
-           ((GitSuccessfulRebase)rebaseStatus).getSuccessType() != SuccessType.UP_TO_DATE;
+    return rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS;
   }
 
   private boolean saveDirtyRootsInitially(@NotNull List<? extends GitRepository> repositories) {
@@ -386,17 +384,17 @@ public class GitRebaseProcess {
     return filter(repositories, repository -> myChangeListManager.haveChangesUnder(repository.getRoot()) != ThreeState.NO);
   }
 
-  protected void notifySuccess(@NotNull Map<GitRepository, GitSuccessfulRebase> successful,
-                             @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
+  protected void notifySuccess(
+    @NotNull Map<GitRepository, GitSuccessfulRebase> successful,
+    @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits
+  ) {
     String rebasedBranch = getCommonCurrentBranchNameIfAllTheSame(myRebaseSpec.getAllRepositories());
-    List<SuccessType> successTypes = map(successful.values(), GitSuccessfulRebase::getSuccessType);
-    SuccessType commonType = getItemIfAllTheSame(successTypes, SuccessType.REBASED);
     GitRebaseParams params = myRebaseSpec.getParams();
     String baseBranch = params == null ? null : notNull(params.getNewBase(), params.getUpstream());
     if (HEAD.equals(baseBranch)) {
       baseBranch = getItemIfAllTheSame(myRebaseSpec.getInitialBranchNames().values(), baseBranch);
     }
-    String message = commonType.formatMessage(rebasedBranch, baseBranch, params != null && params.getBranch() != null);
+    String message = GitSuccessfulRebase.formatMessage(rebasedBranch, baseBranch, params != null && params.getBranch() != null);
     message += mentionSkippedCommits(skippedCommits);
     myNotifier.notifyMinorInfo(
       GitBundle.getString("rebase.notification.successful.title"),

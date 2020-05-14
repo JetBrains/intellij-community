@@ -42,7 +42,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     ensureUpToDateAndRebaseOnMaster()
 
-    assertSuccessfulRebaseNotification("feature is up-to-date with master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     repo.`assert feature rebased on master`()
     assertNoRebaseInProgress(repo)
   }
@@ -52,7 +52,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     ensureUpToDateAndRebaseOnMaster()
 
-    assertSuccessfulRebaseNotification("Fast-forwarded feature to master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     repo.`assert feature rebased on master`()
     assertNoRebaseInProgress(repo)
   }
@@ -536,13 +536,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`diverge feature and master`()
     checkCheckoutAndRebase {
       "Checked out feature and rebased it on master"
-    }
-  }
-
-  fun `test checkout with fast-forward`() {
-    repo.`place feature below master`()
-    checkCheckoutAndRebase {
-      "Checked out feature and fast-forwarded it to master"
     }
   }
 
