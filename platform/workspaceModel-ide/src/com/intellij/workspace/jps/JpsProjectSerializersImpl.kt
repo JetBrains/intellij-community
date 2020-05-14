@@ -140,25 +140,26 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     return Pair(changedSources, builder)
   }
 
+  private val lock = Any()
+
   override fun loadAll(reader: JpsFileContentReader, builder: TypedEntityStorageBuilder) {
-    val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
-    val futures = ArrayList<Future<TypedEntityStorageBuilder>>()
+    val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
       val tasks = fileSerializersByUrl.values().map { serilizer ->
         Callable {
           val myBuilder = TypedEntityStorageBuilder.create()
           serilizer.loadEntities(myBuilder, reader, virtualFileManager)
-          myBuilder
+          synchronized(lock) {
+            builder.addDiff(myBuilder)
+          }
         }
       }
 
-      futures += ConcurrencyUtil.invokeAll(tasks, service)
+      ConcurrencyUtil.invokeAll(tasks, service)
     }
     finally {
       service.shutdown()
     }
-
-    futures.map { it.get() }.forEach { builder.addDiff(it) }
   }
 
   @TestOnly
