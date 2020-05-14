@@ -26,8 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, BeforeRunFragment.BeforeRunComponent> {
-
+public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, BeforeRunFragment.BeforeRunComponent> {
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
     ArrayList<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
     list.add(new BeforeRunFragment<>());
@@ -107,9 +106,10 @@ public class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunCon
       if (myTags == null) {
         myTags = new ArrayList<>();
         RunConfiguration configuration = s.getConfiguration();
-        for (BeforeRunTaskProvider<BeforeRunTask> provider : BeforeRunTaskProvider.EXTENSION_POINT_NAME
-          .getExtensionList(configuration.getProject())) {
-          if (provider.createTask(configuration) == null) continue;
+        for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : BeforeRunTaskProvider.EP_NAME.getExtensions(configuration.getProject())) {
+          if (provider.createTask(configuration) == null) {
+            continue;
+          }
           TaskButton button = new TaskButton(provider);
           add(button);
           myTags.add(button);
@@ -123,13 +123,14 @@ public class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunCon
 
     public void apply(RunnerAndConfigurationSettingsImpl s) {
       RunConfiguration configuration = s.getConfiguration();
-      List<BeforeRunTask> tasks =
-        myTags.stream().filter(button -> button.isVisible()).map(button -> button.myProvider.createTask(configuration))
-          .collect(Collectors.toList());
+      List<BeforeRunTask<?>> tasks = myTags.stream()
+        .filter(button -> button.isVisible())
+        .map(button -> button.myProvider.createTask(configuration))
+        .collect(Collectors.toList());
       s.getManager().setBeforeRunTasks(configuration, tasks);
     }
 
-    private class TaskButton extends TagButton {
+    private final class TaskButton extends TagButton {
       @NotNull private final BeforeRunTaskProvider<?> myProvider;
 
       private TaskButton(BeforeRunTaskProvider<?> provider) {

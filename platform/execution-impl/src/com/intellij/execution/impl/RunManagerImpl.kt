@@ -4,7 +4,6 @@ package com.intellij.execution.impl
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
-import com.intellij.execution.configuration.ConfigurationFactoryEx
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
@@ -195,7 +194,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
     override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
       val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
-      for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensionList(project)) {
+      for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(project)) {
         result.put(provider.id.toString(), provider)
       }
       return result
@@ -222,7 +221,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
     })
 
-    BeforeRunTaskProvider.EXTENSION_POINT_NAME.getPoint(project).addChangeListener(Runnable(stringIdToBeforeRunProvider::drop), project)
+    BeforeRunTaskProvider.EP_NAME.getPoint(project).addChangeListener(Runnable(stringIdToBeforeRunProvider::drop), project)
   }
 
   private fun clearSelectedConfigurationIcon() {
@@ -239,7 +238,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   private fun buildConfigurationTypeMap(factories: List<ConfigurationType>): Map<String, ConfigurationType> {
     val types = factories.toMutableList()
     types.add(UnknownConfigurationType.getInstance())
-    val map = THashMap<String, ConfigurationType>()
+    val map = HashMap<String, ConfigurationType>()
     for (type in types) {
       map.put(type.id, type)
     }
@@ -691,7 +690,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             settings.setConfiguration(configuration)
           }
         }
-        
+
         lock.write {  templateIdToConfiguration.retainEntries { _, settings -> settings.type != extension } }
       }
     }, this)
@@ -1308,13 +1307,13 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
 
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
-  (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
+  (factory as? com.intellij.execution.configuration.ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
   (configuration as? ConfigurationCreationListener)?.onNewConfigurationCreated()
 }
 
 private fun getFactoryKey(factory: ConfigurationFactory): String {
-  return when {
-    factory.type is SimpleConfigurationType -> factory.type.id
+  return when (factory.type) {
+    is SimpleConfigurationType -> factory.type.id
     else -> "${factory.type.id}.${factory.id}"
   }
 }

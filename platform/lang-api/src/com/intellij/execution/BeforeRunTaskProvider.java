@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -14,16 +15,22 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 
-public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
-  public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME =
+public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
+  public static final ProjectExtensionPointName<BeforeRunTaskProvider<BeforeRunTask<?>>> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.stepsBeforeRunProvider");
+
+  /**
+   * @deprecated Use {@link #EP_NAME}
+   */
+  @Deprecated
+  public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask<?>>> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.stepsBeforeRunProvider");
 
   public abstract Key<T> getId();
 
   public abstract String getName();
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
@@ -31,8 +38,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
     return getName();
   }
 
-  @Nullable
-  public Icon getTaskIcon(T task) {
+  public @Nullable Icon getTaskIcon(T task) {
     return null;
   }
 
@@ -43,8 +49,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   /**
    * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration
    */
-  @Nullable
-  public abstract T createTask(@NotNull RunConfiguration runConfiguration);
+  public abstract @Nullable T createTask(@NotNull RunConfiguration runConfiguration);
 
   /**
    * @return {@code true} if task configuration is changed
@@ -77,9 +82,8 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
     return false;
   }
 
-  @Nullable
-  public static <T extends BeforeRunTask> BeforeRunTaskProvider<T> getProvider(@NotNull Project project, Key<T> key) {
-    for (BeforeRunTaskProvider<BeforeRunTask> provider : EXTENSION_POINT_NAME.getExtensionList(project)) {
+  public static @Nullable <T extends BeforeRunTask<?>> BeforeRunTaskProvider<T> getProvider(@NotNull Project project, Key<T> key) {
+    for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : EP_NAME.getIterable(project)) {
       if (provider.getId() == key) {
         //noinspection unchecked
         return (BeforeRunTaskProvider<T>)provider;
