@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.util.PlatformUtils.getPlatformPrefix;
 import static com.intellij.util.PlatformUtils.isIntelliJ;
 
 /**
@@ -36,7 +35,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     this.myModules = modules;
   }
 
-  private boolean myUseQualifiedModuleNames = !isIntelliJ() && !"AndroidStudio".equals(getPlatformPrefix()); // backward-compatible defaults
+  private boolean myUseQualifiedModuleNames = !isIntelliJ(); // backward-compatible defaults
 
   /**
    * @deprecated left for settings backward-compatibility
