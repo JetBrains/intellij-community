@@ -24,6 +24,7 @@ import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibra
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.HashMap
 
@@ -79,11 +80,22 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
     }
   }
 
-  private val disposed = AtomicReference<Throwable>(null)
+  private var disposedStackTrace: Throwable? = null
+  private val isDisposed = AtomicBoolean(false)
+
   override fun dispose() {
     (filePointerProvider as? LegacyBridgeFilePointerProviderImpl)?.disposeAndClearCaches()
-    val disposedStackTrace = disposed.getAndSet(Throwable())
-    if (disposedStackTrace != null) throw IllegalStateException("${javaClass.name} was already disposed", disposedStackTrace)
+
+    val alreadyDisposed = isDisposed.getAndSet(true)
+    if (alreadyDisposed) {
+      val trace = disposedStackTrace
+      if (trace != null) {
+        throw IllegalStateException("${javaClass.name} was already disposed", trace)
+      }
+      else throw IllegalStateException("${javaClass.name} was already disposed")
+    } else if (Disposer.isDebugMode()) {
+      disposedStackTrace = Throwable()
+    }
   }
 
   override fun getModule(): LegacyBridgeModule = module
