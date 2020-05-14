@@ -116,7 +116,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
             GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author, newComment.bodyHtml, comment.createdAt,
                                        comment.state, comment.path, comment.commit, comment.position,
                                        comment.originalCommit, comment.originalPosition, comment.replyTo, comment.diffHunk,
-                                       GHNode(comment.reviewId), comment.viewerCanDelete, comment.viewerCanUpdate)
+                                       comment.reviewId?.let { GHNode(it) }, comment.viewerCanDelete, comment.viewerCanUpdate)
           else comment
         }))
       }

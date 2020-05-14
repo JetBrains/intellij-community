@@ -33,7 +33,15 @@ class GHPRReviewsThreadsModelsProviderImpl(private val reviewDataProvider: GHPRR
   }
 
   private fun updateReviewsThreads(threads: List<GHPullRequestReviewThread>) {
-    threadsByReview = threads.groupBy { it.reviewId }
+    val threadsMap = mutableMapOf<String, MutableList<GHPullRequestReviewThread>>()
+    for (thread in threads) {
+      val reviewId = thread.reviewId
+      if (reviewId != null) {
+        val list = threadsMap.getOrPut(reviewId) { mutableListOf() }
+        list.add(thread)
+      }
+    }
+    threadsByReview = threadsMap
     for ((reviewId, model) in threadsModelsByReview) {
       model.update(threadsByReview[reviewId].orEmpty())
     }
