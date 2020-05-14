@@ -56,18 +56,18 @@ public class JBCefJSQuery implements JBCefDisposable {
   }
 
   /**
-   * Returns the query callback call to inject into JS code
+   * Returns the query callback to inject into JS code
    *
-   * @param queryResult the result that will be passed to the java handler {@link #addHandler(Function)}
+   * @param queryResult the result (JS variable name or JS value) that will be passed to the java handler {@link #addHandler(Function)}
    */
   public String inject(@Nullable String queryResult) {
     return inject(queryResult, "function(response) {}", "function(error_code, error_message) {}");
   }
 
   /**
-   * Returns the query callback call to inject into JS code
+   * Returns the query callback to inject into JS code
    *
-   * @param queryResult the result that weill be passed to the java handler {@link #addHandler(Function)}
+   * @param queryResult the result (JS variable name or JS value) that will be passed to the java handler {@link #addHandler(Function)}
    * @param onSuccessCallback JS callback in format: function(response) {}
    * @param onFailureCallback JS callback in format: function(error_code, error_message) {}
    */
