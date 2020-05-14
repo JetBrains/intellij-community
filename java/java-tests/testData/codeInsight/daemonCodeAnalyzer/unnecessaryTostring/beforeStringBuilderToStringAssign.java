@@ -1,4 +1,4 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Unnecessary call to 'toString()'' problems in file" "true"
 
 class StringBuilderToStringAssign {
 

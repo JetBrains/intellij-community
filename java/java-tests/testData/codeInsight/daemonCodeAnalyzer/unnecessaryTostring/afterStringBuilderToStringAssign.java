@@ -1,4 +1,4 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Unnecessary call to 'toString()'' problems in file" "true"
 
 class StringBuilderToStringAssign {
 
@@ -75,13 +75,22 @@ class StringBuilderToStringAssign {
       /* 4 */
       String s83 = str() + /* 1 */sb/* 5 */ + str();
 
-    String s91 = /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */;
-    String s92 = /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */;
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      String s91 = /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb/* 5 */;
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      String s92 = /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb/* 5 */ + /* 1 */sb/* 5 */;
 
     String s101 = ("Hello" + sb) + sb + sb;
     String s102 = ("Hello" + sb) + sb + sb;
     String s103 = (("Hello" + sb) + sb) + sb;
-    String s104 = ("Hello" + sb + (sb.toString() + ((sb.toString()))));
+    String s104 = ("Hello" + sb + (sb.toString() + ((sb))));
     String s105 = ("Hello" + sb + (sb + ((sb) + "Hello")));
     String s106 = ("Hello" + sb + (sb + ((sb.toString()) + 42)));
 

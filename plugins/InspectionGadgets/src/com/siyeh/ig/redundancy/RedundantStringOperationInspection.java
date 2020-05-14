@@ -20,10 +20,12 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -277,39 +279,13 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     @Nullable
     private ProblemDescriptor getRedundantStringBuilderToStringProblem(@NotNull final PsiMethodCallExpression call) {
-      if (!ExpressionUtils.isConversionToStringNecessary(call, false)) {
-        // report naked `new StringBuilder().toString()`
-        final PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-        if (parent instanceof PsiPolyadicExpression) {
-          if (((PsiPolyadicExpression)parent).getOperationTokenType() != JavaTokenType.PLUS) return null;
-
-          final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-          final PsiExpression @NotNull[] operands = polyadicExpression.getOperands();
-
-          final boolean hasStringOperand = Arrays.stream(operands)
-            .filter(operand -> operand != call)
-            .anyMatch(RedundantStringOperationVisitor::isOperandOfStringType);
-
-          if (!hasStringOperand) return null;
-        }
-        return getProblem(call, "inspection.redundant.string.call.message");
-      }
-
       final PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
-      if (!STRING_SUBSTRING.test(substringCall)) return null;
+      if (substringCall == null) return null;
+
+      final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(substringCall.getMethodExpression());
+      if (qualifier != call || !STRING_SUBSTRING.test(substringCall)) return null;
 
       return getProblem(call, "inspection.redundant.string.call.message");
-    }
-
-    private static boolean isOperandOfStringType(@NotNull final PsiExpression operand) {
-      if (STRING_BUILDER_TO_STRING.matches(operand)) return false;
-
-      if (operand.getType() != null && operand.getType().equalsToText(String.class.getName())) {
-        return true;
-      }
-
-      final String value = tryCast(ExpressionUtils.computeConstantExpression(operand), String.class);
-      return value != null;
     }
 
     @Nullable

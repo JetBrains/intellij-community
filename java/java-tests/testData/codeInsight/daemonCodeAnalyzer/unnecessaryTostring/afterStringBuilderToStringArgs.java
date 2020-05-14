@@ -1,4 +1,4 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Unnecessary call to 'toString()'' problems in file" "true"
 
 class StringBuilderToStringArgs {
 
@@ -76,13 +76,22 @@ class StringBuilderToStringArgs {
       /* 4 */
       System.out.println(str() + /* 1 */sb/* 5 */ + str());
 
-    System.out.println(/* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */);
-    System.out.println(/* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */);
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      System.out.println(/* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb/* 5 */);
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      /* 2 */
+      /* 3 */
+      /* 4 */
+      System.out.println(/* 1 */sb./* 2 */toString/* 3 */(/* 4 */)/* 5 */ + /* 1 */sb/* 5 */ + /* 1 */sb/* 5 */);
 
     System.out.println(("Hello" + sb) + sb + sb);
     System.out.println(("Hello" + sb) + sb + sb);
     System.out.println((("Hello" + sb) + sb) + sb);
-    System.out.println(("Hello" + sb + (sb.toString() + ((sb.toString())))));
+    System.out.println(("Hello" + sb + (sb.toString() + ((sb)))));
     System.out.println(("Hello" + sb + (sb + ((sb) + "Hello"))));
     System.out.println(("Hello" + sb + (sb + ((sb.toString()) + 42))));
 
