@@ -6,10 +6,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to overwrite project level encoding settings for a specific virtual file.
+ * Allows to overwrite project level UTF-8 BOM option for a specific virtual file.
  */
-public interface FileEncodingProvider {
-  ExtensionPointName<FileEncodingProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileEncodingProvider");
+public interface Utf8BomOptionProvider {
+  ExtensionPointName<Utf8BomOptionProvider> EP_NAME = ExtensionPointName.create("com.intellij.utf8BomOptionProvider");
 
   /**
    * @param file The file to check.

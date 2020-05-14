@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.openapi.vfs.encoding.FileEncodingProvider;
+import com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
@@ -487,7 +487,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static boolean isUtf8BomRequired(@NotNull VirtualFile file) {
-    for (FileEncodingProvider encodingProvider : FileEncodingProvider.EP_NAME.getExtensionList()) {
+    for (Utf8BomOptionProvider encodingProvider : Utf8BomOptionProvider.EP_NAME.getExtensionList()) {
       if (encodingProvider.shouldAddBOMForNewUtf8File(file)) {
         return true;
       }

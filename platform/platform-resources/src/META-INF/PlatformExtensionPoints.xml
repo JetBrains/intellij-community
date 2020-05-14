@@ -381,6 +381,6 @@
 
     <extensionPoint name="iconDescriptionBundle" beanClass="com.intellij.ui.IconDescriptionBundleEP" dynamic="true"/>
 
-    <extensionPoint name="fileEncodingProvider" interface="com.intellij.openapi.vfs.encoding.FileEncodingProvider" dynamic="true"/>
+    <extensionPoint name="utf8BomOptionProvider" interface="com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

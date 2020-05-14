@@ -4,7 +4,7 @@ package org.editorconfig.configmanagement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.FileEncodingProvider;
+import com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EditorConfigFileEncodingProvider implements FileEncodingProvider {
+public class EditorConfigUtf8BomOptionProvider implements Utf8BomOptionProvider {
   @Override
   public boolean shouldAddBOMForNewUtf8File(@NotNull VirtualFile file) {
     Project project = ProjectLocator.getInstance().guessProjectForFile(file);
