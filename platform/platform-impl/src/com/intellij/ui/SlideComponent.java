@@ -107,9 +107,9 @@ class SlideComponent extends JComponent {
       int units = event.getUnitsToScroll();
       if (units == 0) return;
       int pointerValue = myPointerValue + units;
-      pointerValue = pointerValue < OFFSET ? OFFSET : pointerValue;
+      pointerValue = Math.max(pointerValue, OFFSET);
       int size = myVertical ? getHeight() : getWidth();
-      pointerValue = pointerValue > (size - 12) ? size - 12 : pointerValue;
+      pointerValue = Math.min(pointerValue, size - 12);
 
       myPointerValue = pointerValue;
       myValue = pointerValueToValue(myPointerValue);
@@ -160,9 +160,9 @@ class SlideComponent extends JComponent {
 
   private void processMouse(MouseEvent e) {
     int pointerValue = myVertical ? e.getY() : e.getX();
-    pointerValue = pointerValue < OFFSET ? OFFSET : pointerValue;
+    pointerValue = Math.max(pointerValue, OFFSET);
     int size = myVertical ? getHeight() : getWidth();
-    pointerValue = pointerValue > (size - 12) ? size - 12 : pointerValue;
+    pointerValue = Math.min(pointerValue, size - 12);
 
     myPointerValue = pointerValue;
 

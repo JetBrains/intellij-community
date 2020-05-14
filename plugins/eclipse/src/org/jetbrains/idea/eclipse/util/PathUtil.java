@@ -78,7 +78,7 @@ public class PathUtil {
       end = new_end;
     }
     while (end != path1.length());
-    return end < 0 ? 0 : end;
+    return Math.max(end, 0);
   }
 
   private static int endOfToken(String s, int index) {

@@ -75,7 +75,7 @@ public class BunchFactory {
     myResult.add(new Fragment(fragment.getOrigin(), subList, fragment.isConsistentWithOlder(), fragment.isConsistentWithYounger(),
                      fragment.getOriginBunch()));
     myBunchSize -= subList.size();
-    myBunchSize = (myBunchSize < 0) ? 0 : myBunchSize;
+    myBunchSize = Math.max(myBunchSize, 0);
     myYoungest = subList.get(subList.size() - 1).getNumber();
   }
 

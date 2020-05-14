@@ -166,7 +166,7 @@ public class StructClass extends StructMember {
   }
 
   public int getBytecodeVersion() {
-    return majorVersion < CodeConstants.BYTECODE_JAVA_LE_4 ? CodeConstants.BYTECODE_JAVA_LE_4 : majorVersion;
+    return Math.max(majorVersion, CodeConstants.BYTECODE_JAVA_LE_4);
   }
 
   @Override

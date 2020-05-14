@@ -171,7 +171,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
       @Override
       public Dimension getPreferredSize() {
         final Dimension superValue = super.getPreferredSize();
-        return new Dimension(superValue.width, superValue.height > 90 ? superValue.height : 90);
+        return new Dimension(superValue.width, Math.max(superValue.height, 90));
       }
 
       @Override

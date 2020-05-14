@@ -193,8 +193,6 @@ public class Utils {
 
   public static int getRandomLess(int count) {
     final int ret = (int)(getRandom() * count / RAND_MAX);
-    if (ret >= count) return count - 1;
-    if (ret < 0) return 0;
-    return ret;
+    return Math.min(Math.max(ret, 0), count - 1);
   }
 }

@@ -106,7 +106,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getLengthIncrement(final Dimension labelPrefSize) {
-      return myLayout.getCallback().isEditorTabs() ? labelPrefSize.width < MIN_TAB_WIDTH ? MIN_TAB_WIDTH : labelPrefSize.width : labelPrefSize.width;
+      return myLayout.getCallback().isEditorTabs() ? Math.max(labelPrefSize.width, MIN_TAB_WIDTH) : labelPrefSize.width;
     }
 
     @Override

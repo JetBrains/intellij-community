@@ -972,9 +972,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       final int top = i.top + (d.height - i.top - i.bottom - HEIGHT) / 2;
 
       int col = (x - left - 2) / 31;
-      col = col > 9 ? 9 : col;
+      col = Math.min(col, 9);
       int row = (y - top - 2) / 31;
-      row = row > 1 ? 1 : row;
+      row = Math.min(row, 1);
 
       return row >= 0 && col >= 0 ? Couple.of(row, col) : null;
     }

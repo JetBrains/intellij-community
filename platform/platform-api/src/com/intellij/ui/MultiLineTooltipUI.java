@@ -65,7 +65,7 @@ public class MultiLineTooltipUI extends MetalToolTipUI {
       }
     }
 
-    int height = metrics.getHeight() * ((lines.length < 1)? 1 : lines.length);
+    int height = metrics.getHeight() * Math.max(lines.length, 1);
     return new Dimension(maxWidth + 6, height + 4);
   }
 }

@@ -352,7 +352,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   private static int adjust(int value, int min, int max) {
-    return value < min ? min : value > max ? max : value;
+    return Math.max(min, Math.min(value, max));
   }
 
   private final class Listener extends MouseAdapter implements ActionListener, FocusListener, ChangeListener, PropertyChangeListener {
