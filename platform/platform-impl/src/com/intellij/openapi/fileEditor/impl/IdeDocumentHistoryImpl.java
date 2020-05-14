@@ -166,7 +166,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       public void extensionRemoved(@NotNull FileEditorProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         String editorTypeId = provider.getEditorTypeId();
         Predicate<PlaceInfo> clearStatePredicate = e -> editorTypeId.equals(e.getEditorTypeId());
-        myChangePlaces.removeIf(clearStatePredicate);
+        if (myChangePlaces.removeIf(clearStatePredicate)) {
+          myCurrentIndex = myChangePlaces.size();
+        }
         myBackPlaces.removeIf(clearStatePredicate);
         myForwardPlaces.removeIf(clearStatePredicate);
       }
