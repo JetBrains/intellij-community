@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
@@ -66,13 +67,13 @@ abstract class GitMergeAction extends GitRepositoryAction {
   protected static class DialogState {
     final VirtualFile selectedRoot;
     final String progressTitle;
-    final Computable<GitLineHandler> handlerProvider;
+    final Supplier<GitLineHandler> handlerProvider;
     @NotNull private final List<String> selectedBranches;
     final boolean commitAfterMerge;
 
     DialogState(@NotNull VirtualFile root,
                 @NotNull String title,
-                @NotNull Computable<GitLineHandler> provider,
+                @NotNull Supplier<GitLineHandler> provider,
                 @NotNull List<String> selectedBranches,
                 boolean commitAfterMerge) {
       selectedRoot = root;
@@ -94,7 +95,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       return;
     }
     VirtualFile selectedRoot = dialogState.selectedRoot;
-    Computable<GitLineHandler> handlerProvider = dialogState.handlerProvider;
+    Supplier<GitLineHandler> handlerProvider = dialogState.handlerProvider;
     Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
 
     new Task.Backgroundable(project, dialogState.progressTitle, true) {
@@ -129,7 +130,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         Ref<GitHandlerRebaseEditorManager> rebaseEditorManager = Ref.create();
         try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = git.runCommand(() -> {
-            GitLineHandler handler = handlerProvider.compute();
+            GitLineHandler handler = handlerProvider.get();
 
             if (setupRebaseEditor) {
               if (!rebaseEditorManager.isNull()) {
