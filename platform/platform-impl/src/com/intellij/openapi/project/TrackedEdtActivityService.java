@@ -4,10 +4,15 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,6 +48,29 @@ final class TrackedEdtActivityService {
 
   public void setDumbStartModality(@NotNull ModalityState modality) {
     myDumbStartModality = modality;
+  }
+
+  public <T> T computeInEdt(@NotNull Producer<T> task) {
+    AsyncPromise<T> promise = new AsyncPromise<>();
+
+    invokeLater(() -> {
+      if (myProject.isDisposed()) {
+        promise.setError(new ProcessCanceledException());
+        return;
+      }
+      Promises.compute(promise, task::produce);
+    });
+
+    try {
+      return promise.get();
+    }
+    catch (Throwable e) {
+      Throwable cause = e.getCause();
+      if (!(cause instanceof ProcessCanceledException)) {
+        ExceptionUtil.rethrowAllAsUnchecked(cause);
+      }
+      return null;
+    }
   }
 
   private class TrackedEdtActivity implements Runnable {

@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -22,16 +21,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 
 final class DumbServiceTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceTaskQueue.class);
 
-  private final Project myProject;
   private final TrackedEdtActivityService myTrackedEdtActivityService;
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
@@ -42,9 +37,7 @@ final class DumbServiceTaskQueue {
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = new ConcurrentHashMap<>();
 
-  DumbServiceTaskQueue(@NotNull Project project,
-                       @NotNull TrackedEdtActivityService trackedEdtActivityService) {
-    myProject = project;
+  DumbServiceTaskQueue(@NotNull TrackedEdtActivityService trackedEdtActivityService) {
     myTrackedEdtActivityService = trackedEdtActivityService;
   }
 
@@ -89,7 +82,8 @@ final class DumbServiceTaskQueue {
   void processTasksWithProgress(@NotNull Function<ProgressIndicatorEx, ProgressIndicatorEx> bindProgress,
                                 @NotNull IdeActivity activity) {
     while (true) {
-      Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask();
+      //we do jump in EDT to
+      Pair<DumbModeTask, ProgressIndicatorEx> pair = myTrackedEdtActivityService.computeInEdt(() -> pollTaskQueue());
       if (pair == null) break;
 
       DumbModeTask task = pair.first;
@@ -124,19 +118,6 @@ final class DumbServiceTaskQueue {
     }, taskIndicator);
   }
 
-  private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> getNextTask() {
-    CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
-    myTrackedEdtActivityService.invokeLater(() -> {
-      if (myProject.isDisposed()) {
-        result.completeExceptionally(new ProcessCanceledException());
-        return;
-      }
-
-      result.complete(pollTaskQueue());
-    });
-    return waitForFuture(result);
-  }
-
   private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> pollTaskQueue() {
     while (true) {
       if (myUpdatesQueue.isEmpty()) {
@@ -152,22 +133,6 @@ final class DumbServiceTaskQueue {
       }
 
       return Pair.create(queuedTask, indicator);
-    }
-  }
-
-  private static @Nullable <T> T waitForFuture(Future<T> result) {
-    try {
-      return result.get();
-    }
-    catch (InterruptedException e) {
-      return null;
-    }
-    catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (!(cause instanceof ProcessCanceledException)) {
-        ExceptionUtil.rethrowAllAsUnchecked(cause);
-      }
-      return null;
     }
   }
 }
