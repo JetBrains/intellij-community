@@ -189,7 +189,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
-    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
+    String place = ActionPlaces.getActionGroupPopupPlace(event.getPlace());
+    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(place, actionGroup, new MenuItemPresentationFactory() {
       @Override
       protected void processPresentation(Presentation presentation) {
         if (myNoIconsInPopup) {
