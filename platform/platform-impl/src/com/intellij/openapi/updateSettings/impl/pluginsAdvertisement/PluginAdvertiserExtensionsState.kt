@@ -53,18 +53,21 @@ class PluginAdvertiserExtensionsState(private val project: Project) {
   private fun getCachedData(extensionOrFileName: String): PluginAdvertiserExtensionsData? =
     cache.getIfPresent(extensionOrFileName)?.orElse(null)
 
-  fun updateCache(extensionOrFileName: String) {
+  fun updateCache(extensionOrFileName: String): Boolean {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed)
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
 
     if (cache.getIfPresent(extensionOrFileName) != null) {
-      return
+      return false
     }
     val knownExtensions = PluginsAdvertiser.loadExtensions()
-    if (knownExtensions != null) {
-      val newData = requestData(extensionOrFileName, knownExtensions)
-      cache.put(extensionOrFileName, Optional.ofNullable(newData))
+    if (knownExtensions == null) {
+      return false
     }
+
+    val newData = requestData(extensionOrFileName, knownExtensions)
+    cache.put(extensionOrFileName, Optional.ofNullable(newData))
+    return true
   }
 
   private fun invalidateCacheDataForKey(extensionOrFileName: String) {
@@ -74,11 +77,10 @@ class PluginAdvertiserExtensionsState(private val project: Project) {
   fun requestExtensionData(
     fileName: String,
     fileType: FileType,
-    extension: String?
+    fullExtension: String?
   ): PluginAdvertiserExtensionsData? {
     val alreadySupported = fileType !is PlainTextLikeFileType
 
-    val fullExtension = extension?.let { "*.$it" }
     if (fullExtension != null && isIgnored(fullExtension)) {
       LOG.debug(String.format("Extension '%s' is ignored in project '%s'", fullExtension, project.name))
       return null

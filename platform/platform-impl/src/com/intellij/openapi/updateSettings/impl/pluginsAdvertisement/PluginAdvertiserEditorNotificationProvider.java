@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
@@ -39,12 +40,22 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     final EditorNotificationPanel panel = new EditorNotificationPanel();
 
     PluginAdvertiserExtensionsState pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsState.getInstance(project);
-    PluginAdvertiserExtensionsData cachedData = pluginAdvertiserExtensionsState.requestExtensionData(file.getName(), file.getFileType(), file.getExtension());
-    if (cachedData == null) {
+    String fullExtension = file.getExtension() != null ? "*." + file.getExtension() : null;
+    PluginAdvertiserExtensionsData extensionsData = pluginAdvertiserExtensionsState.requestExtensionData(file.getName(), file.getFileType(), fullExtension);
+    if (extensionsData == null) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        boolean shouldUpdateNotifications = PluginAdvertiserExtensionsState.getInstance(project).updateCache(file.getName());
+        if (fullExtension != null) {
+          shouldUpdateNotifications = PluginAdvertiserExtensionsState.getInstance(project).updateCache(fullExtension) || shouldUpdateNotifications;
+        }
+        if (shouldUpdateNotifications) {
+          EditorNotifications.getInstance(project).updateNotifications(file);
+        }
+      });
       return null;
     }
-    String extensionOrFileName = cachedData.getExtensionOrFileName();
-    Set<PluginsAdvertiser.Plugin> plugins = cachedData.getPlugins();
+    String extensionOrFileName = extensionsData.getExtensionOrFileName();
+    Set<PluginsAdvertiser.Plugin> plugins = extensionsData.getPlugins();
 
     panel.setText(IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName));
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);

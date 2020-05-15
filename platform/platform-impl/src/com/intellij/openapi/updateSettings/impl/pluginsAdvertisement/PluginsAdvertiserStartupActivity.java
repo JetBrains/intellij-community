@@ -199,25 +199,6 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
         notification.notify(project);
       }
     }, ModalityState.NON_MODAL);
-
-    Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
-    Disposer.register(project, activityDisposable);
-
-    project.getMessageBus().connect(activityDisposable)
-      .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-        @Override
-        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            PluginAdvertiserExtensionsState.getInstance(project).updateCache(file.getName());
-            if (file.getExtension() != null) {
-                String fullExtension = "*."+file.getExtension();
-              PluginAdvertiserExtensionsState.getInstance(project).updateCache(fullExtension);
-            }
-            EditorNotifications.getInstance(project).updateNotifications(file);
-          });
-        }
-      });
-
   }
 
   @NotNull
