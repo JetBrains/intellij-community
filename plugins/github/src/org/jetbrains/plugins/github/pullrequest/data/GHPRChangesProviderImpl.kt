@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
-import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
@@ -19,7 +18,7 @@ import kotlin.collections.LinkedHashMap
 
 class GHPRChangesProviderImpl(private val repository: GitRepository,
                               mergeBaseRef: String,
-                              commitsWithDiffs: List<Triple<GHCommit, String, String>>)
+                              commitsWithPatches: List<GHCommitWithPatches>)
   : GHPRChangesProvider {
 
   override val changes: List<Change>
@@ -42,16 +41,13 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
     var lastCommitSha = mergeBaseRef
     var lastCumulativePatches: List<FilePatch>? = null
 
-    val commitsHashes = commitsWithDiffs.map { it.first.oid }
-    for ((commit, commitDiff, diffFromMergeBase) in commitsWithDiffs) {
+    val commitsHashes = commitsWithPatches.map { it.sha }
+    for (commitWithPatches in commitsWithPatches) {
 
-      val commitSha = commit.oid
+      val commitSha = commitWithPatches.sha
       val commitChanges = mutableListOf<Change>()
-      val commitPatches = readAllPatches(commitDiff)
 
-      val cumulativePatches = readAllPatches(diffFromMergeBase)
-
-      for (patch in commitPatches) {
+      for (patch in commitWithPatches.commitPatches) {
         val change = createChangeFromPatch(lastCommitSha, commitSha, patch)
         commitChanges.add(change)
 
@@ -66,7 +62,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
           fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
           val initialPath = fileHistory.initialFilePath
 
-          val cumulativePatch = findPatchByFilePaths(cumulativePatches, initialPath, afterPath) as? TextFilePatch
+          val cumulativePatch = findPatchByFilePaths(commitWithPatches.cumulativePatches, initialPath, afterPath) as? TextFilePatch
           if (cumulativePatch == null) {
             LOG.debug("Unable to find cumulative patch for commit patch")
             continue
@@ -77,9 +73,9 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
                                                                fileHistory)
         }
       }
-      changesByCommits[commit] = commitChanges
+      changesByCommits[commitWithPatches.commit] = commitChanges
       lastCommitSha = commitSha
-      lastCumulativePatches = cumulativePatches
+      lastCumulativePatches = commitWithPatches.cumulativePatches
     }
 
     changes = mutableListOf()
@@ -134,11 +130,5 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
 
     private val TextFilePatch.filePath
       get() = (afterName ?: beforeName)!!
-
-    private fun readAllPatches(diffFile: String): List<FilePatch> {
-      val reader = PatchReader(diffFile, true)
-      reader.parseAllPatches()
-      return reader.allPatches
-    }
   }
 }

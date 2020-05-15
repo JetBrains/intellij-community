@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diff.impl.patch.FilePatch
+import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -15,6 +17,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHCommitWithPatches
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -76,13 +79,15 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       }
 
       CompletableFuture.allOf(*commitsDiffsRequests.values.toTypedArray()).joinCancellable()
-      val commitsWithDiffs = commitsDiffsRequests.map { (commit, request) ->
+      val commitsWithPatches = commitsDiffsRequests.map { (commit, request) ->
         val diffs = request.joinCancellable()
-        Triple(commit, diffs.first, diffs.second)
+        val commitPatches = readAllPatches(diffs.first)
+        val cumulativePatches = readAllPatches(diffs.second)
+        GHCommitWithPatches(commit, commitPatches, cumulativePatches)
       }
       it.checkCanceled()
 
-      GHPRChangesProviderImpl(gitRemote.repository, mergeBaseOid, commitsWithDiffs) as GHPRChangesProvider
+      GHPRChangesProviderImpl(gitRemote.repository, mergeBaseOid, commitsWithPatches) as GHPRChangesProvider
     }.logError(LOG, "Error occurred while building changes from commits")
 
   companion object {
@@ -100,6 +105,12 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
         if (GithubAsyncUtil.isCancellation(e)) throw ProcessCanceledException(e)
         throw GithubAsyncUtil.extractError(e)
       }
+    }
+
+    private fun readAllPatches(diffFile: String): List<FilePatch> {
+      val reader = PatchReader(diffFile, true)
+      reader.parseAllPatches()
+      return reader.allPatches
     }
   }
 }
