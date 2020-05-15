@@ -98,6 +98,7 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   }
   public void testSuperBoundLambda() { doTest(); }
   public void testLambdaReturnChain() { doTest(); }
+  public void testExpectedTypeProducesBadReturnType() { doTest(); }
 
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);

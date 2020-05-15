@@ -7,11 +7,9 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -502,6 +500,14 @@ public class RedundantCastUtil {
             return;
           }
         }
+        else if (newArg instanceof PsiCallExpression) { 
+          //if top method is not generic, all inference problems may be collected in the argument itself
+          JavaResolveResult result = ((PsiCallExpression)newArg).resolveMethodGenerics();
+          if (!(result instanceof MethodCandidateInfo) || ((MethodCandidateInfo)result).getInferenceErrorMessage() == null) {
+            addToResults(arg);
+            return;
+          }
+        }
         else {
           addToResults(arg);
           return;
@@ -949,13 +955,7 @@ public class RedundantCastUtil {
 
       if (expectedTypeByParent != null && !(operand instanceof PsiFunctionalExpression)) {
         try {
-          final Project project = operand.getProject();
-          final String uniqueVariableName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("l", operand, false);
-          final PsiDeclarationStatement declarationStatement =
-            (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(
-              expectedTypeByParent.getCanonicalText() + " " + uniqueVariableName + " = " + operand.getText() + ";", operand);
-          final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
-          LOG.assertTrue(initializer != null, operand.getText());
+          final PsiExpression initializer = (PsiExpression)LambdaUtil.copyWithExpectedType(operand, expectedTypeByParent);
           opType = initializer.getType();
 
           if (initializer instanceof PsiMethodCallExpression) {
