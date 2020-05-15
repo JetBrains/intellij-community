@@ -138,6 +138,13 @@ public class LaterInvocator {
       }
     };
     invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null, onEdt);
+
+    // IDEA-241340: Timeout in tests during BaseFixture.disposeRootDisposable caused by LaterInvocator
+    // Android Studio: The item just added to the queue may never run. Flush it explicitly here to avoid deadlock on semaphore.waitFor().
+    if (isTestMode()) {
+      getRunnableQueue(onEdt).scheduleFlush();
+    }
+
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
@@ -150,6 +157,20 @@ public class LaterInvocator {
         ExceptionUtil.rethrow(cause);
       }
     }
+  }
+
+  // Android Studio: copied from IdeEventQueue for use in invokeAndWait above
+  private static Boolean myTestMode;
+  private static boolean isTestMode() {
+    Boolean testMode = myTestMode;
+    if (testMode != null) return testMode;
+
+    Application application = ApplicationManager.getApplication();
+    if (application == null) return false;
+
+    testMode = application.isUnitTestMode();
+    myTestMode = testMode;
+    return testMode;
   }
 
   public static void enterModal(@NotNull Object modalEntity) {
