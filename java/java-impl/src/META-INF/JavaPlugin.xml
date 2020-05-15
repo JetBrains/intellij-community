@@ -1368,7 +1368,7 @@
                      key="inspection.text.block.backward.migration.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="WrapperTypeMayBePrimitive"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.WrapperTypeMayBePrimitiveInspection"
                      key="inspection.wrapper.type.may.be.primitive.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantLambdaParameterType"
