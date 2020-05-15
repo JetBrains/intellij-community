@@ -52,6 +52,8 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ArrayRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
@@ -100,72 +102,86 @@ public class ArrayRenderer extends NodeRendererImpl{
   @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
-    NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
     ArrayReference array = (ArrayReference)value;
-    int arrayLength = array.length();
-    if (arrayLength > 0) {
-      if (!myForced) {
-        builder.initChildrenArrayRenderer(this, arrayLength);
-      }
-
-      if (ENTRIES_LIMIT <= 0) {
-        ENTRIES_LIMIT = 1;
-      }
-
-      try {
-        int added = 0;
-        boolean hiddenNulls = false;
-        int end = Math.min(arrayLength - 1, END_INDEX);
-        int idx = START_INDEX;
-        if (arrayLength > START_INDEX) {
-          ArrayValuesCache arrayValuesCache = new ArrayValuesCache(array);
-          for (; idx <= end; idx++) {
-            Value val = arrayValuesCache.getValue(idx);
-            if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && val == null) {
-              hiddenNulls = true;
-              continue;
-            }
-
-            ArrayElementDescriptorImpl descriptor =
-              (ArrayElementDescriptorImpl)descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx);
-            descriptor.setValue(val);
-            DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptor, evaluationContext);
-
-            builder.addChildren(Collections.singletonList(arrayItemNode), false);
-            added++;
-            if (added >= ENTRIES_LIMIT) {
-              break;
-            }
-          }
+    DebuggerUtilsAsync.length(array, evaluationContext.getSuspendContext()).thenAccept(arrayLength -> {
+      if (arrayLength > 0) {
+        if (!myForced) {
+          builder.initChildrenArrayRenderer(this, arrayLength);
         }
 
-        builder.addChildren(Collections.emptyList(), true);
+        if (ENTRIES_LIMIT <= 0) {
+          ENTRIES_LIMIT = 1;
+        }
 
-        if (added == 0) {
-          if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
-            builder.setMessage(JavaDebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                               null);
-          }
-          else {
-            builder.setMessage(JavaDebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
-                               SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
-          }
-        }
-        else {
-          if (hiddenNulls) {
-            builder
-              .setMessage(JavaDebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                          null);
-          }
-          if (!myForced && idx < end) {
-            builder.tooManyChildren(end - idx);
-          }
-        }
+        AtomicInteger added = new AtomicInteger();
+        AtomicBoolean hiddenNulls = new AtomicBoolean();
+
+        addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
       }
-      catch (ObjectCollectedException e) {
-        builder.setErrorMessage(JavaDebuggerBundle.message("evaluation.error.array.collected"));
+    });
+  }
+
+  private CompletableFuture<Void> addChunk(ArrayReference array,
+                                           int start,
+                                           int end,
+                                           int length,
+                                           ChildrenBuilder builder,
+                                           EvaluationContext evaluationContext,
+                                           AtomicInteger added,
+                                           AtomicBoolean hiddenNulls) {
+    int chunkLength = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, end - start + 1);
+    return DebuggerUtilsAsync.getValues(array, start, chunkLength, evaluationContext.getSuspendContext())
+      .thenCompose(values -> {
+        int idx = start;
+        for (; idx < start + values.size(); idx++) {
+          Value val = values.get(idx - start);
+          if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && val == null) {
+            hiddenNulls.set(true);
+            continue;
+          }
+
+          ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)builder.getDescriptorManager()
+            .getArrayItemDescriptor(builder.getParentDescriptor(), array, idx);
+          descriptor.setValue(val);
+          DebuggerTreeNode arrayItemNode = ((NodeManagerImpl)builder.getNodeManager()).createNode(descriptor, evaluationContext);
+          builder.addChildren(Collections.singletonList(arrayItemNode), false);
+
+          if (added.incrementAndGet() >= ENTRIES_LIMIT) {
+            break;
+          }
+        }
+        // process next chunk if needed
+        if (idx < end && added.get() < ENTRIES_LIMIT) {
+          return addChunk(array, idx, end, length, builder, evaluationContext, added, hiddenNulls);
+        }
+        finish(builder, length, added.get(), hiddenNulls.get(), end, idx);
+        return CompletableFuture.completedFuture(null);
+      });
+  }
+
+  private void finish(ChildrenBuilder builder, int arrayLength, int added, boolean hiddenNulls, int end, int idx) {
+    builder.addChildren(Collections.emptyList(), true);
+
+    if (added == 0) {
+      if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
+        builder
+          .setMessage(JavaDebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                      null);
+      }
+      else {
+        builder.setMessage(JavaDebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
+                           SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+      }
+    }
+    else {
+      if (hiddenNulls) {
+        builder
+          .setMessage(JavaDebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                      null);
+      }
+      if (!myForced && idx < end) {
+        builder.tooManyChildren(end - idx);
       }
     }
   }
@@ -234,6 +250,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     return type instanceof ArrayType;
   }
 
+  //TODO: make async
   public static class Filtered extends ArrayRenderer {
     private final XExpression myExpression;
 

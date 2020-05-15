@@ -76,6 +76,13 @@ public class DebuggerUtilsAsync {
     return completedFuture(type.getValues(fields));
   }
 
+  public static CompletableFuture<List<Value>> getValues(ArrayReference ref, int index, int length, @Nullable SuspendContext context) {
+    if (ref instanceof ArrayReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
+      return schedule((SuspendContextImpl)context, ((ArrayReferenceImpl)ref).getValuesAsync(index, length));
+    }
+    return completedFuture(ref.getValues(index, length));
+  }
+
   public static CompletableFuture<Integer> length(ArrayReference ref, @Nullable SuspendContext context) {
     if (ref instanceof ArrayReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
       return schedule((SuspendContextImpl)context, ((ArrayReferenceImpl)ref).lengthAsync());
