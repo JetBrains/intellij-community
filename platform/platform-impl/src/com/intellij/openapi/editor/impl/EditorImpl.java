@@ -393,8 +393,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel);
     myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
       @Override
-      public void errorMarkerChanged(@NotNull ErrorStripeMarker marker) {
-        errorStripeMarkerChanged(marker);
+      public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
+        errorStripeMarkerChanged(((RangeHighlighterEx)e.getHighlighter()));
       }
     }, myCaretModel);
 
@@ -607,7 +607,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            position == LineMarkerRendererEx.Position.RIGHT && !myGutterComponent.myForceRightFreePaintersAreaShown;
   }
 
-  private void errorStripeMarkerChanged(@NotNull ErrorStripeMarker marker) {
+  private void errorStripeMarkerChanged(@NotNull RangeHighlighterEx highlighter) {
     if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
 
     if (myDocumentChangeInProgress) {
@@ -617,16 +617,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    int textLength = myDocument.getTextLength();
-    RangeHighlighterEx highlighter = marker.getHighlighter();
-    int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
-    int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
-
     // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
     if (myFoldingModel.isInBatchFoldingOperation()) {
       myErrorStripeNeedsRepaint = true;
     }
     else {
+      int start = highlighter.getAffectedAreaStartOffset();
+      int end = highlighter.getAffectedAreaEndOffset();
       myMarkupModel.repaint(start, end);
     }
   }
@@ -638,8 +635,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       updateGutterSize();
     }
 
-    int textLength = myDocument.getTextLength();
+    if (myDocumentChangeInProgress) return;
 
+    int textLength = myDocument.getTextLength();
     int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
     int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), 0, textLength);
 
@@ -3469,8 +3467,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       boolean oldAvailable = oldFilter == null || oldFilter.value(highlighter);
       boolean newAvailable = filter == null || filter.value(highlighter);
       if (oldAvailable != newAvailable) {
+        boolean styleOrColorChanged = EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme()));
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
-                                                EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme())));
+                                                styleOrColorChanged);
+        myMarkupModel.getErrorStripeMarkersModel().attributesChanged(
+          (RangeHighlighterEx)highlighter, true,
+          styleOrColorChanged);
       }
     }
   }

@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -70,11 +69,8 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @Override
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
                                                                 int endOffset,
-                                                                boolean onlyRenderedInGutter,
-                                                                boolean onlyRenderedInScrollBar,
-                                                                @Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
-    return new FilteringMarkupIterator<>(
-      myDelegate.overlappingIterator(startOffset, endOffset, onlyRenderedInGutter, onlyRenderedInScrollBar, scheme), this::isAvailable);
+                                                                boolean onlyRenderedInGutter) {
+    return new FilteringMarkupIterator<>(myDelegate.overlappingIterator(startOffset, endOffset, onlyRenderedInGutter), this::isAvailable);
   }
 
   @Override
@@ -85,34 +81,9 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   @Override
   public void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener) {
-    myDelegate.addMarkupModelListener(parentDisposable, createFilteringListener(listener));
+    myDelegate.addMarkupModelListener(parentDisposable, listener);
   }
 
-  @NotNull
-  private MarkupModelListener createFilteringListener(@NotNull MarkupModelListener listener) {
-    return new MarkupModelListener() {
-      @Override
-      public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        if (isAvailable(highlighter)) {
-          listener.afterAdded(highlighter);
-        }
-      }
-
-      @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        if (isAvailable(highlighter)) {
-          listener.beforeRemoved(highlighter);
-        }
-      }
-
-      @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
-        if (isAvailable(highlighter)) {
-          listener.attributesChanged(highlighter, renderersChanged, fontStyleOrColorChanged);
-        }
-      }
-    };
-  }
   @Override
   public void dispose() {
   }
@@ -201,7 +172,7 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
                                                                    int layer,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
-                                                                   Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                                                   @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     return myDelegate.addRangeHighlighterAndChangeAttributes(textAttributesKey, startOffset, endOffset, layer,
                                                              targetArea, isPersistent, changeAttributesAction);
   }

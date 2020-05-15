@@ -18,7 +18,6 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -84,7 +83,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
                                                                    int layer,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
-                                                                   Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                                                   @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myHostModel.addRangeHighlighterAndChangeAttributes(textAttributesKey, hostRange.getStartOffset(), hostRange.getEndOffset(), layer,
                                                               targetArea, isPersistent, changeAttributesAction);
@@ -184,9 +183,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   @Override
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
                                                                 int endOffset,
-                                                                boolean onlyRenderedInGutter,
-                                                                boolean onlyRenderedInScrollBar,
-                                                                @Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
+                                                                boolean onlyRenderedInGutter) {
     throw new UnsupportedOperationException();
   }
 

@@ -22,7 +22,7 @@ import java.util.EventListener;
 public interface ErrorStripeListener extends EventListener {
   ErrorStripeListener[] EMPTY_ARRAY = new ErrorStripeListener[0];
 
-  default void errorMarkerChanged(@NotNull ErrorStripeMarker marker) { }
+  default void errorMarkerChanged(@NotNull ErrorStripeEvent e) { }
 
   default void errorMarkerClicked(@NotNull ErrorStripeEvent e) { }
 }

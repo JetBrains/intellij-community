@@ -57,7 +57,7 @@ public interface MarkupModelEx extends MarkupModel {
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
   /**
-   * @deprecated Use the overload with EditorColorScheme
+   * @deprecated onlyRenderedInScrollBar doesn't affect anything
    */
   @Deprecated
   @NotNull
@@ -65,15 +65,13 @@ public interface MarkupModelEx extends MarkupModel {
                                                          int endOffset,
                                                          boolean onlyRenderedInGutter,
                                                          boolean onlyRenderedInScrollBar) {
-    return overlappingIterator(startOffset, endOffset, onlyRenderedInGutter, onlyRenderedInScrollBar, null);
+    return overlappingIterator(startOffset, endOffset, onlyRenderedInGutter);
   }
 
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
                                                          int endOffset,
-                                                         boolean onlyRenderedInGutter,
-                                                         boolean onlyRenderedInScrollBar,
-                                                         @Nullable("when null, the global scheme will be used") EditorColorsScheme scheme);
+                                                         boolean onlyRenderedInGutter);
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
@@ -83,7 +81,7 @@ public interface MarkupModelEx extends MarkupModel {
                                                             int layer,
                                                             @NotNull HighlighterTargetArea targetArea,
                                                             boolean isPersistent,
-                                                            Consumer<? super RangeHighlighterEx> changeAttributesAction);
+                                                            @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction);
 
   /**
    * Consider using {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
@@ -99,12 +97,14 @@ public interface MarkupModelEx extends MarkupModel {
                                                                     TextAttributes textAttributes,
                                                                     @NotNull HighlighterTargetArea targetArea,
                                                                     boolean isPersistent,
-                                                                    Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                                                    @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     return addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, layer, targetArea, isPersistent, ex -> {
       if (textAttributes != null) {
         ex.setTextAttributes(textAttributes);
       }
-      changeAttributesAction.consume(ex);
+      if (changeAttributesAction != null) {
+        changeAttributesAction.consume(ex);
+      }
     });
   }
 

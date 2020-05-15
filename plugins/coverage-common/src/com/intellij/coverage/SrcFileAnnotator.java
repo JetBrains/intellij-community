@@ -11,14 +11,13 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -465,13 +464,19 @@ public class SrcFileAnnotator implements Disposable {
                                                   final int lineNumberInCurrent,
                                                   @NotNull final CoverageSuitesBundle coverageSuite, Object[] lines,
                                                   @NotNull MyEditorBean editorBean) {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
+    final TextAttributes attributes = scheme.getAttributes(attributesKey);
+    TextAttributes textAttributes = null;
+    if (attributes.getBackgroundColor() != null) {
+      textAttributes = attributes;
+    }
     Document document = editorBean.getDocument();
     Editor editor = editorBean.getEditor();
     final int startOffset = document.getLineStartOffset(lineNumberInCurrent);
     final int endOffset = document.getLineEndOffset(lineNumberInCurrent);
-    final TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
     final RangeHighlighter highlighter =
-      markupModel.addRangeHighlighter(attributesKey, startOffset, endOffset, HighlighterLayer.SELECTION - 1, HighlighterTargetArea.LINES_IN_RANGE);
+      markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
     final Function<Integer, Integer> newToOldConverter = newLine -> {
       if (editor == null) return -1;
       final TIntIntHashMap oldLineMapping = getNewToOldLineMapping(date, editorBean);

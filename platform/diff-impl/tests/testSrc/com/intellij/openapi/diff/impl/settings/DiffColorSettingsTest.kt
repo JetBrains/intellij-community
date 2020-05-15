@@ -72,7 +72,7 @@ class DiffColorSettingsTest : HeavyDiffTestCase() {
 
   private fun assertContainsMarkerColor(viewer: SimpleThreesideDiffViewer, type: TextDiffType) {
     assertContainsBackgroundColor(viewer) { editor, highlighter ->
-      highlighter.getTextAttributes(null)?.errorStripeColor == type.getMarkerColor(editor)
+      highlighter.getTextAttributes(editor.colorsScheme)?.errorStripeColor == type.getMarkerColor(editor)
     }
   }
 

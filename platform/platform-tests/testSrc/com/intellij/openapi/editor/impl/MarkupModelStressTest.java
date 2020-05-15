@@ -65,7 +65,7 @@ public class MarkupModelStressTest extends AbstractEditorTest {
     }
     List<RangeHighlighterEx> list2 = new ArrayList<>();
     MarkupIterator<RangeHighlighterEx> it2 =
-      markupModel.overlappingIterator(0, Integer.MAX_VALUE, true, false, getEditor().getColorsScheme());
+      markupModel.overlappingIterator(0, Integer.MAX_VALUE, true);
     try {
       while (it2.hasNext()) {
         list2.add(it2.next());

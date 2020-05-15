@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupIterator;
@@ -329,15 +328,13 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
                                                                 int endOffset,
-                                                                boolean onlyRenderedInGutter,
-                                                                boolean onlyRenderedInScrollBar,
-                                                                @Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
+                                                                boolean onlyRenderedInGutter) {
     startOffset = Math.max(0,startOffset);
     endOffset = Math.max(startOffset, endOffset);
     MarkupIterator<RangeHighlighterEx> exact = myHighlighterTree
-      .overlappingIterator(new TextRangeInterval(startOffset, endOffset), onlyRenderedInGutter, onlyRenderedInScrollBar, scheme);
+      .overlappingIterator(new TextRangeInterval(startOffset, endOffset), onlyRenderedInGutter);
     MarkupIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines
-      .overlappingIterator(roundToLineBoundaries(getDocument(), startOffset, endOffset), onlyRenderedInGutter, onlyRenderedInScrollBar, scheme);
+      .overlappingIterator(roundToLineBoundaries(getDocument(), startOffset, endOffset), onlyRenderedInGutter);
     return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 

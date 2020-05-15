@@ -16,13 +16,11 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   private final MarkupModelEx myMarkupModel;
@@ -33,16 +31,11 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   }
 
   @NotNull
-  MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRangeInterval rangeInterval,
-                                                         boolean onlyRenderedInGutter,
-                                                         boolean onlyRenderedInScrollBar,
-                                                         @Nullable EditorColorsScheme scheme) {
+  MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRangeInterval rangeInterval, boolean onlyRenderedInGutter) {
     MarkupIterator<RangeHighlighterEx> iterator =
       overlappingIterator(rangeInterval, node -> (!onlyRenderedInGutter || node.isFlagSet(RHNode.RENDERED_IN_GUTTER_FLAG)));
 
-    return new FilteringMarkupIterator<>(iterator, highlighter -> (!onlyRenderedInGutter || highlighter.isRenderedInGutter()) &&
-                                                                  (!onlyRenderedInScrollBar ||
-                                                                   highlighter.getErrorStripeMarkColor(scheme) != null));
+    return new FilteringMarkupIterator<>(iterator, highlighter -> !onlyRenderedInGutter || highlighter.isRenderedInGutter());
   }
 
   void updateRenderedFlags(RangeHighlighterEx highlighter) {

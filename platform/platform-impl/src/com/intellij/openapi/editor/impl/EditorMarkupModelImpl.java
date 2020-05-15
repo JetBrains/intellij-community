@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -54,8 +55,8 @@ import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -104,6 +105,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private static final ColorKey ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground",
                                                                           UIUtil.getContextHelpForeground());
+
+  private static final Logger LOG = Logger.getInstance(EditorMarkupModelImpl.class);
 
   private int getMinMarkHeight() {
     return JBUIScale.scale(myMinMarkHeight);
@@ -163,6 +166,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private boolean hasAnalyzed;
   private boolean isAnalyzing;
   private boolean showNavigation;
+  private boolean reportErrorStripeInconsistency = true;
   private InspectionPopupManager myPopupManager = new InspectionPopupManager();
   private final Disposable resourcesDisposable = Disposer.newDisposable();
 
@@ -1048,7 +1052,13 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             }
           }
           Color color = highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme());
-          if (color == null) return true;
+          if (color == null) {
+            if (reportErrorStripeInconsistency) {
+              reportErrorStripeInconsistency = false;
+              LOG.error("Error stripe marker has no color. highlighter: " + highlighter);
+            }
+            return true;
+          }
 
           if (stripe == null) {
             // started new stripe, draw previous above

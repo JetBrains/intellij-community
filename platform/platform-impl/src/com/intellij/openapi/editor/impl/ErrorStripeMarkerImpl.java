@@ -2,12 +2,11 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.ErrorStripeMarker;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 
-class ErrorStripeMarkerImpl extends RangeMarkerImpl implements Getter<ErrorStripeMarkerImpl>, ErrorStripeMarker {
+class ErrorStripeMarkerImpl extends RangeMarkerImpl implements Getter<ErrorStripeMarkerImpl> {
 
   private final RangeHighlighterEx myHighlighter;
 
@@ -16,7 +15,6 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl implements Getter<ErrorStrip
     myHighlighter = highlighter;
   }
 
-  @Override
   @NotNull
   public RangeHighlighterEx getHighlighter() {
     return myHighlighter;

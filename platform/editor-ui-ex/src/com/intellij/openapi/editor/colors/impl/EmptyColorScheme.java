@@ -40,9 +40,9 @@ public class EmptyColorScheme extends DefaultColorsScheme {
     initFonts();
   }
 
+  @NotNull
   @Override
   public TextAttributes getAttributes(TextAttributesKey key) {
-    if (key == null) return null;
     TextAttributes attributes = super.getAttributes(key);
     return attributes == null ? DEFAULT_ATTRS : attributes;
   }

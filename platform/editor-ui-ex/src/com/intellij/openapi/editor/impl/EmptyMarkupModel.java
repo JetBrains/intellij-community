@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -77,7 +76,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
                                                                    int layer,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
-                                                                   Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                                                   @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     throw new ProcessCanceledException();
   }
 
@@ -167,9 +166,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   @Override
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
                                                                 int endOffset,
-                                                                boolean onlyRenderedInGutter,
-                                                                boolean onlyRenderedInScrollBar,
-                                                                @Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
+                                                                boolean onlyRenderedInGutter) {
     return MarkupIterator.EMPTY;
   }
 

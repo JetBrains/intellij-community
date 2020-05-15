@@ -116,12 +116,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @Override
   public void setTextAttributes(@NotNull TextAttributes textAttributes) {
     TextAttributes old = myForcedTextAttributes;
-    if (Comparing.equal(old,textAttributes)) return;
+    if (old == textAttributes) return;
 
     myForcedTextAttributes = textAttributes;
-    myModel.treeFor(this).updateRenderedFlags(this);
 
-    if (old != textAttributes && (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER)) {
+    if (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER ||
+        old == null && myTextAttributesKey != null) {
       fireChanged(false, true);
     }
     else if (!Comparing.equal(old, textAttributes)) {
@@ -135,7 +135,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     TextAttributesKey old = myTextAttributesKey;
     myTextAttributesKey = textAttributesKey;
     if (!Comparing.equal(old, textAttributesKey)) {
-      fireChanged(false, true);
+      fireChanged(false, myForcedTextAttributes == null);
     }
   }
 
@@ -226,11 +226,10 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public void setErrorStripeMarkColor(@Nullable Color color) {
     if (color == null) color = NULL_COLOR;
     Color old = myErrorStripeColor;
-    if (Comparing.equal(old, color)) return;
-
     myErrorStripeColor = color;
-    myModel.treeFor(this).updateRenderedFlags(this);
-    fireChanged(false, false);
+    if (!Comparing.equal(old, color)) {
+      fireChanged(false, false);
+    }
   }
 
   @Override

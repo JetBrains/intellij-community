@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -41,18 +41,21 @@ public interface RangeHighlighter extends RangeMarker {
 
   /**
    * Returns the text attributes key used for highlighting.
-   * Having a key is preferred over raw attributes which make impossible to tell what the highlighter is.
-   * @return the attributes key to use for highlighting, or {@code null} if the highlighter
-   * does not modify the text attributes.
+   * Having a key is preferred over raw attributes which makes it impossible to update it on a {@link EditorColorsScheme} changes
+   * @return the attributes key or {@code null} if the highlighter does not have a key.
    */
   @Nullable
-  default TextAttributesKey getTextAttributesKey() {
-    return null;
-  }
+  TextAttributesKey getTextAttributesKey();
 
   /**
-   * @deprecated Use the overload with EditorColorScheme and prefer to pass
-   * @see RangeHighlighter#getTextAttributesKey() around which has structural color-scheme-independent information
+   * Sets the text attributes key used for highlighting.
+   * Having a key is preferred over raw attributes which makes it impossible to update it on a {@link EditorColorsScheme} changes
+   * @param textAttributesKey a attributes key.
+   */
+  void setTextAttributesKey(@NotNull TextAttributesKey textAttributesKey);
+
+  /**
+   * @deprecated Use the overload with {@link EditorColorsScheme} and prefer using {@link #getTextAttributesKey()}
    */
   @Nullable
   @Deprecated
@@ -63,7 +66,7 @@ public interface RangeHighlighter extends RangeMarker {
   /**
    * Returns text attributes used for highlighting.
    * @param scheme color scheme for which text attributes are requested
-   * @return the attributes to use for highlighting, or it does not modify the text attributes.
+   * @return the attributes, or null if highlighter does not modify the text attributes.
    * @see RangeHighlighter#getTextAttributesKey()
    */
   @Nullable
@@ -118,7 +121,7 @@ public interface RangeHighlighter extends RangeMarker {
   void setGutterIconRenderer(@Nullable GutterIconRenderer renderer);
 
   /**
-   * @deprecated Use the overload with {@code EditorColorScheme}
+   * @deprecated Use the overload with {@link EditorColorsScheme}
    */
   @Deprecated
   @Nullable

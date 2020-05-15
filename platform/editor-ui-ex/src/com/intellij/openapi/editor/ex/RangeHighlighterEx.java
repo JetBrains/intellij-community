@@ -37,8 +37,6 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   void setTextAttributes(@NotNull TextAttributes textAttributes);
 
-  default void setTextAttributesKey(@NotNull TextAttributesKey textAttributesKey) {}
-
   /**
    * @see #isVisibleIfFolded()
    */
@@ -67,8 +65,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   }
 
   /**
-   * @deprecated Use
-   * @see #getErrorStripeMarkColor(EditorColorsScheme) directly,
+   * @deprecated Use {@link #getErrorStripeMarkColor(EditorColorsScheme)} directly,
    * it's impossible to tell if a highlighter should be rendered in a scroll bar since an editor can have a custom color scheme
    */
   @Deprecated

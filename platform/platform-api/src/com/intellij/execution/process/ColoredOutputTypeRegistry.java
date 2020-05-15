@@ -245,7 +245,7 @@ public class ColoredOutputTypeRegistry {
                                        boolean inverse,
                                        @NotNull List<EffectType> effectTypes,
                                        int fontType) {
-      super(attribute, ConsoleViewContentType.NORMAL_OUTPUT_KEY);
+      super(attribute, new TextAttributes());
       myBackgroundColorIndex = backgroundColorIndex;
       myEnforcedBackgroundColor = enforcedBackgroundColor;
       myForegroundColorIndex = foregroundColorIndex;

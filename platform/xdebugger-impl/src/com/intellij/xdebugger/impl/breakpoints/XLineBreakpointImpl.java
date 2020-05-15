@@ -6,14 +6,13 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.GutterDraggableObject;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -98,14 +97,20 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
     }
 
-    // todo separate attribute key for disabled breakpoints with settings in Colors | Debugger
-    TextAttributesKey textAttributesKey = isEnabled() ? DebuggerColors.BREAKPOINT_ATTRIBUTES : null;
+    TextAttributesKey attributesKey = DebuggerColors.BREAKPOINT_ATTRIBUTES;
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes attributes = scheme.getAttributes(attributesKey);
+
+    if (!isEnabled()) {
+      attributes = attributes.clone();
+      attributes.setBackgroundColor(null);
+    }
 
     RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
     if (highlighter != null &&
         (!highlighter.isValid()
          || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), document)
-         || !Comparing.equal(highlighter.getTextAttributesKey(), textAttributesKey)
+         || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
          // it seems that this check is not needed - we always update line number from the highlighter
          // and highlighter is removed on line and file change anyway
          /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
@@ -120,15 +125,13 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       if (range != null && !range.isEmpty()) {
         TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
         if (range.intersects(lineRange)) {
-          highlighter = markupModel.addRangeHighlighter(textAttributesKey,
-                                                        range.getStartOffset(),
-                                                        range.getEndOffset(),
-                                                        DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
+          highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                        DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
                                                         HighlighterTargetArea.EXACT_RANGE);
         }
       }
       if (highlighter == null) {
-        highlighter = markupModel.addPersistentLineHighlighter(textAttributesKey, getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER);
+        highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
       }
       if (highlighter == null) {
         return;

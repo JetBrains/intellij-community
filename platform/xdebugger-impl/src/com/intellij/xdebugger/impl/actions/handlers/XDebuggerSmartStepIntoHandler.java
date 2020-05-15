@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -360,8 +359,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     private void setCurrentVariantHighlighterAttributes(TextAttributesKey attributesKey) {
       int index = myVariants.indexOf(myCurrentVariant);
       if (index != -1) {
-        ((RangeHighlighterEx)myHighlighters.get(index))
-          .setTextAttributesKey(attributesKey);
+        myHighlighters.get(index).setTextAttributesKey(attributesKey);
       }
     }
 
