@@ -8,20 +8,14 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeFactory
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 import java.util.concurrent.TimeUnit
-
-data class PluginAdvertiserExtensionsKey(
-  val fileName: String,
-  val fileTypeName: String, // Do not use [FileType] here because it might prevent plugin dynamic unloading.
-  val extension: String?
-)
 
 data class PluginAdvertiserExtensionsData(
   // Either extension or file name. Depends on which of the two properties has more priority for advertising plugins for this specific file.
@@ -38,40 +32,50 @@ class PluginAdvertiserExtensionsState(private val project: Project) {
     fun getInstance(project: Project): PluginAdvertiserExtensionsState = project.service()
   }
 
-  private val cache: Cache<PluginAdvertiserExtensionsKey, Optional<PluginAdvertiserExtensionsData>> =
+  private val cache: Cache<String, Optional<PluginAdvertiserExtensionsData>> =
     CacheBuilder
       .newBuilder()
-      .expireAfterWrite(5, TimeUnit.MINUTES)
+      .expireAfterWrite(1, TimeUnit.HOURS)
       .build()
+
+  fun ignoreExtensionOrFileNameAndInvalidateCache(extensionOrFileName: String) {
+    UnknownFeaturesCollector.getInstance(project).ignoreFeature(createUnknownExtensionFeature(extensionOrFileName))
+    invalidateCacheDataForKey(extensionOrFileName)
+  }
 
   private val enabledExtensionOrFileNames = ContainerUtil.newConcurrentSet<String>()
 
-  fun addEnabledExtensionOrFileName(extensionOrFileName: String) {
+  fun addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName: String) {
     enabledExtensionOrFileNames += extensionOrFileName
+    invalidateCacheDataForKey(extensionOrFileName)
   }
 
-  fun getCachedData(extensionsKey: PluginAdvertiserExtensionsKey): PluginAdvertiserExtensionsData? =
-    cache.getIfPresent(extensionsKey)?.orElse(null)
+  private fun getCachedData(extensionOrFileName: String): PluginAdvertiserExtensionsData? =
+    cache.getIfPresent(extensionOrFileName)?.orElse(null)
 
-  fun updateCache(extensionsKey: PluginAdvertiserExtensionsKey) {
+  fun updateCache(extensionOrFileName: String) {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed)
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
 
-    if (cache.getIfPresent(extensionsKey) != null) {
+    if (cache.getIfPresent(extensionOrFileName) != null) {
       return
     }
-    val newData = requestExtensionData(extensionsKey)
-    cache.put(extensionsKey, Optional.ofNullable(newData))
+    val knownExtensions = PluginsAdvertiser.loadExtensions()
+    if (knownExtensions != null) {
+      val newData = requestData(extensionOrFileName, knownExtensions)
+      cache.put(extensionOrFileName, Optional.ofNullable(newData))
+    }
   }
 
-  fun invalidateCacheForKey(extensionsKey: PluginAdvertiserExtensionsKey) {
-    cache.invalidate(extensionsKey)
+  private fun invalidateCacheDataForKey(extensionOrFileName: String) {
+    cache.invalidate(extensionOrFileName)
   }
 
-  private fun requestExtensionData(key: PluginAdvertiserExtensionsKey): PluginAdvertiserExtensionsData? {
-    val fileName = key.fileName
-    val fileType = FileTypeManager.getInstance().findFileTypeByName(key.fileTypeName) ?: return null
-    val extension = key.extension
+  fun requestExtensionData(
+    fileName: String,
+    fileType: FileType,
+    extension: String?
+  ): PluginAdvertiserExtensionsData? {
     val alreadySupported = fileType !is PlainTextLikeFileType
 
     val fullExtension = extension?.let { "*.$it" }
@@ -113,9 +117,9 @@ class PluginAdvertiserExtensionsState(private val project: Project) {
           fileName,
           fileType
         ))
-        return requestData(fileName, knownExtensions)
+        return getCachedData(fileName)
       }
-      return fullExtension?.let { requestData(it, knownExtensions) } ?: requestData(fileName, knownExtensions)
+      return fullExtension?.let { getCachedData(it) } ?: getCachedData(fileName)
     }
     LOG.debug("No known extensions loaded")
     return null

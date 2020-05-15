@@ -208,8 +208,11 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            PluginAdvertiserExtensionsKey extensionsKey = new PluginAdvertiserExtensionsKey(file.getName(), file.getFileType().getName(), file.getExtension());
-            PluginAdvertiserExtensionsState.getInstance(project).updateCache(extensionsKey);
+            PluginAdvertiserExtensionsState.getInstance(project).updateCache(file.getName());
+            if (file.getExtension() != null) {
+                String fullExtension = "*."+file.getExtension();
+              PluginAdvertiserExtensionsState.getInstance(project).updateCache(fullExtension);
+            }
             EditorNotifications.getInstance(project).updateNotifications(file);
           });
         }

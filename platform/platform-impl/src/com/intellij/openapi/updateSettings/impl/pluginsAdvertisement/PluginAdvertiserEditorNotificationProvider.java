@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -40,8 +39,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     final EditorNotificationPanel panel = new EditorNotificationPanel();
 
     PluginAdvertiserExtensionsState pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsState.getInstance(project);
-    PluginAdvertiserExtensionsKey extensionsKey = new PluginAdvertiserExtensionsKey(file.getName(), file.getFileType().getName(), file.getExtension());
-    PluginAdvertiserExtensionsData cachedData = pluginAdvertiserExtensionsState.getCachedData(extensionsKey);
+    PluginAdvertiserExtensionsData cachedData = pluginAdvertiserExtensionsState.requestExtensionData(file.getName(), file.getFileType(), file.getExtension());
     if (cachedData == null) {
       return null;
     }
@@ -52,8 +50,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", disabledPlugin.getName()), () -> {
-        pluginAdvertiserExtensionsState.addEnabledExtensionOrFileName(extensionOrFileName);
-        pluginAdvertiserExtensionsState.invalidateCacheForKey(extensionsKey);
+        pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
         EditorNotifications.getInstance(project).updateAllNotifications();
         FeatureUsageData data = new FeatureUsageData()
           .addData("source", "editor")
@@ -73,8 +70,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           .addData("plugins", ContainerUtil.map(pluginIds, (pluginId) -> pluginId.getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
         PluginsAdvertiser.installAndEnable(pluginIds, () -> {
-          pluginAdvertiserExtensionsState.addEnabledExtensionOrFileName(extensionOrFileName);
-          pluginAdvertiserExtensionsState.invalidateCacheForKey(extensionsKey);
+          pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
           EditorNotifications.getInstance(project).updateAllNotifications();
         });
       });
@@ -86,8 +82,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       panel.setText(IdeBundle.message("plugins.advertiser.extensions.supported.in.ultimate", extensionOrFileName));
 
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate"), () -> {
-        pluginAdvertiserExtensionsState.addEnabledExtensionOrFileName(extensionOrFileName);
-        pluginAdvertiserExtensionsState.invalidateCacheForKey(extensionsKey);
+        pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
         FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page", data);
         PluginsAdvertiser.openDownloadPage();
@@ -106,8 +101,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.extension"), () -> {
       FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
       FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.extensions", data);
-      UnknownFeaturesCollector.getInstance(project).ignoreFeature(createUnknownExtensionFeature(extensionOrFileName));
-      pluginAdvertiserExtensionsState.invalidateCacheForKey(extensionsKey);
+      pluginAdvertiserExtensionsState.ignoreExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
       EditorNotifications.getInstance(project).updateAllNotifications();
     });
     return panel;
@@ -118,11 +112,5 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       if (!plugin.myBundled) return true;
     }
     return false;
-  }
-
-  @NotNull
-  private static UnknownFeature createUnknownExtensionFeature(@NotNull String extension) {
-    //noinspection deprecation
-    return new UnknownFeature(FileTypeFactory.FILE_TYPE_FACTORY_EP.getName(), "File Type", extension, extension);
   }
 }
