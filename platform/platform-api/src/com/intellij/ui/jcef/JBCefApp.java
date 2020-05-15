@@ -253,6 +253,13 @@ public final class JBCefApp {
     }
 
     @Override
+    public boolean onBeforeTerminate() {
+      // Do not let JCEF auto-terminate by Cmd+Q (or an alternative),
+      // so that IDE (user) has an option to decide
+      return true;
+    }
+
+    @Override
     public void onRegisterCustomSchemes(CefSchemeRegistrar registrar) {
       for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         f.registerCustomScheme(registrar);
