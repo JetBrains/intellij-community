@@ -109,6 +109,7 @@ public class FilterPanel implements FilterTable {
       })
       .setRemoveActionUpdater(e -> myValid && myFilterTable.getTable().getSelectedRow() != 0)
       .setPanelBorder(JBUI.Borders.empty())
+      .setScrollPaneBorder(JBUI.Borders.empty())
       .createPanel();
     myFilterPanel.setPreferredSize(new Dimension(350, 60));
   }
@@ -119,7 +120,8 @@ public class FilterPanel implements FilterTable {
     TableUtil.stopEditing(table);
     table.setRowHeight(table.getRowHeight()); // reset
     int index = 0;
-    for (int max = myTableModel.getRowCount(); index < max; index++) {
+    final int max = myTableModel.getRowCount();
+    for (; index < max; index++) {
       if (filter.position() < myTableModel.getItem(index).position()) {
         break;
       }
