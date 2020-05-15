@@ -8,6 +8,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -20,8 +21,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.intellij.icons.AllIcons.Actions.FindAndShowNextMatches;
 
 public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettings> extends CompositeSettingsEditor<Settings> {
 
@@ -119,9 +118,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
           fragments.remove(label);
         }
 
-        linkLabel = LinkLabel.create(OptionsBundle.message("settings.editor.modify.options"), () -> showOptions());
-        linkLabel.setIcon(FindAndShowNextMatches);
-        linkLabel.setHorizontalTextPosition(SwingConstants.LEADING);
+        linkLabel = new DropDownLink<>(OptionsBundle.message("settings.editor.modify.options"), () -> showOptions());
         panel.add(linkLabel, BorderLayout.EAST);
         return panel;
       }
