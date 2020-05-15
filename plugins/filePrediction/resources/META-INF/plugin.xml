@@ -10,6 +10,7 @@
   <depends optional="true" config-file="file-prediction-vcs.xml">com.jetbrains.changeReminder</depends>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.candidateProvider" interface="com.intellij.filePrediction.candidates.FilePredictionCandidateProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.features.FilePredictionFeatureProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.references.FileExternalReferencesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.filePrediction.ml.model" interface="com.intellij.filePrediction.predictor.model.FilePredictionModelProvider" dynamic="true"/>
@@ -20,6 +21,9 @@
     <registryKey key="filePrediction.calculate.features" defaultValue="true" description="Record opened files features to predict which file will be opened next and pre-load caches."/>
 
     <statistics.counterUsagesCollector groupId="file.prediction" version="5"/>
+
+    <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionReferenceProvider"/>
+    <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionNeighborFilesProvider"/>
 
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionGeneralFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionFileTypeFeatures"/>

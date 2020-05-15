@@ -1,60 +1,45 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.candidates
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
+private val EP_NAME = ExtensionPointName<FilePredictionCandidateProvider>("com.intellij.filePrediction.candidateProvider")
+
+@ApiStatus.Internal
 interface FilePredictionCandidateProvider {
+  fun getWeight(): Int
+
   fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile>
 }
 
+internal abstract class FilePredictionBaseCandidateProvider(private val weight: Int) : FilePredictionCandidateProvider {
+  override fun getWeight(): Int = weight
+
+  internal fun addWithLimit(from: Iterator<VirtualFile>, to: MutableList<VirtualFile>, skip: VirtualFile, limit: Int) {
+    while (to.size < limit && from.hasNext()) {
+      val next = from.next()
+      if (!next.isDirectory && skip != next) {
+        to.add(next)
+      }
+    }
+  }
+}
+
 internal object CompositeCandidateProvider : FilePredictionCandidateProvider {
-  private val refProvider: FilePredictionCandidateProvider = FilePredictionReferenceProvider()
-  private val neighborProvider: FilePredictionCandidateProvider = FilePredictionNeighborFilesProvider()
+  override fun getWeight(): Int {
+    return 0
+  }
 
   override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
     val result = HashSet<VirtualFile>()
-    result.addAll(refProvider.provideCandidates(project, file, refs, limit / 2))
-    result.addAll(neighborProvider.provideCandidates(project, file, refs, limit - result.size))
-    return result
-  }
-}
-
-internal class FilePredictionReferenceProvider : FilePredictionCandidateProvider {
-  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
-    if (refs.isEmpty() || file == null) {
-      return emptySet()
-    }
-
-    val result = ArrayList<VirtualFile>()
-    addWithLimit(refs.iterator(), result, file, limit)
-    return result
-  }
-}
-
-internal class FilePredictionNeighborFilesProvider : FilePredictionCandidateProvider {
-  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
-    if (file == null) {
-      return emptySet()
-    }
-
-    val result = ArrayList<VirtualFile>()
-    val fileIndex = FileIndexFacade.getInstance(project)
-    var parent = file.parent
-    while (parent != null && parent.isDirectory && result.size < limit && fileIndex.isInProjectScope(parent)) {
-      addWithLimit(parent.children.iterator(), result, file, limit)
-      parent = parent.parent
+    val providers = EP_NAME.extensionList.sortedBy { it.getWeight() }
+    for ((index, provider) in providers.withIndex()) {
+      val providerLimit = (limit - result.size) / (providers.size - index)
+      result.addAll(provider.provideCandidates(project, file, refs, providerLimit))
     }
     return result
-  }
-}
-
-private fun addWithLimit(from: Iterator<VirtualFile>, to: MutableList<VirtualFile>, skip: VirtualFile, limit: Int) {
-  while (to.size < limit && from.hasNext()) {
-    val next = from.next()
-    if (!next.isDirectory && skip != next) {
-      to.add(next)
-    }
   }
 }
