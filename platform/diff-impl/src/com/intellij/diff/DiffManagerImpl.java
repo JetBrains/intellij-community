@@ -126,7 +126,7 @@ public class DiffManagerImpl extends DiffManagerEx {
   @CalledInAwt
   public void showMerge(@Nullable Project project, @NotNull MergeRequest request) {
     // plugin may provide a better tool for this MergeRequest
-    AutomaticExternalMergeTool tool = AutomaticExternalMergeTool.EP_NAME.findFirstSafe(mergeTool -> mergeTool.canShow(request));
+    AutomaticExternalMergeTool tool = AutomaticExternalMergeTool.EP_NAME.findFirstSafe(mergeTool -> mergeTool.canShow(project, request));
     if (tool!=null) {
       tool.show(project, request);
       return;
