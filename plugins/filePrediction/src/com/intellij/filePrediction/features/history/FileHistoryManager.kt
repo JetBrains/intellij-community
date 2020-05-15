@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features.history
 
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.TestOnly
+
 data class FileHistoryFeatures(val position: Int?, val uniGram: NextFileProbability, val biGram: NextFileProbability)
 
 data class NextFileProbability(
@@ -10,8 +13,14 @@ data class NextFileProbability(
 class FileHistoryManager(private var state: FilePredictionHistoryState, private val recentFilesLimit: Int) {
   val helper: FileSequenceModelHelper = FileSequenceModelHelper()
 
+  @TestOnly
   @Synchronized
   fun getState() = state
+
+  @Synchronized
+  fun saveFileHistory(project: Project) {
+    FileHistoryPersistence.saveFileHistory(project, state)
+  }
 
   @Synchronized
   fun onFileOpened(fileUrl: String) {

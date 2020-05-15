@@ -23,7 +23,7 @@ class FilePredictionHistory(project: Project) {
 
   fun saveFilePredictionHistory(project: Project) {
     ApplicationManager.getApplication().executeOnPooledThread {
-      FileHistoryPersistence.saveFileHistory(project, manager.getState())
+      manager.saveFileHistory(project)
     }
   }
 
