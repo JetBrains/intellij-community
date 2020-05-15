@@ -38,6 +38,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -46,10 +47,7 @@ import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -184,6 +182,14 @@ class SliceUtil {
         return processUsagesFlownDownTo(rExpression, processor, builder);
       }
     }
+    JavaDfaSliceValueFilter filter = ObjectUtils.tryCast(builder.getParent().params.valueFilter, JavaDfaSliceValueFilter.class);
+    if (filter != null && expression instanceof PsiExpression) {
+      AnalysisStartingPoint analysis = AnalysisStartingPoint.propagateThroughExpression(expression, filter.getDfType());
+      if (analysis != null) {
+        return builder.withFilter(new JavaDfaSliceValueFilter(analysis.myDfType)).process(analysis.myAnchor, processor);
+      }
+    }
+    
     if (builder.hasNesting()) {
       // consider container creation
       PsiElement initializer = expression instanceof PsiNewExpression ? ((PsiNewExpression)expression).getArrayInitializer() : expression;

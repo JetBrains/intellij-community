@@ -18,15 +18,20 @@ import java.util.Objects;
 
 public class JavaDfaSliceValueFilter implements SliceValueFilter {
   private final @Nullable JavaDfaSliceValueFilter myNextFilter;
+
   private final @NotNull DfType myDfType;
 
   private JavaDfaSliceValueFilter(@Nullable JavaDfaSliceValueFilter nextFilter, @NotNull DfType type) {
     myNextFilter = nextFilter;
     myDfType = type;
   }
-  
+
   public JavaDfaSliceValueFilter(@NotNull DfType type) {
     this(null, type);
+  }
+
+  @NotNull DfType getDfType() {
+    return myDfType;
   }
   
   JavaDfaSliceValueFilter wrap() {

@@ -62,7 +62,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   
   public void testAssertDivisibility() {
     doTest("java.lang.AssertionError",
-           "Find why 'i' could be odd",
+           "Find why 'i % 2' could be != 0",
            "class X {static void test(int i) {assert i % 2 == 0;}}");
   }
 
