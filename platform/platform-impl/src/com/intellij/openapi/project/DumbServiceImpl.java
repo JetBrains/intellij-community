@@ -691,31 +691,15 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
 
-        DumbModeTask task = null;
-        while (true) {
-          Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
-          if (pair == null) break;
-
-          task = pair.first;
-          activity.stageStarted(task.getClass());
-          ProgressIndicatorEx taskIndicator = pair.second;
-          suspender.attachToProgress(taskIndicator);
-          taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
-            @Override
-            protected void delegateProgressChange(@NotNull IndicatorAction action) {
-              super.delegateProgressChange(action);
-              action.execute((ProgressIndicatorEx)visibleIndicator);
-            }
-          });
-          try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
-            runSingleTask(task, taskIndicator);
-          }
-        }
+        processTasksWithProgress((ProgressIndicatorEx)visibleIndicator, suspender, activity);
       }
       catch (Throwable unexpected) {
         LOG.error(unexpected);
       }
       finally {
+        //this used to be called in EDT from getNextTask(), but look thread-safe
+        queueUpdateFinished();
+
         shutdownTracker.unregisterStopperThread(self);
         // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
         // got suspended after the the last dumb task finished (or even after the last check cancelled call). This case is handled by
@@ -723,6 +707,31 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         // previously installed.
         myCurrentSuspender = null;
         activity.finished();
+      }
+    }
+  }
+
+  private void processTasksWithProgress(@NotNull ProgressIndicatorEx visibleIndicator,
+                                        @NotNull ProgressSuspender suspender,
+                                        @NotNull IdeActivity activity) {
+    DumbModeTask task = null;
+    while (true) {
+      Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
+      if (pair == null) break;
+
+      task = pair.first;
+      activity.stageStarted(task.getClass());
+      ProgressIndicatorEx taskIndicator = pair.second;
+      suspender.attachToProgress(taskIndicator);
+      taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
+        @Override
+        protected void delegateProgressChange(@NotNull IndicatorAction action) {
+          super.delegateProgressChange(action);
+          action.execute(visibleIndicator);
+        }
+      });
+      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
+        runSingleTask(task, taskIndicator);
       }
     }
   }
@@ -757,11 +766,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         Disposer.dispose(prevTask);
       }
 
-      Pair<DumbModeTask, ProgressIndicatorEx> pair = myDumbTaskQueue.pollTaskQueue();
-      if (pair == null) {
-        queueUpdateFinished();
-      }
-      result.complete(pair);
+      result.complete(myDumbTaskQueue.pollTaskQueue());
     });
     return waitForFuture(result);
   }
