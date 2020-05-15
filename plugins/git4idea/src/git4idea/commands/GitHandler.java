@@ -21,7 +21,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
@@ -84,8 +83,6 @@ public abstract class GitHandler {
          GitExecutableManager.getInstance().getPathToGit(project),
          command,
          configParameters);
-    myProgressParameterAllowed =
-      GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(project);
   }
 
   /**
@@ -117,7 +114,6 @@ public abstract class GitHandler {
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
     myProject = project;
-    myVcs = project != null ? GitVcs.getInstance(project) : null;
     myPathToExecutable = pathToExecutable;
     myCommand = command;
 
@@ -464,17 +460,12 @@ public abstract class GitHandler {
   }
 
   //region deprecated stuff
-  //Used by Gitflow in GitInitLineHandler.onTextAvailable
-  @Deprecated
-  protected final GitVcs myVcs;
   @Deprecated
   private Integer myExitCode; // exit code or null if exit code is not yet available
   @Deprecated
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<>());
   @Deprecated
   private static final int LAST_OUTPUT_SIZE = 5;
-  @Deprecated
-  private boolean myProgressParameterAllowed = false;
   @Deprecated
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<>());
 
@@ -486,7 +477,7 @@ public abstract class GitHandler {
    */
   @Deprecated
   public boolean addProgressParameter() {
-    if (myProgressParameterAllowed) {
+    if (myProject != null && GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
       addParameters("--progress");
       return true;
     }
