@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -417,8 +418,7 @@ public class PersistentHashMapValueStorage {
             }
           }
 
-          final int chunkSizeOutOfBuffer = Math.min(chunkSize,
-                                                    Math.max((int)(info.valueAddress + dataOffset + chunkSize - lastReadOffset), 0));
+          final int chunkSizeOutOfBuffer = MathUtil.clamp((int)(info.valueAddress + dataOffset + chunkSize - lastReadOffset), 0, chunkSize);
           if (chunkSizeOutOfBuffer > 0) {
             if (allRecordsStart != 0) {
               myCompactionModeReader.get(allRecordsStart, accumulatedChunksBuffer, chunkSize - chunkSizeOutOfBuffer, chunkSizeOutOfBuffer);

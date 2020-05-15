@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -219,15 +220,15 @@ public class OnePixelDivider extends Divider {
       final float secondMinProportion = mySplitter.getMinProportion(false);
       if (isVertical()) {
         if (getHeight() > 0) {
-          proportion = Math.min(1.0f, Math
-            .max(.0f, Math.min(Math.max(firstMinProportion, (float)myPoint.y / (float)mySplitter.asComponent().getHeight()), 1 - secondMinProportion)));
+          float ratio = (float)myPoint.y / (float)mySplitter.asComponent().getHeight();
+          proportion = MathUtil.clamp(MathUtil.clamp(ratio, firstMinProportion, 1 - secondMinProportion), 0f, 1f);
           mySplitter.setProportion(proportion);
         }
       }
       else {
         if (getWidth() > 0) {
-          proportion = Math.min(1.0f, Math.max(.0f, Math.min(
-            Math.max(firstMinProportion, (float)myPoint.x / (float)mySplitter.asComponent().getWidth()), 1 - secondMinProportion)));
+          float ratio = (float)myPoint.x / (float)mySplitter.asComponent().getWidth();
+          proportion = MathUtil.clamp(MathUtil.clamp(ratio, firstMinProportion, 1 - secondMinProportion), 0f, 1f);
           mySplitter.setProportion(proportion);
         }
       }

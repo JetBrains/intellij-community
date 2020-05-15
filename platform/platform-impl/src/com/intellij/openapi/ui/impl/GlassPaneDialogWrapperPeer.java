@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -511,8 +512,8 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
         Rectangle bounds = new Rectangle(p.getWidth() - width, p.getHeight() - height);
         JBInsets.removeFrom(bounds, getInsets());
 
-        x = bounds.width < 0 ? bounds.width / 2 : Math.min(bounds.x + bounds.width, Math.max(bounds.x, x));
-        y = bounds.height < 0 ? bounds.height / 2 : Math.min(bounds.y + bounds.height, Math.max(bounds.y, y));
+        x = bounds.width < 0 ? bounds.width / 2 : MathUtil.clamp(x, bounds.x, bounds.x + bounds.width);
+        y = bounds.height < 0 ? bounds.height / 2 : MathUtil.clamp(y, bounds.y, bounds.y + bounds.height);
       }
       super.setBounds(x, y, width, height);
 

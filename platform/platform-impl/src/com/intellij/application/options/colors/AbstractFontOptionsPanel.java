@@ -16,6 +16,7 @@ import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,7 +185,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
         try {
           int value = Integer.parseInt(myEditorFontSizeField.getText());
           value += (up ? 1 : -1);
-          value = Math.min(EditorFontsConstants.getMaxEditorFontSize(), Math.max(EditorFontsConstants.getMinEditorFontSize(), value));
+          value = MathUtil.clamp(value, EditorFontsConstants.getMinEditorFontSize(), EditorFontsConstants.getMaxEditorFontSize());
           myEditorFontSizeField.setText(String.valueOf(value));
         }
         catch (NumberFormatException ignored) {
@@ -211,7 +212,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
         try {
           float value = Float.parseFloat(myLineSpacingField.getText());
           value += (up ? 1 : -1) * .1F;
-          value = Math.min(EditorFontsConstants.getMaxEditorLineSpacing(), Math.max(EditorFontsConstants.getMinEditorLineSpacing(), value));
+          value = MathUtil.clamp(value, EditorFontsConstants.getMinEditorLineSpacing(), EditorFontsConstants.getMaxEditorLineSpacing());
           myLineSpacingField.setText(String.format(Locale.ENGLISH, "%.1f", value));
         }
         catch (NumberFormatException ignored) {
@@ -237,8 +238,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   private int getFontSizeFromField() {
     try {
-      return Math.min(EditorFontsConstants.getMaxEditorFontSize(),
-                      Math.max(EditorFontsConstants.getMinEditorFontSize(), Integer.parseInt(myEditorFontSizeField.getText())));
+      return MathUtil.clamp(Integer.parseInt(myEditorFontSizeField.getText()), 
+                            EditorFontsConstants.getMinEditorFontSize(), EditorFontsConstants.getMaxEditorFontSize());
     }
     catch (NumberFormatException e) {
       return EditorFontsConstants.getDefaultEditorFontSize();
@@ -247,8 +248,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   private float getLineSpacingFromField() {
     try {
-      return Math.min(EditorFontsConstants.getMaxEditorLineSpacing(),
-                      Math.max(EditorFontsConstants.getMinEditorLineSpacing(), Float.parseFloat(myLineSpacingField.getText())));
+      return MathUtil.clamp(Float.parseFloat(myLineSpacingField.getText()), 
+                            EditorFontsConstants.getMinEditorLineSpacing(), EditorFontsConstants.getMaxEditorLineSpacing());
     }
     catch (NumberFormatException e) {
       return EditorFontsConstants.getDefaultEditorLineSpacing();

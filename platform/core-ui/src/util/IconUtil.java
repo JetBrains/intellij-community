@@ -414,7 +414,7 @@ public class IconUtil {
   @Deprecated
   @NotNull
   public static Icon scale(@NotNull final Icon source, double _scale) {
-    final double scale = Math.min(32, Math.max(.1, _scale));
+    final double scale = MathUtil.clamp(_scale, .1, 32);
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {

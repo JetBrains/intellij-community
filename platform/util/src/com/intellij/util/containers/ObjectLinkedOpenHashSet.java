@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.MathUtil;
 import gnu.trove.TObjectHashingStrategy;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -238,7 +239,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   }
 
   private void tryCapacity(final long capacity) {
-    final int needed = (int)Math.min(1 << 30, Math.max(2, nextPowerOfTwo((long)Math.ceil(capacity / f))));
+    final int needed = (int)MathUtil.clamp(nextPowerOfTwo((long)Math.ceil(capacity / f)), 2, 1 << 30);
     if (needed > n) {
       rehash(needed);
     }

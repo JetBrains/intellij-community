@@ -38,6 +38,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
+import com.intellij.util.MathUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -419,7 +420,7 @@ public final class AboutPopup {
       if (myShowCopy) {
         JBPoint coord = getCopyIconCoord();
         float alpha = myShowCopyAlpha;
-        config = new GraphicsConfig(g).paintWithAlpha(Math.min(1f, Math.max(0f, alpha)));
+        config = new GraphicsConfig(g).paintWithAlpha(MathUtil.clamp(alpha, 0f, 1f));
         AllIcons.General.CopyHovered.paintIcon(this, g, coord.x, coord.y);
         config.restore();
       }

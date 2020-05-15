@@ -19,6 +19,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -386,8 +387,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       ToolWindowAnchor anchor = decorator.toolWindow.getAnchor();
       Container windowPane = decorator.getParent();
       Point lastPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), windowPane);
-      lastPoint.x = Math.min(Math.max(lastPoint.x, 0), windowPane.getWidth());
-      lastPoint.y = Math.min(Math.max(lastPoint.y, 0), windowPane.getHeight());
+      lastPoint.x = MathUtil.clamp(lastPoint.x, 0, windowPane.getWidth());
+      lastPoint.y = MathUtil.clamp(lastPoint.y, 0, windowPane.getHeight());
 
       Rectangle bounds = decorator.getBounds();
       if (anchor == ToolWindowAnchor.TOP) {

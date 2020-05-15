@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.extractor.values.Generation;
 import com.intellij.psi.codeStyle.extractor.values.Gens;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,6 +194,6 @@ public class Utils {
 
   public static int getRandomLess(int count) {
     final int ret = (int)(getRandom() * count / RAND_MAX);
-    return Math.min(Math.max(ret, 0), count - 1);
+    return MathUtil.clamp(ret, 0, count - 1);
   }
 }

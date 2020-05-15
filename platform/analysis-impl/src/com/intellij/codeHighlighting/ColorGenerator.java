@@ -16,6 +16,7 @@
 package com.intellij.codeHighlighting;
 
 import com.intellij.ui.JBColor;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -70,6 +71,6 @@ public class ColorGenerator {
 
   private static int ratio(int val1, int val2, float ratio) {
     int value = (int)(val1 + (val2 - val1) * ratio);
-    return Math.max(Math.min(value, 255), 0);
+    return MathUtil.clamp(value, 0, 255);
   }
 }

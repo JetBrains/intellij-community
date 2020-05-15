@@ -47,6 +47,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -278,7 +279,7 @@ public class BackgroundImageDialog extends DialogWrapper {
         boolean b = e.getSource() == myOpacitySpinner;
         if (b) {
           int value = (Integer)myOpacitySpinner.getValue();
-          myOpacitySpinner.setValue(Math.min(Math.max(0, value), 100));
+          myOpacitySpinner.setValue(MathUtil.clamp(value, 0, 100));
           myOpacitySlider.setValue(value);
         }
         else {

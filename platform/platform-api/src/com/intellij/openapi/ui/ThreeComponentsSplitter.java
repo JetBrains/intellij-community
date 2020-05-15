@@ -13,6 +13,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -853,20 +854,24 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         if (getOrientation()) {
           if (size > 0 || myDividerZone > 0) {
             if (myIsFirst) {
-              setFirstSize(Math.min(size - myLastSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount(), Math.max(getMinSize(myFirstComponent), myPoint.y)));
+              setFirstSize(MathUtil.clamp(myPoint.y, getMinSize(myFirstComponent),
+                                          size - myLastSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount()));
             }
             else {
-              setLastSize(Math.min(size - myFirstSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount(), Math.max(getMinSize(myLastComponent), size - myPoint.y - getDividerWidth())));
+              setLastSize(MathUtil.clamp(size - myPoint.y - getDividerWidth(), getMinSize(myLastComponent), 
+                                         size - myFirstSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount()));
             }
           }
         }
         else {
           if (size > 0 || myDividerZone > 0) {
             if (myIsFirst) {
-              setFirstSize(Math.min(size - myLastSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount(), Math.max(getMinSize(myFirstComponent), myPoint.x)));
+              setFirstSize(MathUtil.clamp(myPoint.x, getMinSize(myFirstComponent), 
+                                          size - myLastSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount()));
             }
             else {
-              setLastSize(Math.min(size - myFirstSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount(), Math.max(getMinSize(myLastComponent), size - myPoint.x - getDividerWidth())));
+              setLastSize(MathUtil.clamp(size - myPoint.x - getDividerWidth(), getMinSize(myLastComponent), 
+                                         size - myFirstSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount()));
             }
           }
         }

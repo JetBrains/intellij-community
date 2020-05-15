@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ThreeState;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -1908,8 +1909,8 @@ public abstract class LongRangeSet {
           int divisorValue = (int)((Point)divisor).myValue;
           int lcm = lcm(divisorValue);
           if (lcm <= Long.SIZE) {
-            long from = Math.min(0, Math.max(myFrom, -divisorValue + 1));
-            long to = Math.max(0, Math.min(myTo, divisorValue - 1));
+            long from = MathUtil.clamp(myFrom, -divisorValue + 1, 0);
+            long to = MathUtil.clamp(myTo, 0, divisorValue - 1);
             long possibleMods = widenBits(lcm);
             while (Long.SIZE - Long.numberOfLeadingZeros(possibleMods) > divisorValue) {
               possibleMods = extractBits(possibleMods, divisorValue, Long.SIZE) | 

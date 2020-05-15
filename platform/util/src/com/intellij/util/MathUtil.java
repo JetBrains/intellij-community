@@ -13,4 +13,48 @@ public class MathUtil {
     return a >= 0 ? a :
            a == Integer.MIN_VALUE ? Integer.MAX_VALUE : -a;
   }
+
+  /**
+   * Clamps the value to fit between min and max
+   * @param value value to clamp
+   * @param min min allowed value
+   * @param max max allowed value
+   * @return a clamped value that fits into [min..max] interval
+   */
+  public static int clamp(int value, int min, int max) {
+    return Math.min(max, Math.max(value, min));
+  }
+
+  /**
+   * Clamps the value to fit between min and max
+   * @param value value to clamp
+   * @param min min allowed value
+   * @param max max allowed value
+   * @return a clamped value that fits into [min..max] interval
+   */
+  public static long clamp(long value, long min, long max) {
+    return Math.min(max, Math.max(value, min));
+  }
+
+  /**
+   * Clamps the value to fit between min and max
+   * @param value value to clamp
+   * @param min min allowed value
+   * @param max max allowed value
+   * @return a clamped value that fits into [min..max] interval
+   */
+  public static double clamp(double value, double min, double max) {
+    return Math.min(max, Math.max(value, min));
+  }
+
+  /**
+   * Clamps the value to fit between min and max
+   * @param value value to clamp
+   * @param min min allowed value
+   * @param max max allowed value
+   * @return a clamped value that fits into [min..max] interval
+   */
+  public static float clamp(float value, float min, float max) {
+    return Math.min(max, Math.max(value, min));
+  }
 }
