@@ -29,8 +29,6 @@ open class EntitySourceIndex private constructor(
   class MutableEntitySourceIndex private constructor(
     index: BidirectionalMap<PId<out TypedEntity>, EntitySource>
   ) : EntitySourceIndex(index) {
-    constructor() : this(BidirectionalMap<PId<out TypedEntity>, EntitySource>())
-
     internal fun index(id: PId<out TypedEntity>, entitySource: EntitySource? = null) {
       index.remove(id)
       if (entitySource == null) return

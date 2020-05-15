@@ -119,16 +119,11 @@ internal class MutableEntityFamily<E : TypedEntity>(
 }
 
 internal sealed class EntityFamily<E : TypedEntity> {
-
   internal abstract val entities: List<PEntityData<E>?>
 
   operator fun get(idx: Int) = entities.getOrNull(idx)
-
-  fun all() = entities.asSequence().filterNotNull()
-
   fun exists(id: Int) = get(id) != null
-
   fun isEmpty() = entities.isEmpty()
-
+  fun all() = entities.asSequence().filterNotNull()
   abstract fun size(): Int
 }

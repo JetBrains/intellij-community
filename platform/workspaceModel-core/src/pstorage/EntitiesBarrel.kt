@@ -2,6 +2,7 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.TypedEntity
+import org.jetbrains.annotations.TestOnly
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entities: Map<Class<out TypedEntity>, ImmutableEntityFamily<out TypedEntity>>
@@ -28,15 +29,6 @@ internal open class ImmutableEntitiesBarrel internal constructor(
 internal class MutableEntitiesBarrel(
   override var entities: MutableMap<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
 ) : EntitiesBarrel() {
-
-  fun clear() = entities.clear()
-
-  fun isEmpty() = entities.isEmpty()
-
-  operator fun <T : TypedEntity> set(clazz: Class<T>, newFamily: MutableEntityFamily<T>) {
-    entities[clazz] = newFamily
-  }
-
   fun remove(id: Int, clazz: Class<out TypedEntity>) {
     val entityFamily = getMutableEntityFamily(clazz)
     entityFamily.remove(id)
@@ -64,7 +56,6 @@ internal class MutableEntitiesBarrel(
   }
 
   fun toImmutable(): ImmutableEntitiesBarrel {
-    entities
     val friezedEntities = entities.mapValues { (_, family) ->
       when (family) {
         is MutableEntityFamily<*> -> family.toImmutable()
@@ -73,6 +64,9 @@ internal class MutableEntitiesBarrel(
     }
     return ImmutableEntitiesBarrel(friezedEntities)
   }
+
+  fun isEmpty() = entities.isEmpty()
+  fun clear() = entities.clear()
 
   private fun <T : TypedEntity> getMutableEntityFamily(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
     val entityFamily = entities[unmodifiableEntityClass] as EntityFamily<T>?
@@ -94,7 +88,11 @@ internal class MutableEntitiesBarrel(
   }
 
   companion object {
-    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(HashMap(original.all()))
+    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel {
+      val copy = HashMap<Class<out TypedEntity>, EntityFamily<out TypedEntity>>()
+      original.forEach { entry -> copy[entry.key] = entry.value }
+      return MutableEntitiesBarrel(copy)
+    }
   }
 }
 
@@ -103,8 +101,7 @@ internal sealed class EntitiesBarrel : Iterable<Map.Entry<Class<out TypedEntity>
 
   @Suppress("UNCHECKED_CAST")
   open operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entities[clazz] as EntityFamily<T>?
-  @Deprecated("This class is iterable")
-  internal fun all() = entities
-
   override fun iterator(): Iterator<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> = entities.iterator()
+  @TestOnly
+  internal fun all() = entities
 }

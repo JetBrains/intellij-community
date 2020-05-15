@@ -179,12 +179,6 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  private fun addChangesToIndices(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: AbstractPEntityStorage) {
-    builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
-    builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
-    builder.persistentIdIndex.getPersistentId(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
-  }
-
   private fun updateIndices(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: AbstractPEntityStorage) {
     builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
     builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
@@ -213,16 +207,7 @@ internal class PEntityStorageBuilder(
 
     // Restore soft references
     updateSoftReferences(beforePersistentId, beforeSoftLinks, entityDataByIdOrDie(id))
-
-    // Restore children references of the entity
-    for ((connectionId, children) in updatedChildren) {
-      refs.updateChildrenOfParent(connectionId, id, children.toList())
-    }
-
-    // Restore parent references of the entity
-    for ((connection, parent) in updatedParents) {
-      refs.updateParentOfChild(connection, id, parent)
-    }
+    updateEntityRefs(id, updatedChildren, updatedParents)
   }
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
@@ -528,7 +513,7 @@ internal class PEntityStorageBuilder(
           replaceMap[newPid] = oldPid
           val parents = this.refs.getParentRefsOfChild(newPid)
           val children = this.refs.getChildrenRefsOfParentBy(newPid)
-          addChangesToIndices(oldPid, newPid, replaceWith)
+          updateIndices(oldPid, newPid, replaceWith)
           updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz.java, children, parents)) }
         }
       }
@@ -705,7 +690,7 @@ internal class PEntityStorageBuilder(
 
           val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
           updateEntityRefs(entity2id.second, updatedChildren, updatedParents)
-          addChangesToIndices(change.entityData.createPid(), entity2id.second, builder)
+          updateIndices(change.entityData.createPid(), entity2id.second, builder)
           updateChangeLog {
             it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
           }

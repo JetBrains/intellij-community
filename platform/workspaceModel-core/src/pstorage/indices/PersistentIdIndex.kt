@@ -25,8 +25,6 @@ open class PersistentIdIndex private constructor(
   class MutablePersistentIdIndex private constructor(
     index: BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>
   ) : PersistentIdIndex(index) {
-    constructor() : this(BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>())
-
     internal fun index(id: PId<out TypedEntity>, persistentId: PersistentEntityId<*>? = null) {
       index.remove(id)
       if (persistentId == null) return

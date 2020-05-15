@@ -141,21 +141,12 @@ class PSerializer(private val virtualFileManager: VirtualFileUrlManager) : Entit
     }
   }
 
-  private fun findSingletons(kryo: Kryo, storage: PEntityStorage) {
-    val track = HashSet<KClass<*>>()
-    storage.entitiesByType.all().asSequence().flatMap { it.value.all() }.forEach {
-      recursiveSingletons(kryo, it, track)
-    }
-  }
-
   override fun serializeCache(stream: OutputStream, storage: TypedEntityStorage) {
     storage as PEntityStorage
 
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
       val kryo = createKryo()
-
-      //findSingletons(kryo, storage)
       kryo.writeClassAndObject(output, storage)
     }
     finally {
@@ -166,7 +157,6 @@ class PSerializer(private val virtualFileManager: VirtualFileUrlManager) : Entit
   override fun deserializeCache(stream: InputStream): TypedEntityStorageBuilder {
     Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
-
       val storage = kryo.readClassAndObject(input) as PEntityStorage
       return PEntityStorageBuilder.from(storage)
     }

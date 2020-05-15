@@ -8,7 +8,6 @@ import com.intellij.workspace.api.pstorage.PId
 import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
 import com.intellij.workspace.api.pstorage.PTypedEntity
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
@@ -30,8 +29,6 @@ open class VirtualFileIndex private constructor(
   class MutableVirtualFileIndex private constructor(
     index: BidirectionalMultiMap<VirtualFileUrl, Int>
   ) : VirtualFileIndex(index) {
-    constructor() : this(BidirectionalMultiMap<VirtualFileUrl, Int>())
-
     internal fun index(id: PId<out TypedEntity>, virtualFileUrls: List<VirtualFileUrl>? = null) {
       index.removeValue(id.arrayId)
       if (virtualFileUrls == null) return
@@ -45,7 +42,6 @@ open class VirtualFileIndex private constructor(
     }
   }
 }
-
 
 //---------------------------------------------------------------------
 class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl> {
