@@ -18,7 +18,7 @@ interface FilePredictionCandidateProvider {
 internal abstract class FilePredictionBaseCandidateProvider(private val weight: Int) : FilePredictionCandidateProvider {
   override fun getWeight(): Int = weight
 
-  internal fun addWithLimit(from: Iterator<VirtualFile>, to: MutableList<VirtualFile>, skip: VirtualFile, limit: Int) {
+  internal fun addWithLimit(from: Iterator<VirtualFile>, to: MutableSet<VirtualFile>, skip: VirtualFile?, limit: Int) {
     while (to.size < limit && from.hasNext()) {
       val next = from.next()
       if (!next.isDirectory && skip != next) {
@@ -28,14 +28,18 @@ internal abstract class FilePredictionBaseCandidateProvider(private val weight: 
   }
 }
 
-internal object CompositeCandidateProvider : FilePredictionCandidateProvider {
+internal open class CompositeCandidateProvider : FilePredictionCandidateProvider {
   override fun getWeight(): Int {
     return 0
   }
 
+  open fun getProviders() : List<FilePredictionCandidateProvider> {
+    return EP_NAME.extensionList.sortedBy { it.getWeight() }
+  }
+
   override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
     val result = HashSet<VirtualFile>()
-    val providers = EP_NAME.extensionList.sortedBy { it.getWeight() }
+    val providers = getProviders()
     for ((index, provider) in providers.withIndex()) {
       val providerLimit = (limit - result.size) / (providers.size - index)
       result.addAll(provider.provideCandidates(project, file, refs, providerLimit))

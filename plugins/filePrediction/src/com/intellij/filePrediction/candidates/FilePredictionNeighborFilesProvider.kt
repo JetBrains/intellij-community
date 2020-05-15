@@ -11,7 +11,7 @@ internal class FilePredictionNeighborFilesProvider : FilePredictionBaseCandidate
       return emptySet()
     }
 
-    val result = ArrayList<VirtualFile>()
+    val result = HashSet<VirtualFile>()
     val fileIndex = FileIndexFacade.getInstance(project)
     var parent = file.parent
     while (parent != null && parent.isDirectory && result.size < limit && fileIndex.isInProjectScope(parent)) {

@@ -2,8 +2,11 @@ package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
+import com.intellij.filePrediction.candidates.FilePredictionNeighborFilesProvider
+import com.intellij.filePrediction.candidates.FilePredictionReferenceProvider
 import com.intellij.filePrediction.predictor.model.disableFilePredictionModel
 import com.intellij.filePrediction.predictor.model.setConstantFilePredictionModel
+import com.intellij.filePrediction.predictor.model.setCustomCandidateProviderModel
 import com.intellij.filePrediction.predictor.model.setPredefinedProbabilityModel
 import com.intellij.internal.statistic.FUCounterCollectorTestCase.collectLogEvents
 import com.intellij.internal.statistic.TestStatisticsEventValidatorBuilder
@@ -73,6 +76,7 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     val file = FilePredictionTestDataHelper.findMainTestFile(root)
     assertNotNull("Cannot find main project file", file)
 
+    setCustomCandidateProviderModel(testRootDisposable, FilePredictionReferenceProvider(), FilePredictionNeighborFilesProvider())
     val predictor = predictorProvider.invoke(testRootDisposable)
     val events = collectLogEvents {
       predictor.predictNextFile(myFixture.project, 1, file!!)

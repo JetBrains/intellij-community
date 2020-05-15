@@ -10,7 +10,7 @@ internal class FilePredictionReferenceProvider : FilePredictionBaseCandidateProv
       return emptySet()
     }
 
-    val result = ArrayList<VirtualFile>()
+    val result = HashSet<VirtualFile>()
     addWithLimit(refs.iterator(), result, file, limit)
     return result
   }

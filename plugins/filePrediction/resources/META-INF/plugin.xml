@@ -24,6 +24,7 @@
 
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionReferenceProvider"/>
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionNeighborFilesProvider"/>
+    <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionRecentFilesProvider"/>
 
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionGeneralFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionFileTypeFeatures"/>

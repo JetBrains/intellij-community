@@ -22,7 +22,26 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
     return testName.replace("_", "/")
   }
 
+  private fun doTestRecent(builder: FilePredictionTestProjectBuilder, vararg expected: String) {
+    doTestInternal(builder.openMain(), FilePredictionRecentFilesProvider(), 5, *expected)
+  }
+
+  private fun doTestRefs(builder: FilePredictionTestProjectBuilder, vararg expected: String) {
+    doTestInternal(builder, FilePredictionReferenceProvider(), 5, *expected)
+  }
+
+  private fun doTestNeighbor(builder: FilePredictionTestProjectBuilder, vararg expected: String) {
+    doTestInternal(builder, FilePredictionNeighborFilesProvider(), 10, *expected)
+  }
+
   private fun doTest(builder: FilePredictionTestProjectBuilder, vararg expected: String) {
+    doTestInternal(builder, CompositeCandidateProvider(), 10, *expected)
+  }
+
+  private fun doTestInternal(builder: FilePredictionTestProjectBuilder,
+                             provider: FilePredictionCandidateProvider,
+                             limit: Int,
+                             vararg expected: String) {
     val root = builder.create(myFixture)
     assertNotNull("Cannot create test project", root)
 
@@ -30,7 +49,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
     assertNotNull("Cannot find file with '${FilePredictionTestDataHelper.DEFAULT_MAIN_FILE}' name", file)
 
     val result = FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, file!!).value
-    val candidates = CompositeCandidateProvider.provideCandidates(myFixture.project, file, result.references, 10)
+    val candidates = provider.provideCandidates(myFixture.project, file, result.references, limit)
 
     val actual = candidates.map { FileUtil.getRelativePath(root.path, it.path, '/') }.toSet()
     assertEquals(ContainerUtil.newHashSet(*expected), actual)
@@ -41,7 +60,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       FilePredictionTestProjectBuilder().addFile(
         "com/test/MainTest.java", "import com.test.ui.Baz;"
       ).addFile("com/test/ui/Baz.java")
-    doTest(builder, "com/test/ui/Baz.java")
+    doTestRefs(builder, "com/test/ui/Baz.java")
   }
 
   fun testReference_multiple() {
@@ -56,7 +75,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
         "com/test/component/Foo.java"
       )
 
-    doTest(
+    doTestRefs(
       builder,
       "com/test/Helper.java",
       "com/test/ui/Baz.java",
@@ -90,7 +109,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
         "com/test/component/Foo10.java"
       )
 
-    doTest(
+    doTestRefs(
       builder,
       "com/test/component/Foo1.java",
       "com/test/component/Foo2.java",
@@ -126,7 +145,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
         "org/another/component/Foo10.java"
       )
 
-    doTest(
+    doTestRefs(
       builder,
       "org/another/component/Foo1.java",
       "org/another/component/Foo2.java",
@@ -142,7 +161,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
         "com/test/MainTest.txt",
         "com/test/Foo.txt"
       )
-    doTest(builder, "com/test/Foo.txt")
+    doTestNeighbor(builder, "com/test/Foo.txt")
   }
 
   fun testNeighbor_multiple() {
@@ -152,7 +171,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
         "com/test/Foo.txt",
         "com/Bar.csv"
       )
-    doTest(
+    doTestNeighbor(
       builder,
       "com/test/Foo.txt",
       "com/Bar.csv"
@@ -168,7 +187,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
         "com/test/Foo3.txt",
         "com/test/Foo4.txt"
       )
-    doTest(
+    doTestNeighbor(
       builder,
       "com/test/Foo1.txt",
       "com/test/Foo2.txt",
@@ -185,7 +204,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
         "com/Foo2.txt",
         "com/Foo3.txt"
       )
-    doTest(
+    doTestNeighbor(
       builder,
       "com/Foo1.txt",
       "com/Foo2.txt",
@@ -210,7 +229,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
         "com/test/Foo11.txt",
         "com/test/Foo12.txt"
       )
-    doTest(
+    doTestNeighbor(
       builder,
       "com/test/Foo1.txt",
       "com/test/Foo2.txt",
@@ -222,6 +241,68 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       "com/test/Foo8.txt",
       "com/test/Foo9.txt",
       "com/test/Foo10.txt"
+    )
+  }
+
+  fun testRecent_single() {
+    val builder = FilePredictionTestProjectBuilder("com")
+      .open("com/test/ui/Baz.java")
+    doTestRecent(builder, "com/test/ui/Baz.java")
+  }
+
+  fun testRecent_multiple() {
+    val builder = FilePredictionTestProjectBuilder("com")
+      .open("com/test/ui/Baz.java")
+      .open("com/test/component/Bar.java")
+      .open("com/test/Foo.java")
+    doTestRecent(
+      builder,
+      "com/test/ui/Baz.java",
+      "com/test/component/Bar.java",
+      "com/test/Foo.java"
+    )
+  }
+
+  fun testRecent_notOpened() {
+    val builder = FilePredictionTestProjectBuilder("com")
+      .open("com/test/ui/Baz.java")
+      .open("com/test/component/Bar.java")
+      .close("com/test/component/Bar.java")
+      .open("com/test/Foo.java")
+      .close("com/test/ui/Baz.java")
+      .close("com/test/Foo.java")
+    doTestRecent(
+      builder,
+      "com/test/ui/Baz.java",
+      "com/test/component/Bar.java",
+      "com/test/Foo.java"
+    )
+  }
+
+  fun testRecent_opened() {
+    val builder = FilePredictionTestProjectBuilder("com")
+      .open("com/test/Foo1.java")
+      .open("com/test/Foo2.java")
+      .open("com/test/Foo3.java").close("com/test/Foo3.java")
+      .open("com/test/Foo4.java").close("com/test/Foo4.java")
+      .open("com/test/Foo5.java").close("com/test/Foo5.java")
+      .open("com/test/Foo6.java").close("com/test/Foo6.java")
+      .open("com/test/Foo7.java").close("com/test/Foo7.java")
+      .open("com/test/Foo8.java").close("com/test/Foo8.java")
+      .open("com/test/Foo9.java").close("com/test/Foo9.java")
+      .open("com/test/Foo10.java").close("com/test/Foo10.java")
+      .open("com/test/Foo11.java").close("com/test/Foo11.java")
+      .open("com/test/Foo12.java").close("com/test/Foo12.java")
+      .open("com/test/Foo13.java").close("com/test/Foo13.java")
+      .open("com/test/Foo14.java").close("com/test/Foo14.java")
+      .open("com/test/Foo15.java").close("com/test/Foo15.java")
+    doTestRecent(
+      builder,
+      "com/test/Foo1.java",
+      "com/test/Foo2.java",
+      "com/test/Foo13.java",
+      "com/test/Foo14.java",
+      "com/test/Foo15.java"
     )
   }
 
@@ -343,8 +424,6 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       "com/test/component/Foo1.java",
       "com/test/component/Foo2.java",
       "com/test/component/Foo3.java",
-      "com/test/component/Foo4.java",
-      "com/test/component/Foo5.java",
       "com/test/Neighbor.txt"
     )
   }
@@ -375,12 +454,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       "com/test/Foo1.txt",
       "com/test/Foo2.txt",
       "com/test/Foo3.txt",
-      "com/test/Foo4.txt",
-      "com/test/Foo5.txt",
-      "com/test/Foo6.txt",
-      "com/test/Foo7.txt",
-      "com/test/Foo8.txt",
-      "com/test/Foo9.txt"
+      "com/test/Foo4.txt"
     )
   }
 
@@ -427,13 +501,9 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       "com/test/ui/Baz1.java",
       "com/test/ui/Baz2.java",
       "com/test/ui/Baz3.java",
-      "com/test/ui/Baz4.java",
-      "com/test/ui/Baz5.java",
       "com/test/Foo1.txt",
       "com/test/Foo2.txt",
-      "com/test/Foo3.txt",
-      "com/test/Foo4.txt",
-      "com/test/Foo5.txt"
+      "com/test/Foo3.txt"
     )
   }
 }
