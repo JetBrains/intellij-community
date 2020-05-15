@@ -106,6 +106,10 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
   }
 
   public static class ImplicitUsageProvider extends ImplicitPropertyUsageProvider {
+
+    @NonNls public static final String ICON_TOOLTIP_PREFIX = "icon.";
+    @NonNls public static final String ICON_TOOLTIP_SUFFIX = ".tooltip";
+
     @Override
     protected boolean isUsed(@NotNull Property property) {
       PsiFile file = property.getContainingFile();
@@ -119,7 +123,8 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
         return Arrays.stream(references).anyMatch(reference -> reference.resolve() != null);
       }
-      return false;
+
+      return name.startsWith(ICON_TOOLTIP_PREFIX) && name.endsWith(ICON_TOOLTIP_SUFFIX);
     }
   }
 }
