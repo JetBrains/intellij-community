@@ -4,7 +4,9 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.util.Collections;
 
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() {
@@ -659,5 +662,30 @@ public class EditorImplTest extends AbstractEditorTest {
     finally {
       EditorSettingsExternalizable.getInstance().setCamelWords(savedOption);
     }
+  }
+
+  public void testSettingFontPreferences() {
+    initText("");
+    EditorColorsScheme colorsScheme = getEditor().getColorsScheme();
+
+    FontPreferencesImpl preferences = new FontPreferencesImpl();
+    preferences.register("CustomFont", 32);
+    preferences.setUseLigatures(true);
+    colorsScheme.setFontPreferences(preferences);
+
+    FontPreferences p = colorsScheme.getFontPreferences();
+    assertEquals(Collections.singletonList("CustomFont"), p.getRealFontFamilies());
+    assertEquals(32, p.getSize("CustomFont"));
+    assertTrue(p.useLigatures());
+
+    FontPreferencesImpl preferences2 = new FontPreferencesImpl();
+    preferences2.register("CustomFont2", 23);
+    preferences2.setUseLigatures(false);
+    colorsScheme.setFontPreferences(preferences2);
+
+    FontPreferences p2 = colorsScheme.getFontPreferences();
+    assertEquals(Collections.singletonList("CustomFont2"), p2.getRealFontFamilies());
+    assertEquals(23, p2.getSize("CustomFont2"));
+    assertFalse(p.useLigatures());
   }
 }
