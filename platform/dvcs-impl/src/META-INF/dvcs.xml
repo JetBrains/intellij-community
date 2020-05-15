@@ -74,6 +74,7 @@
 
     <projectService serviceImplementation="com.intellij.dvcs.repo.VcsRepositoryManager"/>
     <vcsStartupActivity implementation="com.intellij.dvcs.repo.VcsRepositoryManager$MyStartupActivity"/>
+    <iconDescriptionBundle qualifiedName="messages.DvcsBundle"/>
   </extensions>
 </idea-plugin>
 
