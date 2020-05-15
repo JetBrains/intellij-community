@@ -159,7 +159,7 @@ public class RecentProjectPanel extends JPanel {
 
     JBScrollPane scroll
       = new JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scroll.setBorder(null);
+    scroll.setBorder(JBUI.Borders.empty());
 
     JComponent list = recentProjectActions.isEmpty()
                       ? myList

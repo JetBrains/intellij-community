@@ -34,7 +34,7 @@ import java.util.List;
 public class NewRecentProjectPanel extends RecentProjectPanel {
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {
     super(parentDisposable);
-    setBorder(null);
+    setBorder(JBUI.Borders.empty());
     setBackground(WelcomeScreenUIManager.getProjectsBackground());
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
