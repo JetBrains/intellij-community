@@ -91,10 +91,12 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     }
     SliceValueFilter filter = sliceUsage.params.valueFilter;
     SliceUsage parent = sliceUsage.getParent();
-    if (parent == null || !Objects.equals(parent.params.valueFilter, filter)) {
-      String message = filter == null ? 
-                       LangBundle.message("slice.analysis.title.no.filter") : 
-                       LangBundle.message("slice.analysis.title.filter", filter);
+    SliceValueFilter parentFilter = parent == null ? null : parent.params.valueFilter;
+    String filterText = filter == null ? "" : filter.getPresentationText(sliceUsage.getElement());
+    String parentFilterText = parentFilter == null || parent.getElement() == null ? "" : 
+                              parentFilter.getPresentationText(parent.getElement());
+    if (!filterText.isEmpty() && !filterText.equals(parentFilterText)) {
+      String message = LangBundle.message("slice.analysis.title.filter", filterText);
       append(" " + message, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }

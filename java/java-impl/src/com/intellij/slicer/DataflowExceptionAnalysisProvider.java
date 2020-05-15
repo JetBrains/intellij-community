@@ -281,7 +281,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
 
   private @Nullable AnAction createAction(@Nullable Analysis analysis) {
     if (analysis == null) return null;
-    String text = getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
+    String text = JavaDfaSliceValueFilter.getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
     if (text.isEmpty()) return null;
     return new AnAction(null, JavaBundle.message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null) {
       @Override
@@ -294,38 +294,6 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
         SliceManager.getInstance(myProject).createToolWindow(analysis.myAnchor, params);
       }
     };
-  }
-
-  private static String getPresentationText(DfType type, @Nullable PsiType psiType) {
-    if (type instanceof DfIntegralType) {
-      // chop 'int' or 'long' prefix
-      return ((DfIntegralType)type).getRange().getPresentationText(psiType);
-    }
-    if (type instanceof DfConstantType) {
-      return type.toString();
-    }
-    if (type instanceof DfReferenceType) {
-      DfReferenceType stripped = ((DfReferenceType)type).dropNullability();
-      DfaNullability nullability = ((DfReferenceType)type).getNullability();
-      TypeConstraint constraint = ((DfReferenceType)type).getConstraint();
-      if (constraint.getPresentationText(psiType).isEmpty()) {
-        stripped = stripped.dropTypeConstraint();
-      }
-      String constraintText = stripped.toString();
-      if (nullability == DfaNullability.NOT_NULL) {
-        if (constraintText.isEmpty()) {
-          return "not-null";
-        }
-        return constraintText + " (not-null)";
-      }
-      else if (nullability != DfaNullability.NULL) {
-        if (constraintText.isEmpty()) {
-          return "";
-        }
-        return "null or " + constraintText;
-      }
-    }
-    return type.toString();
   }
 
   private static @Nullable Analysis fromCondition(@Nullable PsiExpression cond) {

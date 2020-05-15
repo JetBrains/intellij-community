@@ -3,10 +3,14 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.JavaPsiMathUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,9 +76,66 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
 
   @Override
   public @NotNull String toString() {
-    if (myDfType == DfTypes.TOP) {
-      return InspectionGadgetsBundle.message("none");
-    }
     return myDfType.toString();
+  }
+
+  @Override
+  public @NotNull @Nls String getPresentationText(@NotNull PsiElement element) {
+    if (element instanceof PsiLiteralExpression ||
+        element instanceof PsiExpression && JavaPsiMathUtil.getNumberFromLiteral((PsiExpression)element) != null) {
+      return "";
+    }
+    if (element instanceof PsiNewExpression && ((PsiNewExpression)element).isArrayCreation()) {
+      return "";
+    }
+    return getPresentationText(myDfType, getElementType(element));
+  }
+
+  private @Nullable static PsiType getElementType(@NotNull PsiElement element) {
+    if (element instanceof PsiExpression) {
+      return ((PsiExpression)element).getType();
+    }
+    if (element instanceof PsiVariable) {
+      return ((PsiVariable)element).getType();
+    }
+    return null;
+  }
+
+  static String getPresentationText(@NotNull DfType type, @Nullable PsiType psiType) {
+    if (type == DfTypes.TOP) {
+      return "";
+    }
+    if (type instanceof DfIntegralType) {
+      LongRangeSet psiRange = LongRangeSet.fromType(psiType);
+      LongRangeSet dfRange = ((DfIntegralType)type).getRange();
+      if (dfRange.contains(psiRange)) return "";
+      // chop 'int' or 'long' prefix
+      return dfRange.getPresentationText(psiType);
+    }
+    if (type instanceof DfConstantType) {
+      return type.toString();
+    }
+    if (type instanceof DfReferenceType) {
+      DfReferenceType stripped = ((DfReferenceType)type).dropNullability();
+      DfaNullability nullability = ((DfReferenceType)type).getNullability();
+      TypeConstraint constraint = ((DfReferenceType)type).getConstraint();
+      if (constraint.getPresentationText(psiType).isEmpty()) {
+        stripped = stripped.dropTypeConstraint();
+      }
+      String constraintText = stripped.toString();
+      if (nullability == DfaNullability.NOT_NULL) {
+        if (constraintText.isEmpty()) {
+          return "not-null";
+        }
+        return constraintText + " (not-null)";
+      }
+      else if (nullability != DfaNullability.NULL) {
+        if (constraintText.isEmpty()) {
+          return "";
+        }
+        return "null or " + constraintText;
+      }
+    }
+    return type.toString();
   }
 }
