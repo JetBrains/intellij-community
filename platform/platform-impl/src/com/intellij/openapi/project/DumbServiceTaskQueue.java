@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
@@ -74,10 +75,7 @@ final class DumbServiceTaskQueue {
     }
 
     myProgresses.put(task, new ProgressIndicatorBase());
-    Disposer.register(task, () -> {
-      ApplicationManager.getApplication().assertIsWriteThread();
-      myProgresses.remove(task);
-    });
+    Disposer.register(task, () -> myProgresses.remove(task));
     myUpdatesQueue.addLast(task);
     return true;
   }
@@ -90,21 +88,25 @@ final class DumbServiceTaskQueue {
 
   void processTasksWithProgress(@NotNull Function<ProgressIndicatorEx, ProgressIndicatorEx> bindProgress,
                                 @NotNull IdeActivity activity) {
-    DumbModeTask task = null;
     while (true) {
-      Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
+      Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask();
       if (pair == null) break;
 
-      task = pair.first;
-      activity.stageStarted(task.getClass());
-      ProgressIndicatorEx taskIndicator = bindProgress.apply(pair.second);
-      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
-        runSingleTask(task, taskIndicator);
+      DumbModeTask task = pair.first;
+      try {
+        ProgressIndicatorEx taskIndicator = bindProgress.apply(pair.second);
+        activity.stageStarted(task.getClass());
+        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
+          runSingleTask(task, taskIndicator);
+        }
+      } finally {
+        Disposer.dispose(task);
       }
     }
   }
 
-  private static void runSingleTask(final DumbModeTask task, final ProgressIndicatorEx taskIndicator) {
+  private static void runSingleTask(@NotNull final DumbModeTask task,
+                                    @NotNull final ProgressIndicator taskIndicator) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
@@ -122,16 +124,12 @@ final class DumbServiceTaskQueue {
     }, taskIndicator);
   }
 
-  private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask) {
+  private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> getNextTask() {
     CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
     myTrackedEdtActivityService.invokeLater(() -> {
       if (myProject.isDisposed()) {
         result.completeExceptionally(new ProcessCanceledException());
         return;
-      }
-
-      if (prevTask != null) {
-        Disposer.dispose(prevTask);
       }
 
       result.complete(pollTaskQueue());
