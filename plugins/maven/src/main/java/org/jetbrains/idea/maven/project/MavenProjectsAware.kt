@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectRefreshListener
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -33,7 +34,7 @@ class MavenProjectsAware(
     isImportCompleted.afterSet({ listener.afterProjectRefresh(SUCCESS) }, parentDisposable)
   }
 
-  override fun refreshProject() {
+  override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     FileDocumentManager.getInstance().saveAllDocuments()
     manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
   }
