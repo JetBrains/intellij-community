@@ -28,7 +28,7 @@ import com.intellij.psi.PsiManager
 import javax.swing.Icon
 import kotlin.math.round
 
-private const val CALCULATE_CANDIDATES: Int = 30
+private const val CALCULATE_CANDIDATES: Int = 50
 private const val SHOW_CANDIDATES: Int = 10
 
 class FilePredictionNextCandidatesAction : AnAction() {

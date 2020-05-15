@@ -21,7 +21,7 @@ class FilePredictionHandler {
     fun getInstance(): FilePredictionHandler? = ServiceManager.getService(FilePredictionHandler::class.java)
   }
 
-  private val predictor: FileUsagePredictionHandler = FileUsagePredictionHandler(30, 5, 10)
+  private val predictor: FileUsagePredictionHandler = FileUsagePredictionHandler(50, 5, 10)
 
   private var session: FilePredictionSessionHolder = FilePredictionSessionHolder()
 
