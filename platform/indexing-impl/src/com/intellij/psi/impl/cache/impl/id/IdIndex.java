@@ -78,17 +78,21 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   @NotNull
   @Override
   public DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
-    return new CompositeDataIndexer<IdIndexEntry, Integer, IdIndexer, String>() {
+    return new CompositeDataIndexer<IdIndexEntry, Integer, FileTypeSpecificSubIndexer<IdIndexer>, String>() {
       @Nullable
       @Override
-      public IdIndexer calculateSubIndexer(@NotNull IndexedFile file) {
-        return IdTableBuilding.getFileTypeIndexer(file.getFileType());
+      public FileTypeSpecificSubIndexer<IdIndexer> calculateSubIndexer(@NotNull IndexedFile file) {
+        FileType type = file.getFileType();
+        IdIndexer indexer = IdTableBuilding.getFileTypeIndexer(type);
+        return indexer == null ? null : new FileTypeSpecificSubIndexer<>(indexer, file.getFileType());
       }
 
       @NotNull
       @Override
-      public String getSubIndexerVersion(@NotNull IdIndexer indexer) {
-        return indexer.getClass().getName() + ":" + indexer.getVersion();
+      public String getSubIndexerVersion(@NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) {
+        return indexer.getSubIndexerType().getClass().getName() + ":" +
+               indexer.getSubIndexerType().getVersion() + ":" +
+               indexer.getFileType().getName();
       }
 
       @NotNull
@@ -99,8 +103,8 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
 
       @NotNull
       @Override
-      public Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData, @NotNull IdIndexer indexer) {
-        return indexer.map(inputData);
+      public Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData, @NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) {
+        return indexer.getSubIndexerType().map(inputData);
       }
     };
   }
