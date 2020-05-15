@@ -48,13 +48,11 @@ import com.intellij.ui.AppIcon;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.indexing.IndexingBundle;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.DeprecationStripePanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -67,10 +65,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
-import java.util.function.Function;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
@@ -97,7 +93,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public DumbServiceImpl(Project project) {
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
-    myDumbTaskQueue = new DumbServiceTaskQueue();
+    myDumbTaskQueue = new DumbServiceTaskQueue(project, myTrackedEdtActivityService);
     mySyncTaskQueue = new DumbServiceSyncTaskQueue();
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
@@ -692,7 +688,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
 
-        processTasksWithProgress(taskIndicator -> {
+        myDumbTaskQueue.processTasksWithProgress(taskIndicator -> {
           suspender.attachToProgress(taskIndicator);
           taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
             @Override
@@ -719,73 +715,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myCurrentSuspender = null;
         activity.finished();
       }
-    }
-  }
-
-  private void processTasksWithProgress(@NotNull Function<ProgressIndicatorEx, ProgressIndicatorEx> bindProgress,
-                                        @NotNull IdeActivity activity) {
-    DumbModeTask task = null;
-    while (true) {
-      Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
-      if (pair == null) break;
-
-      task = pair.first;
-      activity.stageStarted(task.getClass());
-      ProgressIndicatorEx taskIndicator = bindProgress.apply(pair.second);
-      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
-        runSingleTask(task, taskIndicator);
-      }
-    }
-  }
-
-  private static void runSingleTask(final DumbModeTask task, final ProgressIndicatorEx taskIndicator) {
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
-
-    // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
-    ProgressManager.getInstance().runProcess(() -> {
-      try {
-        taskIndicator.checkCanceled();
-        taskIndicator.setIndeterminate(true);
-        task.performInDumbMode(taskIndicator);
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-      catch (Throwable unexpected) {
-        LOG.error(unexpected);
-      }
-    }, taskIndicator);
-  }
-
-  private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask) {
-    CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
-    myTrackedEdtActivityService.invokeLater(() -> {
-      if (myProject.isDisposed()) {
-        result.completeExceptionally(new ProcessCanceledException());
-        return;
-      }
-
-      if (prevTask != null) {
-        Disposer.dispose(prevTask);
-      }
-
-      result.complete(myDumbTaskQueue.pollTaskQueue());
-    });
-    return waitForFuture(result);
-  }
-
-  private static @Nullable <T> T waitForFuture(Future<T> result) {
-    try {
-      return result.get();
-    }
-    catch (InterruptedException e) {
-      return null;
-    }
-    catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (!(cause instanceof ProcessCanceledException)) {
-        ExceptionUtil.rethrowAllAsUnchecked(cause);
-      }
-      return null;
     }
   }
 

@@ -1,13 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,11 +21,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.function.Function;
 
 final class DumbServiceTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceTaskQueue.class);
 
+  private final Project myProject;
+  private final TrackedEdtActivityService myTrackedEdtActivityService;
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
 
@@ -28,6 +40,12 @@ final class DumbServiceTaskQueue {
    * The task is removed from this map after it's finished or when the project is disposed.
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = new ConcurrentHashMap<>();
+
+  DumbServiceTaskQueue(@NotNull Project project,
+                       @NotNull TrackedEdtActivityService trackedEdtActivityService) {
+    myProject = project;
+    myTrackedEdtActivityService = trackedEdtActivityService;
+  }
 
   void cancelTask(@NotNull DumbModeTask task) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
@@ -70,8 +88,58 @@ final class DumbServiceTaskQueue {
     }
   }
 
-  @Nullable
-  Pair<DumbModeTask, ProgressIndicatorEx> pollTaskQueue() {
+  void processTasksWithProgress(@NotNull Function<ProgressIndicatorEx, ProgressIndicatorEx> bindProgress,
+                                @NotNull IdeActivity activity) {
+    DumbModeTask task = null;
+    while (true) {
+      Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
+      if (pair == null) break;
+
+      task = pair.first;
+      activity.stageStarted(task.getClass());
+      ProgressIndicatorEx taskIndicator = bindProgress.apply(pair.second);
+      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
+        runSingleTask(task, taskIndicator);
+      }
+    }
+  }
+
+  private static void runSingleTask(final DumbModeTask task, final ProgressIndicatorEx taskIndicator) {
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
+
+    // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
+    ProgressManager.getInstance().runProcess(() -> {
+      try {
+        taskIndicator.checkCanceled();
+        taskIndicator.setIndeterminate(true);
+        task.performInDumbMode(taskIndicator);
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Throwable unexpected) {
+        LOG.error(unexpected);
+      }
+    }, taskIndicator);
+  }
+
+  private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask) {
+    CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
+    myTrackedEdtActivityService.invokeLater(() -> {
+      if (myProject.isDisposed()) {
+        result.completeExceptionally(new ProcessCanceledException());
+        return;
+      }
+
+      if (prevTask != null) {
+        Disposer.dispose(prevTask);
+      }
+
+      result.complete(pollTaskQueue());
+    });
+    return waitForFuture(result);
+  }
+
+  private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> pollTaskQueue() {
     while (true) {
       if (myUpdatesQueue.isEmpty()) {
         return null;
@@ -86,6 +154,22 @@ final class DumbServiceTaskQueue {
       }
 
       return Pair.create(queuedTask, indicator);
+    }
+  }
+
+  private static @Nullable <T> T waitForFuture(Future<T> result) {
+    try {
+      return result.get();
+    }
+    catch (InterruptedException e) {
+      return null;
+    }
+    catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (!(cause instanceof ProcessCanceledException)) {
+        ExceptionUtil.rethrowAllAsUnchecked(cause);
+      }
+      return null;
     }
   }
 }
