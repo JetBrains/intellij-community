@@ -87,6 +87,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -216,6 +217,38 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       LOG.info(e);
       // use default, but do not cache
       return getDefaultRenderer(type);
+    }
+  }
+
+  @NotNull
+  public CompletableFuture<NodeRenderer> getAutoRendererAsync(Type type, SuspendContext context) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    // in case evaluation is not possible, force default renderer
+    if (!isEvaluationPossible()) {
+      return CompletableFuture.completedFuture(getDefaultRenderer(type));
+    }
+
+    try {
+      NodeRenderer renderer = myNodeRenderersMap.get(type);
+      if (renderer != null) {
+        return CompletableFuture.completedFuture(renderer);
+      }
+      CompletableFuture<Boolean>[] futures = myRenderers.stream().map(r -> r.isApplicableAsync(type, context)).toArray(CompletableFuture[]::new);
+      return CompletableFuture.allOf(futures).thenApply(__ -> {
+        List<Boolean> res = StreamEx.of(futures).map(CompletableFuture::join).toList();
+        int idx = res.indexOf(true);
+        if (idx > -1) {
+          NodeRenderer r = myRenderers.get(idx);
+          myNodeRenderersMap.put(type, r);
+          return r;
+        }
+        return null;
+      });
+    }
+    catch (ClassNotPreparedException e) {
+      LOG.info(e);
+      // use default, but do not cache
+      return CompletableFuture.completedFuture(getDefaultRenderer(type));
     }
   }
 

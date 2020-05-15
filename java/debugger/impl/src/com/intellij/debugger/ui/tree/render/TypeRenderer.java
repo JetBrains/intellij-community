@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContext;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -9,6 +11,8 @@ import com.intellij.psi.CommonClassNames;
 import com.sun.jdi.Type;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.CompletableFuture;
 
 public abstract class TypeRenderer implements Renderer {
   private static final Logger LOG = Logger.getInstance(ReferenceRenderer.class);
@@ -46,6 +50,11 @@ public abstract class TypeRenderer implements Renderer {
   @Override
   public boolean isApplicable(Type type) {
     return DebuggerUtils.instanceOf(type, getClassName());
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
+    return DebuggerUtilsAsync.instanceOf(type, getClassName(), context);
   }
 
   @Override

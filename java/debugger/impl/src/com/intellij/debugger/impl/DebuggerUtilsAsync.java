@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.CommonClassNames;
 import com.jetbrains.jdi.*;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
@@ -64,6 +65,74 @@ public class DebuggerUtilsAsync {
     return CompletableFuture.completedFuture(type.getValues(fields));
   }
 
+  public static CompletableFuture<Boolean> instanceOf(@Nullable Type subType, @NotNull String superType, @Nullable SuspendContext context) {
+    if (subType == null || subType instanceof VoidType) {
+      return CompletableFuture.completedFuture(false);
+    }
+
+    if (subType instanceof PrimitiveType) {
+      return CompletableFuture.completedFuture(superType.equals(subType.name()));
+    }
+
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(superType)) {
+      return CompletableFuture.completedFuture(true);
+    }
+
+    CompletableFuture<Boolean> res = new CompletableFuture<>();
+    instanceOfObject(subType, superType, res).thenRun(() -> res.complete(false));
+    return schedule((SuspendContextImpl)context, res);
+  }
+
+  private static CompletableFuture<Void> instanceOfObject(@Nullable Type subType,
+                                                          @NotNull String superType,
+                                                          CompletableFuture<Boolean> res) {
+    if (subType == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+
+    if (typeEquals(subType, superType)) {
+      res.complete(true);
+    }
+
+    if (subType instanceof ClassType) {
+      return CompletableFuture.allOf(
+        superclass((ClassType)subType).thenCompose(s -> instanceOfObject(s, superType, res)),
+        interfaces((ClassType)subType).thenCompose(interfaces -> CompletableFuture
+          .allOf(interfaces.stream().map(i -> instanceOfObject(i, superType, res)).toArray(CompletableFuture[]::new))));
+    }
+
+    if (subType instanceof InterfaceType) {
+      return CompletableFuture.allOf(
+        superinterfaces((InterfaceType)subType).thenCompose(interfaces -> CompletableFuture
+          .allOf(interfaces.stream().map(i -> instanceOfObject(i, superType, res)).toArray(CompletableFuture[]::new))));
+    }
+
+    if (subType instanceof ArrayType && superType.endsWith("[]")) {
+      try {
+        String superTypeItem = superType.substring(0, superType.length() - 2);
+        Type subTypeItem = ((ArrayType)subType).componentType();
+        return instanceOf(subTypeItem, superTypeItem, null).thenAccept(r -> {
+          if (r) res.complete(true);
+        });
+      }
+      catch (ClassNotLoadedException e) {
+        //LOG.info(e);
+      }
+    }
+
+    return CompletableFuture.completedFuture(null);
+  }
+
+
+  // Copied from DebuggerUtils
+  private static boolean typeEquals(@NotNull Type type, @NotNull String typeName) {
+    int genericPos = typeName.indexOf('<');
+    if (genericPos > -1) {
+      typeName = typeName.substring(0, genericPos);
+    }
+    return type.name().replace('$', '.').equals(typeName.replace('$', '.'));
+  }
+
   // Reader thread
   public static CompletableFuture<List<InterfaceType>> superinterfaces(InterfaceType iface) {
     if (iface instanceof InterfaceTypeImpl && Registry.is("debugger.async.jdi")) {
@@ -100,8 +169,8 @@ public class DebuggerUtilsAsync {
     return CompletableFuture.completedFuture(StreamEx.empty());
   }
 
-  private static <T> CompletableFuture<T> schedule(SuspendContextImpl context, CompletableFuture<T> future) {
-    if (future.isDone()) {
+  private static <T> CompletableFuture<T> schedule(@Nullable SuspendContextImpl context, CompletableFuture<T> future) {
+    if (future.isDone() || context == null) {
       return future;
     }
 

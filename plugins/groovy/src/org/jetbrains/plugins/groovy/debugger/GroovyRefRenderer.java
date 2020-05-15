@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -25,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author peter
  */
@@ -41,6 +45,14 @@ public class GroovyRefRenderer extends NodeRendererImpl {
   @Override
   public boolean isApplicable(Type type) {
     return type instanceof ReferenceType && DebuggerUtils.instanceOf(type, GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
+    if (type instanceof ReferenceType) {
+      return DebuggerUtilsAsync.instanceOf(type, GroovyCommonClassNames.GROOVY_LANG_REFERENCE, context);
+    }
+    return CompletableFuture.completedFuture(false);
   }
 
   @Override

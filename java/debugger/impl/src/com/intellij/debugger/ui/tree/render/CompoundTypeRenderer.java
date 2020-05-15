@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -21,6 +23,8 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.CompletableFuture;
 
 public class CompoundTypeRenderer extends CompoundNodeRenderer {
   public static final @NonNls String UNIQUE_ID = "CompoundTypeRenderer";
@@ -99,6 +103,12 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
       return super.isApplicable(type);
     }
     return false;
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
+    return DebuggerUtilsAsync.instanceOf(type, getClassName(), context)
+      .thenCombine(super.isApplicableAsync(type, context), (res1, res2) -> res1 && res2);
   }
 
   @Override

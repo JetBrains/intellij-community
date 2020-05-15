@@ -443,7 +443,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public CompletableFuture<NodeRenderer> getRendererAsync(DebugProcessImpl debugProcess, SuspendContext context) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return getTypeAsync(context).thenApply(type -> getRenderer(type, debugProcess));
+    return getTypeAsync(context).thenCompose(type -> getRendererAsync(type, debugProcess, context));
   }
 
   public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
@@ -458,6 +458,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     myAutoRenderer = debugProcess.getAutoRenderer(type);
     return myAutoRenderer;
+  }
+
+  private CompletableFuture<NodeRenderer> getRendererAsync(Type type, DebugProcessImpl debugProcess, SuspendContext context) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (type != null && myRenderer != null && myRenderer.isApplicable(type)) {
+      return CompletableFuture.completedFuture(myRenderer);
+    }
+
+    return debugProcess.getAutoRendererAsync(type, context).thenApply(r -> myAutoRenderer = r);
   }
 
   public void setRenderer(NodeRenderer renderer) {
