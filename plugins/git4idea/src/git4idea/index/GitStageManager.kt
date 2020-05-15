@@ -33,7 +33,7 @@ class GitStageManager(val project: Project) : Disposable {
   }
 }
 
-class GitStageStartupActivity : StartupActivity {
+class GitStageStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (isStageAvailable(project)) {
       GitStageTracker.getInstance(project).scheduleUpdateAll()
