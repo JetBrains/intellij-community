@@ -106,7 +106,7 @@ public final class CommandLineProcessor {
       }
     }
 
-    if (LightEditUtil.isLightEditEnabled()) {
+    if (LightEditUtil.isLightEditEnabled() && !LightEditUtil.isOpenInExistingProject()) {
       return LightEditUtil.getProject();
     }
 
@@ -163,6 +163,7 @@ public final class CommandLineProcessor {
     int column = -1;
     boolean tempProject = false;
     boolean shouldWait = args.contains(OPTION_WAIT);
+    LightEditUtil.setForceOpenInExistingProject(false);
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
@@ -188,6 +189,11 @@ public final class CommandLineProcessor {
 
       if (arg.equals("--temp-project")) {
         tempProject = true;
+        continue;
+      }
+
+      if (arg.equals("-p") || arg.equals("--project")) {
+        LightEditUtil.setForceOpenInExistingProject(true);
         continue;
       }
 

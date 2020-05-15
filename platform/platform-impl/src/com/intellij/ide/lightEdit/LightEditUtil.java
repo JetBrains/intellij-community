@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,6 +38,8 @@ public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
   private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
 
+  private static boolean ourForceOpenInExistingProjectFlag;
+
   private LightEditUtil() {
   }
 
@@ -49,6 +52,11 @@ public final class LightEditUtil {
       }
     }
     return false;
+  }
+
+  public static boolean isOpenInExistingProject() {
+    return ourForceOpenInExistingProjectFlag &&
+           ProjectManager.getInstance().getOpenProjects().length > 0;
   }
 
   public static @NotNull Project getProject() {
@@ -149,5 +157,9 @@ public final class LightEditUtil {
           });
       }
     };
+  }
+
+  public static void setForceOpenInExistingProject(boolean openInExistingProject) {
+    ourForceOpenInExistingProjectFlag = openInExistingProject;
   }
 }
