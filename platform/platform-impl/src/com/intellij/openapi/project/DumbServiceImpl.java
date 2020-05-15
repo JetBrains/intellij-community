@@ -70,6 +70,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Function;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
@@ -691,7 +692,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
 
-        processTasksWithProgress((ProgressIndicatorEx)visibleIndicator, suspender, activity);
+        processTasksWithProgress(taskIndicator -> {
+          suspender.attachToProgress(taskIndicator);
+          taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
+            @Override
+            protected void delegateProgressChange(@NotNull IndicatorAction action) {
+              super.delegateProgressChange(action);
+              action.execute((ProgressIndicatorEx)visibleIndicator);
+            }
+          });
+          return taskIndicator;
+        }, activity);
       }
       catch (Throwable unexpected) {
         LOG.error(unexpected);
@@ -711,8 +722,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
-  private void processTasksWithProgress(@NotNull ProgressIndicatorEx visibleIndicator,
-                                        @NotNull ProgressSuspender suspender,
+  private void processTasksWithProgress(@NotNull Function<ProgressIndicatorEx, ProgressIndicatorEx> bindProgress,
                                         @NotNull IdeActivity activity) {
     DumbModeTask task = null;
     while (true) {
@@ -721,15 +731,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
       task = pair.first;
       activity.stageStarted(task.getClass());
-      ProgressIndicatorEx taskIndicator = pair.second;
-      suspender.attachToProgress(taskIndicator);
-      taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
-        @Override
-        protected void delegateProgressChange(@NotNull IndicatorAction action) {
-          super.delegateProgressChange(action);
-          action.execute(visibleIndicator);
-        }
-      });
+      ProgressIndicatorEx taskIndicator = bindProgress.apply(pair.second);
       try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
         runSingleTask(task, taskIndicator);
       }
