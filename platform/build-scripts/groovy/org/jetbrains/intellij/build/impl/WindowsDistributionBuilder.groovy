@@ -144,6 +144,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       "plugins/android/resources/*",
       "plugins/java/lib/java-api.jar",
       "plugins/java/lib/java-impl.jar",
+      "plugins/java/lib/resources.jar",
       "plugins/java/lib/java_resources_en.jar"].
       collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\$it" }.join("\n")
 
