@@ -48,18 +48,17 @@
         <properties maven-id="org.codehaus.groovy:groovy-groovydoc:2.4.17">
           <exclude>
             <dependency maven-id="org.codehaus.groovy:groovy" />
+            <dependency maven-id="org.codehaus.groovy:groovy-xml" />
           </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.4.17/groovy-groovydoc-2.4.17.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.4.17/groovy-templates-2.4.17.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-xml/2.4.17/groovy-xml-2.4.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.4.17/groovy-groovydoc-2.4.17-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.4.17/groovy-templates-2.4.17-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-xml/2.4.17/groovy-xml-2.4.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
