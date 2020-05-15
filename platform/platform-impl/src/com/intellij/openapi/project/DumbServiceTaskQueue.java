@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public final class DumbServiceTaskQueue {
+final class DumbServiceTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceTaskQueue.class);
 
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
