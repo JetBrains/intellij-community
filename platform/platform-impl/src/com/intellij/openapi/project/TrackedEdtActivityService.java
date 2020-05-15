@@ -14,13 +14,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
-final class TrackedEdtActivityService {
+public final class TrackedEdtActivityService {
   private final Project myProject;
   private volatile ModalityState myDumbStartModality;
 
   private final BlockingQueue<TrackedEdtActivity> myTrackedEdtActivities = new LinkedBlockingQueue<>();
 
-  TrackedEdtActivityService(@NotNull Project project) {
+  public TrackedEdtActivityService(@NotNull Project project) {
     myProject = project;
   }
 
