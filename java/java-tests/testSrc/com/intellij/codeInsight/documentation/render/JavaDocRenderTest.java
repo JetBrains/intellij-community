@@ -127,7 +127,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   private void updateRenderedItems(boolean collapseNewRegions) {
-    DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor().getDocument(), getFile());
+    DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor(), getFile());
     DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, collapseNewRegions);
   }
 
