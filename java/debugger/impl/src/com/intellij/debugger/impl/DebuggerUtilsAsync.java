@@ -65,6 +65,13 @@ public class DebuggerUtilsAsync {
     return CompletableFuture.completedFuture(type.getValues(fields));
   }
 
+  public static CompletableFuture<Integer> length(ArrayReference ref, @Nullable SuspendContext context) {
+    if (ref instanceof ArrayReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
+      return schedule((SuspendContextImpl)context, ((ArrayReferenceImpl)ref).lengthAsync());
+    }
+    return CompletableFuture.completedFuture(ref.length());
+  }
+
   public static CompletableFuture<Boolean> instanceOf(@Nullable Type subType, @NotNull String superType, @Nullable SuspendContext context) {
     if (subType == null || subType instanceof VoidType) {
       return CompletableFuture.completedFuture(false);

@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
@@ -286,6 +287,18 @@ public class ClassRenderer extends NodeRendererImpl{
     }
   }
 
+  private static CompletableFuture<Boolean> valueExpandable(Value value, SuspendContext context)  {
+    if(value instanceof ArrayReference) {
+      return DebuggerUtilsAsync.length((ArrayReference)value, context).thenApply(r -> r > 0).exceptionally(throwable -> true);
+    }
+    else if(value instanceof ObjectReference) {
+      return CompletableFuture.completedFuture(true); // if object has no fields, it contains a child-message about that
+      //return ((ObjectReference)value).referenceType().allFields().size() > 0;
+    }
+
+    return CompletableFuture.completedFuture(false);
+  }
+
   private static boolean valueExpandable(Value value)  {
     try {
       if(value instanceof ArrayReference) {
@@ -307,6 +320,12 @@ public class ClassRenderer extends NodeRendererImpl{
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return valueExpandable(value);
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    return valueExpandable(value, evaluationContext.getSuspendContext());
   }
 
   @Override

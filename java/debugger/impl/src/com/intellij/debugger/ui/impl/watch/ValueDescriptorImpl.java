@@ -302,8 +302,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     EvaluateException valueException = myValueException;
-    myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) &&
-                     getChildrenRenderer(debugProcess).isExpandable(getValue(), context, this);
+    if (valueException == null || valueException.getExceptionFromTargetVM() != null) {
+      getChildrenRenderer(debugProcess).isExpandableAsync(getValue(), context, this).thenAccept(r -> {
+        if (r != myIsExpandable) {
+          myIsExpandable = r;
+          labelListener.labelChanged();
+        }
+      });
+    }
 
     if (!OnDemandRenderer.isOnDemandForced(debugProcess)) {
       try {

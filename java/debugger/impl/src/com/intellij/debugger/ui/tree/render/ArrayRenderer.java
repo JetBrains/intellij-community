@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.utils.ErrorsValueGroup;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -50,6 +51,7 @@ import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class ArrayRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
@@ -217,6 +219,14 @@ public class ArrayRenderer extends NodeRendererImpl{
   @Override
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return value instanceof ArrayReference && ((ArrayReference)value).length() > 0;
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    if (!(value instanceof ArrayReference)) {
+      return CompletableFuture.completedFuture(false);
+    }
+    return DebuggerUtilsAsync.length(((ArrayReference)value), evaluationContext.getSuspendContext()).thenApply(l -> l > 0);
   }
 
   @Override

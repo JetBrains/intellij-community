@@ -63,6 +63,11 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
   }
 
   @Override
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    return getChildrenRenderer().isExpandableAsync(value, evaluationContext, parentDescriptor);
+  }
+
+  @Override
   public boolean isApplicable(Type type) {
     return getLabelRenderer().isApplicable(type) && getChildrenRenderer().isApplicable(type);
   }
