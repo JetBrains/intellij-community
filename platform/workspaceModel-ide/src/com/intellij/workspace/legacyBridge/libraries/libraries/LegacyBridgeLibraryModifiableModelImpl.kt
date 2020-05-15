@@ -33,10 +33,9 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
 
   private val currentLibraryValue = CachedValue { storage ->
     val newLibrary = LibraryViaTypedEntity(
-      libraryImpl = originalLibrary,
       libraryEntity = storage.resolve(entityId) ?: error("Can't resolve library via $entityId"),
-      storage = storage,
       filePointerProvider = originalLibrarySnapshot.filePointerProvider,
+      storage = storage,
       libraryTable = originalLibrarySnapshot.libraryTable,
       modifiableModelFactory = { _,_ -> throw UnsupportedOperationException() }
     )

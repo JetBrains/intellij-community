@@ -106,7 +106,6 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
 
     val entityId = when (library) {
       is LegacyBridgeLibraryImpl -> library.entityId
-      is LibraryViaTypedEntity -> library.libraryEntity.persistentId()
       else -> error("Unknown libraryImpl class: ${library.javaClass.simpleName}")
     }
 

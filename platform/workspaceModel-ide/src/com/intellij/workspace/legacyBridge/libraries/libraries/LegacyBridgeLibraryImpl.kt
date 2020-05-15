@@ -74,11 +74,10 @@ internal class LegacyBridgeLibraryImpl(
 
   private val librarySnapshotCached: CachedValueWithParameter<LibraryId, LibraryViaTypedEntity> = CachedValueWithParameter { storage, id: LibraryId ->
     LibraryViaTypedEntity(
-      libraryImpl = this,
       libraryEntity = storage.resolve(id) ?: FakeLibraryEntity(id.name),
+      filePointerProvider = filePointerProvider,
       storage = storage,
       libraryTable = libraryTable,
-      filePointerProvider = filePointerProvider,
       modifiableModelFactory = modifiableModelFactory ?: { librarySnapshot, diff ->
         LegacyBridgeLibraryModifiableModelImpl(
           originalLibrary = this,
@@ -131,7 +130,7 @@ internal class LegacyBridgeLibraryImpl(
   override fun isValid(url: String, rootType: OrderRootType): Boolean = librarySnapshot.isValid(url, rootType)
 
   override fun readExternal(element: Element?) = throw NotImplementedError()
-  override fun writeExternal(element: Element) = librarySnapshot.writeExternal(element)
+  override fun writeExternal(element: Element) = throw NotImplementedError()
 
   override fun addRootSetChangedListener(listener: RootSetChangedListener) = dispatcher.addListener(listener)
   override fun addRootSetChangedListener(listener: RootSetChangedListener, parentDisposable: Disposable) {
