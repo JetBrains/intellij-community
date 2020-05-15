@@ -393,7 +393,20 @@ public final class IconLoader {
     } finally {
       g.dispose();
     }
-    return new JBImageIcon(image);
+
+    return new JBImageIcon(image) {
+      final int originalWidth = icon.getIconWidth();
+      final int originalHeight = icon.getIconHeight();
+      @Override
+      public int getIconWidth() {
+        return originalWidth;
+      }
+
+      @Override
+      public int getIconHeight() {
+        return originalHeight;
+      }
+    };
   }
 
   @Nullable
