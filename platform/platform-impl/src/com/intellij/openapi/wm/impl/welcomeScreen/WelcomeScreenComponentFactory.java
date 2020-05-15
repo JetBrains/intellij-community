@@ -242,4 +242,15 @@ public class WelcomeScreenComponentFactory {
     Disposer.register(parent, panel);
     return panel;
   }
+
+  public static void collectAllActions(@NotNull DefaultActionGroup group, @NotNull ActionGroup actionGroup) {
+    for (AnAction action : actionGroup.getChildren(null)) {
+      if (action instanceof ActionGroup && !((ActionGroup)action).isPopup()) {
+        collectAllActions(group, (ActionGroup)action);
+      }
+      else {
+        group.add(action);
+      }
+    }
+  }
 }

@@ -581,19 +581,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       });
     }
 
-    private void collectAllActions(@NotNull DefaultActionGroup group, @NotNull ActionGroup actionGroup) {
-      for (AnAction action : actionGroup.getChildren(null)) {
-        if (action instanceof ActionGroup && !((ActionGroup)action).isPopup()) {
-          collectAllActions(group, (ActionGroup)action);
-        }
-        else {
-          group.add(action);
-        }
-      }
-    }
-
-
-
     @Override
     public void setupFrame(JFrame frame) {
 
