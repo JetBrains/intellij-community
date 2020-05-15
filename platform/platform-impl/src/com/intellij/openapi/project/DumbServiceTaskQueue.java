@@ -20,9 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 final class DumbServiceTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceTaskQueue.class);
 
-  private final Project myProject;
-  private final TrackedEdtActivityService myTrackedEdtActivityService;
-
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
 
@@ -32,12 +29,6 @@ final class DumbServiceTaskQueue {
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = new ConcurrentHashMap<>();
 
-  DumbServiceTaskQueue(@NotNull Project project,
-                       @NotNull TrackedEdtActivityService trackedEdtActivityService) {
-    myProject = project;
-    myTrackedEdtActivityService = trackedEdtActivityService;
-  }
-
   void cancelTask(@NotNull DumbModeTask task) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
     ProgressIndicatorEx indicator = myProgresses.get(task);
@@ -46,10 +37,12 @@ final class DumbServiceTaskQueue {
     }
   }
 
-  void disposePendingTasks() {
+  void clearTasksQueue() {
     myUpdatesQueue.clear();
     myQueuedEquivalences.clear();
-    //it was synchronized (myRunWhenSmartQueue) { } here before
+  }
+
+  void disposePendingTasks() {
     for (DumbModeTask task : new ArrayList<>(myProgresses.keySet())) {
       cancelTask(task);
       Disposer.dispose(task);
