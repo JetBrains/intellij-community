@@ -45,32 +45,40 @@
     <orderEntry type="library" name="org.codehaus.groovy:groovy-ant" level="project" />
     <orderEntry type="module-library">
       <library name="org.codehaus.groovy:groovy-groovydoc" type="repository">
-        <properties maven-id="org.codehaus.groovy:groovy-groovydoc:2.4.17">
+        <properties maven-id="org.codehaus.groovy:groovy-groovydoc:2.5.11">
           <exclude>
-            <dependency maven-id="org.codehaus.groovy:groovy" />
             <dependency maven-id="org.codehaus.groovy:groovy-xml" />
+            <dependency maven-id="org.codehaus.groovy:groovy" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.4.17/groovy-groovydoc-2.4.17.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.4.17/groovy-templates-2.4.17.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.5.11/groovy-groovydoc-2.5.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.5.11/groovy-templates-2.5.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-cli-picocli/2.5.11/groovy-cli-picocli-2.5.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/info/picocli/picocli/4.0.1/picocli-4.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-docgenerator/2.5.11/groovy-docgenerator-2.5.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/1.12.1/qdox-1.12.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.4.17/groovy-groovydoc-2.4.17-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.4.17/groovy-templates-2.4.17-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.5.11/groovy-groovydoc-2.5.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.5.11/groovy-templates-2.5.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-cli-picocli/2.5.11/groovy-cli-picocli-2.5.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/info/picocli/picocli/4.0.1/picocli-4.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-docgenerator/2.5.11/groovy-docgenerator-2.5.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/1.12.1/qdox-1.12.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.codehaus.groovy:groovy-groovysh" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-groovysh:2.4.17" />
+        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-groovysh:2.5.11" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovysh/2.4.17/groovy-groovysh-2.4.17.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovysh/2.5.11/groovy-groovysh-2.5.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovysh/2.4.17/groovy-groovysh-2.4.17-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovysh/2.5.11/groovy-groovysh-2.5.11-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
