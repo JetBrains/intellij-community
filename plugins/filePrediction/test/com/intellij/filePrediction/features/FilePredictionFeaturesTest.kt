@@ -1,5 +1,6 @@
 package com.intellij.filePrediction.features
 
+import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
@@ -14,7 +15,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     val prevFile = myFixture.addFileToProject("prevFile.txt", "PREVIOUS FILE").virtualFile
     val candidate = myFixture.addFileToProject("candidate.txt", "CANDIDATE").virtualFile
 
-    val result = FilePredictionFeaturesHelper.calculateExternalReferences(myFixture.project, prevFile).value
+    val result = FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile).value
     val actual = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidate, result, prevFile)
     assertNotEmpty(actual.value.keys)
 

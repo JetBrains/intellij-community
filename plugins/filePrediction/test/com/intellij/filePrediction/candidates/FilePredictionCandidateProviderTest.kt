@@ -1,8 +1,8 @@
 package com.intellij.filePrediction.candidates
 
-import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
+import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
@@ -29,7 +29,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
     val file = FilePredictionTestDataHelper.findMainTestFile(root)
     assertNotNull("Cannot find file with '${FilePredictionTestDataHelper.DEFAULT_MAIN_FILE}' name", file)
 
-    val result = FilePredictionFeaturesHelper.calculateExternalReferences(myFixture.project, file!!).value
+    val result = FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, file!!).value
     val candidates = CompositeCandidateProvider.provideCandidates(myFixture.project, file, result.references, 10)
 
     val actual = candidates.map { FileUtil.getRelativePath(root.path, it.path, '/') }.toSet()

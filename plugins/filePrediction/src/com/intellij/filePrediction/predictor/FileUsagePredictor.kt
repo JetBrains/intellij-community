@@ -4,6 +4,7 @@ package com.intellij.filePrediction.predictor
 import com.intellij.filePrediction.FileReferencesComputationResult
 import com.intellij.filePrediction.candidates.CompositeCandidateProvider
 import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
+import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.filePrediction.predictor.model.FilePredictionModel
 import com.intellij.filePrediction.predictor.model.getFilePredictionModel
 import com.intellij.openapi.project.Project
@@ -11,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 abstract class FileUsagePredictor(val isDummy: Boolean) {
   fun predictNextFile(project: Project, currentFile: VirtualFile?, topCandidates: Int): List<FilePredictionCandidate> {
-    val refs = FilePredictionFeaturesHelper.calculateExternalReferences(project, currentFile)
+    val refs = FilePredictionReferencesHelper.calculateExternalReferences(project, currentFile)
     return predictNextFile(project, currentFile, refs, topCandidates)
   }
 

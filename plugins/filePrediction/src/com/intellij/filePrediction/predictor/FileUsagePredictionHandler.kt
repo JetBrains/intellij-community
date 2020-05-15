@@ -2,7 +2,7 @@
 package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.FileNavigationLogger
-import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
+import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -12,7 +12,7 @@ internal class FileUsagePredictionHandler(private val candidatesLimit: Int,
   private val predictor: FileUsagePredictor = FileUsagePredictorProvider.getFileUsagePredictor()
 
   fun predictNextFile(project: Project, sessionId: Int, file: VirtualFile) {
-    val refs = FilePredictionFeaturesHelper.calculateExternalReferences(project, file)
+    val refs = FilePredictionReferencesHelper.calculateExternalReferences(project, file)
 
     val candidatesToCalculate = if (!predictor.isDummy) candidatesLimit else logTotalLimit
     val candidates = predictor.predictNextFile(project, file, refs, candidatesToCalculate)

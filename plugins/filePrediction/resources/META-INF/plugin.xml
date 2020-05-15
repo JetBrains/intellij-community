@@ -11,7 +11,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.features.FilePredictionFeatureProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.features.FileExternalReferencesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.references.FileExternalReferencesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.filePrediction.ml.model" interface="com.intellij.filePrediction.predictor.model.FilePredictionModelProvider" dynamic="true"/>
   </extensionPoints>
 
@@ -25,6 +25,7 @@
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionFileTypeFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.FilePredictionHistoryFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.context.FilePredictionContextFeatures"/>
+
     <filePrediction.ml.model implementation="com.intellij.filePrediction.predictor.model.FilePredictionMLModelProvider"/>
 
     <applicationService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>

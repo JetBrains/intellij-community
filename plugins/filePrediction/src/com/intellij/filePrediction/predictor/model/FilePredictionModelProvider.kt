@@ -2,7 +2,9 @@
 package com.intellij.filePrediction.predictor.model
 
 import com.intellij.internal.ml.DecisionFunction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface FilePredictionModelProvider {
   fun getModel(): DecisionFunction
 }

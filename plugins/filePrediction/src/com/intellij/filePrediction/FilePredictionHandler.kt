@@ -2,6 +2,7 @@
 package com.intellij.filePrediction
 
 import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
+import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.filePrediction.features.history.FilePredictionHistory
 import com.intellij.filePrediction.features.history.context.FilePredictionContext
 import com.intellij.filePrediction.predictor.FileUsagePredictionHandler
@@ -65,7 +66,7 @@ class FilePredictionHandler {
                             sessionId: Int,
                             newFile: VirtualFile,
                             prevFile: VirtualFile?) {
-    val result = FilePredictionFeaturesHelper.calculateExternalReferences(project, prevFile)
+    val result = FilePredictionReferencesHelper.calculateExternalReferences(project, prevFile)
 
     val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, result.value, prevFile)
     FileNavigationLogger.logEvent(project, "file.opened", sessionId, features, newFile.path, prevFile?.path, result.duration)

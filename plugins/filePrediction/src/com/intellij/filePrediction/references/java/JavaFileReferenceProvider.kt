@@ -4,7 +4,7 @@ package com.intellij.filePrediction.references.java
 import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.filePrediction.references.ExternalReferencesResult.Companion.FAILED_COMPUTATION
 import com.intellij.filePrediction.references.ExternalReferencesResult.Companion.succeed
-import com.intellij.filePrediction.features.FileExternalReferencesProvider
+import com.intellij.filePrediction.references.FileExternalReferencesProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiFile
 import org.jetbrains.uast.UFile
