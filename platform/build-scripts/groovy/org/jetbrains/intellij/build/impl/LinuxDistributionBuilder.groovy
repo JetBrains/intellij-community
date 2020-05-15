@@ -139,7 +139,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "system_selector", value: "AndroidStudioGameTools")
         // Here we overwrite idea.platform.prefix to start the distinct entry point of game tools.
         filter(token: "ide_jvm_args", value:
-          buildContext.additionalJvmArguments + " -Didea.platform.prefix=AndroidStudioGameTools -Didea.load.plugins=false")
+          buildContext.additionalJvmArguments + " -Didea.platform.prefix=AndroidStudioGameTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not")
         filter(token: "class_path", value: gameToolsClassPath)
         filter(token: "script_name", value: "game-tools.sh")
       }
