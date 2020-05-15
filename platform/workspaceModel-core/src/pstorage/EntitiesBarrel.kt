@@ -38,7 +38,9 @@ internal class MutableEntitiesBarrel(
   }
 
   fun remove(id: Int, clazz: Class<out TypedEntity>) {
-    getMutableEntityFamily(clazz).remove(id)
+    val entityFamily = getMutableEntityFamily(clazz)
+    entityFamily.remove(id)
+    if (entityFamily.isEmpty()) entities.remove(clazz)
   }
 
   fun <E : TypedEntity> getEntityDataForModification(id: PId<E>): PEntityData<E> {
@@ -97,12 +99,10 @@ internal class MutableEntitiesBarrel(
 }
 
 internal sealed class EntitiesBarrel : Iterable<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
-
   protected abstract val entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
 
   @Suppress("UNCHECKED_CAST")
   open operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entities[clazz] as EntityFamily<T>?
-
   @Deprecated("This class is iterable")
   internal fun all() = entities
 
