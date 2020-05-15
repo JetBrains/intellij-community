@@ -63,8 +63,19 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
           isTypingAnnotation(expr.getStringValue())) {
         return PyTypeHintDialect.INSTANCE;
       }
+      if (isInsideValueOfExplicitTypeAnnotation(expr)) {
+        return PyTypeHintDialect.INSTANCE;
+      }
     }
     return null;
+  }
+
+  private static boolean isInsideValueOfExplicitTypeAnnotation(@NotNull PyStringLiteralExpression expr) {
+    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(expr, PyAssignmentStatement.class);
+    if (assignment == null || !PsiTreeUtil.isAncestor(assignment.getAssignedValue(), expr, false)) {
+      return false;
+    }
+    return PyTypingTypeProvider.isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile()));
   }
 
   @NotNull

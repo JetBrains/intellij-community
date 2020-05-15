@@ -484,6 +484,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-42334
+  public void testTypeOfExplicitTypeAlias() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
+  }
+
   // PY-29339
   public void testAsyncFunctionTooltip() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);

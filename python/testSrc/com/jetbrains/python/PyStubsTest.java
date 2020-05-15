@@ -815,25 +815,27 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testTypeAliasStubs() {
-    final PyFile file = getTestFile();
-    final List<PyTargetExpression> attributes = file.getTopLevelAttributes();
-    for (PyTargetExpression attr : attributes) {
-      assertHasTypingAliasStub(attr.getName().endsWith("_ok"), attr);
-    }
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      final PyFile file = getTestFile();
+      final List<PyTargetExpression> attributes = file.getTopLevelAttributes();
+      for (PyTargetExpression attr : attributes) {
+        assertHasTypingAliasStub(attr.getName().endsWith("_ok"), attr);
+      }
 
-    final PyTargetExpression referenceAlias = file.findTopLevelAttribute("plain_ref");
-    final PyTargetExpressionStub referenceAliasStub = referenceAlias.getStub();
-    assertEquals(PyTargetExpressionStub.InitializerType.ReferenceExpression, referenceAliasStub.getInitializerType());
-    assertEquals(QualifiedName.fromDottedString("foo.bar.baz"), referenceAliasStub.getInitializer());
+      final PyTargetExpression referenceAlias = file.findTopLevelAttribute("plain_ref");
+      final PyTargetExpressionStub referenceAliasStub = referenceAlias.getStub();
+      assertEquals(PyTargetExpressionStub.InitializerType.ReferenceExpression, referenceAliasStub.getInitializerType());
+      assertEquals(QualifiedName.fromDottedString("foo.bar.baz"), referenceAliasStub.getInitializer());
 
-    final PyClass pyClass = file.findTopLevelClass("C");
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
-    final PyTargetExpression classAttr = pyClass.findClassAttribute("class_attr", false, context);
-    assertHasTypingAliasStub(false, classAttr);
+      final PyClass pyClass = file.findTopLevelClass("C");
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+      final PyTargetExpression classAttr = pyClass.findClassAttribute("class_attr", false, context);
+      assertHasTypingAliasStub(false, classAttr);
 
-    final PyTargetExpression instanceAttr = pyClass.findInstanceAttribute("inst_attr", false);
-    assertHasTypingAliasStub(false, instanceAttr);
-    assertNotParsed(file);
+      final PyTargetExpression instanceAttr = pyClass.findInstanceAttribute("inst_attr", false);
+      assertHasTypingAliasStub(false, instanceAttr);
+      assertNotParsed(file);
+    });
   }
 
   // PY-18166
