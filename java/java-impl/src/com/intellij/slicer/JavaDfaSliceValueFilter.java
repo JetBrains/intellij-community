@@ -42,18 +42,32 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
         return Objects.equals(value, constValue);
       }
     }
-    if (!(element instanceof PsiExpression)) return true;
+    DfType dfType = getElementDfType(element);
+    return dfType.meet(myDfType) != DfTypes.BOTTOM;
+  }
+
+  @Nullable JavaDfaSliceValueFilter mergeFilter(@NotNull PsiElement element) {
+    DfType type = getElementDfType(element);
+    if (type instanceof DfReferenceType) {
+      type = ((DfReferenceType)type).dropLocality().dropMutability();
+    }
+    DfType meet = type.meet(myDfType);
+    if (meet == DfTypes.TOP && myNextFilter == null) return null;
+    if (meet == DfTypes.BOTTOM || meet.equals(myDfType)) return this;
+    return new JavaDfaSliceValueFilter(myNextFilter, meet);
+  }
+
+  private @NotNull DfType getElementDfType(@NotNull PsiElement element) {
+    if (!(element instanceof PsiExpression)) return DfTypes.TOP;
     PsiExpression expression = (PsiExpression)element;
-    DfType dfType;
     PsiType expressionType = expression.getType();
     if (TypeConversionUtil.isPrimitiveAndNotNull(expressionType) && myDfType instanceof DfReferenceType) {
-      dfType = DfTypes.typedObject(((PsiPrimitiveType)expressionType).getBoxedType(expression), Nullability.NOT_NULL);
-    } else if (!(expressionType instanceof PsiPrimitiveType) && myDfType instanceof DfPrimitiveType) {
-      dfType = DfTypes.typedObject(PsiPrimitiveType.getUnboxedType(expressionType), Nullability.NOT_NULL); 
-    } else {
-      dfType = CommonDataflow.getDfType(expression);
+      return DfTypes.typedObject(((PsiPrimitiveType)expressionType).getBoxedType(expression), Nullability.NOT_NULL);
     }
-    return dfType.meet(myDfType) != DfTypes.BOTTOM;
+    if (!(expressionType instanceof PsiPrimitiveType) && myDfType instanceof DfPrimitiveType) {
+      return DfTypes.typedObject(PsiPrimitiveType.getUnboxedType(expressionType), Nullability.NOT_NULL);
+    }
+    return CommonDataflow.getDfType(expression);
   }
 
   @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -74,8 +75,16 @@ final class JavaSliceBuilder {
     final PsiElement realExpression = element.getParent() instanceof DummyHolder ? element.getParent().getContext() : element;
     assert realExpression != null;
     if (!(realExpression instanceof PsiCompiledElement)) {
-      return processor
-        .process(new JavaSliceUsage(realExpression, myParent, myAnalysisParams, mySubstitutor, myIndexNesting, mySyntheticField));
+      JavaDfaSliceValueFilter curFilter = myAnalysisParams.valueFilter instanceof JavaDfaSliceValueFilter
+                                          ? (JavaDfaSliceValueFilter)myAnalysisParams.valueFilter
+                                          : new JavaDfaSliceValueFilter(DfTypes.TOP);
+      JavaDfaSliceValueFilter filter = curFilter.mergeFilter(realExpression);
+      SliceAnalysisParams params = myAnalysisParams;
+      if (filter != curFilter) {
+        params = new SliceAnalysisParams(params);
+        params.valueFilter = filter;
+      }
+      return processor.process(new JavaSliceUsage(realExpression, myParent, params, mySubstitutor, myIndexNesting, mySyntheticField));
     }
     return true;
   }
@@ -87,14 +96,14 @@ final class JavaSliceBuilder {
    */
   @Contract(pure = true)
   @NotNull JavaSliceBuilder updateNesting(@NotNull Flow anno) {
-    int nestingDelta = (anno.sourceIsContainer() ? 1 : 0) - (anno.targetIsContainer() ? 1 : 0);
-    if (nestingDelta > 0) {
-      return incrementNesting();
+    JavaSliceBuilder result = this;
+    if (anno.targetIsContainer()) {
+      result = result.decrementNesting();
     }
-    if (nestingDelta < 0) {
-      return decrementNesting();
+    if (anno.sourceIsContainer()) {
+      result = result.incrementNesting();
     }
-    return this;
+    return result;
   }
 
   @Contract(pure = true)
