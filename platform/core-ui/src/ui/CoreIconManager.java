@@ -161,7 +161,7 @@ public final class CoreIconManager implements IconManager {
       IconDescriptionBundleEP.EP_NAME.processWithPluginDescriptor((ep, descriptor) -> {
         ClassLoader classLoader = descriptor == null ? null : descriptor.getPluginClassLoader();
         if (classLoader == null) classLoader = getClass().getClassLoader();
-        ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(ep.qualifiedName, classLoader);
+        ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(ep.resourceBundle, classLoader);
         String description = AbstractBundle.messageOrNull(bundle, key);
         if (description != null) {
           result.set(description);
