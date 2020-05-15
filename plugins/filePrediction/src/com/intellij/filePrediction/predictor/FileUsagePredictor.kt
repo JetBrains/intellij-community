@@ -10,6 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 abstract class FileUsagePredictor(val isDummy: Boolean) {
+  fun predictNextFile(project: Project, currentFile: VirtualFile?, topCandidates: Int): List<FilePredictionCandidate> {
+    val refs = FilePredictionFeaturesHelper.calculateExternalReferences(project, currentFile)
+    return predictNextFile(project, currentFile, refs, topCandidates)
+  }
+
   internal abstract fun predictNextFile(
     project: Project, currentFile: VirtualFile?,
     refs: FileReferencesComputationResult, topCandidates: Int

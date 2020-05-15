@@ -2,6 +2,7 @@
   <id>com.jetbrains.filePrediction</id>
   <name>Next File Prediction</name>
   <vendor>JetBrains</vendor>
+  <resource-bundle>messages.FilePredictionBundle</resource-bundle>
 
   <description><![CDATA[Predicts next file which will be open in IDE to start long running analysis and pre-load caches.]]></description>
 
@@ -15,6 +16,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <notificationWhitelist groupIds="NextFilePrediction"/>
     <registryKey key="filePrediction.calculate.features" defaultValue="true" description="Record opened files features to predict which file will be opened next and pre-load caches."/>
 
     <statistics.counterUsagesCollector groupId="file.prediction" version="5"/>
@@ -37,4 +39,9 @@
   <applicationListeners>
     <listener class="com.intellij.filePrediction.features.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
+
+  <actions>
+    <action internal="true" id="PredictNextFileCandidates"
+            class="com.intellij.filePrediction.actions.FilePredictionNextCandidatesAction"/>
+  </actions>
 </idea-plugin>
