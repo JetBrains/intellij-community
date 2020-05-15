@@ -18,8 +18,10 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.merge.MergeUtils.putRevisionInfos
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil
@@ -28,6 +30,8 @@ import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.NodeKind
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.GitIndexVirtualFileCache
+import git4idea.merge.GitMergeUtil
+import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
 import java.io.IOException
 
@@ -35,14 +39,16 @@ fun createTwoSidesDiffRequestProducer(project: Project, statusNode: GitFileStatu
   return when (statusNode.kind) {
     NodeKind.STAGED -> StagedProducer(project, statusNode)
     NodeKind.UNSTAGED -> UnStagedProducer(project, statusNode)
-    NodeKind.CONFLICTED, NodeKind.IGNORED, NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath)
+    NodeKind.CONFLICTED -> MergedProducer(project, statusNode)
+    NodeKind.IGNORED, NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath)
   }
 }
 
 fun createThreeSidesDiffRequestProducer(project: Project, statusNode: GitFileStatusNode): ChangeDiffRequestChain.Producer {
   return when (statusNode.kind) {
     NodeKind.STAGED, NodeKind.UNSTAGED -> ThreeSidesProducer(project, statusNode)
-    NodeKind.CONFLICTED, NodeKind.IGNORED, NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath)
+    NodeKind.CONFLICTED -> MergedProducer(project, statusNode)
+    NodeKind.IGNORED, NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath)
   }
 }
 
@@ -67,8 +73,8 @@ private fun stagedContent(project: Project, statusNode: GitFileStatusNode): Diff
 private fun localContent(project: Project, statusNode: GitFileStatusNode): DiffContent {
   if (!statusNode.has(ContentVersion.LOCAL)) return DiffContentFactory.getInstance().createEmpty()
 
-  val localFile: VirtualFile = statusNode.path(ContentVersion.LOCAL).virtualFile ?:
-                               throw VcsException("Can't get local file: " + statusNode.filePath)
+  val localFile: VirtualFile = statusNode.path(ContentVersion.LOCAL).virtualFile ?: throw VcsException(
+    "Can't get local file: " + statusNode.filePath)
   return DiffContentFactory.getInstance().create(project, localFile)
 }
 
@@ -98,6 +104,29 @@ class ThreeSidesProducer(private val project: Project,
     return StagedDiffRequest(headContent(project, statusNode), stagedContent(project, statusNode), localContent(project, statusNode),
                              GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
                              title).apply { putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true) }
+  }
+}
+
+class MergedProducer(private val project: Project,
+                     statusNode: GitFileStatusNode) : GitFileStatusNodeProducerBase(statusNode) {
+
+  @Throws(VcsException::class, IOException::class)
+  override fun processImpl(): DiffRequest {
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(statusNode.root)
+    val mergeData = GitMergeUtil.loadMergeData(project, statusNode.root, statusNode.filePath,
+                                               repository?.let { GitMergeUtil.isReverseRoot(it) } ?: false)
+
+    val title = getTitle(statusNode)
+    val titles = listOf(ChangeDiffRequestProducer.getYourVersion(),
+                        ChangeDiffRequestProducer.getBaseVersion(),
+                        ChangeDiffRequestProducer.getServerVersion())
+    val contents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST).map {
+      DiffContentFactory.getInstance().createFromBytes(project, it, statusNode.filePath.fileType, statusNode.filePath.name)
+    }
+    val request = SimpleDiffRequest(title, contents, titles)
+    putRevisionInfos(request, mergeData)
+
+    return request
   }
 }
 
