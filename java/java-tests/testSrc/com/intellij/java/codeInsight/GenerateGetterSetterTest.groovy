@@ -196,7 +196,7 @@ class Foo {
         boolean allowEmptySelection,
         boolean copyJavadocCheckbox,
         Project project,
-        @Nullable @Nullable Editor editor) {
+        @Nullable Editor editor) {
         return members
       }
     }.invoke(project, myFixture.editor, myFixture.file)
@@ -260,7 +260,7 @@ class Foo {
         boolean allowEmptySelection,
         boolean copyJavadocCheckbox,
         Project project,
-        @Nullable @Nullable Editor editor) {
+        @Nullable Editor editor) {
         return members
       }
     }.invoke(project, myFixture.editor, myFixture.file)
