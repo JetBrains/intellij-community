@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -79,7 +78,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final AtomicReference<State> myState;
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
-  private volatile ModalityState myDumbStartModality;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
@@ -97,10 +95,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
   private volatile ProgressSuspender myCurrentSuspender;
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
-   private final BlockingQueue<TrackedEdtActivity> myTrackedEdtActivities = new LinkedBlockingQueue<>();
+
+  private final TrackedEdtActivityService myTrackedEdtActivityService;
 
   public DumbServiceImpl(Project project) {
     myProject = project;
+    myTrackedEdtActivityService = myProject.getService(TrackedEdtActivityService.class);
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
     ApplicationManager.getApplication().getMessageBus().connect(project)
@@ -351,7 +351,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         state == State.WAITING_FOR_FINISH ||
         state == State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS) {
       enterDumbMode(modality, trace);
-      new TrackedEdtActivity(this::startBackgroundProcess).invokeLaterIfProjectNotDisposed();
+      myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(this::startBackgroundProcess);
     }
   }
 
@@ -378,7 +378,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
       myDumbStart = trace;
       myDumbEnterTrace = new Throwable();
-      myDumbStartModality = modality;
+      myTrackedEdtActivityService.setDumbStartModality(modality);
       myModificationCount++;
     });
     if (wasSmart) {
@@ -398,7 +398,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // The current suspender, however, might have already got suspended between the point of the last check cancelled call and
       // this point. If it has happened it will be cleaned up when the suspender is closed on the background process thread.
       myCurrentSuspender = null;
-      new TrackedEdtActivity(this::updateFinished).invokeLaterAfterProjectInitialized();
+      myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(this::updateFinished);
     }
   }
 
@@ -549,9 +549,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     while (myState.get() != State.SMART && !myProject.isDisposed()) {
       LockSupport.parkNanos(50_000_000);
       // polls next dumb mode task
-      while (!myTrackedEdtActivities.isEmpty()) {
-        myTrackedEdtActivities.poll().run();
-      }
+      myTrackedEdtActivityService.executeAllQueuedActivities();
       // cancels all scheduled and running tasks
       for (DumbModeTask task : myProgresses.keySet()) {
         cancelTask(task);
@@ -775,7 +773,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask) {
     CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
-    new TrackedEdtActivity(() -> {
+    myTrackedEdtActivityService.invokeLater(() -> {
       if (myProject.isDisposed()) {
         result.completeExceptionally(new ProcessCanceledException());
         return;
@@ -786,7 +784,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
 
       result.complete(pollTaskQueue());
-    }).invokeLater();
+    });
     return waitForFuture(result);
   }
 
@@ -893,47 +891,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
      * Indicates that project has been loaded and {@link StartupActivity.RequiredForSmartMode}-s were added to task queue.
      */
     RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS
-  }
-
-  private class TrackedEdtActivity implements Runnable {
-    private final @NotNull Runnable myRunnable;
-
-    TrackedEdtActivity(@NotNull Runnable runnable) {
-      myRunnable = runnable;
-      myTrackedEdtActivities.add(this);
-    }
-
-    void invokeLater() {
-      ApplicationManager.getApplication().invokeLater(this, getActivityExpirationCondition());
-    }
-
-    void invokeLaterIfProjectNotDisposed() {
-      ApplicationManager.getApplication().invokeLater(this, getProjectActivityExpirationCondition());
-    }
-
-    void invokeLaterAfterProjectInitialized() {
-      StartupManager startupManager = StartupManager.getInstance(myProject);
-      startupManager.runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-        Application app = ApplicationManager.getApplication();
-        app.invokeLater(this, myDumbStartModality, getProjectActivityExpirationCondition());
-      });
-    }
-
-    @Override
-    public void run() {
-      myTrackedEdtActivities.remove(this);
-      myRunnable.run();
-    }
-
-    @SuppressWarnings({"RedundantCast", "unchecked", "rawtypes"})
-    private @NotNull Condition getProjectActivityExpirationCondition() {
-      return Conditions.or((Condition)myProject.getDisposed(), (Condition)getActivityExpirationCondition());
-    }
-
-    @NotNull
-    Condition<?> getActivityExpirationCondition() {
-      return __ -> !myTrackedEdtActivities.contains(this);
-    }
   }
 
   private static boolean isSynchronousTaskExecution() {
