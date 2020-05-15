@@ -52,4 +52,5 @@ public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   public void testParenthesisAroundConditional() { doTest();}
   public void testMiscStatements() { doTest();}
   public void testSameSubstitutor() { doTest();}
+  public void testSameUpperBounds() { doTest();}
 }

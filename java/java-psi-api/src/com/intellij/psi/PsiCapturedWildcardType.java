@@ -121,7 +121,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
       return false;
     }
 
-    if ((myContext instanceof PsiReferenceExpression || myContext instanceof PsiMethodCallExpression) && 
+    if (!(myContext instanceof PsiTypeParameter) && 
         !manager.areElementsEquivalent(myParameter, captured.myParameter)) {
       return false;
     }
