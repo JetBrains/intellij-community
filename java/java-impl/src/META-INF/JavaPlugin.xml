@@ -1700,7 +1700,7 @@
                      implementationClass="com.intellij.codeInspection.enhancedSwitch.SwitchLabeledRuleCanBeCodeBlockInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantOperationOnEmptyContainer"
                      key="inspection.redundant.operation.on.empty.container.display.name" bundle="messages.JavaBundle"
-                     groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="InsertLiteralUnderscores"
