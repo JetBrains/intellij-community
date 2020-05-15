@@ -77,7 +77,7 @@ final class TrackedEdtActivityService {
       myRunnable.run();
     }
 
-    @SuppressWarnings({"RedundantCast", "unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private @NotNull Condition getProjectActivityExpirationCondition() {
       return Conditions.or((Condition)myProject.getDisposed(), (Condition)getActivityExpirationCondition());
     }
