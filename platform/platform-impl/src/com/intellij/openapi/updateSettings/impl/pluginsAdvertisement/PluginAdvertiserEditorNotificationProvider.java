@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
@@ -25,6 +26,7 @@ import java.util.Set;
 
 public class PluginAdvertiserEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.type.associations.detected");
+  private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
 
   @NotNull
   @Override
@@ -51,6 +53,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
         if (shouldUpdateNotifications) {
           EditorNotifications.getInstance(project).updateNotifications(file);
         }
+        LOG.debug(String.format("Tried to update extensions cache for file '%s'. shouldUpdateNotifications=%s", file.getName(), shouldUpdateNotifications));
       });
       return null;
     }
