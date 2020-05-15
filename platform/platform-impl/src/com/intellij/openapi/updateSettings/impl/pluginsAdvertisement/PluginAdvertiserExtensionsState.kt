@@ -26,7 +26,7 @@ data class PluginAdvertiserExtensionsData(
 class PluginAdvertiserExtensionsState(private val project: Project) {
 
   companion object {
-    private val LOG = Logger.getInstance(PluginAdvertiserExtensionsState::class.java)
+    private val LOG = Logger.getInstance(PluginsAdvertiser::class.java)
 
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserExtensionsState = project.service()
