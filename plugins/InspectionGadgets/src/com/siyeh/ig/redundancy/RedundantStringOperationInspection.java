@@ -282,7 +282,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       final PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
       if (substringCall == null) return null;
 
-      final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(substringCall.getMethodExpression());
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(substringCall.getMethodExpression().getQualifierExpression());
       if (qualifier != call || !STRING_SUBSTRING.test(substringCall)) return null;
 
       return getProblem(call, "inspection.redundant.string.call.message");
