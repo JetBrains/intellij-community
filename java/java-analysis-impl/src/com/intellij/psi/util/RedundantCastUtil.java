@@ -343,11 +343,11 @@ public class RedundantCastUtil {
 
           if (newThenExpression instanceof PsiTypeCastExpression &&
               !castForBoxing(getInnerMostOperand(thenExpression), elseExpression != null ? elseExpression.getType() : null, conditionalType)) {
-            checkConditionalBranch(expression, newCall, oldMethod, thenExpression, newThenExpression);
+            checkConditionalBranch(expression, newCall, thenExpression, newThenExpression);
           }
           if (newElseExpression instanceof PsiTypeCastExpression &&
               !castForBoxing(getInnerMostOperand(elseExpression), thenExpression != null ? thenExpression.getType() : null, conditionalType)) {
-            checkConditionalBranch(expression, newCall, oldMethod, elseExpression, newElseExpression);
+            checkConditionalBranch(expression, newCall, elseExpression, newElseExpression);
           }
         }
       }
@@ -355,21 +355,30 @@ public class RedundantCastUtil {
 
     private void checkConditionalBranch(PsiCall oldCall,
                                         PsiCall newCall,
-                                        PsiMethod oldMethod,
                                         PsiExpression oldBranchExpression,
                                         PsiExpression newBranchExpression) {
       PsiExpression operand = ((PsiTypeCastExpression)newBranchExpression).getOperand();
       if (operand != null) {
         newBranchExpression = (PsiExpression)newBranchExpression.replace(operand);
+        JavaResolveResult oldResult = oldCall.resolveMethodGenerics();
         JavaResolveResult newResult = resolveNewResult(oldCall, newCall);
-        if (newResult.getElement() == oldMethod && 
-            newResult.isValidResult()) {
+        
+        if (isSameResolveResult(oldResult, newResult)) {
           addToResults((PsiTypeCastExpression)oldBranchExpression);
         }
         else {
           newBranchExpression.replace(oldBranchExpression);
         }
       }
+    }
+
+    private static boolean isSameResolveResult(JavaResolveResult oldResult, JavaResolveResult newResult) {
+      PsiMethod oldMethod = (PsiMethod)oldResult.getElement();
+      LOG.assertTrue(oldMethod != null);
+      return oldMethod.equals(newResult.getElement()) &&
+             newResult.isValidResult() &&
+             !(newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null) &&
+             recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor());
     }
 
     private static boolean castForBoxing(PsiExpression operand, PsiType oppositeType, PsiType conditionalType) {
@@ -476,10 +485,7 @@ public class RedundantCastUtil {
         return;
       }
 
-      if (oldMethod.equals(newResult.getElement()) &&
-          newResult.isValidResult() &&
-          !(newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null) &&
-          recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor())) {
+      if (isSameResolveResult(oldResult, newResult)) {
         PsiExpression newArg = PsiUtil.deparenthesizeExpression(newArgs[i]);
         if (newArg instanceof PsiFunctionalExpression) {
           PsiType newArgType = calculateNewArgType(i, newResult, parameters);
