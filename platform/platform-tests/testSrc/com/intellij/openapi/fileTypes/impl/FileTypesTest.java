@@ -310,7 +310,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
-    myFileTypeManager.toLog = true;
+    FileTypeManagerImpl.toLog = true;
 
     try {
       log("T: ------ akjdhfksdjgf");
@@ -331,7 +331,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       log("T: ------");
     }
     finally {
-      myFileTypeManager.toLog = false;
+      FileTypeManagerImpl.toLog = false;
     }
   }
 

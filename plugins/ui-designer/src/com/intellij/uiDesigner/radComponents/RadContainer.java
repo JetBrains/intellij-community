@@ -300,7 +300,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
   @Nullable
   public RadComponent getComponentAtGrid(int row, int col) {
-    return getGridLayoutManager().getComponentAtGrid(this, row, col);
+    return RadAbstractGridLayoutManager.getComponentAtGrid(this, row, col);
   }
 
   public int getGridRowCount() {
