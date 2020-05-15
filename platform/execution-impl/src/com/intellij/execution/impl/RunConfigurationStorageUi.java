@@ -55,7 +55,7 @@ class RunConfigurationStorageUi {
 
     JPanel comboBoxPanel = UI.PanelFactory.panel(myPathComboBox)
       .withLabel(ExecutionBundle.message("run.configuration.store.in")).moveLabelOnTop()
-      .withComment(getCompatibilityHintText(project))
+      .withComment(getCompatibilityHintText(project), false)
       .withCommentHyperlinkListener(e -> {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           myPathComboBox.getEditor().setItem(FileUtil.toSystemDependentName(myDotIdeaStoragePath));
@@ -106,7 +106,6 @@ class RunConfigurationStorageUi {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         if (file.getPath().equals(myDotIdeaStoragePath)) return true;
-        //noinspection HardCodedStringLiteral
         return file.isDirectory() &&
                super.isFileSelectable(file) &&
                ProjectFileIndex.getInstance(project).isInContent(file) &&
@@ -128,13 +127,7 @@ class RunConfigurationStorageUi {
     String oldStorage = ProjectKt.isDirectoryBased(project)
                         ? FileUtil.toSystemDependentName(".idea/runConfigurations")
                         : PathUtil.getFileName(StringUtil.notNullize(project.getProjectFilePath()));
-    String compatibilityHint = ExecutionBundle.message("run.configuration.storage.compatibility.hint", oldStorage);
-    // All spaces should be &nbsp; - otherwise the comment may get wrapped in the middle of the sentence and it looks not great
-    // Other way to solve wrapping problem is to create comment component using ComponentPanelBuilder.createCommentComponent(compatibilityHint, true, false, 1000);
-    // but it doesn't allow to add custom HyperlinkListener
-    @NonNls String nbsp = "&nbsp;";
-    compatibilityHint = StringUtil.replace(compatibilityHint, " ", nbsp);
-    return compatibilityHint;
+    return ExecutionBundle.message("run.configuration.storage.compatibility.hint", oldStorage);
   }
 
   JPanel getMainPanel() {
