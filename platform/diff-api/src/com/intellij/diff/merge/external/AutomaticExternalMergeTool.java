@@ -9,6 +9,6 @@ import org.jetbrains.annotations.Nullable;
 public interface AutomaticExternalMergeTool {
   ExtensionPointName<AutomaticExternalMergeTool> EP_NAME = ExtensionPointName.create("com.intellij.diff.merge.external.AutomaticExternalMergeTool");
 
-  boolean canShow(@NotNull MergeRequest request);
+  boolean canShow(@Nullable Project project, @NotNull MergeRequest request);
   void show(@Nullable Project project, @NotNull MergeRequest request);
 }
