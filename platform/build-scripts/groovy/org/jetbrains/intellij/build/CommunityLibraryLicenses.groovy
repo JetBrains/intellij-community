@@ -600,6 +600,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-markdown"),
     jetbrainsLibrary("intellij-test-discovery"),
+    jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("jps-build-script-dependencies-bootstrap"),
     jetbrainsLibrary("kotlin-reflect"),
     jetbrainsLibrary("kotlin-script-runtime"),

@@ -17,12 +17,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="filePrediction.calculate.features" defaultValue="true" description="Record opened files features to predict which file will be opened next and pre-load caches."/>
 
-    <statistics.counterUsagesCollector groupId="file.prediction" version="4"/>
+    <statistics.counterUsagesCollector groupId="file.prediction" version="5"/>
 
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionGeneralFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionFileTypeFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.FilePredictionHistoryFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.context.FilePredictionContextFeatures"/>
+    <filePrediction.ml.model implementation="com.intellij.filePrediction.predictor.model.FilePredictionMLModelProvider"/>
 
     <applicationService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
     <projectService serviceImplementation="com.intellij.filePrediction.features.history.FilePredictionHistory"/>
