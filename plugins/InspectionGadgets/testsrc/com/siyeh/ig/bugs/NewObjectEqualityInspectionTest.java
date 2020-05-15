@@ -11,6 +11,9 @@ public class NewObjectEqualityInspectionTest extends LightJavaInspectionTestCase
   public void testNewObjectEquality() {
     doTest();
   }
+  public void testPrimitiveAndBoxed() {
+    doTest();
+  }
 
   @NotNull
   @Override
