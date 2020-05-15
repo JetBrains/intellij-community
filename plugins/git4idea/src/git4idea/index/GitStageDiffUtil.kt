@@ -40,7 +40,10 @@ fun createTwoSidesDiffRequestProducer(project: Project, statusNode: GitFileStatu
 }
 
 fun createThreeSidesDiffRequestProducer(project: Project, statusNode: GitFileStatusNode): ChangeDiffRequestChain.Producer {
-  return ThreeSidesProducer(project, statusNode)
+  return when (statusNode.kind) {
+    NodeKind.STAGED, NodeKind.UNSTAGED -> ThreeSidesProducer(project, statusNode)
+    NodeKind.CONFLICTED, NodeKind.IGNORED, NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath)
+  }
 }
 
 @Throws(VcsException::class, IOException::class)
