@@ -21,5 +21,5 @@ interface ExternalSystemProjectAware {
 
   fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable)
 
-  fun refreshProject()
+  fun reloadProject(context: ExternalSystemProjectReloadContext)
 }
