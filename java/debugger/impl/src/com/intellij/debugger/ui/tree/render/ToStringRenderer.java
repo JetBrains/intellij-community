@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -130,12 +132,41 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return overridesToString(type);
   }
 
+  @Override
+  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
+    if (!(type instanceof ReferenceType)) {
+      return CompletableFuture.completedFuture(false);
+    }
+
+    if (JAVA_LANG_STRING.equals(type.name())) {
+      return CompletableFuture.completedFuture(false); // do not render 'String' objects for performance reasons
+    }
+
+    return overridesToString(type, context);
+  }
+
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
       Method toStringMethod = DebuggerUtils.findMethod((ReferenceType)type, "toString", "()Ljava/lang/String;");
       return toStringMethod != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(toStringMethod.declaringType().name());
     }
     return false;
+  }
+
+  private static CompletableFuture<Boolean> overridesToString(Type type, SuspendContext context) {
+    if (type instanceof ClassType) {
+      return DebuggerUtilsAsync.findAnyBaseType(type, t -> {
+        if (t instanceof ReferenceType) {
+          return DebuggerUtilsAsync.methods((ReferenceType)t, context).thenApply(methods -> {
+            return methods.stream().anyMatch(m -> !m.isAbstract() &&
+                                                  DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
+                                                  !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
+          });
+        }
+        return CompletableFuture.completedFuture(false);
+      }, context).thenApply(t -> t != null);
+    }
+    return CompletableFuture.completedFuture(false);
   }
 
   @Override

@@ -524,6 +524,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return methodName(signatureToName(m.declaringType().signature()), m.name(), m.signature());
   }
 
+  public static boolean methodMatches(@NotNull Method m, @NotNull String name, @NotNull String signature) {
+    return name.equals(m.name()) && signature.equals(m.signature());
+  }
+
   public static String methodName(final String className, final String methodName, final String signature) {
     try {
       return new SigReader(signature) {
