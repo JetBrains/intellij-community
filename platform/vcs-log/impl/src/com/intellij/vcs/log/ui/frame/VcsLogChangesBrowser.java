@@ -124,7 +124,10 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @Override
   protected JComponent createCenterPanel() {
     JComponent centerPanel = super.createCenterPanel();
-    ComponentUtil.putClientProperty(centerPanel, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    JScrollPane scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane.class);
+    if (scrollPane != null) {
+      ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    }
     return centerPanel;
   }
 
