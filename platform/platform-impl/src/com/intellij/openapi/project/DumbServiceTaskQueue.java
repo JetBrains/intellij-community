@@ -2,7 +2,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
@@ -18,9 +17,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
 final class DumbServiceTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceTaskQueue.class);
+
+  private final Project myProject;
+  private final TrackedEdtActivityService myTrackedEdtActivityService;
 
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
@@ -31,6 +32,11 @@ final class DumbServiceTaskQueue {
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = new ConcurrentHashMap<>();
 
+  DumbServiceTaskQueue(@NotNull Project project,
+                       @NotNull TrackedEdtActivityService trackedEdtActivityService) {
+    myProject = project;
+    myTrackedEdtActivityService = trackedEdtActivityService;
+  }
 
   void cancelTask(@NotNull DumbModeTask task) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);

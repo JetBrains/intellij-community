@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Service
 public final class DumbServiceSyncTaskQueue {
   private final Object myLock = new Object();
   private boolean myIsRunning = false;

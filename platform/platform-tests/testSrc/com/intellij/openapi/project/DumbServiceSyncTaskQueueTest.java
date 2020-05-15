@@ -11,9 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
+  private final DumbServiceSyncTaskQueue myService = new DumbServiceSyncTaskQueue();
   @NotNull
   private DumbServiceSyncTaskQueue service() {
-    return getProject().getService(DumbServiceSyncTaskQueue.class);
+    return myService;
   }
 
   public void testRecursionIsBlocked() {
