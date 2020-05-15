@@ -80,14 +80,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private volatile Throwable myDumbStart;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
-  private final Set<Object> myQueuedEquivalences = new HashSet<>();
-  private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
 
-  /**
-   * Per-task progress indicators. Modified from EDT only.
-   * The task is removed from this map after it's finished or when the project is disposed.
-   */
-  private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = new ConcurrentHashMap<>();
   private Balloon myBalloon;//used from EDT only
 
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
@@ -97,10 +90,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
+  private final DumbServiceTaskQueue myDumbTaskQueue;
 
   public DumbServiceImpl(Project project) {
     myProject = project;
     myTrackedEdtActivityService = myProject.getService(TrackedEdtActivityService.class);
+    myDumbTaskQueue = myProject.getService(DumbServiceTaskQueue.class);
+
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
     ApplicationManager.getApplication().getMessageBus().connect(project)
@@ -158,11 +154,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void cancelTask(@NotNull DumbModeTask task) {
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
-    ProgressIndicatorEx indicator = myProgresses.get(task);
-    if (indicator != null) {
-      indicator.cancel();
-    }
+    myDumbTaskQueue.cancelTask(task);
   }
 
   @Override
@@ -171,15 +163,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (myBalloon != null) {
       Disposer.dispose(myBalloon);
     }
-    myUpdatesQueue.clear();
-    myQueuedEquivalences.clear();
     synchronized (myRunWhenSmartQueue) {
       myRunWhenSmartQueue.clear();
     }
-    for (DumbModeTask task : new ArrayList<>(myProgresses.keySet())) {
-      cancelTask(task);
-      Disposer.dispose(task);
-    }
+    myDumbTaskQueue.disposePendingTasks();
   }
 
   @Override
@@ -340,7 +327,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace) {
-    if (!addTaskToQueue(task)) return;
+    if (!myDumbTaskQueue.addTaskToQueue(task)) return;
 
     State state = myState.get();
     if (state == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS) {
@@ -353,21 +340,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       enterDumbMode(modality, trace);
       myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(this::startBackgroundProcess);
     }
-  }
-
-  private boolean addTaskToQueue(@NotNull DumbModeTask task) {
-    if (!myQueuedEquivalences.add(task.getEquivalenceObject())) {
-      Disposer.dispose(task);
-      return false;
-    }
-
-    myProgresses.put(task, new ProgressIndicatorBase());
-    Disposer.register(task, () -> {
-      ApplicationManager.getApplication().assertIsWriteThread();
-      myProgresses.remove(task);
-    });
-    myUpdatesQueue.addLast(task);
-    return true;
   }
 
   private void enterDumbMode(@NotNull ModalityState modality, @NotNull Throwable trace) {
@@ -551,9 +523,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // polls next dumb mode task
       myTrackedEdtActivityService.executeAllQueuedActivities();
       // cancels all scheduled and running tasks
-      for (DumbModeTask task : myProgresses.keySet()) {
-        cancelTask(task);
-      }
+      myDumbTaskQueue.cancelAllTasks();
 
       if (myCurrentSuspender != null && myCurrentSuspender.isSuspended()) {
         myCurrentSuspender.resumeProcess();
@@ -783,28 +753,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         Disposer.dispose(prevTask);
       }
 
-      result.complete(pollTaskQueue());
+      Pair<DumbModeTask, ProgressIndicatorEx> pair = myDumbTaskQueue.pollTaskQueue();
+      if (pair == null) {
+        queueUpdateFinished();
+      }
+      result.complete(pair);
     });
     return waitForFuture(result);
-  }
-
-  private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> pollTaskQueue() {
-    while (true) {
-      if (myUpdatesQueue.isEmpty()) {
-        queueUpdateFinished();
-        return null;
-      }
-
-      DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
-      myQueuedEquivalences.remove(queuedTask.getEquivalenceObject());
-      ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
-      if (indicator.isCanceled()) {
-        Disposer.dispose(queuedTask);
-        continue;
-      }
-
-      return Pair.create(queuedTask, indicator);
-    }
   }
 
   private static @Nullable <T> T waitForFuture(Future<T> result) {
