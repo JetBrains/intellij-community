@@ -155,18 +155,23 @@ public class RedundantCastUtil {
               if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)castOperand).getElseExpression())) return;
             }
             if (TypeConversionUtil.isAssignable(lType, opType, false)) {
-              if (castOperand instanceof PsiFunctionalExpression) {
-                final PsiTypeElement typeElement = ((PsiTypeCastExpression)rExpr).getCastType();
-                final PsiType castType = typeElement != null ? typeElement.getType() : null;
-                if (!lType.equals(castType)) {
-                  return;
-                }
-              }
+              if (!isFunctionalExpressionTypePreserved((PsiTypeCastExpression)rExpr, castOperand, lType)) return;
               addToResults((PsiTypeCastExpression)rExpr);
             }
           }
         }
       }
+    }
+
+    private static boolean isFunctionalExpressionTypePreserved(PsiTypeCastExpression typeCast,
+                                                               PsiExpression castOperand,
+                                                               @NotNull PsiType lType) {
+      if (castOperand instanceof PsiFunctionalExpression) {
+        final PsiTypeElement typeElement = typeCast.getCastType();
+        final PsiType castType = typeElement != null ? typeElement.getType() : null;
+        return lType.equals(castType);
+      }
+      return true;
     }
 
     @Override
@@ -406,7 +411,7 @@ public class RedundantCastUtil {
           PsiExpression returnExpression = deparenthesizeExpression(expressions.get(returnExprIdx));
           final PsiExpression newReturnExpression = deparenthesizeExpression(newReturnExpressions.get(returnExprIdx));
           if (newReturnExpression instanceof PsiTypeCastExpression) {
-            checkLambdaReturn(i, returnExpression, (PsiTypeCastExpression)newReturnExpression, interfaceType, newLambdaExpression, oldCall, newCall, parameters);
+            checkLambdaReturn(i, (PsiTypeCastExpression)returnExpression, (PsiTypeCastExpression)newReturnExpression, interfaceType, newLambdaExpression, oldCall, newCall, parameters);
           }
           else if (returnExpression instanceof PsiConditionalExpression) {
             LOG.assertTrue(newReturnExpression instanceof PsiConditionalExpression);
@@ -421,12 +426,12 @@ public class RedundantCastUtil {
 
             if (thenExpression instanceof PsiTypeCastExpression &&
                 !castForBoxing(getInnerMostOperand(thenExpression), elseExpression != null ? elseExpression.getType() : null, returnExpression.getType())) {
-              checkLambdaReturn(i, thenExpression, (PsiTypeCastExpression)newThenExpression, interfaceType, newLambdaExpression, oldCall, newCall, parameters);
+              checkLambdaReturn(i, (PsiTypeCastExpression)thenExpression, (PsiTypeCastExpression)newThenExpression, interfaceType, newLambdaExpression, oldCall, newCall, parameters);
             }
 
             if (elseExpression instanceof PsiTypeCastExpression &&
                 !castForBoxing(getInnerMostOperand(elseExpression), thenExpression != null ? thenExpression.getType() : null, returnExpression.getType())) {
-              checkLambdaReturn(i, elseExpression, (PsiTypeCastExpression)newElseExpression, interfaceType, newLambdaExpression, oldCall, newCall, parameters);
+              checkLambdaReturn(i, (PsiTypeCastExpression)elseExpression, (PsiTypeCastExpression)newElseExpression, interfaceType, newLambdaExpression, oldCall, newCall, parameters);
             }
           }
         }
@@ -434,23 +439,25 @@ public class RedundantCastUtil {
     }
 
     private void checkLambdaReturn(int i,
-                                   PsiExpression returnExpression,
+                                   PsiTypeCastExpression returnExpression,
                                    PsiTypeCastExpression newReturnExpression,
                                    PsiType originalFunctionalInterfaceType,
                                    PsiLambdaExpression newLambdaExpression, 
                                    PsiCall oldCall,
                                    PsiCall newCall,
                                    PsiParameter[] parameters) {
-      PsiExpression castOperand = getInnerMostOperand(newReturnExpression);
+      PsiExpression castOperand = getInnerMostOperand(returnExpression);
       if (castOperand == null) return;
+      final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(originalFunctionalInterfaceType);
+      if (interfaceReturnType == null || 
+          !isFunctionalExpressionTypePreserved(returnExpression, castOperand, interfaceReturnType)) return;
       PsiExpression strippedCast = (PsiExpression)newReturnExpression.replace(castOperand);
       PsiType newArgType = calculateNewArgType(i, resolveNewResult(oldCall, newCall), parameters);
       final PsiType functionalInterfaceType = newLambdaExpression.getGroundTargetType(newArgType);
       if (originalFunctionalInterfaceType.equals(functionalInterfaceType)) {
-        final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(originalFunctionalInterfaceType);
         final PsiType castExprType = LambdaUtil.performWithTargetType(newLambdaExpression, functionalInterfaceType, () -> strippedCast.getType());
-        if (interfaceReturnType != null && castExprType != null && interfaceReturnType.isAssignableFrom(castExprType)) {
-          addToResults((PsiTypeCastExpression)returnExpression);
+        if (castExprType != null && interfaceReturnType.isAssignableFrom(castExprType)) {
+          addToResults(returnExpression);
           return;
         }
       }
