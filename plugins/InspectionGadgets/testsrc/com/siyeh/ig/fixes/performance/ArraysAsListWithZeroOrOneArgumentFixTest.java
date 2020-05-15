@@ -24,6 +24,7 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
            "}}");
   }
 
+  @SuppressWarnings("RedundantOperationOnEmptyContainer")
   public void testZeroArgumentsWithType() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.emptyList()"),
            "import java.util.*;\n" +
