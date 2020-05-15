@@ -122,8 +122,12 @@ class GitRevisionContentPreLoader(val project: Project) {
         LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
         return null
       }
+      if (endIndex <= startIndex || output[endIndex - 1] != '\n'.toByte()) {
+        LOG.error("Unexpected output for hash $hash at position $endIndex", Attachment("catfile.txt", String(output)))
+        return null
+      }
 
-      val content = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
+      val content   = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
       result[path] = content
       currentPosition = endIndex
     }
