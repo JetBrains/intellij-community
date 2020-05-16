@@ -32,7 +32,7 @@ class CompilationPartsUploader implements Closeable {
     myServerUrl = fixServerUrl(serverUrl)
     myMessages = messages
     CompilationPartsUtil.initLog4J(messages)
-    def timeout = TimeUnit.MINUTES.toMillis(3).toInteger()
+    def timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
     def config = RequestConfig.custom()
       .setConnectTimeout(timeout)
       .setConnectionRequestTimeout(timeout)
