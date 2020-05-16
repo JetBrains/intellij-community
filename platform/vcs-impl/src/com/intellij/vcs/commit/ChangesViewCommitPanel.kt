@@ -102,7 +102,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val centerPanel = simplePanel()
-  private val buttonPanel = NonOpaquePanel(HorizontalLayout(0))
+  private val buttonPanel = simplePanel().apply { isOpaque = false }
   private val toolbarPanel = simplePanel().apply { isOpaque = false }
   private var verticalToolbarBorder: Border? = null
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
@@ -170,9 +170,11 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     buttonPanel.apply {
       border = getButtonPanelBorder()
 
-      add(commitButton)
-      add(commitActionToolbar.component)
-      add(toolbarPanel)
+      addToLeft(commitButton)
+      addToRight(NonOpaquePanel(HorizontalLayout(0)).apply {
+        add(commitActionToolbar.component)
+        add(toolbarPanel)
+      })
     }
     centerPanel
       .addToCenter(commitMessage)
