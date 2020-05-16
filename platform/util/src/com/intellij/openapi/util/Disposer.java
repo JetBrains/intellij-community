@@ -28,13 +28,15 @@ public final class Disposer {
   private Disposer() { }
 
   @NotNull
+  @Contract(pure = true, value = "->new")
   public static Disposable newDisposable() {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
-    return newDisposable(null);
+    return newDisposable("");
   }
 
   @NotNull
-  public static Disposable newDisposable(@Nullable String debugName) {
+  @Contract(pure = true, value = "_->new")
+  public static Disposable newDisposable(@NotNull String debugName) {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new Disposable() {
       @Override
@@ -42,12 +44,13 @@ public final class Disposer {
 
       @Override
       public String toString() {
-        return debugName == null ? super.toString() : debugName;
+        return debugName;
       }
     };
   }
 
-  public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @Nullable String debugName) {
+  @Contract(pure = true, value = "_,_->new")
+  public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
     Disposable result = newDisposable(debugName);
     register(parentDisposable, result);
     return result;
