@@ -29,17 +29,15 @@ class PortableCompilationCache {
   /**
    * If true then current execution is expected to perform only warm up and upload of new commits caches, nothing else like tests execution
    */
-  private boolean uploadOnly = System.getProperty('intellij.jps.cache.uploadOnly')?.toBoolean() ?: false
+  private boolean uploadOnly = bool('intellij.jps.cache.uploadOnly', false)
   @Lazy
   private CompilationOutputsDownloader downloader = {
-    def availableForHeadCommit = System.getProperty(AVAILABLE_FOR_HEAD_PROPERTY)?.toBoolean() ?: false
+    def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
     new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
   }()
   private File cacheDir = context.compilationData.dataStorageRoot
-  private boolean forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force')?.toBoolean() ?: false
-  boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && System.getProperty(REMOTE_CACHE_URL_PROPERTY)?.with {
-    !StringUtil.isEmptyOrSpaces(it)
-  } == true
+  private boolean forceRebuild = bool('intellij.jps.cache.rebuild.force', false)
+  boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && !StringUtil.isEmptyOrSpaces(System.getProperty(REMOTE_CACHE_URL_PROPERTY))
 
   PortableCompilationCache(CompilationContext context) {
     this.context = context
@@ -51,6 +49,16 @@ class PortableCompilationCache {
       context.messages.error("$description is not defined. Please set '$systemProperty' system property.")
     }
     return value
+  }
+
+  private static boolean bool(String systemProperty, boolean defaultValue) {
+    def value = System.getProperty(systemProperty)
+    if (StringUtil.isEmptyOrSpaces(value)) {
+      defaultValue
+    }
+    else {
+      Boolean.parseBoolean(value)
+    }
   }
 
   private def clearJpsOutputs() {
@@ -77,7 +85,7 @@ class PortableCompilationCache {
    * Download latest available compilation cache from remote cache and perform compilation if necessary
    */
   def warmUp() {
-    def forceDownload = System.getProperty(FORCE_DOWNLOAD_PROPERTY)?.toBoolean() ?: false
+    def forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
     if (forceRebuild) {
       clearJpsOutputs()
     }
@@ -109,7 +117,7 @@ class PortableCompilationCache {
       def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
       def commitHash = require("build.vcs.number", "Repository commit")
       context.messages.buildStatus(commitHash)
-      def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory')?.toBoolean() ?: true
+      def updateCommitHistory = bool('intellij.jps.remote.cache.updateHistory', true)
       context.messages.info("Git remote url $remoteGitUrl")
       Map<String, String> remotePerCommitHash = [:]
       remotePerCommitHash[remoteGitUrl] = commitHash
