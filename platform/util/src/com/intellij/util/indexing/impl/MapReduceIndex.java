@@ -209,11 +209,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       if (myDisposed) {
         return new ValueContainerImpl<>();
       }
-      IndexDebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
+      IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
       return myStorage.read(key);
     }
     finally {
-      IndexDebugAssertions.DEBUG_INDEX_ID.set(null);
+      IndexDebugProperties.DEBUG_INDEX_ID.set(null);
       myLock.readLock().unlock();
     }
   }
@@ -338,9 +338,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
     myLock.writeLock().lock();
     try {
-      IndexId<?, ?> oldIndexId = IndexDebugAssertions.DEBUG_INDEX_ID.get();
+      IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
-        IndexDebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
+        IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
         boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
         if (hasDifference) updateData.updateForwardIndex();
       }
@@ -351,7 +351,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         throw new StorageException(e);
       }
       finally {
-        IndexDebugAssertions.DEBUG_INDEX_ID.set(oldIndexId);
+        IndexDebugProperties.DEBUG_INDEX_ID.set(oldIndexId);
       }
     }
     finally {
@@ -362,7 +362,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public static <Key, Value> void checkValuesHaveProperEqualsAndHashCode(@NotNull Map<Key, Value> data,
                                                                          @NotNull IndexId<Key, Value> indexId,
                                                                          @NotNull DataExternalizer<Value> valueExternalizer) {
-    if (IndexDebugAssertions.DEBUG) {
+    if (IndexDebugProperties.DEBUG) {
       for (Map.Entry<Key, Value> e : data.entrySet()) {
         final Value value = e.getValue();
         if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {

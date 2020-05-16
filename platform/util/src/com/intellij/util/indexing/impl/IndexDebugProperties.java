@@ -15,13 +15,12 @@
  */
 package com.intellij.util.indexing.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.IndexId;
+import org.jetbrains.annotations.ApiStatus;
 
-public class IndexDebugAssertions {
-  private static final Logger LOG = Logger.getInstance(IndexDebugAssertions.class);
-
+@ApiStatus.Internal
+public class IndexDebugProperties {
   public static final ThreadLocal<IndexId<?, ?>> DEBUG_INDEX_ID = new ThreadLocal<>();
 
   @SuppressWarnings("StaticNonFinalField")
@@ -34,20 +33,4 @@ public class IndexDebugAssertions {
     "intellij.idea.indices.debug.extra.sanity",
     false //DEBUG // todo https://youtrack.jetbrains.com/issue/IDEA-134916
   );
-
-  public static void assertTrue(boolean value) {
-    if (!value) {
-      LOG.assertTrue(false);
-    }
-  }
-
-  public static void assertTrue(boolean value, String message, Object ... args) {
-    if (!value) {
-      error(message, args);
-    }
-  }
-
-  public static void error(String message, Object ... args) {
-    LOG.error(String.format(message, args));
-  }
 }

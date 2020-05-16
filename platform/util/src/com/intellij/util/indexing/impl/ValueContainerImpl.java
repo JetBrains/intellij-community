@@ -116,8 +116,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
           fileSetObjects = new SmartList<>();
           valueObjects = new SmartList<>();
         }
-        else if (IndexDebugAssertions.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + IndexDebugAssertions.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
+        else if (IndexDebugProperties.DEBUG) {
+          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);
@@ -448,7 +448,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
         // serialize positive file ids with delta encoding
         ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
         IntIdsIterator intIterator = originalInput.sortedIntIterator();
-        if (IndexDebugAssertions.DEBUG) IndexDebugAssertions.assertTrue(intIterator.hasAscendingOrder());
+        if (IndexDebugProperties.DEBUG) LOG.assertTrue(intIterator.hasAscendingOrder());
 
         if (intIterator.size() == 1) {
           DataInputOutputUtil.writeINT(out, intIterator.next());
