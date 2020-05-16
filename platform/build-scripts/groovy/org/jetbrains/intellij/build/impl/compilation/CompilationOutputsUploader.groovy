@@ -74,30 +74,25 @@ class CompilationOutputsUploader {
     try {
       def start = System.nanoTime()
       Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
-      executor.submit {
-        // In case if commits history is not updated it makes no sense to upload
-        // JPS caches archive as we're going to use hot compile outputs only and
-        // not to perform any further compilations.
-        if (updateCommitHistory) {
-        // Upload jps caches started first because of the significant size of the output
+      // In case if commits history is not updated it makes no sense to upload
+      // JPS caches archive as we're going to use hot compile outputs only and
+      // not to perform any further compilations.
+      if (updateCommitHistory) {
+        executor.submit {
+          // Upload jps caches started first because of the significant size of the output
           uploadCompilationCache(publishTeamCityArtifacts)
         }
-
-        uploadMetadata()
       }
 
       uploadCompilationOutputs(currentSourcesState, uploader, executor)
 
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
-      def metadata = new File(tmpDir, "metadata/$commitHash")
-      if (!metadata.exists()) {
-        messages.error("$metadata.absolutePath doesn't exist")
-      }
       messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
       messages.reportStatisticValue("Total outputs", String.valueOf(sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size()))
       messages.reportStatisticValue("Uploaded outputs", String.valueOf(uploadedOutputsCount.get()))
 
+      uploadMetadata()
       if (updateCommitHistory) {
         updateCommitHistory(uploader)
       }
@@ -200,8 +195,8 @@ class CompilationOutputsUploader {
 
   private static move(File src, File dst) {
     if (!src.exists()) throw new IllegalStateException("File $src doesn't exist.")
-
     FileUtil.rename(src, dst)
+    if (!dst.exists()) throw new IllegalStateException("File $dst doesn't exist.")
   }
 
   @CompileStatic
