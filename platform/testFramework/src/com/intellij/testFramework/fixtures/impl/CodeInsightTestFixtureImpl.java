@@ -863,7 +863,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public Collection<UsageInfo> testFindUsages(final String @NotNull ... fileNames) {
     assertInitialized();
-    configureByFiles(fileNames);
+    if (fileNames.length > 0) {
+      configureByFiles(fileNames);
+    }
     int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
     PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), flags);
     assertNotNull("Cannot find referenced element", targetElement);
