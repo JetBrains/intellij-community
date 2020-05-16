@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiPredicate;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class ArrayUtil {
@@ -641,17 +642,11 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<? extends T> objects, T object, @NotNull Equality<? super T> comparator) {
+  public static <T> int indexOf(@NotNull List<? extends T> objects, T object, @NotNull BiPredicate<? super T, ? super T> predicate) {
     for (int i = 0; i < objects.size(); i++) {
-      if (comparator.equals(objects.get(i), object)) return i;
-    }
-    return -1;
-  }
-
-  @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<? extends T> objects, T object, @NotNull Comparator<? super T> comparator) {
-    for (int i = 0; i < objects.size(); i++) {
-      if (comparator.compare(objects.get(i), object) == 0) return i;
+      if (predicate.test(objects.get(i), object)) {
+        return i;
+      }
     }
     return -1;
   }

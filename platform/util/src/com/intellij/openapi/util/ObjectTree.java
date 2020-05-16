@@ -176,7 +176,9 @@ final class ObjectTree {
   static <T> void executeActionWithRecursiveGuard(@NotNull T object, @NotNull List<T> recursiveGuard, @NotNull Consumer<? super T> action) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (recursiveGuard) {
-      if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.identityStrategy()) != -1) return;
+      if (ArrayUtil.indexOf(recursiveGuard, object, (t, t2) -> t == t2) != -1) {
+        return;
+      }
       recursiveGuard.add(object);
     }
 
