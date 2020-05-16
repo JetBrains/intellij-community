@@ -9,18 +9,19 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.FontUtil
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import git4idea.i18n.GitBundle
-import git4idea.index.*
+import git4idea.index.GitFileStatus
+import git4idea.index.GitStageTracker
+import git4idea.index.isRenamed
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 import org.jetbrains.annotations.Nls
@@ -58,19 +59,19 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
       rootState.statuses.forEach { (_, status) ->
         NodeKind.values().forEach { kind ->
           if (kind.`is`(status)) {
-            val parentNode = parentNodes.getOrPut(kind) { ChangesBrowserKindNode(kind) }
+            val parentNode = parentNodes.getOrPut(kind) { ChangesBrowserKindNode(project, kind) }
             val fileStatusInfo = GitFileStatusNode.Saved(root, status, kind)
             builder.insertPath(fileStatusInfo, parentNode)
           }
         }
       }
       rootState.unsavedIndex.forEach { file ->
-        val parentNode = parentNodes.getOrPut(NodeKind.STAGED) { ChangesBrowserKindNode(NodeKind.STAGED) }
+        val parentNode = parentNodes.getOrPut(NodeKind.STAGED) { ChangesBrowserKindNode(project, NodeKind.STAGED) }
         val fileStatusInfo = GitFileStatusNode.Unsaved(root, file)
         builder.insertPath(fileStatusInfo, parentNode)
       }
       rootState.unsavedWorkTree.forEach { file ->
-        val parentNode = parentNodes.getOrPut(NodeKind.UNSTAGED) { ChangesBrowserKindNode(NodeKind.UNSTAGED) }
+        val parentNode = parentNodes.getOrPut(NodeKind.UNSTAGED) { ChangesBrowserKindNode(project, NodeKind.UNSTAGED) }
         val fileStatusInfo = GitFileStatusNode.Unsaved(root, file)
         builder.insertPath(fileStatusInfo, parentNode)
       }
@@ -129,7 +130,7 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     }
   }
 
-  private class ChangesBrowserKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
+  private class ChangesBrowserKindNode(val project: Project, kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
     private val sortOrder = listOf(NodeKind.CONFLICTED, NodeKind.STAGED,
                                    NodeKind.UNSTAGED, NodeKind.UNTRACKED,
                                    NodeKind.IGNORED).zip(NodeKind.values().indices).toMap()
@@ -139,6 +140,22 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
 
     init {
       markAsHelperNode()
+    }
+
+    override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+      if (kind == NodeKind.CONFLICTED) {
+        renderer.append(textPresentation, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        renderer.append(FontUtil.spaceAndThinSpace(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+        renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"),
+                        SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
+                        Runnable {
+                          val conflictedFiles = getObjectsUnderStream(GitFileStatusNode::class.java).map { it.filePath.virtualFile }.filter { it != null }.toList()
+                          AbstractVcsHelper.getInstance(project).showMergeDialog(conflictedFiles)
+                        })
+        appendCount(renderer)
+      } else {
+        super.render(renderer, selected, expanded, hasFocus)
+      }
     }
 
     @Nls
