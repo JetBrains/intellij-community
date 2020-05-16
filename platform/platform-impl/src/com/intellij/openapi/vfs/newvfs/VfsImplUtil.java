@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +13,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Function;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -172,7 +175,7 @@ public class VfsImplUtil {
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
-  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlers = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY); // guarded by ourLock
   private static final Map<String, Set<String>> ourDominatorsMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
 
   @NotNull
@@ -185,12 +188,12 @@ public class VfsImplUtil {
     T handler;
 
     synchronized (ourLock) {
-      Pair<ArchiveFileSystem, ArchiveHandler> record = ourHandlers.get(localPath);
+      Pair<ArchiveFileSystem, ArchiveHandler> record = ourHandlerCache.get(localPath);
 
       if (record == null) {
         handler = producer.fun(localPath);
         record = pair(vfs, handler);
-        ourHandlers.put(localPath, record);
+        ourHandlerCache.put(localPath, record);
 
         forEachDirectoryComponent(localPath, containingDirectoryPath -> {
           Set<String> handlers = ourDominatorsMap.computeIfAbsent(containingDirectoryPath, __ -> new THashSet<>());
@@ -198,14 +201,14 @@ public class VfsImplUtil {
         });
       }
 
-      @SuppressWarnings("unchecked") T t = (T)record.second;
-      handler = t;
+      //noinspection unchecked
+      handler = (T)record.second;
     }
 
     return handler;
   }
 
-  private static void forEachDirectoryComponent(String rootPath, Consumer<? super String> consumer) {
+  private static void forEachDirectoryComponent(@NotNull String rootPath, @NotNull Consumer<? super String> consumer) {
     int index = rootPath.lastIndexOf('/');
     while (index > 0) {
       String containingDirectoryPath = rootPath.substring(0, index);
@@ -222,7 +225,8 @@ public class VfsImplUtil {
       // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
       return;
     }
-    app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    MessageBusConnection connection = app.getMessageBus().connect(app);
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         InvalidationState state = null;
@@ -265,11 +269,20 @@ public class VfsImplUtil {
         if (state != null) state.scheduleRefresh();
       }
     });
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        synchronized (ourLock) {
+          // avoid leaking ArchiveFileSystem registered by plugin, e.g. TgzFileSystem from Kubernetes plugin
+          ourHandlerCache.clear();
+        }
+      }
+    });
   }
 
   @Nullable
-  private static InvalidationState invalidate(@Nullable InvalidationState state, String path) {
-    Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
+  private static InvalidationState invalidate(@Nullable InvalidationState state, @NotNull String path) {
+    Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.remove(path);
     if (handlerPair != null) {
       handlerPair.second.dispose();
 
@@ -290,7 +303,7 @@ public class VfsImplUtil {
   private static class InvalidationState {
     private Set<NewVirtualFile> myRootsToRefresh;
 
-    private void registerPathToRefresh(String path, ArchiveFileSystem vfs) {
+    private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
       NewVirtualFile root = ManagingFS.getInstance().findRoot(vfs.composeRootPath(path), vfs);
       if (root != null) {
         if (myRootsToRefresh == null) myRootsToRefresh = new HashSet<>();
@@ -312,7 +325,9 @@ public class VfsImplUtil {
   @TestOnly
   public static void releaseHandler(@NotNull String localPath) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
-    InvalidationState state = invalidate(null, localPath);
-    if (state == null) throw new IllegalArgumentException(localPath + " not in " + ourHandlers.keySet());
+    synchronized (ourLock) {
+      InvalidationState state = invalidate(null, localPath);
+      if (state == null) throw new IllegalArgumentException(localPath + " not in " + ourHandlerCache.keySet());
+    }
   }
 }
