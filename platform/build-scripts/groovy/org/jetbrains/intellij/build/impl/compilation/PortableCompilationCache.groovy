@@ -116,14 +116,6 @@ class PortableCompilationCache {
       new CompilationOutputsUploader(
         context, remoteCacheUrl, remotePerCommitHash, syncFolder, updateCommitHistory
       ).upload(publishTeamCityArtifacts)
-      context.messages.block("AWS sync folder $syncFolder") {
-        def root = new File(syncFolder)
-        root.eachFileRecurse {
-          if (!it.isDirectory()) {
-            context.messages.info(root.toPath().relativize(it.toPath()).toString())
-          }
-        }
-      }
     }
   }
 }

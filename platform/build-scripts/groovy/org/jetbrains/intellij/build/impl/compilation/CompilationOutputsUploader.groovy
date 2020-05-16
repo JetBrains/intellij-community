@@ -63,21 +63,17 @@ class CompilationOutputsUploader {
   }
 
   def upload(Boolean publishTeamCityArtifacts) {
+    if (!sourcesStateProcessor.sourceStateFile.exists()) {
+      context.messages.warning("Compilation outputs doesn't contain source state file, please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
+      return
+    }
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("$executorThreadsCount threads will be used for upload")
     NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
     executor.prestartAllCoreThreads()
-
     try {
       def start = System.nanoTime()
-      def sourceStateFile = sourcesStateProcessor.sourceStateFile
-      if (!sourceStateFile.exists()) {
-        context.messages.
-          warning("Compilation outputs doesn't contain source state file, please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
-        return
-      }
       Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
-
       executor.submit {
         // In case if commits history is not updated it makes no sense to upload
         // JPS caches archive as we're going to use hot compile outputs only and
