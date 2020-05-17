@@ -11,8 +11,7 @@ import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-abstract class FileUsagePredictor(val isDummy: Boolean) {
-  val candidateProvider: FilePredictionCandidateProvider = CompositeCandidateProvider()
+abstract class FileUsagePredictor(val candidateProvider: FilePredictionCandidateProvider, val isDummy: Boolean) {
 
   fun predictNextFile(project: Project, currentFile: VirtualFile?, topCandidates: Int): List<FilePredictionCandidate> {
     val refs = FilePredictionReferencesHelper.calculateExternalReferences(project, currentFile)
@@ -25,7 +24,7 @@ abstract class FileUsagePredictor(val isDummy: Boolean) {
   ): List<FilePredictionCandidate>
 }
 
-private class FileUsageSimplePredictor : FileUsagePredictor(true) {
+private class FileUsageSimplePredictor(candidateProvider: FilePredictionCandidateProvider) : FileUsagePredictor(candidateProvider, true) {
   override fun predictNextFile(project: Project,
                                currentFile: VirtualFile?,
                                refs: FileReferencesComputationResult,
@@ -42,7 +41,7 @@ private class FileUsageSimplePredictor : FileUsagePredictor(true) {
   }
 }
 
-private class FileUsageMLPredictor(private val model: FilePredictionModel) : FileUsagePredictor(false) {
+private class FileUsageMLPredictor(candidateProvider: FilePredictionCandidateProvider, private val model: FilePredictionModel) : FileUsagePredictor(candidateProvider, false) {
   override fun predictNextFile(project: Project,
                                currentFile: VirtualFile?,
                                refs: FileReferencesComputationResult,
@@ -63,11 +62,12 @@ private class FileUsageMLPredictor(private val model: FilePredictionModel) : Fil
 }
 
 object FileUsagePredictorProvider {
-  fun getFileUsagePredictor(): FileUsagePredictor {
+  fun getFileUsagePredictor(customCandidateProvider: FilePredictionCandidateProvider? = null): FileUsagePredictor {
+    val provider: FilePredictionCandidateProvider = customCandidateProvider ?: CompositeCandidateProvider()
     val model = getFilePredictionModel()
     if (model != null) {
-      return FileUsageMLPredictor(model)
+      return FileUsageMLPredictor(provider, model)
     }
-    return FileUsageSimplePredictor()
+    return FileUsageSimplePredictor(provider)
   }
 }

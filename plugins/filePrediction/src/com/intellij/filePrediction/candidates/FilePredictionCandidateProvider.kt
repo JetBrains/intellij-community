@@ -28,7 +28,7 @@ internal abstract class FilePredictionBaseCandidateProvider(private val weight: 
   }
 }
 
-internal open class CompositeCandidateProvider : FilePredictionCandidateProvider {
+open class CompositeCandidateProvider : FilePredictionCandidateProvider {
   override fun getWeight(): Int {
     return 0
   }

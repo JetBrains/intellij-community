@@ -3,6 +3,10 @@ package com.intellij.filePrediction.actions
 
 import com.intellij.filePrediction.FilePredictionBundle
 import com.intellij.filePrediction.FilePredictionNotifications
+import com.intellij.filePrediction.candidates.CompositeCandidateProvider
+import com.intellij.filePrediction.candidates.FilePredictionCandidateProvider
+import com.intellij.filePrediction.candidates.FilePredictionNeighborFilesProvider
+import com.intellij.filePrediction.candidates.FilePredictionReferenceProvider
 import com.intellij.filePrediction.predictor.FilePredictionCandidate
 import com.intellij.filePrediction.predictor.FileUsagePredictorProvider
 import com.intellij.openapi.actionSystem.AnAction
@@ -19,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,9 +32,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import javax.swing.Icon
 import kotlin.math.round
-
-private const val CALCULATE_CANDIDATES: Int = 50
-private const val SHOW_CANDIDATES: Int = 10
 
 class FilePredictionNextCandidatesAction : AnAction() {
 
@@ -44,14 +46,29 @@ class FilePredictionNextCandidatesAction : AnAction() {
     val title = FilePredictionBundle.message("file.prediction.predict.next.files.process.title")
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, false) {
       override fun run(indicator: ProgressIndicator) {
-        val predictor = FileUsagePredictorProvider.getFileUsagePredictor()
+        val predictor = FileUsagePredictorProvider.getFileUsagePredictor(getCandidatesProvider())
         val file: PsiFile? = CommonDataKeys.PSI_FILE.getData(e.dataContext)
-        val candidates = predictor.predictNextFile(project, file?.virtualFile, CALCULATE_CANDIDATES)
+        val limit: Int = Registry.get("filePrediction.action.calculate.candidates").asInteger()
+        val candidates = predictor.predictNextFile(project, file?.virtualFile, limit)
         ApplicationManager.getApplication().invokeLater {
-          showCandidates(project, e.dataContext, candidates.take(SHOW_CANDIDATES))
+          val toShow: Int = Registry.get("filePrediction.action.show.candidates").asInteger()
+          showCandidates(project, e.dataContext, candidates.take(toShow))
         }
       }
     })
+  }
+
+  private fun getCandidatesProvider(): FilePredictionCandidateProvider {
+    val useAllCandidates = Registry.get("filePrediction.action.use.all.candidates").asBoolean()
+    if (useAllCandidates) {
+      return CompositeCandidateProvider()
+    }
+
+    val providers = arrayListOf<FilePredictionCandidateProvider>(
+      FilePredictionReferenceProvider(),
+      FilePredictionNeighborFilesProvider()
+    )
+    return FilePredictionCustomCandidateProvider(providers)
   }
 
   private fun showCandidates(project: Project, context: DataContext, candidates: List<FilePredictionCandidate>) {
@@ -112,3 +129,7 @@ private data class FileCandidatePresentation(val file: VirtualFile?,
                                              val icon: Icon?,
                                              val presentableName: String,
                                              val original: FilePredictionCandidate)
+
+private class FilePredictionCustomCandidateProvider(private val providers: List<FilePredictionCandidateProvider>) : CompositeCandidateProvider() {
+  override fun getProviders() : List<FilePredictionCandidateProvider> = providers
+}
