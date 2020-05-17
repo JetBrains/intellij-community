@@ -310,6 +310,8 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
         .map { ToggleFilterAction(filterer, it) }
         .toTypedArray()
     }
+
+    override fun disableIfNoVisibleChildren(): Boolean = false
   }
 
   private class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)
