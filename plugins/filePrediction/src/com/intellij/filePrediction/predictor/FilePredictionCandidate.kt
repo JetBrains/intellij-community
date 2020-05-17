@@ -3,4 +3,9 @@ package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.FileFeaturesComputationResult
 
-class FilePredictionCandidate(val features: FileFeaturesComputationResult, val path: String, val probability: Double? = null)
+class FilePredictionCandidate(
+  val features: FileFeaturesComputationResult,
+  val path: String,
+  val duration: Long? = null,
+  val probability: Double? = null
+)

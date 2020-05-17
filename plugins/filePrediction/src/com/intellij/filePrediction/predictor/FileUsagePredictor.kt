@@ -52,8 +52,10 @@ private class FileUsageMLPredictor(private val model: FilePredictionModel) : Fil
     val candidateFiles = candidateProvider.provideCandidates(project, currentFile, references, topCandidates)
     for (candidate in candidateFiles) {
       val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, candidate, refs.value, currentFile)
+      val start = System.currentTimeMillis()
       val probability = model.predict(features.value)
-      candidates.add(FilePredictionCandidate(features, candidate.path, probability))
+      val duration = System.currentTimeMillis() - start
+      candidates.add(FilePredictionCandidate(features, candidate.path, duration, probability))
     }
     candidates.sortByDescending { it.probability }
     return candidates

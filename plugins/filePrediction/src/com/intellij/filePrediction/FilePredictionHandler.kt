@@ -66,9 +66,13 @@ class FilePredictionHandler {
                             sessionId: Int,
                             newFile: VirtualFile,
                             prevFile: VirtualFile?) {
+    val start = System.currentTimeMillis()
     val result = FilePredictionReferencesHelper.calculateExternalReferences(project, prevFile)
 
     val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, result.value, prevFile)
-    FileNavigationLogger.logEvent(project, "file.opened", sessionId, features, newFile.path, prevFile?.path, result.duration)
+    val duration = System.currentTimeMillis() - start
+    FileNavigationLogger.logEvent(
+      project, "file.opened", sessionId, features, newFile.path, prevFile?.path, duration, result.duration
+    )
   }
 }

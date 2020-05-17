@@ -14,14 +14,21 @@ internal object FileNavigationLogger {
                features: FileFeaturesComputationResult,
                filePath: String,
                prevFilePath: String?,
+               totalDuration: Long,
                refsComputation: Long,
+               predictionDuration: Long? = null,
                probability: Double? = null) {
-    val data = FeatureUsageData().
-      addData("session_id", sessionId).
-      addAnonymizedPath(filePath).
-      addAnonymizedValue("prev_file_path", prevFilePath).
-      addData("refs_computation", refsComputation).
-      addData("features_computation", features.duration)
+    val data = FeatureUsageData()
+      .addData("session_id", sessionId)
+      .addAnonymizedPath(filePath)
+      .addAnonymizedValue("prev_file_path", prevFilePath)
+      .addData("total_ms", totalDuration)
+      .addData("refs_ms", refsComputation)
+      .addData("features_ms", features.duration)
+
+    if (predictionDuration != null) {
+      data.addData("predict_ms", predictionDuration)
+    }
 
     if (probability != null) {
       data.addData("probability", probability)
