@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 class GHCommit(id: String,
                oid: String,
                abbreviatedOid: String,
@@ -9,5 +11,9 @@ class GHCommit(id: String,
                val messageHeadlineHTML: String,
                val messageBodyHTML: String,
                val author: GHGitActor?,
-               val committer: GHGitActor?)
-  : GHCommitHash(id, oid, abbreviatedOid)
+               val committer: GHGitActor?,
+               @JsonProperty("parents") parents: GHNodes<GHCommitHash>)
+  : GHCommitHash(id, oid, abbreviatedOid) {
+
+  val parents = parents.nodes
+}

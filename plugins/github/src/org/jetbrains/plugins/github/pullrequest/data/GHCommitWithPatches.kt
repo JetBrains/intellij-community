@@ -9,6 +9,7 @@ class GHCommitWithPatches(val commit: GHCommit,
                           val cumulativePatches: List<FilePatch>) {
 
   val sha = commit.oid
+  val parents = commit.parents.map { it.oid }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
