@@ -36,7 +36,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
       override fun computeHashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
     })
 
-    val fileHistoriesByLastKnownFilePath = mutableMapOf<String, GHPRChangeDiffData.FileHistory>()
+    val fileHistoriesByLastKnownFilePath = mutableMapOf<String, GHPRMutableLinearFileHistory>()
 
     var lastCommitSha = mergeBaseRef
     var lastCumulativePatches: List<FilePatch>? = null
@@ -56,13 +56,15 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
           val afterPath = patch.afterName
 
           val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
-          val fileHistory = (historyBefore ?: GHPRChangeDiffData.FileHistory(commitsHashes)).apply {
+          val fileHistory = (historyBefore ?: GHPRMutableLinearFileHistory(commitsHashes)).apply {
             append(commitSha, patch)
           }
-          fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
-          val initialPath = fileHistory.initialFilePath
+          if (afterPath != null) {
+            fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
+          }
+          val firstKnownPath = fileHistory.firstKnownFilePath
 
-          val cumulativePatch = findPatchByFilePaths(commitWithPatches.cumulativePatches, initialPath, afterPath) as? TextFilePatch
+          val cumulativePatch = findPatchByFilePaths(commitWithPatches.cumulativePatches, firstKnownPath, afterPath) as? TextFilePatch
           if (cumulativePatch == null) {
             LOG.debug("Unable to find cumulative patch for commit patch")
             continue
@@ -81,7 +83,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
     changes = mutableListOf()
 
     val fileHistoriesBySummaryFilePath = fileHistoriesByLastKnownFilePath.mapKeys {
-      it.value.filePath
+      it.value.lastKnownFilePath
     }
 
     lastCumulativePatches?.let {
