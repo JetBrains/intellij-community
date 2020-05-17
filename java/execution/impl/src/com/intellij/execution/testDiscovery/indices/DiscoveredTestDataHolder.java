@@ -9,8 +9,10 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -184,7 +186,7 @@ public final class DiscoveredTestDataHolder {
                              @Nullable String moduleName,
                              byte frameworkId) throws IOException {
     final int testNameId = myTestEnumerator.enumerate(createTestId(testClassName, testMethodName, frameworkId));
-    Int2ObjectOpenHashMap<IntArrayList> result = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<IntList> result = new Int2ObjectOpenHashMap<>();
     for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
       IntArrayList methodIds = new IntArrayList(e.getValue().size());
       result.put(myClassEnumerator.enumerate(e.getKey()), methodIds);
@@ -193,7 +195,7 @@ public final class DiscoveredTestDataHolder {
       }
     }
 
-    Map<Integer, Void> usedVirtualFileIds = new HashMap<>();
+    Int2ObjectMap<Void> usedVirtualFileIds = new Int2ObjectOpenHashMap<>();
     for (String file : usedFiles) {
       if (file.contains("testData") || file.contains("test-data") || file.contains("test_data")) {
         int fileId = myPathEnumerator.enumerate(file);
