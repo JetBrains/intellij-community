@@ -91,11 +91,10 @@ final class MessageBusConnectionImpl implements MessageBusConnection, MessageBus
       return;
     }
 
-    // reset as bus will not remove disposed connection from list immediately
-    SmartFMap<Topic<?>, Object> oldMap = mySubscriptions.getAndSet(SmartFMap.emptyMap());
-
     myBus = null;
     myDefaultHandler = null;
+    // reset as bus will not remove disposed connection from list immediately
+    SmartFMap<Topic<?>, Object> oldMap = mySubscriptions.getAndSet(SmartFMap.emptyMap());
     bus.notifyConnectionTerminated(oldMap);
   }
 
@@ -124,8 +123,8 @@ final class MessageBusConnectionImpl implements MessageBusConnection, MessageBus
   }
 
   @Override
-  public boolean isEmpty() {
-    return mySubscriptions.get().isEmpty();
+  public boolean isDisposed() {
+    return myBus == null;
   }
 
   @Override

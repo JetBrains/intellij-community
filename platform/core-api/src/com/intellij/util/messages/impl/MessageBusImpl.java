@@ -13,6 +13,7 @@ import com.intellij.util.messages.Topic.BroadcastDirection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -31,7 +32,7 @@ public class MessageBusImpl implements MessageBus {
   interface MessageHandlerHolder {
     void collectHandlers(@NotNull Topic<?> topic, @NotNull List<Object> result);
 
-    boolean isEmpty();
+    boolean isDisposed();
   }
 
   protected static final Logger LOG = Logger.getInstance(MessageBusImpl.class);
@@ -483,7 +484,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   protected void removeEmptyConnectionsRecursively() {
-    mySubscribers.removeIf(MessageHandlerHolder::isEmpty);
+    mySubscribers.removeIf(MessageHandlerHolder::isDisposed);
   }
 
   boolean notifyConnectionTerminated(@NotNull Map<Topic<?>, Object> handlers) {
@@ -676,6 +677,11 @@ public class MessageBusImpl implements MessageBus {
           future.cancel(false);
         }
       }
+    }
+
+    @TestOnly
+    void _removeEmptyConnectionsRecursively() {
+      removeEmptyConnectionsRecursively();
     }
 
     @Override

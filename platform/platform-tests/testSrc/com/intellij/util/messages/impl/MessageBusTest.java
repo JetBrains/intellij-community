@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.testFramework.ServiceContainerUtil.createSimpleMessageBusOwner;
@@ -463,5 +464,42 @@ public class MessageBusTest implements MessageBusOwner {
     });
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
     assertThat(isCalled.get()).isTrue();
+  }
+
+  @Test
+  public void removeEmptyConnectionsRecursively() throws Throwable {
+    int threadsNumber = 10;
+    AtomicReference<Throwable> exception = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(threadsNumber);
+    List<Future<?>> threads = new ArrayList<>();
+    AtomicInteger eventCounter = new AtomicInteger();
+    for (int i = 0; i < threadsNumber; i++) {
+      Future<?> thread = AppExecutorUtil.getAppScheduledExecutorService().submit(() -> {
+        try {
+          MessageBusConnection connection = myBus.connect();
+          ((MessageBusImpl.RootBus)myBus)._removeEmptyConnectionsRecursively();
+          connection.subscribe(RUNNABLE_TOPIC, () -> eventCounter.incrementAndGet());
+        }
+        catch (Throwable e) {
+          exception.set(e);
+        }
+        finally {
+          latch.countDown();
+        }
+      });
+      threads.add(thread);
+    }
+    latch.await();
+
+    Throwable e = exception.get();
+    if (e != null) {
+      throw e;
+    }
+    for (Future<?> thread : threads) {
+      thread.get();
+    }
+
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    assertThat(eventCounter.get()).isEqualTo(threadsNumber);
   }
 }

@@ -47,13 +47,12 @@ final class SimpleMessageBusConnectionImpl implements SimpleMessageBusConnection
     myBus = null;
     // reset as bus will not remove disposed connection from list immediately
     SmartFMap<Topic<?>, Object> oldMap = topicToHandlers.getAndSet(SmartFMap.emptyMap());
-
     bus.notifyConnectionTerminated(oldMap);
   }
 
   @Override
-  public boolean isEmpty() {
-    return topicToHandlers.get().isEmpty();
+  public boolean isDisposed() {
+    return myBus == null;
   }
 
   @Override

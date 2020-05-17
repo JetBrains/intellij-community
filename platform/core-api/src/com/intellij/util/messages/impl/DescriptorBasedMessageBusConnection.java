@@ -29,7 +29,7 @@ final class DescriptorBasedMessageBusConnection implements MessageBusImpl.Messag
   }
 
   @Override
-  public boolean isEmpty() {
+  public boolean isDisposed() {
     // never empty
     return false;
   }
