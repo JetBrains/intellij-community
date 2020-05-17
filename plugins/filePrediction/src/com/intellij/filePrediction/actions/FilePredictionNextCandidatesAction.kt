@@ -95,7 +95,7 @@ class FilePredictionNextCandidatesAction : AnAction() {
   private fun roundProbability(candidate: FilePredictionCandidate): Double {
     val probability = candidate.probability ?: return -1.0
     if (!probability.isFinite()) return -1.0
-    return round(probability * 100000) / 100000
+    return round(probability * 100) / 100
   }
 
 
