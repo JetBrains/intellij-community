@@ -119,6 +119,10 @@
         <reference ref="ProblemsView.SortBySeverity"/>
         <reference ref="ProblemsView.SortByName"/>
       </group>
+      <action id="ProblemsView.QuickFix"
+              icon="AllIcons.Actions.QuickfixBulb"
+              use-shortcut-of="ShowIntentionActions"
+              class="com.intellij.analysis.problemsView.toolWindow.ProblemsViewQuickFixAction"/>
     </group>
   </actions>
 
