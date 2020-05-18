@@ -742,7 +742,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     @NotNull
     Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
       final int width = fm.stringWidth(s) + ROUND_VALUE * 2;
-      return new Dimension(width > maxWidth ? maxWidth : width, fm.getHeight() + 4);
+      return new Dimension(Math.min(width, maxWidth), fm.getHeight() + 4);
     }
   }
 }
