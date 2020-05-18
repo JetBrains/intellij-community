@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -553,6 +554,7 @@ public final class PathManager {
       org.jdom.Document.class,                         // jDOM
       org.apache.log4j.Appender.class,                 // Log4J
       gnu.trove.THashSet.class,                        // Trove
+      Object2IntMap.class,                            // fastutil
       com.sun.jna.TypeMapper.class,                    // JNA
       com.sun.jna.platform.FileUtils.class,            // JNA (jna-platform)
       org.apache.oro.text.regex.PatternMatcher.class,  // OROMatcher
