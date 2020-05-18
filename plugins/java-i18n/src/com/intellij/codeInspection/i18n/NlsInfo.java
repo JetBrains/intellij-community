@@ -168,6 +168,9 @@ public abstract class NlsInfo {
         PsiMethod method = (PsiMethod)scope;
         PsiParameterList list = method.getParameterList();
         int index = list.getParameterIndex((PsiParameter)owner);
+        if (index < 0) {
+          return Unspecified.UNKNOWN;
+        }
         return fromMethodParameter(method, index, null);
       }
     }
