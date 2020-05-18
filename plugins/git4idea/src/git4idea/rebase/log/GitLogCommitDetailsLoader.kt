@@ -7,8 +7,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
@@ -16,24 +14,7 @@ import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.i18n.GitBundle
 
-private val LOG = logger("Git.Rebase.Log.Action.Utils")
-
-internal fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
-  val branchesGetter = data.containingBranchesGetter
-  val branches = branchesGetter.getContainingBranchesQuickly(root, hash)
-  if (branches == null) {
-    return ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously<List<String>, RuntimeException>(
-        {
-          branchesGetter.getContainingBranchesSynchronously(root, hash)
-        },
-        GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"),
-        true,
-        data.project
-      )
-  }
-  return branches
-}
+private val LOG = logger("Git.Rebase.Log.Action.CommitDetailsLoader")
 
 internal fun getOrLoadDetails(project: Project, data: VcsLogData, commitList: List<VcsShortCommitDetails>): List<VcsCommitMetadata> {
   val commitsToLoad = HashSet<VcsShortCommitDetails>(commitList)

@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
+import git4idea.rebase.log.GitCommitEditingActionBase.Companion.findContainingBranches
 import org.jetbrains.annotations.Nls
 
 internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.MultipleCommitEditingData>(

@@ -9,7 +9,6 @@ import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingActionBase
-import git4idea.rebase.log.findContainingBranches
 import git4idea.repo.GitRepository
 
 internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBase<GitSingleCommitEditingAction.SingleCommitEditingData>() {

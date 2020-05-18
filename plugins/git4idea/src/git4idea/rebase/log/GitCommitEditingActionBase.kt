@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -21,6 +22,24 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
 internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
+  companion object {
+    internal fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
+      val branchesGetter = data.containingBranchesGetter
+      val branches = branchesGetter.getContainingBranchesQuickly(root, hash)
+      if (branches == null) {
+        return ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously<List<String>, RuntimeException>(
+            {
+              branchesGetter.getContainingBranchesSynchronously(root, hash)
+            },
+            GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"),
+            true,
+            data.project
+          )
+      }
+      return branches
+    }
+  }
 
   protected open val prohibitRebaseDuringRebasePolicy: ProhibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Allow
 
