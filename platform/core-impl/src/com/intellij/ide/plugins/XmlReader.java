@@ -13,7 +13,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Interner;
 import com.intellij.util.messages.ListenerDescriptor;
 import org.jdom.Attribute;
 import org.jdom.Content;
@@ -267,7 +266,6 @@ final class XmlReader {
                                                                        @NotNull DescriptorListLoadingContext loadingContext,
                                                                        @NotNull Element child) {
     String ns = child.getAttributeValue("defaultExtensionNs");
-    Interner<String> stringInterner = loadingContext.getStringInterner();
     for (Element extensionElement : child.getChildren()) {
       String os = extensionElement.getAttributeValue("os");
       if (os != null) {
@@ -277,7 +275,7 @@ final class XmlReader {
         }
       }
 
-      String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
+      String qualifiedExtensionPointName = loadingContext.internString(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
       ContainerDescriptor containerDescriptor;
       switch (qualifiedExtensionPointName) {
         case APPLICATION_SERVICE:

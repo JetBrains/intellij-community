@@ -66,13 +66,13 @@ public final class PluginDescriptorLoader {
       if (context.isEssential) {
         ExceptionUtil.rethrow(e);
       }
-      context.parentContext.result.reportCannotLoad(context.parentContext, file, e);
+      context.parentContext.result.reportCannotLoad(file, e);
     }
     catch (Throwable e) {
       if (context.isEssential) {
         ExceptionUtil.rethrow(e);
       }
-      context.parentContext.getLogger().warn("Cannot load " + descriptorFile, e);
+      DescriptorListLoadingContext.LOG.warn("Cannot load " + descriptorFile, e);
     }
     return null;
   }
@@ -103,13 +103,13 @@ public final class PluginDescriptorLoader {
       if (context.isEssential) {
         ExceptionUtil.rethrow(e);
       }
-      context.parentContext.result.reportCannotLoad(context.parentContext, file, e);
+      context.parentContext.result.reportCannotLoad(file, e);
     }
     catch (Throwable e) {
       if (context.isEssential) {
         ExceptionUtil.rethrow(e);
       }
-      context.parentContext.getLogger().info("Cannot load " + file + "!/META-INF/" + fileName, e);
+      DescriptorListLoadingContext.LOG.info("Cannot load " + file + "!/META-INF/" + fileName, e);
     }
 
     return null;
@@ -157,7 +157,7 @@ public final class PluginDescriptorLoader {
       IdeaPluginDescriptorImpl otherDescriptor = loadDescriptorFromDir(dir, descriptorRelativePath, file, context);
       if (otherDescriptor != null) {
         if (descriptor != null) {
-          context.parentContext.getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
+          DescriptorListLoadingContext.LOG.info("Cannot load " + file + " because two or more plugin.xml's detected");
           return null;
         }
         descriptor = otherDescriptor;
@@ -285,7 +285,7 @@ public final class PluginDescriptorLoader {
       if (loadingContext.isEssential) {
         ExceptionUtil.rethrow(e);
       }
-      loadingContext.parentContext.getLogger().info("Cannot load " + resource, e);
+      DescriptorListLoadingContext.LOG.info("Cannot load " + resource, e);
       return null;
     }
     finally {

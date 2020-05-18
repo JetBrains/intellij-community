@@ -151,8 +151,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myDescriptionChildText = element.getChildTextTrim("description");
       myCategory = element.getChildTextTrim("category");
       myVersion = element.getChildTextTrim("version");
-      if (context.getLogger().isDebugEnabled()) {
-        context.getLogger().debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
+      if (DescriptorListLoadingContext.LOG.isDebugEnabled()) {
+        DescriptorListLoadingContext.LOG.debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
       }
       List<Element> dependsElements = element.getChildren("depends");
       for (Element dependsElement : dependsElements) {
@@ -284,7 +284,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         case "resource-bundle":
           String value = StringUtil.nullize(child.getTextTrim());
           if (myResourceBundleBaseName != null && !Objects.equals(myResourceBundleBaseName, value)) {
-            context.getLogger().warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
+            DescriptorListLoadingContext.LOG.warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
                      "Old value: " + myResourceBundleBaseName + ", new value: " + value);
           }
           myResourceBundleBaseName = value;
@@ -353,7 +353,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     else {
       if (context.result.isBroken(dependencyId)) {
         if (!isOptional) {
-          context.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
+          DescriptorListLoadingContext.LOG.info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
           markAsIncomplete(context, "Non-optional dependency " + dependencyId + " is broken", null);
           return false;
         }
@@ -523,7 +523,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return context.getDateParser().parse(dateStr);
     }
     catch (ParseException e) {
-      context.getLogger().info("Error parse release date from plugin descriptor for plugin " + myName + " {" + myId + "}: " + e.getMessage());
+      DescriptorListLoadingContext.LOG.info("Error parse release date from plugin descriptor for plugin " + myName + " {" + myId + "}: " + e.getMessage());
     }
     return null;
   }

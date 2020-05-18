@@ -15,7 +15,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.SmartList
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -45,8 +45,8 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
 
   init {
     val app = ApplicationManager.getApplication()
-    val result = HashMap<Any, MutableList<InspectionFactory>>()
-    val shortNames: MutableMap<String, InspectionEP> = THashMap()
+    val result = Object2ObjectOpenHashMap<Any, MutableList<InspectionFactory>>()
+    val shortNames = Object2ObjectOpenHashMap<String, InspectionEP>()
     registerToolProviders(app, result)
     registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION)
     registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION)

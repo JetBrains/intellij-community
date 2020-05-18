@@ -17,12 +17,11 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 final class PluginLoadingResult {
-  final Map<PluginId, Set<String>> brokenPluginVersions;
+  private final Map<PluginId, Set<String>> brokenPluginVersions;
   final @NotNull Supplier<BuildNumber> productBuildNumber;
 
   final Map<PluginId, IdeaPluginDescriptorImpl> incompletePlugins = new ConcurrentHashMap<>();
 
-  final List<IdeaPluginDescriptorImpl> pluginsWithoutId = new ArrayList<>();
   private final Map<PluginId, IdeaPluginDescriptorImpl> plugins = new HashMap<>();
 
   // only read is concurrent, write from the only thread
@@ -34,7 +33,7 @@ final class PluginLoadingResult {
 
   private final Set<PluginId> shadowedBundledIds = new HashSet<>();
 
-  final boolean checkModuleDependencies;
+  private final boolean checkModuleDependencies;
 
   // result, after calling finishLoading
   private List<IdeaPluginDescriptorImpl> enabledPlugins;
@@ -121,8 +120,8 @@ final class PluginLoadingResult {
     errors.put(plugin.getPluginId(), new PluginError(plugin, message, reason));
   }
 
-  void reportCannotLoad(@NotNull DescriptorListLoadingContext context, @NotNull Path file, Exception e) {
-    context.getLogger().warn("Cannot load " + file, e);
+  void reportCannotLoad(@NotNull Path file, Exception e) {
+    DescriptorListLoadingContext.LOG.warn("Cannot load " + file, e);
     errors.put(PluginId.getId("__cannot load__"), new PluginError(null, "File \"" + FileUtil.getLocationRelativeToUserHome(file.toString(), false) + "\" contains invalid plugin descriptor", null));
   }
 
@@ -130,7 +129,6 @@ final class PluginLoadingResult {
   boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, boolean overrideUseIfCompatible) {
     PluginId pluginId = descriptor.getPluginId();
     if (pluginId == null) {
-      pluginsWithoutId.add(descriptor);
       PluginManagerCore.getLogger().warn("No id is provided by \"" + descriptor.getPluginPath().getFileName().toString() + "\"");
       return true;
     }

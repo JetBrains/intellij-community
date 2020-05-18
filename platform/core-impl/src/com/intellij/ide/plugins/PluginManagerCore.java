@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +102,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   public static Set<PluginId> ourPluginsToEnable;
 
+  @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
   public static boolean ourDisableNonBundledPlugins;
 
@@ -900,7 +902,7 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull Map<String, String[]> loadAdditionalLayoutMap() {
-    Path fileWithLayout = PluginManagerCore.usePluginClassLoader
+    Path fileWithLayout = usePluginClassLoader
                           ? Paths.get(PathManager.getSystemPath(), PlatformUtils.getPlatformPrefix() + ".txt")
                           : null;
     if (fileWithLayout == null || !Files.exists(fileWithLayout)) {
@@ -984,7 +986,8 @@ public final class PluginManagerCore {
   private static void disableIncompatiblePlugins(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                                  @NotNull List<PluginError> errors) {
-    if (ourDisableNonBundledPlugins) {
+    boolean isNonBundledPluginDisabled = ourDisableNonBundledPlugins;
+    if (isNonBundledPluginDisabled) {
       getLogger().info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled");
     }
     String selectedIds = System.getProperty("idea.load.plugins.id");
@@ -1054,7 +1057,7 @@ public final class PluginManagerCore {
         descriptor.setEnabled(false);
         errors.add(new PluginError(descriptor, "is skipped (plugins loading disabled)", null));
       }
-      else if (!descriptor.isBundled() && ourDisableNonBundledPlugins) {
+      else if (isNonBundledPluginDisabled && !descriptor.isBundled()) {
         descriptor.setEnabled(false);
         errors.add(new PluginError(descriptor, "is skipped (third-party plugins loading disabled)", null, false));
       }
@@ -1234,7 +1237,7 @@ public final class PluginManagerCore {
     }
   }
 
-  private static @NotNull IdeaPluginDescriptorImpl @NotNull [] getTopologicallySorted(@NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph) {
+  private static @NotNull IdeaPluginDescriptorImpl @NotNull [] getTopologicallySorted(@NotNull InboundSemiGraph<IdeaPluginDescriptorImpl> graph) {
     DFSTBuilder<IdeaPluginDescriptorImpl> requiredOnlyGraph = new DFSTBuilder<>(GraphGenerator.generate(graph));
     IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
     Comparator<IdeaPluginDescriptorImpl> comparator = requiredOnlyGraph.comparator();
@@ -1389,7 +1392,7 @@ public final class PluginManagerCore {
    *
    * @param pluginRoot jar file or directory which contains the configuration file
    * @param fileName   name of the configuration file located in 'META-INF' directory under {@code pluginRoot}
-   * @param area       area which extension points and extensions should be registered (e.g. {@link com.intellij.openapi.components.ComponentManager#getRootArea()} for application-level extensions)
+   * @param area       area which extension points and extensions should be registered
    */
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
@@ -1509,7 +1512,7 @@ public final class PluginManagerCore {
   }
 
   /**
-   * You must not use this method in cycle, in this case use {@link #processAllDependencies(IdeaPluginDescriptor, boolean, Map, Function)} instead
+   * You must not use this method in cycle, in this case use {@link #processAllDependencies(IdeaPluginDescriptorImpl, boolean, Map, Function)} instead
    * (to reuse result of {@link #buildPluginIdMap()}).
    *
    * {@link FileVisitResult#SKIP_SIBLINGS} is not supported.

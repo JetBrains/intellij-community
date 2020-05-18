@@ -25,7 +25,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
-public class ActionsTreeUtil {
+public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
   /**
@@ -49,37 +50,39 @@ public class ActionsTreeUtil {
   private ActionsTreeUtil() {
   }
 
-  public static Map<String, String> createPluginActionsMap() {
+  public static @NotNull Map<String, String> createPluginActionsMap() {
     Set<PluginId> visited = new HashSet<>();
-    Map<String, String> result = new HashMap<>();
+    Map<String, String> result = new Object2ObjectOpenHashMap<>();
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();
       visited.add(id);
       if (PluginManagerCore.CORE_ID == id) {
         continue;
       }
-      for (String actionId : ActionManagerEx.getInstanceEx().getPluginActions(id)) {
+      for (String actionId : actionManager.getPluginActions(id)) {
         result.put(actionId, descriptor.getName());
       }
     }
-    for (PluginId id : PluginId.getRegisteredIds().values()) {
-      if (visited.contains(id)) continue;
-      for (String actionId : ActionManagerEx.getInstanceEx().getPluginActions(id)) {
+    for (PluginId id : PluginId.getRegisteredIdList()) {
+      if (visited.contains(id)) {
+        continue;
+      }
+      for (String actionId : actionManager.getPluginActions(id)) {
         result.put(actionId, id.getIdString());
       }
     }
     return result;
   }
 
-  private static Group createPluginsActionsGroup(Condition<? super AnAction> filtered) {
+  private static @NotNull Group createPluginsActionsGroup(Condition<? super AnAction> filtered) {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-    ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final List<IdeaPluginDescriptor> plugins = new ArrayList<>();
-    Collections.addAll(plugins, PluginManagerCore.getPlugins());
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    List<IdeaPluginDescriptor> plugins = new ArrayList<>(Arrays.asList(PluginManagerCore.getPlugins()));
     plugins.sort(Comparator.comparing(IdeaPluginDescriptor::getName));
 
-    List<PluginId> collected = new ArrayList<>();
+    Set<PluginId> collected = new ObjectOpenHashSet<>(plugins.size());
     for (IdeaPluginDescriptor plugin : plugins) {
       collected.add(plugin.getPluginId());
       Group pluginGroup;
@@ -89,14 +92,14 @@ public class ActionsTreeUtil {
       else {
         pluginGroup = new Group(plugin.getName(), null, null);
       }
-      final String[] pluginActions = managerEx.getPluginActions(plugin.getPluginId());
+      final String[] pluginActions = actionManager.getPluginActions(plugin.getPluginId());
       if (pluginActions.length == 0) {
         continue;
       }
       Arrays.sort(pluginActions, Comparator.comparing(ActionsTreeUtil::getTextToCompare));
       for (String pluginAction : pluginActions) {
         if (keymapManager.getBoundActions().contains(pluginAction)) continue;
-        final AnAction anAction = managerEx.getActionOrStub(pluginAction);
+        final AnAction anAction = actionManager.getActionOrStub(pluginAction);
         if (filtered == null || filtered.value(anAction)) {
           pluginGroup.addActionId(pluginAction);
         }
@@ -106,16 +109,18 @@ public class ActionsTreeUtil {
       }
     }
 
-    for (PluginId pluginId : PluginId.getRegisteredIds().values()) {
-      if (collected.contains(pluginId)) continue;
+    for (PluginId pluginId : PluginId.getRegisteredIdList()) {
+      if (collected.contains(pluginId)) {
+        continue;
+      }
       Group pluginGroup = new Group(pluginId.getIdString(), null, null);
-      final String[] pluginActions = managerEx.getPluginActions(pluginId);
+      final String[] pluginActions = actionManager.getPluginActions(pluginId);
       if (pluginActions.length == 0) {
         continue;
       }
       for (String pluginAction : pluginActions) {
         if (keymapManager.getBoundActions().contains(pluginAction)) continue;
-        final AnAction anAction = managerEx.getActionOrStub(pluginAction);
+        final AnAction anAction = actionManager.getActionOrStub(pluginAction);
         if (filtered == null || filtered.value(anAction)) {
           pluginGroup.addActionId(pluginAction);
         }
@@ -135,8 +140,7 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  @Nullable
-  private static Condition<AnAction> wrapFilter(@Nullable final Condition<? super AnAction> filter, final Keymap keymap, final ActionManager actionManager) {
+  private static @NotNull Condition<AnAction> wrapFilter(@Nullable final Condition<? super AnAction> filter, final Keymap keymap, final ActionManager actionManager) {
     final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
     return action -> {
       if (action == null) return false;
@@ -393,7 +397,7 @@ public class ActionsTreeUtil {
   @NotNull
   private static Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group addedActions, @Nullable Keymap keymap) {
     addedActions.initIds();
-    Set<String> result = new THashSet<>();
+    Set<String> result = new ObjectOpenHashSet<>();
 
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (keymap != null) {
@@ -538,7 +542,7 @@ public class ActionsTreeUtil {
     return mainGroup;
   }
 
-  public static Condition<AnAction> isActionFiltered(final String filter, final boolean force) {
+  private static Condition<AnAction> isActionFiltered(final String filter, final boolean force) {
     return action -> {
       if (filter == null) return true;
       if (action == null) return false;
@@ -567,9 +571,9 @@ public class ActionsTreeUtil {
     };
   }
 
-  public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
-                                                     final Keymap keymap,
-                                                     final Shortcut shortcut) {
+  private static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
+                                                      final Keymap keymap,
+                                                      final Shortcut shortcut) {
     return isActionFiltered(actionManager, keymap, sc -> sc != null && sc.startsWith(shortcut));
   }
 
