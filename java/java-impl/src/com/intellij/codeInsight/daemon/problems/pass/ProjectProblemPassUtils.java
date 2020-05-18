@@ -32,6 +32,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
+import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlaySettingsProvider.HINTS_ID;
+
 public class ProjectProblemPassUtils {
 
   private static final Key<Map<SmartPsiElementPointer<PsiMember>, Inlay<?>>> PROBLEM_INLAY_HINTS = Key.create("ProjectProblemInlayHintsKey");
@@ -65,7 +67,8 @@ public class ProjectProblemPassUtils {
 
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem item = new JMenuItem(JavaErrorBundle.message("project.problems.settings"));
-    item.addActionListener(e -> InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE));
+    item.addActionListener(e -> InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE,
+                                                                                     model -> model.getId().equals(HINTS_ID)));
     popupMenu.add(item);
 
     InlayPresentation withSettings = factory.onClick(usagesPresentation, MouseButton.Right, (e, __) -> {

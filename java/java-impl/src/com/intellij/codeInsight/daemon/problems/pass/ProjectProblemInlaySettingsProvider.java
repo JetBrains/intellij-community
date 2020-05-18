@@ -23,6 +23,8 @@ import java.util.List;
 
 public class ProjectProblemInlaySettingsProvider implements InlaySettingsProvider {
 
+  static final String HINTS_ID = "java.project.problems";
+
   @NotNull
   @Override
   public List<InlayProviderSettingsModel> createModels(@NotNull Project project, @NotNull Language language) {
@@ -45,7 +47,8 @@ public class ProjectProblemInlaySettingsProvider implements InlaySettingsProvide
 
   private static class SettingsModel extends InlayProviderSettingsModel {
 
-    private static final SettingsKey<NoSettings> SETTINGS_KEY = new SettingsKey<>("java.project.problems");
+    private static final SettingsKey<NoSettings> SETTINGS_KEY = new SettingsKey<>(HINTS_ID);
+
     private final InlayHintsSettings config = InlayHintsSettings.instance();
 
     private SettingsModel(boolean isEnabled, @NotNull String id) {
