@@ -9,7 +9,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.xslt.debugger.rt" />
+    <orderEntry type="module" module-name="intellij.xpath.rt" />
     <orderEntry type="module" module-name="intellij.xslt.debugger.engine" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">

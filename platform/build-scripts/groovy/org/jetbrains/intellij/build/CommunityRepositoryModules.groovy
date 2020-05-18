@@ -113,7 +113,7 @@ class CommunityRepositoryModules {
       withModule("intellij.vcs.cvs.core", "cvs_util.jar")
     },
     plugin("intellij.xpath") {
-      withModule("intellij.xslt.debugger.rt", "rt/xslt-rt.jar")
+      withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
     plugin("intellij.platform.langInjection") {
       withModule("intellij.java.langInjection", "IntelliLang.jar")
