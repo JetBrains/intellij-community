@@ -126,13 +126,26 @@ public class NewMappings implements Disposable {
     myRootUpdateQueue.flush();
   }
 
-  public void scheduleMappingsUpdate() {
+  public void updateMappedVcsesImmediately() {
+    LOG.debug("updateMappingsImmediately");
+
     MyVcsActivator activator;
     synchronized (myUpdateLock) {
       if (!myActivated) return;
       activator = updateActiveVcses();
     }
     activator.activate();
+
+    synchronized (myUpdateLock) {
+      Disposer.dispose(myFilePointerDisposable);
+      myFilePointerDisposable = Disposer.newDisposable();
+
+      myMappedRoots = Collections.emptyList();
+      myMappedRootsMapping = new RootMapping(Collections.emptyList());
+
+      dumpMappedRootsToLog();
+    }
+    mappingsChanged();
 
     scheduleMappedRootsUpdate();
   }

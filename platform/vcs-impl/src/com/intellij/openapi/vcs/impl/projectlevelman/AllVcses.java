@@ -84,7 +84,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
         registerVcs(vcs);
       }
     });
-    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
   }
 
   @Override
@@ -100,7 +100,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
         unregisterVcs(vcs);
       }
     });
-    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
   }
 
   @Override
@@ -224,7 +224,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
           unregisterVcs(oldVcs);
         }
       }
-      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
+      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
     }
 
     @Override
@@ -242,7 +242,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
           LOG.error(String.format("removing unregistered EP. name: %s, ep: %s", name, extension.vcsClass));
         }
       }
-      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
+      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
     }
   }
 

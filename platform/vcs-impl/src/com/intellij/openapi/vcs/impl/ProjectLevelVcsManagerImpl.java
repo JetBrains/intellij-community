@@ -397,8 +397,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.scheduleMappedRootsUpdate();
   }
 
-  public void scheduleMappingsUpdate() {
-    myMappings.scheduleMappingsUpdate();
+  public void updateMappedVcsesImmediately() {
+    myMappings.updateMappedVcsesImmediately();
   }
 
   private void activateActiveVcses() {
