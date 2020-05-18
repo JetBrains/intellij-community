@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface GitNativeSshAskPassXmlRpcHandler {
 
-  String IJ_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
-  String IJ_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";
+  String IJ_SSH_ASK_PASS_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
+  String IJ_SSH_ASK_PASS_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";
   String HANDLER_NAME = GitNativeSshAskPassXmlRpcHandler.class.getName();
 
   /**

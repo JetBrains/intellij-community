@@ -23,8 +23,8 @@ public class GitNativeSshAskPassApp implements GitExternalApp {
         description = ""; // XML RPC doesn't like nulls
       }
 
-      String token = getNotNull(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV);
-      int xmlRpcPort = Integer.parseInt(getNotNull(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV));
+      String token = getNotNull(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV);
+      int xmlRpcPort = Integer.parseInt(getNotNull(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV));
       GitNativeSshAskPassXmlRpcClient xmlRpcClient = new GitNativeSshAskPassXmlRpcClient(xmlRpcPort);
 
       String answer = adjustNull(xmlRpcClient.handleInput(token, description));

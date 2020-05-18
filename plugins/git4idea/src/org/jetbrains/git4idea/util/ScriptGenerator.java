@@ -124,10 +124,10 @@ public class ScriptGenerator {
 
     if (executable instanceof GitExecutable.Wsl) {
       List<String> envs = ContainerUtil.newArrayList(
-        GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV,
-        GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV,
-        GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV,
-        GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV,
+        GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV,
+        GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV,
+        GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV,
+        GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV,
         GitRebaseEditorMain.IDEA_REBASE_HANDER_NO);
       cmd.append("export WSLENV=");
       cmd.append(StringUtil.join(envs, it -> it + "/w", ":"));

@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GitAskPassXmlRpcHandler {
 
-  String GIT_ASK_PASS_HANDLER_ENV = "GIT_ASKPASS_HANDLER";
-  String GIT_ASK_PASS_PORT_ENV = "GIT_ASKPASS_PORT";
+  String IJ_ASK_PASS_HANDLER_ENV = "GIT_ASKPASS_HANDLER";
+  String IJ_ASK_PASS_PORT_ENV = "GIT_ASKPASS_PORT";
   String HANDLER_NAME = GitAskPassXmlRpcHandler.class.getName();
 
   /**
