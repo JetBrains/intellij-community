@@ -7,23 +7,20 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.internal.statistic.IdeActivity;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -31,26 +28,18 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.DeprecationStripePanel;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -58,23 +47,21 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
-public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
+public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
   private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
-  private static final @NotNull JBInsets DUMB_BALLOON_INSETS = JBInsets.create(5, 8);
   private final AtomicReference<State> myState;
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
 
-  private Balloon myBalloon;//used from EDT only
 
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
@@ -84,6 +71,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbServiceTaskQueue myDumbTaskQueue;
   private final DumbServiceSyncTaskQueue mySyncTaskQueue;
   private final DumbServiceHeavyActivities myHeavyActivities;
+
+  //used from EDT
+  private final DumbServiceBalloon myBalloon;
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -95,6 +85,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     myHeavyActivities = new DumbServiceHeavyActivities();
     new DumbServiceVfsBatchListener(myProject, myHeavyActivities);
+    myBalloon = new DumbServiceBalloon(project, this);
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
   }
 
@@ -133,9 +124,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void dispose() {
     ApplicationManager.getApplication().assertIsWriteThread();
-    if (myBalloon != null) {
-      Disposer.dispose(myBalloon);
-    }
+    myBalloon.dispose();
     myDumbTaskQueue.clearTasksQueue();
 
     synchronized (myRunWhenSmartQueue) {
@@ -374,75 +363,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void showDumbModeActionBalloon(@NotNull @PopupContent String balloonText,
                                         @NotNull Runnable runWhenSmartAndBalloonStillShowing) {
-    if (LightEdit.owns(myProject)) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!isDumb()) {
-      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonWasNotNeeded, new FeatureUsageData().addProject(myProject));
-      runWhenSmartAndBalloonStillShowing.run();
-      return;
-    }
-    if (myBalloon != null) {
-      //here should be an assertion that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
-      return;
-    }
-    tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonStillShowing);
-  }
-
-  private void tryShowBalloonTillSmartMode(@NotNull @PopupContent String balloonText,
-                                           @NotNull Runnable runWhenSmartAndBalloonNotHidden) {
-    LOG.assertTrue(myBalloon == null);
-    long startTimestamp = System.nanoTime();
-    UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonRequested, new FeatureUsageData().addProject(myProject));
-    myBalloon = JBPopupFactory.getInstance().
-            createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
-            setBorderColor(JBColor.border()).
-            setBorderInsets(DUMB_BALLOON_INSETS).
-            setShowCallout(false).
-            createBalloon();
-    myBalloon.setAnimationEnabled(false);
-    myBalloon.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (myBalloon == null) {
-          return;
-        }
-        FeatureUsageData data = new FeatureUsageData().addProject(myProject);
-        UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonCancelled, data);
-        myBalloon = null;
-      }
-    });
-    runWhenSmart(() -> {
-      if (myBalloon == null) {
-        return;
-      }
-      FeatureUsageData data = new FeatureUsageData().addProject(myProject).
-        addData("duration_ms", TimeoutUtil.getDurationMillis(startTimestamp));
-      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonProceededToActions, data);
-      runWhenSmartAndBalloonNotHidden.run();
-      Balloon balloon = myBalloon;
-      myBalloon = null;
-      balloon.hide();
-    });
-    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
-      if (!isDumb()) {
-        return;
-      }
-      if (myBalloon == null) {
-        return;
-      }
-      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonShown, new FeatureUsageData().addProject(myProject));
-      myBalloon.show(getDumbBalloonPopupPoint(myBalloon, context), Balloon.Position.above);
-    });
-  }
-
-  private static @NotNull RelativePoint getDumbBalloonPopupPoint(@NotNull Balloon balloon, DataContext context) {
-    RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(context);
-    Dimension size = balloon.getPreferredSize();
-    Point point = relativePoint.getPoint();
-    point.translate(size.width / 2, 0);
-    //here are included hardcoded insets, icon width and small hardcoded delta to show before guessBestPopupLocation point
-    point.translate(-DUMB_BALLOON_INSETS.left - AllIcons.General.BalloonWarning.getIconWidth() - JBUIScale.scale(6), 0);
-    return new RelativePoint(relativePoint.getComponent(), point);
+    myBalloon.showDumbModeActionBalloon(balloonText, runWhenSmartAndBalloonStillShowing);
   }
 
   @Override
