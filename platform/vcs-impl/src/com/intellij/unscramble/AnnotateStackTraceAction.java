@@ -43,6 +43,7 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
@@ -57,7 +58,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class AnnotateStackTraceAction extends DumbAwareAction {
+public final class AnnotateStackTraceAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
 
   private boolean myIsLoading = false;
@@ -98,7 +99,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Object2ObjectOpenHashMap<VirtualFile, IntArrayList> files2lines = new Object2ObjectOpenHashMap<>();
-        Int2ObjectOpenHashMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
+        Int2ObjectMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
 
         ApplicationManager.getApplication().runReadAction(() -> {
           for (int line = 0; line < editor.getDocument().getLineCount(); line++) {

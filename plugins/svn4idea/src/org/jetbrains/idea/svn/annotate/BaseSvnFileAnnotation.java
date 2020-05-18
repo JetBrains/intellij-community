@@ -7,7 +7,10 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.annotate.AnnotationTooltipBuilder;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -18,15 +21,17 @@ import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public abstract class BaseSvnFileAnnotation extends FileAnnotation {
-  protected final String myContents;
+  private final String myContents;
   protected final VcsRevisionNumber myBaseRevision;
   private final MyPartiallyCreatedInfos myInfos;
 
   protected final SvnVcs myVcs;
-  private final Map<Long, SvnFileRevision> myRevisionMap = new HashMap<>();
+  private final Long2ObjectMap<SvnFileRevision> myRevisionMap = new Long2ObjectOpenHashMap<>();
 
   private final LineAnnotationAspect DATE_ASPECT = new SvnAnnotationAspect(LineAnnotationAspect.DATE, true) {
 
@@ -110,7 +115,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   }
 
   @Override
-  public LineAnnotationAspect[] getAspects() {
+  public LineAnnotationAspect @NotNull [] getAspects() {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
 
@@ -260,8 +265,8 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
   private static final class MyPartiallyCreatedInfos {
     private boolean myShowMergeSource;
-    private final Int2ObjectOpenHashMap<CommitInfo> myMappedLineInfo;
-    private final Int2ObjectOpenHashMap<CommitInfo> myMergeSourceInfos;
+    private final Int2ObjectMap<CommitInfo> myMappedLineInfo;
+    private final Int2ObjectMap<CommitInfo> myMergeSourceInfos;
     private int myMaxIdx;
 
     private MyPartiallyCreatedInfos() {

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.util.IntPair;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class IndentsModelImpl implements IndentsModel {
-  private final Object2ObjectOpenHashMap<IntPair, IndentGuideDescriptor> myIndentsByLines = new Object2ObjectOpenHashMap<>();
+  private final Object2ObjectMap<IntPair, IndentGuideDescriptor> myIndentsByLines = new Object2ObjectOpenHashMap<>();
   private List<IndentGuideDescriptor> myIndents = new ArrayList<>();
   @NotNull private final EditorImpl myEditor;
 
