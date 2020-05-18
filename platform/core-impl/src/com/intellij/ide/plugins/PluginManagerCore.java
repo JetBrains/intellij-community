@@ -540,7 +540,7 @@ public final class PluginManagerCore {
     Application app = ApplicationManager.getApplication();
     if (app == null || !app.isHeadlessEnvironment() || isUnitTestMode) {
       if (!errorsToReport.isEmpty()) {
-        String errorMessage = Stream.concat(errorsToReport.stream().map(o -> o.toUserError() + "."), actions.stream()).collect(Collectors.joining("<p/>"));
+        String errorMessage = Stream.concat(errorsToReport.stream().map(o -> StringUtil.escapeXmlEntities(o.toUserError()) + "."), actions.stream()).collect(Collectors.joining("<p/>"));
         if (ourPluginError == null) {
           ourPluginError = errorMessage;
         }

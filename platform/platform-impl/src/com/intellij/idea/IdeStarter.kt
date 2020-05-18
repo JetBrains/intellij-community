@@ -262,7 +262,7 @@ private fun reportPluginError() {
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
     Notification(NotificationGroup.createIdWithTitle("Plugin Error", title),
-                 title, StringUtil.escapeXmlEntities(pluginError), NotificationType.ERROR) { notification, event ->
+                 title, pluginError, NotificationType.ERROR) { notification, event ->
       notification.expire()
 
       val description = event.description
