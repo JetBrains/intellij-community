@@ -201,8 +201,8 @@ public class VfsImplUtil {
         });
       }
 
-      //noinspection unchecked
-      handler = (T)record.second;
+      @SuppressWarnings("unchecked") T t = (T)record.second;
+      handler = t;
     }
 
     return handler;
