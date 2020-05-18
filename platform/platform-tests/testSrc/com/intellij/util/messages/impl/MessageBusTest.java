@@ -19,6 +19,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import static com.intellij.testFramework.ServiceContainerUtil.createSimpleMessageBusOwner;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -464,6 +465,39 @@ public class MessageBusTest implements MessageBusOwner {
     });
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
     assertThat(isCalled.get()).isTrue();
+  }
+
+  @Test
+  public void disconnectOnPluginUnload() {
+    // child must be created before to ensure that cache is not cleared on a new child
+    MessageBus child = new CompositeMessageBus(this, myBus);
+    // call to compute cache
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+
+    AtomicInteger callCounter = new AtomicInteger();
+    Runnable listener = () -> {
+      callCounter.incrementAndGet();
+    };
+
+    // add twice
+    child.connect().subscribe(RUNNABLE_TOPIC, listener);
+    child.connect().subscribe(RUNNABLE_TOPIC, listener);
+
+    myBus.disconnectPluginConnections(new Predicate<Class<?>>() {
+      boolean isRemoved;
+      @Override
+      public boolean test(Class<?> aClass) {
+        // remove first one
+        if (isRemoved) {
+          return false;
+        }
+        isRemoved = true;
+        return true;
+      }
+    });
+
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    assertThat(callCounter.get()).isEqualTo(1);
   }
 
   @Test

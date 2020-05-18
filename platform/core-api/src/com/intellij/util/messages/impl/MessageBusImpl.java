@@ -26,11 +26,14 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public class MessageBusImpl implements MessageBus {
   interface MessageHandlerHolder {
     void collectHandlers(@NotNull Topic<?> topic, @NotNull List<Object> result);
+
+    void disconnectIfNeeded(@NotNull Predicate<Class<?>> predicate);
 
     boolean isDisposed();
   }
@@ -487,47 +490,35 @@ public class MessageBusImpl implements MessageBus {
     mySubscribers.removeIf(MessageHandlerHolder::isDisposed);
   }
 
-  boolean notifyConnectionTerminated(@NotNull Map<Topic<?>, Object> handlers) {
+  boolean notifyConnectionTerminated(Object [] topicAndHandlerPairs) {
     if (disposeState != 0) {
       return false;
     }
 
     myRootBus.scheduleEmptyConnectionRemoving();
 
-    SubscriberCacheCleanerOnConnectionTerminated cleaner = new SubscriberCacheCleanerOnConnectionTerminated(this);
-    handlers.forEach(cleaner);
-    return cleaner.isChildClearingNeeded;
+    return clearSubscriberCacheOnConnectionTerminated(topicAndHandlerPairs, this);
   }
 
-  // this method is used only in CompositeMessageBus.notifyConnectionTerminated to clear subscriber cache in children
-  protected void clearSubscriberCache(@NotNull Map<Topic<?>, Object> handlers) {
-    handlers.forEach((topic, o) -> subscriberCache.remove(topic));
-  }
+  private static boolean clearSubscriberCacheOnConnectionTerminated(Object[] topicAndHandlerPairs, @NotNull MessageBusImpl bus) {
+    boolean isChildClearingNeeded = false;
 
-  private static final class SubscriberCacheCleanerOnConnectionTerminated implements BiConsumer<Topic<?>, Object> {
-    private final MessageBusImpl bus;
-    boolean isChildClearingNeeded;
-
-    SubscriberCacheCleanerOnConnectionTerminated(@NotNull MessageBusImpl bus) {
-      this.bus = bus;
-    }
-
-    @Override
-    public void accept(@NotNull Topic<?> topic, Object handlers) {
+    for (int i = 0; i < topicAndHandlerPairs.length; i += 2) {
+      Topic<?> topic = (Topic<?>)topicAndHandlerPairs[i];
       if (bus.subscriberCache.remove(topic) != null) {
-        bus.removeDisposedHandlers(topic, handlers);
+        bus.removeDisposedHandlers(topic, topicAndHandlerPairs[i + 1]);
       }
 
       BroadcastDirection direction = topic.getBroadcastDirection();
       if (direction != BroadcastDirection.TO_CHILDREN) {
-        return;
+        continue;
       }
 
       // clear parents
       MessageBusImpl parentBus = bus;
       while ((parentBus = parentBus.myParentBus) != null) {
-        if (parentBus.subscriberCache.remove(topic) != null && handlers != null) {
-          parentBus.removeDisposedHandlers(topic, handlers);
+        if (parentBus.subscriberCache.remove(topic) != null) {
+          parentBus.removeDisposedHandlers(topic, topicAndHandlerPairs[i + 1]);
         }
       }
 
@@ -535,6 +526,15 @@ public class MessageBusImpl implements MessageBus {
         // clear children
         isChildClearingNeeded = true;
       }
+    }
+    return isChildClearingNeeded;
+  }
+
+  // this method is used only in CompositeMessageBus.notifyConnectionTerminated to clear subscriber cache in children
+  protected void clearSubscriberCache(Object[] topicAndHandlerPairs) {
+    for (int i = 0; i < topicAndHandlerPairs.length; i += 2) {
+      //noinspection SuspiciousMethodCalls
+      subscriberCache.remove(topicAndHandlerPairs[i]);
     }
   }
 
@@ -643,6 +643,12 @@ public class MessageBusImpl implements MessageBus {
     return exceptions;
   }
 
+  protected void disconnectPluginConnections(@NotNull Predicate<Class<?>> predicate) {
+    for (MessageHandlerHolder holder : mySubscribers) {
+      holder.disconnectIfNeeded(predicate);
+    }
+  }
+
   static final class RootBus extends CompositeMessageBus {
     private final AtomicReference<CompletableFuture<?>> compactionFutureRef = new AtomicReference<>();
     private final AtomicInteger emptyConnectionCounter = new AtomicInteger();
@@ -694,10 +700,10 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private void removeDisposedHandlers(@NotNull Topic<?> topic, @NotNull Object handlers) {
+  private void removeDisposedHandlers(@NotNull Topic<?> topic, @NotNull Object handler) {
     JobQueue jobQueue = myMessageQueue.get();
     if (!jobQueue.queue.isEmpty() &&
-        jobQueue.queue.removeIf(job -> job.topic == topic && MessageBusConnectionImpl.removeHandlers(job, handlers) && job.handlers.isEmpty())) {
+        jobQueue.queue.removeIf(job -> job.topic == topic && job.handlers.removeIf(it -> it == handler) && job.handlers.isEmpty())) {
       jobRemoved(jobQueue);
     }
   }

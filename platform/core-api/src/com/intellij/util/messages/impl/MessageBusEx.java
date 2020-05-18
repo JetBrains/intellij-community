@@ -10,12 +10,18 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public interface MessageBusEx extends MessageBus {
   void clearPublisherCache();
 
   void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<ListenerDescriptor> listenerDescriptors);
+
+  /**
+   * Must be called only on a root bus.
+   */
+  void disconnectPluginConnections(@NotNull Predicate<Class<?>> pluginId);
 
   @TestOnly
   void clearAllSubscriberCache();

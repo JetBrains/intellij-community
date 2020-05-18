@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   private final List<MessageBusImpl> childBuses = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -178,7 +179,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
 
     // use linked hash map for repeatable results
-    LinkedHashMap<PluginId, List<Object>> listenerMap = new LinkedHashMap<>();
+    Map<PluginId, List<Object>> listenerMap = new LinkedHashMap<>();
     for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
       try {
         listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor.getPluginId(), __ -> new ArrayList<>()).add(
@@ -214,13 +215,13 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  final boolean notifyConnectionTerminated(@NotNull Map<Topic<?>, Object> handlers) {
-    boolean isChildClearingNeeded = super.notifyConnectionTerminated(handlers);
+  final boolean notifyConnectionTerminated(Object[] topicAndHandlerPairs) {
+    boolean isChildClearingNeeded = super.notifyConnectionTerminated(topicAndHandlerPairs);
     if (!isChildClearingNeeded) {
       return false;
     }
 
-    childBuses.forEach(childBus -> childBus.clearSubscriberCache(handlers));
+    childBuses.forEach(childBus -> childBus.clearSubscriberCache(topicAndHandlerPairs));
 
     // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions because it is not wise to check each child bus -
     // waitingBuses list can be used instead of checking each child bus message queue
@@ -229,7 +230,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
       waitingBuses.removeIf(bus -> {
         JobQueue jobQueue = bus.myMessageQueue.get();
         return !jobQueue.queue.isEmpty() &&
-               jobQueue.queue.removeIf(job -> MessageBusConnectionImpl.removeMyHandlers(job, handlers) && job.handlers.isEmpty()) &&
+               jobQueue.queue.removeIf(job -> MessageBusConnectionImpl.removeHandlersFromJob(job, topicAndHandlerPairs) && job.handlers.isEmpty()) &&
                jobQueue.current == null &&
                jobQueue.queue.isEmpty();
       });
@@ -238,9 +239,9 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final void clearSubscriberCache(@NotNull Map<Topic<?>, Object> handlers) {
-    super.clearSubscriberCache(handlers);
-    childBuses.forEach(childBus -> childBus.clearSubscriberCache(handlers));
+  protected final void clearSubscriberCache(Object[] topicAndHandlerPairs) {
+    super.clearSubscriberCache(topicAndHandlerPairs);
+    childBuses.forEach(childBus -> childBus.clearSubscriberCache(topicAndHandlerPairs));
   }
 
   @Override
@@ -329,6 +330,12 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
       }
       subscriberCache.clear();
     }
+  }
+
+  @Override
+  public void disconnectPluginConnections(@NotNull Predicate<Class<?>> predicate) {
+    super.disconnectPluginConnections(predicate);
+    childBuses.forEach(bus -> bus.disconnectPluginConnections(predicate));
   }
 
   @Override

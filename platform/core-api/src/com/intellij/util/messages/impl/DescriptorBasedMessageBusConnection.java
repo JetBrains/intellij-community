@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 final class DescriptorBasedMessageBusConnection implements MessageBusImpl.MessageHandlerHolder {
   final PluginId pluginId;
@@ -26,6 +27,10 @@ final class DescriptorBasedMessageBusConnection implements MessageBusImpl.Messag
     if (this.topic == topic) {
       result.addAll(handlers);
     }
+  }
+
+  @Override
+  public void disconnectIfNeeded(@NotNull Predicate<Class<?>> predicate) {
   }
 
   @Override

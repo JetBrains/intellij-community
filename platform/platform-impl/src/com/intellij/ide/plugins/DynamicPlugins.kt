@@ -56,6 +56,7 @@ import com.intellij.util.xmlb.BeanBinding
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.function.Predicate
 import javax.swing.JComponent
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -520,16 +521,22 @@ object DynamicPlugins {
 
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
     application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
-    (application.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
+    val appMessageBus = application.messageBus as MessageBusEx
+    appMessageBus.unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
 
     for (project in openProjects) {
       (project as ProjectImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
+      (project.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
+
       val moduleServices = pluginDescriptor.moduleContainerDescriptor.getServices()
       for (module in ModuleManager.getInstance(project).modules) {
         (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
       }
-      (project.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
     }
+
+    appMessageBus.disconnectPluginConnections(Predicate { aClass ->
+      (aClass.classLoader as? PluginClassLoader)?.pluginId == pluginId
+    })
   }
 
   private inline fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
