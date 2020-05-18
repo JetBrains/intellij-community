@@ -337,8 +337,9 @@ public final class EnvironmentUtil {
       // *csh do not allow to use -l with any other options
       commands.add(SHELL_LOGIN_ARGUMENT);
     }
-    if (isInteractive) {
-      commands.add(SHELL_INTERACTIVE_ARGUMENT); // enable interactive shell
+    if (isInteractive && !shellScript.endsWith("/fish")) {
+      // Fish uses a single config file with conditions
+      commands.add(SHELL_INTERACTIVE_ARGUMENT);
     }
     if (isCommand) {
       commands.add(SHELL_COMMAND_ARGUMENT);
