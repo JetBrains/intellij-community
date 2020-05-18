@@ -37,8 +37,10 @@ import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
@@ -87,28 +89,32 @@ public class PyPackageManagerUI {
       if (!dependentPackages.isEmpty()) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           if (dependentPackages.size() == 1) {
-            String message = "You are attempting to uninstall ";
             List<String> dep = new ArrayList<>();
             int size = 1;
             for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
               final Set<PyPackage> value = entry.getValue();
               size = value.size();
-              dep.add(entry.getKey() + " package which is required for " + StringUtil.join(value, ", "));
+              dep.add(PyBundle.message(
+                "python.packaging.dialog.description.attempt.to.uninstall.for.one.dependent.package.single.package.description",
+                entry.getKey(),
+                StringUtil.join(value, ", ")));
             }
-            message += StringUtil.join(dep, "\n");
-            message += size == 1 ? " package" : " packages";
-            message += "\n\nDo you want to proceed?";
+            String message = PyBundle.message("python.packaging.dialog.description.attempt.to.uninstall.for.one.dependent.package",
+                                              StringUtil.join(dep, "\n"),
+                                              size);
             warning[0] = Messages.showYesNoDialog(message, PyBundle.message("python.packaging.warning"),
                                                   AllIcons.General.BalloonWarning);
           }
           else {
-            String message = "You are attempting to uninstall packages which are required for another packages.\n\n";
             List<String> dep = new ArrayList<>();
             for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
-              dep.add(entry.getKey() + " -> " + StringUtil.join(entry.getValue(), ", "));
+              dep.add(PyBundle.message(
+                "python.packaging.dialog.description.attempt.to.uninstall.for.several.dependent.packages.single.package.description",
+                entry.getKey(),
+                StringUtil.join(entry.getValue(), ", ")));
             }
-            message += StringUtil.join(dep, "\n");
-            message += "\n\nDo you want to proceed?";
+            String message = PyBundle.message("python.packaging.dialog.description.attempt.to.uninstall.for.several.dependent.packages",
+                                              StringUtil.join(dep, "\n"));
             warning[0] = Messages.showYesNoDialog(message, PyBundle.message("python.packaging.warning"),
                                                   AllIcons.General.BalloonWarning);
           }
@@ -144,7 +150,10 @@ public class PyPackageManagerUI {
     @NotNull protected final Sdk mySdk;
     @Nullable protected final Listener myListener;
 
-    PackagingTask(@Nullable Project project, @NotNull Sdk sdk, @NotNull String title, @Nullable Listener listener) {
+    PackagingTask(@Nullable Project project,
+                  @NotNull Sdk sdk,
+                  @NotNull @Nls String title,
+                  @Nullable Listener listener) {
       super(project, title);
       mySdk = sdk;
       myListener = listener;
@@ -160,12 +169,15 @@ public class PyPackageManagerUI {
     protected abstract List<ExecutionException> runTask(@NotNull ProgressIndicator indicator);
 
     @NotNull
+    @Nls
     protected abstract String getSuccessTitle();
 
     @NotNull
+    @Nls
     protected abstract String getSuccessDescription();
 
     @NotNull
+    @Nls
     protected abstract String getFailureTitle();
 
     protected void taskStarted(@NotNull ProgressIndicator indicator) {
@@ -189,7 +201,7 @@ public class PyPackageManagerUI {
       else {
         final PackageManagementService.ErrorDescription description = PyPackageManagementService.toErrorDescription(exceptions, mySdk);
         if (description != null) {
-          final String firstLine = getTitle() + ": error occurred.";
+          final String firstLine = PyBundle.message("python.packaging.notification.title.error.occurred", getTitle());
           final NotificationListener listener = new NotificationListener() {
             @Override
             public void hyperlinkUpdate(@NotNull Notification notification,
@@ -199,7 +211,8 @@ public class PyPackageManagerUI {
               PackagesNotificationPanel.showError(title, description);
             }
           };
-          notificationRef.set(new PackagingNotification(PACKAGING_GROUP_ID, getFailureTitle(), firstLine + " <a href=\"xxx\">Details...</a>",
+          String content = wrapIntoLink(firstLine, "python.packaging.notification.description.details.link");
+          notificationRef.set(new PackagingNotification(PACKAGING_GROUP_ID, getFailureTitle(), content,
                                                NotificationType.ERROR, listener));
         }
       }
@@ -214,11 +227,17 @@ public class PyPackageManagerUI {
       });
     }
 
+    @SuppressWarnings("HardCodedStringLiteral")
+    private static @NotNull @Nls String wrapIntoLink(@NotNull @Nls String prefix,
+                                                     @NotNull @PropertyKey(resourceBundle = PyBundle.BUNDLE) String key) {
+      return prefix + " <a href=\"xxx\">" + PyBundle.message(key) + "</a>";
+    }
+
     private static class PackagingNotification extends Notification{
 
       PackagingNotification(@NotNull String groupDisplayId,
-                                   @NotNull String title,
-                                   @NotNull String content,
+                                   @NotNull @Nls String title,
+                                   @NotNull @Nls String content,
                                    @NotNull NotificationType type, @Nullable NotificationListener listener) {
         super(groupDisplayId, title, content, type, listener);
       }
@@ -234,7 +253,7 @@ public class PyPackageManagerUI {
                        @Nullable List<PyRequirement> requirements,
                        @NotNull List<String> extraArgs,
                        @Nullable Listener listener) {
-      super(project, sdk, "Installing packages", listener);
+      super(project, sdk, PyBundle.message("python.packaging.progress.title.installing.packages"), listener);
       myRequirements = requirements;
       myExtraArgs = extraArgs;
     }
@@ -261,7 +280,8 @@ public class PyPackageManagerUI {
         final int size = myRequirements.size();
         for (int i = 0; i < size; i++) {
           final PyRequirement requirement = myRequirements.get(i);
-          indicator.setText(String.format("Installing package '%s'...", requirement.getPresentableText()));
+          indicator.setText(PyBundle.message("python.packaging.progress.text.installing.specific.package",
+                                             requirement.getPresentableText()));
           if (i == 0) {
             indicator.setIndeterminate(true);
           }
@@ -288,21 +308,22 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected String getSuccessTitle() {
-      return "Packages installed successfully";
+      return PyBundle.message("python.packaging.notification.title.packages.installed.successfully");
     }
 
     @NotNull
     @Override
     protected String getSuccessDescription() {
-      return myRequirements != null ?
-             "Installed packages: " + PyPackageUtil.requirementsToString(myRequirements) :
-             "Installed all requirements";
+      return myRequirements != null
+             ? PyBundle.message("python.packaging.notification.description.installed.packages",
+                                PyPackageUtil.requirementsToString(myRequirements))
+             : PyBundle.message("python.packaging.notification.description.installed.all.requirements");
     }
 
     @NotNull
     @Override
     protected String getFailureTitle() {
-      return "Install packages failed";
+      return PyBundle.message("python.packaging.notification.title.install.packages.failed");
     }
   }
 
@@ -334,7 +355,7 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected String getSuccessDescription() {
-      return "Installed Python packaging tools";
+      return PyBundle.message("python.packaging.notification.description.installed.python.packaging.tools");
     }
   }
 
@@ -345,7 +366,7 @@ public class PyPackageManagerUI {
                          @NotNull Sdk sdk,
                          @Nullable Listener listener,
                          @NotNull List<PyPackage> packages) {
-      super(project, sdk, "Uninstalling packages", listener);
+      super(project, sdk, PyBundle.message("python.packaging.progress.title.uninstalling.packages"), listener);
       myPackages = packages;
     }
 
@@ -369,20 +390,20 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected String getSuccessTitle() {
-      return "Packages uninstalled successfully";
+      return PyBundle.message("python.packaging.notification.title.packages.uninstalled.successfully");
     }
 
     @NotNull
     @Override
     protected String getSuccessDescription() {
       final String packagesString = StringUtil.join(myPackages, pkg -> "'" + pkg.getName() + "'", ", ");
-      return "Uninstalled packages: " + packagesString;
+      return PyBundle.message("python.packaging.notification.description.uninstalled.packages", packagesString);
     }
 
     @NotNull
     @Override
     protected String getFailureTitle() {
-      return "Uninstall packages failed";
+      return PyBundle.message("python.packaging.notification.title.uninstall.packages.failed");
     }
   }
 }
