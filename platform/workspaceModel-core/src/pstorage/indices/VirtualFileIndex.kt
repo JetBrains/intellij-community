@@ -13,26 +13,26 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 open class VirtualFileIndex private constructor(
-  protected val index: BidirectionalMultiMap<VirtualFileUrl, Int>
+  internal val index: BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>
 ) {
-  constructor() : this(BidirectionalMultiMap<VirtualFileUrl, Int>())
+  constructor() : this(BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>())
 
   internal fun getVirtualFiles(id: PId<out TypedEntity>): Set<VirtualFileUrl>? =
-    index.getKeys(id.arrayId)
+    index.getKeys(id)
 
-  internal fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, Int> {
-    val copy = BidirectionalMultiMap<VirtualFileUrl, Int>()
+  internal fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>> {
+    val copy = BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>()
     index.keys.forEach { key -> index.getValues(key).forEach { value -> copy.put(key, value) } }
     return copy
   }
 
   class MutableVirtualFileIndex private constructor(
-    index: BidirectionalMultiMap<VirtualFileUrl, Int>
+    index: BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>
   ) : VirtualFileIndex(index) {
     internal fun index(id: PId<out TypedEntity>, virtualFileUrls: List<VirtualFileUrl>? = null) {
-      index.removeValue(id.arrayId)
+      index.removeValue(id)
       if (virtualFileUrls == null) return
-      virtualFileUrls.forEach { index.put(it, id.arrayId) }
+      virtualFileUrls.forEach { index.put(it, id) }
     }
 
     fun toImmutable(): VirtualFileIndex = VirtualFileIndex(copyIndex())
