@@ -41,16 +41,16 @@ public class Junit4ConverterInspectionTest extends LightJavaInspectionTestCase {
            "        assertEquals(2, 1 + 1);\n" +
            "    }\n" +
            "}");
-    checkQuickFix("Convert to JUnit 4", "import junit.framework.TestCase;\n" +
-                                        "import org.junit.Assert;\n" +
-                                        "import org.junit.Test;\n" +
-                                        "\n" +
-                                        "class JUnit3TestCase {\n" +
-                                        "    @Test\n" +
-                                        "    public void testAddition() {\n" +
-                                        "        Assert.assertEquals(2, 1 + 1);\n" +
-                                        "    }\n" +
-                                        "}");
+    checkQuickFix("Convert to JUnit 4 test case", "import junit.framework.TestCase;\n" +
+                                                  "import org.junit.Assert;\n" +
+                                                  "import org.junit.Test;\n" +
+                                                  "\n" +
+                                                  "class JUnit3TestCase {\n" +
+                                                  "    @Test\n" +
+                                                  "    public void testAddition() {\n" +
+                                                  "        Assert.assertEquals(2, 1 + 1);\n" +
+                                                  "    }\n" +
+                                                  "}");
   }
 
   @Override

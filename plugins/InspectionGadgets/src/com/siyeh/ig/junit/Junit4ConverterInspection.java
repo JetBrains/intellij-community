@@ -3,15 +3,14 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ipp.junit.ConvertJUnit3TestCaseToJUnit4Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,10 +33,31 @@ public class Junit4ConverterInspection extends BaseInspection {
       @Override
       public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
-        boolean possibleToConvert = new ConvertJUnit3TestCaseToJUnit4Predicate().satisfiedBy(aClass);
-        if (possibleToConvert) {
+        if (possibleToConvert(aClass)) {
           registerClassError(aClass);
         }
+      }
+
+      private boolean possibleToConvert(PsiClass aClass) {
+        final PsiReferenceList extendsList = aClass.getExtendsList();
+        if (extendsList == null) return false;
+
+        final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+        if (referenceElements.length != 1) return false;
+
+        final PsiJavaCodeReferenceElement referenceElement = referenceElements[0];
+        final PsiElement target = referenceElement.resolve();
+        if (!(target instanceof PsiClass)) return false;
+
+        final PsiClass targetClass = (PsiClass)target;
+        final String name = targetClass.getQualifiedName();
+        if (!"junit.framework.TestCase".equals(name)) return false;
+
+        final Project project = aClass.getProject();
+        final GlobalSearchScope scope = aClass.getResolveScope();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiClass testAnnotation = psiFacade.findClass("org.junit.Test", scope);
+        return testAnnotation != null;
       }
     };
   }
