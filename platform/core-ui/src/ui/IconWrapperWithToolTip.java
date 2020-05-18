@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class IconWrapperWithToolTip implements IconWithToolTip, RetrievableIcon {
@@ -34,6 +35,18 @@ public class IconWrapperWithToolTip implements IconWithToolTip, RetrievableIcon 
   @Override
   public String getToolTip(boolean composite) {
     return myToolTip.get();
+  }
+
+  @Override
+  public int hashCode() {
+    return myIcon.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    return object == this ||
+           object instanceof IconWrapperWithToolTip &&
+           Objects.equals(((IconWrapperWithToolTip)object).myIcon, this.myIcon);
   }
 
   @Override

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 public class IconWrapperWithToolTipComposite implements IconWithToolTip, RetrievableIcon {
   private final Icon myIcon;
@@ -38,6 +39,18 @@ public class IconWrapperWithToolTipComposite implements IconWithToolTip, Retriev
   @Override
   public @NotNull Icon retrieveIcon() {
     return myIcon;
+  }
+
+  @Override
+  public int hashCode() {
+    return myIcon.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    return object == this ||
+           object instanceof IconWrapperWithToolTipComposite &&
+           Objects.equals(((IconWrapperWithToolTipComposite)object).myIcon, this.myIcon);
   }
 
   @Override
