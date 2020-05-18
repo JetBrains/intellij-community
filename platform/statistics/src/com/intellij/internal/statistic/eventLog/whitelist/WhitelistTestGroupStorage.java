@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.whitelist;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
+import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
@@ -71,7 +71,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   protected @NotNull Map<String, WhiteListGroupRules> createValidators(@NotNull WLGroups groups,
                                                                        @Nullable WLRule productionRules) {
     final WLRule rules = merge(groups.rules, productionRules);
-    final EventLogBuildNumber buildNumber = EventLogBuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
+    final EventLogBuild buildNumber = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
       filter(group -> group.accepts(buildNumber)).
       collect(Collectors.toMap(group -> group.id, group -> createRules(group, rules)));

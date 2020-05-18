@@ -1,40 +1,41 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 
-public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber> {
+import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpaces;
+import static com.intellij.internal.statistic.StatisticsStringUtil.split;
+
+public final class EventLogBuild implements Comparable<EventLogBuild> {
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
 
-  @NotNull private final int[] myComponents;
+  private final int[] myComponents;
 
-  public EventLogBuildNumber(@NotNull int... components) {
+  public EventLogBuild(int... components) {
     myComponents = components;
   }
 
-  @NotNull
   public int[] getComponents() {
     return myComponents.clone();
   }
 
   @Nullable
-  public static EventLogBuildNumber fromString(@Nullable String version) {
-    if (version == null || StatisticsEventLogUtil.isEmptyOrSpaces(version)) {
+  public static EventLogBuild fromString(@Nullable String version) {
+    if (version == null || isEmptyOrSpaces(version)) {
       return null;
     }
 
     String versionWithoutCode = removeProductCode(version);
     int separator = versionWithoutCode.indexOf('.');
     if (separator > 0) {
-      List<String> components = StatisticsEventLogUtil.split(versionWithoutCode ,'.');
-      return new EventLogBuildNumber(toIntArray(components));
+      List<String> components = split(versionWithoutCode , '.');
+      return new EventLogBuild(toIntArray(components));
     }
-    return new EventLogBuildNumber(tryParseInt(versionWithoutCode), 0);
+    return new EventLogBuild(tryParseInt(versionWithoutCode), 0);
   }
 
   private static int[] toIntArray(List<String> components) {
@@ -72,7 +73,7 @@ public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber
   }
 
   @Override
-  public int compareTo(@NotNull EventLogBuildNumber o) {
+  public int compareTo(@NotNull EventLogBuild o) {
     int[] c1 = myComponents;
     int[] c2 = o.myComponents;
 
@@ -91,7 +92,7 @@ public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    EventLogBuildNumber number = (EventLogBuildNumber)o;
+    EventLogBuild number = (EventLogBuild)o;
     return Arrays.equals(myComponents, number.myComponents);
   }
 

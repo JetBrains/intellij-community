@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus;
 
-import com.intellij.internal.statistic.StatisticsEventLogUtil;
-import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
+import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 
 public class FUSWhitelist {
   private Map<String, GroupFilterCondition> myGroups;
@@ -96,7 +97,7 @@ public class FUSWhitelist {
     private boolean acceptsBuild(@NotNull String build) {
       if (builds.isEmpty()) return true;
 
-      final EventLogBuildNumber number = EventLogBuildNumber.fromString(build);
+      final EventLogBuild number = EventLogBuild.fromString(build);
       return number != null && builds.stream().anyMatch(b -> b.contains(number));
     }
 
@@ -125,10 +126,10 @@ public class FUSWhitelist {
   }
 
   public static class BuildRange {
-    private final EventLogBuildNumber myFrom;
-    private final EventLogBuildNumber myTo;
+    private final EventLogBuild myFrom;
+    private final EventLogBuild myTo;
 
-    public BuildRange(@Nullable EventLogBuildNumber from, @Nullable EventLogBuildNumber to) {
+    public BuildRange(@Nullable EventLogBuild from, @Nullable EventLogBuild to) {
       myFrom = from;
       myTo = to;
     }
@@ -136,12 +137,12 @@ public class FUSWhitelist {
     @NotNull
     public static BuildRange create(@Nullable String from, @Nullable String to) {
       return new BuildRange(
-        StatisticsEventLogUtil.isNotEmpty(from) ? EventLogBuildNumber.fromString(from) : null,
-        StatisticsEventLogUtil.isNotEmpty(to) ? EventLogBuildNumber.fromString(to) : null
+        isNotEmpty(from) ? EventLogBuild.fromString(from) : null,
+        isNotEmpty(to) ? EventLogBuild.fromString(to) : null
       );
     }
 
-    public boolean contains(@NotNull EventLogBuildNumber build) {
+    public boolean contains(@NotNull EventLogBuild build) {
       return (myTo == null || myTo.compareTo(build) > 0) && (myFrom == null || myFrom.compareTo(build) <= 0);
     }
 

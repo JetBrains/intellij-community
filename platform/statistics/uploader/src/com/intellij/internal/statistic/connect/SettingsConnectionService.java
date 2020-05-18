@@ -18,6 +18,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
+
 public abstract class SettingsConnectionService {
   protected static final String SERVICE_URL_ATTR_NAME = "url";
 
@@ -79,7 +81,7 @@ public abstract class SettingsConnectionService {
           Element root = StatisticsEventLogUtil.parseXml(content);
           for (String s : attributes) {
             String attributeValue = root.getAttributeValue(s);
-            if (StatisticsEventLogUtil.isNotEmpty(attributeValue)) {
+            if (isNotEmpty(attributeValue)) {
               settings.put(s, attributeValue);
             }
           }

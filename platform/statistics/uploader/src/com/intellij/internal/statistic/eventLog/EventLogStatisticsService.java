@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
+import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
+
 public class EventLogStatisticsService implements StatisticsService {
   private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
@@ -107,7 +110,7 @@ public class EventLogStatisticsService implements StatisticsService {
         final LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger);
         final String error = validate(recordRequest, file);
-        if (StatisticsEventLogUtil.isNotEmpty(error) || recordRequest == null) {
+        if (isNotEmpty(error) || recordRequest == null) {
           if (logger.isTraceEnabled()) {
             logger.trace(file.getName() + "-> " + error);
           }
@@ -181,13 +184,13 @@ public class EventLogStatisticsService implements StatisticsService {
       return "File is empty or has invalid format: " + file.getName();
     }
 
-    if (StatisticsEventLogUtil.isEmpty(request.getDevice())) {
+    if (isEmpty(request.getDevice())) {
       return "Cannot upload event log, device ID is empty";
     }
-    else if (StatisticsEventLogUtil.isEmpty(request.getProduct())) {
+    else if (isEmpty(request.getProduct())) {
       return "Cannot upload event log, product code is empty";
     }
-    else if (StatisticsEventLogUtil.isEmpty(request.getRecorder())) {
+    else if (isEmpty(request.getRecorder())) {
       return "Cannot upload event log, recorder code is empty";
     }
     else if (request.getRecords().isEmpty()) {

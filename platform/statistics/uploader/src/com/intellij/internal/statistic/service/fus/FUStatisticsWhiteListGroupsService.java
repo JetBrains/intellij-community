@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.service.fus;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
-import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
+import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.intellij.internal.statistic.StatisticsStringUtil.*;
 import static java.util.Collections.emptyList;
 
 /**
@@ -76,7 +77,7 @@ public class FUStatisticsWhiteListGroupsService {
 
   @NotNull
   private static String getFUSWhiteListContent(@NotNull String userAgent, @Nullable String serviceUrl) throws EventLogWhitelistLoadException {
-    if (StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) {
+    if (isEmptyOrSpaces(serviceUrl)) {
       throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.EMPTY_SERVICE_URL);
     }
 
@@ -101,7 +102,7 @@ public class FUStatisticsWhiteListGroupsService {
   }
 
   private static long lastModifiedWhitelist(@NotNull String userAgent, @Nullable String serviceUrl) {
-    if (!StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) {
+    if (!isEmptyOrSpaces(serviceUrl)) {
       try (CloseableHttpClient client = StatisticsEventLogUtil.create(userAgent);
            CloseableHttpResponse response = client.execute(new HttpHead(serviceUrl))) {
         Header[] headers = response.getHeaders(HttpHeaders.LAST_MODIFIED);
@@ -120,7 +121,7 @@ public class FUStatisticsWhiteListGroupsService {
 
   @NotNull
   public static WLGroups parseWhiteListContent(@Nullable String content) throws EventLogWhitelistParseException {
-    if (StatisticsEventLogUtil.isEmptyOrSpaces(content)) {
+    if (isEmptyOrSpaces(content)) {
       throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.EMPTY_CONTENT);
     }
 
@@ -177,7 +178,6 @@ public class FUStatisticsWhiteListGroupsService {
   public static class WLGroups {
     @NotNull
     public final ArrayList<WLGroup> groups = new ArrayList<>();
-    @Nullable public Map<String, Set<String>> globalEnums;
     @Nullable public WLRule rules;
     @Nullable public String version;
   }
@@ -192,7 +192,7 @@ public class FUStatisticsWhiteListGroupsService {
     @Nullable
     public WLRule rules;
 
-    public boolean accepts(EventLogBuildNumber current) {
+    public boolean accepts(EventLogBuild current) {
       if (!isValid()) {
         return false;
       }
@@ -203,7 +203,7 @@ public class FUStatisticsWhiteListGroupsService {
     private boolean isValid() {
       final boolean hasBuilds = builds != null && !builds.isEmpty();
       final boolean hasVersions = versions != null && !versions.isEmpty();
-      return StatisticsEventLogUtil.isNotEmpty(id) && (hasBuilds || hasVersions);
+      return isNotEmpty(id) && (hasBuilds || hasVersions);
     }
   }
 
@@ -228,10 +228,16 @@ public class FUStatisticsWhiteListGroupsService {
     public String from;
     public String to;
 
-    public boolean contains(EventLogBuildNumber build) {
-      //TODO: check build number is not null
-      return (StatisticsEventLogUtil.isEmpty(to) || EventLogBuildNumber.fromString(to).compareTo(build) > 0) &&
-             (StatisticsEventLogUtil.isEmpty(from) || EventLogBuildNumber.fromString(from).compareTo(build) <= 0);
+    public boolean contains(EventLogBuild build) {
+      // toBuild or fromBuild == null when to or from border isn't set
+      EventLogBuild toBuild = EventLogBuild.fromString(to);
+      EventLogBuild fromBuild = EventLogBuild.fromString(from);
+
+      if (toBuild == null && fromBuild == null) {
+        return false;
+      }
+      return (toBuild == null || toBuild.compareTo(build) > 0) &&
+             (fromBuild == null || fromBuild.compareTo(build) <= 0);
     }
   }
 }

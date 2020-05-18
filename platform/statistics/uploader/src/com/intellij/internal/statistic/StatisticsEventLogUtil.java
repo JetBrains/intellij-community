@@ -23,34 +23,6 @@ public class StatisticsEventLogUtil {
     return HttpClientBuilder.create().setUserAgent(userAgent).build();
   }
 
-  public static boolean isEmpty(@Nullable String s) {
-    return s == null || s.isEmpty();
-  }
-
-  public static boolean isNotEmpty(@Nullable String s) {
-    return !isEmpty(s);
-  }
-
-  public static boolean isEmptyOrSpaces(@Nullable String s) {
-    if (isEmpty(s)) {
-      return true;
-    }
-    for (int i = 0; i < s.length(); i++) {
-      if (s.charAt(i) > ' ') {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public static boolean equals(@Nullable String s1, @Nullable String s2) {
-    if (s1 == s2) return true;
-    if (s1 == null || s2 == null) return false;
-
-    if (s1.length() != s2.length()) return false;
-    return s1.equals(s2);
-  }
-
   public static String[] mergeArrays(@NotNull String[] a1, @NotNull String[] a2) {
     String[] result = new String[a1.length + a2.length];
     System.arraycopy(a1, 0, result, 0, a1.length);
@@ -65,26 +37,5 @@ public class StatisticsEventLogUtil {
     finally {
       stream.close();
     }
-  }
-
-  @NotNull
-  public static List<String> split(@NotNull String text, char separator) {
-    List<String> result = new ArrayList<>();
-    int pos = 0;
-    int index = text.indexOf(separator, pos);
-    while (index >= 0) {
-      final int nextPos = index + 1;
-      String token = text.substring(pos, index);
-      if (token.length() != 0) {
-        result.add(token);
-      }
-      pos = nextPos;
-      index = text.indexOf(separator, pos);
-    }
-
-    if (pos < text.length()) {
-      result.add(text.substring(pos));
-    }
-    return result;
   }
 }

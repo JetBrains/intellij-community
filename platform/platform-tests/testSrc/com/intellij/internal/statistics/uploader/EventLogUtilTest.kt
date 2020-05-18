@@ -2,6 +2,7 @@
 package com.intellij.internal.statistics.uploader
 
 import com.intellij.internal.statistic.StatisticsEventLogUtil
+import com.intellij.internal.statistic.StatisticsStringUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -38,7 +39,7 @@ class EventLogUtilTest : UsefulTestCase() {
   }
 
   private fun doTestStringSplit(str: String, separator: Char, expected: List<String>) {
-    val actual = StatisticsEventLogUtil.split(str, separator)
+    val actual = StatisticsStringUtil.split(str, separator)
     assertEquals(expected, actual)
   }
 
