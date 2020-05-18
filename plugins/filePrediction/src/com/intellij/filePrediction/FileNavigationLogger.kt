@@ -4,6 +4,7 @@ package com.intellij.filePrediction
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
+import kotlin.math.round
 
 internal object FileNavigationLogger {
   private const val GROUP_ID = "file.prediction"
@@ -31,12 +32,17 @@ internal object FileNavigationLogger {
     }
 
     if (probability != null) {
-      data.addData("probability", probability)
+      data.addData("probability", roundProbability(probability))
     }
 
     for (feature in features.value) {
       feature.value.addToEventData(feature.key, data)
     }
     FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, event, data)
+  }
+
+  private fun roundProbability(value: Double): Double {
+    if (!value.isFinite()) return -1.0
+    return round(value * 100000) / 100000
   }
 }
