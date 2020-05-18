@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -31,9 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.messages.Topic;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -153,8 +150,6 @@ public final class SvnVcs extends AbstractVcs {
     }
     else {
       myEntriesFileListener = new SvnEntriesFileListener(project);
-      upgradeIfNeeded(project.getMessageBus());
-
       myChangeListListener = new SvnChangelistListener(this);
     }
 
@@ -215,29 +210,14 @@ public final class SvnVcs extends AbstractVcs {
     getSvnFileUrlMappingImpl().scheduleRefresh();
   }
 
-  private void upgradeIfNeeded(@NotNull MessageBus bus) {
-    SimpleMessageBusConnection connection = bus.simpleConnect();
-    connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, lists -> {
-      if (lists.isEmpty()) {
-        return;
-      }
+  private void setupChangeLists() {
+    ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.getDefaultName(), true);
 
-      try {
-        ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.getDefaultName(), true);
-
-        if (!myConfiguration.changeListsSynchronized()) {
-          ExclusiveBackgroundVcsAction.run(myProject, () -> synchronizeToNativeChangeLists(lists));
-        }
-      }
-      catch (ProcessCanceledException e) {
-        //
-      }
-      finally {
-        myConfiguration.upgrade();
-      }
-
-      connection.disconnect();
-    });
+    if (!myConfiguration.changeListsSynchronized()) {
+      List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
+      ExclusiveBackgroundVcsAction.run(myProject, () -> synchronizeToNativeChangeLists(changeLists));
+    }
+    myConfiguration.upgrade();
   }
 
   public void synchronizeToNativeChangeLists(@NotNull List<? extends LocalChangeList> lists) {
@@ -293,7 +273,7 @@ public final class SvnVcs extends AbstractVcs {
       checkCommandLineVersion();
     }
 
-    // do one time after project loaded
+    ProjectLevelVcsManager.getInstance(myProject).runAfterInitialization(() -> setupChangeLists());
     StartupManager.getInstance(myProject).runAfterOpened(() -> {
       postStartup();
 
