@@ -6,7 +6,7 @@ import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.repo.GitRepository
 
-internal abstract class GitMultipleCommitEditingAction : GitMultipleCommitEditingActionBase<GitMultipleCommitEditingActionBase.MultipleCommitEditingData>() {
+internal abstract class GitMultipleCommitEditingAction : GitCommitEditingActionBase<GitCommitEditingActionBase.MultipleCommitEditingData>() {
   override fun createCommitEditingData(
     repository: GitRepository,
     log: VcsLog,
