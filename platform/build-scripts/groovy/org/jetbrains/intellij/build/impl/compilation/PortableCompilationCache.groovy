@@ -52,13 +52,7 @@ class PortableCompilationCache {
   }
 
   private static boolean bool(String systemProperty, boolean defaultValue) {
-    def value = System.getProperty(systemProperty)
-    if (StringUtil.isEmptyOrSpaces(value)) {
-      defaultValue
-    }
-    else {
-      Boolean.parseBoolean(value)
-    }
+    System.getProperty(systemProperty, "$defaultValue").toBoolean()
   }
 
   private def clearJpsOutputs() {
