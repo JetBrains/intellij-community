@@ -1,12 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static java.util.Comparator.comparingInt;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import com.intellij.AbstractBundle;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -40,26 +34,23 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import java.awt.Color;
-import java.lang.reflect.Field;
-import java.text.MessageFormat;
-import java.text.ParsePosition;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.lang.reflect.Field;
+import java.text.MessageFormat;
+import java.text.ParsePosition;
+import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static com.intellij.openapi.util.Pair.pair;
+import static java.util.Comparator.comparingInt;
+import static org.junit.Assert.*;
 
 /**
  * @author cdr
@@ -169,8 +160,10 @@ public class ExpectedHighlightingData {
 
   public void init() {
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      extractExpectedLineMarkerSet(myDocument);
-      extractExpectedHighlightsSet(myDocument);
+      DocumentUtil.executeInBulk(myDocument, true, () -> {
+        extractExpectedLineMarkerSet(myDocument);
+        extractExpectedHighlightsSet(myDocument);
+      });
       refreshLineMarkers();
     });
   }
@@ -274,15 +267,13 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                                 "(/)?>";
 
-    DocumentUtil.executeInBulk(document, true, () -> {
-      Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
-      Ref<Integer> textOffset = Ref.create(0);
-      int pos = 0;
-      while (matcher.find(pos)) {
-        textOffset.set(textOffset.get() + matcher.start() - pos);
-        pos = extractExpectedHighlight(matcher, text, document, textOffset);
-      }
-    });
+    Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
+    Ref<Integer> textOffset = Ref.create(0);
+    int pos = 0;
+    while (matcher.find(pos)) {
+      textOffset.set(textOffset.get() + matcher.start() - pos);
+      pos = extractExpectedHighlight(matcher, text, document, textOffset);
+    }
   }
 
   private int extractExpectedHighlight(Matcher matcher, String text, Document document, Ref<Integer> textOffset) {
