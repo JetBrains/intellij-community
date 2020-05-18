@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -70,7 +70,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new LibraryLightProjectDescriptor(GroovyProjectDescriptors.LIB_GROOVY_2_4) {
+    return new LibraryLightProjectDescriptor(GroovyProjectDescriptors.LIB_GROOVY_2_5) {
       @Override
       Sdk getSdk() {
         return IdeaTestUtil.getMockJdk18()
@@ -175,7 +175,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         }
         ''',
            valuesXTypes,
-           ['[] -> BigInteger', '[1] -> BigInteger', '[0L] -> BigInteger'],
+           ['[0L] -> BigInteger'],
            [
              '[] -> int', '[] -> double', '[] -> short', '[] -> byte',
              'new ArrayList<>() -> int[]', 'new ArrayList<>() -> double[]', 'new ArrayList<>() -> Integer[]', 'new ArrayList<>() -> List[]', 'new ArrayList<>() -> Thread[]'
