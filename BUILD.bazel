@@ -1045,7 +1045,6 @@ iml_module(
         "//tools/idea/plugins/maven/error-prone-compiler:intellij.maven.errorProne.compiler",
         "//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.20.1:jar",
         "//tools/vendor/intellij/cidr/cidr-workspaceModel:intellij.cidr.workspaceModel",
-        "//tools/adt/idea/android:intellij.android.core.tests",
     ],
     # do not sort: must match IML order
     deps = [
