@@ -88,9 +88,7 @@ public class MavenProject {
         return result;
       }
       catch (ClassNotFoundException e) {
-        IOException ioException = new IOException();
-        ioException.initCause(e);
-        throw ioException;
+        throw new IOException(e);
       }
     }
     finally {
