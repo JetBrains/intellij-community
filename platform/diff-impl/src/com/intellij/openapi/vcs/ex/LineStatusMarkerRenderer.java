@@ -437,6 +437,7 @@ public abstract class LineStatusMarkerRenderer {
                                     int x1, int x2, int y) {
     float editorScale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
     int size = (int)JBUIScale.scale(4 * editorScale);
+    if (y < size) y = size;
 
     final int[] xPoints = new int[]{x1, x1, x2};
     final int[] yPoints = new int[]{y - size, y + size, y};
