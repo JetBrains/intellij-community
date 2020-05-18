@@ -643,6 +643,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       }
 
       updateEnableForNameAndIcon();
+      updateIcon();
       updateErrors();
     }
   }

@@ -498,6 +498,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
           listComponent.myPlugin = installedDescriptor;
         }
         listComponent.hideProgress(success, restartRequired);
+        listComponent.updateErrors();
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
@@ -971,6 +972,11 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
 
   @Nullable
   public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super String> enableAction) {
+    if (InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginDescriptor.getPluginId())) {
+      // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any error
+      return null;
+    }
+
     String message = PluginManagerCore.getLoadingError(pluginDescriptor);
 
     PluginId disabledDependency = PluginManagerCore.getFirstDisabledDependency(pluginDescriptor);
