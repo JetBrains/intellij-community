@@ -117,25 +117,20 @@ fun findPluginTypeByValue(value: String): PluginType? {
 }
 
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
-
   /**
    * @return true if code is from IntelliJ platform or JB plugin.
    */
-  fun isDevelopedByJetBrains(): Boolean {
-    return type.isDevelopedByJetBrains()
-  }
+  fun isDevelopedByJetBrains() = type.isDevelopedByJetBrains()
 
   /**
    * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
    */
-  fun isSafeToReport(): Boolean {
-    return type.isSafeToReport()
-  }
+  fun isSafeToReport() = type.isSafeToReport()
 }
 
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
 val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null, null)
-val notListedPlugin: PluginInfo = PluginInfo(PluginType.NOT_LISTED, null, null)
+private val notListedPlugin = PluginInfo(PluginType.NOT_LISTED, null, null)
 
 // Mock plugin info used when we can't detect plugin by class loader because IDE is built from sources
 val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null, null)

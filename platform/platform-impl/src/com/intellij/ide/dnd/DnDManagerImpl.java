@@ -13,6 +13,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.MultiResolutionImageProvider;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,15 +25,13 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.lang.ref.WeakReference;
 
-import static com.intellij.util.ui.TimerUtil.createNamedTimer;
-
 public final class DnDManagerImpl extends DnDManager {
   private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
 
   @NonNls private static final String SOURCE_KEY = "DnD Source";
   @NonNls private static final String TARGET_KEY = "DnD Target";
 
-  public static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<>("draggedImage");
+  private static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<>("draggedImage");
 
   private DnDEventImpl myCurrentEvent;
   private DnDEvent myLastHighlightedEvent;
@@ -53,7 +52,7 @@ public final class DnDManagerImpl extends DnDManager {
   private static final Image EMPTY_IMAGE = ImageUtil.createImage(1, 1, Transparency.TRANSLUCENT);
 
   private final Timer myTooltipTimer =
-    createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), e -> onTimer());
+    TimerUtil.createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), e -> onTimer());
   private Runnable myHighlighterShowRequest;
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
@@ -281,7 +280,7 @@ public final class DnDManagerImpl extends DnDManager {
     myCurrentDragContext.setCursor(cursor);
   }
 
-  private boolean update(DnDTarget target, DnDEvent currentEvent) {
+  private boolean update(DnDTargetChecker target, DnDEvent currentEvent) {
     LOG.debug("update target:" + target);
 
     currentEvent.clearDelegatedTarget();

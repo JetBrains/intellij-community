@@ -37,9 +37,8 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
     return false;
   }
 
-  @Nullable
   @Override
-  public String getErrorMessage(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable String getErrorMessage(@NotNull Project project, @NotNull VirtualFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null && !module.isDisposed()) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
@@ -55,8 +54,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
     return null;
   }
 
-  @NotNull
-  private static SdkPopupBuilder preparePopup(@NotNull Project project, @NotNull VirtualFile file) {
+  private static @NotNull SdkPopupBuilder preparePopup(@NotNull Project project, @NotNull VirtualFile file) {
     return SdkPopupFactory
       .newBuilder()
       .withProject(project)
@@ -64,9 +62,8 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
       .updateSdkForFile(file);
   }
 
-  @NotNull
   @Override
-  public ActionHandler getFixHandler(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull ActionHandler getFixHandler(@NotNull Project project, @NotNull VirtualFile file) {
     return preparePopup(project, file).buildEditorNotificationPanelHandler();
   }
 

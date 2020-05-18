@@ -203,7 +203,7 @@ public abstract class DumbService {
   @Contract(pure = true)
   public @NotNull <T> List<T> filterByDumbAwareness(@NotNull Collection<? extends T> collection) {
     if (isDumb()) {
-      final ArrayList<T> result = new ArrayList<>(collection.size());
+      List<T> result = new ArrayList<>(collection.size());
       for (T element : collection) {
         if (isDumbAware(element)) {
           result.add(element);
@@ -212,11 +212,8 @@ public abstract class DumbService {
       return result;
     }
 
-    if (collection instanceof List) {
-      return (List<T>)collection;
-    }
-
-    return new ArrayList<>(collection);
+    //noinspection unchecked
+    return collection instanceof List ? (List<T>)collection : new ArrayList<>(collection);
   }
 
   /**
