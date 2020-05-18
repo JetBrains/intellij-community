@@ -57,12 +57,14 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public void updateWidget(@NotNull Class<? extends StatusBarWidgetFactory> factoryExtension) {
-    StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
-    if (factory == null || !myWidgetFactories.containsKey(factory)) {
-      LOG.info("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
-      return;
+    synchronized (myWidgetFactories) {
+      StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
+      if (factory == null || !myWidgetFactories.containsKey(factory)) {
+        LOG.info("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
+        return;
+      }
+      updateWidget(factory);
     }
-    updateWidget(factory);
   }
 
   public void updateWidget(@NotNull StatusBarWidgetFactory factory) {
@@ -76,13 +78,17 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public boolean wasWidgetCreated(@Nullable StatusBarWidgetFactory factory) {
-    return myWidgetFactories.get(factory) != null;
+    synchronized (myWidgetFactories) {
+      return myWidgetFactories.get(factory) != null;
+    }
   }
 
   @Override
   public void dispose() {
-    myWidgetFactories.forEach((factory, createdWidget) -> disableWidget(factory));
-    myWidgetFactories.clear();
+    synchronized (myWidgetFactories) {
+      myWidgetFactories.forEach((factory, createdWidget) -> disableWidget(factory));
+      myWidgetFactories.clear();
+    }
   }
 
   @Nullable
@@ -92,31 +98,35 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
 
   @NotNull
   public Set<StatusBarWidgetFactory> getWidgetFactories() {
-    return myWidgetFactories.keySet();
+    synchronized (myWidgetFactories) {
+      return myWidgetFactories.keySet();
+    }
   }
 
   private void enableWidget(@NotNull StatusBarWidgetFactory factory) {
-    if (!myWidgetFactories.containsKey(factory)) {
-      LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factory.getId());
-      return;
-    }
+    synchronized (myWidgetFactories) {
+      if (!myWidgetFactories.containsKey(factory)) {
+        LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factory.getId());
+        return;
+      }
 
-    StatusBarWidget createdWidget = myWidgetFactories.get(factory);
-    if (createdWidget != null) {
-      // widget is already enabled
-      return;
-    }
+      StatusBarWidget createdWidget = myWidgetFactories.get(factory);
+      if (createdWidget != null) {
+        // widget is already enabled
+        return;
+      }
 
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar == null) {
-      LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
-      return;
-    }
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBar == null) {
+        LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
+        return;
+      }
 
-    StatusBarWidget widget = factory.createWidget(myProject);
-    myWidgetFactories.put(factory, widget);
-    myWidgetIdsMap.put(widget.ID(), factory);
-    statusBar.addWidget(widget, getAnchor(factory), this);
+      StatusBarWidget widget = factory.createWidget(myProject);
+      myWidgetFactories.put(factory, widget);
+      myWidgetIdsMap.put(widget.ID(), factory);
+      statusBar.addWidget(widget, getAnchor(factory), this);
+    }
   }
 
   @NotNull
@@ -144,13 +154,15 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   private void disableWidget(@NotNull StatusBarWidgetFactory factory) {
-    StatusBarWidget createdWidget = myWidgetFactories.put(factory, null);
-    if (createdWidget != null) {
-      myWidgetIdsMap.remove(createdWidget.ID());
-      factory.disposeWidget(createdWidget);
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-      if (statusBar != null) {
-        statusBar.removeWidget(createdWidget.ID());
+    synchronized (myWidgetFactories) {
+      StatusBarWidget createdWidget = myWidgetFactories.put(factory, null);
+      if (createdWidget != null) {
+        myWidgetIdsMap.remove(createdWidget.ID());
+        factory.disposeWidget(createdWidget);
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (statusBar != null) {
+          statusBar.removeWidget(createdWidget.ID());
+        }
       }
     }
   }
@@ -160,21 +172,25 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   private void addWidgetFactory(@NotNull StatusBarWidgetFactory factory) {
-    if (LightEdit.owns(myProject) && !(factory instanceof LightEditCompatible)) {
-      return;
+    synchronized (myWidgetFactories) {
+      if (LightEdit.owns(myProject) && !(factory instanceof LightEditCompatible)) {
+        return;
+      }
+      if (myWidgetFactories.containsKey(factory)) {
+        LOG.error("Factory has been added already: " + factory.getId());
+        return;
+      }
+      myWidgetFactories.put(factory, null);
+      ApplicationManager.getApplication().invokeLater(() -> updateWidget(factory));
+      incModificationCount();
     }
-    if (myWidgetFactories.containsKey(factory)) {
-      LOG.error("Factory has been added already: " + factory.getId());
-      return;
-    }
-    myWidgetFactories.put(factory, null);
-    ApplicationManager.getApplication().invokeLater(() -> updateWidget(factory));
-    incModificationCount();
   }
 
   private void removeWidgetFactory(@NotNull StatusBarWidgetFactory factory) {
-    disableWidget(factory);
-    myWidgetFactories.remove(factory);
-    incModificationCount();
+    synchronized (myWidgetFactories) {
+      disableWidget(factory);
+      myWidgetFactories.remove(factory);
+      incModificationCount();
+    }
   }
 }
