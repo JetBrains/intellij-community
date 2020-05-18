@@ -5,7 +5,7 @@ PsiJavaFileStub []
     PsiRefListStub[EXTENDS_LIST:]
     PsiRefListStub[IMPLEMENTS_LIST:groovy.lang.GroovyObject]
     PsiClassStub[enum name=Enum fqn=GroovyStuff.Enum]
-      PsiModifierListStub[mask=4112]
+      PsiModifierListStub[mask=4120]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:]
       PsiRefListStub[IMPLEMENTS_LIST:groovy.lang.GroovyObject]
