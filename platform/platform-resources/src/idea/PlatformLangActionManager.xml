@@ -119,7 +119,7 @@
       </group>
       <reference ref="ProblemsView.ShowPreview"/>
       <action id="ProblemsView.QuickFix"
-              icon="AllIcons.Actions.QuickfixBulb"
+              icon="AllIcons.Actions.IntentionBulb"
               use-shortcut-of="ShowIntentionActions"
               class="com.intellij.analysis.problemsView.toolWindow.ProblemsViewQuickFixAction"/>
     </group>
