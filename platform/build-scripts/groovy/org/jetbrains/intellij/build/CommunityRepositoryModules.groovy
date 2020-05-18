@@ -130,11 +130,11 @@ class CommunityRepositoryModules {
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.xslt.debugger") {
-      withModule("intellij.xslt.debugger.engine")
-      withModule("intellij.xslt.debugger.engine.impl", "rt/xslt-debugger-engine-impl.jar")
-      withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.engine.impl", "rt")
-      withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.engine.impl", "rt")
-      withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.engine.impl", "rt")
+      withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
+      withModule("intellij.xslt.debugger.impl.rt", "rt/xslt-debugger-impl-rt.jar")
+      withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.impl.rt", "rt")
+      withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt")
+      withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt")
     },
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")

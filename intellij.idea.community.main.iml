@@ -80,7 +80,7 @@
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xpath" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xslt.debugger" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.xslt.debugger.engine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger.rt" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.i18n" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tasks" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tasks.java" scope="RUNTIME" />

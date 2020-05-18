@@ -139,15 +139,15 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     Path xsltDebuggerClassesRoot = Paths.get(PathUtil.getJarPathForClass(getClass()));
     if (!Files.isDirectory(xsltDebuggerClassesRoot)) {
       Path libDirectory = xsltDebuggerClassesRoot.getParent();
-      addPathToClasspath(parameters, libDirectory.resolve("xslt-debugger-engine.jar"));
+      addPathToClasspath(parameters, libDirectory.resolve("xslt-debugger-rt.jar"));
       addPathToClasspath(parameters, libDirectory.resolve("rmi-stubs.jar"));
-      addPathToClasspath(parameters, libDirectory.resolve("rt/xslt-debugger-engine-impl.jar"));
+      addPathToClasspath(parameters, libDirectory.resolve("rt/xslt-debugger-impl-rt.jar"));
     }
     else {
       //running from sources
       Path outProductionDir = xsltDebuggerClassesRoot.getParent();
-      addPathToClasspath(parameters, outProductionDir.resolve("intellij.xslt.debugger.engine"));
-      addPathToClasspath(parameters, outProductionDir.resolve("intellij.xslt.debugger.engine.impl"));
+      addPathToClasspath(parameters, outProductionDir.resolve("intellij.xslt.debugger.rt"));
+      addPathToClasspath(parameters, outProductionDir.resolve("intellij.xslt.debugger.impl.rt"));
       addPathToClasspath(parameters, getPluginEngineDirInSources().resolve("lib/rmi-stubs.jar"));
     }
 
