@@ -32,9 +32,9 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun registerSnapshot(snapshotId: String, stepExecutionId: Long) {
+    override fun registerSnapshot(snapshotId: String, stepExecutionId: StepExecId) {
         val step = findStepExecution(stepExecutionId, false) ?: error("Execution step is not found")
-        volumeSnapshots.add(CircletIdeaVolumeSnapshotEntity(Random.nextLong(), snapshotId, nowMs, step.graph.id, stepExecutionId, this))
+        volumeSnapshots.add(CircletIdeaVolumeSnapshotEntity(Random.nextLong(), snapshotId, nowMs, step.graph.id, stepExecutionId.value, this))
     }
 
     override fun deleteSnapshotsByGraphExecution(graphExecution: AGraphExecutionEntity): Int {
@@ -45,12 +45,13 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun findStepExecution(id: Long, forUpdate: Boolean): AStepExecutionEntity<ScriptStep.Process<*, *>>? {
-        return stepExecutions.firstOrNull { it.id == id }
+    override fun findStepExecution(id: StepExecId, forUpdate: Boolean): AStepExecutionEntity<ScriptStep.Process<*, *>>? {
+        return stepExecutions.firstOrNull { it.id == id.value }
     }
 
-    override fun findStepExecutions(ids: List<Long>, forUpdate: Boolean): Sequence<AStepExecutionEntity<ScriptStep.Process<*, *>>> {
-        return stepExecutions.filter { it.id in ids }.asSequence()
+    override fun findStepExecutions(ids: List<StepExecId>, forUpdate: Boolean): Sequence<AStepExecutionEntity<ScriptStep.Process<*, *>>> {
+        val idValues = ids.map { it.value }
+        return stepExecutions.filter { it.id in idValues }.asSequence()
     }
 
     override fun findAuthClient(graphExecution: AGraphExecutionEntity): ServiceCredentials? {
@@ -62,12 +63,12 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         return volumeSnapshots.firstOrNull { it.stepExecutionId == stepExec.id }
     }
 
-    override fun findSnapshotCreationPoint(graphExecutionId: Long): AStepExecutionEntity<ScriptStep.Process<*, *>>? {
+    override fun findSnapshotCreationPoint(graphExecutionId: GraphExecId): AStepExecutionEntity<ScriptStep.Process<*, *>>? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun findGraphExecutionById(graphExecutionId: Long): AGraphExecutionEntity? {
-        return executions.firstOrNull { it.id == graphExecutionId }
+    override fun findGraphExecutionById(graphExecutionId: GraphExecId): AGraphExecutionEntity? {
+        return executions.firstOrNull { it.id == graphExecutionId.value }
     }
 
     override fun createGraphExecution(

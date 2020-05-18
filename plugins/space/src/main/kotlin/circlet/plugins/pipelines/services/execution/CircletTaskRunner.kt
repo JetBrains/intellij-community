@@ -1,28 +1,36 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.common.api.*
-import circlet.pipelines.engine.*
+import circlet.pipelines.common.api.ExecutionStatus
+import circlet.pipelines.common.api.GraphExecId
+import circlet.pipelines.common.api.StepExecId
+import circlet.pipelines.common.api.TraceLevel
+import circlet.pipelines.engine.AutomationGraphEngineImpl
+import circlet.pipelines.engine.AutomationGraphManagerImpl
 import circlet.pipelines.engine.api.*
-import circlet.pipelines.engine.api.storage.*
-import circlet.pipelines.provider.*
-import circlet.pipelines.provider.io.*
+import circlet.pipelines.engine.api.storage.AutomationStorageTransaction
+import circlet.pipelines.provider.FailureChecker
+import circlet.pipelines.provider.io.CommonFile
 import circlet.pipelines.provider.local.*
-import circlet.plugins.pipelines.services.*
+import circlet.plugins.pipelines.services.SpaceKtsModelBuilder
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.process.*
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.openapi.components.*
-import com.intellij.openapi.project.*
-import kotlinx.coroutines.*
-import libraries.coroutines.extra.*
-import libraries.io.*
-import libraries.io.random.*
-import libraries.klogging.*
-import libraries.process.*
-import runtime.*
-import java.io.*
-import java.nio.file.*
-import java.util.concurrent.*
+import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import kotlinx.coroutines.asCoroutineDispatcher
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.LifetimeSource
+import libraries.coroutines.extra.launch
+import libraries.io.DaemonThreadFactory
+import libraries.io.random.Random
+import libraries.klogging.KLogging
+import libraries.klogging.catch
+import libraries.process.OSProcesses
+import runtime.Ui
+import java.io.File
+import java.io.OutputStream
+import java.nio.file.Paths
+import java.util.concurrent.Executors
 
 class CircletTaskRunner(val project: Project) {
 
@@ -65,14 +73,20 @@ class CircletTaskRunner(val project: Project) {
 //      /mnt/space/system/circlet-agent.jar
 //      /mnt/space/system/entrypoint")
 
-        val vp = IdeaLocalVolumeProvider(Path.of("/Users/sergey.shkredov/work/tmp"), paths)
+        val vp = IdeaLocalVolumeProvider(Paths.get("/Users/sergey.shkredov/work/tmp"), paths)
 
         val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, ideaLocalRunnerLabel, vp, dockerEventsListener, processes)
 
         val batchSize = 1
 
         val logMessageSink = object : LogMessagesSink {
-            override fun invoke(graphExecutionId: Long, stepExecutionId: Long, serviceExecutionId: Long?, batchIndex: Int, data: List<LogLine>) {
+            override fun invoke(
+              graphExecutionId: GraphExecId,
+              stepExecutionId: StepExecId,
+              serviceExecutionId: Long?,
+              batchIndex: Int,
+              data: List<LogLine>
+            ) {
                 data.forEach {
                     processHandler.message(it.line, TraceLevel.INFO)
                 }

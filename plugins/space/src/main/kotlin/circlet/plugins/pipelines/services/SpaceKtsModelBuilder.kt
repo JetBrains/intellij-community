@@ -157,8 +157,8 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                     val configuration = AutomationCompilerConfiguration.Remote(server = server)
 
                     val compile = AutomationCompilerBootstrap(eventLogger, configuration = configuration).compile(
-                        Path.of(scriptFile.path),
-                        Path.of(targetJar)
+                        Paths.get(scriptFile.path),
+                        Paths.get(targetJar)
                     )
 
                     if (compile == 0) {

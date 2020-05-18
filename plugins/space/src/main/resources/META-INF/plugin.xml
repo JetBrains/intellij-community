@@ -34,6 +34,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="circlet.settings.CircletSettings"/>
         <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
+        <applicationService serviceImplementation="circlet.components.CircletWorkspaceComponent"/>
+
 
         <applicationConfigurable
             groupId="tools"
@@ -66,16 +68,6 @@
         <postStartupActivity implementation="circlet.plugins.pipelines.services.SpaceKtsFileDetectorActivator"/>
 
     </extensions>
-
-    <application-components>
-        <component>
-            <implementation-class>circlet.components.CircletApplicationComponent</implementation-class>
-        </component>
-
-        <component>
-            <implementation-class>circlet.components.CircletWorkspaceComponent</implementation-class>
-        </component>
-    </application-components>
 
     <actions>
         <group id="circlet.actions.MainToolbarActionGroup">

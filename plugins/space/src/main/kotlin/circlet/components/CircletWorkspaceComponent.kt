@@ -1,27 +1,43 @@
 package circlet.components
 
-import circlet.auth.*
-import circlet.common.oauth.*
-import circlet.permission.*
-import circlet.platform.api.oauth.*
-import circlet.platform.client.*
-import circlet.platform.workspaces.*
-import circlet.settings.*
-import circlet.utils.*
-import circlet.workspaces.*
-import com.intellij.openapi.components.*
-import libraries.coroutines.extra.*
-import libraries.klogging.*
-import runtime.*
-import runtime.persistence.*
+import circlet.arenas.initCircletArenas
+import circlet.auth.accessTokenInteractive
+import circlet.client.api.impl.ApiClassesDeserializer
+import circlet.common.oauth.IdeaOAuthConfig
+import circlet.permission.FeatureFlagsVmPersistenceKey
+import circlet.platform.api.oauth.OAuthTokenResponse
+import circlet.platform.api.oauth.toTokenInfo
+import circlet.platform.api.serialization.ExtendableSerializationRegistry
+import circlet.platform.client.ConnectionStatus
+import circlet.platform.workspaces.WorkspaceConfiguration
+import circlet.platform.workspaces.WorkspaceManagerHost
+import circlet.runtime.ApplicationDispatcher
+import circlet.settings.CircletServerSettings
+import circlet.settings.CircletSettings
+import circlet.settings.CircletSettingsPanel
+import circlet.utils.IdeaPasswordSafePersistence
+import circlet.utils.LifetimedDisposable
+import circlet.utils.LifetimedDisposableImpl
+import circlet.utils.notify
+import circlet.workspaces.Workspace
+import circlet.workspaces.WorkspaceManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceManager
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.launch
+import libraries.klogging.assert
+import libraries.klogging.logger
+import runtime.Ui
+import runtime.mutableUiDispatch
+import runtime.persistence.InMemoryPersistence
+import runtime.persistence.PersistenceConfiguration
+import runtime.persistence.PersistenceKey
 import runtime.reactive.*
-
-val circletWorkspace get() = application.getComponent<CircletWorkspaceComponent>()
 
 private val log = logger<CircletWorkspaceComponent>()
 
 // monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
-class CircletWorkspaceComponent : WorkspaceManagerHost(), BaseComponent, LifetimedDisposable by LifetimedDisposableImpl() {
+class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by LifetimedDisposableImpl() {
 
     private val ideaClientPersistenceConfiguration = PersistenceConfiguration(
         FeatureFlagsVmPersistenceKey,
@@ -37,14 +53,16 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), BaseComponent, Lifetim
 
     private val settings = CircletSettings.getInstance()
 
-    override fun initComponent() {
+    init {
+        initApp()
         val settingsOnStartup = settings.serverSettings
         val wsLifetime = workspacesLifetimes.next()
 
         // sign in automatically on application startup.
         launch(wsLifetime, Ui) {
-            if (!autoSignIn(settingsOnStartup, wsLifetime))
-                notifyDisconnected(wsLifetime)
+            if (!autoSignIn(settingsOnStartup, wsLifetime)) {
+            }
+            notifyDisconnected(wsLifetime)
         }
 
         // notify circlet is connected on the first connect (remove it later)
@@ -54,6 +72,20 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), BaseComponent, Lifetim
             }
         }
     }
+
+    private fun initApp() {
+        val application = ApplicationManager.getApplication()
+        //if (!application.isUnitTestMode && !application.isHeadlessEnvironment) {
+        //    KLoggerStaticFactory.customFactory = KLoggerFactoryIdea
+        //}
+
+        mutableUiDispatch = ApplicationDispatcher(application)
+
+        initCircletArenas()
+
+        ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
+    }
+
 
     override suspend fun authFailed() {
         authCheckFailedNotification(lifetime)
@@ -97,6 +129,10 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), BaseComponent, Lifetim
     }
 
 }
+
+val circletWorkspace: CircletWorkspaceComponent
+    get() = ServiceManager.getService(CircletWorkspaceComponent::class.java)
+
 
 private fun notifyDisconnected(lifetime: Lifetime) {
     notify(lifetime, "Disconnected.<br><a href=\"switch-on\">Configure Server</a>", ::configure)

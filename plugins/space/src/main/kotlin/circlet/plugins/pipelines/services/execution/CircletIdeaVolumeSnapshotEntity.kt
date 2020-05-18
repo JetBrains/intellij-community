@@ -1,6 +1,8 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.engine.api.storage.*
+import circlet.pipelines.common.api.GraphExecId
+import circlet.pipelines.engine.api.storage.AGraphExecutionEntity
+import circlet.pipelines.engine.api.storage.AVolumeSnapshotEntity
 
 data class CircletIdeaVolumeSnapshotEntity(
     override val id: Long,
@@ -10,5 +12,5 @@ data class CircletIdeaVolumeSnapshotEntity(
     val stepExecutionId : Long,
     private val storage: CircletIdeaExecutionProviderStorage
 ) : AVolumeSnapshotEntity {
-    override val graph: AGraphExecutionEntity get() = storage.findGraphExecutionById(grapthExecutionId) ?: error("Execution is not found")
+    override val graph: AGraphExecutionEntity get() = storage.findGraphExecutionById(GraphExecId(grapthExecutionId)) ?: error("Execution is not found")
 }
