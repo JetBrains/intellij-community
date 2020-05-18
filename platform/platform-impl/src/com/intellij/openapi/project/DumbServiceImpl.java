@@ -93,7 +93,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public DumbServiceImpl(Project project) {
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
-    myDumbTaskQueue = new DumbServiceTaskQueue(myTrackedEdtActivityService);
+    myDumbTaskQueue = new DumbServiceTaskQueue(myProject);
     mySyncTaskQueue = new DumbServiceSyncTaskQueue();
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);

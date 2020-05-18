@@ -27,7 +27,8 @@ import java.util.function.Function;
 final class DumbServiceTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceTaskQueue.class);
 
-  private final TrackedEdtActivityService myTrackedEdtActivityService;
+  private final Project myProject;
+  private final Object myLock = new Object();
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
 
@@ -37,12 +38,13 @@ final class DumbServiceTaskQueue {
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = new ConcurrentHashMap<>();
 
-  DumbServiceTaskQueue(@NotNull TrackedEdtActivityService trackedEdtActivityService) {
-    myTrackedEdtActivityService = trackedEdtActivityService;
+  DumbServiceTaskQueue(@NotNull Project project) {
+    myProject = project;
   }
 
   void cancelTask(@NotNull DumbModeTask task) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
+
     ProgressIndicatorEx indicator = myProgresses.get(task);
     if (indicator != null) {
       indicator.cancel();
@@ -50,8 +52,10 @@ final class DumbServiceTaskQueue {
   }
 
   void clearTasksQueue() {
-    myUpdatesQueue.clear();
-    myQueuedEquivalences.clear();
+    synchronized (myLock) {
+      myUpdatesQueue.clear();
+      myQueuedEquivalences.clear();
+    }
   }
 
   void disposePendingTasks() {
@@ -62,8 +66,20 @@ final class DumbServiceTaskQueue {
   }
 
   boolean addTaskToQueue(@NotNull DumbModeTask task) {
-    if (!myQueuedEquivalences.add(task.getEquivalenceObject())) {
+    boolean result;
+    synchronized (myLock) {
+      result = addTaskToQueueImpl(task);
+    }
+
+    if (!result) {
       Disposer.dispose(task);
+    }
+
+    return result;
+  }
+
+  private boolean addTaskToQueueImpl(@NotNull DumbModeTask task) {
+    if (!myQueuedEquivalences.add(task.getEquivalenceObject())) {
       return false;
     }
 
@@ -83,7 +99,7 @@ final class DumbServiceTaskQueue {
                                 @NotNull IdeActivity activity) {
     while (true) {
       //we do jump in EDT to
-      Pair<DumbModeTask, ProgressIndicatorEx> pair = myTrackedEdtActivityService.computeInEdt(() -> pollTaskQueue());
+      Pair<DumbModeTask, ProgressIndicatorEx> pair = pollTaskQueue();
       if (pair == null) break;
 
       DumbModeTask task = pair.first;
@@ -113,26 +129,32 @@ final class DumbServiceTaskQueue {
       catch (ProcessCanceledException ignored) {
       }
       catch (Throwable unexpected) {
-        LOG.error(unexpected);
+        LOG.error("Failed to execute task " + task + ". " + unexpected.getMessage(), unexpected);
       }
     }, taskIndicator);
   }
 
   private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> pollTaskQueue() {
-    while (true) {
-      if (myUpdatesQueue.isEmpty()) {
-        return null;
-      }
+    synchronized (myLock) {
+      while (true) {
+        if (myUpdatesQueue.isEmpty()) {
+          return null;
+        }
 
-      DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
-      myQueuedEquivalences.remove(queuedTask.getEquivalenceObject());
-      ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
-      if (indicator.isCanceled()) {
-        Disposer.dispose(queuedTask);
-        continue;
-      }
+        if (myProject.isDisposed()) {
+          return null;
+        }
 
-      return Pair.create(queuedTask, indicator);
+        DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
+        myQueuedEquivalences.remove(queuedTask.getEquivalenceObject());
+        ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
+        if (indicator.isCanceled()) {
+          Disposer.dispose(queuedTask);
+          continue;
+        }
+
+        return Pair.create(queuedTask, indicator);
+      }
     }
   }
 }
