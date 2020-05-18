@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.local
 
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -46,6 +47,8 @@ private class ActionsLocalSummaryListener : AnActionListener {
                         ?: throw ExtensionNotApplicableException.INSTANCE
 
   override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-    service.state.updateActionsSummary(event.actionManager.getId(action) ?: action.javaClass.name)
+    if (getPluginInfo(action::class.java).isSafeToReport()) {
+      service.state.updateActionsSummary(event.actionManager.getId(action) ?: action.javaClass.name)
+    }
   }
 }
