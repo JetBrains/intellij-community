@@ -57,8 +57,8 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public void updateWidget(@NotNull Class<? extends StatusBarWidgetFactory> factoryExtension) {
+    StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
     synchronized (myWidgetFactories) {
-      StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
       if (factory == null || !myWidgetFactories.containsKey(factory)) {
         LOG.info("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
         return;
@@ -104,6 +104,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   private void enableWidget(@NotNull StatusBarWidgetFactory factory) {
+    List<StatusBarWidgetFactory> availableFactories = StatusBarWidgetFactory.EP_NAME.getExtensionList();
     synchronized (myWidgetFactories) {
       if (!myWidgetFactories.containsKey(factory)) {
         LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factory.getId());
@@ -125,26 +126,25 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       StatusBarWidget widget = factory.createWidget(myProject);
       myWidgetFactories.put(factory, widget);
       myWidgetIdsMap.put(widget.ID(), factory);
-      statusBar.addWidget(widget, getAnchor(factory), this);
+      statusBar.addWidget(widget, getAnchor(factory, availableFactories), this);
     }
   }
 
   @NotNull
-  private String getAnchor(@NotNull StatusBarWidgetFactory factory) {
+  private String getAnchor(@NotNull StatusBarWidgetFactory factory, @NotNull List<StatusBarWidgetFactory> availableFactories) {
     if (factory instanceof StatusBarWidgetProviderToFactoryAdapter) {
       return ((StatusBarWidgetProviderToFactoryAdapter)factory).getAnchor();
     }
-    List<StatusBarWidgetFactory> factories = StatusBarWidgetFactory.EP_NAME.getExtensionList();
-    int indexOf = factories.indexOf(factory);
-    for (int i = indexOf + 1; i < factories.size(); i++) {
-      StatusBarWidgetFactory nextFactory = factories.get(i);
+    int indexOf = availableFactories.indexOf(factory);
+    for (int i = indexOf + 1; i < availableFactories.size(); i++) {
+      StatusBarWidgetFactory nextFactory = availableFactories.get(i);
       StatusBarWidget widget = myWidgetFactories.get(nextFactory);
       if (widget != null) {
         return StatusBar.Anchors.before(widget.ID());
       }
     }
     for (int i = indexOf - 1; i >= 0; i--) {
-      StatusBarWidgetFactory prevFactory = factories.get(i);
+      StatusBarWidgetFactory prevFactory = availableFactories.get(i);
       StatusBarWidget widget = myWidgetFactories.get(prevFactory);
       if (widget != null) {
         return StatusBar.Anchors.after(widget.ID());
