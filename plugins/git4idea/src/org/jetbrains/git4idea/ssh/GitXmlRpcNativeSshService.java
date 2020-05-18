@@ -4,6 +4,7 @@ package org.jetbrains.git4idea.ssh;
 import git4idea.commands.GitNativeSshAuthenticator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.GitAppUtil;
 import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassApp;
 import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 
@@ -27,17 +28,7 @@ public class GitXmlRpcNativeSshService extends GitXmlRpcHandlerService<GitNative
     @Nullable
     @Override
     public String handleInput(String handler, @NotNull String description) {
-      return adjustNull(getHandler(UUID.fromString(handler)).handleInput(description));
-    }
-
-    /**
-     * Adjust null value ({@code "-"} if null, {@code "+"+s} if non-null)
-     *
-     * @param s a value to adjust
-     * @return adjusted string
-     */
-    private String adjustNull(final String s) {
-      return s == null ? "-" : "+" + s;
+      return GitAppUtil.adjustNullTo(getHandler(UUID.fromString(handler)).handleInput(description));
     }
   }
 }

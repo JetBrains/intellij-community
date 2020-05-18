@@ -18,6 +18,7 @@ package org.jetbrains.git4idea.http;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.GitAppUtil;
 import org.jetbrains.git4idea.GitExternalApp;
 
 /**
@@ -56,8 +57,8 @@ public class GitAskPassApp implements GitExternalApp {
       boolean usernameNeeded = arguments.getFirst();
       String url = arguments.getSecond();
 
-      String token = getNotNull(GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV);
-      int xmlRpcPort = Integer.parseInt(getNotNull(GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV));
+      String token = GitAppUtil.getEnv(GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV);
+      int xmlRpcPort = GitAppUtil.getEnvInt(GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV);
       GitAskPassXmlRpcClient xmlRpcClient = new GitAskPassXmlRpcClient(xmlRpcPort);
 
       if (usernameNeeded) {
@@ -73,15 +74,6 @@ public class GitAskPassApp implements GitExternalApp {
       System.err.println(t.getMessage());
       t.printStackTrace(System.err);
     }
-  }
-
-  @NotNull
-  private static String getNotNull(@NotNull String env) {
-    String value = System.getenv(env);
-    if (value == null) {
-      throw new IllegalStateException(env + " environment variable is not defined!");
-    }
-    return value;
   }
 
   @NotNull
