@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.InplaceButton;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,6 +75,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
 
     public BeforeRunComponent() {
       super(new WrapLayout(FlowLayout.LEADING));
+      setBorder(JBUI.Borders.emptyLeft(-5));
       add(new JLabel(ExecutionBundle.message("run.configuration.before.run.label")));
       myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> {
         showPopup();

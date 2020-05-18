@@ -77,7 +77,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
         addLine(buildCommandLinePanel(fragments));
 
         JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING));
-        tagsPanel.setBorder(JBUI.Borders.empty(5, 0));
+        tagsPanel.setBorder(JBUI.Borders.empty(5, -5, 5, 0));
         for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
           if (fragment.isTag()) {
             tagsPanel.add(fragment.getComponent());
