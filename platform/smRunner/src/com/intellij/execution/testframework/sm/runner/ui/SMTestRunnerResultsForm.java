@@ -277,19 +277,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     LvcsHelper.addLabel(this);
 
-
-    final Runnable onDone = () -> {
-      myTestsRunning = false;
-      final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
-      if (sortByDuration) {
-        myTreeBuilder.setTestsComparator(this);
-      }
-    };
     if (myLastSelected == null) {
-      selectAndNotify(myTestsRootNode, onDone);
+      selectAndNotify(myTestsRootNode);
     }
-    else {
-      onDone.run();
+
+    myTestsRunning = false;
+    if (TestConsoleProperties.SORT_BY_DURATION.value(myProperties)) {
+      myTreeBuilder.setTestsComparator(this);
     }
 
     fireOnTestingFinished();
