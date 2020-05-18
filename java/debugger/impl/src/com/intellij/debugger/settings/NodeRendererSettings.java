@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -434,7 +434,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return labelRenderer;
   }
 
-  private static class MapEntryLabelRenderer extends ReferenceRenderer implements ValueLabelRenderer, XValuePresentationProvider {
+  private static class MapEntryLabelRenderer extends ReferenceRenderer
+    implements ValueLabelRenderer, XValuePresentationProvider, OnDemandRenderer {
     private static final Key<ValueDescriptorImpl> KEY_DESCRIPTOR = Key.create("KEY_DESCRIPTOR");
     private static final Key<ValueDescriptorImpl> VALUE_DESCRIPTOR = Key.create("VALUE_DESCRIPTOR");
 
@@ -449,6 +450,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     @Override
     public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      if (!isShowValue(descriptor, evaluationContext)) {
+        return "";
+      }
       String keyText = calcExpression(evaluationContext, descriptor, myKeyExpression, listener, KEY_DESCRIPTOR);
       String valueText = calcExpression(evaluationContext, descriptor, myValueExpression, listener, VALUE_DESCRIPTOR);
       return keyText + " -> " + valueText;
@@ -479,6 +483,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     @Override
     public String getUniqueId() {
       return "MapEntry renderer";
+    }
+
+    @NotNull
+    @Override
+    public String getLinkText() {
+      return JavaDebuggerBundle.message("message.node.evaluate");
     }
 
     private Value doEval(EvaluationContext evaluationContext, Value originalValue, MyCachedEvaluator cachedEvaluator)
