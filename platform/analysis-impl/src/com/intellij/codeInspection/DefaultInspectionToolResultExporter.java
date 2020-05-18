@@ -184,7 +184,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     try {
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());
-      problemClassElement.addContent(myToolWrapper.getDisplayName());
+      problemClassElement.addContent(sanitizeIllegalXmlChars(myToolWrapper.getDisplayName()));
 
       final HighlightSeverity severity = InspectionToolResultExporter.getSeverity(refEntity, psiElement, this);
 
@@ -207,7 +207,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
             final String hint = globalInspectionTool.getHint(fix);
             if (hint != null) {
               @NonNls Element hintElement = new Element(INSPECTION_RESULTS_HINT_ELEMENT);
-              hintElement.setAttribute(INSPECTION_RESULTS_VALUE_ATTRIBUTE, hint);
+              hintElement.setAttribute(INSPECTION_RESULTS_VALUE_ATTRIBUTE, sanitizeIllegalXmlChars(hint));
               hintsElement.addContent(hintElement);
             }
           }
