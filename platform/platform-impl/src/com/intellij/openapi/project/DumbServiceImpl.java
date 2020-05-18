@@ -9,7 +9,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -49,7 +48,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.indexing.IndexingBundle;
@@ -83,12 +81,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
-  private volatile ProgressSuspender myCurrentSuspender;
-  private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
   private final DumbServiceTaskQueue myDumbTaskQueue;
   private final DumbServiceSyncTaskQueue mySyncTaskQueue;
+  private final DumbServiceHeavyActivities myHeavyActivities;
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -98,29 +95,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
-    ApplicationManager.getApplication().getMessageBus().connect(project)
-      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
-        // synchronized, can be accessed from different threads
-        @SuppressWarnings("UnnecessaryFullyQualifiedName")
-        final java.util.Stack<AccessToken> stack = new Stack<>();
-
-        @Override
-        public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
-          if (project == myProject) {
-            stack.push(heavyActivityStarted(activityName != null ? UIUtil.removeMnemonic(activityName) : "file system changes"));
-          }
-        }
-
-        @Override
-        public void batchChangeCompleted(@NotNull Project project) {
-          if (project != myProject) return;
-
-          Stack<AccessToken> tokens = stack;
-          if (!tokens.isEmpty()) { // just in case
-            tokens.pop().finish();
-          }
-        }
-      });
+    myHeavyActivities = new DumbServiceHeavyActivities();
+    new DumbServiceVfsBatchListener(myProject, myHeavyActivities);
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
   }
 
@@ -182,56 +158,15 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
-    try (AccessToken ignore = heavyActivityStarted(activityName)) {
+    try (AccessToken ignore = myHeavyActivities.heavyActivityStarted(activityName)) {
       activity.run();
     }
   }
 
   @Override
   public boolean isSuspendedDumbMode() {
-    ProgressSuspender suspender = myCurrentSuspender;
-    return isDumb() && suspender != null && suspender.isSuspended();
-  }
-
-  private @NotNull AccessToken heavyActivityStarted(@NotNull String activityName) {
-    String reason = IdeBundle.message("dumb.service.indexing.paused.due.to", activityName);
-    synchronized (myRequestedSuspensions) {
-      myRequestedSuspensions.add(reason);
-    }
-
-    suspendCurrentTask(reason);
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        synchronized (myRequestedSuspensions) {
-          myRequestedSuspensions.remove(reason);
-        }
-        resumeAutoSuspendedTask(reason);
-      }
-    };
-  }
-
-  private void suspendCurrentTask(String reason) {
-    ProgressSuspender currentSuspender = myCurrentSuspender;
-    if (currentSuspender != null && !currentSuspender.isSuspended()) {
-      currentSuspender.suspendProcess(reason);
-    }
-  }
-
-  private void resumeAutoSuspendedTask(@NotNull String reason) {
-    ProgressSuspender currentSuspender = myCurrentSuspender;
-    if (currentSuspender != null && currentSuspender.isSuspended() && reason.equals(currentSuspender.getSuspendedText())) {
-      currentSuspender.resumeProcess();
-    }
-  }
-
-  private void suspendIfRequested(ProgressSuspender suspender) {
-    synchronized (myRequestedSuspensions) {
-      String suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
-      if (suspendedReason != null) {
-        suspender.suspendProcess(suspendedReason);
-      }
-    }
+    boolean suspended = myHeavyActivities.isSuspended();
+    return isDumb() && suspended;
   }
 
   @Override
@@ -370,7 +305,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // created.
       // The current suspender, however, might have already got suspended between the point of the last check cancelled call and
       // this point. If it has happened it will be cleaned up when the suspender is closed on the background process thread.
-      myCurrentSuspender = null;
+      myHeavyActivities.resetCurrentSuspender();
       myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(this::updateFinished);
     }
   }
@@ -525,10 +460,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myTrackedEdtActivityService.executeAllQueuedActivities();
       // cancels all scheduled and running tasks
       myDumbTaskQueue.cancelAllTasks();
-
-      if (myCurrentSuspender != null && myCurrentSuspender.isSuspended()) {
-        myCurrentSuspender.resumeProcess();
-      }
+      myHeavyActivities.resumeProgressIfPossible();
     }
   }
 
@@ -677,8 +609,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     // Only one thread can execute this method at the same time at this point.
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused")) {
-      myCurrentSuspender = suspender;
-      suspendIfRequested(suspender);
+      myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
 
       IdeActivity activity = IdeActivity.started(myProject, "indexing");
       final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
@@ -712,7 +643,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         // got suspended after the the last dumb task finished (or even after the last check cancelled call). This case is handled by
         // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
         // previously installed.
-        myCurrentSuspender = null;
+        myHeavyActivities.resetCurrentSuspender();
         activity.finished();
       }
     }
