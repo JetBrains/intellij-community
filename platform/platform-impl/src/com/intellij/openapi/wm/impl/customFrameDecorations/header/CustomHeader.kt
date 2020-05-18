@@ -373,9 +373,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         private val shouldDrawTopBorder: Boolean
             get() {
-                val drawTopBorderActive = myActive && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF()) // omit in Darcula with colorization disabled
-                val drawTopBorderInactive = !myActive && UIUtil.isUnderIntelliJLaF()
-                return drawTopBorderActive || drawTopBorderInactive
+                return false
             }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
@@ -393,8 +391,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         override fun getBorderInsets(c: Component): Insets {
-            val thickness = calculateWindowBorderThicknessInLogicalPx()
-            val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
+            val top = 0
             val bottom = if (isBottomNeeded()) bottomBorderWidthLogicalPx else 0
             return Insets(top, 0, bottom, 0)
         }
