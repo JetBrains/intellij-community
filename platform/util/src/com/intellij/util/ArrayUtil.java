@@ -403,10 +403,8 @@ public final class ArrayUtil {
 
   @Contract(pure=true)
   public static <T> T @NotNull [] remove(final T @NotNull [] src, T element) {
-    final int idx = find(src, element);
-    if (idx == -1) return src;
-
-    return remove(src, idx);
+    int index = ArrayUtilRt.find(src, element);
+    return index == -1 ? src : remove(src, index);
   }
 
   @Contract(pure=true)
@@ -506,6 +504,10 @@ public final class ArrayUtil {
     return true;
   }
 
+  /**
+   * @deprecated Use {@link #equals(Object[], Object[], Comparator)}
+   */
+  @Deprecated
   @Contract(pure=true)
   public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Equality<? super T> comparator) {
     //noinspection ArrayEquality
@@ -652,9 +654,11 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(T @NotNull [] objects, T object, @NotNull Equality<? super T> comparator) {
+  public static <T> int indexOf(T @NotNull [] objects, T object, @NotNull BiPredicate<T, T> comparator) {
     for (int i = 0; i < objects.length; i++) {
-      if (comparator.equals(objects[i], object)) return i;
+      if (comparator.test(objects[i], object)) {
+        return i;
+      }
     }
     return -1;
   }
@@ -726,10 +730,10 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(final T @NotNull [] src, final T obj, @NotNull Equality<? super T> comparator) {
+  public static <T> int lastIndexOf(final T @NotNull [] src, final T obj, @NotNull BiPredicate<? super T, ? super T> predicate) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];
-      if (comparator.equals(obj, o)) {
+      if (predicate.test(obj, o)) {
         return i;
       }
     }
@@ -737,10 +741,10 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull List<? extends T> src, final T obj, @NotNull Equality<? super T> comparator) {
+  public static <T> int lastIndexOf(@NotNull List<? extends T> src, final T obj, @NotNull BiPredicate<? super T, ? super T> comparator) {
     for (int i = src.size() - 1; i >= 0; i--) {
       final T o = src.get(i);
-      if (comparator.equals(obj, o)) {
+      if (comparator.test(obj, o)) {
         return i;
       }
     }
