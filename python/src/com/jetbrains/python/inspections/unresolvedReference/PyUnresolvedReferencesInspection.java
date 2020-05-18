@@ -393,7 +393,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static LocalQuickFix getInstallPackageAction(String packageName, Module module, Sdk sdk) {
       final List<PyRequirement> requirements = Collections.singletonList(PyRequirementsKt.pyRequirement(packageName));
-      final String name = "Install package " + packageName;
+      final String name = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName);
       return new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements);
     }
 
