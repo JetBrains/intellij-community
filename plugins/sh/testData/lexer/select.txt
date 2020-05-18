@@ -1,4 +1,5 @@
-shebang ('#!/bin/bash\n')
+shebang ('#!/bin/bash')
+\n ('\n')
 \n ('\n')
 word ('echo')
 WHITE_SPACE (' ')

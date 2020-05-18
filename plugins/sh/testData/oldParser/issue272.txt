@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/usr/bin/env bash\n')
+  PsiComment(shebang)('#!/usr/bin/env bash')
+  PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
       GENERIC_COMMAND_DIRECTIVE

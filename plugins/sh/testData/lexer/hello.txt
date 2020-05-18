@@ -1,4 +1,5 @@
-shebang ('#!/bin/sh\n')
+shebang ('#!/bin/sh')
+\n ('\n')
 Comment ('# This is a comment!')
 \n ('\n')
 word ('echo')

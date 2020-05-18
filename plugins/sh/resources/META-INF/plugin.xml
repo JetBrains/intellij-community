@@ -2,10 +2,13 @@
   <id>com.jetbrains.sh</id>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>
-  <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
   <name>Shell Script</name>
   <category>Languages</category>
   <resource-bundle>messages.ShBundle</resource-bundle>
+
+  <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
+  <depends optional="true" config-file="sh-copyright.xml">com.intellij.copyright</depends>
+
   <description><![CDATA[
 Adds support for working with shell script files
 
@@ -89,8 +92,7 @@ Adds support for working with shell script files
     <notificationWhitelist groupIds="Shell Script"/>
   </extensions>
   <actions>
-    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction"
-            use-shortcut-of="RunClass"/>
+    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" use-shortcut-of="RunClass"/>
 
     <group id="ShGenerateGroup">
       <action id="ShGenerateForLoop" class="com.intellij.sh.actions.ShGenerateForLoop"/>
