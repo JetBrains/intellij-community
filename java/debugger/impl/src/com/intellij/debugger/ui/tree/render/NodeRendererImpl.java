@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -17,6 +18,8 @@ import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.CompletableFuture;
 
 public abstract class NodeRendererImpl implements NodeRenderer {
   public static final String DEFAULT_NAME = "unnamed";
@@ -110,6 +113,13 @@ public abstract class NodeRendererImpl implements NodeRenderer {
   @Nullable
   public String getIdLabel(Value value, DebugProcess process) {
     return value instanceof ObjectReference && isShowType() ? ValueDescriptorImpl.getIdLabel((ObjectReference)value) : null;
+  }
+
+  @NotNull
+  public CompletableFuture<String> getIdLabelAsync(Value value, DebugProcess process, SuspendContext context) {
+    return value instanceof ObjectReference && isShowType()
+           ? ValueDescriptorImpl.getIdLabelAsync((ObjectReference)value, context)
+           : CompletableFuture.completedFuture(null);
   }
 
   public boolean hasOverhead() {

@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -321,6 +322,21 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
     }
 
+    //set label id
+    if (isShowIdLabel() && renderer instanceof NodeRendererImpl) {
+      CompletableFuture<String> asyncId =
+        ((NodeRendererImpl)renderer).getIdLabelAsync(getValue(), debugProcess, context.getSuspendContext());
+      if (asyncId.isDone()) {
+        myIdLabel = asyncId.join();
+      }
+      else {
+        asyncId.thenAccept(res -> {
+          myIdLabel = asyncId.join();
+          labelListener.labelChanged();
+        });
+      }
+    }
+
     String label;
     if (valueException == null) {
       long start = renderer instanceof NodeRendererImpl && ((NodeRendererImpl)renderer).hasOverhead() ? System.currentTimeMillis() : 0;
@@ -379,16 +395,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public void setValueLabel(@NotNull String label) {
-    label = myFullValue ? label : DebuggerUtilsEx.truncateString(label);
-
-    Value value = myValueReady ? getValue() : null;
-    NodeRendererImpl lastRenderer = (NodeRendererImpl)getLastRenderer();
-    EvaluationContextImpl evalContext = myStoredEvaluationContext;
-    String labelId = myValueReady && evalContext != null && lastRenderer != null &&
-                     !evalContext.getSuspendContext().isResumed() ?
-                     lastRenderer.getIdLabel(value, evalContext.getDebugProcess()) : null;
-    myValueText = label;
-    myIdLabel = isShowIdLabel() ? labelId : null;
+    myValueText = myFullValue ? label : DebuggerUtilsEx.truncateString(label);
   }
 
   @Override
@@ -537,9 +544,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public abstract PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   public static String getIdLabel(ObjectReference objRef) {
+    return getIdLabelAsync(objRef, null).join();
+  }
+
+  @NotNull
+  public static CompletableFuture<String> getIdLabelAsync(ObjectReference objRef, SuspendContext context) {
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
     if (objRef instanceof StringReference && !classRenderer.SHOW_STRINGS_TYPE) {
-      return null;
+      return CompletableFuture.completedFuture(null);
     }
     StringBuilder buf = new StringBuilder();
     final boolean showConcreteType =
@@ -553,7 +565,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       if (classRenderer.SHOW_OBJECT_ID) {
         buf.append('@');
         if(ApplicationManager.getApplication().isUnitTestMode()) {
-          //noinspection HardCodedStringLiteral
           buf.append("uniqueID");
         }
         else {
@@ -566,11 +577,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (objRef instanceof ArrayReference) {
       int idx = buf.indexOf("[");
       if(idx >= 0) {
-        buf.insert(idx + 1, ((ArrayReference)objRef).length());
+        return DebuggerUtilsAsync.length((ArrayReference)objRef, context).thenApply(length -> buf.insert(idx + 1, length).toString());
       }
     }
 
-    return buf.toString();
+    return CompletableFuture.completedFuture(buf.toString());
   }
 
   private static boolean isEnumConstant(final ObjectReference objRef) {
