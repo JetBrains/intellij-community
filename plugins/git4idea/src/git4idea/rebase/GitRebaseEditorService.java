@@ -10,6 +10,8 @@ import git4idea.commands.GitHandler;
 import git4idea.config.GitExecutable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
+import org.jetbrains.git4idea.editor.GitRebaseEditorApp;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
@@ -53,8 +55,8 @@ public class GitRebaseEditorService implements Disposable {
 
   private void addInternalHandler() {
     XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
-    if (!xmlRpcServer.hasHandler(GitRebaseEditorMain.HANDLER_NAME)) {
-      xmlRpcServer.addHandler(GitRebaseEditorMain.HANDLER_NAME, new InternalHandler());
+    if (!xmlRpcServer.hasHandler(GitRebaseEditorXmlRpcHandler.HANDLER_NAME)) {
+      xmlRpcServer.addHandler(GitRebaseEditorXmlRpcHandler.HANDLER_NAME, new InternalHandlerRebase());
     }
   }
 
@@ -62,7 +64,7 @@ public class GitRebaseEditorService implements Disposable {
   public void dispose() {
     XmlRpcServer xmlRpcServer = ApplicationManager.getApplication().getServiceIfCreated(XmlRpcServer.class);
     if (xmlRpcServer != null) {
-      xmlRpcServer.removeHandler(GitRebaseEditorMain.HANDLER_NAME);
+      xmlRpcServer.removeHandler(GitRebaseEditorXmlRpcHandler.HANDLER_NAME);
     }
   }
 
@@ -74,7 +76,7 @@ public class GitRebaseEditorService implements Disposable {
   @NotNull
   public synchronized String getEditorCommand(@NotNull GitExecutable executable) {
     synchronized (myScriptLock) {
-      ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorMain.class);
+      ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorApp.class);
       generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().waitForStart().getPort()));
       return generator.commandLine(executable);
     }
@@ -128,7 +130,7 @@ public class GitRebaseEditorService implements Disposable {
   /**
    * The internal xml rcp handler
    */
-  public class InternalHandler {
+  public class InternalHandlerRebase implements GitRebaseEditorXmlRpcHandler {
     /**
      * Edit commits for the rebase operation
      *
@@ -136,8 +138,9 @@ public class GitRebaseEditorService implements Disposable {
      * @param path      the path to edit
      * @return exit code
      */
+    @Override
     @SuppressWarnings({"UnusedDeclaration"})
-    public int editCommits(@NotNull String handlerNo, String path, String workingDir) {
+    public int editCommits(@NotNull String handlerNo, @NotNull String path, @NotNull String workingDir) {
       Pair<GitRebaseEditorHandler, GitExecutable> pair = getHandler(UUID.fromString(handlerNo));
       GitExecutable executable = pair.second;
       GitRebaseEditorHandler editorHandler = pair.first;

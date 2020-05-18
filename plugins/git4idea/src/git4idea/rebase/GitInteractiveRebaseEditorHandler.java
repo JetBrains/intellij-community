@@ -35,8 +35,8 @@ import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static git4idea.DialogManager.showOkCancelDialog;
-import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
 import static git4idea.rebase.interactive.GitRebaseTodoModelConverterKt.convertToEntries;
+import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
 
 /**
  * The handler for rebase editor request. The handler shows the {@link GitInteractiveRebaseDialog}

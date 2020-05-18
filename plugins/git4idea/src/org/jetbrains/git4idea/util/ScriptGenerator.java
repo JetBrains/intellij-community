@@ -9,10 +9,10 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.config.GitExecutable;
-import git4idea.rebase.GitRebaseEditorMain;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
 import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
 import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 
@@ -128,7 +128,7 @@ public class ScriptGenerator {
         GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV,
         GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV,
         GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV,
-        GitRebaseEditorMain.IDEA_REBASE_HANDER_NO);
+        GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV);
       cmd.append("export WSLENV=");
       cmd.append(StringUtil.join(envs, it -> it + "/w", ":"));
       cmd.append("\n");

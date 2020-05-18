@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.rebase;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.git4idea.editor;
 
 import org.apache.xmlrpc.XmlRpcClientLite;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.GitExternalApp;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Vector;
+
+import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.*;
 
 /**
  * The rebase editor application, this editor is invoked by the git.
@@ -16,24 +16,11 @@ import java.util.Vector;
  * registered on the host passed as the first parameter. The application
  * exits with exit code returned from the service.
  */
-public class GitRebaseEditorMain implements GitExternalApp {
-  /**
-   * The environment variable for handler no
-   */
-  @NonNls @NotNull public static final String IDEA_REBASE_HANDER_NO = "IDEA_REBASE_HANDER_NO";
-  /**
-   * The exit code used to indicate that editing was canceled or has failed in some other way.
-   */
-  public final static int ERROR_EXIT_CODE = 2;
-  /**
-   * Rebase editor handler name
-   */
-  @NonNls static final String HANDLER_NAME = "Git4ideaRebaseEditorHandler";
-
+public class GitRebaseEditorApp implements GitExternalApp {
   /**
    * A private constructor for static class
    */
-  private GitRebaseEditorMain() {
+  private GitRebaseEditorApp() {
   }
 
   /**
@@ -57,7 +44,7 @@ public class GitRebaseEditorMain implements GitExternalApp {
       System.exit(ERROR_EXIT_CODE);
       return;
     }
-    String handlerId = System.getenv(IDEA_REBASE_HANDER_NO);
+    String handlerId = System.getenv(IJ_EDITOR_HANDLER_ENV);
     if (handlerId == null) {
       System.err.println("Handler no is not specified");
       System.exit(ERROR_EXIT_CODE);
