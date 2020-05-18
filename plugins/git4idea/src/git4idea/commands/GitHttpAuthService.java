@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.http.GitAskPassApp;
@@ -72,18 +73,11 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
     }
   }
 
-  private static String parseUrl(@NotNull String urlArg) {
+  private static String parseUrl(@NotNull String url) {
     // un-quote and remove the trailing colon
-    String url = urlArg;
-    if (url.startsWith("'")) {
-      url = url.substring(1);
-    }
-    if (url.endsWith(":")) {
-      url = url.substring(0, url.length() - 1);
-    }
-    if (url.endsWith("'")) {
-      url = url.substring(0, url.length() - 1);
-    }
+    url = StringUtil.trimStart(url, "'");
+    url = StringUtil.trimEnd(url, ":");
+    url = StringUtil.trimEnd(url, "'");
     return url;
   }
 
