@@ -17,9 +17,9 @@ class GitIndexVirtualFileCache(private val project: Project) : Disposable {
     return cache.get(Key(root, filePath))
   }
 
-  fun filesUnder(roots: Collection<VirtualFile>): List<GitIndexVirtualFile> {
+  fun filesMatching(function: (GitIndexVirtualFile) -> Boolean): List<GitIndexVirtualFile> {
     val result = mutableListOf<GitIndexVirtualFile>()
-    cache.asMap().forEach { (_, file) -> if (roots.contains(file.root)) result.add(file) }
+    cache.asMap().forEach { (_, file) -> if (function(file)) result.add(file) }
     return result
   }
 

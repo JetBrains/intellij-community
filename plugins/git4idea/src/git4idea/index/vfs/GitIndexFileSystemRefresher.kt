@@ -3,11 +3,13 @@ package git4idea.index.vfs
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -20,6 +22,8 @@ import git4idea.repo.GitUntrackedFilesHolder
 import org.jetbrains.annotations.CalledWithWriteLock
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
+  private val cache get() = project.serviceIfCreated<GitIndexVirtualFileCache>()
+
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
@@ -29,12 +33,16 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
         }.map { it.root }
         if (roots.isNotEmpty()) {
           LOG.debug("Scheduling refresh for ${roots.joinToString { it.name }}")
-          val filesToRefresh = project.serviceIfCreated<GitIndexVirtualFileCache>()?.filesUnder(roots)
-          if (filesToRefresh == null || filesToRefresh.isEmpty()) return
-          refresh(filesToRefresh)
+          refresh { roots.contains(it.root) }
         }
       }
     })
+  }
+
+  fun refresh(condition: (GitIndexVirtualFile) -> Boolean) {
+    val filesToRefresh = cache?.filesMatching(condition)
+    if (filesToRefresh == null || filesToRefresh.isEmpty()) return
+    refresh(filesToRefresh)
   }
 
   internal fun refresh(filesToRefresh: List<GitIndexVirtualFile>, async: Boolean = true, postRunnable: Runnable? = null) {
@@ -78,6 +86,9 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
   companion object {
     private val LOG = Logger.getInstance(GitIndexFileSystemRefresher::class.java)
+
+    @JvmStatic
+    fun getInstance(project: Project) = project.service<GitIndexFileSystemRefresher>()
   }
 
   private class RefreshSession(private val filesToRefresh: List<GitIndexVirtualFile>, private val postRunnable: Runnable?) {

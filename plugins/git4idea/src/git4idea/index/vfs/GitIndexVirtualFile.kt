@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference
 class GitIndexVirtualFile(private val project: Project,
                           val root: VirtualFile,
                           val filePath: FilePath) : VirtualFile() {
-  private val refresher: GitIndexFileSystemRefresher get() = project.service()
+  private val refresher: GitIndexFileSystemRefresher get() = GitIndexFileSystemRefresher.getInstance(project)
 
   private val cachedData: AtomicReference<CachedData?> = AtomicReference()
 

@@ -22,7 +22,7 @@ import git4idea.i18n.GitBundle
 import git4idea.index.ui.GIT_FILE_STATUS_NODES_STREAM
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.NodeKind
-import git4idea.repo.GitRepositoryManager
+import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.util.GitFileUtils
 import java.util.function.Supplier
 import kotlin.streams.toList
@@ -58,7 +58,7 @@ abstract class GitFileStatusNodeAction(dynamicText: Supplier<String>) : DumbAwar
       try {
         processPaths(project, vcsRoot.path, paths)
         VcsFileUtil.markFilesDirty(project, paths)
-        GitRepositoryManager.getInstance(project).getRepositoryForRoot(vcsRoot.path)?.repositoryFiles?.refreshIndexFile()
+        GitIndexFileSystemRefresher.getInstance(project).refresh { paths.contains(it.filePath) }
       }
       catch (ex: VcsException) {
         exceptions.add(ex)
