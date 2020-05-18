@@ -19,27 +19,28 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
 
   override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
     val selectedCommitDetails = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selectedCommitList)
-    SquashNewCommitMessageDialog(commitEditingData, selectedCommitDetails).show()
+    val dialog = GitNewCommitMessageActionDialog(
+      commitEditingData,
+      selectedCommitDetails.joinToString("\n".repeat(3)) { it.fullMessage },
+      GitBundle.getString("rebase.log.squash.new.message.dialog.title"),
+      GitBundle.getString("rebase.log.squash.new.message.dialog.label")
+    )
+    dialog.show { newMessage ->
+      squashInBackground(commitEditingData, selectedCommitDetails, newMessage)
+    }
+  }
+
+  private fun squashInBackground(
+    commitEditingData: MultipleCommitEditingData,
+    selectedCommitsDetails: List<VcsCommitMetadata>,
+    newMessage: String
+  ) {
+    object : Task.Backgroundable(commitEditingData.project, GitBundle.getString("rebase.log.squash.progress.indicator.title")) {
+      override fun run(indicator: ProgressIndicator) {
+        GitSquashOperation(commitEditingData.repository).execute(selectedCommitsDetails, newMessage)
+      }
+    }.queue()
   }
 
   override fun getFailureTitle() = GitBundle.getString("rebase.log.squash.action.failure.title")
-
-  private class SquashNewCommitMessageDialog(
-    commitEditingData: MultipleCommitEditingData,
-    val selectedCommitsDetails: List<VcsCommitMetadata>
-  ) : GitNewCommitMessageActionDialog<MultipleCommitEditingData>(
-    commitEditingData,
-    selectedCommitsDetails.joinToString("\n".repeat(3)) { it.fullMessage },
-    GitBundle.getString("rebase.log.squash.new.message.dialog.title"),
-    GitBundle.getString("rebase.log.squash.new.message.dialog.label")
-  ) {
-
-    override fun startOperation(commitEditingData: MultipleCommitEditingData, newMessage: String) {
-      object : Task.Backgroundable(commitEditingData.project, GitBundle.getString("rebase.log.squash.progress.indicator.title")) {
-        override fun run(indicator: ProgressIndicator) {
-          GitSquashOperation(commitEditingData.repository).execute(selectedCommitsDetails, newMessage)
-        }
-      }.queue()
-    }
-  }
 }

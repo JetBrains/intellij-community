@@ -19,8 +19,20 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
 
   override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
     val details = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, listOf(commitEditingData.selectedCommit))
-
-    RewordNewCommitMessageActionDialog(commitEditingData, details.first()).show()
+    val commit = details.first()
+    val dialog = GitNewCommitMessageActionDialog(
+      commitEditingData,
+      commit.fullMessage,
+      GitBundle.getString("rebase.log.reword.dialog.title"),
+      GitBundle.message(
+        "rebase.log.reword.dialog.description.label",
+        commit.id.toShortString(),
+        getShortPresentation(commit.author)
+      )
+    )
+    dialog.show { newMessage ->
+      rewordInBackground(commitEditingData.project, commit, commitEditingData.repository, newMessage)
+    }
   }
 
   override fun getFailureTitle(): String = GitBundle.getString("rebase.log.reword.action.failure.title")
@@ -38,24 +50,5 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
       return null
     }
     return super.getProhibitedStateMessage(commitEditingData, operation)
-  }
-
-  private inner class RewordNewCommitMessageActionDialog(
-    commitEditingData: SingleCommitEditingData,
-    private val commit: VcsCommitMetadata
-  ) : GitNewCommitMessageActionDialog<SingleCommitEditingData>(
-    commitEditingData,
-    commit.fullMessage,
-    GitBundle.getString("rebase.log.reword.dialog.title"),
-    GitBundle.message(
-      "rebase.log.reword.dialog.description.label",
-      commit.id.toShortString(),
-      getShortPresentation(commit.author)
-    )
-  ) {
-
-    override fun startOperation(commitEditingData: SingleCommitEditingData, newMessage: String) {
-      rewordInBackground(commitEditingData.project, commit, commitEditingData.repository, newMessage)
-    }
   }
 }

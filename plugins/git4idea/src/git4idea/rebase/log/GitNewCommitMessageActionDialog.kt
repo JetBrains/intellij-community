@@ -13,14 +13,15 @@ import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 
-internal abstract class GitNewCommitMessageActionDialog<T : GitMultipleCommitEditingActionBase.MultipleCommitEditingData>(
+internal class GitNewCommitMessageActionDialog<T : GitMultipleCommitEditingActionBase.MultipleCommitEditingData>(
   private val commitEditingData: T,
   private val originMessage: String,
-  title: @Nls String,
-  private val dialogLabel: @Nls String
+  @Nls title: String,
+  @Nls private val dialogLabel: String
 ) : DialogWrapper(commitEditingData.project, true) {
   private val originalHEAD = commitEditingData.repository.info.currentRevision
   private val commitEditor = createCommitEditor()
+  private var whenOk: (String) -> Unit = {}
 
   init {
     Disposer.register(disposable, commitEditor)
@@ -30,13 +31,12 @@ internal abstract class GitNewCommitMessageActionDialog<T : GitMultipleCommitEdi
     this.title = title
   }
 
-  abstract fun startOperation(commitEditingData: T, newMessage: String)
-
-  final override fun init() {
-    super.init()
+  fun show(whenOk: (newMessage: String) -> Unit) {
+    this.whenOk = whenOk
+    show()
   }
 
-  protected open fun validate(commitEditingData: T, originalHEAD: String?): ValidationInfo? {
+  private fun validate(commitEditingData: T, originalHEAD: String?): ValidationInfo? {
     val logData = commitEditingData.logData
     val repository = commitEditingData.repository
     val commits = commitEditingData.selectedCommitList
@@ -86,6 +86,6 @@ internal abstract class GitNewCommitMessageActionDialog<T : GitMultipleCommitEdi
   override fun doOKAction() {
     super.doOKAction()
 
-    startOperation(commitEditingData, commitEditor.comment)
+    whenOk(commitEditor.comment)
   }
 }
