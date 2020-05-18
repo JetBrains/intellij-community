@@ -1,23 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api
 
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 
 internal class VirtualFileNameStore {
   private val generator = IntIdGenerator()
-  private val name2IdStore = THashMap<String, IdPerCount>()
-  private val id2NameStore = THashMap<Int, String>()
+  private val name2IdStore = Object2ObjectOpenHashMap<String, IdPerCount>()
+  private val id2NameStore = Int2ObjectOpenHashMap<String>()
 
   fun generateIdForName(name: String): Int {
     val idPerCount = name2IdStore[name]
     if (idPerCount != null) {
       idPerCount.usageCount++
       return idPerCount.id
-    } else {
+    }
+    else {
       val id = generator.generateId()
+
       name2IdStore[name] = IdPerCount(id, 1)
-      id2NameStore[id] = name
+      // Don't convert to links[key] = ... because it *may* became autoboxing
+      @Suppress("ReplacePutWithAssignment")
+      id2NameStore.put(id, name)
       return id
     }
   }
@@ -27,12 +32,13 @@ internal class VirtualFileNameStore {
     if (idPerCount.usageCount == 1L) {
       name2IdStore.remove(name)
       id2NameStore.remove(idPerCount.id)
-    } else {
+    }
+    else {
       idPerCount.usageCount--
     }
   }
 
-  fun getNameForId(id: Int): String? = id2NameStore[id]
+  fun getNameForId(id: Int): String? = id2NameStore.get(id)
 
   fun getIdForName(name: String) = name2IdStore[name]?.id
 

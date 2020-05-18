@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage.containers
 
-import gnu.trove.TIntIntHashMap
+import it.unimi.dsi.fastutil.ints.Int2IntMap
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
+import java.util.function.IntConsumer
 
 /**
  * @author Alex Plate
@@ -17,21 +19,21 @@ import org.jetbrains.annotations.TestOnly
 
 sealed class ImmutablePositiveIntIntMultiMap(
   override var values: IntArray,
-  override val links: TIntIntHashMap,
+  override val links: Int2IntMap,
   override val distinctValues: Boolean
 ) : PositiveIntIntMultiMap() {
 
-  class BySet internal constructor(values: IntArray, links: TIntIntHashMap) : ImmutablePositiveIntIntMultiMap(values, links, true) {
+  class BySet internal constructor(values: IntArray, links: Int2IntMap) : ImmutablePositiveIntIntMultiMap(values, links, true) {
     override fun toMutable(): MutablePositiveIntIntMultiMap.BySet = MutablePositiveIntIntMultiMap.BySet(values, links)
   }
 
-  class ByList internal constructor(values: IntArray, links: TIntIntHashMap) : ImmutablePositiveIntIntMultiMap(values, links, false) {
+  class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutablePositiveIntIntMultiMap(values, links, false) {
     override fun toMutable(): MutablePositiveIntIntMultiMap.ByList = MutablePositiveIntIntMultiMap.ByList(values, links)
   }
 
   override operator fun get(key: Int): IntSequence {
-    if (key !in links) return EmptyIntSequence
-    val idx = links[key]
+    if (!links.containsKey(key)) return EmptyIntSequence
+    val idx = links.get(key)
     if (idx >= 0) return SingleResultIntSequence(idx)
     return RoMultiResultIntSequence(values, idx.unpack())
   }
@@ -65,14 +67,15 @@ sealed class ImmutablePositiveIntIntMultiMap(
 
 sealed class MutablePositiveIntIntMultiMap(
   override var values: IntArray,
-  override var links: TIntIntHashMap,
+  override var links: Int2IntMap,
   override val distinctValues: Boolean,
   protected var freezed: Boolean
 ) : PositiveIntIntMultiMap() {
 
-  class BySet private constructor(values: IntArray, links: TIntIntHashMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links, true, freezed) {
-    constructor() : this(IntArray(0), TIntIntHashMap(), false)
-    internal constructor(values: IntArray, links: TIntIntHashMap) : this(values, links, true)
+  class BySet private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links,
+                                                                                                                         true, freezed) {
+    constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
+    internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
 
     override fun toImmutable(): ImmutablePositiveIntIntMultiMap.BySet {
       freezed = true
@@ -80,9 +83,10 @@ sealed class MutablePositiveIntIntMultiMap(
     }
   }
 
-  class ByList private constructor(values: IntArray, links: TIntIntHashMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links, false, freezed) {
-    constructor() : this(IntArray(0), TIntIntHashMap(), false)
-    internal constructor(values: IntArray, links: TIntIntHashMap) : this(values, links, true)
+  class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links,
+                                                                                                                          false, freezed) {
+    constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
+    internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
 
     override fun toImmutable(): ImmutablePositiveIntIntMultiMap.ByList {
       freezed = true
@@ -91,9 +95,9 @@ sealed class MutablePositiveIntIntMultiMap(
   }
 
   override fun get(key: Int): IntSequence {
-    if (key !in links) return EmptyIntSequence
+    if (!links.containsKey(key)) return EmptyIntSequence
 
-    var idx = links[key]
+    var idx = links.get(key)
     if (idx >= 0) return SingleResultIntSequence(idx)
 
     // idx is a link to  values
@@ -108,8 +112,8 @@ sealed class MutablePositiveIntIntMultiMap(
   fun putAll(key: Int, newValues: IntArray): Boolean {
     if (newValues.isEmpty()) return false
     startWrite()
-    return if (key in links) {
-      var idx = links[key]
+    return if (links.containsKey(key)) {
+      var idx = links.get(key)
       if (idx < 0) {
         // Adding new values to existing that are already stored in the [values] array
         idx = idx.unpack()
@@ -154,6 +158,8 @@ sealed class MutablePositiveIntIntMultiMap(
 
         this.values = newArray
 
+        // Don't convert to links[key] = ... because it *may* became autoboxing
+        @Suppress("ReplacePutWithAssignment")
         links.put(key, arraySize.pack())
 
         true // Returned value
@@ -173,12 +179,17 @@ sealed class MutablePositiveIntIntMultiMap(
         newArray[arraySize + newValuesSize - 1] = newValues.last().pack()
         this.values = newArray
 
+        // Don't convert to links[key] = ... because it *may* became autoboxing
+        @Suppress("ReplacePutWithAssignment")
         links.put(key, arraySize.pack())
 
         true // Returned value
       }
       else {
         // Great! Only one value to store. No need to allocate memory in the [values]
+
+        // Don't convert to links[key] = ... because it *may* became autoboxing
+        @Suppress("ReplacePutWithAssignment")
         links.put(key, newValues.single())
 
         true // Returned value
@@ -187,10 +198,10 @@ sealed class MutablePositiveIntIntMultiMap(
   }
 
   fun remove(key: Int) {
-    if (key !in links) return
+    if (!links.containsKey(key)) return
     startWrite()
 
-    var idx = links[key]
+    var idx = links.get(key)
 
     if (idx >= 0) {
       // Only one value in the store
@@ -216,9 +227,9 @@ sealed class MutablePositiveIntIntMultiMap(
   }
 
   fun remove(key: Int, value: Int): Boolean {
-    if (key !in links) return false
+    if (!links.containsKey(key)) return false
     startWrite()
-    var idx = links[key]
+    var idx = links.get(key)
 
     if (idx >= 0) {
       if (value == idx) {
@@ -284,6 +295,8 @@ sealed class MutablePositiveIntIntMultiMap(
       values.copyInto(newArray, valuesStartIndex, valuesStartIndex + 2)
       values = newArray
 
+      // Don't convert to links[key] = ... because it *may* became autoboxing
+      @Suppress("ReplacePutWithAssignment")
       links.put(key, remainedValue)
 
       rightShiftLinks(idx, -2)
@@ -303,24 +316,27 @@ sealed class MutablePositiveIntIntMultiMap(
   private fun startWrite() {
     if (!freezed) return
     values = values.clone()
-    links = links.clone() as TIntIntHashMap
+    links = Int2IntOpenHashMap(links)
     freezed = false
   }
 
   private fun startWriteDoNotCopyValues() {
     if (!freezed) return
     values = values.clone()
-    links = links.clone() as TIntIntHashMap
+    links = Int2IntOpenHashMap(links)
     freezed = false
   }
 
   private fun rightShiftLinks(idx: Int, shiftTo: Int) {
-    links.keys().forEach { keyToUpdate ->
-      val valueToUpdate = links[keyToUpdate]
-      if (valueToUpdate >= 0) return@forEach
+    links.keys.forEach(IntConsumer { keyToUpdate ->
+      val valueToUpdate = links.get(keyToUpdate)
+      if (valueToUpdate >= 0) return@IntConsumer
       val unpackedValue = valueToUpdate.unpack()
+
+      // Don't convert to links[key] = ... because it *may* became autoboxing
+      @Suppress("ReplacePutWithAssignment")
       if (unpackedValue > idx) links.put(keyToUpdate, (unpackedValue + shiftTo).pack())
-    }
+    })
   }
 
   fun clear() {
@@ -339,15 +355,15 @@ sealed class MutablePositiveIntIntMultiMap(
 sealed class PositiveIntIntMultiMap {
 
   protected abstract var values: IntArray
-  protected abstract val links: TIntIntHashMap
+  protected abstract val links: Int2IntMap
   protected abstract val distinctValues: Boolean
 
   abstract operator fun get(key: Int): IntSequence
 
   fun get(key: Int, action: (Int) -> Unit) {
-    if (key !in links) return
+    if (!links.containsKey(key)) return
 
-    var idx = links[key]
+    var idx = links.get(key)
     if (idx >= 0) {
       // It's value
       action(idx)
@@ -370,9 +386,9 @@ sealed class PositiveIntIntMultiMap {
 
   /** This method works o(n) */
   protected fun size(key: Int): Int {
-    if (key !in links) return 0
+    if (!links.containsKey(key)) return 0
 
-    var idx = links[key]
+    var idx = links.get(key)
     if (idx >= 0) return 1
 
     idx = idx.unpack()
@@ -385,9 +401,9 @@ sealed class PositiveIntIntMultiMap {
     return res + 1
   }
 
-  operator fun contains(key: Int): Boolean = key in links
+  operator fun contains(key: Int): Boolean = links.containsKey(key)
 
-  fun isEmpty(): Boolean = links.isEmpty
+  fun isEmpty(): Boolean = links.isEmpty()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

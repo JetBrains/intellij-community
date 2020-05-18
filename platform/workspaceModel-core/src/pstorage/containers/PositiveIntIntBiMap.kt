@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage.containers
 
-import gnu.trove.TIntIntHashMap
+import it.unimi.dsi.fastutil.ints.Int2IntMap
+import it.unimi.dsi.fastutil.ints.Int2IntMaps
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import java.util.function.Consumer
 
 class ImmutablePositiveIntIntBiMap(
-  override val key2Value: TIntIntHashMap,
+  override val key2Value: Int2IntMap,
   override val value2Keys: ImmutablePositiveIntIntMultiMap.ByList
 ) : PositiveIntIntBiMap() {
 
@@ -14,22 +17,22 @@ class ImmutablePositiveIntIntBiMap(
 }
 
 class MutablePositiveIntIntBiMap private constructor(
-  override var key2Value: TIntIntHashMap,
+  override var key2Value: Int2IntMap,
   override var value2Keys: MutablePositiveIntIntMultiMap.ByList,
   private var freezed: Boolean
 ) : PositiveIntIntBiMap() {
 
-  constructor() : this(TIntIntHashMap(), MutablePositiveIntIntMultiMap.ByList(), false)
-  constructor(key2Value: TIntIntHashMap, value2Keys: MutablePositiveIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
+  constructor() : this(Int2IntOpenHashMap(), MutablePositiveIntIntMultiMap.ByList(), false)
+  constructor(key2Value: Int2IntMap, value2Keys: MutablePositiveIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
 
   fun putAll(keys: IntArray, value: Int) {
     startWrite()
     value2Keys.putAll(value, keys)
-    keys.forEach { key2Value.put(it, value) }
+    keys.forEach { key2Value[it] = value }
   }
 
   fun removeKey(key: Int) {
-    if (key !in key2Value) return
+    if (!key2Value.containsKey(key)) return
     startWrite()
     val removedValue = key2Value.remove(key)
     value2Keys.remove(removedValue, key)
@@ -37,7 +40,7 @@ class MutablePositiveIntIntBiMap private constructor(
 
   fun removeValue(value: Int) {
     startWrite()
-    value2Keys[value].forEach {
+    value2Keys.get(value).forEach {
       key2Value.remove(it)
     }
     value2Keys.remove(value)
@@ -57,7 +60,7 @@ class MutablePositiveIntIntBiMap private constructor(
 
   private fun startWrite() {
     if (!freezed) return
-    key2Value = key2Value.clone() as TIntIntHashMap
+    key2Value = Int2IntOpenHashMap(key2Value)
     freezed = false
   }
 
@@ -69,22 +72,22 @@ class MutablePositiveIntIntBiMap private constructor(
 
 sealed class PositiveIntIntBiMap {
 
-  protected abstract val key2Value: TIntIntHashMap
+  protected abstract val key2Value: Int2IntMap
   protected abstract val value2Keys: PositiveIntIntMultiMap
 
   inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
-    key2Value.forEachEntry { key, value -> action(key, value); true }
+    Int2IntMaps.fastForEach(`access$key2Value`, Consumer { action(it.intKey, it.intValue) })
   }
 
-  fun containsKey(key: Int) = key in key2Value
+  fun containsKey(key: Int) = key2Value.containsKey(key)
 
   fun containsValue(value: Int) = value in value2Keys
 
-  fun get(key: Int) = key2Value[key]
+  fun get(key: Int) = key2Value.get(key)
 
   fun getKeys(value: Int): PositiveIntIntMultiMap.IntSequence = value2Keys[value]
 
-  fun isEmpty(): Boolean = key2Value.isEmpty && value2Keys.isEmpty()
+  fun isEmpty(): Boolean = key2Value.isEmpty() && value2Keys.isEmpty()
 
   abstract fun toImmutable(): ImmutablePositiveIntIntBiMap
 
@@ -105,4 +108,8 @@ sealed class PositiveIntIntBiMap {
     result = 31 * result + value2Keys.hashCode()
     return result
   }
+
+  @PublishedApi
+  internal val `access$key2Value`: Int2IntMap
+    get() = key2Value
 }

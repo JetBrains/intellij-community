@@ -2,7 +2,6 @@
 package com.intellij.workspace.jps
 
 import com.intellij.application.options.ReplacePathToMacroMap
-import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
@@ -19,7 +18,7 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.JpsProjectConfigLocation
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -27,7 +26,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Future
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                                 fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
@@ -40,7 +38,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
   private val internalSourceToExternal = HashMap<JpsFileEntitySource, JpsFileEntitySource>()
   internal val fileSerializersByUrl = MultiMap.create<String, JpsFileEntitiesSerializer<*>>()
-  internal val fileIdToFileName = TIntObjectHashMap<String>()
+  internal val fileIdToFileName = Int2ObjectOpenHashMap<String>()
 
   init {
     for (factory in directorySerializersFactories) {
@@ -64,6 +62,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
   private fun createFileInDirectorySource(directoryUrl: VirtualFileUrl, fileName: String): JpsFileEntitySource.FileInDirectory {
     val source = JpsFileEntitySource.FileInDirectory(directoryUrl, configLocation)
+    // Don't convert to links[key] = ... because it *may* became autoboxing
+    @Suppress("ReplacePutWithAssignment")
     fileIdToFileName.put(source.fileNameId, fileName)
     return source
   }
@@ -175,7 +175,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   private fun getActualFileUrl(source: JpsFileEntitySource) = when (source) {
     is JpsFileEntitySource.ExactFile -> source.file.url
     is JpsFileEntitySource.FileInDirectory -> {
-      val fileName = fileIdToFileName[source.fileNameId]
+      val fileName = fileIdToFileName.get(source.fileNameId)
       if (fileName != null) source.directory.url + "/" + fileName else null
     }
   }
@@ -260,8 +260,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val actualFileSource = getActualFileSource(source)
       if (actualFileSource is JpsFileEntitySource.FileInDirectory) {
         val fileNameByEntity = calculateFileNameForEntity(actualFileSource, source, entities)
-        val oldFileName = fileIdToFileName[actualFileSource.fileNameId]
+        val oldFileName = fileIdToFileName.get(actualFileSource.fileNameId)
         if (oldFileName != fileNameByEntity) {
+          // Don't convert to links[key] = ... because it *may* became autoboxing
+          @Suppress("ReplacePutWithAssignment")
           fileIdToFileName.put(actualFileSource.fileNameId, fileNameByEntity)
           if (oldFileName != null) {
             processObsoleteSource("${actualFileSource.directory.url}/$oldFileName", true)
@@ -370,7 +372,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val entityMap = mapOf<Class<out TypedEntity>, List<TypedEntity>>(factory.entityClass to listOf(it))
         val currentSource = it.entitySource as? JpsFileEntitySource.FileInDirectory
         val source =
-          if (currentSource != null && fileIdToFileName[currentSource.fileNameId] == fileName) currentSource
+          if (currentSource != null && fileIdToFileName.get(currentSource.fileNameId) == fileName) currentSource
           else createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), fileName)
         Pair(factory.createSerializer("${factory.directoryUrl}/$fileName", source, virtualFileManager), entityMap)
       }

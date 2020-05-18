@@ -2,7 +2,8 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.TypedEntity
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 
 internal class ImmutableEntityFamily<E : TypedEntity>(
   override val entities: ArrayList<PEntityData<E>?>,
@@ -37,16 +38,16 @@ internal class MutableEntityFamily<E : TypedEntity>(
   // This set contains empty slots at the moment of MutableEntityFamily creation
   //   New empty slots MUST NOT be added this this set.
   // TODO Fill the reason
-  private val availableSlots: TIntHashSet = TIntHashSet().also {
+  private val availableSlots: IntSet = IntOpenHashSet().also {
     entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) }
   }
 
-  private var amountOfGapsInEntities = availableSlots.size()
+  private var amountOfGapsInEntities = availableSlots.size
 
-  private val copiedToModify: TIntHashSet = TIntHashSet()
+  private val copiedToModify: IntSet = IntOpenHashSet()
 
   fun remove(id: Int) {
-    if (id in availableSlots) error("id $id is already removed")
+    if (availableSlots.contains(id)) error("id $id is already removed")
     startWrite()
 
     copiedToModify.remove(id)
@@ -57,7 +58,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
   fun add(other: PEntityData<E>) {
     startWrite()
 
-    if (availableSlots.isEmpty) {
+    if (availableSlots.isEmpty()) {
       other.id = entities.size
       entities.add(other)
     }
@@ -72,7 +73,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
   fun replaceById(entity: PEntityData<E>) {
     val id = entity.id
-    if (id in availableSlots) error("Nothing to replace")
+    if (availableSlots.contains(id)) error("Nothing to replace")
     startWrite()
 
     entities[id] = entity
@@ -81,7 +82,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
   fun getEntityDataForModification(id: PId<E>): PEntityData<E> {
     val entity = entities[id.arrayId] ?: error("Nothing to modify")
-    if (id.arrayId in copiedToModify) return entity
+    if (copiedToModify.contains(id.arrayId)) return entity
     startWrite()
 
     val clonedEntity = entity.clone()
@@ -105,10 +106,10 @@ internal class MutableEntityFamily<E : TypedEntity>(
     freezed = false
   }
 
-  private fun TIntHashSet.pop(): Int {
+  private fun IntSet.pop(): Int {
     val iterator = this.iterator()
     if (!iterator.hasNext()) error("Set is empty")
-    val res = iterator.next()
+    val res = iterator.nextInt()
     iterator.remove()
     return res
   }

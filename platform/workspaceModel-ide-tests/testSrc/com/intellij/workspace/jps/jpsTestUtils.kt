@@ -201,9 +201,9 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
   assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.entrySet().filterNot { it.value.all { isSerializerWithoutEntities(it)} }.map { it.key }.sorted())
 
   val fileIdFromEntities = allSources.keys.filterIsInstance(JpsFileEntitySource.FileInDirectory::class.java).mapTo(HashSet()) { it.fileNameId }
-  val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys().toSet()
+  val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys.toSet()
   assertTrue("Some fileNameId aren't registered: ${unregisteredIds}", unregisteredIds.isEmpty())
-  val staleIds = fileIdToFileName.keys().toSet() - fileIdFromEntities
+  val staleIds = fileIdToFileName.keys.toSet() - fileIdFromEntities
   assertTrue("There are stale mapping for some fileNameId: ${staleIds.joinToString { "$it -> ${fileIdToFileName.get(it)}" }}", staleIds.isEmpty())
 }
 
