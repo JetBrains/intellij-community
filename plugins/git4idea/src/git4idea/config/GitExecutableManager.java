@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -98,9 +97,13 @@ public class GitExecutableManager {
     return new GitExecutable.Local(pathToGit);
   }
 
+  public static boolean supportWslExecutable() {
+    return WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser");
+  }
+
   @Nullable
   private static GitExecutable.Wsl getWslExecutable(@NotNull String pathToGit) {
-    if (!SystemInfo.isWin10OrNewer || !Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) return null;
+    if (!supportWslExecutable()) return null;
     if (!pathToGit.startsWith(WSLDistribution.UNC_PREFIX)) return null;
 
     pathToGit = StringUtil.trimStart(pathToGit, WSLDistribution.UNC_PREFIX);
