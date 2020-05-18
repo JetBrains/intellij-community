@@ -72,6 +72,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     private List<TaskButton> myTags;
     private final InplaceButton myAddButton;
     private Runnable myChangeListener;
+    private RunConfiguration myConfiguration;
 
     public BeforeRunComponent() {
       super(new WrapLayout(FlowLayout.LEADING));
@@ -86,15 +87,25 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     public void showPopup() {
       DefaultActionGroup group = new DefaultActionGroup();
       for (TaskButton tag : myTags) {
-        if (!tag.isVisible()) {
-          group.add(new AnAction(tag.myProvider.getName(), null, tag.myProvider.getIcon()) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
+        if (tag.isVisible()) {
+          continue;
+        }
+        group.add(new AnAction(tag.myProvider.getName(), null, tag.myProvider.getIcon()) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            BeforeRunTask<?> task = tag.myProvider.createTask(myConfiguration);
+            if (task == null) return;
+            tag.myProvider.configureTask(e.getDataContext(), myConfiguration, task).onSuccess(changed -> {
+              if (!tag.myProvider.canExecuteTask(myConfiguration, task)) {
+                return;
+              }
+              task.setEnabled(true);
+              tag.setTask(task);
               tag.setVisible(true);
               myChangeListener.run();
-            }
-          });
-        }
+            });
+          }
+        });
       }
       ListPopup
         popup = JBPopupFactory
@@ -105,6 +116,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     }
 
     public void reset(RunnerAndConfigurationSettingsImpl s) {
+      myConfiguration = s.getConfiguration();
       if (myTags == null) {
         myTags = new ArrayList<>();
         RunConfiguration configuration = s.getConfiguration();
@@ -133,12 +145,17 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     }
 
     private final class TaskButton extends TagButton {
-      @NotNull private final BeforeRunTaskProvider<?> myProvider;
+      @NotNull private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
 
-      private TaskButton(BeforeRunTaskProvider<?> provider) {
+      private TaskButton(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
         super(provider.getName(), myChangeListener);
         myProvider = provider;
         setIcon(provider.getIcon());
+      }
+
+      private void setTask(@NotNull BeforeRunTask<?> task) {
+        setText(myProvider.getDescription(task));
+        setIcon(myProvider.getTaskIcon(task));
       }
     }
   }
