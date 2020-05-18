@@ -124,7 +124,13 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
 
   @Override
   public void unloadProvidersFor(@NotNull Language language) {
-    myRegistrars.remove(language);
+    PsiReferenceRegistrarImpl psiReferenceRegistrar = myRegistrars.remove(language);
+    if (psiReferenceRegistrar != null) {
+      psiReferenceRegistrar.cleanup();
+    }
+    for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
+      registrar.clearBindingsCache();
+    }
   }
 
   @Override
