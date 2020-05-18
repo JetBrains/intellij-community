@@ -26,7 +26,8 @@ public class NotificationSearchableOptionContributor extends SearchableOptionCon
   @Override
   public void processOptions(@NotNull SearchableOptionProcessor processor) {
     for (NotificationSettings settings : NotificationsConfigurationImpl.getInstanceImpl().getAllSettings()) {
-      processor.addOptions(settings.getGroupId(), null, settings.getGroupId() + " notifications", NotificationsConfigurable.ID, NotificationsConfigurable.DISPLAY_NAME, true);
+      processor.addOptions(settings.getGroupId(), null, settings.getGroupId() + " notifications",
+              NotificationsConfigurable.ID, NotificationsConfigurable.displayName(), true);
     }
   }
 }

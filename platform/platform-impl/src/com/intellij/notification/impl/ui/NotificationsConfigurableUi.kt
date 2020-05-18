@@ -1,0 +1,100 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.notification.impl.ui
+
+import com.intellij.ide.IdeBundle
+import com.intellij.notification.impl.NotificationsConfigurationImpl
+import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.ScrollingUtil
+import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.JBList
+import com.intellij.ui.layout.*
+import java.awt.Dimension
+import javax.swing.JCheckBox
+import javax.swing.JPanel
+
+/**
+ * @author Konstantin Bulenkov
+ */
+class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl> {
+  private val ui: DialogPanel
+  private var notificationsList: JBList<NotificationSettingsWrapper>
+  private lateinit var useBalloonNotifications: JCheckBox
+  private lateinit var useSystemNotifications: JCheckBox
+  private lateinit var notificationSettings: NotificationSettingsUi
+
+  init {
+    notificationsList = createNotificationsList()
+
+    ui = panel {
+      row {
+        useBalloonNotifications = checkBox(IdeBundle.message("notifications.configurable.display.balloon.notifications"),
+                                           { settings.SHOW_BALLOONS },
+                                           { settings.SHOW_BALLOONS = it }).component
+      }
+      row {
+        useSystemNotifications = checkBox(IdeBundle.message("notifications.configurable.enable.system.notifications"),
+                                          { settings.SYSTEM_NOTIFICATIONS },
+                                          { settings.SYSTEM_NOTIFICATIONS = it }).component
+      }
+      row {
+        notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0))
+        cell {
+          scrollPane(notificationsList)
+        }
+        cell(isVerticalFlow = true) {
+          component(notificationSettings.ui).withLargeLeftGap().constraints(CCFlags.pushX)
+          component(object: JPanel() {
+            override fun getPreferredSize() = 1 x Int.MAX_VALUE
+          })
+        }
+      }
+    }
+    ScrollingUtil.ensureSelectionExists(notificationsList)
+  }
+
+  private fun createNotificationsList(): JBList<NotificationSettingsWrapper> {
+    return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings.toTypedArray())
+      .apply {
+        cellRenderer = SimpleListCellRenderer.create("") { it.groupId }
+        selectionModel.addListSelectionListener {
+          selectedValue?.let { notificationSettings.updateUi(it) }
+        }
+      }
+  }
+
+  override fun reset(settings: NotificationsConfigurationImpl) {
+    ui.reset()
+    val selectedIndex = notificationsList.selectedIndex
+    notificationsList.model = createNotificationsList().model
+    notificationsList.selectedIndex = selectedIndex
+    notificationSettings.updateUi(notificationsList.selectedValue)
+  }
+
+  override fun isModified(settings: NotificationsConfigurationImpl): Boolean {
+    return ui.isModified() || isNotificationsModified()
+  }
+
+  private fun isNotificationsModified(): Boolean {
+    for (i in 0 until notificationsList.model.size) {
+      if (notificationsList.model.getElementAt(i).hasChanged()) {
+        return true
+      }
+    }
+    return false
+  }
+
+  override fun apply(settings: NotificationsConfigurationImpl) {
+    ui.apply()
+    for (i in 0 until notificationsList.model.size) {
+      val settingsWrapper = notificationsList.model.getElementAt(i)
+      if (settingsWrapper.hasChanged()) {
+        settingsWrapper.apply()
+      }
+    }
+  }
+
+  override fun getComponent() = ui
+}
+
+private infix fun Int.x(height: Int) = Dimension(this, height)
