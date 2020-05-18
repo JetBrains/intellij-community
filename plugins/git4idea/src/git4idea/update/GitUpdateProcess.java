@@ -27,13 +27,11 @@ import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
-import git4idea.config.GitVersionSpecialty;
 import git4idea.config.UpdateMethod;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
-import git4idea.pull.GitPullDialog;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
@@ -427,13 +425,14 @@ public class GitUpdateProcess {
   }
 
   private void showUpdateDialog(@NotNull GitRepository repository) {
-    GitPullDialog updateDialog = new GitPullDialog(repository.getProject());
+    FixTrackedBranchDialog updateDialog = new FixTrackedBranchDialog(repository.getProject());
+
     if (updateDialog.showAndGet()) {
       new GitUpdateExecutionProcess(repository.getProject(),
                                     myRepositories,
                                     updateDialog.getUpdateConfig(),
                                     updateDialog.getUpdateMethod(),
-                                    updateDialog.shouldSetAsUpstream())
+                                    updateDialog.shouldSetAsTrackedBranch())
         .execute();
     }
   }
