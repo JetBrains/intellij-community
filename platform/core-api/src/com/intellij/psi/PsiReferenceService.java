@@ -35,7 +35,12 @@ public abstract class PsiReferenceService {
     return list.toArray(PsiReference.EMPTY_ARRAY);
   }
 
-
+  /**
+   * Hints to be passed to PSI when searching for usages, allowing to avoid creating all references when none of them would be suitable.
+   * @see PsiReferenceProvider#acceptsHints
+   * @see ContributedReferenceHost
+   * @see HintedReferenceHost
+   */
   public static class Hints {
     public static final Hints NO_HINTS = new Hints();
 
