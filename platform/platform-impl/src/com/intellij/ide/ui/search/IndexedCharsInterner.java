@@ -46,6 +46,7 @@ final class IndexedCharsInterner {
       }
       idToIndex[id] = index;
       assert ArrayUtil.indexOf(idToIndex, index) == id;
+      //noinspection AssertWithSideEffects
       assert toId(name) == id;
     }
     else {
