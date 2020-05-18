@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -19,6 +20,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -271,11 +273,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         result.append(formatTypeWithLinks(paramType, function, context));
       }
       final String defaultValue = parameter.getDefaultValueText();
-      if (defaultValue != null) {
-        // According to PEP 8 equal sign should be surrounded by spaces if annotation is present
-        result.append(showType ? " = " : "=");
-        result.append(escaped(defaultValue));
-      }
+      result.append(escaped(ObjectUtils.notNull(ParamHelper.getDefaultValuePartInSignature(defaultValue, showType), "")));
       first = false;
     }
 
