@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.JavaPsiMathUtil;
 import org.jetbrains.annotations.Nls;
@@ -44,6 +45,14 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
 
   @Override
   public boolean allowed(@NotNull PsiElement element) {
+    return allowed(element, true);
+  }
+
+  boolean requiresAssertionViolation(@NotNull PsiElement element) {
+    return allowed(element, true) && !allowed(element, false);
+  }
+
+  private boolean allowed(@NotNull PsiElement element, boolean assertionsDisabled) {
     if (myDfType instanceof DfConstantType && element instanceof PsiLiteralValue) {
       Object constValue = ((DfConstantType<?>)myDfType).getValue();
       if (!(constValue instanceof PsiElement)) {
@@ -51,12 +60,12 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
         return Objects.equals(value, constValue);
       }
     }
-    DfType dfType = getElementDfType(element);
+    DfType dfType = getElementDfType(element, assertionsDisabled);
     return dfType.meet(myDfType) != DfTypes.BOTTOM;
   }
 
   @Nullable JavaDfaSliceValueFilter mergeFilter(@NotNull PsiElement element) {
-    DfType type = getElementDfType(element);
+    DfType type = getElementDfType(element, true);
     if (type instanceof DfReferenceType) {
       type = ((DfReferenceType)type).dropLocality().dropMutability();
     }
@@ -66,7 +75,7 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
     return new JavaDfaSliceValueFilter(myNextFilter, meet);
   }
 
-  private @NotNull DfType getElementDfType(@NotNull PsiElement element) {
+  private @NotNull DfType getElementDfType(@NotNull PsiElement element, boolean assertionsDisabled) {
     if (!(element instanceof PsiExpression)) return DfTypes.TOP;
     PsiExpression expression = (PsiExpression)element;
     PsiType expressionType = expression.getType();
@@ -76,7 +85,10 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
     if (!(expressionType instanceof PsiPrimitiveType) && myDfType instanceof DfPrimitiveType) {
       return DfTypes.typedObject(PsiPrimitiveType.getUnboxedType(expressionType), Nullability.NOT_NULL);
     }
-    return CommonDataflow.getDfType(expression);
+    CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
+    if (result == null) return DfTypes.TOP;
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    return assertionsDisabled ? result.getDfTypeNoAssertions(expression) : result.getDfType(expression);
   }
 
   @Override

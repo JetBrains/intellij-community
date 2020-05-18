@@ -99,4 +99,5 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testFilterPropagateMath() throws Exception { doTest("-8");}
   public void testFilterPropagateBoolean() throws Exception { doTest("true");}
   public void testFilterPropagateBoolean2() throws Exception { doTest("false");}
+  public void testFilterAssertionViolation() throws Exception { doTest("-1");}
 }
