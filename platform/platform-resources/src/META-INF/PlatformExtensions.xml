@@ -302,8 +302,7 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
-    <applicationService serviceInterface="com.intellij.ide.externalComponents.ExternalComponentManager"
-                        serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManager"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"/>
 
