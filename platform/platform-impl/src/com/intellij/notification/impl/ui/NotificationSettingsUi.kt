@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.ui
 
+import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationDisplayType.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
@@ -24,7 +25,7 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
   init {
     val model = createComboboxModel(notification)
     ui = panel(LCFlags.fillX) {
-      row("Popup type: ") {
+      row(IdeBundle.message("notifications.configurable.column.popup")) {
         type = comboBox(model,
                         getter = notification::displayType,
                         setter = {notification.displayType = it},
@@ -34,14 +35,18 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
         }
       }
       row {
-        log = checkBox("Log", {notification.isShouldLog}, {notification.isShouldLog = it}).component
+        log = checkBox(IdeBundle.message("notifications.configurable.column.log"),
+                       {notification.isShouldLog},
+                       {notification.isShouldLog = it}).component
         log.addActionListener {
           notification.isShouldLog = log.isSelected
         }
       }
       if (isReadAloudEnabled()) {
         row {
-          readAloud = checkBox("Read aloud", {notification.isShouldReadAloud}, {notification.isShouldReadAloud = it}).component
+          readAloud = checkBox(IdeBundle.message("notifications.configurable.column.read.aloud"),
+                               {notification.isShouldReadAloud},
+                               {notification.isShouldReadAloud = it}).component
           readAloud.addActionListener {
             notification.isShouldReadAloud = readAloud.isSelected
           }
