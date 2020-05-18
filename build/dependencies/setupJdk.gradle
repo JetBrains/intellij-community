@@ -5,8 +5,9 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-def jbrVersionToUnpack = System.getProperty('intellij.build.jdk.version', '8').toInteger()
-task setupJdks(dependsOn: ["setupJbr$jbrVersionToUnpack"])
+def buildJdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
+def setupJdkTasks = buildJdkVersion == 8 ? ["setupJbr11", "setupJbr8"] : ["setupJbr$buildJdkVersion"]
+task setupJdks(dependsOn: setupJdkTasks)
 cleanSetupJdks.dependsOn('cleanSetupJbr8', 'cleanSetupJbr11', 'cleanDownloadJbr8', 'cleanDownloadJbr11', 'cleanSetupJdk16')
 project.ext.jbrRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
