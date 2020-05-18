@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class ConvertJUnit3TestCaseToJUnit4Predicate implements PsiElementPredicate {
+public class ConvertJUnit3TestCaseToJUnit4Predicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
@@ -34,6 +34,10 @@ class ConvertJUnit3TestCaseToJUnit4Predicate implements PsiElementPredicate {
     if (leftBrace == null || offsetInParent >= leftBrace.getStartOffsetInParent()) {
       return false;
     }
+    return satisfiedBy(aClass);
+  }
+
+  public boolean satisfiedBy(PsiClass aClass) {
     final PsiReferenceList extendsList = aClass.getExtendsList();
     if (extendsList == null) {
       return false;
@@ -52,8 +56,8 @@ class ConvertJUnit3TestCaseToJUnit4Predicate implements PsiElementPredicate {
     if (!"junit.framework.TestCase".equals(name)) {
       return false;
     }
-    final Project project = element.getProject();
-    final GlobalSearchScope scope = element.getResolveScope();
+    final Project project = aClass.getProject();
+    final GlobalSearchScope scope = aClass.getResolveScope();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiClass testAnnotation = psiFacade.findClass("org.junit.Test", scope);
     return testAnnotation != null;
