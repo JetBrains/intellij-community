@@ -25,11 +25,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -40,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.net.NetUtils;
 import gnu.trove.THashMap;
@@ -138,51 +136,19 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     parameters.getVMParametersList().defineProperty("xslt.debugger.token", token);
     extensionData.putUserData(ACCESS_TOKEN, token);
 
-    final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-    assert pluginId != null || System.getProperty("xslt-debugger.plugin.path") != null
-      : "PluginId not found - development builds need to specify -Dxslt-debugger.plugin.path=../out/classes/production/intellij.xslt.debugger.engine";
-
-    Path pluginPath;
-    if (pluginId != null) {
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
-      assert descriptor != null;
-      pluginPath = descriptor.getPluginPath();
+    Path xsltDebuggerClassesRoot = Paths.get(PathUtil.getJarPathForClass(getClass()));
+    if (!Files.isDirectory(xsltDebuggerClassesRoot)) {
+      Path libDirectory = xsltDebuggerClassesRoot.getParent();
+      addPathToClasspath(parameters, libDirectory.resolve("xslt-debugger-engine.jar"));
+      addPathToClasspath(parameters, libDirectory.resolve("rmi-stubs.jar"));
+      addPathToClasspath(parameters, libDirectory.resolve("rt/xslt-debugger-engine-impl.jar"));
     }
     else {
-      pluginPath = Paths.get(System.getProperty("xslt-debugger.plugin.path"));
-    }
-
-    Path rtClasspath = pluginPath.resolve("lib/xslt-debugger-engine.jar");
-    if (Files.exists(rtClasspath)) {
-      parameters.getClassPath().addTail(rtClasspath.toAbsolutePath().toString());
-
-      Path rmiStubs = pluginPath.resolve("lib/rmi-stubs.jar");
-      assert Files.exists(rmiStubs) : rmiStubs.toAbsolutePath().toString();
-      parameters.getClassPath().addTail(rmiStubs.toAbsolutePath().toString());
-
-      Path engineImpl = pluginPath.resolve("lib/rt/xslt-debugger-engine-impl.jar");
-      assert Files.exists(engineImpl) : engineImpl.toAbsolutePath().toString();
-      parameters.getClassPath().addTail(engineImpl.toAbsolutePath().toString());
-    }
-    else {
-      rtClasspath = pluginPath.resolve("classes");
-      if (!Files.exists(rtClasspath)) {
-        if (ApplicationManager.getApplication().isInternal() && Files.exists(pluginPath.resolve("org"))) {
-          rtClasspath = pluginPath;
-          Path engineImplInternal = pluginPath.getParent().resolve("intellij.xslt.debugger.engine.impl");
-          assert Files.exists(engineImplInternal) : engineImplInternal.toAbsolutePath().toString();
-          parameters.getClassPath().addTail(engineImplInternal.toAbsolutePath().toString());
-        }
-        else {
-          throw new CantRunException("Runtime classes not found at " + rtClasspath.toAbsolutePath().toString());
-        }
-      }
-
-      parameters.getClassPath().addTail(rtClasspath.toAbsolutePath().toString());
-
-      Path rmiStubs = rtClasspath.resolve("rmi-stubs.jar");
-      assert Files.exists(rmiStubs) : rmiStubs.toAbsolutePath().toString();
-      parameters.getClassPath().addTail(rmiStubs.toAbsolutePath().toString());
+      //running from sources
+      Path outProductionDir = xsltDebuggerClassesRoot.getParent();
+      addPathToClasspath(parameters, outProductionDir.resolve("intellij.xslt.debugger.engine"));
+      addPathToClasspath(parameters, outProductionDir.resolve("intellij.xslt.debugger.engine.impl"));
+      addPathToClasspath(parameters, getPluginEngineDirInSources().resolve("lib/rmi-stubs.jar"));
     }
 
     File trove4j = new File(PathUtil.getJarPathForClass(THashMap.class));
@@ -190,15 +156,15 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
 
     String type = parameters.getVMParametersList().getPropertyValue("xslt.transformer.type");
     if ("saxon".equalsIgnoreCase(type)) {
-      addSaxon(parameters, pluginPath, SAXON_6_JAR);
+      addPathToClasspath(parameters, findSaxonJar(xsltDebuggerClassesRoot, SAXON_6_JAR));
     }
     else if ("saxon9".equalsIgnoreCase(type)) {
-      addSaxon(parameters, pluginPath, SAXON_9_JAR);
+      addPathToClasspath(parameters, findSaxonJar(xsltDebuggerClassesRoot, SAXON_9_JAR));
     }
     else if ("xalan".equalsIgnoreCase(type)) {
       final Boolean xalanPresent = isValidXalanPresent(parameters);
       if (xalanPresent == null) {
-        addXalan(parameters, pluginPath);
+        addXalan(parameters, xsltDebuggerClassesRoot);
       }
       else if (!xalanPresent) {
         throw new CantRunException("Unsupported Xalan version is present in classpath.");
@@ -228,14 +194,20 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       // add saxon for backward-compatibility
       if (level == XsltChecker.LanguageLevel.V2) {
         parameters.getVMParametersList().defineProperty("xslt.transformer.type", "saxon9");
-        addSaxon(parameters, pluginPath, SAXON_9_JAR);
+        addPathToClasspath(parameters, findSaxonJar(xsltDebuggerClassesRoot, SAXON_9_JAR));
       } else {
         parameters.getVMParametersList().defineProperty("xslt.transformer.type", "saxon");
-        addSaxon(parameters, pluginPath, SAXON_6_JAR);
+        addPathToClasspath(parameters, findSaxonJar(xsltDebuggerClassesRoot, SAXON_6_JAR));
       }
     }
 
     parameters.getVMParametersList().defineProperty("xslt.main", "org.intellij.plugins.xsltDebugger.rt.XSLTDebuggerMain");
+  }
+
+  private static void addPathToClasspath(SimpleJavaParameters parameters, Path path) {
+    Path absolutePath = path.toAbsolutePath();
+    assert Files.exists(absolutePath) : absolutePath.toString();
+    parameters.getClassPath().addTail(absolutePath.toString());
   }
 
   @Nullable
@@ -285,29 +257,35 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     return null;
   }
 
-  private static void addXalan(SimpleJavaParameters parameters, Path pluginPath) {
-    Path xalan = findTransformerJar(pluginPath, "xalan-2.7.2.jar").toAbsolutePath();
-    parameters.getClassPath().addTail(xalan.toString());
-    parameters.getClassPath().addTail(xalan.getParent().resolve("serializer-2.7.2.jar").toString());
+  private static void addXalan(SimpleJavaParameters parameters, Path xsltDebuggerClassesRoot) {
+    if (!Files.isDirectory(xsltDebuggerClassesRoot)) {
+      Path rtDir = xsltDebuggerClassesRoot.getParent().resolve("rt");
+      addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.2.jar"));
+      addPathToClasspath(parameters, rtDir.resolve("serializer-2.7.2.jar"));
+    }
+    else {
+      //running from sources
+      Path xalanInM2 = Paths.get(SystemProperties.getUserHome(), ".m2", "repository", "xalan");
+      addPathToClasspath(parameters, xalanInM2.resolve("xalan/2.7.2/xalan-2.7.2.jar"));
+      addPathToClasspath(parameters, xalanInM2.resolve("serializer/2.7.2/serializer-2.7.2.jar"));
+    }
   }
 
-  private static void addSaxon(SimpleJavaParameters parameters, Path pluginPath, final String saxonJar) {
-    Path saxon = findTransformerJar(pluginPath, saxonJar);
-    parameters.getClassPath().addTail(saxon.toAbsolutePath().toString());
-  }
-
-  private static Path findTransformerJar(Path pluginPath, String jarFile) {
-    Path transformerFile = pluginPath.resolve("lib/rt").resolve(jarFile);
+  private static Path findSaxonJar(Path xsltDebuggerClassesRoot, String jarFile) {
+    Path transformerFile = xsltDebuggerClassesRoot.getParent().resolve("lib/rt").resolve(jarFile);
     if (!Files.exists(transformerFile)) {
-      transformerFile = pluginPath.resolve("lib").resolve(jarFile);
-      if (!Files.exists(transformerFile)) {
-        transformerFile = pluginPath.getParent().resolve("intellij.xslt.debugger.engine.impl").resolve(jarFile);
-        if (!Files.exists(transformerFile)) {
-          transformerFile = pluginPath.resolve(jarFile);
-          assert Files.exists(transformerFile) : transformerFile.toAbsolutePath().toString();
-        }
-      }
+      //running from sources
+      Path libDir = getPluginEngineDirInSources().resolve("impl/lib");
+      transformerFile = libDir.resolve(jarFile);
+      assert Files.exists(transformerFile) : transformerFile.toAbsolutePath().toString();
     }
     return transformerFile;
+  }
+
+  @NotNull
+  private static Path getPluginEngineDirInSources() {
+    Path path = Paths.get(PathManager.getCommunityHomePath(), "plugins", "xslt-debugger", "engine");
+    assert Files.isDirectory(path) : path.toString();
+    return path;
   }
 }

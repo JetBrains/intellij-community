@@ -135,10 +135,6 @@ class CommunityRepositoryModules {
       withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.engine.impl", "rt")
       withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.engine.impl", "rt")
       withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.engine.impl", "rt")
-      //todo[nik] unmark 'lib' directory as source root instead
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "rmi-stubs.jar")
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "saxon.jar")
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "saxon9he.jar")
     },
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
