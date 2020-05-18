@@ -116,7 +116,7 @@ public class SpellcheckingStrategy {
 
       final String valueTextTrimmed = element.getValue().trim();
       // do not inspect colors like #00aaFF
-      if (valueTextTrimmed.startsWith("#") && valueTextTrimmed.length() <= 7 && isHexString(valueTextTrimmed.substring(1))) {
+      if (valueTextTrimmed.startsWith("#") && valueTextTrimmed.length() <= 9 && isHexString(valueTextTrimmed.substring(1))) {
         return;
       }
 
