@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
@@ -15,7 +16,6 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
-import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
