@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.castSafelyTo
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -20,6 +21,11 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 private val LOG = Logger.getInstance(UastLocalUsageDependencyGraph::class.java)
 
+/**
+ * Dependency graph of UElements in some scope.
+ * Dependencies of element are elements needed to compute value of this element.
+ * Handles variable assignments and branching
+ */
 @ApiStatus.Experimental
 class UastLocalUsageDependencyGraph private constructor(element: UElement) {
   val dependents: Map<UElement, Set<Dependent>>
@@ -45,6 +51,9 @@ class UastLocalUsageDependencyGraph private constructor(element: UElement) {
       "reactor.local.dependency.graph"
     )
 
+    /**
+     * Creates or takes from cache of [element] dependency graph
+     */
     @JvmStatic
     fun getGraphByUElement(element: UElement): UastLocalUsageDependencyGraph? {
       val sourcePsi = element.sourcePsi ?: return null
@@ -220,6 +229,26 @@ private class VisitorWithVariablesTracking(
     currentScope.mergeWith(right, left)
 
     return@checkedDepthCall true
+  }
+
+  override fun visitExpressionList(node: UExpressionList) = checkedDepthCall(node) {
+    ProgressManager.checkCanceled()
+    if (node.kind.name != UAST_KT_ELVIS_NAME) {
+      return super.visitExpressionList(node)
+    }
+
+    val firstExpression = (node.expressions.first() as? UDeclarationsExpression)
+      ?.declarations
+      ?.first()
+      ?.castSafelyTo<ULocalVariable>()
+      ?.uastInitializer
+      ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
+    val ifExpression = node.expressions.getOrNull(1)
+                         ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
+
+    registerDependency(Dependent.CommonDependent(node), firstExpression.and(ifExpression))
+
+    return@checkedDepthCall super.visitExpressionList(node)
   }
 
   override fun visitSwitchExpression(node: USwitchExpression): Boolean = checkedDepthCall(node) {
@@ -403,6 +432,10 @@ sealed class Dependency : UserDataHolderBase() {
   }
 
   data class BranchingDependency(override val elements: Set<UElement>) : Dependency()
+
+  fun and(other: Dependency): Dependency {
+    return BranchingDependency(elements + other.elements)
+  }
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -483,3 +516,5 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
     }
   }
 }
+
+private const val UAST_KT_ELVIS_NAME = "elvis"
