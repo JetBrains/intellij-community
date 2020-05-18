@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,9 +79,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
       super(new WrapLayout(FlowLayout.LEADING));
       setBorder(JBUI.Borders.emptyLeft(-5));
       add(new JLabel(ExecutionBundle.message("run.configuration.before.run.label")));
-      myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> {
-        showPopup();
-      });
+      myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
       add(myAddButton);
     }
 
@@ -101,7 +100,6 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
               }
               task.setEnabled(true);
               tag.setTask(task);
-              tag.setVisible(true);
               myChangeListener.run();
             });
           }
@@ -130,32 +128,40 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
         }
       }
       List<BeforeRunTask<?>> tasks = s.getManager().getBeforeRunTasks(s.getConfiguration());
-      for (TaskButton tag : myTags) {
-        tag.setVisible(ContainerUtil.exists(tasks, task -> tag.myProvider.getId() == task.getProviderId()));
+      for (BeforeRunTask<?> task : tasks) {
+        TaskButton button = ContainerUtil.find(myTags, tag -> tag.myProvider.getId() == task.getProviderId());
+        if (button != null) {
+          button.setTask(task);
+        }
       }
     }
 
     public void apply(RunnerAndConfigurationSettingsImpl s) {
       RunConfiguration configuration = s.getConfiguration();
       List<BeforeRunTask<?>> tasks = myTags.stream()
-        .filter(button -> button.isVisible())
-        .map(button -> button.myProvider.createTask(configuration))
+        .filter(button -> button.myTask != null && button.isVisible())
+        .map(button -> button.myTask)
         .collect(Collectors.toList());
       s.getManager().setBeforeRunTasks(configuration, tasks);
     }
 
     private final class TaskButton extends TagButton {
       @NotNull private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
+      private BeforeRunTask<?> myTask;
 
       private TaskButton(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
         super(provider.getName(), myChangeListener);
         myProvider = provider;
-        setIcon(provider.getIcon());
+        setVisible(false);
       }
 
-      private void setTask(@NotNull BeforeRunTask<?> task) {
-        setText(myProvider.getDescription(task));
-        setIcon(myProvider.getTaskIcon(task));
+      private void setTask(@Nullable BeforeRunTask<?> task) {
+        myTask = task;
+        setVisible(task != null);
+        if (task != null) {
+          setText(myProvider.getDescription(task));
+          setIcon(myProvider.getTaskIcon(task));
+        }
       }
     }
   }
