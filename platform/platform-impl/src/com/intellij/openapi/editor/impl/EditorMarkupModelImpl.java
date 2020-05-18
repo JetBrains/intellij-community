@@ -382,18 +382,19 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       public void actionPerformed(@NotNull AnActionEvent e) {
         IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
 
+        AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(delegate,
+                                                                       e.getInputEvent(),
+                                                                       ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                                       myEditor.getDataContext());
+
         if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
           focusManager.requestFocus(myEditor.getContentComponent(), true).
             doWhenDone(() -> {
-              AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(delegate,
-                                                                             e.getInputEvent(),
-                                                                             ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
-                                                                             myEditor.getDataContext());
               delegate.actionPerformed(delegateEvent);
             });
         }
         else {
-          delegate.actionPerformed(e);
+          delegate.actionPerformed(delegateEvent);
         }
       }
     };
