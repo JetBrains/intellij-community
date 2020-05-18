@@ -112,13 +112,12 @@
         <reference ref="ProblemsView.ShowWarnings"/>
         <reference ref="ProblemsView.ShowInformation"/>
       </group>
-      <reference ref="ProblemsView.AutoscrollToSource"/>
-      <reference ref="ProblemsView.ShowPreview"/>
-      <group id="ProblemsView.Comparator" icon="AllIcons.General.GearPlain" popup="true">
+      <group id="ProblemsView.Comparator" icon="AllIcons.ObjectBrowser.SortByType" popup="true">
         <reference ref="ProblemsView.SortFoldersFirst"/>
         <reference ref="ProblemsView.SortBySeverity"/>
         <reference ref="ProblemsView.SortByName"/>
       </group>
+      <reference ref="ProblemsView.ShowPreview"/>
       <action id="ProblemsView.QuickFix"
               icon="AllIcons.Actions.QuickfixBulb"
               use-shortcut-of="ShowIntentionActions"
