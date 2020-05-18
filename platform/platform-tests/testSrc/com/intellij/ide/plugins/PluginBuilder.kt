@@ -15,7 +15,9 @@ class PluginBuilder {
 
   var id: String = UUID.randomUUID().toString()
 
+  private var implementationDetail = false
   private var name: String? = null
+  private var description: String? = null
   private val dependsTags = mutableListOf<DependsTag>()
   private var applicationListeners: String? = null
   private var actions: String? = null
@@ -33,18 +35,28 @@ class PluginBuilder {
     return this
   }
 
-  fun name(name: String): PluginBuilder {
-    this.name = name
-    return this
-  }
-
   fun randomId(idPrefix: String): PluginBuilder {
     this.id = "$idPrefix${UUID.randomUUID()}"
     return this
   }
 
+  fun name(name: String): PluginBuilder {
+    this.name = name
+    return this
+  }
+
+  fun description(description: String): PluginBuilder {
+    this.description = description
+    return this
+  }
+
   fun depends(pluginId: String, configFile: String? = null): PluginBuilder {
     dependsTags.add(DependsTag(pluginId, configFile))
+    return this
+  }
+
+  fun noDepends(): PluginBuilder {
+    dependsTags.clear()
     return this
   }
 
@@ -78,13 +90,23 @@ class PluginBuilder {
     return this
   }
 
+  fun implementationDetail(): PluginBuilder {
+    implementationDetail = true
+    return this
+  }
+
   fun text(requireId: Boolean = true): String {
     return buildString {
-      append("<idea-plugin>")
+      append("<idea-plugin")
+      if (implementationDetail) {
+        append(""" implementation-detail="true"""")
+      }
+      append(">")
       if (requireId) {
         append("<id>$id</id>")
       }
       name?.let { append("<name>$it</name>") }
+      description?.let { append("<description>$it</description>") }
       for (dependsTag in dependsTags) {
         val configFile = dependsTag.configFile
         if (configFile != null) {
