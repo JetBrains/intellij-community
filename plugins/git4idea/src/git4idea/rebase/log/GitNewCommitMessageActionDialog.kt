@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nls
 internal abstract class GitNewCommitMessageActionDialog<T : GitMultipleCommitEditingActionBase.MultipleCommitEditingData>(
   private val commitEditingData: T,
   private val originMessage: String,
+  title: @Nls String,
   private val dialogLabel: @Nls String
 ) : DialogWrapper(commitEditingData.project, true) {
   private val originalHEAD = commitEditingData.repository.info.currentRevision
@@ -26,6 +27,7 @@ internal abstract class GitNewCommitMessageActionDialog<T : GitMultipleCommitEdi
 
     init()
     isModal = false
+    this.title = title
   }
 
   abstract fun startOperation(commitEditingData: T, newMessage: String)

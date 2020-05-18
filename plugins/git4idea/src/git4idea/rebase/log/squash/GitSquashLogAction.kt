@@ -30,12 +30,9 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
   ) : GitNewCommitMessageActionDialog<MultipleCommitEditingData>(
     commitEditingData,
     selectedCommitsDetails.joinToString("\n".repeat(3)) { it.fullMessage },
+    GitBundle.getString("rebase.log.squash.new.message.dialog.title"),
     GitBundle.getString("rebase.log.squash.new.message.dialog.label")
   ) {
-
-    init {
-      title = GitBundle.getString("rebase.log.squash.new.message.dialog.title")
-    }
 
     override fun startOperation(commitEditingData: MultipleCommitEditingData, newMessage: String) {
       object : Task.Backgroundable(commitEditingData.project, GitBundle.getString("rebase.log.squash.progress.indicator.title")) {

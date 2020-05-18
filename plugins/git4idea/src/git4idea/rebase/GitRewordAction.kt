@@ -46,15 +46,13 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
   ) : GitNewCommitMessageActionDialog<SingleCommitEditingData>(
     commitEditingData,
     commit.fullMessage,
+    GitBundle.getString("rebase.log.reword.dialog.title"),
     GitBundle.message(
       "rebase.log.reword.dialog.description.label",
       commit.id.toShortString(),
       getShortPresentation(commit.author)
     )
   ) {
-    init {
-      title = GitBundle.getString("rebase.log.reword.dialog.title")
-    }
 
     override fun startOperation(commitEditingData: SingleCommitEditingData, newMessage: String) {
       rewordInBackground(commitEditingData.project, commit, commitEditingData.repository, newMessage)
