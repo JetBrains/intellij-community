@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -692,8 +693,9 @@ class DistributionJARsBuilder {
       def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
       buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish), pluginsToPublishDir, null)
 
-      def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
-              : buildContext.buildNumber
+      def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT")
+        ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
+        : buildContext.buildNumber
       def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
@@ -830,8 +832,9 @@ class DistributionJARsBuilder {
                     buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
                             : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
 
-    def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
-            : buildContext.buildNumber
+    def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT")
+      ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
+      : buildContext.buildNumber
 
     setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, compatibleBuildRange, pluginsToPublish.contains(plugin))
     layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
