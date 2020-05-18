@@ -143,6 +143,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     }
   }
 
+  @SuppressWarnings("WeakerAccess")
   public void updateHistoryEntry(@NotNull VirtualFile file, boolean changeEntryOrderOnly) {
     updateHistoryEntry(file, null, null, changeEntryOrderOnly);
   }

@@ -13,7 +13,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -39,7 +38,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.*;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
@@ -132,7 +130,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   }
 
   private static final class ModuleGroupInterner {
-    private final Interner<String> groups = new StringInterner();
+    private final Interner<String> groups = Interner.createStringInterner();
     private final Map<String[], String[]> paths = new THashMap<>(new TObjectHashingStrategy<String[]>() {
       @Override
       public int computeHashCode(String[] object) {

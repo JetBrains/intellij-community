@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -16,14 +16,15 @@ import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * `Heavy` entries should be disposed with {@link #destroy()} to prevent leak of VirtualFilePointer
@@ -38,12 +39,12 @@ public final class HistoryEntry {
 
   @NotNull private final VirtualFilePointer myFilePointer;
 
-  private static final Element EMPTY_ELEMENT = JDOMUtil.internElement(new Element("state"));
+  private static final Element EMPTY_ELEMENT = new Element("state");
   /**
    * can be null when read from XML
    */
   @Nullable private FileEditorProvider mySelectedProvider;
-  @NotNull private final Map<FileEditorProvider, FileEditorState> myProviderToState = new THashMap<>();
+  @NotNull private final Object2ObjectMap<FileEditorProvider, FileEditorState> myProviderToState = new Object2ObjectOpenHashMap<>();
 
   @Nullable private final Disposable myDisposable;
 
@@ -159,21 +160,22 @@ public final class HistoryEntry {
     element.addContent(e);
     e.setAttribute(FILE_ATTR, myFilePointer.getUrl());
 
-    myProviderToState.forEach((provider, state) -> {
+    for (Object2ObjectMap.Entry<FileEditorProvider, FileEditorState> entry : Object2ObjectMaps.fastIterable(myProviderToState)) {
       Element providerElement = new Element(PROVIDER_ELEMENT);
+      FileEditorProvider provider = entry.getKey();
       if (provider.equals(mySelectedProvider)) {
         providerElement.setAttribute(SELECTED_ATTR_VALUE, Boolean.TRUE.toString());
       }
       providerElement.setAttribute(EDITOR_TYPE_ID_ATTR, provider.getEditorTypeId());
 
       Element stateElement = new Element(STATE_ELEMENT);
-      provider.writeState(state, project, stateElement);
+      provider.writeState(entry.getValue(), project, stateElement);
       if (!JDOMUtil.isEmpty(stateElement)) {
         providerElement.addContent(stateElement);
       }
 
       e.addContent(providerElement);
-    });
+    }
 
     return e;
   }

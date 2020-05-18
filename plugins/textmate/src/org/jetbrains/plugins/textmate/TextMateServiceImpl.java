@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +51,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TextMateServiceImpl extends TextMateService {
   private boolean ourBuiltinBundlesDisabled;
 
-  private final AtomicBoolean myInitialized = new AtomicBoolean(false); 
-  
+  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
+
   private final THashMap<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new THashMap<>();
   private final THashMap<String, CharSequence> myExtensionsMapping = new THashMap<>();
 
@@ -67,7 +66,7 @@ public class TextMateServiceImpl extends TextMateService {
     FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getCommunityHomePath(), "plugins", "textmate", "lib", "bundles"));
   @NonNls public static final String INSTALLED_BUNDLES_PATH =
     FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
-  private final Interner<CharSequence> myInterner = new WeakInterner<>();
+  private final Interner<CharSequence> myInterner = Interner.createWeakInterner();
 
   public TextMateServiceImpl() {
     Application application = ApplicationManager.getApplication();

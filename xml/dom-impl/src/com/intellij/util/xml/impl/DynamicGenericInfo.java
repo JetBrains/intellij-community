@@ -11,7 +11,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -114,7 +113,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
     SoftReference<Interner<ChildrenDescriptionsHolder<?>>> ref = file.getUserData(HOLDERS_CACHE);
     Interner<ChildrenDescriptionsHolder<?>> cache = SoftReference.dereference(ref);
     if (cache == null) {
-      cache = new WeakInterner<>();
+      cache = Interner.createWeakInterner();
       file.putUserData(HOLDERS_CACHE, new SoftReference<>(cache));
     }
     //noinspection unchecked

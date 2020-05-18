@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.patterns.compiler;
 
@@ -15,7 +15,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -27,12 +26,11 @@ import java.util.*;
 /**
  * @author Gregory.Shrago
  */
-public class PatternCompilerImpl<T> implements PatternCompiler<T> {
-
+public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static final Logger LOG = Logger.getInstance(PatternCompilerImpl.class.getName());
 
   private final Set<Method> myStaticMethods;
-  private final Interner<String> myStringInterner = new StringInterner();
+  private final Interner<String> myStringInterner = Interner.createStringInterner();
 
   public PatternCompilerImpl(final List<Class<?>> patternClasses) {
     myStaticMethods = getStaticMethods(patternClasses);

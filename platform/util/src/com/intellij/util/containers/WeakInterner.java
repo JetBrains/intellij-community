@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ConcurrencyUtil;
@@ -18,9 +18,14 @@ import java.util.concurrent.ConcurrentMap;
 public class WeakInterner<T> extends Interner<T> {
   private final ConcurrentMap<T, T> myMap;
 
+  /**
+   * @deprecated Use {@link Interner#createWeakInterner()}
+   */
+  @Deprecated
   public WeakInterner() {
     myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   }
+
   public WeakInterner(@NotNull TObjectHashingStrategy<? super T> strategy) {
     myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap(strategy);
   }

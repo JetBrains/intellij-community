@@ -40,7 +40,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +81,7 @@ public class RefManagerImpl extends RefManager {
 
   private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
-  private final Interner<String> myNameInterner = new StringInterner();
+  private final Interner<String> myNameInterner = Interner.createStringInterner();
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;

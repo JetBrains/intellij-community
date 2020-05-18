@@ -152,8 +152,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }
     else {
-      List<Element> children = element.getChildren(INSPECTION_TOOL_TAG);
-      for (Element toolElement : children) {
+      for (Element toolElement : element.getChildren(INSPECTION_TOOL_TAG)) {
         myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), JDOMUtil.internElement(toolElement));
       }
     }
@@ -161,7 +160,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   private static @Nullable String convertToShortName(@Nullable String displayName, @NotNull List<InspectionToolWrapper<?, ?>> tools) {
     if (displayName == null) return null;
-    for (InspectionToolWrapper tool : tools) {
+    for (InspectionToolWrapper<?, ?> tool : tools) {
       if (displayName.equals(tool.getDisplayName())) {
         return tool.getShortName();
       }
