@@ -162,6 +162,11 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     List<Runnable> updates = null;
     for (FileEditor editor : editors) {
       for (Provider<?> provider : providers) {
+        // light project is not disposed in tests
+        if (myProject.isDisposed()) {
+          return Collections.emptyList();
+        }
+
         JComponent component = provider.createNotificationPanel(file, editor, myProject);
         if (component instanceof EditorNotificationPanel) {
           ((EditorNotificationPanel)component).setProviderKey(provider.getKey());
