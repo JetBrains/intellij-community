@@ -3,7 +3,6 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.File;
@@ -11,6 +10,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static org.junit.Assert.*;
 
 public class EnvironmentUtilTest {
@@ -46,13 +46,14 @@ public class EnvironmentUtilTest {
   @Test(timeout = 30000)
   public void load() {
     assumeUnix();
+
     Map<String, String> env = EnvironmentUtil.testLoader();
     assertTrue(env.size() >= System.getenv().size() / 2);
   }
 
   @Test(timeout = 30000)
   public void loadingBatEnv() throws Exception {
-    IoTestUtil.assumeWindows();
+    assumeWindows();
 
     File file = FileUtil.createTempFile("test", ".bat", true);
     FileUtil.writeToFile(file, "set FOO_TEST_1=123\r\nset FOO_TEST_2=%1");
@@ -64,7 +65,7 @@ public class EnvironmentUtilTest {
 
   @Test(timeout = 30000)
   public void loadingBatEnv_ErrorHandling() throws Exception {
-    IoTestUtil.assumeWindows();
+    assumeWindows();
 
     File file = FileUtil.createTempFile("test", ".bat", true);
     FileUtil.writeToFile(file, "echo some error\r\nexit /B 1");

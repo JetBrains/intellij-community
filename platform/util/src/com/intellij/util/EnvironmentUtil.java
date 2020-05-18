@@ -327,13 +327,10 @@ public final class EnvironmentUtil {
    * @return list of commands for starting a process, e.g. {@code /bin/bash -l -i -c}
    */
   @ApiStatus.Experimental
-  public static @NotNull List<String> buildShellProcessCommand(@NotNull String shellScript,
-                                                      boolean isLogin,
-                                                      boolean isInteractive,
-                                                      boolean isCommand) {
+  public static @NotNull List<String> buildShellProcessCommand(@NotNull String shellScript, boolean isLogin, boolean isInteractive, boolean isCommand) {
     List<String> commands = new ArrayList<>();
     commands.add(shellScript);
-    if (isLogin && !shellScript.endsWith("/tcsh") && !shellScript.endsWith("/csh")) {
+    if (isLogin && !(shellScript.endsWith("/tcsh") || shellScript.endsWith("/csh"))) {
       // *csh do not allow to use -l with any other options
       commands.add(SHELL_LOGIN_ARGUMENT);
     }
