@@ -69,6 +69,11 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
     val commitList = commitEditingData.selectedCommitList
     val repository = commitEditingData.repository
 
+    if (VcsLogUtil.findBranch(commitEditingData.logData.dataPack.refsModel, repository.root, GitUtil.HEAD) == null) {
+      e.presentation.description = GitBundle.message("rebase.log.multiple.commit.editing.action.cant.find.head", commitList.size)
+      return
+    }
+
     // editing merge commit or root commit is not allowed
     commitList.forEach { commit ->
       if (commit.isRootOrMerge()) {
@@ -169,10 +174,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {
         val commitNodeIds = commitsInfo.convertToNodeIds(commitIndices).toMutableSet()
-        val headRef = VcsLogUtil.findBranch(dataPack.refsModel, root, GitUtil.HEAD) ?: let {
-          description = GitBundle.message("rebase.log.multiple.commit.editing.action.cant.find.head", commits.size)
-          return@runProcessWithProgressSynchronously
-        }
+        val headRef = VcsLogUtil.findBranch(dataPack.refsModel, root, GitUtil.HEAD)!!
         val headIndex = logData.getCommitIndex(headRef.commitHash, root)
         val headId = commitsInfo.getNodeId(headIndex)
         val maxNodeId = commitNodeIds.max()!!
