@@ -1911,7 +1911,9 @@ public class HighlightMethodUtil {
       }
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(currentType);
       if (valueType.equals(unboxedType)) return currentType;
-      valueType = ((PsiPrimitiveType)valueType).getBoxedType(method);
+      PsiClassType boxedType = ((PsiPrimitiveType)valueType).getBoxedType(method);
+      if (boxedType == null) return valueType;
+      valueType = boxedType;
     }
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(currentType)) {
