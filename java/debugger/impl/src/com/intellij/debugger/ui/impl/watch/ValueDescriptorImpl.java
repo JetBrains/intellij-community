@@ -304,12 +304,18 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     EvaluateException valueException = myValueException;
     if (valueException == null || valueException.getExceptionFromTargetVM() != null) {
-      getChildrenRenderer(debugProcess).isExpandableAsync(getValue(), context, this).thenAccept(r -> {
-        if (r != myIsExpandable) {
-          myIsExpandable = r;
-          labelListener.labelChanged();
-        }
-      });
+      CompletableFuture<Boolean> expandableFuture = getChildrenRenderer(debugProcess).isExpandableAsync(getValue(), context, this);
+      if (expandableFuture.isDone()) {
+        myIsExpandable = expandableFuture.join();
+      }
+      else {
+        expandableFuture.thenAccept(r -> {
+          if (r != myIsExpandable) {
+            myIsExpandable = r;
+            labelListener.labelChanged();
+          }
+        });
+      }
     }
 
     if (!OnDemandRenderer.isOnDemandForced(debugProcess)) {
