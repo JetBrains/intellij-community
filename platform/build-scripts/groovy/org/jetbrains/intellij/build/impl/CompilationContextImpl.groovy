@@ -102,7 +102,9 @@ class CompilationContextImpl implements CompilationContext {
       .collect { it.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName }
       .findAll { it != null && !sdks.contains(it) }
       .toSet().each { sdkName ->
-      def sdkHome = JdkUtils.computeJdkHome(messages, sdkName, "$jbrDir/$sdkName", null)?.with {
+      def vendorPrefixEnd = sdkName.indexOf("-")
+      def sdkNameWithoutVendor = vendorPrefixEnd != -1 ? sdkName.substring(vendorPrefixEnd + 1) : sdkName
+      def sdkHome = JdkUtils.computeJdkHome(messages, sdkNameWithoutVendor, "$jbrDir/$sdkNameWithoutVendor", null)?.with {
         toCanonicalPath(it)
       }
       if (sdkHome != null) {
