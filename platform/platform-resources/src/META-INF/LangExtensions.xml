@@ -1283,7 +1283,7 @@
 
     <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
 
-    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.Problems" doNotActivateOnStart="true" canCloseContents="false"
+    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.Problems" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewState"/>
     <notificationWhitelist groupIds="Problems View;Inspection Results;Find in Path;Dependencies;Execution;Suggest Run Dashboard;
