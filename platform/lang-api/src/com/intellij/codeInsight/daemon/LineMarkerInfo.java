@@ -60,20 +60,17 @@ public class LineMarkerInfo<T extends PsiElement> {
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
-    myIcon = icon;
-    myTooltipProvider = tooltipProvider;
-    myIconAlignment = alignment;
+    this(createElementRef(element, range), range, icon, tooltipProvider, navHandler, alignment);
+  }
+
+  @NotNull
+  private static <T extends PsiElement> SmartPsiElementPointer<T> createElementRef(@NotNull T element, @NotNull TextRange range) {
     PsiFile containingFile = element.getContainingFile();
     Project project = containingFile.getProject();
     TextRange topLevelRange = InjectedLanguageManager.getInstance(project).getTopLevelFile(containingFile).getTextRange();
     if (!topLevelRange.contains(range)) {
       throw new IllegalArgumentException("Range must be inside file offsets "+topLevelRange+" but got: "+range);
     }
-    elementRef = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element, containingFile);
-    myNavigationHandler = navHandler;
-    startOffset = range.getStartOffset();
-    endOffset = range.getEndOffset();
-    updatePass = 11; //Pass.LINE_MARKERS;
     PsiElement firstChild;
     if (!(element instanceof PsiFile) && (firstChild = element.getFirstChild()) != null) {
       String msg = "Performance warning: LineMarker is supposed to be registered for leaf elements only, but got: " +
@@ -87,6 +84,23 @@ public class LineMarkerInfo<T extends PsiElement> {
         LOG.warn(msg);
       }
     }
+    return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element, containingFile);
+  }
+
+  protected LineMarkerInfo(@NotNull SmartPsiElementPointer<T> elementRef,
+                           @NotNull TextRange range,
+                           @Nullable Icon icon,
+                           @Nullable Function<? super T, String> tooltipProvider,
+                           @Nullable GutterIconNavigationHandler<T> navHandler,
+                           @NotNull GutterIconRenderer.Alignment alignment) {
+    myIcon = icon;
+    myTooltipProvider = tooltipProvider;
+    myIconAlignment = alignment;
+    this.elementRef = elementRef;
+    myNavigationHandler = navHandler;
+    startOffset = range.getStartOffset();
+    endOffset = range.getEndOffset();
+    updatePass = 11; //Pass.LINE_MARKERS;
   }
 
   /**

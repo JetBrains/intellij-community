@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.AbstractBundle;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -16,15 +15,14 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ArrayUtilRt;
@@ -93,7 +91,7 @@ public class ExpectedHighlightingData {
   }
 
   private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
-  private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<>();
+  private final Map<RangeMarker, LineMarkerInfo<?>> myLineMarkerInfos = new THashMap<>();
   private final Document myDocument;
   private final PsiFile myFile;
   private final String myText;
@@ -192,17 +190,14 @@ public class ExpectedHighlightingData {
   }
 
   private void refreshLineMarkers() {
-    for (Map.Entry<RangeMarker, LineMarkerInfo> entry : myLineMarkerInfos.entrySet()) {
+    for (Map.Entry<RangeMarker, LineMarkerInfo<?>> entry : myLineMarkerInfos.entrySet()) {
       RangeMarker rangeMarker = entry.getKey();
       int startOffset = rangeMarker.getStartOffset();
       int endOffset = rangeMarker.getEndOffset();
-      LineMarkerInfo value = entry.getValue();
-      PsiElement element = value.getElement();
-      assert element != null : value;
+      LineMarkerInfo<?> value = entry.getValue();
       TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = value.getLineMarkerTooltip();
-      MyLineMarkerInfo markerInfo =
-        new MyLineMarkerInfo(element, range, value.updatePass, GutterIconRenderer.Alignment.RIGHT, tooltip);
+      MyLineMarkerInfo markerInfo = new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip);
       entry.setValue(markerInfo);
     }
   }
@@ -236,11 +231,10 @@ public class ExpectedHighlightingData {
       document.replaceString(startOffset, endOffset, content);
       endOffset -= endTag.length();
 
-      PsiElement leaf = Objects.requireNonNull(myFile.findElementAt(startOffset));
       TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = StringUtil.unescapeStringCharacters(descr);
       LineMarkerInfo<PsiElement> markerInfo =
-        new MyLineMarkerInfo(leaf, range, Pass.LINE_MARKERS, GutterIconRenderer.Alignment.RIGHT, tooltip);
+        new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip);
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
 
       text = document.getText();
@@ -801,11 +795,43 @@ public class ExpectedHighlightingData {
     }
   }
 
+  private static final SmartPsiElementPointer<PsiElement> NULL_POINTER = new SmartPsiElementPointer<PsiElement>() {
+    @Nullable
+    @Override
+    public PsiElement getElement() {
+      return null;
+    }
+
+    @Override
+    public @Nullable PsiFile getContainingFile() {
+      return null;
+    }
+
+    @Override
+    public @NotNull Project getProject() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public VirtualFile getVirtualFile() {
+      return null;
+    }
+
+    @Override
+    public @Nullable Segment getRange() {
+      return null;
+    }
+
+    @Override
+    public @Nullable Segment getPsiRange() {
+      return null;
+    }
+  };
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final String myTooltip;
 
-    MyLineMarkerInfo(PsiElement element, TextRange range, int updatePass, GutterIconRenderer.Alignment alignment, String tooltip) {
-      super(element, range, null, null, null, alignment);
+    MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip) {
+      super(NULL_POINTER, range, null, null, null, alignment);
       myTooltip = tooltip;
     }
 
