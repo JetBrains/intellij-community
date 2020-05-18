@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.JBUI
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
 
@@ -46,7 +47,7 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
           }
         }
       }
-    }
+    }.withBorder(JBUI.Borders.empty(2))
   }
 
   private fun isReadAloudEnabled() = SystemInfo.isMac
