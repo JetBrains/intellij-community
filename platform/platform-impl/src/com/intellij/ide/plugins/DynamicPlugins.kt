@@ -43,6 +43,8 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.DescriptorToLoad
@@ -53,6 +55,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
+import java.awt.Window
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
@@ -445,6 +448,7 @@ object DynamicPlugins {
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
       Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
       IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
+      clearTemporaryLostComponent()
 
       if (ApplicationManager.getApplication().isUnitTestMode && loadedPluginDescriptor.pluginClassLoader !is PluginClassLoader) {
         return true
@@ -652,5 +656,27 @@ object DynamicPlugins {
         callback.run()
       }
     })
+  }
+
+  private fun clearTemporaryLostComponent() {
+    try {
+      val clearMethod = Window::class.java.declaredMethods.find { it.name == "setTemporaryLostComponent" }
+      if (clearMethod == null) {
+        LOG.info("setTemporaryLostComponent method not found")
+        return
+      }
+      clearMethod.isAccessible = true
+      loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
+        val window = when(frame) {
+          is ProjectFrameHelper -> frame.frame
+          is Window -> frame
+          else -> continue@loop
+        }
+        clearMethod.invoke(window, null)
+      }
+    }
+    catch (e: Throwable) {
+      LOG.info("Failed to clear Window.temporaryLostComponent", e)
+    }
   }
 }
