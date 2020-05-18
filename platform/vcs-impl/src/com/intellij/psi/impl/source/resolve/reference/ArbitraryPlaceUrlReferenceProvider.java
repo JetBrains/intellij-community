@@ -66,4 +66,9 @@ public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
   public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     return ourRefsCache.get(element, null).getValue();
   }
+
+  @Override
+  public boolean acceptsTarget(@NotNull PsiElement target) {
+    return false;
+  }
 }
