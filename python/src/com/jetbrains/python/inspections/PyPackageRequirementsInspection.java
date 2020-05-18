@@ -379,12 +379,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @NotNull private final List<String> myExtraArgs;
     @Nullable private final PyPackageManagerUI.Listener myListener;
 
-    public PyInstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
+    public PyInstallRequirementsFix(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                    @NotNull Module module, @NotNull Sdk sdk,
                                     @NotNull List<PyRequirement> unsatisfied) {
       this(name, module, sdk, unsatisfied, Collections.emptyList(), null);
     }
 
-    public PyInstallRequirementsFix(@Nullable String name,
+    public PyInstallRequirementsFix(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                     @NotNull Module module,
                                     @NotNull Sdk sdk,
                                     @NotNull List<PyRequirement> unsatisfied,

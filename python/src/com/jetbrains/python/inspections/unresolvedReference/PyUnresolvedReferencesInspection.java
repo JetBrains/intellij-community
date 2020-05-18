@@ -16,10 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.PlatformUtils;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.PythonRuntimeService;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
@@ -250,7 +247,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static LocalQuickFix getInstallPackageAction(String packageName, Module module, Sdk sdk) {
       final List<PyRequirement> requirements = Collections.singletonList(PyRequirementsKt.pyRequirement(packageName));
-      final String name = "Install package " + packageName;
+      final String name = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName);
       return new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements);
     }
 
