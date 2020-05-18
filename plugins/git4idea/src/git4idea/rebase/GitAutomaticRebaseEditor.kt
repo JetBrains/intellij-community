@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.config.GitConfigUtil
-import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE
 import java.io.File
 
 internal class GitAutomaticRebaseEditor(private val project: Project,

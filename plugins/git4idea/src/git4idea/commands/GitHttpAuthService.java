@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.http.GitAskPassApp;
 import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
@@ -56,17 +57,34 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
    * Internal handler implementation class, it is made public to be accessible via XML RPC.
    */
   public class InternalRequestHandlerDelegate implements GitAskPassXmlRpcHandler {
-    @NotNull
     @Override
-    public String askUsername(String token, @NotNull String url) {
-      return getDefaultValueIfCancelled(() -> getHandler(UUID.fromString(token)).askUsername(url), "");
-    }
+    public @NotNull String handleInput(@NotNull String handlerNo, @NotNull String arg) {
+      GitHttpAuthenticator handler = getHandler(UUID.fromString(handlerNo));
 
-    @NotNull
-    @Override
-    public String askPassword(String token, @NotNull String url) {
-      return getDefaultValueIfCancelled(() -> getHandler(UUID.fromString(token)).askPassword(url), "");
+      boolean usernameNeeded = StringUtilRt.startsWithIgnoreCase(arg, "username");
+
+      String[] split = arg.split(" ");
+      String url = split.length > 2 ? parseUrl(split[2]) : "";
+
+      return getDefaultValueIfCancelled(() -> {
+        return usernameNeeded ? handler.askUsername(url) : handler.askPassword(url);
+      }, "");
     }
+  }
+
+  private static String parseUrl(@NotNull String urlArg) {
+    // un-quote and remove the trailing colon
+    String url = urlArg;
+    if (url.startsWith("'")) {
+      url = url.substring(1);
+    }
+    if (url.endsWith(":")) {
+      url = url.substring(0, url.length() - 1);
+    }
+    if (url.endsWith("'")) {
+      url = url.substring(0, url.length() - 1);
+    }
+    return url;
   }
 
   @NotNull

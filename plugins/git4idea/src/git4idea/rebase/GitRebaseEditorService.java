@@ -10,8 +10,8 @@ import git4idea.commands.GitHandler;
 import git4idea.config.GitExecutable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
 import org.jetbrains.git4idea.editor.GitRebaseEditorApp;
+import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
@@ -131,13 +131,6 @@ public class GitRebaseEditorService implements Disposable {
    * The internal xml rcp handler
    */
   public class InternalHandlerRebase implements GitRebaseEditorXmlRpcHandler {
-    /**
-     * Edit commits for the rebase operation
-     *
-     * @param handlerNo the handler no
-     * @param path      the path to edit
-     * @return exit code
-     */
     @Override
     @SuppressWarnings({"UnusedDeclaration"})
     public int editCommits(@NotNull String handlerNo, @NotNull String path, @NotNull String workingDir) {

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.config.GitExecutable;
@@ -53,7 +52,7 @@ public class ScriptGenerator {
     myPrefix = prefix;
     myMainClass = mainClass;
     addClasses(myMainClass);
-    addClasses(XmlRpcClientLite.class, DecoderException.class, StringUtilRt.class);
+    addClasses(XmlRpcClientLite.class, DecoderException.class);
   }
 
   /**

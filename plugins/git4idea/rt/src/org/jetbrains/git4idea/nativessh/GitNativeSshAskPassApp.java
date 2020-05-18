@@ -22,20 +22,22 @@ public class GitNativeSshAskPassApp implements GitExternalApp {
         description = ""; // XML RPC doesn't like nulls
       }
 
-      String token = GitAppUtil.getEnv(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV);
+      String handlerNo = GitAppUtil.getEnv(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV);
       int xmlRpcPort = GitAppUtil.getEnvInt(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV);
-      GitNativeSshAskPassXmlRpcClient xmlRpcClient = new GitNativeSshAskPassXmlRpcClient(xmlRpcPort);
 
-      String answer = GitAppUtil.adjustNullFrom(xmlRpcClient.handleInput(token, description));
-      if (answer == null) {
+      String response = GitAppUtil.sendXmlRequest(GitNativeSshAskPassXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
+                                                  handlerNo, description);
+      String passphrase = GitAppUtil.adjustNullFrom(response);
+      if (passphrase == null) {
         System.exit(1); // dialog canceled
       }
 
-      System.out.println(answer);
+      System.out.println(passphrase);
     }
     catch (Throwable t) {
       System.err.println(t.getMessage());
       t.printStackTrace(System.err);
+      System.exit(1);
     }
   }
 }

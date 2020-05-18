@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
-
-
 public class GitSimpleEditorHandler implements GitRebaseEditorHandler {
   private static final Logger LOG = Logger.getInstance(GitSimpleEditorHandler.class);
 

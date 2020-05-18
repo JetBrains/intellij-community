@@ -16,6 +16,7 @@
 package git4idea.rebase;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
 
 import java.io.File;
 
@@ -25,6 +26,7 @@ import java.io.File;
  * <p>This handler should be registered in the {@link GitRebaseEditorService}.</p>
  */
 public interface GitRebaseEditorHandler {
+  int ERROR_EXIT_CODE = GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
 
   /**
    * Handle the request from Git to edit some information during rebase.
