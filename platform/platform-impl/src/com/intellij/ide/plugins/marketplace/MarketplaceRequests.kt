@@ -113,7 +113,7 @@ open class MarketplaceRequests {
       }
   }
   catch (e: Exception) {
-    LOG.warn("Can not get features from Marketplace")
+    logWarnOrPrintIfDebug("Can not get features from Marketplace", e)
     emptyList()
   }
 
@@ -171,7 +171,7 @@ open class MarketplaceRequests {
       }
   }
   catch (e: Exception) {
-    LOG.warn("Can not get organizations from Marketplace", e)
+    logWarnOrPrintIfDebug("Can not get organizations from Marketplace", e)
     emptyList()
   }
 
@@ -185,7 +185,7 @@ open class MarketplaceRequests {
       }
   }
   catch (e: Exception) {
-    LOG.warn("Can not get tags from Marketplace", e)
+    logWarnOrPrintIfDebug("Can not get tags from Marketplace", e)
     emptyList()
   }
 
@@ -266,7 +266,7 @@ open class MarketplaceRequests {
       }
   }
   catch (e: Exception) {
-    LOG.warn("Can not get compatible updates from Marketplace")
+    logWarnOrPrintIfDebug("Can not get compatible updates from Marketplace", e)
     emptyList()
   }
 
@@ -360,5 +360,14 @@ open class MarketplaceRequests {
   }
 
   private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)
+
+  private fun logWarnOrPrintIfDebug(message: String, throwable: Throwable) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug(message, throwable)
+    }
+    else {
+      LOG.warn("$message:${throwable.message}")
+    }
+  }
 
 }
