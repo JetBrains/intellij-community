@@ -13,6 +13,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +76,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
         addLine(buildHeader(fragments));
         addLine(buildCommandLinePanel(fragments));
 
-        JPanel tagsPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING));
         tagsPanel.setBorder(JBUI.Borders.empty(5, 0));
         for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
           if (fragment.isTag()) {
