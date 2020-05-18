@@ -38,12 +38,10 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.AppIcon;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -617,7 +615,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       try {
         shutdownTracker.registerStopperThread(self);
 
-        ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
+        DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
 
         myDumbTaskQueue.processTasksWithProgress(taskIndicator -> {
           suspender.attachToProgress(taskIndicator);
@@ -656,33 +654,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   public @Nullable Throwable getDumbModeStartTrace() {
     return myDumbStart;
-  }
-
-  private class AppIconProgress extends ProgressIndicatorBase {
-    private double lastFraction;
-
-    @Override
-    public void setFraction(final double fraction) {
-      if (fraction - lastFraction < 0.01d) return;
-      lastFraction = fraction;
-      UIUtil.invokeLaterIfNeeded(
-        () -> AppIcon.getInstance().setProgress(myProject, "indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true));
-    }
-
-    @Override
-    public void finish(@NotNull TaskInfo task) {
-      if (lastFraction != 0) { // we should call setProgress at least once before
-        UIUtil.invokeLaterIfNeeded(() -> {
-          AppIcon appIcon = AppIcon.getInstance();
-          if (appIcon.hideProgress(myProject, "indexUpdate")) {
-            if (Registry.is("ide.appIcon.requestAttention.after.indexing", false)) {
-              appIcon.requestAttention(myProject, false);
-            }
-            appIcon.setOkBadge(myProject, true);
-          }
-        });
-      }
-    }
   }
 
   private enum State {
