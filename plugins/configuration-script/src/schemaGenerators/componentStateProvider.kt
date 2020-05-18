@@ -11,11 +11,11 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.ReflectionUtil
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.io.JsonObjectBuilder
 
 internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
-  private val pathToStateClass: MutableMap<String, Class<out BaseState>> = THashMap()
+  private val pathToStateClass: MutableMap<String, Class<out BaseState>> = Object2ObjectOpenHashMap()
 
   private val objectSchemaGenerator = OptionClassJsonSchemaGenerator("classDefinitions")
 
@@ -39,7 +39,7 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
       return
     }
 
-    val pathToJsonObjectBuilder: MutableMap<String, JsonObjectBuilder> = THashMap()
+    val pathToJsonObjectBuilder: MutableMap<String, JsonObjectBuilder> = Object2ObjectOpenHashMap()
     for (path in pathToStateClass.keys.sorted()) {
       val keys = path.split(".")
       val jsonObjectBuilder: JsonObjectBuilder
