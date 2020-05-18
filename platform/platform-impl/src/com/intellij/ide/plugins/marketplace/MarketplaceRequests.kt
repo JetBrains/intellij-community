@@ -203,13 +203,7 @@ open class MarketplaceRequests {
   @JvmOverloads
   fun loadLastCompatiblePluginDescriptors(ids: List<String>, buildNumber: BuildNumber? = null): List<PluginNode> {
     if (ids.isEmpty()) return emptyList()
-    val data: List<IdeCompatibleUpdate> = try {
-      getLastCompatiblePluginUpdate(ids, buildNumber)
-    }
-    catch (e: Exception) {
-      LOG.warn("Can not get compatible update from Marketplace", e)
-      emptyList()
-    }
+    val data: List<IdeCompatibleUpdate> = getLastCompatiblePluginUpdate(ids, buildNumber)
     return data.map { loadPluginDescriptor(it.pluginId, it, null) }
   }
 
@@ -278,13 +272,7 @@ open class MarketplaceRequests {
 
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null, indicator: ProgressIndicator? = null): PluginNode? {
-    val data = try {
-      getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
-    }
-    catch (e: Exception) {
-      LOG.warn("Can not get compatible update from Marketplace", e)
-      null
-    }
+    val data = getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
     return data?.let { loadPluginDescriptor(id, it, indicator) }
   }
 
