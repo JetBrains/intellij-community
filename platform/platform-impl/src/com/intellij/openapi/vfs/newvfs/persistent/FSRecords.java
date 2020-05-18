@@ -1718,7 +1718,8 @@ public final class FSRecords {
   private static int contents;
   private static int reuses;
 
-  private static final MessageDigest CONTENT_HASH_DIGEST = DigestUtil.sha1();
+  // TODO replace with sha-256
+  public static final MessageDigest CONTENT_HASH_DIGEST = DigestUtil.sha1();
 
   private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert WE_HAVE_CONTENT_HASHES;

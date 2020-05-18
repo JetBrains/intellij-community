@@ -1316,7 +1316,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     // trigram index is not a composite index
     assertFalse(trigramIndexForwardIndex.getInt(javaFileId) == 0)
     assertFalse(trigramIndexForwardIndex.getInt(groovyFileId) == 0)
-    assertEquals(trigramIndexForwardIndex.getInt(groovyFileId), trigramIndexForwardIndex.getInt(javaFileId))
+    // for trigram index the assertion above can be broken by definition of trigram index
+    // assertFalse(trigramIndexForwardIndex.getInt(groovyFileId) == trigramIndexForwardIndex.getInt(javaFileId))
   }
 
   private boolean findWordInDumbMode(String word, VirtualFile file, boolean inDumbMode) {

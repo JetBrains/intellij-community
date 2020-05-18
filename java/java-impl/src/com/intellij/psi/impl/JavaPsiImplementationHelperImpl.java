@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -158,10 +159,9 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     // prevent expensive look-up into VFS
     if (virtualFile == null || myProject.isDefault()) return PsiUtil.getLanguageLevel(myProject);
 
-    VirtualFile parent = virtualFile.getParent();
-    if (parent != null) {
-      LanguageLevel level = parent.getUserData(LanguageLevel.KEY);
-      if (level != null) return level;
+    LanguageLevel level = JavaLanguageLevelPusher.getPushedLanguageLevel(virtualFile);
+    if (level != null) {
+      return level;
     }
 
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();

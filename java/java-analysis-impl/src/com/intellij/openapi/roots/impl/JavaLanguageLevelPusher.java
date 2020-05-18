@@ -112,4 +112,14 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
                                                      @NotNull LanguageLevel level, @NotNull PsiFile file) {
     return null;
   }
+
+  @Nullable
+  public static LanguageLevel getPushedLanguageLevel(@NotNull VirtualFile file) {
+    VirtualFile parent = file.getParent();
+    if (parent != null) {
+      LanguageLevel level = parent.getUserData(LanguageLevel.KEY);
+      if (level != null) return level;
+    }
+    return null;
+  }
 }
