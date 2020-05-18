@@ -73,7 +73,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
 
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     String shFmtExecutable = ShSettings.getShfmtPath();
-    if (ShSettings.I_DO_MIND.equals(shFmtExecutable)) return;
+    if (ShSettings.PLACEHOLDER.equals(shFmtExecutable)) return;
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       String groupId = NotificationGroup.createIdWithTitle("Shell Script", ShBundle.message("sh.title.case"));
@@ -93,7 +93,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
         }));
       notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.fmt.no.thanks"), () -> {
         notification.expire();
-        ShSettings.setShfmtPath(ShSettings.I_DO_MIND);
+        ShSettings.setShfmtPath(ShSettings.PLACEHOLDER);
       }));
       Notifications.Bus.notify(notification);
       return;
