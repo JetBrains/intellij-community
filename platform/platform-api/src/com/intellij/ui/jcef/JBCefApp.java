@@ -65,6 +65,9 @@ public final class JBCefApp {
   private static final List<JBCefCustomSchemeHandlerFactory> ourCustomSchemeHandlerFactoryList =
     Collections.synchronizedList(new ArrayList<>());
 
+  //fixme use addCefCustomSchemeHandlerFactory method if possible
+  private static final JBCefSourceSchemeHandlerFactory ourSourceSchemeHandlerFactory = new JBCefSourceSchemeHandlerFactory();
+
   private JBCefApp(@NotNull JCefAppConfig config) {
     CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
     CefSettings settings = config.getCefSettings();
@@ -269,6 +272,7 @@ public final class JBCefApp {
       for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         f.registerCustomScheme(registrar);
       }
+      ourSourceSchemeHandlerFactory.registerCustomScheme(registrar);
     }
 
     @Override
@@ -278,6 +282,8 @@ public final class JBCefApp {
       }
       ourCustomSchemeHandlerFactoryList.clear(); // no longer needed
 
+      getInstance().myCefApp.registerSchemeHandlerFactory(
+        ourSourceSchemeHandlerFactory.getSchemeName(), ourSourceSchemeHandlerFactory.getDomainName(), ourSourceSchemeHandlerFactory);
       getInstance().myCefApp.registerSchemeHandlerFactory(FILE_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
         @Override
         public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
