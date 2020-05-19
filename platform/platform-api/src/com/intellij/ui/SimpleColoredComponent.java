@@ -1085,7 +1085,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     if (myIcon instanceof IconWithToolTip && findFragmentAt(event.getX()) == FRAGMENT_ICON && Registry.is("ide.icon.tooltips")) {
       String iconToolTip = ((IconWithToolTip)myIcon).getToolTip(false);
       if (iconToolTip != null) {
-        return iconToolTip;
+        return StringUtil.capitalize(iconToolTip);
       }
     }
     return super.getToolTipText(event);
