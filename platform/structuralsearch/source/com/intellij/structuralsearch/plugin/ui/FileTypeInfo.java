@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 /**
  * @author Pavel.Dolgov
  */
-public class FileTypeInfo {
+class FileTypeInfo {
   public static final FileTypeInfo[] EMPTY_ARRAY = new FileTypeInfo[0];
 
   /** @see com.intellij.openapi.fileTypes.impl.FileTypeRenderer */
@@ -26,7 +26,7 @@ public class FileTypeInfo {
   private final boolean myNested;
   private final String myDescription;
 
-  public FileTypeInfo(@NotNull LanguageFileType fileType, @NotNull Language dialect, @Nullable PatternContext context, boolean nested) {
+  FileTypeInfo(@NotNull LanguageFileType fileType, @NotNull Language dialect, @Nullable PatternContext context, boolean nested) {
     myFileType = fileType;
     myDialect = dialect;
     myContext = context;
