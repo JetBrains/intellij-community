@@ -403,7 +403,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       if (!myPendingFileTypes.containsKey(bean.name)) {
         fileType = mySchemeManager.findSchemeByName(bean.name);
-        if (fileType != null) {
+        if (fileType != null && !(fileType instanceof AbstractFileType)) {
           return fileType;
         }
       }

@@ -905,16 +905,21 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FileTypeBean bean = new FileTypeBean();
     bean.name = MyTestFileType.NAME;
     bean.implementationClass = MyTestFileType.class.getName();
+    Disposable disposable = registerFileType(bean);
+
+    assertNotNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
+    assertNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
+  }
+
+  @NotNull Disposable registerFileType(FileTypeBean bean) {
     bean.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
     Disposable disposable = Disposer.newDisposable();
     Disposer.register(getTestRootDisposable(), disposable);
     ApplicationManager.getApplication().runWriteAction(
       () -> FileTypeManagerImpl.EP_NAME.getPoint(null).registerExtension(bean, disposable)
     );
-
-    assertNotNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
-    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
-    assertNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
+    return disposable;
   }
 
   public void testRegisterUnregisterExtensionWithFileName() throws IOException {
@@ -926,12 +931,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.name = MyTestFileType.NAME;
     bean.fileNames = ".prettierrc";
     bean.implementationClass = MyTestFileType.class.getName();
-    bean.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
-    Disposable disposable = Disposer.newDisposable();
-    Disposer.register(getTestRootDisposable(), disposable);
-    ApplicationManager.getApplication().runWriteAction(
-      () -> FileTypeManagerImpl.EP_NAME.getPoint(null).registerExtension(bean, disposable)
-    );
+    Disposable disposable = registerFileType(bean);
     CachedFileType.clearCache();   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
 
     assertEquals(MyTestFileType.NAME, FileTypeManager.getInstance().getFileTypeByFileName(".prettierrc").getName());
@@ -949,12 +949,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FileTypeBean bean = new FileTypeBean();
     bean.name = "XML";
     bean.fileNames = ".prettierrc";
-    bean.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
-    Disposable disposable = Disposer.newDisposable();
-    Disposer.register(getTestRootDisposable(), disposable);
-    ApplicationManager.getApplication().runWriteAction(
-      () -> FileTypeManagerImpl.EP_NAME.getPoint(null).registerExtension(bean, disposable)
-    );
+    Disposable disposable = registerFileType(bean);
     CachedFileType.clearCache();   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
 
     assertEquals("XML", FileTypeManager.getInstance().getFileTypeByFileName(".prettierrc").getName());
@@ -962,6 +957,20 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
     assertEquals("UNKNOWN", FileTypeManager.getInstance().getFileTypeByFileName(".prettierrc").getName());
+  }
+
+  public void testPluginOverridesAbstractFileType() {
+    assertInstanceOf(FileTypeManager.getInstance().findFileTypeByName("Haskell"), AbstractFileType.class);
+
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = "Haskell";
+    bean.extensions = "hs";
+    bean.implementationClass = MyHaskellFileType.class.getName();
+    Disposable disposable = registerFileType(bean);
+
+    assertInstanceOf(FileTypeManager.getInstance().findFileTypeByName("Haskell"), MyHaskellFileType.class);
+
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
   }
 
   @NotNull
@@ -1048,6 +1057,50 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override
     public String getDefaultExtension() {
       return "fromPlugin";
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return null;
+    }
+
+    @Override
+    public boolean isBinary() {
+      return false;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+      return null;
+    }
+  }
+
+  private static class MyHaskellFileType implements FileType {
+    public static final String NAME = "Haskell";
+
+    @NotNull
+    @Override
+    public String getName() {
+      return NAME;
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+      return "";
+    }
+
+    @NotNull
+    @Override
+    public String getDefaultExtension() {
+      return "hs";
     }
 
     @Nullable
