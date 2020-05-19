@@ -1045,6 +1045,11 @@
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(c.getValue().substring(1), GlobalSearchScope.allScope(project));&#10;def cVirtualFile = c==null?null:PsiUtil.getVirtualFile(cClass);&#10;&#10;cVirtualFile != null &amp;&amp;  &#10;__context__.getContainingFile().getResolveScope().contains(cVirtualFile)&#10;&quot;" target="true" within="" contains="" />
         <constraint name="c" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Manual TextRange.substring implementation" description="Reports code pattern like str.substring(range.getStartOffset(), range.getEndOffset()). This code could be replaced with range.substring(str)" problemDescriptor="TextRange.substring() could be used" text="$str$.substring($range$.getStartOffset(), $range$.getEndOffset())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$range$.substring($str$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="str" nameOfExprType="java\.lang\.String" within="" contains="" />
+        <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
