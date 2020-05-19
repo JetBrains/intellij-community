@@ -106,7 +106,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
     }
     else {
       mySerializationManager = SerializationManagerImpl(File(indexesRoot, "$indexName.names").toPath(), true)
-      Disposer.register(ApplicationManager.getApplication(), mySerializationManager!!)
+      Disposer.register(ApplicationManager.getApplication(), mySerializationManager)
       return super.openIndexStorage(indexesRoot)
     }
   }
