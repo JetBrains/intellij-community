@@ -24,8 +24,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-final class DumbServiceTaskQueue {
-  private static final Logger LOG = Logger.getInstance(DumbServiceTaskQueue.class);
+final class DumbServiceGuiTaskQueue {
+  private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
 
   private final Project myProject;
   private final Object myLock = new Object();
@@ -38,7 +38,7 @@ final class DumbServiceTaskQueue {
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = new ConcurrentHashMap<>();
 
-  DumbServiceTaskQueue(@NotNull Project project) {
+  DumbServiceGuiTaskQueue(@NotNull Project project) {
     myProject = project;
   }
 
