@@ -68,7 +68,8 @@ class JavaIntentionPolicy extends IntentionPolicy {
     return familyName.matches("(?i)Create \\w+ from usage") ||
            familyName.equals("Create Constructor") ||
            // Does not change file content
-           familyName.equals("Rename File");
+           familyName.equals("Rename File") ||
+           familyName.equals("Move file to a source root");
   }
 }
 
