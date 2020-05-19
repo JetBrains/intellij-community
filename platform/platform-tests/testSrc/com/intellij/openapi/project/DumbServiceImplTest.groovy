@@ -27,6 +27,41 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class DumbServiceImplTest extends BasePlatformTestCase {
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp()
+    def key = "idea.force.dumb.queue.tasks"
+    String prev = System.setProperty(key, "true")
+    disposeOnTearDown {
+      if (prev != null) {
+        System.setProperty(key, prev)
+      } else {
+        System.clearProperty(key)
+      }
+    }
+  }
+
+  void "test queueTask is async"() {
+    def semaphore = new Semaphore(1)
+    dumbService.queueTask(new DumbModeTask("mock") {
+      @Override
+      void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        def e = new Exception()
+        for (StackTraceElement element : e.stackTrace) {
+          if (element.toString().contains(DumbServiceGuiTaskQueue.class.simpleName)) {
+            semaphore.up()
+            return
+          }
+        }
+        throw new Error("Unexpected stack trace for the DumbModeTask: ", e)
+      }
+    })
+
+    UIUtil.dispatchAllInvocationEvents()
+    assert semaphore.waitFor(1000)
+    UIUtil.dispatchAllInvocationEvents()
+  }
+
   void "test runWhenSmart is executed synchronously in smart mode"() {
     int invocations = 0
     dumbService.runWhenSmart { invocations++ }
@@ -38,7 +73,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     int invocations = 0
 
     Semaphore semaphore = new Semaphore(1)
-    dumbService.queueAsynchronousTask(new DumbModeTask(new Object()) {
+    dumbService.queueTask(new DumbModeTask(new Object()) {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         assert !ApplicationManager.application.dispatchThread
@@ -85,7 +120,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     def started = new AtomicBoolean()
     def finished = new AtomicBoolean()
 
-    dumbService.queueAsynchronousTask(new DumbModeTask(new Object()) {
+    dumbService.queueTask(new DumbModeTask(new Object()) {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         started.set(true)

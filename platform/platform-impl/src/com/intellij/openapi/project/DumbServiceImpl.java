@@ -236,7 +236,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @VisibleForTesting
-  void queueAsynchronousTask(@NotNull DumbModeTask task) {
+  private void queueAsynchronousTask(@NotNull DumbModeTask task) {
     Throwable trace = new Throwable(); // please report exceptions here to peter
     ModalityState modality = ModalityState.defaultModalityState();
     Runnable runnable = () -> queueTaskOnEdt(task, modality, trace);
