@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
@@ -23,7 +23,6 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UI;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -323,7 +322,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           return;
         }
 
-        MinusculeMatcher matcher = NameUtil.buildMatcher("*" + mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
+        MinusculeMatcher matcher = FixingLayoutMatcherUtil.buildLayoutFixingMatcher("*" + mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
         model.setFilter(pair -> {
           Object obj = ((Pair)pair).second;
           String value;

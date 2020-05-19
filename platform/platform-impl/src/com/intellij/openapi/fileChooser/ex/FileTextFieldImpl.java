@@ -26,6 +26,7 @@ import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -579,7 +580,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   private static MinusculeMatcher createMatcher(String prefix) {
-    return NameUtil.buildMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE);
+    return FixingLayoutMatcherUtil.buildLayoutFixingMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   private void addMacroPaths(final CompletionResult result, final String typedText) {

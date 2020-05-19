@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
@@ -21,6 +20,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.*;
+import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TIntArrayList;
@@ -521,7 +521,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       if (text == null) return;
 
       for (String word : StringUtil.split(text, " ")) {
-        wordMatchers.add(new FixingLayoutMatcher("*" + word, NameUtil.MatchingCaseSensitivity.NONE, ""));
+        wordMatchers.add(FixingLayoutMatcherUtil.create("*" + word, NameUtil.MatchingCaseSensitivity.NONE, ""));
       }
     }
 

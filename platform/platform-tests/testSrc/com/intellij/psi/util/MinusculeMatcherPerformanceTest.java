@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,6 +6,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.junit.Assert;
@@ -27,10 +26,10 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
     final List<MinusculeMatcher> nonMatching = new ArrayList<>();
 
     for (String s : ContainerUtil.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
-      matching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+      matching.add(FixingLayoutMatcherUtil.buildLayoutFixingMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
     for (String s : ContainerUtil.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
-      nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+      nonMatching.add(FixingLayoutMatcherUtil.buildLayoutFixingMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
     PlatformTestUtil.startPerformanceTest("Matching", 5_500, () -> {

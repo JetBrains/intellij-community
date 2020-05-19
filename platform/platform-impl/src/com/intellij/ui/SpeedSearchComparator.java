@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ public class SpeedSearchComparator {
 
   @NotNull
   protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern).build();
+    return FixingLayoutMatcherUtil.buildLayoutFixingMatcher(pattern).build();
   }
 
   public String getRecentSearchText() {

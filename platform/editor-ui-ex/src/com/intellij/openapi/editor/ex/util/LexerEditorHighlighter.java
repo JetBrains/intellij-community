@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.lexer.FlexAdapter;
@@ -26,8 +26,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
@@ -53,7 +53,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public LexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
-    myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE);
+    myLexer.start(Strings.EMPTY_CHAR_SEQUENCE);
     myInitialState = myLexer.getState();
     myHighlighter = highlighter;
     mySegments = createSegments();

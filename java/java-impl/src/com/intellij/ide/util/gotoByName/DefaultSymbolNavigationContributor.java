@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -23,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +152,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
     if (completePattern.contains(".") || completePattern.contains("#")) {
       String normalized = StringUtil.replace(StringUtil.replace(completePattern, "#", ".*"), ".", ".*");
-      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + normalized).build();
+      MinusculeMatcher matcher = FixingLayoutMatcherUtil.buildLayoutFixingMatcher("*" + normalized).build();
       return member -> {
         String qualifiedName = PsiUtil.getMemberQualifiedName(member);
         return qualifiedName != null && matcher.matches(qualifiedName);

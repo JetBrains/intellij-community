@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -16,6 +15,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
+import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -72,7 +72,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private boolean myOnlyWithDiff;
   private boolean myOnlyTracked;
   private boolean myOnlyWithInstances;
-  private MinusculeMatcher myMatcher = NameUtil.buildMatcher("*").build();
+  private MinusculeMatcher myMatcher = FixingLayoutMatcherUtil.buildLayoutFixingMatcher("*").build();
   private String myFilteringPattern = "";
   private final MergingUpdateQueue myFilterTypingMergeQueue = new MergingUpdateQueue(
     "Classes table typing merging queue", 500, true,
@@ -288,7 +288,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
           if (myMatcher.getPattern().equals(newPattern)) {
             return;
           }
-          myMatcher = NameUtil.buildMatcher(newPattern).build();
+          myMatcher = FixingLayoutMatcherUtil.buildLayoutFixingMatcher(newPattern).build();
           fireTableDataChanged();
           if (getSelectedClass() == null && getRowCount() > 0) {
             getSelectionModel().setSelectionInterval(0, 0);

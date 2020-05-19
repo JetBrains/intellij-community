@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   private MinusculeMatcher createMatcher(final boolean caseSensitive) {
     String prefix = applyMiddleMatching(myPrefix);
 
-    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(prefix);
+    NameUtil.MatcherBuilder builder = FixingLayoutMatcherUtil.buildLayoutFixingMatcher(prefix);
     if (caseSensitive) {
       int setting = CodeInsightSettings.getInstance().getCompletionCaseSensitive();
       if (setting == CodeInsightSettings.FIRST_LETTER) {

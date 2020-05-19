@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
@@ -443,7 +444,7 @@ public final class HttpRequests {
     public CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException {
       BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
       if (byteStream.size() == 0) {
-        return ArrayUtil.EMPTY_CHAR_SEQUENCE;
+        return Strings.EMPTY_CHAR_SEQUENCE;
       }
       else {
         return getCharset().decode(ByteBuffer.wrap(byteStream.getInternalBuffer(), 0, byteStream.size()));
