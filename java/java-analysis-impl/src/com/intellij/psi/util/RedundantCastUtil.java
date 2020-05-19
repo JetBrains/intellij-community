@@ -624,7 +624,7 @@ public class RedundantCastUtil {
       Encoder encoder = new Encoder();
       PsiElement encoded = null;
       try {
-        if (typeByParent != null) {
+        if (typeByParent != null && PsiTypesUtil.isDenotableType(typeByParent, expression)) {
           encoder.encode(encoded = expression);
           return  (PsiCall)LambdaUtil.copyWithExpectedType(expression, typeByParent);
         }
