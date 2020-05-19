@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLayout;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,6 +87,8 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
+      Rectangle bounds = tabLabel.getBounds();
+      if (bounds.x + bounds.width + deltaX < 0 || bounds.x + bounds.width > tabLabel.getParent().getWidth()) return true;
       return Math.abs(deltaY) > tabLabel.getHeight() * myLayout.getDragOutMultiplier();
     }
 
@@ -326,7 +329,9 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
-      return Math.abs(deltaX) > tabLabel.getHeight() * myLayout.getDragOutMultiplier();
+      Rectangle bounds = tabLabel.getBounds();
+      if (bounds.y + bounds.height + deltaX < 0 || bounds.y + bounds.height > tabLabel.getParent().getHeight()) return true;
+      return Math.abs(deltaX) > tabLabel.getWidth() * TabLayout.getDragOutMultiplier();
     }
 
     @Override
