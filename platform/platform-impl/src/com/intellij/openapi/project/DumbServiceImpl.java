@@ -67,8 +67,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Project myProject;
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
-  private final DumbServiceGuiTaskQueue myDumbTaskQueue;
-  private final DumbServiceSyncTaskQueue mySyncTaskQueue;
+  private final DumbServiceMergingTaskQueue myTaskQueue;
+  private final DumbServiceGuiTaskQueue myGuiDumbTaskRunner;
+  private final DumbServiceSyncTaskQueue mySyncDumbTaskRunner;
   private final DumbServiceHeavyActivities myHeavyActivities;
   private final DumbServiceAlternativeResolveTracker myAlternativeResolveTracker;
 
@@ -78,8 +79,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public DumbServiceImpl(Project project) {
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
-    myDumbTaskQueue = new DumbServiceGuiTaskQueue(myProject);
-    mySyncTaskQueue = new DumbServiceSyncTaskQueue();
+    myTaskQueue = new DumbServiceMergingTaskQueue();
+    myGuiDumbTaskRunner = new DumbServiceGuiTaskQueue(myProject, myTaskQueue);
+    mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
@@ -119,19 +121,20 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void cancelTask(@NotNull DumbModeTask task) {
-    myDumbTaskQueue.cancelTask(task);
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
+    myTaskQueue.cancelTask(task);
   }
 
   @Override
   public void dispose() {
     ApplicationManager.getApplication().assertIsWriteThread();
     myBalloon.dispose();
-    myDumbTaskQueue.clearTasksQueue();
+    myTaskQueue.clearTasksQueue();
 
     synchronized (myRunWhenSmartQueue) {
       myRunWhenSmartQueue.clear();
     }
-    myDumbTaskQueue.disposePendingTasks();
+    myTaskQueue.disposePendingTasks();
   }
 
   @Override
@@ -225,7 +228,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     if (isSynchronousTaskExecution()) {
-      mySyncTaskQueue.runTaskSynchronously(task);
+      mySyncDumbTaskRunner.runTaskSynchronously(task);
     }
     else {
       queueAsynchronousTask(task);
@@ -246,7 +249,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace) {
-    myDumbTaskQueue.addTaskToQueue(task);
+    myTaskQueue.addTask(task);
     State state = myState.get();
     if (state == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS) {
       return;
@@ -373,7 +376,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // polls next dumb mode task
       myTrackedEdtActivityService.executeAllQueuedActivities();
       // cancels all scheduled and running tasks
-      myDumbTaskQueue.cancelAllTasks();
+      myTaskQueue.cancelAllTasks();
       myHeavyActivities.resumeProgressIfPossible();
     }
   }
@@ -533,7 +536,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
 
-        myDumbTaskQueue.processTasksWithProgress(taskIndicator -> {
+        myGuiDumbTaskRunner.processTasksWithProgress(taskIndicator -> {
           suspender.attachToProgress(taskIndicator);
           taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
             @Override
