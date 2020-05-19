@@ -486,8 +486,13 @@ public class ExpectedHighlightingData {
       }
     });
     if (!myIgnoreExtraHighlighting) {
-      for (HighlightInfo info : reverseCollection(infos)) {
-        ThreeState state = expectedInfosContainsInfo(info);
+      Map<ExpectedHighlightingSet, Set<HighlightInfo>> indexed = new HashMap<>();
+      for (ExpectedHighlightingSet set : myHighlightingTypes.values()) {
+        indexed.put(set, indexInfos(set.infos));
+      }
+
+      for (HighlightInfo info : infos) {
+        ThreeState state = expectedInfosContainsInfo(info, indexed);
         if (state == ThreeState.NO) {
           reportProblem(psiFile, failMessage, text, info, "extra ");
           failMessage.append(" [").append(info.type).append(']');
@@ -507,11 +512,12 @@ public class ExpectedHighlightingData {
       }
     }
 
+    Set<HighlightInfo> indexedInfos = indexInfos(infos);
     Collection<ExpectedHighlightingSet> expectedHighlights = myHighlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       Set<HighlightInfo> expInfos = highlightingSet.infos;
       for (HighlightInfo expectedInfo : expInfos) {
-        if (!infosContainsExpectedInfo(infos, expectedInfo) && highlightingSet.enabled) {
+        if (!indexedInfos.contains(expectedInfo) && highlightingSet.enabled) {
           reportProblem(psiFile, failMessage, text, expectedInfo, "missing ");
         }
       }
@@ -528,6 +534,22 @@ public class ExpectedHighlightingData {
       failMessage.append('\n');
       compareTexts(infos, text, failMessage.toString(), filePath);
     }
+  }
+
+  @NotNull
+  private static Set<HighlightInfo> indexInfos(Collection<? extends HighlightInfo> infos) {
+    Set<HighlightInfo> index = new THashSet<>(new TObjectHashingStrategy<HighlightInfo>() {
+      @Override
+      public int computeHashCode(HighlightInfo object) {
+        return Objects.hash(object.startOffset, object.endOffset); //good enough
+      }
+      @Override
+      public boolean equals(HighlightInfo o1, HighlightInfo o2) {
+        return matchesPattern(o1, o2, false);
+      }
+    });
+    index.addAll(infos);
+    return index;
   }
 
   private static void reportProblem(@Nullable PsiFile psiFile,
@@ -550,10 +572,6 @@ public class ExpectedHighlightingData {
     if (desc != null) {
       failMessage.append(" (").append(desc).append(')');
     }
-  }
-
-  private static <T> List<T> reverseCollection(Collection<? extends T> infos) {
-    return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<>(infos));
   }
 
   private void compareTexts(Collection<? extends HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
@@ -722,37 +740,24 @@ public class ExpectedHighlightingData {
     return bundleMsg;
   }
 
-  private static boolean infosContainsExpectedInfo(Collection<? extends HighlightInfo> infos, HighlightInfo expectedInfo) {
-    for (HighlightInfo info : infos) {
-      if (matchesPattern(expectedInfo, info, false)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private ThreeState expectedInfosContainsInfo(HighlightInfo info) {
+  private ThreeState expectedInfosContainsInfo(HighlightInfo info, Map<ExpectedHighlightingSet, Set<HighlightInfo>> indexed) {
     if (info.getTextAttributes(null, null) == TextAttributes.ERASE_MARKER) return ThreeState.UNSURE;
     Collection<ExpectedHighlightingSet> expectedHighlights = myHighlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       if (highlightingSet.severity != info.getSeverity()) continue;
       if (!highlightingSet.enabled) return ThreeState.UNSURE;
-      Set<HighlightInfo> infos = highlightingSet.infos;
-      for (HighlightInfo expectedInfo : infos) {
-        if (matchesPattern(expectedInfo, info, false)) {
-          return ThreeState.YES;
-        }
-      }
+      Set<HighlightInfo> index = indexed.get(highlightingSet);
+      if (index != null && index.contains(info)) return ThreeState.YES;
     }
     return ThreeState.NO;
   }
 
   private static boolean matchesPattern(@NotNull HighlightInfo expectedInfo, @NotNull HighlightInfo info, boolean strictMatch) {
     if (expectedInfo == info) return true;
-    boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && expectedInfo.type == WHATEVER;
+    boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && (expectedInfo.type == WHATEVER || info.type == WHATEVER);
     boolean textAttributesMatches = Comparing.equal(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null)) ||
-                                    !strictMatch && expectedInfo.forcedTextAttributes == null;
-    boolean attributesKeyMatches = !strictMatch && expectedInfo.forcedTextAttributesKey == null ||
+                                    !strictMatch && (expectedInfo.forcedTextAttributes == null || info.forcedTextAttributes == null);
+    boolean attributesKeyMatches = !strictMatch && (expectedInfo.forcedTextAttributesKey == null || info.forcedTextAttributesKey == null) ||
                                    Objects.equals(expectedInfo.forcedTextAttributesKey, info.forcedTextAttributesKey);
     return
       haveSamePresentation(info, expectedInfo, strictMatch) &&
@@ -767,7 +772,7 @@ public class ExpectedHighlightingData {
            info1.endOffset == info2.endOffset &&
            info1.isAfterEndOfLine() == info2.isAfterEndOfLine() &&
            (Comparing.strEqual(info1.getDescription(), info2.getDescription()) ||
-            !strictMatch && Comparing.strEqual(ANY_TEXT, info2.getDescription()));
+            !strictMatch && (Comparing.strEqual(ANY_TEXT, info2.getDescription()) || Comparing.strEqual(ANY_TEXT, info1.getDescription())));
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {

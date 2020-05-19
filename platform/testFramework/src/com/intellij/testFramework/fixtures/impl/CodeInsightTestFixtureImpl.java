@@ -196,7 +196,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static void removeDuplicatedRangesForInjected(@NotNull List<? extends HighlightInfo> infos) {
     infos.sort((o1, o2) -> {
-      final int i = o2.startOffset - o1.startOffset;
+      final int i = o1.startOffset - o2.startOffset;
       return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
     });
     HighlightInfo prevInfo = null;
