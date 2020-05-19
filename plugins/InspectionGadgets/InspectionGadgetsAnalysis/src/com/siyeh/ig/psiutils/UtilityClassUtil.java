@@ -47,11 +47,11 @@ public class UtilityClassUtil {
       return false;
     }
     final PsiReferenceList extendsList = aClass.getExtendsList();
-    if (fullCheck && extendsList != null && extendsList.getReferenceElements().length > 0) {
+    if (fullCheck && extendsList != null && extendsList.getReferencedTypes().length > 0) {
       return false;
     }
     final PsiReferenceList implementsList = aClass.getImplementsList();
-    if (implementsList != null && implementsList.getReferenceElements().length > 0) {
+    if (implementsList != null && implementsList.getReferencedTypes().length > 0) {
       return false;
     }
     final int staticMethodCount = countStaticMethods(aClass.getMethods());
