@@ -1807,9 +1807,10 @@ public final class PluginManagerCore {
                                               @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
                                               @NotNull List<PluginError> errors) {
-    if (descriptor.getPluginId() == CORE_ID || descriptor.isImplementationDetail()) {
+    if (descriptor.getPluginId() == CORE_ID) {
       return true;
     }
+    boolean notifyUser = !descriptor.isImplementationDetail();
 
     // no deps at all or all are optional
     if (descriptor.getDependentPluginIds().length == descriptor.getOptionalDependentPluginIds().length) {
@@ -1832,14 +1833,14 @@ public final class PluginManagerCore {
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
         if (findErrorForPlugin(errors, depId) != null) {
-          errors.add(new PluginError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null));
+          errors.add(new PluginError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null, notifyUser));
         }
         else {
-          errors.add(new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null));
+          errors.add(new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null, notifyUser));
         }
       }
       else {
-        PluginError error = new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null);
+        PluginError error = new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null, notifyUser);
         error.setDisabledDependency(dep.getPluginId());
         errors.add(error);
       }
