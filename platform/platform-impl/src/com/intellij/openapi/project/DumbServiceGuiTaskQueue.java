@@ -18,36 +18,17 @@ final class DumbServiceGuiTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
 
   private final Project myProject;
-  private final DumbServiceMergingTaskQueue myTaskQueue = new DumbServiceMergingTaskQueue();
+  private final DumbServiceMergingTaskQueue myTaskQueue;
 
   /**
    * Per-task progress indicators. Modified from EDT only.
    * The task is removed from this map after it's finished or when the project is disposed.
    */
 
-  DumbServiceGuiTaskQueue(@NotNull Project project) {
+  DumbServiceGuiTaskQueue(@NotNull Project project,
+                          @NotNull DumbServiceMergingTaskQueue queue) {
     myProject = project;
-  }
-
-  void cancelTask(@NotNull DumbModeTask task) {
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
-    myTaskQueue.cancelTask(task);
-  }
-
-  void clearTasksQueue() {
-    myTaskQueue.clearTasksQueue();
-  }
-
-  void disposePendingTasks() {
-    myTaskQueue.disposePendingTasks();
-  }
-
-  void addTaskToQueue(@NotNull DumbModeTask task) {
-    myTaskQueue.addTask(task);
-  }
-
-  void cancelAllTasks() {
-    myTaskQueue.cancelAllTasks();
+    myTaskQueue = queue;
   }
 
   void processTasksWithProgress(@NotNull Consumer<ProgressIndicatorEx> bindProgress,

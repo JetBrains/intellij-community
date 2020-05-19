@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
-  private final DumbServiceSyncTaskQueue myService = new DumbServiceSyncTaskQueue();
+  private final DumbServiceMergingTaskQueue myQueue = new DumbServiceMergingTaskQueue();
+  private final DumbServiceSyncTaskQueue myService = new DumbServiceSyncTaskQueue(myQueue);
+
   @NotNull
   private DumbServiceSyncTaskQueue service() {
     return myService;

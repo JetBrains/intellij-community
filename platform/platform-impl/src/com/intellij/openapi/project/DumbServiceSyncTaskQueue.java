@@ -14,7 +14,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class DumbServiceSyncTaskQueue {
   private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
-  private final DumbServiceMergingTaskQueue myTaskQueue = new DumbServiceMergingTaskQueue();
+  private final DumbServiceMergingTaskQueue myTaskQueue;
+
+  public DumbServiceSyncTaskQueue(@NotNull DumbServiceMergingTaskQueue queue) {
+    myTaskQueue = queue;
+  }
 
   /**
    * It is possible to have yet another synchronous task execution from
