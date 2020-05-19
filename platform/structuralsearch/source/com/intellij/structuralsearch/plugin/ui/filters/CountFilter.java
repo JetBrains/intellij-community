@@ -8,6 +8,7 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.fields.IntegerField;
 
 import javax.swing.*;
@@ -70,6 +71,9 @@ public class CountFilter extends FilterAction {
     final int min = constraint.getMinCount();
     final int max = constraint.getMaxCount();
     myLabel.append(SSRBundle.message("count.label", "[" + min + "," + (max == Integer.MAX_VALUE ? "∞" : max) + ']'));
+    if (min == 1 && max == 1) {
+      myLabel.append(SSRBundle.message("default.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
   }
 
   @Override
