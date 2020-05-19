@@ -74,7 +74,7 @@ public abstract class SplitterAction extends DumbAwareAction {
   }
 
 
-  public static final class UnsplitAll extends SplitterAction {
+  public static final class UnsplitAll extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       FileEditorManagerEx manager = getManager(event);
@@ -82,15 +82,14 @@ public abstract class SplitterAction extends DumbAwareAction {
     }
 
     @Override
-    void actionPerformed(@NotNull EditorWindow window) {
-      window.getManager().unsplitAllWindow();
-    }
-
-    @Override
-    boolean isEnabled(@NotNull AnActionEvent event) {
-      if (ActionPlaces.isPopupPlace(event.getPlace())) return super.isEnabled(event);
+    public void update(@NotNull AnActionEvent event) {
       FileEditorManagerEx manager = getManager(event);
-      return manager != null && manager.isInSplitter();
+      if (ActionPlaces.isPopupPlace(event.getPlace())) {
+        event.getPresentation().setVisible(manager != null && manager.getWindowSplitCount() > 2);
+      }
+      else {
+        event.getPresentation().setEnabled(manager != null && manager.isInSplitter());
+      }
     }
 
     private static FileEditorManagerEx getManager(@NotNull AnActionEvent event) {
