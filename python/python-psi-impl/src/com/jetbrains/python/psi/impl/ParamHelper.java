@@ -205,6 +205,10 @@ public class ParamHelper {
     return defaultValue == null ? null : defaultValue.getText();
   }
 
+  public static boolean couldHaveDefaultValue(@NotNull String parameterName) {
+    return !parameterName.startsWith("*") && !parameterName.equals(PySlashParameter.TEXT);
+  }
+
   public interface ParamWalker {
     /**
      * Is called when a tuple parameter is encountered, before visiting any parameters nested in it.

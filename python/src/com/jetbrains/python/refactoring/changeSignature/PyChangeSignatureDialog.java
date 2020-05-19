@@ -37,6 +37,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +210,7 @@ public class PyChangeSignatureDialog extends
         }
       }
       if (parameter.getOldIndex() < 0) {
-        if (!name.startsWith("*") && !name.equals(PySlashParameter.TEXT)) {
+        if (ParamHelper.couldHaveDefaultValue(name)) {
           if (StringUtil.isEmpty(info.defaultValueCodeFragment.getText())) {
             return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
           }
@@ -267,7 +268,7 @@ public class PyChangeSignatureDialog extends
     return new ParametersListTable() {
       @Override
       protected JBTableRowRenderer getRowRenderer(int row) {
-        return new EditorTextFieldJBTableRowRenderer(getProject(), getFileType(), getDisposable()) {
+        return new EditorTextFieldJBTableRowRenderer(getProject(), PythonLanguage.getInstance(), getDisposable()) {
           @Override
           protected String getText(JTable table, int row) {
             final PyParameterTableModelItem pyItem = getRowItem(row);
@@ -306,11 +307,9 @@ public class PyChangeSignatureDialog extends
             add(defaultValueCheckBox);
 
             final String nameText = myNameEditor.getText();
-            final boolean specialParameter = nameText.startsWith("*") ||
-                                             nameText.equals(PySlashParameter.TEXT) ||
-                                             CANONICAL_SELF.equals(nameText);
-            myDefaultValueEditor.setEnabled(!specialParameter);
-            myDefaultInSignature.setEnabled(!specialParameter);
+            final boolean couldHaveDefaultValue = ParamHelper.couldHaveDefaultValue(nameText) && !CANONICAL_SELF.equals(nameText);
+            myDefaultValueEditor.setEnabled(couldHaveDefaultValue);
+            myDefaultInSignature.setEnabled(couldHaveDefaultValue);
           }
 
           private JPanel createDefaultValueCheckBox() {
@@ -366,10 +365,9 @@ public class PyChangeSignatureDialog extends
             myNameEditor.addDocumentListener(new DocumentListener() {
               @Override
               public void documentChanged(@NotNull DocumentEvent event) {
-                final String paramName = myNameEditor.getText();
-                final boolean specialParameter = paramName.startsWith("*") || paramName.equals(PySlashParameter.TEXT);
-                myDefaultValueEditor.setEnabled(!specialParameter);
-                myDefaultInSignature.setEnabled(!specialParameter);
+                final boolean couldHaveDefaultValue = ParamHelper.couldHaveDefaultValue(myNameEditor.getText());
+                myDefaultValueEditor.setEnabled(couldHaveDefaultValue);
+                myDefaultInSignature.setEnabled(couldHaveDefaultValue);
               }
             });
 
