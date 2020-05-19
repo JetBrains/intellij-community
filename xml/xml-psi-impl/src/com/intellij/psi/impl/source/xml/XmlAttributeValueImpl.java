@@ -29,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue, PsiLanguageInjectionHost, RegExpLanguageHost, PsiMetaOwner, PsiMetaData {
+public class XmlAttributeValueImpl extends XmlElementImpl
+  implements XmlAttributeValue, PsiLanguageInjectionHost, RegExpLanguageHost, PsiMetaOwner, PsiMetaData, HintedReferenceHost {
   private static final Logger LOG = Logger.getInstance(XmlAttributeValueImpl.class);
 
   public XmlAttributeValueImpl() {
@@ -75,8 +76,18 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   @Override
+  public PsiReference @NotNull [] getReferences(PsiReferenceService.@NotNull Hints hints) {
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, hints);
+  }
+
+  @Override
+  public boolean shouldAskParentForReferences(PsiReferenceService.@NotNull Hints hints) {
+    return false;
+  }
+
+  @Override
   public PsiReference @NotNull [] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
+    return getReferences(PsiReferenceService.Hints.NO_HINTS);
   }
 
   @Override
