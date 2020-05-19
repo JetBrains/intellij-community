@@ -731,8 +731,6 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       }
     }
 
-    vendors.put("JetBrains", Integer.MAX_VALUE);
-
     return ContainerUtil.sorted(vendors.keySet(), (v1, v2) -> {
       int result = vendors.get(v2) - vendors.get(v1);
       return result == 0 ? v2.compareToIgnoreCase(v1) : result;
