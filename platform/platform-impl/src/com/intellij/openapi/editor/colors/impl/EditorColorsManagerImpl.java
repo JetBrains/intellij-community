@@ -59,10 +59,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 @State(
@@ -382,7 +379,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   private void loadRemainAdditionalTextAttributes(@NotNull MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes) {
-    additionalTextAttributes.entrySet().forEach(entry -> {
+    for (Map.Entry<String, Collection<AdditionalTextAttributesEP>> entry : additionalTextAttributes.entrySet()) {
       String schemeName = entry.getKey();
       EditorColorsScheme editorColorsScheme = mySchemeManager.findSchemeByName(schemeName);
       if (!(editorColorsScheme instanceof AbstractColorsScheme)) {
@@ -390,11 +387,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
           LOG.warn("Cannot find scheme: " + schemeName + " from plugins: " +
                    StringUtil.join(entry.getValue(), ep -> ep.getPluginDescriptor().getPluginId().getIdString(), ";"));
         }
-        return;
+        continue;
       }
 
       loadAdditionalTextAttributesForScheme((AbstractColorsScheme)editorColorsScheme, entry.getValue());
-    });
+    }
     additionalTextAttributes.clear();
   }
 
@@ -408,11 +405,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private static void loadAdditionalTextAttributesForScheme(@NotNull AbstractColorsScheme scheme,
                                                             @NotNull Collection<AdditionalTextAttributesEP> attributesEPs) {
-    attributesEPs.forEach(attributesEP -> {
+    for (AdditionalTextAttributesEP attributesEP : attributesEPs) {
       URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
       if (resource == null) {
         LOG.warn("resource not found: " + attributesEP.file);
-        return;
+        continue;
       }
       try {
         Element root = JDOMUtil.load(URLUtil.openStream(resource));
@@ -426,7 +423,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       catch (Exception e) {
         LOG.error(e);
       }
-    });
+    }
   }
 
   @Override

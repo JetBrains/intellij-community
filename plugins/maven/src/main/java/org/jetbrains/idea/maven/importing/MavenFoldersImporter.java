@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
 import org.jdom.Element;
@@ -122,7 +121,7 @@ public class MavenFoldersImporter {
 
   @NotNull
   public static Map<String, JpsModuleSourceRootType<?>> getSourceFolders(MavenProject mavenProject) {
-    final MultiMap<JpsModuleSourceRootType<?>, String> roots = new LinkedMultiMap<>();
+    final MultiMap<JpsModuleSourceRootType<?>, String> roots = MultiMap.createLinked();
 
     roots.putValues(JavaSourceRootType.SOURCE, mavenProject.getSources());
     roots.putValues(JavaSourceRootType.TEST_SOURCE, mavenProject.getTestSources());

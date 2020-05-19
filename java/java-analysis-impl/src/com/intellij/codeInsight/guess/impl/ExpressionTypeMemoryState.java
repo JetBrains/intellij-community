@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
@@ -25,7 +11,8 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -35,12 +22,15 @@ import java.util.Objects;
 /**
  * @author peter
  */
-public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
+public final class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   private static final Logger LOG = Logger.getInstance(ExpressionTypeMemoryState.class);
-  public static final TObjectHashingStrategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new TObjectHashingStrategy<PsiExpression>() {
+  public static final Hash.Strategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new Hash.Strategy<PsiExpression>() {
     @Override
-    public int computeHashCode(PsiExpression object) {
-      if (object instanceof PsiReferenceExpression) {
+    public int hashCode(PsiExpression object) {
+      if (object == null) {
+        return 0;
+      }
+      else if (object instanceof PsiReferenceExpression) {
         return Objects.hashCode(((PsiReferenceExpression)object).getReferenceName()) * 31 + 1;
       }
       else if (object instanceof PsiMethodCallExpression) {
@@ -50,12 +40,17 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     }
 
     @Override
-    public boolean equals(@NotNull PsiExpression o1, @NotNull PsiExpression o2) {
+    public boolean equals(PsiExpression o1, PsiExpression o2) {
+      if (o1 == o2) {
+        return true;
+      }
+      if (o1 == null || o2 == null) {
+        return false;
+      }
       if (JavaPsiEquivalenceUtil.areExpressionsEquivalent(o1, o2)) {
-        if (computeHashCode(o1) != computeHashCode(o2)) {
-          LOG.error("different hashCodes: " + o1 + "; " + o2 + "; " + computeHashCode(o1) + "!=" + computeHashCode(o2));
+        if (hashCode(o1) != hashCode(o2)) {
+          LOG.error("different hashCodes: " + o1 + "; " + o2 + "; " + hashCode(o1) + "!=" + hashCode(o2));
         }
-
         return true;
       }
       return false;
@@ -68,7 +63,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   public ExpressionTypeMemoryState(final DfaValueFactory factory, boolean honorAssignments) {
     super(factory);
     myHonorAssignments = honorAssignments;
-    myStates = MultiMap.createSet(EXPRESSION_HASHING_STRATEGY);
+    myStates = MultiMap.createSet(new Object2ObjectOpenCustomHashMap<>(EXPRESSION_HASHING_STRATEGY));
   }
 
   private ExpressionTypeMemoryState(ExpressionTypeMemoryState toCopy) {
@@ -80,7 +75,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   @Override
   protected DfType filterDfTypeOnAssignment(DfaVariableValue var, @NotNull DfType dfType) {
     if (myHonorAssignments) return dfType;
-    if (ControlFlowAnalyzer.isTempVariable(var) || (!(dfType instanceof DfReferenceType)) ||    
+    if (ControlFlowAnalyzer.isTempVariable(var) || (!(dfType instanceof DfReferenceType)) ||
         var.getPsiVariable() instanceof PsiParameter && var.getPsiVariable().getParent().getParent() instanceof PsiLambdaExpression) {
       // Pass type normally for synthetic lambda parameter assignment
       return dfType;
@@ -122,7 +117,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
         DfaInstanceofValue value = (DfaInstanceofValue)leftOperand;
         Boolean val = DfConstantType.getConstantOfType(rightOperand.getDfType(), Boolean.class);
         if (val != null) {
-          boolean negated = (relation == RelationType.EQ) != val; 
+          boolean negated = (relation == RelationType.EQ) != val;
           if (!negated) {
             setExpressionType(value.getExpression(), value.getCastType());
           }
@@ -163,9 +158,9 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   void removeExpressionType(@NotNull PsiExpression expression) {
     if (myStates.containsKey(expression)) {
       MultiMap<PsiExpression, PsiType> oldStates = myStates;
-      myStates = MultiMap.createSet(EXPRESSION_HASHING_STRATEGY);
+      myStates = MultiMap.createSet(new Object2ObjectOpenCustomHashMap<>(EXPRESSION_HASHING_STRATEGY));
       for (Map.Entry<PsiExpression, Collection<PsiType>> entry : oldStates.entrySet()) {
-        if(!EXPRESSION_HASHING_STRATEGY.equals(entry.getKey(), expression)) {
+        if (!EXPRESSION_HASHING_STRATEGY.equals(entry.getKey(), expression)) {
           myStates.putValues(entry.getKey(), entry.getValue());
         }
       }
@@ -175,7 +170,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   void setExpressionType(@NotNull PsiExpression expression, @NotNull PsiType type) {
     if (!myStates.get(expression).contains(type)) {
       MultiMap<PsiExpression, PsiType> oldStates = myStates;
-      myStates = MultiMap.createSet(EXPRESSION_HASHING_STRATEGY);
+      myStates = MultiMap.createSet(new Object2ObjectOpenCustomHashMap<>(EXPRESSION_HASHING_STRATEGY));
       myStates.putAllValues(oldStates);
       myStates.putValue(expression, type);
     }

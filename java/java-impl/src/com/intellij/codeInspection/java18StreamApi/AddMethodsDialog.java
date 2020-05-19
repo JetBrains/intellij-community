@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java18StreamApi;
 
 
@@ -20,7 +20,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +131,7 @@ public class AddMethodsDialog extends DialogWrapper {
         }
         else {
           final List<PseudoLambdaReplaceTemplate> possibleTemplates = PseudoLambdaReplaceTemplate.getAllTemplates();
-          final LinkedMultiMap<String, PsiMethod> nameToMethod = new LinkedMultiMap<>();
+          final MultiMap<String, PsiMethod> nameToMethod = MultiMap.createLinked();
           for (PsiMethod m : ContainerUtil.filter(aClass.getMethods(), method -> {
             if (method.isConstructor() ||
                 !method.hasModifierProperty(PsiModifier.STATIC) ||

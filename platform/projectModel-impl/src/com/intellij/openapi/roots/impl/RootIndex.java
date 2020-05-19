@@ -414,7 +414,7 @@ class RootIndex {
       Module[] modules = moduleManager.getModules();
       Graph graph = new Graph(modules.length);
 
-      MultiMap<VirtualFile, Node> roots = MultiMap.createSmart();
+      MultiMap<VirtualFile, Node> roots = new MultiMap<>();
 
       for (final Module module : modules) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -468,8 +468,8 @@ class RootIndex {
 
     @NotNull
     private Pair<MultiMap<VirtualFile, OrderEntry>, MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
-      MultiMap<VirtualFile, OrderEntry> libClassRootEntries = MultiMap.createSmart();
-      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = MultiMap.createSmart();
+      MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<>();
+      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<>();
 
       for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

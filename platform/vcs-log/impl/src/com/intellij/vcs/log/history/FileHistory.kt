@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -18,7 +18,12 @@ import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.*
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import gnu.trove.*
+import gnu.trove.THashSet
+import gnu.trove.TIntHashSet
+import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.*
 import java.util.function.BiConsumer
 
@@ -37,7 +42,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   private val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
   private val processedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
   private val unmatchedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
-  private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
+  private val commitToRename = MultiMap<UnorderedPair<Int>, Rename>()
 
   val fileHistory: FileHistory
     get() = FileHistory(pathsMap, processedAdditionsDeletions, unmatchedAdditionsDeletions, commitToRename)
@@ -275,11 +280,11 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
 abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
-  private val affectedCommits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
-  internal val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
+  private val affectedCommits = Object2ObjectOpenCustomHashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+  internal val commitToRename = MultiMap<UnorderedPair<Int>, Rename>()
 
   val isEmpty: Boolean
-    get() = affectedCommits.isEmpty
+    get() = affectedCommits.isEmpty()
   val hasRenames: Boolean
     get() = !commitToRename.isEmpty
   val files: Set<FilePath>
@@ -288,11 +293,11 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   constructor(startPath: FilePath) : this(listOf(startPath))
 
   internal fun build(oldRenames: MultiMap<UnorderedPair<Int>, Rename>): FileHistoryData {
-    val newPaths = THashSet(FILE_PATH_HASHING_STRATEGY)
+    val newPaths = ObjectOpenCustomHashSet(FILE_PATH_HASHING_STRATEGY)
     newPaths.addAll(startPaths)
 
     while (newPaths.isNotEmpty()) {
-      val commits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+      val commits = Object2ObjectOpenCustomHashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
       newPaths.associateWithTo(commits) { getAffectedCommits(it) }
       affectedCommits.putAll(commits)
       newPaths.clear()
@@ -457,7 +462,7 @@ internal class AdditionDeletion(val filePath: FilePath, val child: Int, val pare
   }
 
   override fun hashCode(): Int {
-    var result = FILE_PATH_HASHING_STRATEGY.computeHashCode(filePath)
+    var result = FILE_PATH_HASHING_STRATEGY.hashCode(filePath)
     result = 31 * result + child
     result = 31 * result + parent
     result = 31 * result + isAddition.hashCode()
@@ -494,8 +499,8 @@ internal class Rename(val parentPath: FilePath, val childPath: FilePath, val par
   }
 
   override fun hashCode(): Int {
-    var result = FILE_PATH_HASHING_STRATEGY.computeHashCode(parentPath)
-    result = 31 * result + FILE_PATH_HASHING_STRATEGY.computeHashCode(childPath)
+    var result = FILE_PATH_HASHING_STRATEGY.hashCode(parentPath)
+    result = 31 * result + FILE_PATH_HASHING_STRATEGY.hashCode(childPath)
     result = 31 * result + parentCommit
     result = 31 * result + childCommit
     return result
@@ -518,7 +523,7 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
   }
 
   override fun hashCode(): Int {
-    var result = FILE_PATH_HASHING_STRATEGY.computeHashCode(filePath)
+    var result = FILE_PATH_HASHING_STRATEGY.hashCode(filePath)
     result = 31 * result + deleted.hashCode()
     return result
   }
@@ -554,9 +559,9 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 }
 
 @JvmField
-val FILE_PATH_HASHING_STRATEGY: TObjectHashingStrategy<FilePath> = FilePathCaseSensitiveStrategy()
+val FILE_PATH_HASHING_STRATEGY: Hash.Strategy<FilePath> = FilePathCaseSensitiveStrategy()
 
-internal class FilePathCaseSensitiveStrategy : TObjectHashingStrategy<FilePath> {
+private class FilePathCaseSensitiveStrategy : Hash.Strategy<FilePath> {
   override fun equals(path1: FilePath?, path2: FilePath?): Boolean {
     if (path1 === path2) return true
     if (path1 == null || path2 == null) return false
@@ -567,7 +572,7 @@ internal class FilePathCaseSensitiveStrategy : TObjectHashingStrategy<FilePath> 
     return canonical1 == canonical2
   }
 
-  override fun computeHashCode(path: FilePath?): Int {
+  override fun hashCode(path: FilePath?): Int {
     if (path == null) return 0
 
     var result = if (path.path.isEmpty()) 0 else FileUtil.toCanonicalPath(path.path).hashCode()

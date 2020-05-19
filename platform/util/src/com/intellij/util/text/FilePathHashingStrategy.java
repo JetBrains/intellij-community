@@ -6,7 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-public class FilePathHashingStrategy {
+public final class FilePathHashingStrategy {
   private FilePathHashingStrategy() { }
 
   @NotNull

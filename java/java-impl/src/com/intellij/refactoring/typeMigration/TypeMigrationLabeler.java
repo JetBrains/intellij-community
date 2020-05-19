@@ -36,7 +36,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -279,15 +278,9 @@ public class TypeMigrationLabeler {
     return myRules.getConversionSettings(aClass);
   }
 
-  class MigrationProducer {
+  final class MigrationProducer {
     private final Map<UsageInfo, Object> myRemainConversions;
-    private final MultiMap<PsiTypeElement, TypeMigrationUsageInfo> myVariableMigration = new MultiMap<PsiTypeElement, TypeMigrationUsageInfo>() {
-      @NotNull
-      @Override
-      protected Map<PsiTypeElement, Collection<TypeMigrationUsageInfo>> createMap() {
-        return new THashMap<>();
-      }
-    };
+    private final MultiMap<PsiTypeElement, TypeMigrationUsageInfo> myVariableMigration = new MultiMap<PsiTypeElement, TypeMigrationUsageInfo>();
 
     private MigrationProducer(Map<UsageInfo, Object> conversions) {
       myRemainConversions = conversions;

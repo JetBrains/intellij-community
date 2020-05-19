@@ -1280,10 +1280,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       myAction2Id.remove(actionToRemove);
       myId2Index.remove(actionId);
 
-      for (final Map.Entry<PluginId, Collection<String>> entry : myPlugin2Id.entrySet()) {
-        Collection<String> pluginActions = entry.getValue();
-        pluginActions.remove(actionId);
+      for (Map.Entry<PluginId, Collection<String>> entry : myPlugin2Id.entrySet()) {
+        entry.getValue().remove(actionId);
       }
+
       if (removeFromGroups) {
         CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
         for (String groupId : myId2GroupId.get(actionId)) {

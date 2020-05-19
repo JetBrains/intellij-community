@@ -202,5 +202,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="library" scope="RUNTIME" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

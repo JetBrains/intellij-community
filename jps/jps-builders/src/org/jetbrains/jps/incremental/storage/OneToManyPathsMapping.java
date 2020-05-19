@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.JBIterator;
-import com.intellij.util.containers.ObjectLinkedOpenHashSet;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
 /**
  * @author Eugene Zhuravlev
  */
-public class OneToManyPathsMapping extends AbstractStateStorage<String, Collection<String>> {
+public final class OneToManyPathsMapping extends AbstractStateStorage<String, Collection<String>> {
   private final PathRelativizerService myRelativizer;
 
   public OneToManyPathsMapping(File storePath, PathRelativizerService relativizer) throws IOException {
@@ -93,7 +92,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
 
     @Override
     public Collection<String> read(@NotNull DataInput in) throws IOException {
-      final Set<String> result = new ObjectLinkedOpenHashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> result = CollectionFactory.createFilePathLinkedSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         final String str = IOUtil.readUTF(stream);

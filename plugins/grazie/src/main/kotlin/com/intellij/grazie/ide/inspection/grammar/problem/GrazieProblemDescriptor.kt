@@ -12,7 +12,7 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuic
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.containers.WeakStringInterner
+import com.intellij.util.containers.Interner
 import com.intellij.util.containers.toArray
 import kotlinx.html.*
 
@@ -29,7 +29,7 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
 ) {
 
   companion object {
-    private val interner: WeakStringInterner = WeakStringInterner()
+    private val interner = Interner.createWeakInterner<String>()
 
     private fun Typo.toFixes(isOnTheFly: Boolean): List<LocalQuickFix> {
       val fixes = ArrayList<LocalQuickFix>()

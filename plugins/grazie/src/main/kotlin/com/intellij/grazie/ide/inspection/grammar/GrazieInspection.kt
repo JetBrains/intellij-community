@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 
 class GrazieInspection : LocalInspectionTool() {
   companion object : GrazieStateLifecycle {
@@ -55,7 +56,7 @@ class GrazieInspection : LocalInspectionTool() {
       override fun visitElement(element: PsiElement) {
         if (element.isInjectedFragment()) return
 
-        val typos = HashSet<Typo>()
+        val typos = ObjectOpenHashSet<Typo>()
 
         val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
 
@@ -71,7 +72,7 @@ class GrazieInspection : LocalInspectionTool() {
           if (isCheckNeeded) typos.addAll(GrammarChecker.check(element, strategy))
         }
 
-        for (typo in typos.filterNot { suppression.isSuppressed(it) }) {
+        for (typo in typos.asSequence().filterNot { suppression.isSuppressed(it) }) {
           holder.registerProblem(GrazieProblemDescriptor(typo, isOnTheFly))
         }
 

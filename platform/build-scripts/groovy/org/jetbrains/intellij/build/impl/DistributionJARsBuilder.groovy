@@ -880,12 +880,11 @@ class DistributionJARsBuilder {
 
   private void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
     // Don't check modules which are not direct children of lib/ directory
-    List<String> moduleNamesInLib = moduleJars.entrySet()
-      .findAll { !it.key.contains("/") }
-      .collect { it.value }
-      .flatten() as List<String>
-    def modulesWithPluginXml = moduleNamesInLib
-      .findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
+    def modulesWithPluginXml = moduleJars.entrySet().stream()
+      .filter { !it.key.contains("/") }
+      .flatMap { it.value.stream() }
+      .filter { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
+      .collect(Collectors.toList()) as List<String>
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
     }
@@ -1022,18 +1021,22 @@ class DistributionJARsBuilder {
         }
 
         //include all module libraries from the plugin modules added to IDE classpath to layout
-        actualModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
-                             .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
-          def excluded = layout.excludedModuleLibraries.get(moduleName)
-          findModule(moduleName).dependenciesList.dependencies.
-            findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
-            findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
-            collect { ((JpsLibraryDependency)it).library }.
-            findAll { !excluded.contains(getLibraryName(it)) }.
-            each {
-              jpsLibrary(it)
-            }
-        }
+        actualModuleJars.entrySet()
+          .stream()
+          .filter { !it.key.contains("/") }
+          .flatMap { it.value.stream() }
+          .filter { !layout.modulesWithExcludedModuleLibraries.contains(it) }
+          .forEach { moduleName ->
+            def excluded = layout.excludedModuleLibraries.get(moduleName)
+            findModule(moduleName).dependenciesList.dependencies.stream()
+              .filter { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }
+              .filter { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }
+              .map { ((JpsLibraryDependency)it).library }
+              .filter { !excluded.contains(getLibraryName(it)) }
+              .forEach {
+                jpsLibrary(it)
+              }
+          }
 
         layout.includedModuleLibraries.each { data ->
           dir(data.relativeOutputPath) {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
@@ -27,7 +25,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -267,7 +264,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected abstract void loadTree();
- 
+
 
   @Override
   @NotNull
@@ -311,7 +308,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @NotNull
   private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<? extends MyNode> nodes) {
     List<? extends RemoveConfigurableHandler<?>> handlers = getRemoveHandlers();
-    MultiMap<RemoveConfigurableHandler, MyNode> grouped = new LinkedMultiMap<>();
+    MultiMap<RemoveConfigurableHandler, MyNode> grouped = MultiMap.createLinked();
     for (MyNode node : nodes) {
       final NamedConfigurable<?> configurable = node.getConfigurable();
       if (configurable == null) continue;

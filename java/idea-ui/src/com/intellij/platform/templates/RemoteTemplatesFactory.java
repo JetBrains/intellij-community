@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -32,7 +32,7 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
+public final class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
 
   private static final String URL = "https://download.jetbrains.com/idea/project_templates/";
@@ -46,7 +46,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
           }
           catch (JDOMException e) {
             LOG.error(e);
-            return MultiMap.emptyInstance();
+            return MultiMap.empty();
           }
         });
     }
@@ -56,7 +56,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     catch (Exception e) {
       LOG.error(e);
     }
-    return MultiMap.emptyInstance();
+    return MultiMap.empty();
   });
 
   @Override

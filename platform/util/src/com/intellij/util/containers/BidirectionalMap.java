@@ -2,76 +2,80 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.*;
 
-public class BidirectionalMap<K,V> implements Map<K,V>{
-  private final Map<K,V> myKeyToValueMap = new THashMap<>();
-  private final Map<V,List<K>> myValueToKeysMap = new THashMap<>();
+@ApiStatus.NonExtendable
+public class BidirectionalMap<K, V> implements Map<K, V> {
+  private final Map<K, V> myKeyToValueMap = new HashMap<>();
+  private final Map<V, List<K>> myValueToKeysMap = new HashMap<>();
 
   @Override
-  public V put(K key, V value){
+  public final V put(K key, V value){
     V oldValue = myKeyToValueMap.put(key, value);
     if (oldValue != null){
-      if (oldValue.equals(value)) return oldValue;
+      if (oldValue.equals(value)) {
+        return oldValue;
+      }
       List<K> array = myValueToKeysMap.get(oldValue);
       array.remove(key);
-      if (array.isEmpty()) myValueToKeysMap.remove(oldValue);
+      if (array.isEmpty()) {
+        myValueToKeysMap.remove(oldValue);
+      }
     }
 
-    List<K> array = myValueToKeysMap.computeIfAbsent(value, __ -> new SmartList<>());
-    array.add(key);
+    myValueToKeysMap.computeIfAbsent(value, __ -> new SmartList<>()).add(key);
     return oldValue;
   }
 
   @Override
-  public void clear() {
+  public final void clear() {
     myKeyToValueMap.clear();
     myValueToKeysMap.clear();
   }
 
   @Nullable
-  public List<K> getKeysByValue(V value){
+  public final List<K> getKeysByValue(V value){
     return myValueToKeysMap.get(value);
   }
 
   @NotNull
   @Override
-  public Set<K> keySet() {
+  public final Set<K> keySet() {
     return myKeyToValueMap.keySet();
   }
 
   @Override
-  public int size(){
+  public final int size(){
     return myKeyToValueMap.size();
   }
 
   @Override
-  public boolean isEmpty(){
+  public final boolean isEmpty(){
     return myKeyToValueMap.isEmpty();
   }
 
   @Override
-  public boolean containsKey(Object key){
+  public final boolean containsKey(Object key){
     return myKeyToValueMap.containsKey(key);
   }
 
   @Override
   @SuppressWarnings("SuspiciousMethodCalls")
-  public boolean containsValue(Object value){
+  public final boolean containsValue(Object value){
     return myValueToKeysMap.containsKey(value);
   }
 
   @Override
-  public V get(Object key) {
+  public final V get(Object key) {
     return myKeyToValueMap.get(key);
   }
 
-  public void removeValue(V v) {
+  public final void removeValue(V v) {
     List<K> ks = myValueToKeysMap.remove(v);
     if (ks != null) {
       for (K k : ks) {
@@ -82,18 +86,22 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
 
   @Override
   @SuppressWarnings("SuspiciousMethodCalls")
-  public V remove(Object key){
+  public final V remove(Object key) {
     final V value = myKeyToValueMap.remove(key);
     final List<K> ks = myValueToKeysMap.get(value);
     if (ks != null) {
-      if(ks.size() > 1) ks.remove(key);
-      else myValueToKeysMap.remove(value);
+      if (ks.size() > 1) {
+        ks.remove(key);
+      }
+      else {
+        myValueToKeysMap.remove(value);
+      }
     }
     return value;
   }
 
   @Override
-  public void putAll(@NotNull Map<? extends K, ? extends V> t){
+  public final void putAll(@NotNull Map<? extends K, ? extends V> t){
     for (final Entry<? extends K, ? extends V> entry : t.entrySet()) {
       put(entry.getKey(), entry.getValue());
     }
@@ -101,18 +109,18 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
 
   @NotNull
   @Override
-  public Collection<V> values(){
+  public final Collection<V> values(){
     return myValueToKeysMap.keySet();
   }
 
   @NotNull
   @Override
-  public Set<Entry<K, V>> entrySet(){
+  public final Set<Entry<K, V>> entrySet(){
     return myKeyToValueMap.entrySet();
   }
 
   @Override
-  public String toString() {
-    return new HashMap<>(myKeyToValueMap).toString();
+  public final String toString() {
+    return myKeyToValueMap.toString();
   }
 }

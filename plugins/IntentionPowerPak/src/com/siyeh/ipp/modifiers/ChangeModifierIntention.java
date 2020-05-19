@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
@@ -383,13 +383,13 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       final PsiClass aClass = (PsiClass)member;
       final PsiElement parent = aClass.getParent();
       if (!(parent instanceof PsiJavaFile)) {
-        return MultiMap.emptyInstance();
+        return MultiMap.empty();
       }
       final PsiJavaFile javaFile = (PsiJavaFile)parent;
       final String name = FileUtilRt.getNameWithoutExtension(javaFile.getName());
       final String className = aClass.getName();
       if (name.equals(className)) {
-        return MultiMap.emptyInstance();
+        return MultiMap.empty();
       }
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       conflicts.putValue(aClass, IntentionPowerPackBundle.message(
@@ -401,7 +401,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     }
     final PsiModifierList modifierList = member.getModifierList();
     if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return MultiMap.emptyInstance();
+      return MultiMap.empty();
     }
     PsiModifierList copy = (PsiModifierList)modifierList.copy();
     copy.setModifierProperty(modifier.toPsiModifier(), true);

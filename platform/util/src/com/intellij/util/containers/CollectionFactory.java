@@ -1,23 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import gnu.trove.TObjectHashingStrategy;
 import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 // ContainerUtil requires trove in classpath
@@ -62,8 +59,12 @@ public final class CollectionFactory {
     return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, ContainerUtil.canonicalStrategy());
   }
 
-  public static @NotNull <T> Map<CharSequence, T> createCharSequenceToObjectMap(boolean caseSensitive, int expectedSize, float loadFactor) {
+  public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive, int expectedSize, float loadFactor) {
     return new Object2ObjectOpenCustomHashMap<>(expectedSize, loadFactor, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+  }
+
+  public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive) {
+    return new Object2ObjectOpenCustomHashMap<>(caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
   }
 
   public static @NotNull Set<String> createCaseInsensitiveStringSet() {
@@ -76,7 +77,7 @@ public final class CollectionFactory {
 
   public static @NotNull Set<String> createFilePathSet() {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
-      return new ObjectOpenHashSet<>();
+      return new HashSet<>();
     }
     else {
       return createCaseInsensitiveStringSet();
@@ -85,7 +86,7 @@ public final class CollectionFactory {
 
   public static @NotNull <V> Map<String, V> createFilePathMap() {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
-      return new Object2ObjectOpenHashMap<>();
+      return new HashMap<>();
     }
     else {
       return createCaseInsensitiveStringMap();
@@ -100,14 +101,71 @@ public final class CollectionFactory {
     return new ObjectOpenCustomHashSet<>(FILE_HASH_STRATEGY);
   }
 
+  public static @NotNull Set<File> createFileLinkedSet() {
+    return new ObjectLinkedOpenCustomHashSet<>(FILE_HASH_STRATEGY);
+  }
+
+  public static @NotNull Set<String> createFilePathLinkedSet() {
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      return new ObjectLinkedOpenHashSet<>();
+    }
+    else {
+      return new ObjectLinkedOpenCustomHashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+    }
+  }
+
+  /**
+   * Create linked map with key hash strategy according to file system path case sensitivity.
+   */
+  public static @NotNull <V> Map<String, V> createFilePathLinkedMap() {
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      return new Object2ObjectLinkedOpenHashMap<>();
+    }
+    else {
+      return new Object2ObjectLinkedOpenCustomHashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+    }
+  }
+
+  /**
+   * Create linked map with canonicalized key hash strategy.
+   */
+  public static @NotNull <V> Map<String, V> createCanonicalFilePathLinkedMap() {
+    return new Object2ObjectLinkedOpenCustomHashMap<>(new Hash.Strategy<String>() {
+      @Override
+      public int hashCode(String value) {
+        return FileUtil.pathHashCode(value);
+      }
+
+      @Override
+      public boolean equals(String val1, String val2) {
+        return FileUtil.pathsEqual(val1, val2);
+      }
+    });
+  }
+
+  /**
+   * Create map with canonicalized key hash strategy.
+   */
+  public static @NotNull <V> Map<File, V> createCanonicalFileMap() {
+    return new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<File>() {
+      @Override
+      public int hashCode(File value) {
+        return FileUtil.fileHashCode(value);
+      }
+
+      @Override
+      public boolean equals(File val1, File val2) {
+        return FileUtil.filesEqual(val1, val2);
+      }
+    });
+  }
+
   public static @NotNull Set<String> createFilePathSet(@NotNull Collection<String> paths) {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
       return new ObjectOpenHashSet<>(paths);
     }
     else {
-      Set<String> result = createCaseInsensitiveStringSet();
-      result.addAll(paths);
-      return result;
+      return new ObjectOpenCustomHashSet<>(paths, CaseInsensitiveStringHashingStrategy.INSTANCE);
     }
   }
 }
@@ -125,12 +183,15 @@ final class CharSequenceHashingStrategy implements Hash.Strategy<CharSequence> {
 
   @Override
   public int hashCode(CharSequence o) {
+    if (o == null) {
+      return 0;
+    }
     return isCaseSensitive ? StringUtil.stringHashCode(o) : StringUtil.stringHashCodeInsensitive(o);
   }
 
   @Override
-  public boolean equals(final CharSequence s1, final CharSequence s2) {
-    return Comparing.equal(s1, s2, isCaseSensitive);
+  public boolean equals(CharSequence s1, CharSequence s2) {
+    return StringUtilRt.equal(s1, s2, isCaseSensitive);
   }
 }
 
@@ -140,11 +201,11 @@ final class CaseInsensitiveStringHashingStrategy implements Hash.Strategy<String
 
   @Override
   public int hashCode(String s) {
-    return StringUtil.stringHashCodeInsensitive(s);
+    return s == null ? 0 : StringUtil.stringHashCodeInsensitive(s);
   }
 
   @Override
-  public boolean equals(final String s1, final String s2) {
-    return s1.equalsIgnoreCase(s2);
+  public boolean equals(String s1, String s2) {
+    return s1 == s2 || (s1 != null && s2 != null && s1.equalsIgnoreCase(s2));
   }
 }

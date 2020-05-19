@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
+public final class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   @NotNull
   private final ResourceBundle myResourceBundle;
   @NotNull
@@ -76,8 +76,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
 
   public static MultiMap<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {
     if (!resourceBundle.isValid()) {
-      //noinspection unchecked
-      return (MultiMap<String, IProperty>)MultiMap.EMPTY;
+      return MultiMap.empty();
     }
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     final MultiMap<String, IProperty> propertyNames;
