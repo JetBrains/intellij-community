@@ -13,6 +13,9 @@ public interface HashBuilder {
   @NotNull
   HashBuilder putInt(int val);
 
+  @NotNull
+  HashBuilder putBoolean(boolean val);
+
   /**
    * @param charSequence to mix in hash. Charset is managed by hash function.
    */
