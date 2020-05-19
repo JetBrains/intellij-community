@@ -25,9 +25,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.messages.MessageBus;
@@ -62,31 +61,26 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   };
 
   static final class State {
-    @NotNull
-    private Charset myDefaultEncoding = StandardCharsets.UTF_8;
-    private @NotNull Charset myDefaultConsoleEncoding = ChooseFileEncodingAction.NO_ENCODING;
+    private @NotNull EncodingReference myDefaultEncoding = new EncodingReference(StandardCharsets.UTF_8);
+    private @NotNull EncodingReference myDefaultConsoleEncoding = EncodingReference.DEFAULT;
 
     @Attribute("default_encoding")
     @NotNull
     public String getDefaultCharsetName() {
-      return myDefaultEncoding == ChooseFileEncodingAction.NO_ENCODING ? "" : myDefaultEncoding.name();
+      return myDefaultEncoding.getCharset() == null ? "" : myDefaultEncoding.getCharset().name();
     }
 
     public void setDefaultCharsetName(@NotNull String name) {
-      myDefaultEncoding = name.isEmpty()
-                          ? ChooseFileEncodingAction.NO_ENCODING
-                          : ObjectUtils.notNull(CharsetToolkit.forName(name), CharsetToolkit.getDefaultSystemCharset());
+      myDefaultEncoding = new EncodingReference(StringUtil.nullize(name));
     }
 
     @Attribute("default_console_encoding")
     public @NotNull String getDefaultConsoleEncodingName() {
-      return myDefaultConsoleEncoding == ChooseFileEncodingAction.NO_ENCODING ? "" : myDefaultConsoleEncoding.name();
+      return myDefaultConsoleEncoding.getCharset() == null ? "" : myDefaultConsoleEncoding.getCharset().name();
     }
 
     public void setDefaultConsoleEncodingName(@NotNull String name) {
-      myDefaultConsoleEncoding = name.isEmpty()
-                                 ? ChooseFileEncodingAction.NO_ENCODING
-                                 : ObjectUtils.notNull(CharsetToolkit.forName(name), ChooseFileEncodingAction.NO_ENCODING);
+      myDefaultConsoleEncoding = new EncodingReference(StringUtil.nullize(name));
     }
   }
 
@@ -313,7 +307,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   @NotNull
   public Charset getDefaultCharset() {
-    return myState.myDefaultEncoding == ChooseFileEncodingAction.NO_ENCODING ? CharsetToolkit.getDefaultSystemCharset() : myState.myDefaultEncoding;
+    return myState.myDefaultEncoding.dereference();
   }
 
   @Override
@@ -344,21 +338,21 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @Override
   public @NotNull Charset getDefaultConsoleEncoding() {
-    return myState.myDefaultConsoleEncoding == ChooseFileEncodingAction.NO_ENCODING ? CharsetToolkit.getDefaultSystemCharset() : myState.myDefaultConsoleEncoding;
+    return myState.myDefaultConsoleEncoding.dereference();
   }
 
   /**
-   * @return default console encoding or {@link ChooseFileEncodingAction#NO_ENCODING} for system-default
+   * @return default console encoding reference
    */
-  public @NotNull Charset getDefaultConsoleEncodingInternal() {
+  public @NotNull EncodingReference getDefaultConsoleEncodingReference() {
     return myState.myDefaultConsoleEncoding;
   }
 
   /**
-   * @param encoding default console encoding or {@link ChooseFileEncodingAction#NO_ENCODING} for system-default
+   * @param encodingReference default console encoding reference
    */
-  public void setDefaultConsoleEncodingInternal(@NotNull Charset encoding) {
-    myState.myDefaultConsoleEncoding = encoding;
+  public void setDefaultConsoleEncodingReference(@NotNull EncodingReference encodingReference) {
+    myState.myDefaultConsoleEncoding = encodingReference;
   }
 
   void firePropertyChange(@Nullable Document document,
