@@ -739,7 +739,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testParameterAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
@@ -754,7 +754,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testFunctionAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
@@ -767,7 +767,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testVariableAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       final PyFile file = getTestFile();
@@ -787,7 +787,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testAttributeTypeDeclaration() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       final PyFile file = getTestFile();
@@ -802,7 +802,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testTypeAliasInParameterAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
@@ -813,7 +813,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testTypeAliasStubs() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       final PyFile file = getTestFile();
@@ -838,7 +838,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18166
+  // PY-18866
   public void testUnresolvedTypingSymbol() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
