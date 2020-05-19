@@ -85,6 +85,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/Groovy/lib/groovy-rt-constants.jar"                : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",
     "plugins/junit/lib/junit-rt.jar"                            : "1.6",
+    "plugins/junit/lib/junit5-rt.jar"                           : "1.8",
     "plugins/gradle/lib/gradle-tooling-extension-api.jar"       : "1.6",
     "plugins/gradle/lib/gradle-tooling-extension-impl.jar"      : "1.6",
     "plugins/maven/lib/maven-server-api.jar"                    : "1.6",
@@ -100,6 +101,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
     "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar"       : "1.6",
     "plugins/android/lib/layoutlib-jre11-26.6.0.2.jar"          : "1.9",
+    "plugins/android/lib/android-rt.jar"                        : "1.8",
     "plugins/javaFX/lib/rt/java11/scenebuilderkit-11.0.2.jar"   : "1.11"
   ]
 
