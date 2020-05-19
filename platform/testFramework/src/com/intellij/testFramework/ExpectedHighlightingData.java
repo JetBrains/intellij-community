@@ -93,7 +93,6 @@ public class ExpectedHighlightingData {
   private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
   private final Map<RangeMarker, LineMarkerInfo<?>> myLineMarkerInfos = new THashMap<>();
   private final Document myDocument;
-  private final PsiFile myFile;
   private final String myText;
   private boolean myIgnoreExtraHighlighting;
   private final ResourceBundle[] myMessageBundles;
@@ -103,15 +102,7 @@ public class ExpectedHighlightingData {
   }
 
   public ExpectedHighlightingData(@NotNull Document document, boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
-    this(document, checkWarnings, checkWeakWarnings, checkInfos, null);
-  }
-
-  public ExpectedHighlightingData(@NotNull Document document,
-                                  boolean checkWarnings,
-                                  boolean checkWeakWarnings,
-                                  boolean checkInfos,
-                                  @Nullable PsiFile file) {
-    this(document, checkWarnings, checkWeakWarnings, checkInfos, false, file);
+    this(document, checkWarnings, checkWeakWarnings, checkInfos, false);
   }
 
   public ExpectedHighlightingData(@NotNull Document document,
@@ -119,18 +110,16 @@ public class ExpectedHighlightingData {
                                   boolean checkWeakWarnings,
                                   boolean checkInfos,
                                   boolean ignoreExtraHighlighting,
-                                  @Nullable PsiFile file,
                                   ResourceBundle... messageBundles) {
-    this(document, file, messageBundles);
+    this(document, messageBundles);
     myIgnoreExtraHighlighting = ignoreExtraHighlighting;
     if (checkWarnings) checkWarnings();
     if (checkWeakWarnings) checkWeakWarnings();
     if (checkInfos) checkInfos();
   }
 
-  public ExpectedHighlightingData(@NotNull Document document, @Nullable PsiFile file, ResourceBundle... messageBundles) {
+  public ExpectedHighlightingData(@NotNull Document document, ResourceBundle... messageBundles) {
     myDocument = document;
-    myFile = file;
     myMessageBundles = messageBundles;
     myText = document.getText();
 
@@ -400,8 +389,8 @@ public class ExpectedHighlightingData {
     return (HighlightInfoType)field.get(null);
   }
 
-  public void checkLineMarkers(@NotNull Collection<? extends LineMarkerInfo> markerInfos, @NotNull String text) {
-    String fileName = myFile == null ? "" : myFile.getName() + ": ";
+  public void checkLineMarkers(@Nullable PsiFile psiFile, @NotNull Collection<? extends LineMarkerInfo> markerInfos, @NotNull String text) {
+    String fileName = psiFile == null ? "" : psiFile.getName() + ": ";
     StringBuilder failMessage = new StringBuilder();
 
     for (LineMarkerInfo info : markerInfos) {
@@ -424,8 +413,8 @@ public class ExpectedHighlightingData {
 
     if (failMessage.length() > 0) {
       String filePath = null;
-      if (myFile != null) {
-        VirtualFile file = myFile.getVirtualFile();
+      if (psiFile != null) {
+        VirtualFile file = psiFile.getVirtualFile();
         if (file != null) {
           filePath = file.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH);
         }
@@ -479,11 +468,11 @@ public class ExpectedHighlightingData {
     return false;
   }
 
-  public void checkResult(Collection<? extends HighlightInfo> infos, String text) {
-    checkResult(infos, text, null);
+  public void checkResult(@Nullable PsiFile psiFile, Collection<? extends HighlightInfo> infos, String text) {
+    checkResult(psiFile, infos, text, null);
   }
 
-  public void checkResult(Collection<? extends HighlightInfo> infos, String text, @Nullable String filePath) {
+  public void checkResult(@Nullable PsiFile psiFile, Collection<? extends HighlightInfo> infos, String text, @Nullable String filePath) {
     StringBuilder failMessage = new StringBuilder();
 
     Set<HighlightInfo> expectedFound = new THashSet<>(new TObjectHashingStrategy<HighlightInfo>() {
@@ -500,7 +489,7 @@ public class ExpectedHighlightingData {
       for (HighlightInfo info : reverseCollection(infos)) {
         ThreeState state = expectedInfosContainsInfo(info);
         if (state == ThreeState.NO) {
-          reportProblem(failMessage, text, info, "extra ");
+          reportProblem(psiFile, failMessage, text, info, "extra ");
           failMessage.append(" [").append(info.type).append(']');
         }
         else if (state == ThreeState.YES) {
@@ -510,7 +499,7 @@ public class ExpectedHighlightingData {
               failedDuplicationChecks++;
             }
             else {
-              reportProblem(failMessage, text, info, "duplicated ");
+              reportProblem(psiFile, failMessage, text, info, "duplicated ");
             }
           }
           expectedFound.add(info);
@@ -519,18 +508,18 @@ public class ExpectedHighlightingData {
     }
 
     Collection<ExpectedHighlightingSet> expectedHighlights = myHighlightingTypes.values();
-    for (ExpectedHighlightingSet highlightingSet : reverseCollection(expectedHighlights)) {
+    for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       Set<HighlightInfo> expInfos = highlightingSet.infos;
       for (HighlightInfo expectedInfo : expInfos) {
         if (!infosContainsExpectedInfo(infos, expectedInfo) && highlightingSet.enabled) {
-          reportProblem(failMessage, text, expectedInfo, "missing ");
+          reportProblem(psiFile, failMessage, text, expectedInfo, "missing ");
         }
       }
     }
 
     if (failMessage.length() > 0) {
-      if (filePath == null && myFile != null) {
-        VirtualFile file = myFile.getVirtualFile();
+      if (filePath == null && psiFile != null) {
+        VirtualFile file = psiFile.getVirtualFile();
         if (file != null) {
           filePath = file.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH);
         }
@@ -541,11 +530,12 @@ public class ExpectedHighlightingData {
     }
   }
 
-  private void reportProblem(@NotNull StringBuilder failMessage,
-                             @NotNull String text,
-                             @NotNull HighlightInfo info,
-                             @NotNull String messageType) {
-    String fileName = myFile == null ? "" : myFile.getName() + ": ";
+  private static void reportProblem(@Nullable PsiFile psiFile,
+                                    @NotNull StringBuilder failMessage,
+                                    @NotNull String text,
+                                    @NotNull HighlightInfo info,
+                                    @NotNull String messageType) {
+    String fileName = psiFile == null ? "" : psiFile.getName() + ": ";
     int startOffset = info.startOffset;
     int endOffset = info.endOffset;
     String s = text.substring(startOffset, endOffset);

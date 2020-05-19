@@ -54,7 +54,7 @@ public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest 
       @Override
       public void doCheck() {
         ExpectedHighlightingData data =
-          new ExpectedHighlightingData(new DocumentImpl(expectedText), true, true, false, myFixture.getFile());
+          new ExpectedHighlightingData(new DocumentImpl(expectedText), true, true, false);
         data.init();
         ((CodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
       }

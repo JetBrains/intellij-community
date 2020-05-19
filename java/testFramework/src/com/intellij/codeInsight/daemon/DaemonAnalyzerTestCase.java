@@ -183,7 +183,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       public HighlightTestInfo doTest() {
         try { configureByFiles(projectRoot, filePaths); }
         catch (Exception e) { throw new RuntimeException(e); }
-        ExpectedHighlightingData data = new JavaExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        ExpectedHighlightingData data = new JavaExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
         if (checkSymbolNames) data.checkSymbolNames();
         checkHighlighting(data);
         return this;
@@ -212,7 +212,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
   protected Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
     return ContainerUtil.filter(
-      checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile)),
+      checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos)),
       info -> info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
               info.getSeverity() == HighlightSeverity.WARNING && checkWarnings ||
               info.getSeverity() == HighlightSeverity.WEAK_WARNING && checkWeakWarnings ||
@@ -241,8 +241,9 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   protected void doCheckResult(@NotNull ExpectedHighlightingData data,
                              Collection<HighlightInfo> infos,
                              String text) {
-    data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
-    data.checkResult(infos, text);
+    PsiFile file = getFile();
+    data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
+    data.checkResult(file, infos, text);
   }
 
   @Override

@@ -89,7 +89,6 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -520,7 +519,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       assertNotNull(document);
       ExpectedHighlightingData datum =
-        new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, psiFile, myMessageBundles);
+        new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, myMessageBundles);
       datum.init();
       return Trinity.create(psiFile, createEditor(file), datum);
     })
@@ -567,8 +566,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       public HighlightTestInfo doTest() {
         configureByFiles(filePaths);
         ExpectedHighlightingData data =
-          new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false, getFile(),
-                                       myMessageBundles);
+          new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false, myMessageBundles);
         if (checkSymbolNames) data.checkSymbolNames();
         data.init();
         collectAndCheckHighlighting(data);
@@ -1484,7 +1482,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                            boolean checkWeakWarnings,
                                            boolean ignoreExtraHighlighting) {
     ExpectedHighlightingData data = new ExpectedHighlightingData(
-      myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, getHostFile(), myMessageBundles);
+      myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, myMessageBundles);
     data.init();
     return collectAndCheckHighlighting(data);
   }
@@ -1523,10 +1521,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //    ProfilingUtil.captureCPUSnapshot("testing");
     final long elapsed = System.currentTimeMillis() - start;
 
-    data.checkResult(infos, file.getText());
+    data.checkResult(file, infos, file.getText());
     if (data.hasLineMarkers()) {
       Document document = getDocument(getFile());
-      data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
+      data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
     }
     ObjectUtils.reachabilityFence(hardRefToFileElement);
     return elapsed;
