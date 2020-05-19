@@ -493,7 +493,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
     @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina)
+    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)  // Android Studio: b/156739439
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {

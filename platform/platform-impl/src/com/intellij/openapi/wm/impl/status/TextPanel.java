@@ -34,9 +34,11 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   @Override
   public void updateUI() {
     UISettings.setupComponentAntialiasing(this);
+/* Android Studio: b/156739439
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
+Android Studio: b/156739439 */
   }
 
   @Override

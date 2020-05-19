@@ -103,6 +103,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   public void updateUI() {
     UISettings.setupComponentAntialiasing(this);
+/* Android Studio: b/156739439
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
@@ -125,6 +126,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
     }
     return false;
+Android Studio: b/156739439 */
   }
 
   @NotNull
@@ -391,7 +393,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @NotNull
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
+/* Android Studio: b/156739439
     updateFractionalMetrics();
+Android Studio: b/156739439 */
     synchronized (myFragments) {
       // Calculate width
       float width = myIpad.left;
@@ -550,7 +554,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @return the index of the fragment, {@link #FRAGMENT_ICON} if the icon is at the offset, or -1 if nothing is there.
    */
   public int findFragmentAt(int x) {
+/* Android Studio: b/156739439
     updateFractionalMetrics();
+Android Studio: b/156739439 */
     float curX = myIpad.left;
     if (myBorder != null) {
       curX += myBorder.getBorderInsets(this).left;
@@ -750,7 +756,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected int doPaintText(Graphics2D g, int textStart, boolean focusAroundIcon) {
+/* Android Studio: b/156739439
     updateFractionalMetrics();
+Android Studio: b/156739439 */
     synchronized (myFragments) {
       // If there is no icon, then we have to add left internal padding
       if (textStart == 0) {
@@ -1000,12 +1008,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
     UISettings.setupAntialiasing(g);
+/* Android Studio: b/156739439
     g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getClientProperty(RenderingHints.KEY_FRACTIONALMETRICS));
+Android Studio: b/156739439 */
   }
 
   @Override
   public int getBaseline(int width, int height) {
+/* Android Studio: b/156739439
     updateFractionalMetrics();
+Android Studio: b/156739439 */
     super.getBaseline(width, height);
     return getTextBaseLine(getFontMetrics(getFont()), height);
   }
