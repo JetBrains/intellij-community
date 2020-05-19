@@ -96,8 +96,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/maven/lib/artifact-resolver-m3.jar"                : "1.6",
     "plugins/maven/lib/artifact-resolver-m31.jar"               : "1.6",
     "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
-    "plugins/xslt-debugger/lib/xslt-debugger-engine.jar"        : "1.6",
-    "plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar": "1.8",
+    "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
+    "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
     "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar"       : "1.6",
     "plugins/android/lib/layoutlib-jre11-26.6.0.2.jar"          : "1.9",
     "plugins/javaFX/lib/rt/java11/scenebuilderkit-11.0.2.jar"   : "1.11"
