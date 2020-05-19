@@ -77,7 +77,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "lib/annotations.jar"                                       : "1.6",
     "lib/util.jar"                                              : "1.8",
     "lib/external-system-rt.jar"                                : "1.6",
-    "lib/jshell-frontend.jar"                                   : "1.9",
+    "lib/jshell-frontend.jar"                                   : "9",
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
     "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
@@ -100,9 +100,9 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
     "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar"       : "1.6",
-    "plugins/android/lib/layoutlib-jre11-26.6.0.2.jar"          : "1.9",
+    "plugins/android/lib/layoutlib-jre11-26.6.0.2.jar"          : "9",
     "plugins/android/lib/android-rt.jar"                        : "1.8",
-    "plugins/javaFX/lib/rt/java11/scenebuilderkit-11.0.2.jar"   : "1.11"
+    "plugins/javaFX/lib/rt/java11/scenebuilderkit-11.0.2.jar"   : "11"
   ]
 
   BaseIdeaProperties() {
