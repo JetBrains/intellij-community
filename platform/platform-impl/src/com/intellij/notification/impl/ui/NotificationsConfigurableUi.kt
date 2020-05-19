@@ -11,7 +11,6 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.layout.*
 import java.awt.Dimension
 import javax.swing.JCheckBox
-import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 
 /**
@@ -45,9 +44,6 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
         }
         cell(isVerticalFlow = true) {
           component(notificationSettings.ui).withLargeLeftGap().constraints(CCFlags.pushX)
-          component(object: JPanel() {
-            override fun getPreferredSize() = 1 x Int.MAX_VALUE
-          })
         }
       }
     }

@@ -33,6 +33,9 @@ componentConstrains:
     pushY: 100.0
     vertical: {grow: 100.0}
   Merge ...:
+    flowX: false
     horizontal: {grow: 1000.0}
     spanX: INF
+    vertical:
+      align: {horizontal: false, unit: 6, value: 0.0}
     wrap: true
