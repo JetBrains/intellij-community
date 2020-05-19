@@ -246,8 +246,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace) {
-    if (!myDumbTaskQueue.addTaskToQueue(task)) return;
-
+    myDumbTaskQueue.addTaskToQueue(task);
     State state = myState.get();
     if (state == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS) {
       return;
@@ -543,7 +542,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
               action.execute((ProgressIndicatorEx)visibleIndicator);
             }
           });
-          return taskIndicator;
         }, activity);
       }
       catch (Throwable unexpected) {

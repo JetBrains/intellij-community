@@ -6,37 +6,24 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 final class DumbServiceGuiTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
 
   private final Project myProject;
-  private final Object myLock = new Object();
-  private final Set<Object> myQueuedEquivalences = new HashSet<>();
-  private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
+  private final DumbServiceMergingTaskQueue myTaskQueue = new DumbServiceMergingTaskQueue();
 
   /**
    * Per-task progress indicators. Modified from EDT only.
    * The task is removed from this map after it's finished or when the project is disposed.
    */
-  private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = new ConcurrentHashMap<>();
 
   DumbServiceGuiTaskQueue(@NotNull Project project) {
     myProject = project;
@@ -44,117 +31,56 @@ final class DumbServiceGuiTaskQueue {
 
   void cancelTask(@NotNull DumbModeTask task) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
-
-    ProgressIndicatorEx indicator = myProgresses.get(task);
-    if (indicator != null) {
-      indicator.cancel();
-    }
+    myTaskQueue.cancelTask(task);
   }
 
   void clearTasksQueue() {
-    synchronized (myLock) {
-      myUpdatesQueue.clear();
-      myQueuedEquivalences.clear();
-    }
+    myTaskQueue.clearTasksQueue();
   }
 
   void disposePendingTasks() {
-    for (DumbModeTask task : new ArrayList<>(myProgresses.keySet())) {
-      cancelTask(task);
-      Disposer.dispose(task);
-    }
+    myTaskQueue.disposePendingTasks();
   }
 
-  boolean addTaskToQueue(@NotNull DumbModeTask task) {
-    boolean result;
-    synchronized (myLock) {
-      result = addTaskToQueueImpl(task);
-    }
-
-    if (!result) {
-      Disposer.dispose(task);
-    }
-
-    return result;
-  }
-
-  private boolean addTaskToQueueImpl(@NotNull DumbModeTask task) {
-    if (!myQueuedEquivalences.add(task.getEquivalenceObject())) {
-      return false;
-    }
-
-    myProgresses.put(task, new ProgressIndicatorBase());
-    Disposer.register(task, () -> myProgresses.remove(task));
-    myUpdatesQueue.addLast(task);
-    return true;
+  void addTaskToQueue(@NotNull DumbModeTask task) {
+    myTaskQueue.addTask(task);
   }
 
   void cancelAllTasks() {
-    for (DumbModeTask task : myProgresses.keySet()) {
-      cancelTask(task);
-    }
+    myTaskQueue.cancelAllTasks();
   }
 
-  void processTasksWithProgress(@NotNull Function<ProgressIndicatorEx, ProgressIndicatorEx> bindProgress,
+  void processTasksWithProgress(@NotNull Consumer<ProgressIndicatorEx> bindProgress,
                                 @NotNull IdeActivity activity) {
     while (true) {
       //we do jump in EDT to
-      Pair<DumbModeTask, ProgressIndicatorEx> pair = pollTaskQueue();
+      if (myProject.isDisposed()) break;
+
+      QueuedDumbModeTask pair = myTaskQueue.extractNextTask();
       if (pair == null) break;
 
-      DumbModeTask task = pair.first;
-      try {
-        ProgressIndicatorEx taskIndicator = bindProgress.apply(pair.second);
-        activity.stageStarted(task.getClass());
-        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
-          runSingleTask(task, taskIndicator);
-        }
-      } finally {
-        Disposer.dispose(task);
+      bindProgress.accept(pair.getIndicator());
+      pair.registerStageStarted(activity);
+
+      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
+        runSingleTask(pair);
       }
     }
   }
 
-  private static void runSingleTask(@NotNull final DumbModeTask task,
-                                    @NotNull final ProgressIndicator taskIndicator) {
+  private static void runSingleTask(@NotNull final QueuedDumbModeTask task) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
     ProgressManager.getInstance().runProcess(() -> {
       try {
-        taskIndicator.checkCanceled();
-        taskIndicator.setIndeterminate(true);
-        task.performInDumbMode(taskIndicator);
+        task.executeTask();
       }
       catch (ProcessCanceledException ignored) {
       }
       catch (Throwable unexpected) {
         LOG.error("Failed to execute task " + task + ". " + unexpected.getMessage(), unexpected);
       }
-    }, taskIndicator);
-  }
-
-  private @Nullable Pair<DumbModeTask, ProgressIndicatorEx> pollTaskQueue() {
-    synchronized (myLock) {
-      while (true) {
-        if (myUpdatesQueue.isEmpty()) {
-          return null;
-        }
-
-        if (myProject.isDisposed()) {
-          return null;
-        }
-
-        DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
-        myQueuedEquivalences.remove(queuedTask.getEquivalenceObject());
-        ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
-        if (indicator.isCanceled()) {
-          Disposer.dispose(queuedTask);
-          continue;
-        }
-
-        return Pair.create(queuedTask, indicator);
-      }
-    }
+    }, task.getIndicator());
   }
 }
