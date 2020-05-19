@@ -7,6 +7,7 @@ import com.intellij.index.PrebuiltIndexProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeExtension
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.indexing.FileContent
@@ -114,6 +115,9 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
   override fun findStub(fileContent: FileContent): SerializedStubTree? {
     try {
       return get(fileContent)
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
     }
     catch (e: Exception) {
       dispose()
