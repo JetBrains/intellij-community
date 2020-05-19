@@ -19,7 +19,7 @@ import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.PathUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -156,7 +156,7 @@ public class ProgramParametersConfigurator {
       if (projectDirectory != null) return projectDirectory;
     }
 
-    if (projectDirectory != null && !PathUtil.isAbsolute(workingDirectory)) {
+    if (projectDirectory != null && !OSAgnosticPathUtil.isAbsolute(workingDirectory)) {
       workingDirectory = projectDirectory + '/' + workingDirectory;
     }
 

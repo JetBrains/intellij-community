@@ -1186,19 +1186,19 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
-  /** @deprecated does not support UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  /** @deprecated does not support UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
   @Deprecated
   public static boolean isAbsolutePlatformIndependent(@NotNull String path) {
     return isUnixAbsolutePath(path) || isWindowsAbsolutePath(path);
   }
 
-  /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
   @Deprecated
   public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");
   }
 
-  /** @deprecated does not support UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  /** @deprecated does not support UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
   @Deprecated
   public static boolean isWindowsAbsolutePath(@NotNull String path) {
     boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';

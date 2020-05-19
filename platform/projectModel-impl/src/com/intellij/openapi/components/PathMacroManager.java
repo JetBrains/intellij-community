@@ -8,7 +8,7 @@ import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.PathUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import org.jdom.Element;
@@ -71,7 +71,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
       result.addReplacement(path, macro, overwrite);
       if (path.equals(stopAt)) break;
       macro += "/..";
-      path = PathUtil.getParent(path);
+      path = OSAgnosticPathUtil.getParent(path);
       overwrite = false;
     }
   }

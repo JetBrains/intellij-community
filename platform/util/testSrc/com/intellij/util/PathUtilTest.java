@@ -3,7 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.util.io.PathUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.util.PathUtilRt.Platform;
 import org.junit.Test;
 
@@ -90,50 +90,50 @@ public class PathUtilTest {
 
   @Test
   public void isAbsolute() {
-    assertThat(PathUtil.isAbsolute("/tmp")).isTrue();
-    assertThat(PathUtil.isAbsolute("/")).isTrue();
-    assertThat(PathUtil.isAbsolute("C:/")).isTrue();
-    assertThat(PathUtil.isAbsolute("d:\\x")).isTrue();
-    assertThat(PathUtil.isAbsolute("\\\\host")).isTrue();
-    assertThat(PathUtil.isAbsolute("\\\\")).isTrue();
-    assertThat(PathUtil.isAbsolute("//host")).isTrue();
+    assertThat(OSAgnosticPathUtil.isAbsolute("/tmp")).isTrue();
+    assertThat(OSAgnosticPathUtil.isAbsolute("/")).isTrue();
+    assertThat(OSAgnosticPathUtil.isAbsolute("C:/")).isTrue();
+    assertThat(OSAgnosticPathUtil.isAbsolute("d:\\x")).isTrue();
+    assertThat(OSAgnosticPathUtil.isAbsolute("\\\\host")).isTrue();
+    assertThat(OSAgnosticPathUtil.isAbsolute("\\\\")).isTrue();
+    assertThat(OSAgnosticPathUtil.isAbsolute("//host")).isTrue();
 
-    assertThat(PathUtil.isAbsolute("")).isFalse();
-    assertThat(PathUtil.isAbsolute("\\a")).isFalse();
-    assertThat(PathUtil.isAbsolute("\\")).isFalse();
-    assertThat(PathUtil.isAbsolute("x:")).isFalse();
+    assertThat(OSAgnosticPathUtil.isAbsolute("")).isFalse();
+    assertThat(OSAgnosticPathUtil.isAbsolute("\\a")).isFalse();
+    assertThat(OSAgnosticPathUtil.isAbsolute("\\")).isFalse();
+    assertThat(OSAgnosticPathUtil.isAbsolute("x:")).isFalse();
   }
 
   @Test
   public void parentPath() {
-    assertThat(PathUtil.getParent("")).isNull();
-    assertThat(PathUtil.getParent("\\")).isNull();
-    assertThat(PathUtil.getParent("tmp\\a")).isEqualTo("tmp");
-    assertThat(PathUtil.getParent("tmp/a/")).isEqualTo("tmp");
-    assertThat(PathUtil.getParent("tmp")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("\\")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("tmp\\a")).isEqualTo("tmp");
+    assertThat(OSAgnosticPathUtil.getParent("tmp/a/")).isEqualTo("tmp");
+    assertThat(OSAgnosticPathUtil.getParent("tmp")).isNull();
 
-    assertThat(PathUtil.getParent("/tmp/a")).isEqualTo("/tmp");
-    assertThat(PathUtil.getParent("/tmp/a/")).isEqualTo("/tmp");
-    assertThat(PathUtil.getParent("/tmp")).isEqualTo("/");
-    assertThat(PathUtil.getParent("/")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("/tmp/a")).isEqualTo("/tmp");
+    assertThat(OSAgnosticPathUtil.getParent("/tmp/a/")).isEqualTo("/tmp");
+    assertThat(OSAgnosticPathUtil.getParent("/tmp")).isEqualTo("/");
+    assertThat(OSAgnosticPathUtil.getParent("/")).isNull();
 
-    assertThat(PathUtil.getParent("c:/tmp/a")).isEqualTo("c:/tmp");
-    assertThat(PathUtil.getParent("c:\\tmp\\a\\")).isEqualTo("c:\\tmp");
-    assertThat(PathUtil.getParent("c:/tmp\\a")).isEqualTo("c:/tmp");
-    assertThat(PathUtil.getParent("c:\\tmp/a/")).isEqualTo("c:\\tmp");
-    assertThat(PathUtil.getParent("c:/tmp")).isEqualTo("c:/");
-    assertThat(PathUtil.getParent("c:\\")).isNull();
-    assertThat(PathUtil.getParent("c:")).isNull();
-    assertThat(PathUtil.getParent("c:x")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("c:/tmp/a")).isEqualTo("c:/tmp");
+    assertThat(OSAgnosticPathUtil.getParent("c:\\tmp\\a\\")).isEqualTo("c:\\tmp");
+    assertThat(OSAgnosticPathUtil.getParent("c:/tmp\\a")).isEqualTo("c:/tmp");
+    assertThat(OSAgnosticPathUtil.getParent("c:\\tmp/a/")).isEqualTo("c:\\tmp");
+    assertThat(OSAgnosticPathUtil.getParent("c:/tmp")).isEqualTo("c:/");
+    assertThat(OSAgnosticPathUtil.getParent("c:\\")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("c:")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("c:x")).isNull();
 
-    assertThat(PathUtil.getParent("//host/share/a")).isEqualTo("//host/share");
-    assertThat(PathUtil.getParent("\\\\host\\share/a/")).isEqualTo("\\\\host\\share");
-    assertThat(PathUtil.getParent("//host/share")).isNull();
-    assertThat(PathUtil.getParent("\\\\host\\share/")).isNull();
-    assertThat(PathUtil.getParent("//host")).isNull();
-    assertThat(PathUtil.getParent("\\\\")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("//host/share/a")).isEqualTo("//host/share");
+    assertThat(OSAgnosticPathUtil.getParent("\\\\host\\share/a/")).isEqualTo("\\\\host\\share");
+    assertThat(OSAgnosticPathUtil.getParent("//host/share")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("\\\\host\\share/")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("//host")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("\\\\")).isNull();
 
-    assertThat(PathUtil.getParent("/tmp/a/.")).isEqualTo("/tmp/a");
-    assertThat(PathUtil.getParent("/tmp/a/../b")).isEqualTo("/tmp/a/..");
+    assertThat(OSAgnosticPathUtil.getParent("/tmp/a/.")).isEqualTo("/tmp/a");
+    assertThat(OSAgnosticPathUtil.getParent("/tmp/a/../b")).isEqualTo("/tmp/a/..");
   }
 }

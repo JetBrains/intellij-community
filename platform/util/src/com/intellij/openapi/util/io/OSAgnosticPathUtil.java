@@ -12,13 +12,13 @@ import org.jetbrains.annotations.Nullable;
  * <p><strong>Warning:</strong> the methods are by definition less strict and in some cases could produce incorrect results.
  * Unless you're certain you need the relaxed handling, prefer {@link java.nio.file NIO2} instead.</p>
  */
-public class PathUtil {
-  private PathUtil() { }
+public class OSAgnosticPathUtil {
+  private OSAgnosticPathUtil() { }
 
   /**
    * Returns {@code true} absolute UNC (even incomplete), DOS and Unix paths; {@code false} otherwise.
    *
-   * @see PathUtil applicability warning
+   * @see OSAgnosticPathUtil applicability warning
    */
   public static boolean isAbsolute(@NotNull String path) {
     return path.length() > 2 && path.charAt(1) == ':' && isSlash(path.charAt(2)) && isDriveLetter(path.charAt(0)) ||
@@ -32,7 +32,7 @@ public class PathUtil {
    * <p>A path should not contain duplicated separators (except at the beginning of a UNC path), otherwise the result could be incorrect.</p>
    * <p>Directory traversals are not processed ({@code getParent("/a/b/..")} returns {@code "/a/b"} instead of {@code "/a"}, etc).</p>
    *
-   * @see PathUtil applicability warning
+   * @see OSAgnosticPathUtil applicability warning
    */
   public static @Nullable String getParent(@NotNull String path) {
     int length = path.length();
@@ -68,7 +68,7 @@ public class PathUtil {
     return 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z';
   }
 
-  private static int lastSeparatorIndex(String s, int from) {
+  private static int lastSeparatorIndex(@NotNull String s, int from) {
     return Math.max(s.lastIndexOf('/', from), s.lastIndexOf('\\', from));
   }
 }
