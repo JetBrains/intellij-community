@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -25,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.util.Pair.create;
 import static com.intellij.openapi.util.Pair.pair;
 
 public class VfsImplUtil {
@@ -301,23 +303,22 @@ public class VfsImplUtil {
   }
 
   private static class InvalidationState {
-    private Set<NewVirtualFile> myRootsToRefresh;
+    private Set<Pair<String, ArchiveFileSystem>> myRootsToRefresh;
 
     private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
-      NewVirtualFile root = ManagingFS.getInstance().findRoot(vfs.composeRootPath(path), vfs);
-      if (root != null) {
-        if (myRootsToRefresh == null) myRootsToRefresh = new HashSet<>();
-        myRootsToRefresh.add(root);
-      }
+      if (myRootsToRefresh == null) myRootsToRefresh = new HashSet<>();
+      myRootsToRefresh.add(create(path, vfs));
     }
 
     private void scheduleRefresh() {
       if (myRootsToRefresh != null) {
-        for (NewVirtualFile root : myRootsToRefresh) {
+        List<NewVirtualFile> rootsToRefresh = ContainerUtil.mapNotNull(myRootsToRefresh, pathAndFs ->
+          ManagingFS.getInstance().findRoot(pathAndFs.second.composeRootPath(pathAndFs.first), pathAndFs.second));
+        for (NewVirtualFile root : rootsToRefresh) {
           root.markDirtyRecursively();
         }
         boolean async = !ApplicationManager.getApplication().isUnitTestMode();
-        RefreshQueue.getInstance().refresh(async, true, null, myRootsToRefresh);
+        RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh);
       }
     }
   }
