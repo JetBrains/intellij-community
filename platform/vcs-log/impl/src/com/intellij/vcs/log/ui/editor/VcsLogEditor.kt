@@ -92,6 +92,12 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
 }
 
 class VcsLogEditorTabTitleProvider : EditorTabTitleProvider {
+
+  override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
+    if (file !is VcsLogFile) return null
+    return getEditorTabTitle(project, file)
+  }
+
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
     if (file !is VcsLogFile) return null
     return file.getUserData(VCS_LOG_FILE_DISPLAY_NAME_GENERATOR)
