@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.*
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -20,7 +21,6 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.URL_ATTRIBUTE
 
 internal abstract class ContentFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
-  override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(contentFolderUrl).file
   override fun getContentEntry(): ContentEntryViaTypedEntity = entry
   override fun getUrl(): String = contentFolderUrl.url
   override fun isSynthetic(): Boolean = false
@@ -30,6 +30,8 @@ internal abstract class ContentFolderViaTypedEntity(private val entry: ContentEn
 
 internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, val sourceRootEntity: SourceRootEntity)
   : ContentFolderViaTypedEntity(entry, sourceRootEntity.url), SourceFolder {
+
+  override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(sourceRootEntity.url, LegacyBridgeFilePointerScope.SourceRoot).file
 
   private var packagePrefixVar: String? = null
   private val sourceRootType: JpsModuleSourceRootType<*> by lazy { getSourceRootType(sourceRootEntity.rootType) }
@@ -154,5 +156,7 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
   }
 }
 
-internal class ExcludeFolderViaTypedEntity(entry: ContentEntryViaTypedEntity, val excludeFolderUrl: VirtualFileUrl)
-  : ContentFolderViaTypedEntity(entry, excludeFolderUrl), ExcludeFolder
+internal class ExcludeFolderViaTypedEntity(val entry: ContentEntryViaTypedEntity, val excludeFolderUrl: VirtualFileUrl)
+  : ContentFolderViaTypedEntity(entry, excludeFolderUrl), ExcludeFolder {
+  override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(excludeFolderUrl, LegacyBridgeFilePointerScope.ExcludedRoots).file
+}

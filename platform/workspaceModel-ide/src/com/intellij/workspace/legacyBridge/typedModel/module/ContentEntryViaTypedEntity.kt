@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.ContentRootEntity
 import com.intellij.workspace.api.SourceRootEntity
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -21,7 +22,8 @@ internal class ContentEntryViaTypedEntity(internal val model: RootModelViaTypedE
     sourceRootEntities.map { SourceFolderViaTypedEntity(this, it) }
   }
 
-  override fun getFile(): VirtualFile? = model.filePointerProvider.getAndCacheFilePointer(entity.url).file
+  override fun getFile(): VirtualFile? = model.filePointerProvider.getAndCacheFilePointer(entity.url,
+                                                                                          LegacyBridgeFilePointerScope.ContentRoots).file
 
   override fun getUrl(): String = entity.url.url
 

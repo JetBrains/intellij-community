@@ -19,9 +19,9 @@ interface TypedEntityStore {
 internal class ValuesCache {
   private data class ValuesCacheData(val version: Long, val value: Any?)
 
-  private val cachedValues: Cache<CachedValue<*>, ValuesCacheData> = CacheBuilder.newBuilder().weakValues().build()
+  private val cachedValues: Cache<CachedValue<*>, ValuesCacheData> = CacheBuilder.newBuilder().build()
   private val cachedValuesWithParameter: Cache<Pair<CachedValueWithParameter<*, *>, *>, ValuesCacheData> =
-    CacheBuilder.newBuilder().weakValues().build()
+    CacheBuilder.newBuilder().build()
 
   fun <R> cachedValue(value: CachedValue<R>, version: Long, storage: TypedEntityStorage): R {
     if (storage is TypedEntityStorageBuilder) error("storage must be immutable")

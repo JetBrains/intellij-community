@@ -84,8 +84,6 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
   private val isDisposed = AtomicBoolean(false)
 
   override fun dispose() {
-    (filePointerProvider as? LegacyBridgeFilePointerProviderImpl)?.disposeAndClearCaches()
-
     val alreadyDisposed = isDisposed.getAndSet(true)
     if (alreadyDisposed) {
       val trace = disposedStackTrace
