@@ -216,6 +216,15 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
         updatePrintElementGenerator();
       }, false, selectionChanged);
     }
+
+    @Override
+    public boolean isActionSupported(@NotNull GraphAction action) {
+      if (action.getType() == GraphAction.Type.BUTTON_COLLAPSE || action.getType() == GraphAction.Type.BUTTON_EXPAND) {
+        return !(myGraphController instanceof FilteredController);
+      }
+
+      return ActionController.super.isActionSupported(action);
+    }
   }
 
   private static class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {

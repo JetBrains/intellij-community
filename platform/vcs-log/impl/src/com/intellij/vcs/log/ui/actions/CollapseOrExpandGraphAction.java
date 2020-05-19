@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -63,20 +62,25 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
-    e.getPresentation().setEnabled(ui != null && !ui.getDataPack().isEmpty() &&
-                                   ui.getFilterUi().getFilters().getDetailsFilters().isEmpty());
-    if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
-        properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
-      e.getPresentation().setText(myMergesAction.get());
-      e.getPresentation().setDescription(myMergesDescription.get());
-    }
-    else {
-      e.getPresentation().setText(myLinearBranchesAction.get());
-      e.getPresentation().setDescription(myLinearBranchesDescription.get());
+    boolean visible = ui != null && ui.getDataPack().getVisibleGraph().getActionController().isActionSupported(getGraphAction());
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && !ui.getDataPack().isEmpty());
+    if (visible) {
+      if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
+          properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
+        e.getPresentation().setText(myMergesAction.get());
+        e.getPresentation().setDescription(myMergesDescription.get());
+      }
+      else {
+        e.getPresentation().setText(myLinearBranchesAction.get());
+        e.getPresentation().setDescription(myLinearBranchesDescription.get());
+      }
     }
   }
 
   protected abstract void executeAction(@NotNull MainVcsLogUi vcsLogUi);
+
+  protected abstract @NotNull GraphAction getGraphAction();
 
   protected void performLongAction(@NotNull MainVcsLogUi logUi, @NotNull GraphAction graphAction, @NotNull String title) {
     VisiblePack dataPack = logUi.getDataPack();
