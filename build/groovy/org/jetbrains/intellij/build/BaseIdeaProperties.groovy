@@ -99,10 +99,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
-    "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar"       : "1.6",
     "plugins/android/lib/layoutlib-jre11-26.6.0.2.jar"          : "9",
     "plugins/android/lib/android-rt.jar"                        : "1.8",
-    "plugins/javaFX/lib/rt/java11/scenebuilderkit-11.0.2.jar"   : "11"
   ]
 
   BaseIdeaProperties() {

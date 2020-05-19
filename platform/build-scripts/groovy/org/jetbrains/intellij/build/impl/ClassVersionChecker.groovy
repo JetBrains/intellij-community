@@ -35,6 +35,7 @@ class ClassVersionChecker {
   }
 
   private final List<Rule> myRules
+  private final Set<Rule> myUsedRules = new HashSet<>()
   private int myJars, myClasses
   private List<String> myErrors
 
@@ -70,6 +71,13 @@ class ClassVersionChecker {
       if (!myErrors.isEmpty()) {
         myErrors.each { buildContext.messages.warning(it) }
         buildContext.messages.error("Failed with ${myErrors.size()} problems")
+      }
+
+      def unusedRules = myRules - myUsedRules
+      if (!unusedRules.isEmpty()) {
+        buildContext.messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
+                                    "ProductProperties::versionCheckerConfig are incorrect:\n" +
+                                    "${unusedRules.collect {it.path}.join("\n")}")
       }
     }
   }
@@ -134,7 +142,9 @@ class ClassVersionChecker {
       return
     }
 
-    int expected = myRules.find { it.path.isEmpty() || path.startsWith(it.path) }.version
+    def rule = myRules.find { it.path.isEmpty() || path.startsWith(it.path) }
+    myUsedRules.add(rule)
+    int expected = rule.version
     if (expected > 0 && major > expected) {
       myErrors.add(path + ": .class file version " + major + " exceeds expected " + expected)
     }
