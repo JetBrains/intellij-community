@@ -50,7 +50,7 @@ public class ResourceBundleUtil {
     final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
     if (bundles != null && bundles.length == 1) return bundles[0];
     VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (virtualFile == null) {
+    if (virtualFile == null || !virtualFile.isValid()) {
       return null;
     }
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
