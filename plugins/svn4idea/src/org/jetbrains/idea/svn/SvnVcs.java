@@ -121,7 +121,6 @@ public final class SvnVcs extends AbstractVcs {
   private SvnBranchPointsCalculator mySvnBranchPointsCalculator;
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
-  private final SvnAuthenticationNotifier myAuthNotifier;
 
   private SvnCheckoutProvider myCheckoutProvider;
 
@@ -133,8 +132,6 @@ public final class SvnVcs extends AbstractVcs {
     super(project, VCS_NAME);
 
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
-    myAuthNotifier = new SvnAuthenticationNotifier(this);
-
     cmdClientFactory = new CmdClientFactory(this);
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -264,7 +261,6 @@ public final class SvnVcs extends AbstractVcs {
                                                                                  VcsDirtyScopeManager.getInstance(myProject)));
     }
 
-    myAuthNotifier.init();
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -305,10 +301,6 @@ public final class SvnVcs extends AbstractVcs {
     return myRootsToWorkingCopies;
   }
 
-  public SvnAuthenticationNotifier getAuthNotifier() {
-    return myAuthNotifier;
-  }
-
   @Override
   public void deactivate() {
     Disposable frameStateListenerDisposable = myFrameStateListenerDisposable;
@@ -328,9 +320,7 @@ public final class SvnVcs extends AbstractVcs {
       myCommittedChangesProvider.deactivate();
     }
     myRootsToWorkingCopies.clear();
-
-    myAuthNotifier.stop();
-    myAuthNotifier.clear();
+    SvnAuthenticationNotifier.getInstance(myProject).clear();
 
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
@@ -787,7 +777,9 @@ public final class SvnVcs extends AbstractVcs {
   public boolean isVcsBackgroundOperationsAllowed(@NotNull VirtualFile root) {
     ClientFactory factory = getFactory(virtualToIoFile(root));
 
-    return ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root, factory == cmdClientFactory ? factory : null));
+    ThreeState authResult =
+      SvnAuthenticationNotifier.getInstance(myProject).isAuthenticatedFor(root, factory == cmdClientFactory ? factory : null);
+    return ThreeState.YES.equals(authResult);
   }
 
   public SvnBranchPointsCalculator getSvnBranchPointsCalculator() {
