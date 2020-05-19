@@ -75,7 +75,7 @@ public class IdentifierSplitter extends BaseSplitter {
         boolean uc = Strings.isUpperCased(text, word);
         boolean flag = (uc && !isAllWordsAreUpperCased);
         try {
-          Matcher matcher = WORD.matcher(newBombedCharSequence(text.substring(word.getStartOffset(), word.getEndOffset())));
+          Matcher matcher = WORD.matcher(newBombedCharSequence(word.substring(text)));
           if (matcher.find()) {
             TextRange found = matcherRange(word, matcher);
             addWord(consumer, flag, found);
@@ -125,7 +125,7 @@ public class IdentifierSplitter extends BaseSplitter {
           //start
           s = i;
         }
-        else if (s >= 0 && type == Character.UPPERCASE_LETTER && prevType == Character.LOWERCASE_LETTER) {
+        else if (type == Character.UPPERCASE_LETTER && prevType == Character.LOWERCASE_LETTER) {
           //a|Camel
           add(text, result, i, s);
           s = i;

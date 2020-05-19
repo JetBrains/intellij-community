@@ -248,8 +248,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = documentManager.getDocument(currentMethod.getContainingFile());
     if (silently || ApplicationManager.getApplication().isUnitTestMode()) {
-      final String currentSignature = currentMethod.getContainingFile().getText().substring(signatureRange.getStartOffset(),
-                                                                                            signatureRange.getEndOffset());
+      final String currentSignature = signatureRange.substring(currentMethod.getContainingFile().getText());
       InplaceChangeSignature.temporallyRevertChanges(JavaChangeSignatureDetector.getSignatureRange(currentMethod), document, oldText, project);
       PsiMethod prototype;
       if (isGenerateDelegate()) {

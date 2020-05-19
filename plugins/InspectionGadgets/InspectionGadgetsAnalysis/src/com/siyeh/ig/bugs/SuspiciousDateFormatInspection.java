@@ -214,7 +214,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
       if (literal == null) return;
       String text = literal.getText();
       if (myRange.getEndOffset() >= text.length()) return;
-      String existing = text.substring(myRange.getStartOffset(), myRange.getEndOffset());
+      String existing = myRange.substring(text);
       if (!existing.equals(myToken.toString())) return;
       text = text.substring(0, myRange.getStartOffset()) + myToken.fixed() + text.substring(myRange.getEndOffset());
       PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, literal);
