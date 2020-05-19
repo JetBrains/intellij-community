@@ -4,25 +4,25 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +38,7 @@ import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
+import static com.intellij.util.ui.UIUtil.FontSize.SMALL;
 
 public class WelcomeScreenComponentFactory {
 
@@ -73,7 +74,7 @@ public class WelcomeScreenComponentFactory {
     }
 
     JLabel version = new JLabel(appVersion);
-    version.setFont(version.getFont().deriveFont((float)JBUIScale.scale(11)));
+    version.setFont(UIUtil.getLabelFont(SMALL));
     version.setHorizontalAlignment(SwingConstants.CENTER);
     version.setForeground(Gray._128);
     NonOpaquePanel textPanel = new NonOpaquePanel();
@@ -251,6 +252,38 @@ public class WelcomeScreenComponentFactory {
       else {
         group.add(action);
       }
+    }
+  }
+
+  public static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+    JButton myButton;
+
+    public ToolbarTextButtonWrapper(@NotNull AnAction action) {
+      super(action.getTemplatePresentation(), action);
+      myButton = new JButton(getTemplateText());
+      myButton.setOpaque(false);
+      myButton.addActionListener(l -> {
+        ActionToolbar toolbar = ComponentUtil.getParentOfType(ActionToolbar.class, myButton);
+        DataContext dataContext = toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(myButton);
+        getDelegate().actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, dataContext));
+      });
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      return myButton;
+    }
+
+    @Override
+    public void updateButton(@NotNull AnActionEvent e) {
+      getDelegate().update(e);
+      myButton.setText(e.getPresentation().getText());
+      myButton.setVisible(e.getPresentation().isVisible());
+      myButton.setEnabled(e.getPresentation().isEnabled());
+    }
+
+    public static ToolbarTextButtonWrapper wrapAsTextButton(@NotNull AnAction action) {
+      return new ToolbarTextButtonWrapper(action);
     }
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.BalloonLayout;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createRecentProjects;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainBackground;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getTabListSelectionBackgroundColor;
@@ -74,20 +72,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
         return UI.Panels.simplePanel(screenTab.getAssociatedComponent());
       }
     };
-  }
-
-  public static class ProjectsTabFactory implements WelcomeTabFactory {
-    @Override
-    public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
-      return new DefaultWelcomeScreenTab("Projects") {
-
-        @Override
-        protected JComponent buildComponent() {
-          return JBUI.Panels.simplePanel(createRecentProjects(parentDisposable)).withBorder(JBUI.Borders.emptyLeft(12))
-            .withBackground(WelcomeScreenUIManager.getProjectsBackground());
-        }
-      };
-    }
   }
 
   @Override

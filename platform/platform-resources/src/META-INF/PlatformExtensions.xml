@@ -431,10 +431,7 @@
 
     <registryKey key="use.tabbed.welcome.screen" defaultValue="false"/>
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
-    <welcomeTabFactory id="ProjectsWelcomeTab"
-                       implementation="com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen$ProjectsTabFactory"/>
-    <welcomeTabFactory id="PluginsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory"
-                       order="after ProjectsWelcomeTab"/>
+    <welcomeTabFactory id="ProjectsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory"/>
     <welcomeTabFactory id="CustomizeWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.CustomizeTabFactory"
                        order="after ProjectsWelcomeTab"/>
     <welcomeTabFactory id="PluginsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory"
