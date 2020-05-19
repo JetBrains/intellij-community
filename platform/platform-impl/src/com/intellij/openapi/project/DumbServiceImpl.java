@@ -65,12 +65,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
-  private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
   private final DumbServiceTaskQueue myDumbTaskQueue;
   private final DumbServiceSyncTaskQueue mySyncTaskQueue;
   private final DumbServiceHeavyActivities myHeavyActivities;
+  private final DumbServiceAlternativeResolveTracker myAlternativeResolveTracker;
 
   //used from EDT
   private final DumbServiceBalloon myBalloon;
@@ -86,6 +86,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myHeavyActivities = new DumbServiceHeavyActivities();
     new DumbServiceVfsBatchListener(myProject, myHeavyActivities);
     myBalloon = new DumbServiceBalloon(project, this);
+    myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
   }
 
@@ -140,7 +141,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public boolean isAlternativeResolveEnabled() {
-    return myAlternativeResolution.get() != null;
+    return myAlternativeResolveTracker.isAlternativeResolveEnabled();
   }
 
   @Override
@@ -156,10 +157,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
-    Integer oldValue = myAlternativeResolution.get();
-    int newValue = (oldValue == null ? 0 : oldValue) + (enabled ? 1 : -1);
-    assert newValue >= 0 : "Non-paired alternative resolution mode";
-    myAlternativeResolution.set(newValue == 0 ? null : newValue);
+    myAlternativeResolveTracker.setAlternativeResolveEnabled(true);
   }
 
   @Override
