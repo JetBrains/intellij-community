@@ -7,9 +7,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.CharsetToolkit
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType.RESOURCE
@@ -53,6 +51,11 @@ private fun writeModuleDescription(module: Module,
     writeContentEntry(contentEntry, writer, macroManager)
   }
   writer.endArray()
+  writer.name("OrderEntries").beginArray()
+  for (orderEntry in rootManager.orderEntries) {
+    writeOrderEntry(orderEntry, writer, macroManager)
+  }
+  writer.endArray()
   writer.endObject()
 }
 
@@ -72,6 +75,21 @@ private fun writeContentEntry(contentEntry: ContentEntry,
     writer.beginObject()
     writer.name("Path").value(macroManager.collapsePath(excludeFolder.url))
     writer.name("Type").value("Exclude")
+    writer.endObject()
+  }
+  writer.endArray()
+  writer.endObject()
+}
+
+private fun writeOrderEntry(orderEntry: OrderEntry,
+                            writer: JsonWriter,
+                            macroManager: PathMacroManager) {
+  writer.beginObject()
+  writer.name("Name").value(orderEntry.presentableName)
+  writer.name("Roots").beginArray()
+  for (root in orderEntry.getUrls(OrderRootType.CLASSES)) {
+    writer.beginObject()
+    writer.name("Path").value(macroManager.collapsePath(root))
     writer.endObject()
   }
   writer.endArray()
