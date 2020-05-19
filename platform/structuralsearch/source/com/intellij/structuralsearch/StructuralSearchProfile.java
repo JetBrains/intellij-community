@@ -231,6 +231,20 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
+  /**
+   * @return true, if this structural search profile can shorten fully qualified names when replacing.
+   */
+  public boolean showShortenFQNames() {
+    return false;
+  }
+
+  /**
+   * @return true, if this structural search profile can use static imports when replacing.
+   */
+  public boolean showUseStaticImports() {
+    return false;
+  }
+
   public void checkSearchPattern(CompiledPattern pattern) {}
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {

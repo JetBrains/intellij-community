@@ -305,6 +305,16 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
+  public boolean showShortenFQNames() {
+    return true;
+  }
+
+  @Override
+  public boolean showUseStaticImports() {
+    return true;
+  }
+
+  @Override
   public PsiElement @NotNull [] createPatternTree(@NotNull String text,
                                                   @NotNull PatternTreeContext context,
                                                   @NotNull LanguageFileType fileType,

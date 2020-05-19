@@ -458,6 +458,14 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final ActionToolbar labelToolbar = actionManager.createActionToolbar("StructuralSearchDialog", labelGroup, true);
 
     final CheckboxAction shortenFqn = new CheckboxAction(SSRBundle.message("shorten.fully.qualified.names.checkbox")) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+        e.getPresentation().setEnabledAndVisible(profile != null && profile.showShortenFQNames());
+      }
+
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         if (!myReplace) return false;
@@ -470,6 +478,14 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
     };
     final CheckboxAction staticImport = new CheckboxAction(SSRBundle.message("use.static.import.checkbox")) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+        e.getPresentation().setEnabledAndVisible(profile != null && profile.showUseStaticImports());
+      }
+
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         if (!myReplace) return false;
