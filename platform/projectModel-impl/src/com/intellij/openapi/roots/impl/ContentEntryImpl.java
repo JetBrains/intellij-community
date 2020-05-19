@@ -66,7 +66,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
   }
 
-  private static String getUrlFrom(@NotNull Element e) throws InvalidDataException {
+  private static @NotNull String getUrlFrom(@NotNull Element e) throws InvalidDataException {
     LOG.assertTrue(ELEMENT_NAME.equals(e.getName()));
 
     String url = e.getAttributeValue(URL_ATTRIBUTE);
@@ -160,7 +160,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @Override
   public VirtualFile @NotNull [] getExcludeFolderFiles() {
     assert !isDisposed();
-    ArrayList<VirtualFile> result = new ArrayList<>();
+    List<VirtualFile> result = new ArrayList<>();
     for (ExcludeFolder excludeFolder : getExcludeFolders()) {
       ContainerUtil.addIfNotNull(result, excludeFolder.getFile());
     }
@@ -437,5 +437,10 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     i = ArrayUtil.lexicographicCompare(getExcludeFolders(), other.getExcludeFolders());
     if (i != 0) return i;
     return ContainerUtil.compareLexicographically(getExcludePatterns(), other.getExcludePatterns());
+  }
+
+  @Override
+  public String toString() {
+    return "ContentEntryImpl for '"+getUrl()+"'";
   }
 }

@@ -531,8 +531,8 @@ class RootIndex {
         }
       }
 
-      @Nullable Pair<VirtualFile, List<Condition<? super VirtualFile>>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
-      @Nullable Pair<VirtualFile, List<Condition<? super VirtualFile>>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
+      Pair<VirtualFile, List<Condition<? super VirtualFile>>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
+      Pair<VirtualFile, List<Condition<? super VirtualFile>>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
       result.addAll(myRootInfo.getLibraryOrderEntries(roots,
                                                       Pair.getFirst(libraryClassRootInfo),
                                                       Pair.getFirst(librarySourceRootInfo),
@@ -607,7 +607,7 @@ class RootIndex {
   }
 
   @Nullable
-  private DirectoryInfo handleInterestingId(int id, VirtualFile file) {
+  private DirectoryInfo handleInterestingId(int id, @NotNull VirtualFile file) {
     DirectoryInfo info = myRootInfos.get(file);
     if (info != null) {
       return info;
@@ -752,7 +752,7 @@ class RootIndex {
     }
 
     private static boolean isExcludedByPattern(@NotNull VirtualFile contentRoot,
-                                               List<? extends VirtualFile> hierarchy,
+                                               @NotNull List<? extends VirtualFile> hierarchy,
                                                @NotNull FileTypeAssocTable<Boolean> table) {
       for (VirtualFile file : hierarchy) {
         if (table.findAssociatedFileType(file.getNameSequence()) != null) {
