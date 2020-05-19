@@ -12,6 +12,7 @@ import com.intellij.ui.layout.*
 import java.awt.Dimension
 import javax.swing.JCheckBox
 import javax.swing.JPanel
+import javax.swing.ListSelectionModel
 
 /**
  * @author Konstantin Bulenkov
@@ -60,6 +61,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
         selectionModel.addListSelectionListener {
           selectedValue?.let { notificationSettings.updateUi(it) }
         }
+        selectionMode = ListSelectionModel.SINGLE_SELECTION
       }
   }
 
