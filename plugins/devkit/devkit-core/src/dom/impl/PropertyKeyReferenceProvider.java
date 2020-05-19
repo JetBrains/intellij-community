@@ -2,10 +2,10 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.lang.properties.BundleNameEvaluator;
-import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -42,7 +42,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return target instanceof IProperty;
+    return PropertyReferenceBase.isPropertyPsi(target);
   }
 
   @Override

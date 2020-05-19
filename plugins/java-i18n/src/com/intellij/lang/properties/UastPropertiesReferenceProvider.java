@@ -3,6 +3,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -25,7 +26,7 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
 
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return target instanceof IProperty;
+    return PropertyReferenceBase.isPropertyPsi(target);
   }
 
 

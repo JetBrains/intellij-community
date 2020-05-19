@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
+import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +41,11 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
   private static final Key<Pattern> KEY = Key.create("MavenFilteredPropertyPsiReferenceProvider:delimitersKey");
   
   public static final Pattern DEFAULT_DELIMITERS = MavenPropertyResolver.PATTERN;
+
+  @Override
+  public boolean acceptsTarget(@NotNull PsiElement target) {
+    return PropertyReferenceBase.isPropertyPsi(target);
+  }
 
   @NotNull
   public static Pattern getDelimitersPattern(MavenProject mavenProject) {
