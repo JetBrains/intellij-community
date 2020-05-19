@@ -2,11 +2,9 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.ArrayList;
@@ -19,13 +17,9 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
   private void runAllTasks() {
     while(true) {
-      Pair<DumbModeTask, ProgressIndicatorEx> nextTask = myQueue.extractNextTask();
+      DumbServiceMergingTaskQueue.@Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask();
       if (nextTask == null) return;
-      try {
-        nextTask.first.performInDumbMode(nextTask.second);
-      } finally {
-        Disposer.dispose(nextTask.first);
-      }
+      nextTask.executeTask();
     }
   }
 

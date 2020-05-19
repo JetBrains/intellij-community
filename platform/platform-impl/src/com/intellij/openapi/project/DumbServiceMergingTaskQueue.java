@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +90,7 @@ public class DumbServiceMergingTaskQueue {
   }
 
   @Nullable
-  public Pair<DumbModeTask, ProgressIndicatorEx> extractNextTask() {
+  public QueuedDumbModeTask extractNextTask() {
     List<DumbModeTask> disposeQueue = new ArrayList<>(1);
 
     try {
@@ -108,13 +108,43 @@ public class DumbServiceMergingTaskQueue {
             continue;
           }
 
-          return Pair.create(task, indicator);
+          return new QueuedDumbModeTask(task, indicator);
         }
       }
     } finally {
       for (DumbModeTask task : disposeQueue) {
         Disposer.dispose(task);
       }
+    }
+  }
+
+  public static class QueuedDumbModeTask {
+    private final DumbModeTask myTask;
+    private final ProgressIndicatorEx myIndicator;
+
+    public QueuedDumbModeTask(@NotNull DumbModeTask task,
+                              @NotNull ProgressIndicatorEx progress) {
+      myTask = task;
+      myIndicator = progress;
+    }
+
+    @NotNull
+    public ProgressIndicatorEx getIndicator() {
+      return myIndicator;
+    }
+
+    public void executeTask() {
+      try {
+        myIndicator.checkCanceled();
+        myIndicator.setIndeterminate(true);
+        myTask.performInDumbMode(myIndicator);
+      } finally {
+        Disposer.dispose(myTask);
+      }
+    }
+
+    public void registerStageStarted(@NotNull IdeActivity activity) {
+      activity.stageStarted(myTask.getClass());
     }
   }
 }
