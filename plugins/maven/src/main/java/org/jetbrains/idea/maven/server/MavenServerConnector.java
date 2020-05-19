@@ -25,8 +25,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenServerConnector implements @NotNull Disposable {
-
-
+  private final MavenServerRemoteProcessSupport mySupport;
+  private final MavenServer myMavenServer;
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
   private final RemoteMavenServerDownloadListener
     myDownloadListener = new RemoteMavenServerDownloadListener();
@@ -40,10 +40,6 @@ public class MavenServerConnector implements @NotNull Disposable {
   private final MavenDistribution myDistribution;
   private final String myVmOptions;
 
-
-  private MavenServerRemoteProcessSupport mySupport;
-  private MavenServer myMavenServer;
-
   public MavenServerConnector(@NotNull Project project,
                               @NotNull MavenServerManager manager,
                               @NotNull MavenWorkspaceSettings settings,
@@ -54,7 +50,8 @@ public class MavenServerConnector implements @NotNull Disposable {
     settings.generalSettings.setMavenHome(myDistribution.getMavenHome().getAbsolutePath());
     myVmOptions = readVmOptions(project, settings);
     myJdk = jdk;
-    connect();
+    mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, project);
+    myMavenServer = connect();
   }
 
   public boolean isSettingsStillValid(MavenWorkspaceSettings settings) {
@@ -96,6 +93,7 @@ public class MavenServerConnector implements @NotNull Disposable {
     // in case if different maven projects are imported into idea project
 
     MavenSyncConsole console = MavenProjectsManager.getInstance(project).getSyncConsole();
+    //noinspection deprecation
     String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
 
     if (distributionUrl == null) {
@@ -122,20 +120,19 @@ public class MavenServerConnector implements @NotNull Disposable {
     }
   }
 
-  private void connect() {
-    if (mySupport != null || myMavenServer != null) {
-      throw new IllegalStateException("Already connected");
-    }
+  private MavenServer connect() {
+    MavenServer result;
     try {
-      mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, myProject);
-      myMavenServer = mySupport.acquire(this, "");
+      result = mySupport.acquire(this, "");
       myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;
       if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
 
       myDownloadListenerExported = MavenRemoteObjectWrapper.doWrapAndExport(myDownloadListener) != null;
       if (!myDownloadListenerExported) throw new RemoteException("Cannot export download listener object");
 
-      myMavenServer.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
+      result.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
+
+      return result;
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot start maven service", e);
@@ -161,8 +158,6 @@ public class MavenServerConnector implements @NotNull Disposable {
       }
       myDownloadListenerExported = false;
     }
-    myMavenServer = null;
-    mySupport = null;
   }
 
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
@@ -212,9 +207,7 @@ public class MavenServerConnector implements @NotNull Disposable {
         return r.execute();
       }
       catch (RemoteException e) {
-        mySupport.stopAll(false);
-        cleanUp();
-        connect();
+        shutdown(false);
       }
     }
     throw new RuntimeException("Cannot reconnect.", last);
