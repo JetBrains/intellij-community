@@ -27,7 +27,7 @@ public class VcsExecutablePathSelector {
   private final BorderLayoutPanel myErrorComponent = new BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0);
 
   @Nullable private String mySavedPath;
-  private String myAutoDetectedPath;
+  @NotNull private String myAutoDetectedPath = "";
 
   public VcsExecutablePathSelector(@NotNull String vcsName, @NotNull Consumer<String> executableTester) {
     this(vcsName, null, executableTester);

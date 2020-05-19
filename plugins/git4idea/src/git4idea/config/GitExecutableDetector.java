@@ -39,7 +39,7 @@ public class GitExecutableDetector {
 
   private static final String WIN_EXECUTABLE = GIT_EXE;
 
-  @NotNull
+  @Nullable
   public String detect() {
     File gitExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? GIT_EXE : GIT, getPath(), null);
     if (gitExecutableFromPath != null) return gitExecutableFromPath.getAbsolutePath();
@@ -48,6 +48,11 @@ public class GitExecutableDetector {
   }
 
   @NotNull
+  public static String getDefaultExecutable() {
+    return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
+  }
+
+  @Nullable
   private static String detectForUnix() {
     for (String p : UNIX_PATHS) {
       File f = new File(p, UNIX_EXECUTABLE);
@@ -55,10 +60,10 @@ public class GitExecutableDetector {
         return f.getPath();
       }
     }
-    return UNIX_EXECUTABLE;
+    return null;
   }
 
-  @NotNull
+  @Nullable
   private String detectForWindows() {
     String exec = checkProgramFiles();
     if (exec != null) {
@@ -75,7 +80,7 @@ public class GitExecutableDetector {
       return exec;
     }
 
-    return WIN_EXECUTABLE;
+    return null;
   }
 
   @Nullable

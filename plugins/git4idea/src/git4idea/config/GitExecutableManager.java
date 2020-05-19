@@ -38,7 +38,9 @@ public class GitExecutableManager {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);
 
-  @Nullable private String myDetectedExecutable;
+  @Nullable private volatile String myDetectedExecutable;
+  private boolean myDetectionComplete;
+
   @NotNull private final Object DETECTED_EXECUTABLE_LOCK = new Object();
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
@@ -77,9 +79,16 @@ public class GitExecutableManager {
 
   @NotNull
   public String getPathToGit(@Nullable Project project) {
+    String pathToGit = getPathToGit(project, true);
+    if (pathToGit == null) pathToGit = GitExecutableDetector.getDefaultExecutable();
+    return pathToGit;
+  }
+
+  @Nullable
+  private String getPathToGit(@Nullable Project project, boolean detectIfNeeded) {
     String path = project != null ? GitVcsSettings.getInstance(project).getPathToGit() : null;
     if (path == null) path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
-    if (path == null) path = getDetectedExecutable();
+    if (path == null) path = getDetectedExecutable(detectIfNeeded);
     return path;
   }
 
@@ -120,17 +129,29 @@ public class GitExecutableManager {
 
   @NotNull
   public String getDetectedExecutable() {
-    synchronized (DETECTED_EXECUTABLE_LOCK) {
-      if (myDetectedExecutable == null) {
-        myDetectedExecutable = new GitExecutableDetector().detect();
+    String executable = getDetectedExecutable(true);
+    return executable != null ? executable : GitExecutableDetector.getDefaultExecutable();
+  }
+
+  @Nullable
+  private String getDetectedExecutable(boolean detectIfNeeded) {
+    if (!detectIfNeeded) return myDetectedExecutable;
+
+    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"), () -> {
+      synchronized (DETECTED_EXECUTABLE_LOCK) {
+        if (!myDetectionComplete) {
+          myDetectedExecutable = new GitExecutableDetector().detect();
+          myDetectionComplete = true;
+        }
+        return myDetectedExecutable;
       }
-      return myDetectedExecutable;
-    }
+    });
   }
 
   public void dropExecutableCache() {
     synchronized (DETECTED_EXECUTABLE_LOCK) {
       myDetectedExecutable = null;
+      myDetectionComplete = false;
     }
   }
 
@@ -142,7 +163,11 @@ public class GitExecutableManager {
   @CalledInAny
   @NotNull
   public GitVersion getVersion(@NotNull Project project) {
-    return getVersion(getExecutable(project));
+    String pathToGit = getPathToGit(project, false);
+    if (pathToGit == null) return GitVersion.NULL;
+
+    GitExecutable executable = getExecutable(pathToGit);
+    return getVersion(executable);
   }
 
   /**
@@ -200,7 +225,7 @@ public class GitExecutableManager {
     });
   }
 
-  private static <T> T runUnderProgressIfNeeded(@NotNull Project project,
+  private static <T> T runUnderProgressIfNeeded(@Nullable Project project,
                                                 @NotNull String title,
                                                 @NotNull ThrowableComputable<T, RuntimeException> task) {
     if (ApplicationManager.getApplication().isDispatchThread()) {

@@ -11,6 +11,7 @@ import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
@@ -61,7 +62,7 @@ interface ErrorNotifier {
   @CalledInAny
   fun hideProgress()
 
-  @CalledInAny
+  @CalledInBackground
   fun resetGitExecutable() {
     GitVcsApplicationSettings.getInstance().setPathToGit(null)
     GitExecutableManager.getInstance().dropExecutableCache()
