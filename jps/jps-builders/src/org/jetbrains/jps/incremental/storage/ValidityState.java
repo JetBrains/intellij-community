@@ -34,7 +34,7 @@ public interface ValidityState {
    * Invoked by make subsystem in order to store the state.
    *
    * @param out the output to which the state should be stored.
-   * @throws java.io.IOException if the save operation failed because of an I/O error.
+   * @throws IOException if the save operation failed because of an I/O error.
    */
   void save(DataOutput out) throws IOException;
 }

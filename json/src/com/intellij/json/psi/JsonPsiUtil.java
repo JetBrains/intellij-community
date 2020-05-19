@@ -67,7 +67,7 @@ public class JsonPsiUtil {
   /**
    * Find the furthest sibling element with the same type as given anchor.
    * <p/>
-   * Ignore white spaces for any type of element except {@link com.intellij.json.JsonElementTypes#LINE_COMMENT}
+   * Ignore white spaces for any type of element except {@link JsonElementTypes#LINE_COMMENT}
    * where non indentation white space (that has new line in the middle) will stop the search.
    *
    * @param anchor element to start from
@@ -109,21 +109,21 @@ public class JsonPsiUtil {
   }
 
   /**
-   * @see #hasElementType(com.intellij.lang.ASTNode, com.intellij.psi.tree.TokenSet)
+   * @see #hasElementType(ASTNode, TokenSet)
    */
   public static boolean hasElementType(@NotNull ASTNode node, IElementType... types) {
     return hasElementType(node, TokenSet.create(types));
   }
 
   /**
-   * @see #hasElementType(com.intellij.lang.ASTNode, com.intellij.psi.tree.TokenSet)
+   * @see #hasElementType(ASTNode, TokenSet)
    */
   public static boolean hasElementType(@NotNull PsiElement element, @NotNull TokenSet set) {
     return element.getNode() != null && hasElementType(element.getNode(), set);
   }
 
   /**
-   * @see #hasElementType(com.intellij.lang.ASTNode, com.intellij.psi.tree.IElementType...)
+   * @see #hasElementType(ASTNode, IElementType...)
    */
   public static boolean hasElementType(@NotNull PsiElement element, IElementType... types) {
     return element.getNode() != null && hasElementType(element.getNode(), types);

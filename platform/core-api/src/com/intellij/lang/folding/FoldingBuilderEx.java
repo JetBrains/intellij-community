@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * by the plugin.
  *
  * @author max
- * @see com.intellij.lang.folding.LanguageFolding#forLanguage(com.intellij.lang.Language)
+ * @see LanguageFolding#forLanguage(com.intellij.lang.Language)
  */
 
 public abstract class FoldingBuilderEx implements FoldingBuilder {

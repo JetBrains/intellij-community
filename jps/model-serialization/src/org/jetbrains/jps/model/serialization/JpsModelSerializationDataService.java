@@ -31,7 +31,7 @@ import java.util.Map;
 
 public class JpsModelSerializationDataService {
   /**
-   * @deprecated use {@link #computeAllPathVariables(org.jetbrains.jps.model.JpsGlobal)} instead
+   * @deprecated use {@link #computeAllPathVariables(JpsGlobal)} instead
    */
   @Deprecated
   @NotNull

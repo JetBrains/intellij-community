@@ -55,7 +55,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   }
 
   /**
-   * @deprecated use {@link JpsModelSerializationDataService#getPathVariableValue(org.jetbrains.jps.model.JpsGlobal, String)} instead
+   * @deprecated use {@link JpsModelSerializationDataService#getPathVariableValue(JpsGlobal, String)} instead
    */
   @Deprecated
   @Nullable

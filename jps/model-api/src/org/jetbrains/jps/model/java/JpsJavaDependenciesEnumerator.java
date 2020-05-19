@@ -21,13 +21,13 @@ import org.jetbrains.jps.model.module.JpsDependenciesEnumerator;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 
 /**
- * Interface for convenient processing dependencies of a java module or a java project. Allows to process {@link org.jetbrains.jps.model.module.JpsDependencyElement}s and collect classes
+ * Interface for convenient processing dependencies of a java module or a java project. Allows to process {@link JpsDependencyElement}s and collect classes
   * and source roots.
  * <p/>
- * Use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#dependencies(org.jetbrains.jps.model.module.JpsModule)} to process dependencies of a module
- * and use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#dependencies(org.jetbrains.jps.model.JpsProject)} to process dependencies of all modules in a project.<p>
+ * Use {@link JpsJavaExtensionService#dependencies(org.jetbrains.jps.model.module.JpsModule)} to process dependencies of a module
+ * and use {@link JpsJavaExtensionService#dependencies(org.jetbrains.jps.model.JpsProject)} to process dependencies of all modules in a project.<p>
  *
- * Note that all configuration methods modify {@link org.jetbrains.jps.model.module.JpsDependenciesEnumerator} instance instead of creating a new one.
+ * Note that all configuration methods modify {@link JpsDependenciesEnumerator} instance instead of creating a new one.
  */
 public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator {
   /**

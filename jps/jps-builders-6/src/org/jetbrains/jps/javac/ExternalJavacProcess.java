@@ -13,6 +13,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4JLoggerFactory;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -20,8 +21,7 @@ import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
@@ -31,7 +31,7 @@ import java.util.concurrent.*;
  */
 public class ExternalJavacProcess {
   public static final String JPS_JAVA_COMPILING_TOOL_PROPERTY = "jps.java.compiling.tool";
-  private final ChannelInitializer myChannelInitializer;
+  private final ChannelInitializer<?> myChannelInitializer;
   private final EventLoopGroup myEventLoopGroup;
   private final boolean myKeepRunning;
   private volatile ChannelFuture myConnectFuture;
@@ -39,7 +39,7 @@ public class ExternalJavacProcess {
   private final Executor myThreadPool = Executors.newCachedThreadPool();
 
   static {
-    org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
+    Logger root = Logger.getRootLogger();
     if (!root.getAllAppenders().hasMoreElements()) {
       root.setLevel(Level.INFO);
       root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
@@ -54,7 +54,7 @@ public class ExternalJavacProcess {
     myEventLoopGroup = new NioEventLoopGroup(1, myThreadPool);
     myChannelInitializer = new ChannelInitializer() {
       @Override
-      protected void initChannel(Channel channel) throws Exception {
+      protected void initChannel(Channel channel) {
         channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
                                    new ProtobufDecoder(msgDefaultInstance),
                                    new ProtobufVarint32LengthFieldPrepender(),

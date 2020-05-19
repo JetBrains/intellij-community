@@ -21,8 +21,8 @@ public abstract class Expression {
   }
 
   /**
-   * @return true if {@link Expression#calculateResult(com.intellij.codeInsight.template.ExpressionContext)} or
-   *                 {@link Expression#calculateQuickResult(com.intellij.codeInsight.template.ExpressionContext)}
+   * @return true if {@link Expression#calculateResult(ExpressionContext)} or
+   *                 {@link Expression#calculateQuickResult(ExpressionContext)}
    *         require committed PSI for their calculation or false otherwise
    */
   public boolean requiresCommittedPSI() {

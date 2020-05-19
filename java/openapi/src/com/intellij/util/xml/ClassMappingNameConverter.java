@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @see com.intellij.util.xml.MappingClass
+ * @see MappingClass
  * @author Dmitry Avdeev
  */
 public class ClassMappingNameConverter extends ResolvingConverter.StringConverter {
