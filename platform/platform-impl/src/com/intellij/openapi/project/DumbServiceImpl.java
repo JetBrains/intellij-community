@@ -157,7 +157,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
-    myAlternativeResolveTracker.setAlternativeResolveEnabled(true);
+    myAlternativeResolveTracker.setAlternativeResolveEnabled(enabled);
   }
 
   @Override
