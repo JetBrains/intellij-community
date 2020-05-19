@@ -444,12 +444,8 @@ object UpdateChecker {
     for (customPlugin in customPlugins) {
       val pluginId = customPlugin.pluginId
       val plugin = compatiblePluginMap[pluginId]
-      if (plugin == null) {
+      if (plugin == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(plugin, customPlugin.version) > 0) {
         compatiblePluginMap[pluginId] = customPlugin
-      } else {
-        if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(plugin, customPlugin.version) > 0) {
-          compatiblePluginMap[pluginId] = customPlugin
-        }
       }
     }
     return compatiblePluginMap.values.toList()
