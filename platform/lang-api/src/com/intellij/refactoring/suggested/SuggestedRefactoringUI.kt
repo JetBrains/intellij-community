@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import javax.swing.JComponent
 
 /**
  * A service providing information required for building user-interface of Change Signature refactoring.
@@ -45,6 +47,12 @@ abstract class SuggestedRefactoringUI {
    * Extracts data about new parameters to offer the user to specify its values for updating calls.
    */
   abstract fun extractNewParameterData(data: SuggestedChangeSignatureData): List<NewParameterData>
+
+  /**
+   * Validates value for [data] typed in [component].
+   * This method should be very fast since it is called on any change for any parameter even if the updated parameter is not [data].
+   */
+  open fun validateValue(data: NewParameterData, component: JComponent?): ValidationInfo? = null
 
   /**
    * Extracts value for a new parameter from code fragment after its editing by the user.
