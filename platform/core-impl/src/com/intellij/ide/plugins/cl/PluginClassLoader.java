@@ -4,8 +4,6 @@ package com.intellij.ide.plugins.cl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
@@ -34,9 +32,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class PluginClassLoader extends UrlClassLoader {
   static {
     if (registerAsParallelCapable()) {
@@ -45,7 +40,6 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   private ClassLoader[] myParents;
-  private final PluginId myPluginId;
   private final IdeaPluginDescriptor myPluginDescriptor;
   private final String myPluginVersion;
   private final List<String> myLibDirectories;
@@ -57,24 +51,21 @@ public final class PluginClassLoader extends UrlClassLoader {
   private ClassLoader myCoreLoader;
 
   public PluginClassLoader(@NotNull List<URL> urls,
-                           ClassLoader @NotNull [] parents,
-                           PluginId pluginId,
-                           @Nullable IdeaPluginDescriptor pluginDescriptor,
+                           @NotNull ClassLoader @NotNull [] parents,
+                           @NotNull IdeaPluginDescriptor pluginDescriptor,
                            String version,
                            @Nullable Path pluginRoot) {
-    this(build().urls(urls).allowLock().useCache(), parents, pluginId, pluginDescriptor, version, pluginRoot);
+    this(build().urls(urls).allowLock().useCache(), parents, pluginDescriptor, version, pluginRoot);
   }
 
   public PluginClassLoader(@NotNull Builder builder,
-                           ClassLoader @NotNull [] parents,
-                           PluginId pluginId,
+                           @NotNull ClassLoader @NotNull [] parents,
                            @Nullable IdeaPluginDescriptor pluginDescriptor,
                            String version,
                            @Nullable Path pluginRoot) {
     super(builder);
 
     myParents = parents;
-    myPluginId = pluginId;
     myPluginDescriptor = pluginDescriptor;
     myPluginVersion = version;
     myLibDirectories = new SmartList<>();
@@ -85,20 +76,6 @@ public final class PluginClassLoader extends UrlClassLoader {
         myLibDirectories.add(libDir.toAbsolutePath().toString());
       }
     }
-  }
-
-  public PluginClassLoader(@NotNull List<URL> urls,
-                           ClassLoader @NotNull [] parents,
-                           @NotNull IdeaPluginDescriptorImpl descriptor) {
-    this(build().urls(urls).allowLock().useCache(), parents, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
-  }
-
-  /**
-   * @deprecated Use {@link #PluginClassLoader(List, ClassLoader[], IdeaPluginDescriptorImpl)}
-   */
-  @Deprecated
-  public PluginClassLoader(@NotNull List<URL> urls, ClassLoader @NotNull [] parents, PluginId pluginId, String version, File pluginRoot) {
-    this(urls, parents, pluginId, null, version, pluginRoot == null ? null : pluginRoot.toPath());
   }
 
   public long getEdtTime() {
@@ -237,7 +214,7 @@ public final class PluginClassLoader extends UrlClassLoader {
       }
     }
 
-    if (myPluginId != null && StartUpMeasurer.measuringPluginStartupCosts) {
+    if (StartUpMeasurer.measuringPluginStartupCosts) {
       Application app = ApplicationManager.getApplication();
       // JDK impl is not so fast as ours, use it only if no application
       boolean isEdt = app == null ? EventQueue.isDispatchThread() : app.isDispatchThread();
@@ -280,7 +257,7 @@ public final class PluginClassLoader extends UrlClassLoader {
         c = _findClass(name);
       }
       catch (LinkageError e) {
-        throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
+        throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, getPluginId());
       }
       if (c != null) {
         loadedClassCounter.incrementAndGet();
@@ -404,24 +381,20 @@ public final class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
-  public PluginId getPluginId() {
-    return myPluginId;
+  public @NotNull PluginId getPluginId() {
+    return myPluginDescriptor.getPluginId();
   }
 
-  public @Nullable IdeaPluginDescriptor getPluginDescriptor() {
+  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
-  }
-
-  public @NotNull String getPluginIdString() {
-    return myPluginId != null ? myPluginId.getIdString() : PluginManagerCore.CORE_ID.getIdString();
   }
 
   @Override
   public String toString() {
-    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "] " + super.toString();
+    return "PluginClassLoader[" + myPluginDescriptor + ", " + myPluginVersion + "] " + super.toString();
   }
 
-  private static class DeepEnumeration implements Enumeration<URL> {
+  private static final class DeepEnumeration implements Enumeration<URL> {
     private final Enumeration<URL>[] myEnumerations;
     private int myIndex;
 
@@ -451,6 +424,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   @TestOnly
   @ApiStatus.Internal
   public @NotNull List<ClassLoader> _getParents() {
+    //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(myParents));
   }
 
@@ -460,7 +434,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   @ApiStatus.Internal
-  public boolean detachParent(ClassLoader classLoader) {
+  public boolean detachParent(@NotNull ClassLoader classLoader) {
     int oldSize = myParents.length;
     myParents = ArrayUtil.remove(myParents, classLoader);
     return myParents.length == oldSize - 1;

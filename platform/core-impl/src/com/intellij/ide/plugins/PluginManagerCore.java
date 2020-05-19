@@ -122,8 +122,6 @@ public final class PluginManagerCore {
     return System.getProperty("idea.plugins.compatible.build");
   }
 
-
-
   /**
    * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins()}
    * if you need to get loaded plugins only.
@@ -456,8 +454,7 @@ public final class PluginManagerCore {
         urls.add(localFileToUrl(pathElement, descriptor));
       }
       PluginClassLoader loader =
-        new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor.getPluginId(), descriptor, descriptor.getVersion(),
-                              descriptor.getPluginPath());
+        new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor, descriptor.getVersion(), descriptor.getPluginPath());
       if (usePluginClassLoader) {
         loader.setCoreLoader(coreLoader);
       }
