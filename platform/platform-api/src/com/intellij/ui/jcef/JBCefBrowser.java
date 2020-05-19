@@ -3,23 +3,24 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
-import org.cef.network.CefCookieManager;
+import org.cef.misc.BoolRef;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.intellij.ui.jcef.JBCefEventUtils.*;
 import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 
 /**
@@ -110,6 +111,10 @@ public class JBCefBrowser implements JBCefDisposable {
     uiComp.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
     myComponent.add(uiComp, BorderLayout.CENTER);
 
+    myComponent.setFocusCycleRoot(true);
+    myComponent.setFocusTraversalPolicyProvider(true);
+    myComponent.setFocusTraversalPolicy(new MyFTP());
+
     if (cefBrowser == null) {
       myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
           @Override
@@ -126,22 +131,50 @@ public class JBCefBrowser implements JBCefDisposable {
     else {
       myLifeSpanHandler = null;
     }
-    myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
-      boolean firstSetFocus = true;
 
+    myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
-        if (!firstSetFocus && source == FocusSource.FOCUS_SOURCE_NAVIGATION) {
-          // Suppress focusing the browser on navigation events.
-          // However, this doesn't work for the first on-show focus, so skip it.
-          return true;
+        if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) {
+          return true; // suppress focusing the browser on navigation events
         }
-        firstSetFocus = false;
-        // Workaround: JCEF doesn't change current focus on the client side.
-        // Clear the focus manually and this will report focus loss to the client
-        // and will let focus return to the client on mouse click.
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+        if (SystemInfoRt.isLinux) {
+          browser.getUIComponent().requestFocus();
+        }
+        else {
+          browser.getUIComponent().requestFocusInWindow();
+        }
         return false;
+      }
+    }, myCefBrowser);
+
+    if (SystemInfoRt.isWindows) {
+      myCefBrowser.getUIComponent().addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          if (myCefBrowser.getUIComponent().isFocusable()) {
+            myCefBrowser.setFocus(true);
+          }
+        }
+      });
+    }
+
+    myCefClient.addKeyboardHandler(new CefKeyboardHandlerAdapter() {
+      @Override
+      public boolean onPreKeyEvent(CefBrowser browser, CefKeyEvent cefKeyEvent, BoolRef is_keyboard_shortcut) {
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        boolean consume = focusOwner != browser.getUIComponent();
+        if (consume && SystemInfoRt.isMac && isUpDownKeyEvent(cefKeyEvent)) return true; // consume
+
+        Window focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        KeyEvent javaKeyEvent = convertCefKeyEvent(cefKeyEvent, focusedWindow);
+        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
+
+        if (javaKeyEvent.getID() == KeyEvent.KEY_PRESSED && cefKeyEvent.modifiers == 0 && cefKeyEvent.character != 0) {
+          javaKeyEvent = javaKeyEventWithID(javaKeyEvent, KeyEvent.KEY_TYPED);
+          Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
+        }
+        return consume;
       }
     }, myCefBrowser);
 
@@ -332,6 +365,33 @@ public class JBCefBrowser implements JBCefDisposable {
         return true;
       }
       return false;
+    }
+  }
+
+  private class MyFTP extends FocusTraversalPolicy {
+    @Override
+    public Component getComponentAfter(Container aContainer, Component aComponent) {
+      return myCefBrowser.getUIComponent();
+    }
+
+    @Override
+    public Component getComponentBefore(Container aContainer, Component aComponent) {
+      return myCefBrowser.getUIComponent();
+    }
+
+    @Override
+    public Component getFirstComponent(Container aContainer) {
+      return myCefBrowser.getUIComponent();
+    }
+
+    @Override
+    public Component getLastComponent(Container aContainer) {
+      return myCefBrowser.getUIComponent();
+    }
+
+    @Override
+    public Component getDefaultComponent(Container aContainer) {
+      return myCefBrowser.getUIComponent();
     }
   }
 }
