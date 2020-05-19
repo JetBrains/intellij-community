@@ -180,6 +180,10 @@ public final class CharArrayUtil {
     return shiftBackward(buffer, 0, offset, chars);
   }
 
+  /**
+   * @return minimal offset in the {@code minOffset}-{@code maxOffset}  range after which {@code buffer} contains only characters from
+   * {@code chars} in the range
+   */
   public static int shiftBackward(@NotNull CharSequence buffer, int minOffset, int maxOffset, @NotNull String chars) {
     if (maxOffset >= buffer.length()) return maxOffset;
 
