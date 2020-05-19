@@ -649,8 +649,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
       }
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
-      Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-      if (component != null && !component.isShowing()) {
+      if (isContextComponentNotVisible(actionEvent)) {
         logTimeMillis(startedAt, action);
         return true;
       }
@@ -679,6 +678,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
+  }
+
+  private static boolean isContextComponentNotVisible(AnActionEvent actionEvent) {
+    Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    return component != null && !component.isShowing();
   }
 
   private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,
