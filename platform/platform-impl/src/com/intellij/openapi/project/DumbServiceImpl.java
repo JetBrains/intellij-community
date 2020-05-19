@@ -550,15 +550,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         LOG.error(unexpected);
       }
       finally {
-        //this used to be called in EDT from getNextTask(), but look thread-safe
-        queueUpdateFinished();
-
         shutdownTracker.unregisterStopperThread(self);
         // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
         // got suspended after the the last dumb task finished (or even after the last check cancelled call). This case is handled by
         // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
         // previously installed.
         myHeavyActivities.resetCurrentSuspender();
+
+        //this used to be called in EDT from getNextTask(), but moved it here to simplify
+        myTrackedEdtActivityService.invokeLater(() -> queueUpdateFinished());
+
         activity.finished();
       }
     }
