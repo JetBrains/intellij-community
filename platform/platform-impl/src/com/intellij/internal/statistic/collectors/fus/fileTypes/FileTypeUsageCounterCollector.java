@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
-import com.intellij.internal.statistic.eventLog.EventField;
-import com.intellij.internal.statistic.eventLog.EventFields;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.VarargEventId;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -30,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -47,20 +45,22 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
 
   private static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
   private static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
+  private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
 
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
   }
 
-  private static VarargEventId registerFileTypeEvent(String eventId) {
-    return GROUP.registerVarargEvent(eventId, EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
+  private static VarargEventId registerFileTypeEvent(String eventId, EventField<?> ... extraFields) {
+    EventField<?>[] baseFields = {EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA};
+    return GROUP.registerVarargEvent(eventId, ArrayUtil.mergeArrays(baseFields, extraFields));
   }
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
   private static final VarargEventId EDIT = registerFileTypeEvent("edit");
-  private static final VarargEventId OPEN = registerFileTypeEvent("open");
-  private static final VarargEventId CLOSE = registerFileTypeEvent("close");
+  private static final VarargEventId OPEN = registerFileTypeEvent("open", IS_WRITABLE);
+  private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE);
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
     log(EDIT, project, file);
@@ -76,20 +76,23 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   }
 
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
-    log(OPEN, project, file);
+    OPEN.log(project, ArrayUtil.append(buildCommonEventPairs(file), IS_WRITABLE.with(file.isWritable())));
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
-    log(CLOSE, project, file);
+    CLOSE.log(project, ArrayUtil.append(buildCommonEventPairs(file), IS_WRITABLE.with(file.isWritable())));
   }
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
+    eventId.log(project, buildCommonEventPairs(file));
+  }
+
+  private static EventPair<?> @NotNull [] buildCommonEventPairs(@NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
-    eventId.log(project,
-        EventFields.PluginInfoFromInstance.with(fileType),
-        FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
-        EventFields.AnonymizedPath.with(file.getPath()),
-        SCHEMA.with(findSchema(file)));
+    return new EventPair[]{EventFields.PluginInfoFromInstance.with(fileType),
+      FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
+      EventFields.AnonymizedPath.with(file.getPath()),
+      SCHEMA.with(findSchema(file))};
   }
 
   private static void logEmptyFile() {
