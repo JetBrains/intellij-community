@@ -50,6 +50,7 @@ public class FilterPanel implements FilterTable {
   @NotNull final Project myProject;
   private CompiledPattern myCompiledPattern;
   NamedScriptableDefinition myConstraint;
+  boolean myShown = false;
   LanguageFileType myFileType;
 
   final Header myHeader = new Header();
@@ -62,7 +63,6 @@ public class FilterPanel implements FilterTable {
                   new ContextFilter(this),
                   myScriptFilter);
   private Runnable myConstraintChangedCallback;
-  boolean myValid;
 
   public FilterPanel(@NotNull Project project, LanguageFileType fileType, Disposable parent) {
     myProject = project;
@@ -83,7 +83,7 @@ public class FilterPanel implements FilterTable {
 
       @Override
       protected JBTableRowEditor getRowEditor(int row) {
-        if (!myValid) return null;
+        if (!isValid()) return null;
         return myTableModel.getRowValue(row).getEditor();
       }
     };
@@ -98,7 +98,7 @@ public class FilterPanel implements FilterTable {
         if (point == null) return;
         showAddFilterPopup(button.getContextComponent(), point);
       })
-      .setAddActionUpdater(e -> myValid && myFilters.stream().anyMatch(f -> f.isAvailable()))
+      .setAddActionUpdater(e -> isValid() && myFilters.stream().anyMatch(f -> f.isAvailable()))
       .setRemoveAction(button -> {
         myFilterTable.stopEditing();
         final int selectedRow = myFilterTable.getTable().getSelectedRow();
@@ -107,7 +107,7 @@ public class FilterPanel implements FilterTable {
           removeFilter((FilterAction)filter);
         }
       })
-      .setRemoveActionUpdater(e -> myValid && myFilterTable.getTable().getSelectedRow() != 0)
+      .setRemoveActionUpdater(e -> isValid() && myFilterTable.getTable().getSelectedRow() != 0)
       .setPanelBorder(JBUI.Borders.empty())
       .setScrollPaneBorder(JBUI.Borders.empty())
       .createPanel();
@@ -142,7 +142,7 @@ public class FilterPanel implements FilterTable {
     }
   }
 
-  public final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
+  final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (filter.checkApplicable(nodes, completePattern, target)) {
       if (filter.hasFilter() && !myTableModel.getItems().contains(filter)) {
         if (myTableModel.getRowCount() == 0) {
@@ -208,28 +208,40 @@ public class FilterPanel implements FilterTable {
     myFileType = fileType;
   }
 
-  public void setCompiledPattern(@NotNull CompiledPattern compiledPattern) {
+  public void setCompiledPattern(@Nullable CompiledPattern compiledPattern) {
     myCompiledPattern = compiledPattern;
+    if (myCompiledPattern == null) {
+      myShown = false;
+    }
+    showFilters();
   }
 
-  public void setValid(boolean valid) {
-    myValid = valid;
-    initFilters(myConstraint);
-  }
-
-  public boolean isInitialized() {
-    return myConstraint != null;
+  private boolean isValid() {
+    return myCompiledPattern != null;
   }
 
   public void initFilters(@NotNull NamedScriptableDefinition constraint) {
-    if (myCompiledPattern == null) {
+    if (constraint == myConstraint) {
       return;
     }
     myConstraint = constraint;
+    myShown = false;
+    showFilters();
+  }
+
+  private void showFilters() {
+    if (myConstraint == null || myShown) {
+      return;
+    }
+    if (!isValid() || myCompiledPattern.getVariableNodes(myConstraint.getName()).isEmpty()) {
+      myConstraint = null;
+      return;
+    }
     final String varName = myConstraint.getName();
     final List<PsiElement> nodes = myCompiledPattern.getVariableNodes(varName);
     final boolean completePattern = Configuration.CONTEXT_VAR_NAME.equals(varName);
-    final boolean target = constraint instanceof MatchVariableConstraint && ((MatchVariableConstraint)constraint).isPartOfSearchResults();
+    final boolean target = myConstraint instanceof MatchVariableConstraint &&
+                           ((MatchVariableConstraint)myConstraint).isPartOfSearchResults();
     myTableModel.setItems(new SmartList<>());
     ReadAction.run(() -> {
       for (FilterAction filter : myFilters) {
@@ -238,7 +250,7 @@ public class FilterPanel implements FilterTable {
     });
 
     final String message;
-    if (constraint instanceof MatchVariableConstraint) {
+    if (myConstraint instanceof MatchVariableConstraint) {
       message = Configuration.CONTEXT_VAR_NAME.equals(varName)
                 ? SSRBundle.message("no.filters.whole.template.label")
                 : SSRBundle.message("no.filters.for.0.label", varName);
@@ -248,7 +260,7 @@ public class FilterPanel implements FilterTable {
     }
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
     statusText.setText(message);
-    if (myValid) {
+    if (isValid()) {
       statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint
                                      ? SSRBundle.message("add.filter.label")
                                      : SSRBundle.message("add.script.label"),
@@ -258,6 +270,7 @@ public class FilterPanel implements FilterTable {
                                        showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
                                      });
     }
+    myShown = true;
   }
 
   public void setConstraintChangedCallback(Runnable callback) {

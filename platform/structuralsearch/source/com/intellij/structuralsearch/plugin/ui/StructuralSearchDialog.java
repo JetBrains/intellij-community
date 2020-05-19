@@ -303,12 +303,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (compiledPattern != null) {
         SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
         if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
-        myFilterPanel.setCompiledPattern(compiledPattern);
       }
-      if (!myFilterPanel.isInitialized()) {
+      myFilterPanel.setCompiledPattern(compiledPattern);
+      if (myFilterPanel.getVariable() == null) {
         myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
       }
-      myFilterPanel.setValid(compiledPattern != null);
     }, ModalityState.stateForComponent(myFilterPanel.getComponent()));
   }
 
@@ -1020,7 +1019,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   void setFilterPanelVisible(boolean visible) {
     if (visible) {
-      if (!myFilterPanel.isInitialized()) {
+      if (myFilterPanel.getVariable() == null) {
         myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
       }
       if (!isFilterPanelVisible()) {
