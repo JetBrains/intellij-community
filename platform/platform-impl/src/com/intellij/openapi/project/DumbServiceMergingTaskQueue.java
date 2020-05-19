@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -134,10 +135,22 @@ public class DumbServiceMergingTaskQueue {
     }
 
     public void executeTask() {
+      executeTask(null);
+    }
+
+    public void executeTask(@Nullable ProgressIndicator customIndicator) {
       try {
+        //this is the cancellation check
         myIndicator.checkCanceled();
         myIndicator.setIndeterminate(true);
-        myTask.performInDumbMode(myIndicator);
+
+        if (customIndicator == null) {
+          customIndicator = myIndicator;
+        } else {
+          customIndicator.checkCanceled();
+        }
+
+        myTask.performInDumbMode(customIndicator);
       } finally {
         Disposer.dispose(myTask);
       }
