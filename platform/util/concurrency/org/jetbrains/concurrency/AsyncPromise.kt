@@ -9,7 +9,9 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-private val CANCELED = CancellationException()
+private val CANCELED = object: CancellationException() {
+  override fun fillInStackTrace(): Throwable = this
+}
 
 open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
