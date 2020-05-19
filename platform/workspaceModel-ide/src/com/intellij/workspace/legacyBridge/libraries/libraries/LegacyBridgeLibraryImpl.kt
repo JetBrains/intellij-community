@@ -159,6 +159,10 @@ internal class LegacyBridgeLibraryImpl(
 
   override fun hashCode(): Int = librarySnapshot.libraryEntity.hashCode()
 
+  internal fun fireRootSetChanged() {
+    dispatcher.multicaster.rootSetChanged(this)
+  }
+
   companion object {
     private const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
     private const val UNIQUE_INDEX_LIBRARY_NAME_SUFFIX = "-d1a6f608-UNIQUE-INDEX-f29c-4df6-"

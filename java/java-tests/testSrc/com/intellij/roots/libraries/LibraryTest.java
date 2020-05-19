@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -40,29 +39,6 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  *  @author dsl
  */
 public class LibraryTest extends ModuleRootManagerTestCase {
-  public void testModification() {
-    final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    final Library library = WriteAction.compute(() -> libraryTable.createLibrary("NewLibrary"));
-    final boolean[] listenerNotifiedOnChange = new boolean[1];
-    library.getRootProvider().addRootSetChangedListener(wrapper -> listenerNotifiedOnChange[0] = true);
-    final Library.ModifiableModel model1 = library.getModifiableModel();
-    model1.addRoot("file://x.jar", OrderRootType.CLASSES);
-    model1.addRoot("file://x-src.jar", OrderRootType.SOURCES);
-    commit(model1);
-    assertTrue(listenerNotifiedOnChange[0]);
-
-    listenerNotifiedOnChange[0] = false;
-
-    final Library.ModifiableModel model2 = library.getModifiableModel();
-    model2.setName("library");
-    commit(model2);
-    assertFalse(listenerNotifiedOnChange[0]);
-
-    assertTrue(LibraryTableImplUtil.isValidLibrary(library));
-    ApplicationManager.getApplication().runWriteAction(() -> libraryTable.removeLibrary(library));
-    assertFalse(LibraryTableImplUtil.isValidLibrary(library));
-  }
-
   public void testLibrarySerialization() throws IOException {
     final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
 

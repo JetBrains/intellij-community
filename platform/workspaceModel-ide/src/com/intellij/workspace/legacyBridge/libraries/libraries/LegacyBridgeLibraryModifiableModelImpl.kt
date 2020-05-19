@@ -84,6 +84,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     }
     if (isChanged) {
       committer(this, diff)
+      originalLibrary.fireRootSetChanged()
     }
   }
 
