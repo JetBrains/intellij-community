@@ -24,7 +24,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.strings" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.collections" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.util.completion" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" exported="" />
   </component>
   <component name="copyright">
     <Base>

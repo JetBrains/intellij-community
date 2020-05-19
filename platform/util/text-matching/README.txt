@@ -1,4 +1,4 @@
-The module with utility methods for completion and string matching features.
+The module with utility methods for text matching features.
 
 It is supposed to be shared with other project, including non-AWT one.
 

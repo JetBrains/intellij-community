@@ -10,6 +10,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
@@ -89,7 +90,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
-    appendPath(cp, NotNullProducer.class);
+    appendPath(cp, NotNullProducer.class);  // intellij.platform.util
+    appendPath(cp, Strings.class);  // intellij.platform.util.strings
     appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);
     myClassFinder = new MyClassFinder(new URL[]{url}, cp.toArray(new URL[0]));
