@@ -7,6 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleManagerComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -27,6 +28,7 @@ import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.addModuleEntity
 import com.intellij.workspace.ide.NonPersistentEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -90,6 +92,12 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     val antLibName = "ant"
     val mavenLibName = "maven"
     val moduleManager = ModuleManager.getInstance(project)
+
+    when (moduleManager) {
+      is LegacyBridgeModuleManagerComponent -> "Legacy bridge model enabled: $moduleManager"
+      is ModuleManagerComponent -> "Old model enabled: $moduleManager"
+      else -> "Unknown model enabled: $moduleManager"
+    }.also { println(it) }
 
     val modules = mutableListOf<Module>()
     logExecutionTimeInMillis("Hundred modules creation") { hundredModulesCreation(moduleManager, modules) }
