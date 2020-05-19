@@ -680,14 +680,14 @@ public class ExpectedHighlightingData {
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
 
-      String str = '<' + severity + " ";
+      String str = '<' + severity;
 
       String bundleMsg = composeBundleMsg(info, messageBundles);
       if (bundleMsg != null) {
-        str += "bundleMsg=\"" + StringUtil.escapeQuotes(bundleMsg) + '"';
+        str += " bundleMsg=\"" + StringUtil.escapeQuotes(bundleMsg) + '"';
       }
-      else {
-        str += "descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
+      else if (info.getSeverity() != HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
+        str += " descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
       }
       if (showAttributesKeys) {
         str += " textAttributesKey=\"" + info.forcedTextAttributesKey + '"';
