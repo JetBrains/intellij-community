@@ -4,6 +4,7 @@ package org.intellij.images.editor.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorPicker;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -41,6 +42,11 @@ public class ChangeBackgroundAction extends DumbAwareAction {
         }
       });
     }
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(Registry.is("ide.images.change.background.action.enabled", false));
   }
 
   private static class MyBackgroundIcon implements Icon {
