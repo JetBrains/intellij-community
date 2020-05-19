@@ -103,7 +103,7 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       WriteCommandAction.runWriteCommandAction(project) {
         bClass.add(field)
       }
-      myFixture.checkHighlighting()
+      myFixture.doHighlighting()
       assertTrue(hasReportedProblems<PsiLocalVariable>(bClass, cClass))
     }
   }
@@ -187,10 +187,10 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         val psiField = factory.createFieldFromText("static final String field = \"foo\";", null)
         targetClass.add(psiField)
       }
-      myFixture.checkHighlighting()
+      myFixture.doHighlighting()
 
       assertFalse(hasReportedProblems<PsiStatement>(targetClass, outsideRefClass))
-      myFixture.checkHighlighting()
+      myFixture.doHighlighting()
       assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, packageRefClass))
 
       changeField(targetClass) { field -> field.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true) }
@@ -228,7 +228,7 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
         modifiers.setModifierProperty(PsiModifier.STATIC, false)
       }
-      myFixture.checkHighlighting()
+      myFixture.doHighlighting()
       val inlays = ProjectProblemPassUtils.getInlays(myFixture.editor)
       UsefulTestCase.assertSize(1, inlays.entries)
     }
@@ -328,6 +328,6 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
     val field = fields[0]
 
     WriteCommandAction.runWriteCommandAction(project) { changeAction(field) }
-    myFixture.checkHighlighting()
+    myFixture.doHighlighting()
   }
 }

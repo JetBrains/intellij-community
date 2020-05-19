@@ -2,11 +2,15 @@
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hints.BlockConstrainedPresentation;
 import com.intellij.codeInsight.hints.BlockConstraints;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
 import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.find.FindUtil;
 import com.intellij.lang.java.JavaLanguage;
@@ -24,6 +28,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +42,9 @@ import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlayS
 
 public class ProjectProblemPassUtils {
 
-  private static final Key<Map<SmartPsiElementPointer<PsiMember>, Inlay<?>>> PROBLEM_INLAY_HINTS = Key.create("ProjectProblemInlayHintsKey");
+  private static final Key<Map<SmartPsiElementPointer<PsiMember>, EditorInfo>> EDITOR_INFOS_KEY = Key.create("ProjectProblemEditorInfoKey");
 
-  private static final Key<Long> PREV_MODIFICATION_COUNT = Key.create("ProjectProblemInlayPassModificationCount");
+  private static final Key<Long> PREV_MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");
 
   static @NotNull InlayPresentation getPresentation(@NotNull Project project,
                                                     @NotNull Editor editor,
@@ -53,17 +59,7 @@ public class ProjectProblemPassUtils {
     InlayPresentation textPresentation = factory.smallText(JavaErrorBundle.message("project.problems.broken.usages", brokenUsages.size()));
     TextAttributes errorAttrs = editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ -> errorAttrs);
-    InlayPresentation usagesPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> {
-      if (brokenUsages.size() == 1) {
-        PsiElement usage = brokenUsages.iterator().next();
-        if (usage instanceof Navigatable) ((Navigatable)usage).navigate(true);
-      }
-      else {
-        String memberName = Objects.requireNonNull(member.getName());
-        FindUtil.showInUsageView(member, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
-                                 JavaErrorBundle.message("project.problems.window.title", memberName), project);
-      }
-    });
+    InlayPresentation usagesPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> showUsages(member, brokenUsages));
 
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem item = new JMenuItem(JavaErrorBundle.message("project.problems.settings"));
@@ -79,6 +75,19 @@ public class ProjectProblemPassUtils {
     return factory.seq(usagesOffset, withSettings);
   }
 
+  private static void showUsages(@NotNull PsiMember member, @NotNull Set<PsiElement> brokenUsages) {
+    Project project = member.getProject();
+    if (brokenUsages.size() == 1) {
+      PsiElement usage = brokenUsages.iterator().next();
+      if (usage instanceof Navigatable) ((Navigatable)usage).navigate(true);
+    }
+    else {
+      String memberName = Objects.requireNonNull(member.getName());
+      FindUtil.showInUsageView(member, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
+                               JavaErrorBundle.message("project.problems.window.title", memberName), project);
+    }
+  }
+
   static @NotNull BlockInlayRenderer createBlockRenderer(@NotNull InlayPresentation presentation) {
     BlockConstraints constraints = new BlockConstraints(true, BlockInlayPriority.PROBLEMS);
     RecursivelyUpdatingRootPresentation rootPresentation = new RecursivelyUpdatingRootPresentation(presentation);
@@ -87,7 +96,7 @@ public class ProjectProblemPassUtils {
     return new BlockInlayRenderer(Collections.singletonList(constrainedPresentation));
   }
 
-  static void addListener(BlockInlayRenderer renderer, Inlay<?> inlay) {
+  static void addListener(@NotNull BlockInlayRenderer renderer, @NotNull Inlay<?> inlay) {
     renderer.setListener(new PresentationListener() {
       @Override
       public void sizeChanged(@NotNull Dimension previous, @NotNull Dimension current) {
@@ -99,6 +108,22 @@ public class ProjectProblemPassUtils {
         inlay.repaint();
       }
     });
+  }
+
+  static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+                                                    @NotNull PsiElement identifier,
+                                                    @NotNull Set<PsiElement> brokenUsages) {
+    Color textColor = editor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor();
+    TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
+
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
+      .range(identifier.getTextRange())
+      .textAttributes(attributes)
+      .descriptionAndTooltip(JavaErrorBundle.message("project.problems.fix.description", identifier.getText()))
+      .createUnconditionally();
+
+    QuickFixAction.registerQuickFixAction(info, new ShowBrokenUsagesAction(brokenUsages));
+    return info;
   }
 
   static int getMemberOffset(@NotNull PsiMember psiMember) {
@@ -118,28 +143,32 @@ public class ProjectProblemPassUtils {
   }
 
   public static @NotNull Map<PsiMember, Inlay<?>> getInlays(@NotNull Editor editor) {
-    Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> oldInlays = editor.getUserData(PROBLEM_INLAY_HINTS);
-    Map<PsiMember, Inlay<?>> inlays = new SmartHashMap<>();
-    if (oldInlays == null) return inlays;
-    oldInlays.forEach((pointer, inlay) -> {
+    return ContainerUtil.map2Map(getEditorInfos(editor).entrySet(), e -> Pair.create(e.getKey(), e.getValue().myInlay));
+  }
+
+  static @NotNull Map<PsiMember, EditorInfo> getEditorInfos(@NotNull Editor editor) {
+    Map<SmartPsiElementPointer<PsiMember>, EditorInfo> oldInfos = editor.getUserData(EDITOR_INFOS_KEY);
+    Map<PsiMember, EditorInfo> editorInfos = new SmartHashMap<>();
+    if (oldInfos == null) return editorInfos;
+    oldInfos.forEach((pointer, info) -> {
       PsiMember member = pointer.getElement();
-      if (member == null) Disposer.dispose(inlay);
-      else inlays.put(member, inlay);
+      if (member == null) Disposer.dispose(info.myInlay);
+      else editorInfos.put(member, info);
     });
-    return inlays;
+    return editorInfos;
   }
 
-  static void updateInlays(@NotNull Editor editor, @NotNull Map<PsiMember, Inlay<?>> inlays) {
-    Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> newInlays =
-      ContainerUtil.map2Map(inlays.entrySet(), e -> Pair.create(SmartPointerManager.createPointer(e.getKey()), e.getValue()));
-    editor.putUserData(PROBLEM_INLAY_HINTS, newInlays);
+  static void updateInfos(@NotNull Editor editor, @NotNull Map<PsiMember, EditorInfo> infos) {
+    Map<SmartPsiElementPointer<PsiMember>, EditorInfo> newInfos =
+      ContainerUtil.map2Map(infos.entrySet(), e -> Pair.create(SmartPointerManager.createPointer(e.getKey()), e.getValue()));
+    editor.putUserData(EDITOR_INFOS_KEY, newInfos);
   }
 
-  static void removeInlays(@NotNull Editor editor) {
-    Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> inlays = editor.getUserData(PROBLEM_INLAY_HINTS);
-    if (inlays == null) return;
-    inlays.values().forEach(inlay -> Disposer.dispose(inlay));
-    editor.putUserData(PROBLEM_INLAY_HINTS, null);
+  static void removeInfos(@NotNull Editor editor) {
+    Map<SmartPsiElementPointer<PsiMember>, EditorInfo> infos = editor.getUserData(EDITOR_INFOS_KEY);
+    if (infos == null) return;
+    infos.values().forEach(info -> Disposer.dispose(info.myInlay));
+    editor.putUserData(EDITOR_INFOS_KEY, null);
   }
 
   static boolean isDocumentUpdated(@NotNull Editor editor) {
@@ -153,5 +182,61 @@ public class ProjectProblemPassUtils {
     Document document = editor.getDocument();
     long timestamp = document.getModificationStamp();
     document.putUserData(PREV_MODIFICATION_COUNT, timestamp);
+  }
+
+  static class EditorInfo {
+
+    final Inlay<?> myInlay;
+    final HighlightInfo myHighlightInfo;
+
+    EditorInfo(@NotNull Inlay<?> inlay, @NotNull HighlightInfo info) {
+      myInlay = inlay;
+      myHighlightInfo = info;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      EditorInfo info = (EditorInfo)o;
+      return myInlay.equals(info.myInlay) &&
+             myHighlightInfo.equals(info.myHighlightInfo);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myInlay, myHighlightInfo);
+    }
+  }
+
+  private static class ShowBrokenUsagesAction extends BaseElementAtCaretIntentionAction {
+
+    private final Set<PsiElement> myBrokenUsages;
+
+    private ShowBrokenUsagesAction(Set<PsiElement> usages) {
+      myBrokenUsages = usages;
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+      return ProjectProblemInlaySettingsProvider.hintsEnabled();
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+      PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
+      if (member == null) return;
+      showUsages(member, myBrokenUsages);
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return getFamilyName();
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaErrorBundle.message("project.problems.fix.text");
+    }
   }
 }

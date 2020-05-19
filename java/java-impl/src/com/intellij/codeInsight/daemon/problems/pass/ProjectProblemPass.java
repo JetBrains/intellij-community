@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.problems.FileState;
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
 import com.intellij.codeInsight.daemon.problems.ProblemCollector;
@@ -18,18 +20,17 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ProjectProblemPass extends EditorBoundHighlightingPass {
 
@@ -59,34 +60,44 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
     if (problems == null) return;
 
     PresentationFactory factory = new PresentationFactory((EditorImpl)myEditor);
-    Map<PsiMember, Inlay<?>> inlays = getInlays(myEditor);
+    Map<PsiMember, EditorInfo> editorInfos = getEditorInfos(myEditor);
     Map<PsiMember, ScopedMember> changes = new SmartHashMap<>();
     problems.forEach((curMember, problem) -> {
       ScopedMember prevMember = problem.prevMember;
       Set<PsiElement> brokenUsages = problem.brokenUsages;
       changes.put(curMember, prevMember);
-      if (brokenUsages != null) addInlay(factory, curMember, brokenUsages, inlays);
+      if (brokenUsages != null) addInfo(factory, curMember, brokenUsages, editorInfos);
     });
-    updateInlays(myEditor, inlays);
+    updateInfos(myEditor, editorInfos);
+
+    List<HighlightInfo> highlighters = ContainerUtil.map(editorInfos.values(), v -> v.myHighlightInfo);
+    int textLength = myFile.getTextLength();
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, textLength, highlighters, myEditor.getColorsScheme(), -1);
 
     FileState fileState = new FileState(snapshot, changes);
     FileStateUpdater.updateState(myFile, fileState);
     updateTimestamp(myEditor);
   }
 
-  private void addInlay(PresentationFactory factory,
-                        PsiMember psiMember,
-                        @NotNull Set<PsiElement> brokenUsages,
-                        @NotNull Map<PsiMember, Inlay<?>> inlays) {
-    Inlay<?> oldInlay = inlays.remove(psiMember);
-    if (oldInlay != null) Disposer.dispose(oldInlay);
+  private void addInfo(@NotNull PresentationFactory factory,
+                       @NotNull PsiMember psiMember,
+                       @NotNull Set<PsiElement> brokenUsages,
+                       @NotNull Map<PsiMember, EditorInfo> editorInfos) {
+    EditorInfo oldInfo = editorInfos.remove(psiMember);
+    if (oldInfo != null) Disposer.dispose(oldInfo.myInlay);
     if (brokenUsages.isEmpty() || hasOtherElementsOnSameLine(psiMember)) return;
+    PsiNameIdentifierOwner identifierOwner = tryCast(psiMember, PsiNameIdentifierOwner.class);
+    if (identifierOwner == null) return;
+    PsiElement identifier = identifierOwner.getNameIdentifier();
+    if (identifier == null) return;
     int offset = getMemberOffset(psiMember);
     InlayPresentation presentation = getPresentation(myProject, myEditor, myEditor.getDocument(), factory, offset, psiMember, brokenUsages);
     BlockInlayRenderer renderer = createBlockRenderer(presentation);
     Inlay<?> newInlay = myEditor.getInlayModel().addBlockElement(offset, true, true, BlockInlayPriority.PROBLEMS, renderer);
+    if (newInlay == null) return;
     addListener(renderer, newInlay);
-    inlays.put(psiMember, newInlay);
+    HighlightInfo newHighlightInfo = createHighlightInfo(myEditor, identifier, brokenUsages);
+    editorInfos.put(psiMember, new EditorInfo(newInlay, newHighlightInfo));
   }
 
   private @NotNull Map<PsiMember, Problem> collectProblems(@NotNull Map<PsiMember, ScopedMember> curChanges,

@@ -41,7 +41,7 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
     if (oldFile == null || oldEditor == null || oldFile instanceof VirtualFileWindow || !oldFile.isValid() || oldFile.equals(newFile)) return;
     PsiJavaFile psiJavaFile = tryCast(PsiManager.getInstance(myProject).findFile(oldFile), PsiJavaFile.class);
     if (psiJavaFile == null) return;
-    ProjectProblemPassUtils.removeInlays(oldEditor.getEditor());
+    ProjectProblemPassUtils.removeInfos(oldEditor.getEditor());
     FileStateUpdater.setPreviousState(psiJavaFile);
   }
 
@@ -84,7 +84,7 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
       if (virtualFile == null) continue;
       PsiJavaFile psiJavaFile = tryCast(psiManager.findFile(virtualFile), PsiJavaFile.class);
       if (psiJavaFile == null) continue;
-      ProjectProblemPassUtils.removeInlays(textEditor.getEditor());
+      ProjectProblemPassUtils.removeInfos(textEditor.getEditor());
       FileStateUpdater.setPreviousState(psiJavaFile);
     }
   }
