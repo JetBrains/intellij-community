@@ -56,7 +56,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   private fun createNotificationsList(): JBList<NotificationSettingsWrapper> {
     return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings.toTypedArray())
       .apply {
-        cellRenderer = SimpleListCellRenderer.create("") { it.groupId }
+        cellRenderer = SimpleListCellRenderer.create("") { it.toString() }
         selectionModel.addListSelectionListener {
           selectedValue?.let { notificationSettings.updateUi(it) }
         }
