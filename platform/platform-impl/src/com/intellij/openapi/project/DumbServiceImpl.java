@@ -558,7 +558,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myHeavyActivities.resetCurrentSuspender();
 
         //this used to be called in EDT from getNextTask(), but moved it here to simplify
-        myTrackedEdtActivityService.invokeLater(() -> queueUpdateFinished());
+        queueUpdateFinished();
 
         activity.finished();
       }
