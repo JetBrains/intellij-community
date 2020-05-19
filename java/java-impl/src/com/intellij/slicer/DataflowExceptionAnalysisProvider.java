@@ -3,8 +3,12 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.ContractValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.execution.filters.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -16,11 +20,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -33,15 +42,17 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
 
   @Override
   public @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
-                                              @NotNull ExceptionInfo info) {
+                                              @NotNull ExceptionInfo info,
+                                              @NotNull Supplier<List<StackLine>> nextFrames) {
     AnalysisStartingPoint analysis = getAnalysis(anchor, info);
-    return createAction(analysis);
+    return createAction(analysis, nextFrames);
   }
 
   @Override
-  public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor) {
+  public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor,
+                                                             @NotNull Supplier<List<StackLine>> nextFrames) {
     AnalysisStartingPoint analysis = getIntermediateRowAnalysis(anchor);
-    return createAction(analysis);
+    return createAction(analysis, nextFrames);
   }
 
   private static @Nullable AnalysisStartingPoint getIntermediateRowAnalysis(@NotNull PsiElement anchor) {
@@ -275,13 +286,15 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return null;
   }
 
-  private @Nullable AnAction createAction(@Nullable AnalysisStartingPoint analysis) {
+  private @Nullable AnAction createAction(@Nullable AnalysisStartingPoint analysis,
+                                          @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
     if (analysis == null) return null;
     String text = JavaDfaSliceValueFilter.getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
     if (text.isEmpty()) return null;
     return new AnAction(null, JavaBundle.message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        List<StackLine> nextFrames = nextFramesSupplier.get();
         SliceAnalysisParams params = new SliceAnalysisParams();
         params.dataFlowToThis = true;
         params.scope = new AnalysisScope(myProject);

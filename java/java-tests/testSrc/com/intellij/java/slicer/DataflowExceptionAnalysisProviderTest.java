@@ -12,6 +12,8 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightTestCase {
   public void testArrayIndex() {
     doTest("java.lang.ArrayIndexOutOfBoundsException: 10",
@@ -338,7 +340,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
       leaf = PsiTreeUtil.nextLeaf(leaf);
     }
     assertNotNull("No anchors found", anchor);
-    AnAction action = analysisProvider.getAnalysisAction(anchor, info);
+    AnAction action = analysisProvider.getAnalysisAction(anchor, info, Collections::emptyList);
     checkAction(action, expectedActionTitle);
   }
 
@@ -349,7 +351,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
     int offset = getEditor().getCaretModel().getOffset();
     assertTrue("Offset is not set", offset > 0);
     PsiElement leaf = getFile().findElementAt(offset);
-    AnAction action = analysisProvider.getIntermediateRowAnalysisAction(leaf);
+    AnAction action = analysisProvider.getIntermediateRowAnalysisAction(leaf, Collections::emptyList);
     checkAction(action, expectedActionTitle);
   }
 

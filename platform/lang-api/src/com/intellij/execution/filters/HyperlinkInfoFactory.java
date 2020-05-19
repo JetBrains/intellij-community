@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 public abstract class HyperlinkInfoFactory {
   @NotNull
@@ -50,7 +49,7 @@ public abstract class HyperlinkInfoFactory {
   public abstract HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
                                                                  int line,
                                                                  @NotNull Project project,
-                                                                 @Nullable BiConsumer<PsiFile, Editor> action);
+                                                                 @Nullable HyperlinkHandler action);
 
   /**
    * Creates a hyperlink that points to elements with ability to navigate to specific element within the file
@@ -60,4 +59,8 @@ public abstract class HyperlinkInfoFactory {
    */
   @NotNull
   public abstract HyperlinkInfo createMultiplePsiElementHyperlinkInfo(@NotNull Collection<? extends PsiElement> elements);
+  
+  public interface HyperlinkHandler {
+    void onLinkFollowed(@NotNull PsiFile psiFile, @NotNull Editor targetEditor, @Nullable Editor originalEditor);
+  }
 }
