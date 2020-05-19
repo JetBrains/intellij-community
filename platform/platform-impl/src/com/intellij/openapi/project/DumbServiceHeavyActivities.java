@@ -14,6 +14,13 @@ class DumbServiceHeavyActivities {
   private volatile ProgressSuspender myCurrentSuspender;
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
+
+  void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
+    try (AccessToken ignore = heavyActivityStarted(activityName)) {
+      activity.run();
+    }
+  }
+
   @NotNull AccessToken heavyActivityStarted(@NotNull String activityName) {
     String reason = IdeBundle.message("dumb.service.indexing.paused.due.to", activityName);
     synchronized (myRequestedSuspensions) {

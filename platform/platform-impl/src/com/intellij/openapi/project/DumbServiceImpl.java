@@ -145,9 +145,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
-    try (AccessToken ignore = myHeavyActivities.heavyActivityStarted(activityName)) {
-      activity.run();
-    }
+    myHeavyActivities.suspendIndexingAndRun(activityName, activity);
   }
 
   @Override
