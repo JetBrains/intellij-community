@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -60,18 +61,17 @@ class VcsLogEditor(file: VcsLogFile) : FileEditorBase() {
 
   init {
     container.add(file.rootComponent, BorderLayout.CENTER)
-    for (logUi in file.logUis) {
-      Disposer.register(this, logUi)
-    }
   }
 
-  fun beforeEditorClose() {
+  fun beforeEditorClose(disposeLogUis: Boolean) {
     val logUis = vcsLogFile?.logUis
 
     container.removeAll()
     vcsLogFile = null
 
-    logUis?.forEach(Disposer::dispose)
+    if (disposeLogUis) {
+      logUis?.forEach(Disposer::dispose)
+    }
   }
 
   override fun getComponent(): JComponent = container
@@ -89,6 +89,14 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
 
   override fun getEditorTypeId(): String = "VcsLogEditor"
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+
+  override fun disposeEditor(editor: FileEditor) {
+    val file = editor.file
+    val closingToReopen = file != null && file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) == true
+    (editor as VcsLogEditor).beforeEditorClose(!closingToReopen)
+
+    super.disposeEditor(editor)
+  }
 }
 
 class VcsLogEditorTabTitleProvider : EditorTabTitleProvider {
