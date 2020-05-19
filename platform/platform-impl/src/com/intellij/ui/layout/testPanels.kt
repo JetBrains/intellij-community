@@ -250,6 +250,21 @@ fun withVerticalButtons(): JPanel {
   }
 }
 
+fun withSingleVerticalButton(): JPanel {
+  return panel {
+    row {
+      label("<html>Merging branch <b>foo</b> into <b>bar</b>")
+    }
+    row {
+      scrollPane(JTextArea()).constraints(pushX)
+
+      cell(isVerticalFlow = true) {
+        button("Merge ...") {}.constraints(growX)
+      }
+    }
+  }
+}
+
 fun titledRows(): JPanel {
   return panel {
     titledRow("Async Profiler") {
