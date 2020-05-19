@@ -239,7 +239,9 @@ public class MagicConstantUtils {
 
   private static boolean containsBeanInfoText(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
-      CachedValueProvider.Result.create(IdIndex.hasIdentifierInFile(file, "beaninfo"), file));
+      CachedValueProvider.Result.create(IdIndex.hasIdentifierInFile(file, "beaninfo") &&
+                                        IdIndex.hasIdentifierInFile(file, "enum"),
+                                        file));
   }
 
   static boolean same(@NotNull PsiElement e1, @NotNull PsiElement e2, @NotNull PsiManager manager) {
