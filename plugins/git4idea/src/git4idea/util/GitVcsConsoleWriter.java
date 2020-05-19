@@ -54,7 +54,7 @@ public final class GitVcsConsoleWriter {
    * @param message     a message to show
    * @param contentType a style to use
    */
-  private void showMessage(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
+  public void showMessage(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
     if (message.length() == 0) {
       return;
     }

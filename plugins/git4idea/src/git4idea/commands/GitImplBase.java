@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.execution.process.ColoredOutputTypeRegistry;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -42,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimLeading;
@@ -53,6 +57,13 @@ import static git4idea.commands.GitCommand.LockingPolicy.READ;
 public abstract class GitImplBase implements Git {
 
   private static final Logger LOG = Logger.getInstance(GitImplBase.class);
+
+  /**
+   * Regexp checks whether char sequence is CSI.
+   * <p>
+   * See <a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code</a>.
+   */
+  private static final Pattern CSI_SEQUENCE_REGEX = Pattern.compile("\\x1b\\[[0-9;]*m");
 
   @NotNull
   @Override
@@ -355,6 +366,11 @@ public abstract class GitImplBase implements Git {
             }
             else if (outputType == ProcessOutputTypes.STDERR && !handler.isStderrSuppressed()) {
               if (!looksLikeProgress(line)) vcsConsoleWriter.showErrorMessage(line);
+            } else if (CSI_SEQUENCE_REGEX.matcher(outputType.toString()).matches()) {
+              ProcessOutputType coloredOutputType = ColoredOutputTypeRegistry.getInstance()
+                .getOutputType(outputType.toString(), outputType);
+
+              vcsConsoleWriter.showMessage(line, ConsoleViewContentType.getConsoleViewType(coloredOutputType));
             }
           }
         }

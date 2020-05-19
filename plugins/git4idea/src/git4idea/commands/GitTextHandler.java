@@ -4,7 +4,7 @@ package git4idea.commands;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
@@ -177,7 +177,7 @@ public abstract class GitTextHandler extends GitHandler {
     return new MyOSProcessHandler(commandLine, myWithMediator && myExecutable.isLocal() && Registry.is("git.execute.with.mediator"));
   }
 
-  protected static class MyOSProcessHandler extends KillableProcessHandler {
+  protected static class MyOSProcessHandler extends KillableColoredProcessHandler {
     protected MyOSProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
       super(commandLine, withMediator);
     }
