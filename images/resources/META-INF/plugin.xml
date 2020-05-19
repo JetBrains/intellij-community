@@ -27,13 +27,13 @@
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
 
     <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
-    <registryKey key="ide.images.wheel.zooming" defaultValue="true"/>
-    <registryKey key="ide.images.show.chessboard" defaultValue="false"/>
-    <registryKey key="ide.images.chessboard.cell.size" defaultValue="5"/>
-    <registryKey key="ide.images.show.grid" defaultValue="false"/>
-    <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3"/>
-    <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1"/>
-    <registryKey key="ide.images.change.background.action.enabled" defaultValue="false"/>
+    <registryKey key="ide.images.wheel.zooming" defaultValue="true" description="Enable zoom in/out by mouse wheel"/>
+    <registryKey key="ide.images.show.chessboard" defaultValue="false" description="Enable chessboard"/>
+    <registryKey key="ide.images.chessboard.cell.size" defaultValue="5" description="Option for default chessboard cell size"/>
+    <registryKey key="ide.images.show.grid" defaultValue="false" description="Show grid by default"/>
+    <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3" description="Hide grid if zoom factor is less than value"/>
+    <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1" description="Pixels between grid lines"/>
+    <registryKey key="ide.images.change.background.action.enabled" defaultValue="false" description="Show action for changing background in the editor toolbar"/>
   </extensions>
 
   <actions>
