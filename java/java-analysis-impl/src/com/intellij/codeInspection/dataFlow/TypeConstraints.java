@@ -450,6 +450,11 @@ public class TypeConstraints {
     }
 
     @Override
+    public boolean isResolved() {
+      return false;
+    }
+
+    @Override
     public boolean equals(Object obj) {
       return obj == this || obj instanceof Unresolved && myReference.equals(((Unresolved)obj).myReference);
     }

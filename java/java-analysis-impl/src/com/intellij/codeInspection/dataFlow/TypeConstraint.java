@@ -89,6 +89,13 @@ public interface TypeConstraint {
   }
 
   /**
+   * @return true if given type is resolved
+   */
+  default boolean isResolved() {
+    return true;
+  }
+
+  /**
    * @param otherType          other type
    * @param expectedAssignable whether other type is expected to be assignable from this, or not
    * @return textual explanation about why expected assignability cannot be satisfied; null if it can be satisfied, or
@@ -265,6 +272,11 @@ public interface TypeConstraint {
       assert !instanceOf.isEmpty() || !notInstanceOf.isEmpty();
       myInstanceOf = instanceOf;
       myNotInstanceOf = notInstanceOf;
+    }
+
+    @Override
+    public boolean isResolved() {
+      return myInstanceOf.stream().allMatch(Exact::isResolved);
     }
 
     @Override
