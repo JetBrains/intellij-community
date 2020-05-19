@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -221,9 +220,11 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
     else {
       String initializerText = stub.getInitializerText();
+      if (initializerText == null) {
+        return null;
+      }
 
-      if (StringUtil.isEmpty(initializerText) ||
-          PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
+      if (PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
           PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
         initializer = getInitializer();
       }
