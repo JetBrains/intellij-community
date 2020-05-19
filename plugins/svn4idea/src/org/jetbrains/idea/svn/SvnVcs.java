@@ -93,7 +93,6 @@ public final class SvnVcs extends AbstractVcs {
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
 
-  @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
   private SvnFileSystemListener myFileOperationsHandler;
 
@@ -134,7 +133,6 @@ public final class SvnVcs extends AbstractVcs {
     super(project, VCS_NAME);
 
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
-    myConfiguration = SvnConfiguration.getInstance(project);
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     cmdClientFactory = new CmdClientFactory(this);
@@ -160,10 +158,10 @@ public final class SvnVcs extends AbstractVcs {
   private void postStartup() {
     if (myProject.isDefault()) return;
 
-    if (!myConfiguration.isCleanupRun()) {
+    if (!getSvnConfiguration().isCleanupRun()) {
       ApplicationManager.getApplication().invokeLater(() -> {
         cleanup17copies();
-        myConfiguration.setCleanupRun(true);
+        getSvnConfiguration().setCleanupRun(true);
       }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
     else {
@@ -213,11 +211,11 @@ public final class SvnVcs extends AbstractVcs {
   private void setupChangeLists() {
     ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.getDefaultName(), true);
 
-    if (!myConfiguration.changeListsSynchronized()) {
+    if (!getSvnConfiguration().changeListsSynchronized()) {
       List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
       ExclusiveBackgroundVcsAction.run(myProject, () -> synchronizeToNativeChangeLists(changeLists));
     }
-    myConfiguration.upgrade();
+    getSvnConfiguration().upgrade();
   }
 
   public void synchronizeToNativeChangeLists(@NotNull List<? extends LocalChangeList> lists) {
@@ -403,7 +401,7 @@ public final class SvnVcs extends AbstractVcs {
 
   @NotNull
   public SvnConfiguration getSvnConfiguration() {
-    return myConfiguration;
+    return SvnConfiguration.getInstance(myProject);
   }
 
   public static SvnVcs getInstance(@NotNull Project project) {
