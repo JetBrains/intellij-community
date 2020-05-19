@@ -4,6 +4,7 @@ package com.intellij.ide.customize;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Pair;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class PluginGroups {
   static final String CORE = "Core";
@@ -31,7 +33,7 @@ public class PluginGroups {
 
   private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<>();
   private final Map<String, String> myDescriptions = new LinkedHashMap<>();
-  private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<>();
+  private final List<PluginNode> myPluginsFromRepository = new ArrayList<>();
   private final Collection<PluginId> myDisabledPluginIds = new HashSet<>();
   private final List<IdeaPluginDescriptorImpl> myAllPlugins;
   private boolean myInitialized;
@@ -40,11 +42,23 @@ public class PluginGroups {
 
   public PluginGroups() {
     myAllPlugins = PluginDescriptorLoader.loadUncachedDescriptors();
-    SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
+    SwingWorker worker = new SwingWorker<List<PluginNode>, Object>() {
       @Override
-      protected List<IdeaPluginDescriptor> doInBackground() {
+      protected List<PluginNode> doInBackground() {
         try {
-          return RepositoryHelper.loadPlugins(null);
+          List<String> featuresPluginIds = ContainerUtil.map(getFeaturedPlugins().values(), value -> parsePluginId(value));
+          List<PluginNode> featuredPlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(featuresPluginIds);
+          List<@NotNull String> dependsIds =
+            featuredPlugins.stream()
+              .map(p -> p.getDepends())
+              .filter(Objects::nonNull)
+              .flatMap(Collection::stream)
+              .map(id -> id.getIdString())
+              .filter(id -> !id.startsWith("(optional)"))
+              .collect(Collectors.toList());
+          List<PluginNode> dependsPlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(dependsIds);
+          featuredPlugins.addAll(dependsPlugins);
+          return featuredPlugins;
         }
         catch (Exception e) {
           //OK, it's offline
@@ -69,7 +83,8 @@ public class PluginGroups {
     for (Entry<String, Pair<Icon, List<String>>> entry : treeMap.entrySet()) {
       myTree.add(new Group(entry.getKey(), entry.getValue().getFirst(), null, entry.getValue().getSecond()));
     }
-
+    worker.execute();
+    DisabledPluginsState.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
     initCloudPlugins();
   }
 
@@ -253,6 +268,13 @@ public class PluginGroups {
     addTrainingPlugin(featuredPlugins);
   }
 
+  static String parsePluginId(String string) {
+    int i = string.indexOf(':');
+    int j = string.indexOf(':', i + 1);
+    return string.substring(j + 1);
+  }
+
+
   protected static void addVcsGroup(@NotNull List<Group> groups) {
     groups.add(new Group("Version Controls", PlatformImplIcons.VersionControls, null, Arrays.asList(
       "CVS",
@@ -344,7 +366,6 @@ public class PluginGroups {
   }
 
   Map<String, String> getFeaturedPlugins() {
-    initIfNeeded();
     return myFeaturedPlugins;
   }
 
@@ -387,7 +408,7 @@ public class PluginGroups {
     return Collections.unmodifiableCollection(myDisabledPluginIds);
   }
 
-  List<IdeaPluginDescriptor> getPluginsFromRepository() {
+  List<PluginNode> getPluginsFromRepository() {
     return myPluginsFromRepository;
   }
 
