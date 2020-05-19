@@ -11,17 +11,18 @@ import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
   private static final CallMatcher ASSERTJ_IS_EQUAL = CallMatcher.instanceCall(
-    "org.assertj.core.api.Assert", "isEqualTo").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+    "org.assertj.core.api.Assert", "isEqualTo", "isSameAs").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
   private static final CallMatcher ASSERTJ_DESCRIBED = CallMatcher.instanceCall(
-    "org.assertj.core.api.Descriptable", "describedAs");
+    "org.assertj.core.api.Descriptable", "describedAs", "as");
   private static final CallMatcher ASSERTJ_ASSERT_THAT = CallMatcher.staticCall(
     "org.assertj.core.api.Assertions", "assertThat").parameterCount(1);
-  
+
   protected abstract boolean checkTestNG();
 
   @Override
@@ -39,20 +40,29 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
     return new AssertEqualsBetweenInconvertibleTypesVisitor();
   }
 
-   @Override
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
-  
+
   private class AssertEqualsBetweenInconvertibleTypesVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       processAssertEquals(expression);
+      processAssertSame(expression);
       processAssertJ(expression);
     }
 
-    private void processAssertJ(PsiMethodCallExpression call) {
+    private void processAssertEquals(@NotNull PsiMethodCallExpression expression) {
+      processAssertEquals(AssertHint.createAssertEqualsHint(expression, checkTestNG()), expression);
+    }
+
+    private void processAssertSame(@NotNull PsiMethodCallExpression expression) {
+      processAssertEquals(AssertHint.createAssertSameHint(expression, checkTestNG()), expression);
+    }
+
+    private void processAssertJ(@NotNull PsiMethodCallExpression call) {
       if (!ASSERTJ_IS_EQUAL.test(call)) return;
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
       while (ASSERTJ_DESCRIBED.test(qualifierCall)) {
@@ -62,8 +72,7 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
       checkConvertibleTypes(call, call.getArgumentList().getExpressions()[0], qualifierCall.getArgumentList().getExpressions()[0]);
     }
 
-    private void processAssertEquals(@NotNull PsiMethodCallExpression expression) {
-      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression, checkTestNG());
+    private void processAssertEquals(@Nullable AssertHint assertHint, @NotNull PsiMethodCallExpression expression) {
       if (assertHint == null) return;
       PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression secondArgument = assertHint.getSecondArgument();

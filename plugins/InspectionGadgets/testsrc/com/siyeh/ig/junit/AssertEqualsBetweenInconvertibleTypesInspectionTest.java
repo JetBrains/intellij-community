@@ -17,6 +17,15 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
   public void testAssertEqualsBetweenInconvertibleTypesAssertJ() {
     doTest();
   }
+  public void testAssertSameBetweenInconvertibleTypes() {
+    doTest();
+  }
+  public void testAssertSameBetweenInconvertibleTypesAssertJ() {
+    doTest();
+  }
+  public void testAssertSameBetweenInconvertibleTypesJUnit5() {
+    doTest();
+  }
 
   @Override
   protected String[] getEnvironmentClasses() {
@@ -33,6 +42,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
       "public class Assert {" +
       "  static public void assertEquals(double expected, double actual, double delta) {}" +
       "  static public void assertEquals(Object expected, Object actual){}" +
+      "  static public void assertSame(Object expected, Object actual){}" +
       "}",
 
       "package org.junit.jupiter.api;\n" +
@@ -44,11 +54,15 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
       "    public static void assertEquals(Object expected, Object actual) {}\n" +
       "    public static void assertEquals(Object expected, Object actual, String message) {}\n" +
       "    public static void assertEquals(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +
+
+      "    public static void assertSame(Object expected, Object actual) {}\n" +
+      "    public static void assertSame(Object expected, Object actual, String message) {}\n" +
+      "    public static void assertSame(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +
       "}",
 
       "package org.assertj.core.api;\n" +
       "public class Assertions {\n" +
-      "  public static native <T> ObjectAssert<T> assertThat(T actual);\n" +
+      "  public static <T> ObjectAssert<T> assertThat(T actual);\n" +
       "}",
 
       "package org.assertj.core.api;\n" +
@@ -56,12 +70,14 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
 
       "package org.assertj.core.api;\n" +
       "public class Assert<SELF extends Assert<SELF, ACTUAL>, ACTUAL> extends Descriptable<SELF> {\n" +
-      "  public native SELF isEqualTo(Object expected);\n" +
+      "  public SELF isEqualTo(Object expected);\n" +
+      "  public SELF isSameAs(Object expected);\n" +
       "}",
 
       "package org.assertj.core.api;\n" +
       "public interface Descriptable<SELF> {\n" +
       "  SELF describedAs(String description, Object... args);\n" +
+      "  default SELF as(String description, Object... args);\n" +
       "  SELF isEqualTo(Object expected);\n" +
       "}",
     };

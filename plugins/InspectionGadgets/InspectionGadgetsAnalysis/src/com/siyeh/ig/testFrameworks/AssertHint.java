@@ -75,6 +75,10 @@ public class AssertHint {
     return create(expression, methodName -> "assertTrue".equals(methodName) || "assertFalse".equals(methodName) ? 1 : null, checkTestNG);
   }
 
+  public static AssertHint createAssertSameHint(PsiMethodCallExpression expression, boolean checkTestNG) {
+    return create(expression, methodName -> "assertSame".equals(methodName) ? 2 : null, checkTestNG);
+  }
+
   public static AssertHint create(PsiMethodCallExpression expression,
                                   Function<? super String, Integer> methodNameToParamCount,
                                   boolean checkTestNG) {
