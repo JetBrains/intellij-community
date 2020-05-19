@@ -51,7 +51,7 @@ public class EditorColorsUtil {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     boolean dark1 = background == null ? StartupUiUtil.isUnderDarcula() : ColorUtil.isDark(background);
     boolean dark2 = ColorUtil.isDark(globalScheme.getDefaultBackground());
-    if (dark1 != dark2) {
+    if (!dark1 && dark2) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
       if (scheme != null) {
         return scheme;
