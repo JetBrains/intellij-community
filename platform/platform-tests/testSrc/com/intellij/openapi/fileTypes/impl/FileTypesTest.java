@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -915,7 +916,54 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
     assertNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
   }
-  
+
+  public void testRegisterUnregisterExtensionWithFileName() throws IOException {
+    File tempFile = createTempFile(".prettierrc", "This is a text file");
+    VirtualFile vFile = getVirtualFile(tempFile);
+    assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
+
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.fileNames = ".prettierrc";
+    bean.implementationClass = MyTestFileType.class.getName();
+    bean.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(getTestRootDisposable(), disposable);
+    ApplicationManager.getApplication().runWriteAction(
+      () -> FileTypeManagerImpl.EP_NAME.getPoint(null).registerExtension(bean, disposable)
+    );
+    CachedFileType.clearCache();   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
+
+    assertEquals(MyTestFileType.NAME, FileTypeManager.getInstance().getFileTypeByFileName(".prettierrc").getName());
+    assertEquals(MyTestFileType.NAME, vFile.getFileType().getName());
+
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
+    assertNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
+  }
+
+  public void testRegisterAdditionalExtensionForExistingFileType() throws IOException {
+    File tempFile = createTempFile(".prettierrc", "This is a text file");
+    VirtualFile vFile = getVirtualFile(tempFile);
+    assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
+
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = "XML";
+    bean.fileNames = ".prettierrc";
+    bean.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(getTestRootDisposable(), disposable);
+    ApplicationManager.getApplication().runWriteAction(
+      () -> FileTypeManagerImpl.EP_NAME.getPoint(null).registerExtension(bean, disposable)
+    );
+    CachedFileType.clearCache();   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
+
+    assertEquals("XML", FileTypeManager.getInstance().getFileTypeByFileName(".prettierrc").getName());
+    assertEquals("XML", vFile.getFileType().getName());
+
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
+    assertEquals("UNKNOWN", FileTypeManager.getInstance().getFileTypeByFileName(".prettierrc").getName());
+  }
+
   @NotNull
   private static FileType createTestFileType() {
     return new MyTestFileType();

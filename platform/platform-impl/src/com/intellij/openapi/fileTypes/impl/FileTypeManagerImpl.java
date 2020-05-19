@@ -214,6 +214,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private void unregisterMatchers(@NotNull StandardFileType stdFileType, @NotNull FileTypeBean extension) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       stdFileType.matchers.removeAll(extension.getMatchers());
+      for (FileNameMatcher matcher : extension.getMatchers()) {
+        myPatternsTable.removeAssociation(matcher, stdFileType.fileType);
+      }
       fileTypeChanged(stdFileType.fileType, ApplicationManager.getApplication().isUnitTestMode());
     });
   }
@@ -386,6 +389,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return instantiateFileTypeBean(fileTypeBean);
     }
     type.matchers.addAll(fileTypeBean.getMatchers());
+    for (FileNameMatcher matcher : fileTypeBean.getMatchers()) {
+      myPatternsTable.addAssociation(matcher, type.fileType);
+    }
     return type.fileType;
   }
 
