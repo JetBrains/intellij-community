@@ -94,14 +94,18 @@ class GitStageTracker(val project: Project) : Disposable {
   private fun scheduleUpdateDocument(document: Document) {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
     val root = getRoot(project, file) ?: return
+    if (!gitRoots().contains(root)) return
     singleTaskController.request(Request.RefreshFiles(mutableMapOf(Pair(root, setOf(file.filePath()))), emptyMap()))
   }
 
   private fun scheduleUpdateForEvents(events: List<VFileEvent>) {
+    val gitRoots = gitRoots()
     val roots = GitRepositoryManager.getInstance(project).repositories.filter { repo ->
       events.any { e -> GitUntrackedFilesHolder.totalRefreshNeeded(repo, e.path) }
-    }.map { it.root }
-    val files = events.mapNotNull { it.file as? GitIndexVirtualFile }.map { Pair(it.root, it.filePath) }.toMapOfSets()
+    }.map { it.root }.intersect(gitRoots)
+    val files = events.mapNotNull { it.file as? GitIndexVirtualFile }.map { Pair(it.root, it.filePath) }.filter {
+      gitRoots.contains(it.first)
+    }.toMapOfSets()
     singleTaskController.sendRequests(refreshRoots(roots), refreshFiles(files))
   }
 
