@@ -30,7 +30,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
 
   protected abstract Collection<SettingsEditorFragment<Settings, ?>> createFragments();
 
-  protected List<SettingsEditorFragment<Settings, ?>> getFragments() {
+  protected final List<SettingsEditorFragment<Settings, ?>> getFragments() {
     return new ArrayList<>(myFragments.getValue());
   }
 
@@ -126,7 +126,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
 
       private void showOptions() {
         List<SettingsEditorFragment<Settings, ?>> fragments =
-          ContainerUtil.filter(myFragments.getValue(), fragment -> fragment.getName() != null);
+          ContainerUtil.filter(getFragments(), fragment -> fragment.getName() != null);
         DefaultActionGroup actionGroup = new DefaultActionGroup();
         String group = null;
         for (SettingsEditorFragment<Settings, ?> fragment : fragments) {

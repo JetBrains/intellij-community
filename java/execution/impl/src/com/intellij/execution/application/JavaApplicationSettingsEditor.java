@@ -3,6 +3,7 @@ package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.project.Project;
@@ -13,7 +14,6 @@ import com.intellij.ui.RawCommandLineEditor;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
@@ -21,12 +21,13 @@ import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEditor<ApplicationConfiguration> {
   private final Project myProject;
 
-  public JavaApplicationSettingsEditor(Project project) {
-    myProject = project;
+  public JavaApplicationSettingsEditor(ApplicationConfiguration configuration) {
+    super(configuration, JavaRunConfigurationExtensionManager.getInstance());
+    myProject = configuration.getProject();
   }
 
   @Override
-  protected Collection<SettingsEditorFragment<ApplicationConfiguration, ?>> createFragments() {
+  protected List<SettingsEditorFragment<ApplicationConfiguration, ?>> createRunFragments() {
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
 
     SettingsEditorFragment<ApplicationConfiguration, LabeledComponent<ModuleDescriptionsComboBox>> moduleClasspath = CommonJavaFragments.moduleClasspath(myProject);

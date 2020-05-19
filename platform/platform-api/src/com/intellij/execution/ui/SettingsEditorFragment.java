@@ -66,6 +66,23 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                         s -> component.isVisible(s));
   }
 
+  public static <S> SettingsEditorFragment<S, ?> createWrapper(String id, String name, String group, @NotNull SettingsEditor<S> inner) {
+    JComponent component = inner.getComponent();
+    SettingsEditorFragment<S, JComponent> fragment = new SettingsEditorFragment<>(id, name, group, component,
+                                                                                  (settings, c) -> inner.resetFrom(settings),
+                                                                                  (settings, c) -> {
+                                                                                    try {
+                                                                                      inner.applyTo(settings);
+                                                                                    }
+                                                                                    catch (ConfigurationException e) {
+                                                                                      throw new RuntimeException(e);
+                                                                                    }
+                                                                                  },
+                                                                                  s -> false);
+    Disposer.register(fragment, inner);
+    return fragment;
+  }
+
   public static <Settings> SettingsEditorFragment<Settings, JButton> createTag(String id, String name, String group,
                                                                                Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
     Ref<SettingsEditorFragment<Settings, JButton>> ref = new Ref<>();
