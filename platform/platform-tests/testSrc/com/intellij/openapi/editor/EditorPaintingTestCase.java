@@ -187,7 +187,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
   }
 
-  private BufferedImage paintEditor(boolean withGutter, @Nullable BufferedImage target, @Nullable Rectangle clip) throws IOException {
+  protected BufferedImage paintEditor(boolean withGutter, @Nullable BufferedImage target, @Nullable Rectangle clip) throws IOException {
     getEditor().getSettings().setAdditionalLinesCount(0);
     getEditor().getSettings().setAdditionalColumnsCount(1);
 
