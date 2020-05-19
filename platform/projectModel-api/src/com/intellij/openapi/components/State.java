@@ -66,7 +66,7 @@ public @interface State {
    * <li>Won't record fields if state is persisted manually, i.e. the state is {@link org.jdom.Element} </li>
    * </ul>
    */
-  boolean reportStatistic() default false;
+  boolean reportStatistic() default true;
 
   boolean allowLoadInTests() default false;
 
