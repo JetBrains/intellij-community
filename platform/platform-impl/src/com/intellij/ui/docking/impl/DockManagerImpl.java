@@ -16,10 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -214,6 +211,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     private final @NotNull DockableContent myContent;
 
+    private DockContainer myStartDragContainer;
     private DockContainer myCurrentOverContainer;
     private final JLabel myImageContainer;
 
@@ -221,6 +219,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myWindow = new JDialog(WindowManager.getInstance().getFrame(myProject));
       myWindow.setUndecorated(true);
       myContent = content;
+      myStartDragContainer = getContainerFor(me.getComponent());
 
       Image previewImage = content.getPreviewImage();
 
@@ -343,21 +342,26 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   private @Nullable DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent<?> content) {
-    for (DockContainer each : getAllContainers()) {
+    DockContainer candidate = null;
+    for (DockContainer each : myContainers) {
       RelativeRectangle rec = each.getAcceptArea();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
-        return each;
+        if (candidate == null || Comparing.equal(candidate, myCurrentDragSession.myStartDragContainer)) {
+          candidate = each;
+        }
       }
     }
 
-    for (DockContainer each : getAllContainers()) {
+    for (DockContainer each : myContainers) {
       RelativeRectangle rec = each.getAcceptAreaFallback();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
-        return each;
+        if (candidate == null || Comparing.equal(candidate, myCurrentDragSession.myStartDragContainer)) {
+          candidate = each;
+        }
       }
     }
 
-    return null;
+    return candidate;
   }
 
   private DockContainerFactory getFactory(String type) {
@@ -468,6 +472,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
           getReady().doWhenDone(() -> {
             if (myContainer.isEmpty()) {
               close();
+              myContainers.remove(myContainer);
             }
           });
         }
