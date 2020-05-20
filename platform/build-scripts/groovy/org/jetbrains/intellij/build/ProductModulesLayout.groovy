@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
+import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -127,6 +128,13 @@ class ProductModulesLayout {
    */
   @Deprecated
   String classesLoadingOrderFilePath = null
+
+  /**
+   * Module names which should be excluded from this product.
+   * Allows to filter out default platform modules (both api and implementation) as well as product modules.
+   * This API is experimental, use with care
+   */
+  List<String> excludedModuleNames = []
 
   /**
    * @return list of all modules which output is included into the plugin's JARs
