@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -154,6 +155,9 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   private static CompletableFuture<Boolean> overridesToString(Type type, SuspendContext context) {
+    if (!Registry.is("debugger.async.jdi")) {
+      return CompletableFuture.completedFuture(overridesToString(type));
+    }
     if (type instanceof ClassType) {
       return DebuggerUtilsAsync.findAnyBaseType(type, t -> {
         if (t instanceof ReferenceType) {

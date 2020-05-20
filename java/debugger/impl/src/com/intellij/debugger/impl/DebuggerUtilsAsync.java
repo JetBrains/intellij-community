@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -91,6 +92,10 @@ public class DebuggerUtilsAsync {
   }
 
   public static CompletableFuture<Boolean> instanceOf(@Nullable Type subType, @NotNull String superType, @Nullable SuspendContext context) {
+    if (!Registry.is("debugger.async.jdi")) {
+      return completedFuture(DebuggerUtils.instanceOf(subType, superType));
+    }
+
     if (subType == null || subType instanceof VoidType) {
       return completedFuture(false);
     }
