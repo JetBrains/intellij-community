@@ -111,6 +111,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
+        .mapNotNull { if (it is PyUnionType) it.excludeNull(typeEvalContext) else it }
         .toList()
         .let { PyUnionType.union(it) }
         .let {

@@ -1,4 +1,4 @@
-from typing import overload, Union
+from typing import Any, overload, Union
 from os import PathLike
 
 def baz(akjlkgjdfsakglkd: PathLike) -> None:
@@ -25,3 +25,23 @@ def foo(akjlkgjdfsakglkd):
     pass
 
 foo("foobar.txt")
+
+
+def qux(akjlkgjdfsakglkd: Union[str, Any]) -> None:
+    pass
+
+qux("foo")
+
+
+@overload
+def quux(akjlkgjdfsakglkd: Any) -> None:
+    pass
+
+@overload
+def quux(akjlkgjdfsakglkd: str) -> None:
+    pass
+
+def quux(akjlkgjdfsakglkd):
+    pass
+
+quux("foo")
