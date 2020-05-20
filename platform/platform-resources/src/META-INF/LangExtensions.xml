@@ -88,6 +88,9 @@
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
 
+    <applicationService serviceInterface="com.intellij.model.BranchService"
+                        serviceImplementation="com.intellij.model.BranchServiceImpl"/>
+
     <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
 
     <projectService serviceInterface="com.intellij.pom.PomModel"
