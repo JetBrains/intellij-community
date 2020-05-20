@@ -4,10 +4,7 @@ package com.intellij.workspace.legacyBridge.typedModel.module
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.roots.CompilerModuleExtension
-import com.intellij.openapi.roots.ModuleExtension
-import com.intellij.openapi.roots.OrderEntry
-import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.RootModelBase
@@ -156,7 +153,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
       val moduleEntity = storage.resolve(module.moduleEntityId)
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
-      for (extension in ModuleExtension.EP_NAME.getExtensions(module)) {
+      for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(module)) {
         val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 
         if (writable) {

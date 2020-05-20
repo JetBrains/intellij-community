@@ -53,7 +53,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
 
     myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
     myOrderRootsCache = new OrderRootsCache(module);
-    ModuleExtension.EP_NAME.getPoint(module).addExtensionPointListener(new ExtensionPointListener<ModuleExtension>() {
+    MODULE_EXTENSION_NAME.getPoint(module).addExtensionPointListener(new ExtensionPointListener<ModuleExtension>() {
       @Override
       public void extensionAdded(@NotNull ModuleExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
         myRootModel.addModuleExtension(extension);

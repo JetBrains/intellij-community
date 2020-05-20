@@ -79,7 +79,7 @@ class LegacyBridgeModuleRootComponent(
         val library = createModuleLibrary(libraryEntity.persistentId())
         moduleLibraries.add(library)
       }
-    ModuleExtension.EP_NAME.getPoint(legacyBridgeModule).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension?> {
+    MODULE_EXTENSION_NAME.getPoint(legacyBridgeModule).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension?> {
       override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
         modelValue.dropCache()
       }

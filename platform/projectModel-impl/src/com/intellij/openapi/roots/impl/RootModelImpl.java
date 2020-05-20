@@ -74,7 +74,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     addSourceOrderEntries();
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager);
 
-    for (ModuleExtension extension : ModuleExtension.EP_NAME.getExtensions(moduleRootManager.getModule())) {
+    for (ModuleExtension extension : ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(moduleRootManager.getModule())) {
       ModuleExtension model = extension.getModifiableModel(false);
       registerOnDispose(model);
       myExtensions.add(model);
