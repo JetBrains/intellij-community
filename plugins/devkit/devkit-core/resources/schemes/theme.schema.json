@@ -152,6 +152,10 @@
         "Checkbox.Focus.Wide.Dark": {
           "$ref": "#/definitions/color",
           "description": "Use for dark themes"
+        },
+        "Tree.iconColor": {
+          "$ref": "#/definitions/color",
+          "description": "Color of expand/collapse icons"
         }
       }
     },
