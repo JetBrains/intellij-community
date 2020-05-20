@@ -366,4 +366,19 @@ public class LongRangeKnownMethods {
     String s = Integer.toString(i);
     if (<warning descr="Condition 's.equals(\"123\") || s.equals(\"456\")' is always 'true'">s.equals("123") || <warning descr="Condition 's.equals(\"456\")' is always 'true' when reached">s.equals("456")</warning></warning>) {}
   }
+  
+  void testRandom(Random r, SplittableRandom sr, int x) {
+    int val = r.nextInt(x);
+    if (<warning descr="Condition 'val < 0' is always 'false'">val < 0</warning>) {}
+    val = r.nextInt(100);
+    if (<warning descr="Condition 'val >= 100' is always 'false'">val >= 100</warning>) {}
+    if (val >= 99) {}
+    val = sr.nextInt(x, 1000);
+    if (<warning descr="Condition 'val >= 1000' is always 'false'">val >= 1000</warning>) {}
+    val = sr.nextInt(10, 20);
+    if (<warning descr="Condition 'val < 10' is always 'false'">val < 10</warning>) {}
+    if (val <= 10) {}
+    if (<warning descr="Condition 'val >= 20' is always 'false'">val >= 20</warning>) {}
+    if (val >= 19) {}
+  }
 }
