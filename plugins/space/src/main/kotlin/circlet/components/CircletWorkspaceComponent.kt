@@ -1,7 +1,6 @@
 package circlet.components
 
 import circlet.arenas.initCircletArenas
-import circlet.auth.accessTokenInteractive
 import circlet.client.api.impl.ApiClassesDeserializer
 import circlet.common.oauth.IdeaOAuthConfig
 import circlet.permission.FeatureFlagsVmPersistenceKey
@@ -9,6 +8,7 @@ import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.api.oauth.toTokenInfo
 import circlet.platform.api.serialization.ExtendableSerializationRegistry
 import circlet.platform.client.ConnectionStatus
+import circlet.platform.workspaces.CodeFlowConfig
 import circlet.platform.workspaces.WorkspaceConfiguration
 import circlet.platform.workspaces.WorkspaceManagerHost
 import circlet.runtime.ApplicationDispatcher
@@ -23,8 +23,12 @@ import circlet.workspaces.Workspace
 import circlet.workspaces.WorkspaceManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.suspendCancellableCoroutine
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
+import libraries.klogging.KLogger
 import libraries.klogging.assert
 import libraries.klogging.logger
 import runtime.Ui
@@ -33,11 +37,19 @@ import runtime.persistence.InMemoryPersistence
 import runtime.persistence.PersistenceConfiguration
 import runtime.persistence.PersistenceKey
 import runtime.reactive.*
-
-private val log = logger<CircletWorkspaceComponent>()
+import runtime.utils.selectFreePort
+import java.awt.Desktop
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.PrintWriter
+import java.net.ServerSocket
+import java.net.Socket
+import java.net.URI
+import kotlin.coroutines.resume
 
 // monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
 class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by LifetimedDisposableImpl() {
+    private val log: KLogger = logger<CircletWorkspaceComponent>()
 
     private val ideaClientPersistenceConfiguration = PersistenceConfiguration(
         FeatureFlagsVmPersistenceKey,
@@ -45,6 +57,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
     )
 
     private val workspacesLifetimes = SequentialLifetimes(lifetime)
+
     private val manager = mutableProperty<WorkspaceManager?>(null)
 
     val workspace = flatMapInit<WorkspaceManager?, Workspace?>(manager, null) {
@@ -75,9 +88,6 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
 
     private fun initApp() {
         val application = ApplicationManager.getApplication()
-        //if (!application.isUnitTestMode && !application.isHeadlessEnvironment) {
-        //    KLoggerStaticFactory.customFactory = KLoggerFactoryIdea
-        //}
 
         mutableUiDispatch = ApplicationDispatcher(application)
 
@@ -92,13 +102,63 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
         manager.value?.signOut(false)
     }
 
+    private val ports = lazy {
+        val regex = "[^\\d]*(?<port>\\d+)[^\\d]*".toRegex()
+        val ports = IdeaOAuthConfig.redirectURIs.mapNotNull { it ->
+            regex.find(it)?.groups?.get("port")?.value?.toIntOrNull()
+        }
+        Pair(ports.min() ?: 1000, ports.max() ?: 65535)
+    }
+
     suspend fun signIn(lifetime: Lifetime, server: String): OAuthTokenResponse {
         log.assert(manager.value == null, "manager.value == null")
 
         val lt = workspacesLifetimes.next()
         val wsConfig = ideaConfig(server)
-        val wss = WorkspaceManager(lt, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClientPersistenceConfiguration, wsConfig)
-        val response = accessTokenInteractive(lifetime, wsConfig)
+        val wss = WorkspaceManager(lt, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClientPersistenceConfiguration,
+                                   wsConfig)
+
+        val port = selectFreePort(ports.value.first, ports.value.second)
+        val authUrl = "http://localhost:$port/auth"
+        val codeFlow = CodeFlowConfig(wsConfig, authUrl)
+
+        val response: OAuthTokenResponse = suspendCancellableCoroutine { cnt ->
+            launch(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+                ServerSocket(port).use { serverSocket ->
+                    val socket: Socket = serverSocket.accept()
+                    socket.getInputStream().use { inputStream ->
+                        BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                            var line = reader.readLine()
+
+                            line = line.substringAfter("/").substringBefore(" ")
+                            val token = codeFlow.handleCodeFlowRedirect("/$line")
+                            cnt.resume(token)
+
+                            PrintWriter(socket.getOutputStream()).use { out ->
+                                val response = "<script>close()</script>"
+                                out.println("HTTP/1.1 200 OK")
+                                out.println("Content-Type: text/html")
+                                out.println("Content-Length: " + response.length)
+                                out.println()
+                                out.println(response)
+                                out.flush()
+                            }
+                        }
+                    }
+                }
+            }
+
+            try {
+                val uri = URI(codeFlow.codeFlowURL())
+                Desktop.getDesktop().browse(uri)
+            }
+            catch (th: Throwable) {
+                val message = "Can't open '${wsConfig.server}' in system browser"
+                log.warn(th, message)
+                cnt.resume(OAuthTokenResponse.Error(wsConfig.server, "", "Can't open '${wsConfig.server}' in system browser."))
+            }
+        }
+
         if (response is OAuthTokenResponse.Success) {
             log.info { "response = ${response.accessToken} ${response.expiresIn} ${response.refreshToken} ${response.scope}" }
             wss.signInWithToken(response.toTokenInfo())
