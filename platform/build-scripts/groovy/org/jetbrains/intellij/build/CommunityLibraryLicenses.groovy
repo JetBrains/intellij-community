@@ -112,6 +112,8 @@ class CommunityLibraryLicenses {
                        url: "http://ws.apache.org/axis/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
     new LibraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils.jar", version: "1.6", license: "Apache 2.0",
                        url: "http://commons.apache.org/beanutils/"),
+    new LibraryLicense(name: "Apache Commons CLI", libraryName: "commons-cli", license: "Apache 2.0",
+                       url: "http://commons.apache.org/cli/", licenseUrl: "http://www.apache.org/licenses/"),
     new LibraryLicense(name: "Apache Commons Codec", libraryName: "commons-codec", license: "Apache 2.0",
                        url: "http://commons.apache.org/codec/", licenseUrl: "http://www.apache.org/licenses/"),
     new LibraryLicense(name: "Apache Commons Collections", libraryName: "commons-collections", license: "Apache 2.0",
