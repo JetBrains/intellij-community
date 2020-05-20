@@ -89,7 +89,7 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
     } else {
       final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(parentExpr.getLExpression());
       if (lExpr instanceof PsiReferenceExpression) {
-        resolve = ((PsiReferenceExpression)lExpr).resolve();
+        result = ((PsiReferenceExpression)lExpr).resolve();
       }
     }
     return result;
