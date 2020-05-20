@@ -39,6 +39,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.sh.ShDependenciesVersionInspector.NOTIFICATION_GROUP_ID;
+
 // todo: rewrite with the future API, see IDEA-203568
 public class ShExternalFormatter implements ExternalFormatProcessor {
   private static final Logger LOG = Logger.getInstance(ShExternalFormatter.class);
@@ -76,22 +78,21 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     if (ShSettings.I_DO_MIND.equals(shFmtExecutable)) return;
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
-      String groupId = NotificationGroup.createIdWithTitle("Shell Script", ShBundle.message("sh.title.case"));
       Notification notification =
-        new Notification(groupId, "", ShBundle.message("sh.fmt.install.question"),
+        new Notification(NOTIFICATION_GROUP_ID, "", ShBundle.message("sh.fmt.install.question"),
                          NotificationType.INFORMATION);
       notification.addAction(
-        NotificationAction.createSimple(ShBundle.messagePointer("sh.fmt.install"), () -> {
+        NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
           notification.expire();
-          ShShfmtFormatterUtil.download(project, settings, () -> Notifications.Bus
-            .notify(new Notification(groupId, "",
-                                     ShBundle.message("sh.fmt.success.install"),
-                                     NotificationType.INFORMATION)), () -> Notifications.Bus
-            .notify(
-              new Notification(groupId, "", ShBundle.message("sh.fmt.cannot.download"),
-                               NotificationType.ERROR)));
+          ShShfmtFormatterUtil.download(project,
+                                        () -> Notifications.Bus
+                                          .notify(new Notification(NOTIFICATION_GROUP_ID, "", ShBundle.message("sh.fmt.success.install"),
+                                                                   NotificationType.INFORMATION)),
+                                        () -> Notifications.Bus
+                                          .notify(new Notification(NOTIFICATION_GROUP_ID, "", ShBundle.message("sh.fmt.cannot.download"),
+                                                                   NotificationType.ERROR)));
         }));
-      notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.fmt.no.thanks"), () -> {
+      notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.no.thanks"), () -> {
         notification.expire();
         ShSettings.setShfmtPath(ShSettings.I_DO_MIND);
       }));

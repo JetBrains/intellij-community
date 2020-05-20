@@ -81,6 +81,7 @@ Adds support for working with shell script files
     <highlightUsagesHandlerFactory id="shOccurrencesHighlightingFactory" implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler id="shRenameHandler" implementation="com.intellij.sh.rename.ShRenameHandler"/>
 
+    <backgroundPostStartupActivity implementation="com.intellij.sh.ShDependenciesVersionInspector"/>
     <intentionAction>
       <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
       <category>Shell script</category>

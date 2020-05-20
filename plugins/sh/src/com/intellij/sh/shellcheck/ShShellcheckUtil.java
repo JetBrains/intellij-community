@@ -1,6 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-class ShShellcheckUtil {
+public class ShShellcheckUtil {
   @NonNls private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
   private static final String WINDOWS_EXTENSION = ".exe";
@@ -45,7 +49,7 @@ class ShShellcheckUtil {
                                        "org/jetbrains/intellij/deps/shellcheck/";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
-  static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+  public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
       //noinspection ResultOfMethodCallIgnored
@@ -123,17 +127,26 @@ class ShShellcheckUtil {
     if (ShSettings.I_DO_MIND.equals(path)) return true;
     File file = new File(path);
     return file.canExecute() && file.getName().contains(SHELLCHECK);
+  }
 
-//    try {
-//      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
-//      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
-//
-//      return processOutput.getStdout().startsWith("ShellCheck");
-//    }
-//    catch (ExecutionException e) {
-//      LOG.debug("Exception in process execution", e);
-//    }
-//    return false;
+  public static boolean isNewVersionAvailable() {
+    String path = ShSettings.getShellcheckPath();
+    if (ShSettings.I_DO_MIND.equals(path)) return false;
+    File file = new File(path);
+    if (!file.canExecute()) return false;
+    if (!file.getName().contains(SHELLCHECK)) return false;
+    try {
+      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
+      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
+
+      String stdout = processOutput.getStdout();
+      //return !stdout.contains(SHELLCHECK);
+      return !stdout.contains("SHELLCHECK");
+    }
+    catch (ExecutionException e) {
+      LOG.debug("Exception in process execution", e);
+    }
+    return false;
   }
 
   @NotNull

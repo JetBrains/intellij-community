@@ -86,8 +86,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myShfmtDownloadLink = new ActionLink(ShBundle.message("sh.code.style.download.link"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        CodeStyleSettings settings = getSettings();
-        ShShfmtFormatterUtil.download(event.getProject(), settings,
+        ShShfmtFormatterUtil.download(event.getProject(),
                                       () -> myShfmtPathSelector.setText(ShSettings.getShfmtPath()),
                                       () -> myErrorLabel.setVisible(true));
       }

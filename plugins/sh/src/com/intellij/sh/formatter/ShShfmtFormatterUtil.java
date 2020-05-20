@@ -1,6 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.formatter;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +49,7 @@ public class ShShfmtFormatterUtil {
   private static final String LINUX = "_linux";
   private static final String FREE_BSD = "_freebsd";
 
-  public static void download(@Nullable Project project, @NotNull CodeStyleSettings settings, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+  public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
       //noinspection ResultOfMethodCallIgnored
@@ -108,6 +112,26 @@ public class ShShfmtFormatterUtil {
     File file = new File(path);
     if (!file.canExecute()) return false;
     return file.getName().contains(SHFMT);
+  }
+
+  public static boolean isNewVersionAvailable() {
+    String path = ShSettings.getShfmtPath();
+    if (ShSettings.I_DO_MIND.equals(path)) return false;
+    File file = new File(path);
+    if (!file.canExecute()) return false;
+    if (!file.getName().contains(SHFMT)) return false;
+    try {
+      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
+      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
+
+      String stdout = processOutput.getStdout();
+      //return !stdout.contains(SHFMT_VERSION);
+      return !stdout.contains("SHFMT_VERSION");
+    }
+    catch (ExecutionException e) {
+      LOG.debug("Exception in process execution", e);
+    }
+    return false;
   }
 
   @NotNull
