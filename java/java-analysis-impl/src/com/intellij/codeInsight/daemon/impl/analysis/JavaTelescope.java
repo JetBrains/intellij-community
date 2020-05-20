@@ -42,7 +42,7 @@ public class JavaTelescope {
     });
     if (totalUsageCount.get() == TOO_MANY_USAGES || totalUsageCount.get() == 0) return null;
     String format = "{0,choice, 0#no usages|1#1 usage|2#{0,number} usages}";
-    return StringUtil.capitalizeWords(MessageFormat.format(format, totalUsageCount.get()), true);
+    return MessageFormat.format(format, totalUsageCount.get());
   }
 
   private static int usagesCount(@NotNull Project project,

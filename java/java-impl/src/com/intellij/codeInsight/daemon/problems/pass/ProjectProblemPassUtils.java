@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems.pass;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -13,6 +12,7 @@ import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.find.FindUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
@@ -56,13 +56,13 @@ public class ProjectProblemPassUtils {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
     SpacePresentation usagesOffset = new SpacePresentation(column * columnWidth, 0);
-    InlayPresentation textPresentation = factory.smallText(JavaErrorBundle.message("project.problems.broken.usages", brokenUsages.size()));
+    InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.broken.usages", brokenUsages.size()));
     TextAttributes errorAttrs = editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ -> errorAttrs);
     InlayPresentation usagesPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> showUsages(member, brokenUsages));
 
     JPopupMenu popupMenu = new JPopupMenu();
-    JMenuItem item = new JMenuItem(JavaErrorBundle.message("project.problems.settings"));
+    JMenuItem item = new JMenuItem(JavaBundle.message("project.problems.settings"));
     item.addActionListener(e -> InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE,
                                                                                      model -> model.getId().equals(HINTS_ID)));
     popupMenu.add(item);
@@ -84,7 +84,7 @@ public class ProjectProblemPassUtils {
     else {
       String memberName = Objects.requireNonNull(member.getName());
       FindUtil.showInUsageView(member, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
-                               JavaErrorBundle.message("project.problems.window.title", memberName), project);
+                               JavaBundle.message("project.problems.window.title", memberName), project);
     }
   }
 
@@ -119,7 +119,7 @@ public class ProjectProblemPassUtils {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
       .range(identifier.getTextRange())
       .textAttributes(attributes)
-      .descriptionAndTooltip(JavaErrorBundle.message("project.problems.fix.description", identifier.getText()))
+      .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", identifier.getText()))
       .createUnconditionally();
 
     QuickFixAction.registerQuickFixAction(info, new ShowBrokenUsagesAction(brokenUsages));
@@ -236,7 +236,7 @@ public class ProjectProblemPassUtils {
 
     @Override
     public @NotNull String getFamilyName() {
-      return JavaErrorBundle.message("project.problems.fix.text");
+      return JavaBundle.message("project.problems.fix.text");
     }
   }
 }

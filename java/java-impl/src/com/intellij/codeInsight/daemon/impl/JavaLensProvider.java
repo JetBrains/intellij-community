@@ -96,7 +96,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
                 @NotNull
                 @Override
                 public String getRegularText() {
-                  String prop = "{0, choice, 1#1 Implementation|2#{0,number} Implementations}";
+                  String prop = "{0, choice, 1#1 implementation|2#{0,number} implementations}";
                   return MessageFormat.format(prop, inheritors);
                 }
               });
@@ -118,7 +118,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
                 @NotNull
                 @Override
                 public String getRegularText() {
-                  String prop = "{0, choice, 1#1 Implementation|2#{0,number} Implementations}";
+                  String prop = "{0, choice, 1#1 implementation|2#{0,number} implementations}";
                   return MessageFormat.format(prop, overridings);
                 }
               });

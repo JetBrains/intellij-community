@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems.pass;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.hints.ImmediateConfigurable;
 import com.intellij.codeInsight.hints.InlayHintsSettings;
 import com.intellij.codeInsight.hints.NoSettings;
 import com.intellij.codeInsight.hints.SettingsKey;
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel;
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -58,7 +58,7 @@ public class ProjectProblemInlaySettingsProvider implements InlaySettingsProvide
     @NotNull
     @Override
     public String getName() {
-      return JavaErrorBundle.message("project.problems.title");
+      return JavaBundle.message("project.problems.title");
     }
 
     @NotNull
