@@ -3,6 +3,7 @@ package com.intellij.platform
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -23,7 +24,7 @@ import java.nio.file.Paths
  *
  * @author traff
  */
-internal class AttachProjectAction : AnAction("Attach project..."), DumbAware {
+internal class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachProject.text")), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ProjectAttachProcessor.canAttachToProject() &&
                                          GeneralSettings.getInstance().confirmOpenNewProject != GeneralSettings.OPEN_PROJECT_ASK
