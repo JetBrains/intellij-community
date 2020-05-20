@@ -14,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -87,7 +86,7 @@ class InferenceCache {
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-      DFAFlowInfo flowInfo = collectRequiredInstructions(definitionMaps, instruction, descriptor, initialState, mixinPredicate);
+      DFAFlowInfo flowInfo = collectFlowInfo(definitionMaps, instruction, descriptor, initialState, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(flowInfo.getInterestingInstructions());
@@ -107,7 +106,7 @@ class InferenceCache {
                                             Instruction @NotNull [] flow,
                                             @NotNull DFAFlowInfo flowInfo) {
     final TypeDfaInstance dfaInstance =
-      new TypeDfaInstance(flow, flowInfo, this, owner.getManager(), new InitialTypeProvider(owner, flowInfo));
+      new TypeDfaInstance(flow, flowInfo, this, owner.getManager(), new InitialTypeProvider(owner, flowInfo.getInitialTypes()));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
@@ -117,11 +116,11 @@ class InferenceCache {
     return myVarTypes.get().get(instruction.num()).getVariableType(descriptor);
   }
 
-  private DFAFlowInfo collectRequiredInstructions(@NotNull List<DefinitionMap> definitionMaps,
-                                                  @NotNull Instruction instruction,
-                                                  @NotNull VariableDescriptor descriptor,
-                                                  @NotNull Map<VariableDescriptor, DFAType> initialState,
-                                                  @NotNull Predicate<? super Instruction> predicate) {
+  private DFAFlowInfo collectFlowInfo(@NotNull List<DefinitionMap> definitionMaps,
+                                      @NotNull Instruction instruction,
+                                      @NotNull VariableDescriptor descriptor,
+                                      @NotNull Map<VariableDescriptor, DFAType> initialState,
+                                      @NotNull Predicate<? super Instruction> predicate) {
     Map<Pair<Instruction, VariableDescriptor>, Collection<Pair<Instruction, VariableDescriptor>>> interesting = new LinkedHashMap<>();
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
@@ -144,7 +143,6 @@ class InferenceCache {
       .map(it -> it.getFirst())
       .filter(predicate)
       .collect(Collectors.toSet());
-    Map<VariableDescriptor, List<GrControlFlowOwner>> usageInFlowMap = FunctionalExpressionFlowUtil.getUsagesMap(myScope);
     Set<VariableDescriptor> interestingDescriptors = interesting.keySet().stream()
       .map(it -> it.getSecond())
       .collect(Collectors.toSet());
@@ -152,8 +150,7 @@ class InferenceCache {
                            interestingInstructions,
                            acyclicInstructions,
                            interestingDescriptors,
-                           dependentOnSharedVariables,
-                           usageInFlowMap);
+                           dependentOnSharedVariables);
   }
 
   @NotNull

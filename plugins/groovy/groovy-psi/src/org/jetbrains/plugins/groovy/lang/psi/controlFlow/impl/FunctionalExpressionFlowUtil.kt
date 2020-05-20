@@ -15,10 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.*
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.SharedVariableInferenceCache.Companion.getWriteInstructionsFromNestedFlows
 import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
@@ -108,12 +105,6 @@ fun GrFunctionalExpression?.getInvocationKind(): InvocationKind {
   return CachedValuesManager.getCachedValue(this) {
     CachedValueProvider.Result(computeInvocationKind(this), this)
   }
-}
-
-internal fun getUsagesMap(topFlowOwner: GrControlFlowOwner): Map<VariableDescriptor, List<GrControlFlowOwner>> {
-  return getWriteInstructionsFromNestedFlows(topFlowOwner)
-    .map { (instruction: ReadWriteVariableInstruction, scope: GrControlFlowOwner) -> instruction.descriptor to scope }
-    .groupBy(Pair<VariableDescriptor, GrControlFlowOwner>::first, Pair<VariableDescriptor, GrControlFlowOwner>::second)
 }
 
 private fun computeInvocationKind(block: GrFunctionalExpression): InvocationKind {

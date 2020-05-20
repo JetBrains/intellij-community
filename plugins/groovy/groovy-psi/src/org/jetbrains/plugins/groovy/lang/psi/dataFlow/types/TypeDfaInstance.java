@@ -210,7 +210,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         handleClosureDFAResult(state, blockFlowOwner, state::putType);
         break;
       case IN_PLACE_UNKNOWN:
-      case UNKNOWN:
         handleClosureDFAResult(state, blockFlowOwner, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
           if (existingType == null) {
@@ -223,17 +222,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           }
         });
         break;
-    }
-    if (kind == InvocationKind.UNKNOWN) {
-      for (VariableDescriptor descriptor : foreignInterestingDescriptors) {
-        PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, descriptor);
-        if (upperBoundByWrites != PsiType.NULL) {
-          DFAType currentType = state.getVariableType(descriptor);
-          currentType = currentType == null ? DFAType.create(null) : currentType;
-          DFAType flushedType = currentType.addFlushingType(upperBoundByWrites, myManager);
-          state.putType(descriptor, flushedType);
+      case UNKNOWN:
+        for (VariableDescriptor descriptor : foreignInterestingDescriptors) {
+          PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, descriptor);
+          if (upperBoundByWrites != PsiType.NULL) {
+            DFAType currentType = state.getVariableType(descriptor);
+            currentType = currentType == null ? DFAType.create(null) : currentType;
+            DFAType flushedType = currentType.addFlushingType(upperBoundByWrites, myManager);
+            state.putType(descriptor, flushedType);
+          }
         }
-      }
     }
   }
 

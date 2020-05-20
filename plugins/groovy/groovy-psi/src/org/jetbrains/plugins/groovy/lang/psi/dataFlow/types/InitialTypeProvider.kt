@@ -9,9 +9,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProcessingAllowed
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType
 
 
-internal class InitialTypeProvider(private val start: GrControlFlowOwner, private val flowInfo: DFAFlowInfo) {
+internal class InitialTypeProvider(private val start: GrControlFlowOwner,
+                                   private val initialTypes: Map<VariableDescriptor, DFAType>) {
 
   private val parentFlowOwner by lazyPub {
     val parent = start.parent
@@ -25,7 +27,7 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
 
   fun initialType(descriptor: VariableDescriptor): PsiType? {
     if (isNestedFlowProcessingAllowed()) {
-      val typeFromInitialContext = flowInfo.initialTypes[descriptor]?.getResultType(start.manager)
+      val typeFromInitialContext = initialTypes[descriptor]?.getResultType(start.manager)
       if (typeFromInitialContext != null) return typeFromInitialContext
       val type = getTypeFromParentDFA(descriptor)
       if (type != null) return type
