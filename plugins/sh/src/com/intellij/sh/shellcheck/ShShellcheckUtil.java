@@ -18,11 +18,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
@@ -37,10 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
@@ -48,11 +45,13 @@ import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
 public class ShShellcheckUtil {
   @NonNls private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
+  private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHELLCHECK_UPDATE");
   private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
   private static final String WINDOWS_EXTENSION = ".exe";
   static final String SHELLCHECK = "shellcheck";
   static final String OLD_SHELLCHECK = "old_shellcheck";
   static final String SHELLCHECK_VERSION = "0.6.0-1";
+  private static final String SHELLCHECK_VERSION_FOR_UPDATE = "0.6.0";
   static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
   static final String SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/" +
                                        "intellij-third-party-dependencies/" +
@@ -183,6 +182,9 @@ public class ShShellcheckUtil {
 
   static void checkShellCheckForUpdate(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
+    if (application.getUserData(UPDATE_NOTIFICATION_SHOWN) != null) return;
+    application.putUserData(UPDATE_NOTIFICATION_SHOWN, true);
+
     if (application.isDispatchThread()) {
       application.executeOnPooledThread(() -> checkForUpdateInBackgroundThread(project));
     } else {
@@ -193,23 +195,23 @@ public class ShShellcheckUtil {
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
     if (!isNewVersionAvailable()) return;
-    Notification notification = new Notification(NOTIFICATION_GROUP_ID, "", message("sh.shellcheck.update.question"),
+    Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.shellcheck.update.question"),
                                                  NotificationType.INFORMATION);
     notification.addAction(
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, "", message("sh.shellcheck.success.update"),
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.shellcheck.success.update"),
                                             NotificationType.INFORMATION)),
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, "", message("sh.shellcheck.cannot.update"),
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.shellcheck.cannot.update"),
                                             NotificationType.ERROR)),
                  true);
       }));
     notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {
       notification.expire();
-      ShSettings.setSkippedShellcheckVersion(SHELLCHECK_VERSION);
+      ShSettings.setSkippedShellcheckVersion(SHELLCHECK_VERSION_FOR_UPDATE);
     }));
     Notifications.Bus.notify(notification, project);
   }
@@ -225,7 +227,7 @@ public class ShShellcheckUtil {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
       String stdout = processOutput.getStdout();
-      return !stdout.contains(SHELLCHECK_VERSION) && !ShSettings.getSkippedShellcheckVersion().equals(SHELLCHECK_VERSION);
+      return !stdout.contains(SHELLCHECK_VERSION_FOR_UPDATE) && !ShSettings.getSkippedShellcheckVersion().equals(SHELLCHECK_VERSION_FOR_UPDATE);
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);

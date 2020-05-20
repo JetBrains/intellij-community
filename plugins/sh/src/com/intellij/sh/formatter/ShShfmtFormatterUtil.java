@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,6 +43,7 @@ import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
 public class ShShfmtFormatterUtil {
   private static final Logger LOG = Logger.getInstance(ShShfmtFormatterUtil.class);
+  private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHFMT_UPDATE");
   private static final String FEATURE_ACTION_ID = "ExternalFormatterDownloaded";
 
   private static final String SHFMT = "shfmt";
@@ -166,6 +168,9 @@ public class ShShfmtFormatterUtil {
 
   static void checkShfmtForUpdate(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
+    if (application.getUserData(UPDATE_NOTIFICATION_SHOWN) != null) return;
+    application.putUserData(UPDATE_NOTIFICATION_SHOWN, true);
+
     if (application.isDispatchThread()) {
       application.executeOnPooledThread(() -> checkForUpdateInBackgroundThread(project));
     } else {
@@ -176,17 +181,17 @@ public class ShShfmtFormatterUtil {
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
     if (!isNewVersionAvailable()) return;
-    Notification notification = new Notification(NOTIFICATION_GROUP_ID, "", message("sh.fmt.update.question"),
+    Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.fmt.update.question"),
                                                  NotificationType.INFORMATION);
     notification.addAction(
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, "", message("sh.fmt.success.update"),
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.fmt.success.update"),
                                             NotificationType.INFORMATION)),
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, "", message("sh.fmt.cannot.update"),
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.fmt.cannot.update"),
                                             NotificationType.ERROR)),
                  true);
       }));

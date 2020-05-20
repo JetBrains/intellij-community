@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
 // todo: rewrite with the future API, see IDEA-203568
@@ -78,17 +79,19 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     if (ShSettings.I_DO_MIND.equals(shFmtExecutable)) return;
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
-      Notification notification = new Notification(NOTIFICATION_GROUP_ID, "", ShBundle.message("sh.fmt.install.question"),
+      Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.fmt.install.question"),
                                                    NotificationType.INFORMATION);
       notification.addAction(
         NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
           notification.expire();
           ShShfmtFormatterUtil.download(project,
                                         () -> Notifications.Bus
-                                          .notify(new Notification(NOTIFICATION_GROUP_ID, "", ShBundle.message("sh.fmt.success.install"),
+                                          .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"),
+                                                                   message("sh.fmt.success.install"),
                                                                    NotificationType.INFORMATION)),
                                         () -> Notifications.Bus
-                                          .notify(new Notification(NOTIFICATION_GROUP_ID, "", ShBundle.message("sh.fmt.cannot.download"),
+                                          .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"),
+                                                                   message("sh.fmt.cannot.download"),
                                                                    NotificationType.ERROR)));
         }));
       notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.no.thanks"), () -> {
@@ -160,7 +163,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
                   FileDocumentManager.getInstance().saveDocument(document);
                 });
                 file.putUserData(UndoConstants.FORCE_RECORD_UNDO, null);
-              }, ShBundle.message("sh.fmt.reformat.code.with", getId()), null, document);
+              }, message("sh.fmt.reformat.code.with", getId()), null, document);
             });
           }
           else {
