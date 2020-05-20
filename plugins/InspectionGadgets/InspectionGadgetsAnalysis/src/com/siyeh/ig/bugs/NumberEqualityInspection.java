@@ -81,7 +81,7 @@ public class NumberEqualityInspection extends BaseInspection {
       if (target instanceof PsiEnumConstant) return true;
       if (!(target instanceof PsiFieldImpl)) return false;
       if (!target.hasModifierProperty(PsiModifier.STATIC) || !target.hasModifierProperty(PsiModifier.FINAL)) return false;
-      PsiExpression initializer = ((PsiFieldImpl)target).getDetachedInitializer();
+      PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(target);
       return ExpressionUtils.isNewObject(initializer);
     }
 

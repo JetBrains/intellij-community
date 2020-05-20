@@ -73,7 +73,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (navigationElement instanceof PsiVariable) {
       var = (PsiVariable)navigationElement;
     }
-    return var instanceof PsiFieldImpl ? ((PsiFieldImpl)var).getDetachedInitializer() : var.getInitializer();
+    return PsiFieldImpl.getDetachedInitializer(var);
   }
 
   @Nullable

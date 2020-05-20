@@ -173,8 +173,7 @@ public class DfaValueFactory {
       if (DfaUtil.isEmptyCollectionConstantField(variable)) {
         return getConstant(variable, type);
       }
-      PsiExpression initializer =
-        variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
+      PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);
       if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
         return getNull();

@@ -408,7 +408,7 @@ public class Foo {
   void "test field with missing initializer"() {
     def file = myFixture.addFileToProject('a.java', 'class A { int a = ; } ')
     def clazz = myFixture.findClass('A')
-    assert (clazz.fields[0] as PsiFieldImpl).detachedInitializer == null
+    assert PsiFieldImpl.getDetachedInitializer(clazz.fields[0]) == null
     assert !((PsiFileImpl) file).contentsLoaded
   }
 }

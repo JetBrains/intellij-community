@@ -141,7 +141,7 @@ class IsConstantExpressionVisitor extends JavaElementVisitor {
       myIsConstant = false;
       return;
     }
-    PsiExpression initializer = variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
+    PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
     if (initializer == null){
       myIsConstant = false;
       return;
