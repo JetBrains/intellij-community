@@ -303,19 +303,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     EvaluateException valueException = myValueException;
+    CompletableFuture<Boolean> expandableFuture;
     if (valueException == null || valueException.getExceptionFromTargetVM() != null) {
-      CompletableFuture<Boolean> expandableFuture = getChildrenRenderer(debugProcess).isExpandableAsync(getValue(), context, this);
-      if (expandableFuture.isDone()) {
-        myIsExpandable = expandableFuture.join();
-      }
-      else {
-        expandableFuture.thenAccept(r -> {
-          if (r != myIsExpandable) {
-            myIsExpandable = r;
-            labelListener.labelChanged();
-          }
-        });
-      }
+      expandableFuture = getChildrenRenderer(debugProcess).isExpandableAsync(getValue(), context, this);
+    }
+    else {
+      expandableFuture = CompletableFuture.completedFuture(false);
     }
 
     if (!OnDemandRenderer.isOnDemandForced(debugProcess)) {
@@ -343,14 +336,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
     }
 
-    String label;
     if (valueException == null) {
       long start = renderer instanceof NodeRendererImpl && ((NodeRendererImpl)renderer).hasOverhead() ? System.currentTimeMillis() : 0;
       try {
-        label = renderer.calcLabel(this, context, labelListener);
+        setValueLabel(renderer.calcLabel(this, context, labelListener));
       }
       catch (EvaluateException e) {
-        label = setValueLabelFailed(e);
+        setValueLabelFailed(e);
       }
       finally {
         if (start > 0) {
@@ -359,11 +351,22 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
     }
     else {
-      label = setValueLabelFailed(valueException);
+      setValueLabelFailed(valueException);
     }
 
-    setValueLabel(label);
-    labelListener.labelChanged();
+    // only call labelChanged when we have expandable value
+    if (expandableFuture.isDone()) {
+      myIsExpandable = expandableFuture.join();
+      labelListener.labelChanged();
+    }
+    else {
+      expandableFuture.thenAccept(r -> {
+        if (r != myIsExpandable) {
+          myIsExpandable = r;
+          labelListener.labelChanged();
+        }
+      });
+    }
 
     return ""; // we have overridden getLabel
   }

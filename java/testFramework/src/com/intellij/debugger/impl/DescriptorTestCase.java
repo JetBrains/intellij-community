@@ -6,10 +6,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,11 +14,12 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class DescriptorTestCase extends DebuggerTestCase {
   private final Map<NodeDescriptorImpl, NodeDescriptorText> myDescriptorLog = new LinkedHashMap<>();
@@ -65,7 +63,7 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     final DebugProcessImpl localProcess = suspendContext.getDebugProcess();
     invokeRatherLater(new SuspendContextCommandImpl(suspendContext) {
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         flushDescriptors();
         localProcess.getManagerThread().schedule(localProcess.createResumeCommand(suspendContext, Priority.LOW));
       }
@@ -118,46 +116,24 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     }
   }
 
-  protected interface NodeFilter {
-    boolean shouldExpand(TreeNode node);
-  }
-
-  private static boolean expandOne(Tree tree, Set<? super Value> alreadyExpanded, NodeFilter filter) {
+  private static boolean expandOne(Tree tree) {
     boolean anyExpanded = false;
     for (int i = 0; i < tree.getRowCount(); i++) {
-      final TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
+      TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
       if (tree.isCollapsed(i) && !treeNode.isLeaf()) {
-        NodeDescriptor nodeDescriptor = null;
-        if (treeNode instanceof DebuggerTreeNodeImpl) {
-          nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();
-        }
-        boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);
-        if (shouldExpand) {
-          // additional checks to prevent infinite expand
-          if (nodeDescriptor instanceof ValueDescriptor) {
-            final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
-            shouldExpand = !alreadyExpanded.contains(value);
-            if (shouldExpand) {
-              alreadyExpanded.add(value);
-            }
-          }
-        }
-        if (shouldExpand) {
-          anyExpanded = true;
-          tree.expandRow(i);
-          break;
-        }
+        anyExpanded = true;
+        tree.expandRow(i);
+        break;
       }
     }
 
     return anyExpanded;
   }
 
-  protected static void expandAll(Tree tree, NodeFilter filter, Runnable wait) {
-    HashSet<Value> expanded = new HashSet<>();
+  protected static void expandAll(Tree tree, Runnable wait) {
     boolean cont = true;
     while (cont) {
-      cont = UIUtil.invokeAndWaitIfNeeded(() -> expandOne(tree, expanded, filter));
+      cont = UIUtil.invokeAndWaitIfNeeded(() -> expandOne(tree));
       wait.run();
     }
   }
