@@ -28,15 +28,15 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable, Conf
 
   @Override
   @Nls
-   public String getDisplayName() {
-     return SpellCheckerBundle.message("spelling");
-   }
+  public String getDisplayName() {
+    return SpellCheckerBundle.message("spelling");
+  }
 
   @Override
   @NonNls
-   public @NotNull String getHelpTopic() {
-     return "reference.settings.ide.settings.spelling";
-   }
+  public @NotNull String getHelpTopic() {
+    return "reference.settings.ide.settings.spelling";
+  }
 
   @Override
   @NotNull
@@ -47,7 +47,7 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable, Conf
   @Override
   public JComponent createComponent() {
     if (settingsPane == null) {
-      settingsPane = new SpellCheckerSettingsPane(settings,project);
+      settingsPane = new SpellCheckerSettingsPane(settings, project);
     }
     return settingsPane.getPane();
   }

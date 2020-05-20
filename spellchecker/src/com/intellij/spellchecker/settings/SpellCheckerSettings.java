@@ -77,7 +77,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     this.myUseSingleDictionaryToSave = useSingleDictionaryToSave;
   }
 
-  public static SpellCheckerSettings getInstance(Project project) {
+  public static @NotNull SpellCheckerSettings getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerSettings.class);
   }
 
@@ -115,7 +115,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myRuntimeDisabledDictionariesNames = runtimeDisabledDictionariesNames;
   }
 
-  public boolean isDefaultAdvancedSettings(){
+  public boolean isDefaultAdvancedSettings() {
     return myCorrectionsLimit == DEFAULT_MAX_VALUE &&
            myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
            myDictionaryToSave == DEFAULT_DICTIONARY_TO_SAVE;

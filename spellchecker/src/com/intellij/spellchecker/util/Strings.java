@@ -90,5 +90,4 @@ public final class Strings {
       words.set(i, StringUtil.toUpperCase(words.get(i)));
     }
   }
-
 }

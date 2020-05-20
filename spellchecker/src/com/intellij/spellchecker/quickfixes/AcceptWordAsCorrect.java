@@ -67,11 +67,12 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
     if (myWord != null) {
-      spellCheckerManager.acceptWordAsCorrect(myWord, project);
-    } else {
-      spellCheckerManager.acceptWordAsCorrect(ProblemDescriptorUtil.extractHighlightedText(descriptor, descriptor.getPsiElement()), project);
+      manager.acceptWordAsCorrect(myWord, project);
+    }
+    else {
+      manager.acceptWordAsCorrect(ProblemDescriptorUtil.extractHighlightedText(descriptor, descriptor.getPsiElement()), project);
     }
   }
 

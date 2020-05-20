@@ -43,36 +43,36 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
     DataManager.getInstance()
-               .getDataContextFromFocusAsync()
-               .onSuccess(context -> {
-                 Editor editor = CommonDataKeys.EDITOR.getData(context);
-                 if (editor == null) return;
+      .getDataContextFromFocusAsync()
+      .onSuccess(context -> {
+        Editor editor = CommonDataKeys.EDITOR.getData(context);
+        if (editor == null) return;
 
-                 if (InjectedLanguageManager.getInstance(project).getInjectionHost(element) != null && !(editor instanceof EditorWindow)) {
-                   editor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, element.getContainingFile());
-                 }
+        if (InjectedLanguageManager.getInstance(project).getInjectionHost(element) != null && !(editor instanceof EditorWindow)) {
+          editor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, element.getContainingFile());
+        }
 
-                 final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
-                 if (textRange == null) return;
-                 final int documentLength = editor.getDocument().getTextLength();
-                 final int endOffset = getDocumentOffset(textRange.getEndOffset(), documentLength);
-                 final int startOffset = getDocumentOffset(textRange.getStartOffset(), documentLength);
-                 editor.getSelectionModel().setSelection(startOffset, endOffset);
-                 final String word = editor.getSelectionModel().getSelectedText();
+        final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
+        if (textRange == null) return;
+        final int documentLength = editor.getDocument().getTextLength();
+        final int endOffset = getDocumentOffset(textRange.getEndOffset(), documentLength);
+        final int startOffset = getDocumentOffset(textRange.getStartOffset(), documentLength);
+        editor.getSelectionModel().setSelection(startOffset, endOffset);
+        final String word = editor.getSelectionModel().getSelectedText();
 
-                 if (word == null || StringUtil.isEmpty(word)) {
-                   return;
-                 }
-                 final LookupElement[] items = getSuggestions(project)
-                   .stream()
-                   .map(LookupElementBuilder::create)
-                   .toArray(LookupElement[]::new);
-                 LookupManager.getInstance(project).showLookup(editor, items);
-               });
+        if (word == null || StringUtil.isEmpty(word)) {
+          return;
+        }
+        final LookupElement[] items = getSuggestions(project)
+          .stream()
+          .map(LookupElementBuilder::create)
+          .toArray(LookupElement[]::new);
+        LookupManager.getInstance(project).showLookup(editor, items);
+      });
   }
 
   private static int getDocumentOffset(int offset, int documentLength) {
-    return offset >=0 && offset <= documentLength ? offset : documentLength;
+    return offset >= 0 && offset <= documentLength ? offset : documentLength;
   }
 
   public static String getFixName() {

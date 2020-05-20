@@ -43,7 +43,7 @@ public class UserDictionary implements EditableDictionary {
   @Nullable
   public Boolean contains(@NotNull String word) {
     boolean contains = words.contains(word);
-    if(contains) return true;
+    if (contains) return true;
     return null;
   }
 
@@ -104,7 +104,6 @@ public class UserDictionary implements EditableDictionary {
     UserDictionary that = (UserDictionary)o;
 
     return name.equals(that.name);
-
   }
 
   @Override

@@ -19,8 +19,9 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
       PsiFile file = element.getContainingFile();
-      if (file == null || file.getLanguage() instanceof TemplateLanguage)
+      if (file == null || file.getLanguage() instanceof TemplateLanguage) {
         return EMPTY_TOKENIZER;
+      }
     }
 
     if (element instanceof XmlToken) {

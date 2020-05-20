@@ -33,19 +33,17 @@ import java.util.List;
 import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.findInjectionHost;
 
 public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
-
   private List<String> suggestions;
   private boolean processed;
   private final String myWordWithTypo;
-
 
   public ShowSuggestions(String wordWithTypo) {
     myWordWithTypo = wordWithTypo;
   }
 
   @NotNull
-  public List<String> getSuggestions(Project project){
-    if (!processed){
+  public List<String> getSuggestions(Project project) {
+    if (!processed) {
       suggestions = SpellCheckerManager.getInstance(project).getSuggestions(myWordWithTypo);
       processed = true;
     }

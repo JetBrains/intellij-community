@@ -25,7 +25,8 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
 
   private ProjectDictionary projectDictionary;
 
-  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener.class);
+  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher =
+    EventDispatcher.create(DictionaryStateListener.class);
 
   public ProjectDictionaryState() {
   }

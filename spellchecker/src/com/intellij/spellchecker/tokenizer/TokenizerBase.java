@@ -14,12 +14,12 @@ public class TokenizerBase<T extends PsiElement> extends Tokenizer<T> {
   public static <T extends PsiElement> TokenizerBase<T> create(Splitter splitter) {
     return new TokenizerBase<>(splitter);
   }
-  
+
   private final Splitter mySplitter;
 
   @Override
   public String toString() {
-    return "TokenizerBase(splitter=" + mySplitter+")";
+    return "TokenizerBase(splitter=" + mySplitter + ")";
   }
 
   public TokenizerBase(Splitter splitter) {

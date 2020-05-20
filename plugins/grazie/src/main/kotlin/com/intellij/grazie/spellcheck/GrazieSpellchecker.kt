@@ -17,11 +17,12 @@ object GrazieSpellchecker : GrazieStateLifecycle {
 
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
   private fun filterCheckers(word: String): Set<SpellerTool> {
+    if (checkers.isEmpty()) return emptySet()
+
     val preferred = filter.filter(listOf(word)).preferred
     return checkers.filter { checker -> preferred.any { checker.lang.equalsTo(it) } }.toSet()
   }
 
-  private val BASE_SPELLCHECKER_LANGUAGE = Lang.AMERICAN_ENGLISH
   private val logger = LoggerFactory.getLogger(GrazieSpellchecker::class.java)
 
   data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule, val suggestLimit: Int) {
@@ -38,25 +39,9 @@ object GrazieSpellchecker : GrazieStateLifecycle {
 
   @Volatile
   private var checkers: LinkedSet<SpellerTool> = LinkedSet()
-    get() {
-      if (field.isEmpty()) {
-        synchronized(this) {
-          if (field.isEmpty()) {
-            field = LinkedSet<SpellerTool>().apply {
-              val tool = LangTool.getTool(BASE_SPELLCHECKER_LANGUAGE)
-              val rule = tool.spellingCheckRule
-              require(rule != null) { "Base spellchecker must contain spelling rule" }
-              add(SpellerTool(tool, BASE_SPELLCHECKER_LANGUAGE, rule, MAX_SUGGESTIONS_COUNT))
-            }
-          }
-        }
-      }
-
-      return field
-    }
 
   override fun init(state: GrazieConfig.State) {
-    checkers = state.availableLanguages.plus(BASE_SPELLCHECKER_LANGUAGE).mapNotNull { lang ->
+    checkers = state.availableLanguages.filterNot { it.isEnglish() }.mapNotNull { lang ->
       val tool = LangTool.getTool(lang, state)
       tool.spellingCheckRule?.let { SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT) }
     }.toLinkedSet()

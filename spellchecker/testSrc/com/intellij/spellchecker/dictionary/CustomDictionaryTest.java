@@ -238,7 +238,9 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   public void testMoveDictDir() throws IOException {
     try {
       doBeforeCheck();
-      WriteAction.run(() -> dictDir.move(this, PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).createChildDirectory(this, "new_dir")));
+      WriteAction.run(
+        () -> dictDir.move(this, PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).createChildDirectory(this, "new_dir"))
+      );
       doAfterCheck();
     }
     finally {

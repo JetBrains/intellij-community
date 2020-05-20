@@ -31,7 +31,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     if (element != null) {
       final Language language = element.getLanguage();
       SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, language);
-      if(strategy instanceof SuppressibleSpellcheckingStrategy) {
+      if (strategy instanceof SuppressibleSpellcheckingStrategy) {
         return ((SuppressibleSpellcheckingStrategy)strategy).getSuppressActions(element, getShortName());
       }
     }
@@ -72,7 +72,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull final PsiElement element) {
-        if (holder.getResultCount()>1000) return;
+        if (holder.getResultCount() > 1000) return;
 
         final ASTNode node = element.getNode();
         if (node == null) {
@@ -108,13 +108,14 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   /**
    * Splits element text in tokens according to spell checker strategy of given language
-   * @param element Psi element
+   *
+   * @param element  Psi element
    * @param language Usually element.getLanguage()
    * @param consumer the consumer of tokens
    */
   public static void tokenize(@NotNull final PsiElement element, @NotNull final Language language, TokenConsumer consumer) {
     final SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element, language);
-    if(factoryByLanguage==null) return;
+    if (factoryByLanguage == null) return;
     Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
     //noinspection unchecked
     tokenizer.tokenize(element, consumer);
@@ -152,7 +153,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     assert textRange.getStartOffset() >= 0;
 
     final String description = SpellCheckerBundle.message("typo.in.word.ref");
-    return new ProblemDescriptorBase(element, element, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, textRange, onTheFly, onTheFly);
+    return new ProblemDescriptorBase(element, element, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                     false, textRange, onTheFly, onTheFly);
   }
 
   @SuppressWarnings({"PublicField"})
@@ -166,18 +168,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.code"), this, "processCode"));
     verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.literals"), this, "processLiterals"));
     verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.comments"), this, "processComments"));
-    /*HyperlinkLabel linkToSettings = new HyperlinkLabel(SpellCheckerBundle.message("link.to.settings"));
-    linkToSettings.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
-          // ??project?
-
-        }
-      }
-    });
-
-    verticalBox.add(linkToSettings);*/
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(verticalBox, BorderLayout.NORTH);
     return panel;
@@ -225,15 +215,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         return;
       }
 
-      boolean hasProblems = myManager.hasProblem(word);
-      if (hasProblems) {
-        int aposIndex = word.indexOf('\'');
-        if (aposIndex != -1) {
-          word = word.substring(0, aposIndex); // IdentifierSplitter.WORD leaves &apos;
-        }
-        hasProblems = myManager.hasProblem(word);
-      }
-      if (hasProblems) {
+      if (myManager.hasProblem(word)) {
         if (myHolder.isOnTheFly()) {
           addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename, word);
         }

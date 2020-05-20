@@ -27,7 +27,9 @@ public class SuggestionTest extends BasePlatformTestCase {
   public static final String TYPPPO = "Typppo";
 
   public void testSuggestions() { doTest("upgade", "upgrade"); }
+
   public void testFirstLetterUppercaseSuggestions() { doTest("Upgade", "Upgrade"); }
+
   public void testCamelCaseSuggestions() { doTest("TestUpgade", "TestUpgrade"); }
 
   private void doTest(String word, String expected) {
@@ -35,11 +37,11 @@ public class SuggestionTest extends BasePlatformTestCase {
     assertEquals(expected, result.get(0));
   }
 
-  public void testMaxSuggestions(){
+  public void testMaxSuggestions() {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
     final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
     int oldCorrectionsLimit = settings.getCorrectionsLimit();
-    assertTrue(oldCorrectionsLimit <= manager.getSuggestions(TYPPPO).size());
+    assertTrue(manager.getSuggestions(TYPPPO).size() <= oldCorrectionsLimit);
   }
 
   public void testMaxSuggestions1() {

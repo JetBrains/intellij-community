@@ -18,7 +18,7 @@ package com.intellij.spellchecker.inspection;
 import java.util.Locale;
 
 /**
- * @author  Ekaterina Shliakhovetskaja
+ * @author Ekaterina Shliakhovetskaja
  */
 public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
   @Override
@@ -35,7 +35,8 @@ public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTe
     try {
       Locale.setDefault(new Locale("tr", "TR"));
       doTest("SPITest2.java");
-    } finally {
+    }
+    finally {
       Locale.setDefault(locale);
     }
   }

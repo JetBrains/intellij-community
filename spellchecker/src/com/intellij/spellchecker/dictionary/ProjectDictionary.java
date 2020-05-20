@@ -63,7 +63,7 @@ public class ProjectDictionary implements EditableDictionary {
         return true;
       }
     }
-    if (errors==dictionaries.size()) return null;//("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+    if (errors == dictionaries.size()) return null;//("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
     return false;
   }
 

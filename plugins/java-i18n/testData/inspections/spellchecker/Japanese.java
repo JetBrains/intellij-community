@@ -1,13 +1,13 @@
-/** Half width <TYPO>Katakana</TYPO> variants (FF00 - <TYPO>FFEF</TYPO>)
+/** Half width Katakana variants (FF00 - <TYPO>FFEF</TYPO>)
  * ﾜﾀｼﾊｼﾞｬﾊﾞｶﾞｽｷﾃﾞｽ｡
  */
 /** Full width ASCII variants (FF00 - <TYPO>FFEF</TYPO>)
  * Ｉ　ＬＯＶＥ　ＪＡＶＡ
  */
-/** <TYPO>Hiragana</TYPO> (3040 - 309F)
+/** Hiragana (3040 - 309F)
  * わたしはじゃばがすきです。
  */
-/** <TYPO>Katakana</TYPO> (30A0 - 30FF)
+/** Katakana (30A0 - 30FF)
  * ワタシハジャバガスキデス。
  */
 /** CJK Unified Ideographs (4E00 - 9FBF)

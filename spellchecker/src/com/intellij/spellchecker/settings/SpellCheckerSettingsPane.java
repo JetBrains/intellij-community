@@ -140,7 +140,8 @@ public class SpellCheckerSettingsPane implements Disposable {
     };
 
     myPanelForBundledDictionaries.setBorder(
-      IdeBorderFactory.createTitledBorder(SpellCheckerBundle.message("dictionaries.panel.description"), false, JBUI.insetsTop(8)).setShowLine(false));
+      IdeBorderFactory.createTitledBorder(SpellCheckerBundle.message("dictionaries.panel.description"), false, JBUI.insetsTop(8)).setShowLine(false)
+    );
     myPanelForBundledDictionaries.setLayout(new BorderLayout());
     myPanelForBundledDictionaries.add(myProvidedDictionariesChooserComponent.getContentPane(), BorderLayout.CENTER);
     myProvidedDictionariesChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
@@ -179,8 +180,8 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public void apply() throws ConfigurationException {
-    if (wordsPanel.isModified()){
-     manager.updateUserDictionary(wordsPanel.getWords());
+    if (wordsPanel.isModified()) {
+      manager.updateUserDictionary(wordsPanel.getWords());
     }
     if (settings.getCorrectionsLimit() != getLimit()) {
       settings.setCorrectionsLimit(getLimit());
@@ -192,7 +193,7 @@ public class SpellCheckerSettingsPane implements Disposable {
       settings.setDictionaryToSave((String)myDictionariesComboBox.getSelectedItem());
     }
     SpellCheckerManager.restartInspections();
-    if (!myProvidedDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()){
+    if (!myProvidedDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()) {
       return;
     }
 
