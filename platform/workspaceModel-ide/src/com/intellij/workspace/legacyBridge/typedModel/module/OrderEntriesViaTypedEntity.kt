@@ -25,7 +25,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 internal abstract class OrderEntryViaTypedEntity(
   protected val module: LegacyBridgeModule,
   protected val index: Int,
-  val item: ModuleDependencyItem,
+  var item: ModuleDependencyItem,
   private val itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
 ) : OrderEntry {
 
@@ -39,6 +39,26 @@ internal abstract class OrderEntryViaTypedEntity(
   fun getRootModel(): RootModelViaTypedEntityImpl {
     // Getting actual RootModelViaTypedEntityImpl the previous implementation returns disposed e.g SuppressExternalTest
     return LegacyBridgeModuleRootComponent.getInstance(module).model
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as OrderEntryViaTypedEntity
+
+    if (module != other.module) return false
+    if (index != other.index) return false
+    if (item != other.item) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = module.hashCode()
+    result = 31 * result + index
+    result = 31 * result + item.hashCode()
+    return result
   }
 }
 
@@ -57,6 +77,7 @@ internal abstract class ExportableOrderEntryViaTypedEntity(
     if (exportedVar == value) return
     updater { (it as ModuleDependencyItem.Exportable).withExported(value) }
     exportedVar = value
+    item = (item as ModuleDependencyItem.Exportable).withExported(value)
   }
 
   override fun getScope() = scopeVar.toDependencyScope()
@@ -64,6 +85,7 @@ internal abstract class ExportableOrderEntryViaTypedEntity(
     if (getScope() == scope) return
     updater { (it as ModuleDependencyItem.Exportable).withScope(scope.toEntityDependencyScope()) }
     scopeVar = scope.toEntityDependencyScope()
+    item = (item as ModuleDependencyItem.Exportable).withScope(scope.toEntityDependencyScope())
   }
 }
 
@@ -117,6 +139,7 @@ internal class ModuleOrderEntryViaTypedEntity(
     if (productionOnTestVar == productionOnTestDependency) return
     updater { item -> (item as ModuleDependencyItem.Exportable.ModuleDependency).copy(productionOnTest = productionOnTestDependency) }
     productionOnTestVar = productionOnTestDependency
+    item = (item as ModuleDependencyItem.Exportable.ModuleDependency).copy(productionOnTest = productionOnTestDependency)
   }
 
   override fun cloneEntry(rootModel: ModifiableRootModel,
@@ -269,6 +292,22 @@ internal class LibraryOrderEntryViaTypedEntity(
   }
 
   override fun isSynthetic(): Boolean = isModuleLevel
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is LibraryOrderEntryViaTypedEntity) return false
+    if (!super.equals(other)) return false
+
+    if (moduleLibrary != other.moduleLibrary) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + (moduleLibrary?.hashCode() ?: 0)
+    return result
+  }
 }
 
 internal class SdkOrderEntryViaTypedEntity(
