@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -76,18 +77,24 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
    */
   private long getModificationCount(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    long fileStamp = file == null || file.isPhysical() ? 0 : file.getModificationStamp();
+    long nonPhysicalStamp = file == null || file.isPhysical() ? 0 : file.getModificationStamp();
+
+    ModelBranch branch = file == null ? null : ModelBranch.getPsiBranch(file);
+    if (branch != null) {
+      nonPhysicalStamp += branch.getBranchedPsiModificationCount();
+    }
+
     PsiModificationTracker tracker = file == null ? element.getManager().getModificationTracker()
                                                   : file.getManager().getModificationTracker();
 
     if (myModifyCause.equals(PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT)) {
-      return fileStamp + tracker.getJavaStructureModificationCount();
+      return nonPhysicalStamp + tracker.getJavaStructureModificationCount();
     }
     if (myModifyCause.equals(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT)) {
-      return fileStamp + tracker.getOutOfCodeBlockModificationCount();
+      return nonPhysicalStamp + tracker.getOutOfCodeBlockModificationCount();
     }
     if (myModifyCause.equals(PsiModificationTracker.MODIFICATION_COUNT)) {
-      return fileStamp + tracker.getModificationCount();
+      return nonPhysicalStamp + tracker.getModificationCount();
     }
     throw new AssertionError("No modification tracker found for key " + myModifyCause);
   }

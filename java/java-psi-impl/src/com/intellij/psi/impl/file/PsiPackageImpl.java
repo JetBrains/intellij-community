@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.model.ModelBranchImpl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
@@ -171,6 +172,10 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassInDumbMode(name, scope);
     }
 
+    if (ModelBranchImpl.hasBranchedFilesInScope(scope)) {
+      return findAllClasses(name, scope);
+    }
+
     Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
     if (map == null) {
       myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
@@ -180,10 +185,14 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return classes;
     }
 
-    final String qName = getQualifiedName();
-    final String classQName = !qName.isEmpty() ? qName + "." + name : name;
-    map.put(name, classes = getFacade().findClasses(classQName, new EverythingGlobalScope(getProject())));
+    map.put(name, classes = findAllClasses(name, new EverythingGlobalScope(getProject())));
     return classes;
+  }
+
+  private PsiClass[] findAllClasses(@NotNull String shortName, GlobalSearchScope scope) {
+    String qName = getQualifiedName();
+    String classQName = !qName.isEmpty() ? qName + "." + shortName : shortName;
+    return getFacade().findClasses(classQName, scope);
   }
 
   private PsiClass @NotNull [] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
