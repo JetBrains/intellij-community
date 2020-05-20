@@ -446,7 +446,8 @@ public class GenerateMembersUtil {
       generator.addExistingName(paramName);
       PsiType expressionType = GenericsUtil.getVariableTypeByExpressionType(substituted);
       if (expressionType instanceof PsiArrayType && substituted instanceof PsiEllipsisType) {
-        expressionType = new PsiEllipsisType(((PsiArrayType)expressionType).getComponentType());
+        expressionType = new PsiEllipsisType(((PsiArrayType)expressionType).getComponentType())
+          .annotate(expressionType.getAnnotationProvider());
       }
       result[i] = factory.createParameter(paramName, expressionType, target);
     }
