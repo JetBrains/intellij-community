@@ -118,10 +118,19 @@
         <reference ref="ProblemsView.SortByName"/>
       </group>
       <reference ref="ProblemsView.ShowPreview"/>
-      <action id="ProblemsView.QuickFix"
-              icon="AllIcons.Actions.IntentionBulb"
-              use-shortcut-of="ShowIntentionActions"
-              class="com.intellij.analysis.problemsView.toolWindow.ProblemsViewQuickFixAction"/>
+    </group>
+
+    <group id="ProblemsView.ToolWindow.TreePopup">
+      <action id="ProblemsView.CopyProblemDescription"
+              icon="AllIcons.Actions.Copy"
+              use-shortcut-of="$Copy"
+              class="com.intellij.analysis.problemsView.toolWindow.CopyProblemDescriptionAction"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <group id="ProblemsView.QuickFixes"
+             icon="AllIcons.Actions.IntentionBulb"
+             use-shortcut-of="ShowIntentionActions"
+             class="com.intellij.analysis.problemsView.toolWindow.ProblemsViewQuickFixes"/>
     </group>
   </actions>
 
