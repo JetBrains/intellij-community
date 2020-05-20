@@ -2,7 +2,11 @@
 package com.intellij.openapi.project;
 
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +24,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
   private void runAllTasks() {
     while(true) {
-      DumbServiceMergingTaskQueue.@Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask();
+      @Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask();
       if (nextTask == null) return;
       nextTask.executeTask();
     }
@@ -229,6 +233,32 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
   }
 
   @TestFor(issues = "IDEA-241378")
+  public void testRunningTaskShouldNotBeDisposed() {
+    AtomicReference<Boolean> isDisposed = new AtomicReference<>();
+    myQueue.addTask(new DumbModeTask("any") {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) { }
+
+      @Override
+      public void dispose() {
+        isDisposed.set(true);
+      }
+    });
+
+    QueuedDumbModeTask task = myQueue.extractNextTask();
+    myQueue.disposePendingTasks();
+
+    Assert.assertNull(isDisposed.get());
+    try {
+      task.executeTask();
+      Assert.fail();
+    } catch (ProcessCanceledException ignore) {
+      //OK
+    }
+    Assert.assertEquals(Boolean.TRUE, isDisposed.get());
+  }
+
+  @TestFor(issues = "IDEA-241378")
   public void testRunningTaskIndicatorShouldBeCancelledOnDisposeRunningTasks() {
     CyclicBarrier b = new CyclicBarrier(2);
     AtomicReference<Boolean> isRun = new AtomicReference<>();
@@ -244,7 +274,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
     Thread th = new Thread(() -> {
       try {
-        DumbServiceMergingTaskQueue.QueuedDumbModeTask nextTask = myQueue.extractNextTask();
+        QueuedDumbModeTask nextTask = myQueue.extractNextTask();
         nextTask.executeTask();
       } catch (Exception e) {
         LOG.error(e);
@@ -258,7 +288,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     myQueue.disposePendingTasks();
     await(b);
 
-    //not it soould complete
+    //not it should complete
     try {
       th.join(5_000);
     }
@@ -268,6 +298,30 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     }
 
     Assert.assertEquals(Boolean.TRUE, isRun.get());
+  }
+
+  public void testNoLeaks() {
+    for(int i = 0; i < 1000; i++) {
+      DumbModeTask task = new DumbModeTask("q-" + i) {
+        @Override
+        public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        }
+      };
+
+      myQueue.addTask(task);
+      if (i % 3 == 0) {
+        Disposer.dispose(task);
+      }
+
+      if (i % 3 == 1) {
+        myQueue.cancelTask(task);
+      }
+    }
+
+    runAllTasks();
+
+    LeakHunter.checkLeak(myQueue, ProgressIndicator.class);
+    LeakHunter.checkLeak(myQueue, DumbModeTask.class);
   }
 
   private static void await(@NotNull CyclicBarrier b) {

@@ -2,6 +2,8 @@
 package com.intellij.openapi.project;
 
 import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
@@ -12,8 +14,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class DumbServiceMergingTaskQueue {
+  private static final Logger LOG = Logger.getInstance(DumbServiceMergingTaskQueue.class);
+
   private final Object myLock = new Object();
+  //does not include a running task
   private final Map<Object, DumbModeTask> myTasksQueue = new LinkedHashMap<>();
+
+  //includes running tasks too
   private final Map<DumbModeTask, ProgressIndicatorBase> myProgresses = new HashMap<>();
 
   /**
@@ -27,21 +34,23 @@ public class DumbServiceMergingTaskQueue {
   }
 
   /**
-   * Disposes tasks without removing them from queue,
-   * execution of such tasks would skip them later
+   * Disposes tasks, cancel underlying progress indicators, clears tasks queue
    */
   void disposePendingTasks() {
-    Set<DumbModeTask> disposeQueue = new LinkedHashSet<>(1);
+    List<DumbModeTask> disposeQueue;
+    List<ProgressIndicatorEx> indicatorsQueue;
     synchronized (myLock) {
-      disposeQueue.addAll(myTasksQueue.values());
-      disposeQueue.addAll(myProgresses.keySet());
+      //running task is not included, we must not dispose it if it is (probably) running
+      disposeQueue = new ArrayList<>(myTasksQueue.values());
+      // the keys also include a running task(s)
+      indicatorsQueue = new ArrayList<>(myProgresses.values());
+
       myTasksQueue.clear();
       myProgresses.clear();
     }
 
-    for (DumbModeTask task : disposeQueue) {
-      Disposer.dispose(task);
-    }
+    cancelIndicatorSafe(indicatorsQueue);
+    disposeSafe(disposeQueue);
   }
 
   void cancelAllTasks() {
@@ -77,11 +86,14 @@ public class DumbServiceMergingTaskQueue {
       //register the new task last
       myTasksQueue.put(key, task);
 
-      myProgresses.put(task, new ProgressIndicatorBase());
+      ProgressIndicatorBase progress = new ProgressIndicatorBase();
+      myProgresses.put(task, progress);
       Disposer.register(task, () -> {
+        //a removed progress means the task would be ignored on queue processing
         synchronized (myLock) {
           myProgresses.remove(task);
         }
+        progress.cancel();
       });
     }
 
@@ -104,6 +116,7 @@ public class DumbServiceMergingTaskQueue {
           if (task == null) continue;
 
           ProgressIndicatorBase indicator = myProgresses.get(task);
+          //a disposed task is just ignored here
           if (indicator == null || indicator.isCanceled()) {
             disposeQueue.add(task);
             continue;
@@ -113,8 +126,41 @@ public class DumbServiceMergingTaskQueue {
         }
       }
     } finally {
-      for (DumbModeTask task : disposeQueue) {
-        Disposer.dispose(task);
+      disposeSafe(disposeQueue);
+    }
+  }
+
+  private static void disposeSafe(@NotNull Collection<DumbModeTask> tasks) {
+    for (DumbModeTask task : tasks) {
+      disposeSafe(task);
+    }
+  }
+
+  private static void disposeSafe(@NotNull DumbModeTask task) {
+    try {
+      if (Disposer.isDisposed(task)) return;
+
+      Disposer.dispose(task);
+    } catch (Throwable t) {
+      if (!(t instanceof ControlFlowException)) {
+        LOG.warn("Failed to dispose DumbModeTask: " + t.getMessage(), t);
+      }
+    }
+  }
+
+  private static void cancelIndicatorSafe(@NotNull List<ProgressIndicatorEx> indicators) {
+    for (ProgressIndicatorEx indicator : indicators) {
+      cancelIndicatorSafe(indicator);
+    }
+  }
+
+  private static void cancelIndicatorSafe(@NotNull ProgressIndicatorEx indicator) {
+    try {
+      indicator.cancel();
+    }
+    catch (Throwable t) {
+      if (!(t instanceof ControlFlowException)) {
+        LOG.warn("Faieded to cancel DumbModeTask indicator: " + t.getMessage(), t);
       }
     }
   }
@@ -148,6 +194,7 @@ public class DumbServiceMergingTaskQueue {
           customIndicator = myIndicator;
         } else {
           customIndicator.checkCanceled();
+          //TODO[jo]: bind with myIndicator here to enforce cancellation
         }
 
         myTask.performInDumbMode(customIndicator);
