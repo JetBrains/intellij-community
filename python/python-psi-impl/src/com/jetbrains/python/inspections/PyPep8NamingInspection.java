@@ -73,8 +73,8 @@ public class PyPep8NamingInspection extends PyInspection {
       rootPanel.add(checkBox, BorderLayout.NORTH);
     }
 
-    JComponent classes = PythonUiService.getInstance().createListEditForm("Excluded base classes", ignoredBaseClasses);
-    JComponent errors = PythonUiService.getInstance().createListEditForm("Ignored errors", ignoredErrors);
+    JComponent classes = PythonUiService.getInstance().createListEditForm(PyPsiBundle.message("excluded.base.classes"), ignoredBaseClasses);
+    JComponent errors = PythonUiService.getInstance().createListEditForm(PyPsiBundle.message("ignored.errors"), ignoredErrors);
 
     if (classes != null && errors != null) {
       JComponent splitter = PythonUiService.getInstance().onePixelSplitter(false, classes, errors);
