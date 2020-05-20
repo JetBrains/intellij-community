@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy
 
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
@@ -46,8 +47,10 @@ final class RepositoryTestLibrary implements TestLibrary {
       }
     }
 
-    libraryModel.commit()
-    tableModel.commit()
+    WriteAction.runAndWait({
+      libraryModel.commit()
+      tableModel.commit()
+    })
 
     model.findLibraryOrderEntry(library).scope = myDependencyScope
   }
