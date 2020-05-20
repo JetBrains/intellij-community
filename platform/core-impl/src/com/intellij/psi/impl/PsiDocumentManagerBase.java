@@ -63,7 +63,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private boolean myPerformBackgroundCommit = true;
 
   private final ThreadLocal<Boolean> myIsCommitInProgress = new ThreadLocal<>();
-  private static volatile boolean ourIsFullReparseInProgress;
+  private static final ThreadLocal<Boolean> ourIsFullReparseInProgress = new ThreadLocal<>();
   private final PsiToDocumentSynchronizer mySynchronizer;
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -512,8 +512,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return myIsCommitInProgress.get() != null || isFullReparseInProgress();
   }
 
+  @ApiStatus.Internal
   public static boolean isFullReparseInProgress() {
-    return ourIsFullReparseInProgress && ApplicationManager.getApplication().isDispatchThread();
+    return ourIsFullReparseInProgress.get() == Boolean.TRUE;
   }
 
   @Override
@@ -1110,25 +1111,20 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return mySynchronizer;
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void reparseFileFromText(@NotNull PsiFileImpl file) {
-    ApplicationManager.getApplication().assertIsWriteThread();
-    if (isCommitInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
+    if (isCommitInProgress() || isFullReparseInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
 
     FileElement node = file.calcTreeElement();
     CharSequence text = node.getChars();
-    ourIsFullReparseInProgress = true;
+    ourIsFullReparseInProgress.set(Boolean.TRUE);
     try {
-      WriteAction.run(() -> {
-        ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-        if (indicator == null) indicator = new EmptyProgressIndicator();
-        DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text).log;
-        log.doActualPsiChange(file);
-        file.getViewProvider().contentsSynchronized();
-      });
+      ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator());
+      DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text).log;
+      log.doActualPsiChange(file);
+      file.getViewProvider().contentsSynchronized();
     }
     finally {
-      ourIsFullReparseInProgress = false;
+      ourIsFullReparseInProgress.remove();
     }
   }
 
