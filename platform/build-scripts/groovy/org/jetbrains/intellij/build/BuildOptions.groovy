@@ -164,13 +164,13 @@ class BuildOptions {
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   * Directory path to unpack JetBrains JDK builds into
+   * Directory path to unpack JetBrains Runtime builds into
    */
   static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 
   /**
-   * Specifies JetBrains JDK version to be used by build scripts, 8 by default.
+   * Specifies JetBrains Runtime version to be used as project SDK, 8 by default.
    */
   static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
   int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
