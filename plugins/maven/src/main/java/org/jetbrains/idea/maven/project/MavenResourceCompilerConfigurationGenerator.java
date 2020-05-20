@@ -295,16 +295,16 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     properties.putAll(mavenProject.getProperties());
 
-    properties.put("settings.localRepository", mavenProject.getLocalRepository().getAbsolutePath());
+    properties.setProperty("settings.localRepository", mavenProject.getLocalRepository().getAbsolutePath());
 
     String jreDir = MavenUtil.getModuleJreHome(myMavenProjectsManager, mavenProject);
     if (jreDir != null) {
-      properties.put("java.home", jreDir);
+      properties.setProperty("java.home", jreDir);
     }
 
     String javaVersion = MavenUtil.getModuleJavaVersion(myMavenProjectsManager, mavenProject);
     if (javaVersion != null) {
-      properties.put("java.version", javaVersion);
+      properties.setProperty("java.version", javaVersion);
     }
 
     return properties;
