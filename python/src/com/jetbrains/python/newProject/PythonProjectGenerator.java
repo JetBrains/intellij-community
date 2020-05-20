@@ -361,21 +361,21 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
     if (forceInstallFramework || PythonSdkUtil.isRemote(sdk)) {
       //Modal is used because it is insane to create project when framework is not installed
-      ProgressManager.getInstance().run(new Task.Modal(project, String.format("Ensuring %s is installed", frameworkName), false) {
+      ProgressManager.getInstance().run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
 
           boolean installed = false;
           if (!forceInstallFramework) {
             // First check if we need to do it
-            indicator.setText(String.format("Checking if %s is installed...", frameworkName));
+            indicator.setText(PyBundle.message("python.install.framework.checking.is.installed", frameworkName));
             final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
             installed = PyPsiPackageUtil.findPackage(packages, requirement) != null;
           }
 
 
           if (!installed) {
-            indicator.setText(String.format("Installing %s...", frameworkName));
+            indicator.setText(PyBundle.message("python.install.framework.installing", frameworkName));
             try {
               packageManager.install(requirement);
               packageManager.refresh();
