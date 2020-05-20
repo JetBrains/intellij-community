@@ -8,26 +8,35 @@ import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
+
+import java.util.concurrent.CompletableFuture;
 
 public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
   public UnboxableTypeRenderer(String className) {
     super(StringUtil.getShortName(className), new LabelRenderer() {
       @Override
-      public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
-        UnBoxingEvaluator.getInnerPrimitiveValue((ObjectReference)descriptor.getValue(), evaluationContext.getSuspendContext())
-          .thenAccept(r -> {
-            try {
-              descriptor.setValueLabel(DebuggerUtils.getValueAsString(evaluationContext, r));
-            }
-            catch (EvaluateException e) {
-              descriptor.setValueLabelFailed(e);
-            }
-            labelListener.labelChanged();
-          });
-        return "";
+      public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
+        throws EvaluateException {
+        CompletableFuture<PrimitiveValue> future =
+          UnBoxingEvaluator.getInnerPrimitiveValue((ObjectReference)descriptor.getValue(), evaluationContext.getSuspendContext());
+        if (future.isDone()) {
+          return DebuggerUtils.getValueAsString(evaluationContext, future.join());
+        }
+        future.thenAccept(r -> {
+          try {
+            descriptor.setValueLabel(DebuggerUtils.getValueAsString(evaluationContext, r));
+          }
+          catch (EvaluateException e) {
+            descriptor.setValueLabelFailed(e);
+          }
+          labelListener.labelChanged();
+        });
+        return XDebuggerUIConstants.getCollectingDataMessage();
       }
 
       @Override
