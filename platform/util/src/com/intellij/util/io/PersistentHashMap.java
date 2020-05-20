@@ -559,7 +559,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         return doGet(key);
       }
       catch (IOException ex) {
-        myEnumerator.markCorrupted();
+        try {
+          myEnumerator.markCorrupted();
+        } catch (Exception e) {
+          LOG.warn(e);
+        }
         throw ex;
       }
       finally {
