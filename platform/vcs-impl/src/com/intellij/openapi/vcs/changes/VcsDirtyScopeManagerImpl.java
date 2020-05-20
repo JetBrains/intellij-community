@@ -89,7 +89,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     synchronized (LOCK) {
       wasReady = myReady;
       if (wasReady) {
-        myDirtBuilder.setEverythingDirty(true);
+        myDirtBuilder.markEverythingDirty();
       }
     }
 
@@ -141,24 +141,13 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
     boolean hasSomethingDirty = false;
     for (VcsRoot vcsRoot : ContainerUtil.union(filesConverted.keySet(), dirsConverted.keySet())) {
-      AbstractVcs vcs = Objects.requireNonNull(vcsRoot.getVcs());
-      VirtualFile root = vcsRoot.getPath();
-
       Set<FilePath> files = ContainerUtil.notNullize(filesConverted.get(vcsRoot));
       Set<FilePath> dirs = ContainerUtil.notNullize(dirsConverted.get(vcsRoot));
 
       synchronized (LOCK) {
-        if (!myReady || myDirtBuilder.isEverythingDirty()) return;
-        VcsDirtyScopeImpl scope = myDirtBuilder.getScope(vcs);
-
-        for (FilePath filePath : files) {
-          scope.addDirtyPathFast(root, filePath, false);
+        if (myReady) {
+          hasSomethingDirty |= myDirtBuilder.addDirtyFiles(vcsRoot, files, dirs);
         }
-        for (FilePath filePath : dirs) {
-          scope.addDirtyPathFast(root, filePath, true);
-        }
-
-        hasSomethingDirty |= !myDirtBuilder.isEmpty();
       }
     }
 
@@ -236,15 +225,8 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
     boolean isEverythingDirty = dirt.isEverythingDirty();
     if (isEverythingDirty) {
-      // Mark roots explicitly dirty
       VcsRoot[] roots = getVcsManager(myProject).getAllVcsRoots();
-      for (VcsRoot root : roots) {
-        AbstractVcs vcs = root.getVcs();
-        VirtualFile path = root.getPath();
-        if (vcs != null) {
-          dirt.getScope(vcs).addDirtyPathFast(path, VcsUtil.getFilePath(path), true);
-        }
-      }
+      dirt.addEverythingDirtyRoots(Arrays.asList(roots));
     }
 
     List<VcsDirtyScopeImpl> scopes = dirt.getScopes();
