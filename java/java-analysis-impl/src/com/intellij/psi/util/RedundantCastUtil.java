@@ -321,12 +321,18 @@ public class RedundantCastUtil {
       PsiMethod oldMethod = (PsiMethod)element;
       PsiParameter[] parameters = oldMethod.getParameterList().getParameters();
 
-      final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
-      PsiCall newCall = copyCallExpression(expression, typeByParent);
-      if (newCall == null) return;
+      PsiCall newCall = null;
       for (int i = 0; i < args.length; i++) {
-        ProgressManager.checkCanceled();
         final PsiExpression arg = deparenthesizeExpression(args[i]);
+        if (!(arg instanceof PsiTypeCastExpression) && !(arg instanceof PsiLambdaExpression) && !(arg instanceof PsiConditionalExpression)) {
+          continue;
+        }
+
+        ProgressManager.checkCanceled();
+        if (newCall == null) {
+          newCall = copyCallExpression(expression, PsiTypesUtil.getExpectedTypeByParent(expression));
+        }
+        if (newCall == null) return;
         
         final PsiExpressionList argList = newCall.getArgumentList();
         LOG.assertTrue(argList != null);
@@ -339,21 +345,20 @@ public class RedundantCastUtil {
         else if (arg instanceof PsiLambdaExpression) {
           checkLambdaReturnsInsideCall(i, (PsiLambdaExpression)arg, newArgs, expression, newCall, parameters);
         }
-        else if (arg instanceof PsiConditionalExpression) {
+        else {
           PsiType conditionalType = arg.getType();
           
-          PsiExpression newThenExpression = deparenthesizeExpression(((PsiConditionalExpression)Objects.requireNonNull(deparenthesizeExpression(newArgs[i]))).getThenExpression());
           PsiExpression thenExpression = deparenthesizeExpression(((PsiConditionalExpression)arg).getThenExpression());
-          
-          PsiExpression newElseExpression = deparenthesizeExpression(((PsiConditionalExpression)Objects.requireNonNull(deparenthesizeExpression(newArgs[i]))).getElseExpression());
           PsiExpression elseExpression = deparenthesizeExpression(((PsiConditionalExpression)arg).getElseExpression());
 
-          if (newThenExpression instanceof PsiTypeCastExpression &&
+          if (thenExpression instanceof PsiTypeCastExpression &&
               !castForBoxing(getInnerMostOperand(thenExpression), elseExpression != null ? elseExpression.getType() : null, conditionalType)) {
+            PsiExpression newThenExpression = deparenthesizeExpression(((PsiConditionalExpression)Objects.requireNonNull(deparenthesizeExpression(newArgs[i]))).getThenExpression());
             checkConditionalBranch(expression, newCall, thenExpression, newThenExpression);
           }
-          if (newElseExpression instanceof PsiTypeCastExpression &&
+          if (elseExpression instanceof PsiTypeCastExpression &&
               !castForBoxing(getInnerMostOperand(elseExpression), thenExpression != null ? thenExpression.getType() : null, conditionalType)) {
+            PsiExpression newElseExpression = deparenthesizeExpression(((PsiConditionalExpression)Objects.requireNonNull(deparenthesizeExpression(newArgs[i]))).getElseExpression());
             checkConditionalBranch(expression, newCall, elseExpression, newElseExpression);
           }
         }
