@@ -11,9 +11,9 @@ import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
-import com.intellij.find.FindUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +29,10 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
@@ -39,6 +43,7 @@ import java.awt.*;
 import java.util.*;
 
 import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlaySettingsProvider.HINTS_ID;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ProjectProblemPassUtils {
 
@@ -83,8 +88,22 @@ public class ProjectProblemPassUtils {
     }
     else {
       String memberName = Objects.requireNonNull(member.getName());
-      FindUtil.showInUsageView(member, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
-                               JavaBundle.message("project.problems.window.title", memberName), project);
+
+      UsageViewPresentation presentation = new UsageViewPresentation();
+      String title = JavaBundle.message("project.problems.window.title", memberName);
+      presentation.setCodeUsagesString(title);
+      presentation.setTabName(title);
+      presentation.setTabText(title);
+
+      PsiElement[] primary = new PsiElement[]{member};
+      Usage[] usages = ContainerUtil.map2Array(brokenUsages, new Usage[brokenUsages.size()],
+                                               e -> UsageInfoToUsageConverter.convert(primary, new UsageInfo(e)));
+
+      UsageTarget[] usageTargets = new UsageTarget[]{new BrokenUsageTargetAdapter(member)};
+      UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
+      UsageViewImpl usageView = tryCast(usageViewManager.showUsages(usageTargets, usages, presentation), UsageViewImpl.class);
+      if (usageView == null) return;
+      usageView.setPopupHandler(IdeActions.GROUP_BROKEN_USAGE_VIEW_POPUP);
     }
   }
 

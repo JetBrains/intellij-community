@@ -261,6 +261,7 @@ public interface IdeActions {
   @NonNls String GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU = "DocCommentGutterIconContextMenu";
 
   @NonNls String GROUP_USAGE_VIEW_POPUP = "UsageView.Popup";
+  @NonNls String GROUP_BROKEN_USAGE_VIEW_POPUP = "BrokenUsageView.Popup";
 
   /*GUI designer actions*/
   @NonNls String GROUP_GUI_DESIGNER_EDITOR_POPUP = "GuiDesigner.EditorPopupMenu";
