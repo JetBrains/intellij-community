@@ -95,12 +95,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       @Override
       public void appUiReady() {
         if (!myEarlyNotifications.isEmpty()) {
-          Condition<?> disposed = ApplicationManager.getApplication().getDisposed();
-          Notification notification;
-          while ((notification = myEarlyNotifications.poll()) != null) {
-            Notification _notification = notification;
-            GuiUtils.invokeLaterIfNeeded(() -> showNotification(_notification, null), ModalityState.any(), disposed);
-          }
+          GuiUtils.invokeLaterIfNeeded(() -> {
+            Notification notification;
+            while ((notification = myEarlyNotifications.poll()) != null) {
+              showNotification(notification, null);
+            }
+          }, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
         }
       }
     });
