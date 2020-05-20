@@ -306,7 +306,7 @@ public class VfsImplUtil {
 
     private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
       if (myRootsToRefresh == null) myRootsToRefresh = new HashSet<>();
-      myRootsToRefresh.add(Pair.create(path, vfs));
+      myRootsToRefresh.add(pair(path, vfs));
     }
 
     private void scheduleRefresh() {
