@@ -39,6 +39,12 @@ class GitRevertAction : DumbAwareAction() {
     val repositoryManager = getRepositoryManager(project)
 
     val commits = ContainerUtil.getFirstItems(log.selectedShortDetails, MAX_SELECTED_COMMITS)
+
+    if (commits.isEmpty()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     // commits from mixed roots
     if (commits.any { repositoryManager.getRepositoryForRootQuick(it.root) == null }) {
       e.presentation.isEnabledAndVisible = false
