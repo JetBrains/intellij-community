@@ -216,7 +216,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     if (!activeKeymapName.isNullOrBlank()) {
       schemeManager.currentSchemeName = activeKeymapName
       if (schemeManager.currentSchemeName != activeKeymapName) {
-        notifyAboutMissingKeymap(activeKeymapName, "Cannot find keymap \"$activeKeymapName\"")
+        notifyAboutMissingKeymap(activeKeymapName, "Cannot find keymap \"$activeKeymapName\"", false)
       }
     }
   }
