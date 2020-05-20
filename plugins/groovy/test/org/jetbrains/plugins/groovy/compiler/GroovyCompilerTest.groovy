@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -901,7 +901,7 @@ class AppTest {
     addGroovyLibrary(anotherModule)
 
     PsiTestUtil.addProjectLibrary(module, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-    PsiTestUtil.addProjectLibrary(module, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.platform.buildScripts", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(module, "cli", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("commons-cli"))
     ModuleRootModificationUtil.addDependency(anotherModule, LibraryTablesRegistrar.instance.getLibraryTable(project).getLibraryByName("cli"))
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")

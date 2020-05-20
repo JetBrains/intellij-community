@@ -11,17 +11,6 @@
     <orderEntry type="library" exported="" name="Ant" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" name="jps-build-script-dependencies-bootstrap" level="project" />
-    <orderEntry type="module-library" exported="" scope="PROVIDED">
-      <library name="commons-cli" type="repository">
-        <properties maven-id="commons-cli:commons-cli:1.2" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.2/commons-cli-1.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.2/commons-cli-1.2-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" scope="PROVIDED" name="commons-cli" level="project" />
   </component>
 </module>
