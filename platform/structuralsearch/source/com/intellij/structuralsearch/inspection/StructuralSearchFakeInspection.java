@@ -256,7 +256,8 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   private void performEdit(JList<Configuration> list) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(list));
     if (project == null) return;
-    final Configuration configuration = list.getSelectedValue();
+    final int index = list.getSelectedIndex();
+    final Configuration configuration = myConfigurations.get(index);
     if (configuration == null) return;
     final SearchContext searchContext = new SearchContext(project);
     final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
@@ -267,6 +268,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     if (configuration.getOrder() == 0) {
       myMainConfiguration = newConfiguration;
     }
+    myConfigurations.set(index, newConfiguration);
     final MyListModel model = (MyListModel)list.getModel();
     model.fireContentsChanged(list);
 
