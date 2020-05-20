@@ -112,7 +112,7 @@ internal class FacetsOrderEntityData : PEntityData<FacetsOrderEntity>() {
   lateinit var orderOfFacets: List<String>
 
   override fun createEntity(snapshot: TypedEntityStorage): FacetsOrderEntity {
-    return FacetsOrderEntity(orderOfFacets.toList()).also { addMetaData(it, snapshot) }
+    return FacetsOrderEntity(orderOfFacets).also { addMetaData(it, snapshot) }
   }
 }
 

@@ -62,7 +62,7 @@ class ModuleEntityData : PEntityData.WithCalculatablePersistentId<ModuleEntity>(
     return changed
   }
 
-  override fun createEntity(snapshot: TypedEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies.toList()).also {
+  override fun createEntity(snapshot: TypedEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies).also {
     addMetaData(it, snapshot)
   }
 
@@ -115,7 +115,7 @@ class ModuleCustomImlDataEntityData : PEntityData<ModuleCustomImlDataEntity>() {
   lateinit var customModuleOptions: Map<String, String>
 
   override fun createEntity(snapshot: TypedEntityStorage): ModuleCustomImlDataEntity {
-    return ModuleCustomImlDataEntity(rootManagerTagCustomData, customModuleOptions.toMap()).also { addMetaData(it, snapshot) }
+    return ModuleCustomImlDataEntity(rootManagerTagCustomData, customModuleOptions).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -130,7 +130,7 @@ class ModuleCustomImlDataEntity(
 class ModuleGroupPathEntityData : PEntityData<ModuleGroupPathEntity>() {
   lateinit var path: List<String>
 
-  override fun createEntity(snapshot: TypedEntityStorage): ModuleGroupPathEntity = ModuleGroupPathEntity(path.toList()).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): ModuleGroupPathEntity = ModuleGroupPathEntity(path).also { addMetaData(it, snapshot) }
 }
 
 class ModuleGroupPathEntity(
@@ -256,7 +256,7 @@ class ContentRootEntityData : PEntityData<ContentRootEntity>() {
   lateinit var excludedPatterns: List<String>
 
   override fun createEntity(snapshot: TypedEntityStorage): ContentRootEntity {
-    return ContentRootEntity(url, excludedUrls.toList(), excludedPatterns.toList()).also { addMetaData(it, snapshot) }
+    return ContentRootEntity(url, excludedUrls, excludedPatterns).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -283,7 +283,7 @@ class FakeContentRootEntity(url: VirtualFileUrl, moduleEntity: ModuleEntity) : C
 class SourceRootOrderEntityData : PEntityData<SourceRootOrderEntity>() {
   lateinit var orderOfSourceRoots: List<VirtualFileUrl>
   override fun createEntity(snapshot: TypedEntityStorage): SourceRootOrderEntity {
-    return SourceRootOrderEntity(orderOfSourceRoots.toList()).also { addMetaData(it, snapshot) }
+    return SourceRootOrderEntity(orderOfSourceRoots).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -350,7 +350,7 @@ class LibraryEntityData : PEntityData.WithCalculatablePersistentId<LibraryEntity
   }
 
   override fun createEntity(snapshot: TypedEntityStorage): LibraryEntity {
-    return LibraryEntity(tableId, name, roots.toList(), excludedRoots.toList()).also { addMetaData(it, snapshot) }
+    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot) }
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)

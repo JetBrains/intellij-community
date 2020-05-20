@@ -49,7 +49,7 @@ internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource:
 internal class ArtifactsOrderEntityData : PEntityData<ArtifactsOrderEntity>() {
   lateinit var orderOfArtifacts: List<String>
   override fun createEntity(snapshot: TypedEntityStorage): ArtifactsOrderEntity {
-    return ArtifactsOrderEntity(orderOfArtifacts.toList()).also { addMetaData(it, snapshot) }
+    return ArtifactsOrderEntity(orderOfArtifacts).also { addMetaData(it, snapshot) }
   }
 }
 

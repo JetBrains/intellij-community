@@ -13,7 +13,7 @@ internal class PSampleEntityData : PEntityData<PSampleEntity>() {
   lateinit var stringListProperty: List<String>
   lateinit var fileProperty: VirtualFileUrl
   override fun createEntity(snapshot: TypedEntityStorage): PSampleEntity {
-    return PSampleEntity(booleanProperty, stringProperty, stringListProperty.toList(), fileProperty).also { addMetaData(it, snapshot) }
+    return PSampleEntity(booleanProperty, stringProperty, stringListProperty, fileProperty).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -27,7 +27,7 @@ internal class PSampleEntity(
 internal class ModifiablePSampleEntity : PModifiableTypedEntity<PSampleEntity>() {
   var booleanProperty: Boolean by EntityDataDelegation()
   var stringProperty: String by EntityDataDelegation()
-  var stringListProperty: MutableList<String> by EntityDataDelegation()
+  var stringListProperty: List<String> by EntityDataDelegation()
   var fileProperty: VirtualFileUrl by EntityDataDelegation()
 }
 
@@ -83,7 +83,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
     val original = builder.addPSampleEntity("hello")
     val modified = builder.modifyEntity(ModifiablePSampleEntity::class.java, original) {
       stringProperty = "foo"
-      stringListProperty.add("first")
+      stringListProperty = stringListProperty + "first"
       booleanProperty = true
       fileProperty = virtualFileManager.fromUrl("file:///xxx")
     }

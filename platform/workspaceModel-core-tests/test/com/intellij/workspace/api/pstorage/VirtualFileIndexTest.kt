@@ -33,7 +33,7 @@ internal class PListVFUEntityData : PEntityData<PListVFUEntity>() {
   lateinit var data: String
   lateinit var fileProperty: List<VirtualFileUrl>
   override fun createEntity(snapshot: TypedEntityStorage): PListVFUEntity {
-    return PListVFUEntity(data, fileProperty.toList()).also { addMetaData(it, snapshot) }
+    return PListVFUEntity(data, fileProperty).also { addMetaData(it, snapshot) }
   }
 }
 
