@@ -113,14 +113,14 @@ class ShShellcheckUtil {
   }
 
   static boolean isExecutionValidPath(@Nullable String path) {
-    if (path == null || ShSettings.I_DO_MIND.equals(path)) return false;
+    if (path == null || ShSettings.PLACEHOLDER.equals(path)) return false;
     File file = new File(path);
     return file.canExecute() && file.getName().contains(SHELLCHECK);
   }
 
   static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
-    if (ShSettings.I_DO_MIND.equals(path)) return true;
+    if (ShSettings.PLACEHOLDER.equals(path)) return true;
     File file = new File(path);
     return file.canExecute() && file.getName().contains(SHELLCHECK);
 
@@ -134,6 +134,11 @@ class ShShellcheckUtil {
 //      LOG.debug("Exception in process execution", e);
 //    }
 //    return false;
+  }
+
+  static boolean isPlaceholder(@Nullable String path) {
+    if (ShSettings.PLACEHOLDER.equals(path)) return true;
+    return false;
   }
 
   @NotNull

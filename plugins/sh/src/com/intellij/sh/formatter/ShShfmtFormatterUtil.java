@@ -104,7 +104,7 @@ public class ShShfmtFormatterUtil {
 
   public static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
-    if (ShSettings.I_DO_MIND.equals(path)) return true;
+    if (ShSettings.PLACEHOLDER.equals(path)) return true;
     File file = new File(path);
     if (!file.canExecute()) return false;
     return file.getName().contains(SHFMT);

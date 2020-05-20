@@ -49,7 +49,7 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
       }, () -> Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shellcheck. Please install it manually",
                                                          NotificationType.ERROR))));
       panel.createActionLabel("No, thanks", () -> {
-        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND);
+        ShSettings.setShellcheckPath(ShSettings.PLACEHOLDER);
         EditorNotifications.getInstance(project).updateAllNotifications();
       });
       return panel;

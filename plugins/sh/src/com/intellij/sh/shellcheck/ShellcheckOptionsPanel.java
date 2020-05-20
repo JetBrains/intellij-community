@@ -48,14 +48,17 @@ public class ShellcheckOptionsPanel {
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
         String shellcheckPath = myShellcheckSelector.getText();
         ShSettings.setShellcheckPath(shellcheckPath);
-        myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
+        myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath) || ShShellcheckUtil.isPlaceholder(shellcheckPath));
         myErrorLabel.setVisible(false);
       }
     });
 
     String shellcheckPath = ShSettings.getShellcheckPath();
-    myShellcheckSelector.setText(shellcheckPath);
-    myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
+    boolean validPath = ShShellcheckUtil.isValidPath(shellcheckPath) && !ShShellcheckUtil.isPlaceholder(shellcheckPath);
+    String shellcheckSelectorText = validPath ? shellcheckPath : "";
+    myShellcheckSelector.setText(shellcheckSelectorText);
+    myWarningPanel.setVisible(!validPath);
+
     myErrorLabel.setForeground(JBColor.RED);
 
     ShShellcheckUtil.SHELLCHECK_CODES.forEach((key, value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
