@@ -39,7 +39,7 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
+  public static class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!editor.getSelectionModel().hasSelection(true)) {
