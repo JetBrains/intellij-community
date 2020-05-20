@@ -49,5 +49,5 @@ internal class DirtBuilder {
   fun getScopes(): List<VcsDirtyScopeImpl> = scopesByVcs.values.toList()
   fun isFileDirty(filePath: FilePath): Boolean = isEverythingDirty || scopesByVcs.values.any { it.belongsTo(filePath) }
 
-  private fun createScope(vcs: AbstractVcs) = scopesByVcs.computeIfAbsent(vcs) { VcsDirtyScopeImpl(it) }
+  private fun createScope(vcs: AbstractVcs) = scopesByVcs.computeIfAbsent(vcs) { VcsDirtyScopeImpl(it, isEverythingDirty) }
 }
