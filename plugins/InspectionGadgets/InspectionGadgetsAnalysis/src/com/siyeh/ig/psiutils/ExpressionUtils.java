@@ -188,7 +188,7 @@ public class ExpressionUtils {
 
   @Nullable
   public static PsiLiteralExpression getLiteral(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression) {
       return (PsiLiteralExpression)expression;
     }
@@ -196,7 +196,7 @@ public class ExpressionUtils {
       return null;
     }
     final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
-    final PsiExpression operand = ParenthesesUtils.stripParentheses(typeCastExpression.getOperand());
+    final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand());
     if (!(operand instanceof PsiLiteralExpression)) {
       return null;
     }
@@ -208,7 +208,7 @@ public class ExpressionUtils {
   }
 
   public static boolean isEmptyStringLiteral(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiLiteralExpression)) {
       return false;
     }
@@ -328,7 +328,7 @@ public class ExpressionUtils {
 
   public static boolean isNegation(@Nullable PsiExpression condition,
                                    boolean ignoreNegatedNullComparison, boolean ignoreNegatedZeroComparison) {
-    condition = ParenthesesUtils.stripParentheses(condition);
+    condition = PsiUtil.skipParenthesizedExprDown(condition);
     if (condition instanceof PsiPrefixExpression) {
       final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
       final IElementType tokenType = prefixExpression.getOperationTokenType();
@@ -336,8 +336,8 @@ public class ExpressionUtils {
     }
     else if (condition instanceof PsiBinaryExpression) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       if (lhs == null || rhs == null) {
         return false;
       }
@@ -377,7 +377,7 @@ public class ExpressionUtils {
   public static boolean isOffsetArrayAccess(
     @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
     final PsiExpression strippedExpression =
-      ParenthesesUtils.stripParentheses(expression);
+      PsiUtil.skipParenthesizedExprDown(expression);
     if (!(strippedExpression instanceof PsiArrayAccessExpression)) {
       return false;
     }
@@ -401,7 +401,7 @@ public class ExpressionUtils {
       return true;
     }
     final PsiExpression strippedExpression =
-      ParenthesesUtils.stripParentheses(expression);
+      PsiUtil.skipParenthesizedExprDown(expression);
     if (!(strippedExpression instanceof PsiBinaryExpression)) {
       return false;
     }
@@ -422,7 +422,7 @@ public class ExpressionUtils {
   }
 
   public static boolean isVariableLessThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
     if (binaryExpression == null) return false;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.LE)) {
@@ -435,7 +435,7 @@ public class ExpressionUtils {
   }
 
   public static boolean isVariableGreaterThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
     if (binaryExpression == null) return false;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.GT) || tokenType.equals(JavaTokenType.GE)) {
@@ -539,12 +539,12 @@ public class ExpressionUtils {
       @NonNls final String name = methodExpression1.getReferenceName();
       final PsiExpression[] expressions = expressionList.getExpressions();
       if ("insert".equals(name)) {
-        if (expressions.length < 2 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[1]))) {
+        if (expressions.length < 2 || !expression.equals(PsiUtil.skipParenthesizedExprDown(expressions[1]))) {
           return true;
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
       } else if ("append".equals(name)) {
-        if (expressions.length != 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
+        if (expressions.length != 1 || !expression.equals(PsiUtil.skipParenthesizedExprDown(expressions[0]))) {
           return true;
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
@@ -618,7 +618,7 @@ public class ExpressionUtils {
   @Contract("null, _ -> null")
   @Nullable
   public static PsiReferenceExpression getReferenceExpressionFromNullComparison(PsiExpression expression, boolean equals) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiPolyadicExpression)) {
       return null;
     }
@@ -645,7 +645,7 @@ public class ExpressionUtils {
     else if (PsiType.NULL.equals(operands[1].getType())) {
       comparedToNull = operands[0];
     }
-    comparedToNull = ParenthesesUtils.stripParentheses(comparedToNull);
+    comparedToNull = PsiUtil.skipParenthesizedExprDown(comparedToNull);
 
     return comparedToNull instanceof PsiReferenceExpression ? (PsiReferenceExpression)comparedToNull : null;
   }
@@ -709,7 +709,7 @@ public class ExpressionUtils {
   }
 
   private static boolean isAnnotated(PsiExpression expression, boolean nullable) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiReferenceExpression)) {
       return false;
     }
@@ -924,7 +924,7 @@ public class ExpressionUtils {
    */
   @Nullable
   public static PsiExpression getArrayFromLengthExpression(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiReferenceExpression)) return null;
     final PsiReferenceExpression reference =
       (PsiReferenceExpression)expression;
@@ -1057,7 +1057,7 @@ public class ExpressionUtils {
   @Contract("null -> null")
   @Nullable
   public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     PsiReferenceExpression referenceExpression = tryCast(expression, PsiReferenceExpression.class);
     if(referenceExpression == null) return null;
     return tryCast(referenceExpression.resolve(), PsiLocalVariable.class);

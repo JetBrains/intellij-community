@@ -119,7 +119,7 @@ public class AutoBoxingInspection extends BaseInspection {
       if (shortcutReplace(expression, classToConstruct)) {
         return;
       }
-      final PsiExpression strippedExpression = ParenthesesUtils.stripParentheses(expression);
+      final PsiExpression strippedExpression = PsiUtil.skipParenthesizedExprDown(expression);
       if (strippedExpression == null) {
         return;
       }

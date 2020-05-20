@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -151,14 +152,14 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
       }
       final PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
       final PsiExpression lhs = expression.getLExpression();
-      PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getRExpression());
+      PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
       if (rhs instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)rhs;
         final PsiType castType = typeCastExpression.getType();
         if (castType == null || !castType.equals(lhs.getType())) {
           return;
         }
-        rhs = ParenthesesUtils.stripParentheses(typeCastExpression.getOperand());
+        rhs = PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand());
       }
       if (!(rhs instanceof PsiPolyadicExpression)) {
         return;
@@ -185,14 +186,14 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
         return;
       }
       final PsiExpression lhs = assignment.getLExpression();
-      PsiExpression rhs = ParenthesesUtils.stripParentheses(assignment.getRExpression());
+      PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
       if (rhs instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)rhs;
         final PsiType castType = typeCastExpression.getType();
         if (castType == null || !castType.equals(lhs.getType())) {
           return;
         }
-        rhs = ParenthesesUtils.stripParentheses(typeCastExpression.getOperand());
+        rhs = PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand());
       }
       if (!(rhs instanceof PsiPolyadicExpression)) {
         return;

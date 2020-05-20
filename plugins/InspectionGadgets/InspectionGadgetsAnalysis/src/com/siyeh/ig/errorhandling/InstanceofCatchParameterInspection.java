@@ -17,11 +17,11 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceofCatchParameterInspection extends BaseInspection {
@@ -50,7 +50,7 @@ public class InstanceofCatchParameterInspection extends BaseInspection {
       if (typeElement == null || !InheritanceUtil.isInheritor(typeElement.getType(), CommonClassNames.JAVA_LANG_THROWABLE)) {
         return;
       }
-      final PsiExpression operand = ParenthesesUtils.stripParentheses(exp.getOperand());
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(exp.getOperand());
       if (!(operand instanceof PsiReferenceExpression)) {
         return;
       }

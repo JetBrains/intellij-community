@@ -97,13 +97,13 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
 
   @NonNls
   static String calculateReplacementExpression(PsiPrefixExpression expression, CommentTracker commentTracker) {
-    final PsiExpression operand = ParenthesesUtils.stripParentheses(expression.getOperand());
+    final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
     if (!(operand instanceof PsiBinaryExpression)) {
       return null;
     }
     final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)operand;
-    final PsiExpression lhs = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
-    final PsiExpression rhs = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
+    final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
     if (lhs == null || rhs == null) {
       return null;
     }
@@ -116,7 +116,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     PsiPolyadicExpression conjunction =
       tryCast(PsiUtil.skipParenthesizedExprDown(expression.getLOperand()), PsiPolyadicExpression.class);
     if (conjunction == null) return null;
-    final PsiExpression rightDisjunct = ParenthesesUtils.stripParentheses(expression.getROperand());
+    final PsiExpression rightDisjunct = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     if (rightDisjunct == null) return null;
 
     if (hasOperand(conjunction, rightDisjunct)) return commentTracker.text(rightDisjunct);
@@ -167,8 +167,8 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
       PsiBinaryExpression maybeXor = tryCast(PsiUtil.skipParenthesizedExprDown(expression.getOperand()), PsiBinaryExpression.class);
       if (maybeXor == null || !JavaTokenType.XOR.equals(maybeXor.getOperationTokenType())) return;
 
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(maybeXor.getLOperand());
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(maybeXor.getROperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(maybeXor.getLOperand());
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(maybeXor.getROperand());
       if (lhs == null || rhs == null) {
         return;
       }
@@ -183,7 +183,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
         tryCast(PsiUtil.skipParenthesizedExprDown(disjunction.getLOperand()), PsiPolyadicExpression.class);
       if (conjunction == null || !JavaTokenType.ANDAND.equals(conjunction.getOperationTokenType())) return;
 
-      final PsiExpression rightDisjunct = ParenthesesUtils.stripParentheses(disjunction.getROperand());
+      final PsiExpression rightDisjunct = PsiUtil.skipParenthesizedExprDown(disjunction.getROperand());
       if (hasOperand(conjunction, rightDisjunct) && !SideEffectChecker.mayHaveSideEffects(conjunction)) {
         registerError(disjunction, disjunction);
       }

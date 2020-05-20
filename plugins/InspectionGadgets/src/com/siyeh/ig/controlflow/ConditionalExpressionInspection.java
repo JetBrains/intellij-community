@@ -104,7 +104,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
         statement instanceof PsiDeclarationStatement ? PsiTreeUtil.getParentOfType(expression, PsiVariable.class) : null;
       PsiExpression thenExpression = expression.getThenExpression();
       PsiExpression elseExpression = expression.getElseExpression();
-      final PsiExpression condition = ParenthesesUtils.stripParentheses(expression.getCondition());
+      final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(expression.getCondition());
       CommentTracker tracker = new CommentTracker();
       String ifText = "if(" + (condition == null ? "" : tracker.text(condition)) + ");\nelse;";
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

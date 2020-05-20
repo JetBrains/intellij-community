@@ -15,8 +15,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +90,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       if (FIND_CONSTRUCTOR.equals(factoryMethodName)) {
         final ReflectiveClass ownerClass = getReflectiveClass(arguments[0]);
         if (ownerClass != null) {
-          final PsiExpression typeExpression = ParenthesesUtils.stripParentheses(arguments[1]);
+          final PsiExpression typeExpression = PsiUtil.skipParenthesizedExprDown(arguments[1]);
           checkConstructor(ownerClass, typeExpression, holder);
         }
       }
@@ -98,11 +98,11 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     else if (arguments.length >= 3) {
       final ReflectiveClass ownerClass = getReflectiveClass(arguments[0]);
       if (ownerClass != null) {
-        final PsiExpression nameExpression = ParenthesesUtils.stripParentheses(arguments[1]);
+        final PsiExpression nameExpression = PsiUtil.skipParenthesizedExprDown(arguments[1]);
         final PsiExpression nameDefinition = findDefinition(nameExpression);
         final String memberName = computeConstantExpression(nameDefinition, String.class);
         if (!StringUtil.isEmpty(memberName)) {
-          final PsiExpression typeExpression = ParenthesesUtils.stripParentheses(arguments[2]);
+          final PsiExpression typeExpression = PsiUtil.skipParenthesizedExprDown(arguments[2]);
 
           switch (factoryMethodName) {
             case FIND_GETTER:

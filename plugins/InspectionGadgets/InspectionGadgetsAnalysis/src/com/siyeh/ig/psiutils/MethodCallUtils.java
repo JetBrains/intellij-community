@@ -228,7 +228,7 @@ public class MethodCallUtils {
     if (!methodName.equals(name)) {
       return false;
     }
-    final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+    final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
     if (!(qualifier instanceof PsiReferenceExpression)) {
       return false;
     }
@@ -303,7 +303,7 @@ public class MethodCallUtils {
   }
 
   public static boolean hasSuperQualifier(@NotNull PsiMethodCallExpression expression) {
-    return ParenthesesUtils.stripParentheses(expression.getMethodExpression().getQualifierExpression()) instanceof PsiSuperExpression;
+    return PsiUtil.skipParenthesizedExprDown(expression.getMethodExpression().getQualifierExpression()) instanceof PsiSuperExpression;
   }
 
   /**
@@ -354,7 +354,7 @@ public class MethodCallUtils {
       return false;
     }
     final PsiExpressionList argumentList = expression.getArgumentList();
-    final PsiExpression argument = ParenthesesUtils.stripParentheses(ExpressionUtils.getFirstExpressionInList(argumentList));
+    final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getFirstExpressionInList(argumentList));
     if (argument == null) {
       return false;
     }
@@ -457,7 +457,7 @@ public class MethodCallUtils {
     final PsiExpression[] arguments = argumentList.getExpressions();
     for (int i = 0; i < arguments.length; i++) {
       PsiExpression argument = arguments[i];
-      argument = ParenthesesUtils.stripParentheses(argument);
+      argument = PsiUtil.skipParenthesizedExprDown(argument);
       if (argument instanceof PsiReferenceExpression) {
         final PsiElement target = ((PsiReferenceExpression)argument).resolve();
         if (target == parameter) {

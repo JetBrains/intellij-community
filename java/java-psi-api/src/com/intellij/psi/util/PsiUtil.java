@@ -1189,6 +1189,7 @@ public final class PsiUtil extends PsiUtilCore {
     return null;
   }
 
+  @Contract("null -> null")
   @Nullable
   public static PsiExpression skipParenthesizedExprDown(PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {

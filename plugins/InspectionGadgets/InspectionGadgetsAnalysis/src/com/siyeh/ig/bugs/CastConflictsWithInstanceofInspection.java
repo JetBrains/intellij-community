@@ -19,12 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CastConflictsWithInstanceofInspection extends BaseInspection {
@@ -62,7 +62,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
         return;
       }
       final PsiType type = castType.getType();
-      final PsiExpression operand = ParenthesesUtils.stripParentheses(expression.getOperand());
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
       if (!(operand instanceof PsiReferenceExpression)) {
         return;
       }
@@ -99,7 +99,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
       if (!"java.lang.Class".equals(qualifiedName)) {
         return;
       }
-      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       if (!(qualifier instanceof PsiClassObjectAccessExpression)) {
         return;
       }
@@ -114,7 +114,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
       if (arguments.length != 1) {
         return;
       }
-      final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[0]);
+      final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
       if (!(argument instanceof PsiReferenceExpression)) {
         return;
       }

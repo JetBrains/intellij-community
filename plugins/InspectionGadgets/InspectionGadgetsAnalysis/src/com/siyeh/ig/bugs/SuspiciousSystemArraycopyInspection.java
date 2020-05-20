@@ -20,11 +20,11 @@ import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -156,8 +156,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
     private static boolean isTheSameArray(@NotNull PsiExpression src,
                                           @NotNull PsiExpression dest) {
-      PsiReferenceExpression srcReference = tryCast(ParenthesesUtils.stripParentheses(src), PsiReferenceExpression.class);
-      PsiReferenceExpression destReference = tryCast(ParenthesesUtils.stripParentheses(dest), PsiReferenceExpression.class);
+      PsiReferenceExpression srcReference = tryCast(PsiUtil.skipParenthesizedExprDown(src), PsiReferenceExpression.class);
+      PsiReferenceExpression destReference = tryCast(PsiUtil.skipParenthesizedExprDown(dest), PsiReferenceExpression.class);
       if (srcReference == null || destReference == null) return false;
       PsiElement srcVariable = srcReference.resolve();
       PsiElement destVariable = destReference.resolve();

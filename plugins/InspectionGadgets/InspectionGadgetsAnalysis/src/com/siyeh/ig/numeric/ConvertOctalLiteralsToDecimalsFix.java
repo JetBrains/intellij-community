@@ -21,10 +21,10 @@ import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +48,7 @@ class ConvertOctalLiteralsToDecimalsFix extends InspectionGadgetsFix {
     }
     final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
     for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
-      initializer = ParenthesesUtils.stripParentheses(initializer);
+      initializer = PsiUtil.skipParenthesizedExprDown(initializer);
       if (!(initializer instanceof PsiLiteralExpression)) {
         continue;
       }

@@ -28,7 +28,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +102,7 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
       if (!field.hasModifierProperty(PsiModifier.FINAL)) {
         return false;
       }
-      final PsiExpression initializer = ParenthesesUtils.stripParentheses(field.getInitializer());
+      final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(field.getInitializer());
       if (ExpressionUtils.isNullLiteral(initializer)) {
         return true;
       }

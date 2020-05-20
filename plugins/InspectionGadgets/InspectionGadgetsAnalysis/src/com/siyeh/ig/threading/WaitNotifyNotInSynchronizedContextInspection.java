@@ -18,11 +18,11 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,7 +52,7 @@ public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection
         return;
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
         if (isSynchronizedOnThis(expression) || isCoveredByGuardedByAnnotation(expression, "this")) {
           return;
@@ -84,7 +84,7 @@ public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection
       if (synchronizedStatement == null) {
         return false;
       }
-      final PsiExpression lockExpression = ParenthesesUtils.stripParentheses(synchronizedStatement.getLockExpression());
+      final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(synchronizedStatement.getLockExpression());
       final EquivalenceChecker checker = EquivalenceChecker.getCanonicalPsiEquivalence();
       return checker.expressionsAreEquivalent(lockExpression, target) || isSynchronizedOn(synchronizedStatement, target);
     }
@@ -93,7 +93,7 @@ public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection
       final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiSynchronizedStatement.class);
       if (context instanceof PsiSynchronizedStatement) {
         final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)context;
-        final PsiExpression lockExpression = ParenthesesUtils.stripParentheses(synchronizedStatement.getLockExpression());
+        final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(synchronizedStatement.getLockExpression());
         return lockExpression instanceof PsiThisExpression || isSynchronizedOnThis(synchronizedStatement);
       }
       else if (context instanceof PsiMethod) {

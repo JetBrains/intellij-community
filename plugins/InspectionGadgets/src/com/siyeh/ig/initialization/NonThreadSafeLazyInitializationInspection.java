@@ -22,7 +22,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,7 +92,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       return false;
     }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-    final PsiExpression lhs = ParenthesesUtils.stripParentheses(assignmentExpression.getLExpression());
+    final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
     if (!(lhs instanceof PsiReferenceExpression)) {
       return false;
     }

@@ -6,13 +6,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ConstructionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
     if (arguments.length == 0) {
       return null;
     }
-    final PsiExpression firstArgument = ParenthesesUtils.stripParentheses(arguments[0]);
+    final PsiExpression firstArgument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
     if (firstArgument instanceof PsiLiteralExpression) {
       return new ReplaceDoubleArgumentWithStringFix("new BigDecimal(\"" + getLiteralText((PsiLiteralExpression)firstArgument) + "\")");
     }
@@ -103,7 +103,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
         return;
       }
       final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiExpression firstArgument = ParenthesesUtils.stripParentheses(arguments[0]);
+      final PsiExpression firstArgument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
       if (firstArgument instanceof PsiLiteralExpression) {
           PsiReplacementUtil.replaceExpression(firstArgument, '"' + getLiteralText((PsiLiteralExpression)firstArgument) + '"');
       }

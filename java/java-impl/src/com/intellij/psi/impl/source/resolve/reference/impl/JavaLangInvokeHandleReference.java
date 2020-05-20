@@ -9,11 +9,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +95,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
         if (definitionCall != null) {
           final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
           if (arguments.length > 2) {
-            final PsiExpression typeExpression = ParenthesesUtils.stripParentheses(arguments[2]);
+            final PsiExpression typeExpression = PsiUtil.skipParenthesizedExprDown(arguments[2]);
             final ReflectiveSignature expectedSignature = composeMethodSignature(typeExpression);
             if (expectedSignature != null) {
               return ContainerUtil.find(methods, method -> expectedSignature.equals(getMethodSignature(method)));

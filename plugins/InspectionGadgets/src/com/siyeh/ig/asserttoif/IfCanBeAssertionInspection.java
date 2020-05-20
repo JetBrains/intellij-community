@@ -73,7 +73,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
     else if (element instanceof PsiThrowStatement) {
       final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
-      final PsiExpression exception = ParenthesesUtils.stripParentheses(throwStatement.getException());
+      final PsiExpression exception = PsiUtil.skipParenthesizedExprDown(throwStatement.getException());
       if (exception instanceof PsiNewExpression) {
         return (PsiNewExpression)exception;
       }

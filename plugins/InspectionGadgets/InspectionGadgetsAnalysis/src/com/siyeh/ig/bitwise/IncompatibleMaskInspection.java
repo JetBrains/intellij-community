@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.bitwise;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -23,7 +26,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class IncompatibleMaskInspection extends BaseInspection {
@@ -75,13 +77,13 @@ public class IncompatibleMaskInspection extends BaseInspection {
         return;
       }
       final PsiExpression strippedRhs =
-        ParenthesesUtils.stripParentheses(rhs);
+        PsiUtil.skipParenthesizedExprDown(rhs);
       if (strippedRhs == null) {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
       final PsiExpression strippedLhs =
-        ParenthesesUtils.stripParentheses(lhs);
+        PsiUtil.skipParenthesizedExprDown(lhs);
       if (strippedLhs == null) {
         return;
       }

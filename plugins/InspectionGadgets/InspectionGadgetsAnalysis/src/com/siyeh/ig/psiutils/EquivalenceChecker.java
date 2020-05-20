@@ -46,7 +46,7 @@ public class EquivalenceChecker {
   private static final Comparator<PsiMember> MEMBER_COMPARATOR =
     comparing(PsiMember::getName, nullsFirst(naturalOrder())).thenComparing(PsiMember::getText);
   private static final Comparator<PsiExpression> EXPRESSION_COMPARATOR =
-    comparing(ParenthesesUtils::stripParentheses, nullsFirst(comparing(PsiExpression::getText)));
+    comparing(expression -> PsiUtil.skipParenthesizedExprDown(expression), nullsFirst(comparing(PsiExpression::getText)));
 
   protected EquivalenceChecker() {}
 
@@ -527,8 +527,8 @@ public class EquivalenceChecker {
     if (expression1 == expression2) {
       return EXACT_MATCH;
     }
-    expression1 = ParenthesesUtils.stripParentheses(expression1);
-    expression2 = ParenthesesUtils.stripParentheses(expression2);
+    expression1 = PsiUtil.skipParenthesizedExprDown(expression1);
+    expression2 = PsiUtil.skipParenthesizedExprDown(expression2);
     if (expression1 == null || expression2 == null) {
       return Match.exact(expression1 == expression2);
     }
@@ -703,8 +703,8 @@ public class EquivalenceChecker {
     else {
       return EXACT_MATCH;
     }
-    final PsiExpression qualifier1 = ParenthesesUtils.stripParentheses(referenceExpression1.getQualifierExpression());
-    final PsiExpression qualifier2 = ParenthesesUtils.stripParentheses(referenceExpression2.getQualifierExpression());
+    final PsiExpression qualifier1 = PsiUtil.skipParenthesizedExprDown(referenceExpression1.getQualifierExpression());
+    final PsiExpression qualifier2 = PsiUtil.skipParenthesizedExprDown(referenceExpression2.getQualifierExpression());
     if (qualifier1 != null && !(qualifier1 instanceof PsiThisExpression || qualifier1 instanceof PsiSuperExpression)) {
       if (qualifier2 == null) {
         return EXACT_MISMATCH;
