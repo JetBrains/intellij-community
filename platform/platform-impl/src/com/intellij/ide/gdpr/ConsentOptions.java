@@ -23,9 +23,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
@@ -42,8 +39,8 @@ public final class ConsentOptions {
     static {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       ourInstance = new ConsentOptions(new IOBackend() {
-        private final File DEFAULT_CONSENTS_FILE = Locations.getDataRoot().resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName() + "/consentOptions/cached").toFile();
-        private final File CONFIRMED_CONSENTS_FILE = Locations.getDataRoot().resolve("/consentOptions/accepted").toFile();
+        private final File DEFAULT_CONSENTS_FILE = Locations.getDataRoot().resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName()).resolve("consentOptions").resolve("cached").toFile();
+        private final File CONFIRMED_CONSENTS_FILE = Locations.getDataRoot().resolve("consentOptions").resolve("accepted").toFile();
         private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
 
         @Override
