@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.util.Pair.create;
 import static com.intellij.openapi.util.Pair.pair;
 
 public class VfsImplUtil {
@@ -307,7 +306,7 @@ public class VfsImplUtil {
 
     private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
       if (myRootsToRefresh == null) myRootsToRefresh = new HashSet<>();
-      myRootsToRefresh.add(create(path, vfs));
+      myRootsToRefresh.add(Pair.create(path, vfs));
     }
 
     private void scheduleRefresh() {
