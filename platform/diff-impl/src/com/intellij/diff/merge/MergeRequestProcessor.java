@@ -133,6 +133,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         MergeRequest mergeRequest = request.process(myContext, ProgressManager.getInstance().getProgressIndicator());
         ApplicationManager.getApplication().invokeLater(
           () -> {
+            if (myDisposed) return;
             myRequest = mergeRequest;
             swapViewer(createViewerFor(mergeRequest));
             installCallbackListener(myRequest);
@@ -142,7 +143,10 @@ public abstract class MergeRequestProcessor implements Disposable {
       catch (Throwable e) {
         LOG.warn(e);
         ApplicationManager.getApplication().invokeLater(
-          () -> swapViewer(new MessageMergeViewer(myContext, DiffBundle.message("label.cant.show.merge.with.description", e.getMessage()))),
+          () -> {
+            if (myDisposed) return;
+            swapViewer(new MessageMergeViewer(myContext, DiffBundle.message("label.cant.show.merge.with.description", e.getMessage())));
+          },
           modality);
       }
     });
