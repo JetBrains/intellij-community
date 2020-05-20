@@ -441,7 +441,6 @@ class CommunityRepositoryModules {
       withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
       withResource("hotswap/gragent.jar", "lib/agent")
       withResource("groovy-psi/resources/conf", "lib")
-      withProjectLibrary("org.codehaus.groovy:groovy-ant")
       additionalModules.each {
         withModule(it)
       }

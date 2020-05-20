@@ -1291,12 +1291,6 @@
       <add-to-group group-id="GenerateGroup" anchor="after" relative-to-action="JavaGenerateGroup1"/>
     </group>
 
-    <action id="Groovy.Doc.Generating"
-            class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
-            icon="JetgroovyIcons.Groovy.GroovyDoc">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-
     <action id="Groovy.Shell"
             class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">

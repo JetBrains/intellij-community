@@ -247,8 +247,6 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "https://groovy-lang.org/"),
     new LibraryLicense(name: "Groovy Ant", libraryName: "org.codehaus.groovy:groovy-ant",
                        license: "Apache 2.0", url: "https://groovy-lang.org/"),
-    new LibraryLicense(name: "Groovy Doc", libraryName: "org.codehaus.groovy:groovy-groovydoc",
-                       license: "Apache 2.0", url: "https://groovy-lang.org/"),
     new LibraryLicense(name: "Groovy JSON", libraryName: "org.codehaus.groovy:groovy-json",
                        license: "Apache 2.0", url: "https://groovy-lang.org/"),
     new LibraryLicense(name: "Groovy JSR-223", libraryName: "org.codehaus.groovy:groovy-jsr223",
