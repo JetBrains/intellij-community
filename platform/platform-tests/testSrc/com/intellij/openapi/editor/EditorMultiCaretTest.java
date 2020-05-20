@@ -504,4 +504,11 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     verifyCaretsAndSelections(0, 1, 1, 1,
                               1, 1, 1, 1);
   }
+
+  public void testCloneCaretDoesNotUseRememberedHorizontalPositionFromMovement() {
+    initText("long long line<caret>\nshort line");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+    executeAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE);
+    checkResultByText("long long <caret>line\nshort line<caret>");
+  }
 }

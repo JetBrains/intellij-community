@@ -57,11 +57,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private int myVisualLineStart;
   private int myVisualLineEnd;
   private boolean mySkipChangeRequests;
-  /**
-   * Initial horizontal caret position during vertical navigation.
-   * Similar to {@link #myDesiredX}, but represents logical caret position ({@code getLogicalPosition().column}) rather than visual.
-   */
-  private int myLastColumnNumber;
+  private int myColumnNumberForCloning = -1;
   private int myDesiredSelectionStartColumn = -1;
   private int myDesiredSelectionEndColumn = -1;
 
@@ -181,7 +177,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       EditorSettings editorSettings = myEditor.getSettings();
       VisualPosition visualCaret = getVisualPosition();
 
-      int lastColumnNumber = myLastColumnNumber;
       int desiredX = myDesiredX;
       if (columnShift == 0) {
         if (myDesiredX < 0) {
@@ -277,9 +272,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       else {
         moveToVisualPosition(pos);
-        if (!editorSettings.isVirtualSpace() && columnShift == 0 && lastColumnNumber >=0) {
-          setLastColumnNumber(lastColumnNumber);
-        }
       }
 
       if (withSelection) {
@@ -419,7 +411,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myEditor.getFoldingModel().flushCaretPosition(this);
 
     myLogicalCaret = logicalPositionToUse;
-    setLastColumnNumber(myLogicalCaret.column);
+    myColumnNumberForCloning = -1;
     myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
     myVisualColumnAdjustment = 0;
@@ -485,10 +477,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     oldMarker.dispose();
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
     myLogicalColumnAdjustment = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
-  }
-
-  private void setLastColumnNumber(int lastColumnNumber) {
-    myLastColumnNumber = lastColumnNumber;
   }
 
   private void requestRepaint(VerticalInfo oldVerticalInfo) {
@@ -590,7 +578,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     myEditor.getFoldingModel().flushCaretPosition(this);
 
-    setLastColumnNumber(myLogicalCaret.column);
+    myColumnNumberForCloning = -1;
     myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myEditor.updateCaretCursor();
     requestRepaint(oldVerticalInfo);
@@ -799,10 +787,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     clone.myVisualLineStart = myVisualLineStart;
     clone.myVisualLineEnd = myVisualLineEnd;
     clone.mySkipChangeRequests = mySkipChangeRequests;
-    clone.myLastColumnNumber = myLastColumnNumber;
     clone.myDesiredX = myDesiredX;
-    clone.myDesiredSelectionStartColumn = -1;
-    clone.myDesiredSelectionEndColumn = -1;
     return clone;
   }
 
@@ -851,11 +836,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       newSelectionStartColumn = -1;
       newSelectionEndColumn = -1;
     }
-    clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber, myLeansTowardsLargerOffsets), false, null, false, false);
-    clone.myLastColumnNumber = myLastColumnNumber;
+    int targetColumn = myColumnNumberForCloning < 0 ? oldPosition.column : myColumnNumberForCloning;
+    clone.moveToLogicalPosition(new LogicalPosition(newLine, targetColumn, myLeansTowardsLargerOffsets), false, null, false, false);
     clone.myDesiredX = myDesiredX >= 0 ? myDesiredX : getCurrentX();
     clone.myDesiredSelectionStartColumn = newSelectionStartColumn;
     clone.myDesiredSelectionEndColumn = newSelectionEndColumn;
+    clone.myColumnNumberForCloning = targetColumn;
 
     if (myCaretModel.addCaret(clone, true)) {
       if (hasNewSelection) {
@@ -1460,7 +1446,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
     myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
     updateVisualLineInfo();
-    setLastColumnNumber(myLogicalCaret.column);
+    myColumnNumberForCloning = -1;
     myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myDesiredX = -1;
   }
