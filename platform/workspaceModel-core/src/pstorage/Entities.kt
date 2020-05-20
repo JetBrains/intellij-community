@@ -74,7 +74,7 @@ abstract class PModifiableTypedEntity<T : PTypedEntity> : PTypedEntity(), Modifi
   internal fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
 }
 
-internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
+internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: Class<E>) {
   init {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
   }
@@ -88,14 +88,14 @@ internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>)
     other as PId<*>
 
     if (arrayId != other.arrayId) return false
-    if (clazz.java != other.clazz.java) return false
+    if (clazz != other.clazz) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = arrayId
-    result = 31 * result + clazz.java.hashCode()
+    result = 31 * result + clazz.hashCode()
     return result
   }
 }
@@ -111,7 +111,7 @@ abstract class PEntityData<E : TypedEntity>: Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  internal fun createPid(): PId<E> = PId(id, ClassConversion.entityDataToEntity(this::class))
+  internal fun createPid(): PId<E> = PId(id, ClassConversion.entityDataToEntity(this.javaClass))
 
   abstract fun createEntity(snapshot: TypedEntityStorage): E
 

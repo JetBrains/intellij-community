@@ -10,8 +10,8 @@ internal open class ImmutableEntitiesBarrel internal constructor(
   fun assertConsistency() {
     entities.forEach { (clazz, family) ->
       family.assertConsistency { entityData ->
-        val immutableClass = ClassConversion.entityDataToEntity(entityData::class)
-        assert(clazz.kotlin ==  immutableClass) {
+        val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
+        assert(clazz ==  immutableClass) {
           """EntityFamily contains entity data of wrong type:
             | - EntityFamily class:   $clazz
             | - entityData class:     $immutableClass
@@ -36,7 +36,7 @@ internal class MutableEntitiesBarrel(
   }
 
   fun <E : TypedEntity> getEntityDataForModification(id: PId<E>): PEntityData<E> {
-    return getMutableEntityFamily(id.clazz.java).getEntityDataForModification(id)
+    return getMutableEntityFamily(id.clazz).getEntityDataForModification(id)
   }
 
   fun <T : TypedEntity> add(newEntity: PEntityData<T>, clazz: Class<T>) {

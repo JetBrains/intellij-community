@@ -302,7 +302,7 @@ internal class PEntityStorageBuilder(
     accumulateEntitiesToRemove(idx, accumulator)
 
     for (id in accumulator) {
-      entitiesByType.remove(id.arrayId, id.clazz.java)
+      entitiesByType.remove(id.arrayId, id.clazz)
       val entityData = entityDataById(id)
       if (entityData is PSoftLinkable) {
         for (link in entityData.getLinks()) {
@@ -495,7 +495,7 @@ internal class PEntityStorageBuilder(
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
             clonedEntity.id = localNode.id
-            this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz.java)
+            this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz)
             val pid = clonedEntity.createPid()
             val parents = this.refs.getParentRefsOfChild(pid)
             val children = this.refs.getChildrenRefsOfParentBy(pid)
@@ -507,14 +507,14 @@ internal class PEntityStorageBuilder(
         }
         else {
           // This is a new entity for this store. Perform add operation
-          val entityClass = ClassConversion.entityDataToEntity(matchedEntityData::class).java
+          val entityClass = ClassConversion.entityDataToEntity(matchedEntityData.javaClass)
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, entityClass)
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid
           val parents = this.refs.getParentRefsOfChild(newPid)
           val children = this.refs.getChildrenRefsOfParentBy(newPid)
           updateIndices(oldPid, newPid, replaceWith)
-          updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz.java, children, parents)) }
+          updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz, children, parents)) }
         }
       }
     }
@@ -523,7 +523,7 @@ internal class PEntityStorageBuilder(
     //   After previous operation localMatchedEntities contain only entities that exist in local store, but don't exist in replaceWith store.
     //   Those entities should be just removed.
     for (localEntity in localMatchedEntities.values()) {
-      val entityClass = ClassConversion.entityDataToEntity(localEntity::class).java
+      val entityClass = ClassConversion.entityDataToEntity(localEntity.javaClass)
       this.entitiesByType.remove(localEntity.id, entityClass)
       val entityId = localEntity.createPid()
       removeFromIndices(entityId)
@@ -628,14 +628,14 @@ internal class PEntityStorageBuilder(
       when (change) {
         is ChangeEntry.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as PTypedEntity
-          changes[addedEntity.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
+          changes[addedEntity.id] = addedEntity.id.clazz to EntityChange.Added(addedEntity)
         }
         is ChangeEntry.RemoveEntity -> {
           val removedData = originalImpl.entityDataById(change.id)
           val oldChange = changes.remove(change.id)
           if (oldChange?.second !is EntityChange.Added && removedData != null) {
             val removedEntity = removedData.createEntity(originalImpl) as PTypedEntity
-            changes[removedEntity.id] = change.id.clazz.java to EntityChange.Removed(removedEntity)
+            changes[removedEntity.id] = change.id.clazz to EntityChange.Removed(removedEntity)
           }
         }
         is ChangeEntry.ReplaceEntity<*> -> {
@@ -643,14 +643,14 @@ internal class PEntityStorageBuilder(
           val oldChange = changes.remove(id)
           if (oldChange?.second is EntityChange.Added) {
             val addedEntity = change.newData.createEntity(this) as PTypedEntity
-            changes[addedEntity.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
+            changes[addedEntity.id] = addedEntity.id.clazz to EntityChange.Added(addedEntity)
           }
           else {
             val oldData = originalImpl.entityDataById(id)
             if (oldData != null) {
               val replacedData = oldData.createEntity(originalImpl) as PTypedEntity
               val replaceToData = change.newData.createEntity(this) as PTypedEntity
-              changes[replacedData.id] = replacedData.id.clazz.java to EntityChange.Replaced(replacedData, replaceToData)
+              changes[replacedData.id] = replacedData.id.clazz to EntityChange.Replaced(replacedData, replaceToData)
             }
           }
         }
@@ -719,7 +719,7 @@ internal class PEntityStorageBuilder(
           updateIndices(outdatedId, newData.createPid(), builder)
           updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedChildren, updatedParents)) }
           if (this.entityDataById(usedPid) != null) {
-            replaceEntityWithRefs(newData, outdatedId.clazz.java, updatedChildren, updatedParents)
+            replaceEntityWithRefs(newData, outdatedId.clazz, updatedChildren, updatedParents)
           }
         }
       }
@@ -843,8 +843,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
-        assertResolvable(parentId.clazz.java, parentId.arrayId)
-        assertResolvable(childId.clazz.java, childId.arrayId)
+        assertResolvable(parentId.clazz, parentId.arrayId)
+        assertResolvable(childId.clazz, childId.arrayId)
 
         //  1.1) For abstract containers: PId has the class of ConnectionId
         assertCorrectEntityClass(connectionId.parentClass, parentId)
@@ -855,8 +855,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     refs.abstractOneToOneContainer.forEach { (connectionId, map) ->
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
-        assertResolvable(parentId.clazz.java, parentId.arrayId)
-        assertResolvable(childId.clazz.java, childId.arrayId)
+        assertResolvable(parentId.clazz, parentId.arrayId)
+        assertResolvable(childId.clazz, childId.arrayId)
 
         //  1.1) For abstract containers: PId has the class of ConnectionId
         assertCorrectEntityClass(connectionId.parentClass, parentId)
@@ -872,7 +872,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   }
 
   private fun assertCorrectEntityClass(connectionClass: Class<out TypedEntity>, entityId: PId<out TypedEntity>) {
-    assert(connectionClass.isAssignableFrom(entityId.clazz.java)) {
+    assert(connectionClass.isAssignableFrom(entityId.clazz)) {
       "Entity storage with connection class $connectionClass contains entity data of wrong type $entityId"
     }
   }
@@ -882,11 +882,11 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   }
 
   internal fun <E : TypedEntity> entityDataById(id: PId<E>): PEntityData<E>? {
-    return entitiesByType[id.clazz.java]?.get(id.arrayId)
+    return entitiesByType[id.clazz]?.get(id.arrayId)
   }
 
   internal fun <E : TypedEntity> entityDataByIdOrDie(id: PId<E>): PEntityData<E> {
-    return entitiesByType[id.clazz.java]?.get(id.arrayId) ?: error("Cannot find an entity by id $id")
+    return entitiesByType[id.clazz]?.get(id.arrayId) ?: error("Cannot find an entity by id $id")
   }
 
   override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
@@ -975,7 +975,7 @@ internal object ClassConversion {
 
   private val modifiableToEntityCache = HashMap<KClass<*>, KClass<*>>()
   private val entityToEntityDataCache = HashMap<KClass<*>, KClass<*>>()
-  private val entityDataToEntityCache = HashMap<KClass<*>, KClass<*>>()
+  private val entityDataToEntityCache = HashMap<Class<*>, Class<*>>()
   private val entityDataToModifiableEntityCache = HashMap<KClass<*>, KClass<*>>()
   private val packageCache = HashMap<KClass<*>, String>()
 
@@ -996,10 +996,10 @@ internal object ClassConversion {
     } as KClass<PEntityData<T>>
   }
 
-  fun <M : PEntityData<out T>, T : TypedEntity> entityDataToEntity(clazz: KClass<out M>): KClass<T> {
+  fun <M : PEntityData<out T>, T : TypedEntity> entityDataToEntity(clazz: Class<out M>): Class<T> {
     return entityDataToEntityCache.getOrPut(clazz) {
-      (Class.forName(clazz.java.name.dropLast(4)) as Class<T>).kotlin
-    } as KClass<T>
+      (Class.forName(clazz.name.dropLast(4)) as Class<T>)
+    } as Class<T>
   }
 
   fun <D : PEntityData<T>, T : TypedEntity> entityDataToModifiableEntity(clazz: KClass<out D>): KClass<ModifiableTypedEntity<T>> {

@@ -342,7 +342,7 @@ internal sealed class AbstractRefsTable {
 
   fun <SUBT : TypedEntity> getParentRefsOfChild(childId: PId<out SUBT>): ParentConnectionsInfo<SUBT> {
     val childArrayId = childId.arrayId
-    val childClass = childId.clazz.java
+    val childClass = childId.clazz
 
     val res = HashMap<ConnectionId<TypedEntity, SUBT>, PId<TypedEntity>>()
 
@@ -352,7 +352,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToMany) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass.kotlin))
+      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass))
       if (existingValue != null) error("This parent already exists")
     }
 
@@ -362,7 +362,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass.kotlin))
+      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass))
       if (existingValue != null) error("This parent already exists")
     }
 
@@ -391,7 +391,7 @@ internal sealed class AbstractRefsTable {
 
   fun <T : TypedEntity> getChildrenRefsOfParentBy(parentId: PId<out T>): ChildrenConnectionsInfo<T> {
     val parentArrayId = parentId.arrayId
-    val parentClass = parentId.clazz.java
+    val parentClass = parentId.clazz
 
     val res = HashMap<ConnectionId<T, TypedEntity>, Set<PId<TypedEntity>>>()
 
@@ -401,7 +401,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToMany) {
       val keys = bimap.getKeys(parentArrayId)
       if (!keys.isEmpty()) {
-        val children = keys.map { PId(it, connectionId.childClass.kotlin) }.toSet()
+        val children = keys.map { PId(it, connectionId.childClass) }.toSet()
         val existingValue = res.putIfAbsent(connectionId, children)
         if (existingValue != null) error("These children already exist")
       }
@@ -413,7 +413,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsValue(parentArrayId)) continue
       val key = bimap.getKey(parentArrayId)
-      val existingValue = res.putIfAbsent(connectionId, setOf(PId(key, connectionId.childClass.kotlin)))
+      val existingValue = res.putIfAbsent(connectionId, setOf(PId(key, connectionId.childClass)))
       if (existingValue != null) error("These children already exist")
     }
 
