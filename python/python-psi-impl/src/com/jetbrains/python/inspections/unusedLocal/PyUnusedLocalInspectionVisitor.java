@@ -20,7 +20,6 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.doctest.PyDocReference;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
@@ -93,7 +92,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   public void visitPyStringLiteralExpression(PyStringLiteralExpression pyString) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(pyString);
     if (owner != null && !(owner instanceof PsiFile)) {
-      final PsiElement instrAnchor = PyDocReference.getControlFlowAnchorForFString(pyString);
+      final PsiElement instrAnchor = getControlFlowAnchorForString(pyString);
       if (instrAnchor == null) return;
       final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
       final int startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, instrAnchor);
@@ -119,6 +118,19 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
+
+  @Nullable
+  private static PsiElement getControlFlowAnchorForString(@NotNull PyStringLiteralExpression host) {
+    final PsiElement comprehensionPart = PsiTreeUtil.findFirstParent(host, element -> {
+      // Any comprehension component and its result are represented as children expressions of the comprehension element.
+      // Only they have respective nodes in CFG and thus can be used as anchors
+      return element instanceof PyExpression && element.getParent() instanceof PyComprehensionElement;
+    });
+    if (comprehensionPart != null) {
+      return comprehensionPart;
+    }
+    return PsiTreeUtil.getParentOfType(host, PyStatement.class);
   }
 
   private void collectAllWrites(ScopeOwner owner) {
