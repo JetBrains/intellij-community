@@ -234,14 +234,14 @@ public abstract class StructuralSearchProfile {
   /**
    * @return true, if this structural search profile can shorten fully qualified names when replacing.
    */
-  public boolean showShortenFQNames() {
+  public boolean supportsShortenFQNames() {
     return false;
   }
 
   /**
    * @return true, if this structural search profile can use static imports when replacing.
    */
-  public boolean showUseStaticImports() {
+  public boolean supportsUseStaticImports() {
     return false;
   }
 

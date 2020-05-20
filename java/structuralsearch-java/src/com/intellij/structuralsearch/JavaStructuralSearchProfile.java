@@ -305,12 +305,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public boolean showShortenFQNames() {
+  public boolean supportsShortenFQNames() {
     return true;
   }
 
   @Override
-  public boolean showUseStaticImports() {
+  public boolean supportsUseStaticImports() {
     return true;
   }
 

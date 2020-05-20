@@ -463,7 +463,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-        e.getPresentation().setEnabledAndVisible(profile != null && profile.showShortenFQNames());
+        e.getPresentation().setEnabledAndVisible(profile != null && profile.supportsShortenFQNames());
       }
 
       @Override
@@ -483,7 +483,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-        e.getPresentation().setEnabledAndVisible(profile != null && profile.showUseStaticImports());
+        e.getPresentation().setEnabledAndVisible(profile != null && profile.supportsUseStaticImports());
       }
 
       @Override
