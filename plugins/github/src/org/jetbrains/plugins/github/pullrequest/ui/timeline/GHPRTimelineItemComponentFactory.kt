@@ -71,7 +71,7 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
       if (review.bodyHTML.isNotEmpty()) {
         add(HtmlEditorPane(review.bodyHTML))
       }
-      add(GHPRReviewThreadsPanel(reviewThreadsModel) {
+      add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
         GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
       }, VerticalLayout.FILL_HORIZONTAL)
     }

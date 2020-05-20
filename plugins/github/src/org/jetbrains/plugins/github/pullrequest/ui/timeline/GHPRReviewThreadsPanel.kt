@@ -3,62 +3,70 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.util.ui.ComponentWithEmptyText
-import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
-import java.awt.Graphics
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel, private val threadComponentFactory: (GHPRReviewThreadModel) -> JComponent)
-  : JPanel(VerticalLayout(UI.scale(12))), ComponentWithEmptyText {
+object GHPRReviewThreadsPanel {
 
-  private val statusText = object : StatusText(this) {
+  fun create(model: GHPRReviewThreadsModel, threadComponentFactory: (GHPRReviewThreadModel) -> JComponent): JComponent {
+    val panel = JPanel(VerticalLayout(UI.scale(12))).apply {
+      isOpaque = false
+    }
+
+    val loadingPanel = JPanel(SingleComponentCenteringLayout()).apply {
+      isOpaque = false
+      add(JLabel(ApplicationBundle.message("label.loading.page.please.wait")).apply {
+        foreground = UIUtil.getContextHelpForeground()
+      })
+    }
+
+    Controller(model, panel, loadingPanel, threadComponentFactory)
+
+    return panel
+  }
+
+  private class Controller(private val model: GHPRReviewThreadsModel,
+                           private val panel: JPanel,
+                           private val loadingPanel: JPanel,
+                           private val threadComponentFactory: (GHPRReviewThreadModel) -> JComponent) {
     init {
-      text = ApplicationBundle.message("label.loading.page.please.wait")
-    }
-
-    override fun isStatusVisible(): Boolean = model.isEmpty
-  }
-
-  init {
-    isOpaque = false
-
-    model.addListDataListener(object : ListDataListener {
-      override fun intervalRemoved(e: ListDataEvent) {
-        for (i in e.index1 downTo e.index0) {
-          remove(i)
+      model.addListDataListener(object : ListDataListener {
+        override fun intervalRemoved(e: ListDataEvent) {
+          for (i in e.index1 downTo e.index0) {
+            panel.remove(i)
+          }
+          panel.revalidate()
+          panel.repaint()
         }
-        revalidate()
-        repaint()
-      }
 
-      override fun intervalAdded(e: ListDataEvent) {
-        for (i in e.index0..e.index1) {
-          add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+        override fun intervalAdded(e: ListDataEvent) {
+          panel.remove(loadingPanel)
+          for (i in e.index0..e.index1) {
+            panel.add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+          }
+          panel.revalidate()
+          panel.repaint()
         }
-        revalidate()
-        repaint()
-      }
 
-      override fun contentsChanged(e: ListDataEvent) {
-        validate()
-        repaint()
-      }
-    })
+        override fun contentsChanged(e: ListDataEvent) {
+          panel.validate()
+          panel.repaint()
+        }
+      })
 
-    for (i in 0 until model.size) {
-      add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+      if (model.isEmpty) {
+        panel.add(loadingPanel, VerticalLayout.FILL_HORIZONTAL)
+      }
+      else for (i in 0 until model.size) {
+        panel.add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+      }
     }
-  }
-
-  override fun getEmptyText() = statusText
-
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    statusText.paint(this, g)
   }
 }
