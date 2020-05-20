@@ -26,6 +26,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
+import java.security.cert.Certificate;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -461,5 +464,11 @@ public final class PluginClassLoader extends UrlClassLoader {
     int oldSize = myParents.length;
     myParents = ArrayUtil.remove(myParents, classLoader);
     return myParents.length == oldSize - 1;
+  }
+
+  @Override
+  protected ProtectionDomain getProtectionDomain(URL url) {
+    // avoid capturing reference to classloader in AccessControlContext
+    return new ProtectionDomain(new CodeSource(url, (Certificate[])null), null);
   }
 }

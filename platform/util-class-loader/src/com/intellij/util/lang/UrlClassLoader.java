@@ -402,7 +402,17 @@ public class UrlClassLoader extends ClassLoader {
     if (protectionDomain != null) {
       return _defineClass(name, b, protectionDomain);
     }
+    else {
+      protectionDomain = getProtectionDomain(res.getURL());
+      if (protectionDomain != null) {
+        return _defineClass(name, b, protectionDomain);
+      }
+    }
     return _defineClass(name, b);
+  }
+
+  protected ProtectionDomain getProtectionDomain(URL url) {
+    return null;
   }
 
   protected Class<?> _defineClass(final String name, final byte[] b) {
