@@ -13,15 +13,13 @@ import kotlin.reflect.KProperty
 
 class OneToAbstractMany<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: KClass<SUBT>) : ReadOnlyProperty<T, Sequence<SUBT>> {
 
-  private lateinit var connectionId: ConnectionId<T, SUBT>
+  private var connectionId: ConnectionId<T, SUBT>? = null
 
   override fun getValue(thisRef: T, property: KProperty<*>): Sequence<SUBT> {
-    return thisRef.snapshot.extractOneToAbstractManyChildren(connectionId, thisRef.id as PId<T>)
-  }
-
-  operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, Sequence<SUBT>> {
-    connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, ONE_TO_ABSTRACT_MANY, false, false)
-    return this
+    if (connectionId == null) {
+      connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, ONE_TO_ABSTRACT_MANY, false, false)
+    }
+    return thisRef.snapshot.extractOneToAbstractManyChildren(connectionId!!, thisRef.id as PId<T>)
   }
 }
 
@@ -30,21 +28,22 @@ class MutableOneToAbstractMany<T : PTypedEntity, SUBT : PTypedEntity, MODT : PMo
   private val childClass: KClass<SUBT>
 ) : ReadWriteProperty<MODT, Sequence<SUBT>> {
 
-  private lateinit var connectionId: ConnectionId<T, SUBT>
+  private var connectionId: ConnectionId<T, SUBT>? = null
 
   override fun getValue(thisRef: MODT, property: KProperty<*>): Sequence<SUBT> {
-    return thisRef.diff.extractOneToAbstractManyChildren(connectionId, thisRef.id as PId<T>)
+    if (connectionId == null) {
+      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, false, false)
+    }
+    return thisRef.diff.extractOneToAbstractManyChildren(connectionId!!, thisRef.id as PId<T>)
   }
 
   override fun setValue(thisRef: MODT, property: KProperty<*>, value: Sequence<SUBT>) {
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
-    thisRef.diff.updateOneToAbstractManyChildrenOfParent(connectionId, thisRef.id as PId<T>, value)
-  }
-
-  operator fun provideDelegate(thisRef: MODT, property: KProperty<*>): ReadWriteProperty<MODT, Sequence<SUBT>> {
-    connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, false, false)
-    return this
+    if (connectionId == null) {
+      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, false, false)
+    }
+    thisRef.diff.updateOneToAbstractManyChildrenOfParent(connectionId!!, thisRef.id as PId<T>, value)
   }
 }
