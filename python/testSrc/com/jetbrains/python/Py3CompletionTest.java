@@ -402,7 +402,10 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-33254, PY-12339, PY-40834
   public void testTypedParameterStringPath() {
-    doMultiFileTest();
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
   @Override
