@@ -20,13 +20,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -122,43 +122,24 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
     return new UseOfPropertiesAsHashtableVisitor();
   }
 
-  private static class UseOfPropertiesAsHashtableVisitor
-    extends BaseInspectionVisitor {
+  private static class UseOfPropertiesAsHashtableVisitor extends BaseInspectionVisitor {
+    private static final CallMatcher HASH_TABLE_CALLS =
+      CallMatcher.exactInstanceCall("java.util.Hashtable", "put", "get", "putAll", "putIfAbsent");
 
     @Override
     public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (!(HardcodedMethodConstants.PUT.equals(methodName) ||
-            HardcodedMethodConstants.PUTALL.equals(methodName) ||
-            HardcodedMethodConstants.GET.equals(methodName))) {
-        return;
+      @NotNull PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      if (!HASH_TABLE_CALLS.test(call)) return;
+      final PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) return;
+      if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_UTIL_PROPERTIES)) return;
+      if ("putAll".equals(call.getMethodExpression().getReferenceName())) {
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        // putAll with properties argument is probably safe, assuming that the original Properties object was safely filled
+        if (args.length == 1 && TypeUtils.typeEquals(CommonClassNames.JAVA_UTIL_PROPERTIES, args[0].getType())) return;
       }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(containingClass,
-                                       "java.util.Hashtable")) {
-        return;
-      }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
-      if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                                CommonClassNames.JAVA_UTIL_PROPERTIES)) {
-        return;
-      }
-      registerMethodCallError(expression, expression);
+      registerMethodCallError(call, call);
     }
   }
 }
