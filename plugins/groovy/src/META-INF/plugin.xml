@@ -1309,9 +1309,6 @@
       <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="AddFrameworkSupport"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
-
-    <action id="groovy.scripting.shell"
-            class="org.jetbrains.plugins.groovy.ide.GroovyScriptingShellAction"/>
   </actions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

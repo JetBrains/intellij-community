@@ -253,8 +253,6 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "https://groovy-lang.org/"),
     new LibraryLicense(name: "Groovy NIO", libraryName: "org.codehaus.groovy:groovy-nio",
                        license: "Apache 2.0", url: "https://groovy-lang.org/"),
-    new LibraryLicense(name: "Groovy Shell", libraryName: "org.codehaus.groovy:groovy-groovysh",
-                       license: "Apache 2.0", url: "https://groovy-lang.org/"),
     new LibraryLicense(name: "Groovy Templates", libraryName: "org.codehaus.groovy:groovy-templates",
                        license: "Apache 2.0", url: "https://groovy-lang.org/"),
     new LibraryLicense(name: "Groovy XML", libraryName: "org.codehaus.groovy:groovy-xml",

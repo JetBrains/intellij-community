@@ -42,18 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
     <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="module-library">
-      <library name="org.codehaus.groovy:groovy-groovysh" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-groovysh:2.5.11" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovysh/2.5.11/groovy-groovysh-2.5.11.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovysh/2.5.11/groovy-groovysh-2.5.11-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Trove4j" level="project" />
   </component>
 </module>
