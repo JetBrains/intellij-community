@@ -3,7 +3,9 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
@@ -33,13 +35,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
   private final InitialTypeProvider myInitialTypeProvider;
+  private final PsiManager myManager;
   private final int lastInterestingInstructionIndex;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull DFAFlowInfo flowInfo,
                   @NotNull InferenceCache cache,
+                  @NotNull PsiManager manager,
                   @NotNull InitialTypeProvider initialTypeProvider) {
     myFlow = flow;
+    myManager = manager;
     myFlowInfo = flowInfo;
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
@@ -164,9 +169,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       }
     }
 
-    List<GrControlFlowOwner> flows = myFlowInfo.getReassignmentLocations().get(descriptor);
-    if (flows != null) {
-      type = TypeDfaInstanceUtilKt.weakenTypeIfUsedInUnknownClosure(descriptor, type, instruction, flows);
+    DFAType existingDfaType = state.getVariableType(descriptor);
+    if (existingDfaType != null) {
+      type = type.addFlushingType(existingDfaType.getFlushingType(), myManager);
     }
     state.putType(descriptor, type);
   }
@@ -194,7 +199,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     Set<? extends VariableDescriptor> foreignDescriptors =
       getForeignVariableDescriptors(blockFlowOwner, ReadWriteVariableInstruction::isWrite);
-    if (myFlowInfo.getInterestingDescriptors().stream().noneMatch(foreignDescriptors::contains)) {
+    Collection<VariableDescriptor> foreignInterestingDescriptors =
+      ContainerUtil.intersection(foreignDescriptors, myFlowInfo.getInterestingDescriptors());
+    if (foreignInterestingDescriptors.isEmpty()) {
       return;
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
@@ -216,6 +223,17 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           }
         });
         break;
+    }
+    if (kind == InvocationKind.UNKNOWN) {
+      for (VariableDescriptor descriptor : foreignInterestingDescriptors) {
+        PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, descriptor);
+        if (upperBoundByWrites != PsiType.NULL) {
+          DFAType currentType = state.getVariableType(descriptor);
+          currentType = currentType == null ? DFAType.create(null) : currentType;
+          DFAType flushedType = currentType.addFlushingType(upperBoundByWrites, myManager);
+          state.putType(descriptor, flushedType);
+        }
+      }
     }
   }
 

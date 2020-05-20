@@ -67,10 +67,28 @@ public class DFAType {
 
   private final PsiType primary;
 
+  /**
+   * Flushing type is required for handling consequences of assignments inside closures
+   * with unknown {@link org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind}.
+   * It is possible that such closures will be invoked in multithreaded environment, so every
+   * reassigned descriptor from these closures will have two types:
+   * the primary one, that appears in usual flow, and the flushing one,
+   * that is a LUB of all assignments in a dangling closure.
+   * <p>
+   * Actual type of the variable is a LUB of primary and flushing type.
+   */
+  private final @Nullable PsiType flushingType;
+
   private final List<Mixin> mixins = new ArrayList<>();
 
   private DFAType(@Nullable PsiType primary) {
     this.primary = primary;
+    flushingType = PsiType.NULL;
+  }
+
+  private DFAType(@Nullable PsiType primary, @Nullable PsiType flushingType) {
+    this.primary = primary;
+    this.flushingType = flushingType;
   }
 
   public void addMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
@@ -79,6 +97,17 @@ public class DFAType {
     }
 
     mixins.add(new Mixin(mixin, instruction, instruction != null && instruction.isNegated()));
+  }
+
+  public DFAType addFlushingType(@Nullable PsiType flushingType, @NotNull PsiManager manager) {
+    PsiType newFlushingType = GenericsUtil.getLeastUpperBound(this.flushingType, flushingType, manager);
+    DFAType newDFAType = new DFAType(primary, newFlushingType);
+    newDFAType.mixins.addAll(mixins);
+    return newDFAType;
+  }
+
+  public @Nullable PsiType getFlushingType() {
+    return flushingType;
   }
 
   @Override
@@ -108,7 +137,7 @@ public class DFAType {
   @Contract("-> new")
   @NotNull
   public DFAType copy() {
-    final DFAType type = new DFAType(primary);
+    final DFAType type = new DFAType(primary, flushingType);
     type.mixins.addAll(mixins);
     return type;
   }
@@ -128,12 +157,13 @@ public class DFAType {
   }
 
   @Nullable
-  public PsiType getResultType() {
-    if (mixins.isEmpty()) return primary;
+  public PsiType getResultType(@NotNull PsiManager manager) {
+    PsiType flushedPrimary = GenericsUtil.getLeastUpperBound(primary, flushingType, manager);
+    if (mixins.isEmpty()) return flushedPrimary;
 
     List<PsiType> types = new ArrayList<>();
-    if (primary != null) {
-      types.add(primary);
+    if (flushedPrimary != null) {
+      types.add(flushedPrimary);
     }
     for (Mixin mixin : mixins) {
       if (mixin.myNegated) {
@@ -163,7 +193,8 @@ public class DFAType {
     if (t1.equals(t2)) return t1;
 
     final PsiType primary = TypesUtil.getLeastUpperBoundNullable(t1.primary, t2.primary, manager);
-    final DFAType type = new DFAType(primary);
+    final PsiType commonFlushingType = GenericsUtil.getLeastUpperBound(t1.flushingType, t2.flushingType, manager);
+    final DFAType type = new DFAType(primary, commonFlushingType);
     final PsiType type1 = reduce(t1.mixins);
     final PsiType type2 = reduce(t2.mixins);
     if (type1 != null && type2 != null) {

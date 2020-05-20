@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +88,9 @@ class TypeDfaState {
         else {
           myVarTypes.put(descriptor, null);
         }
+      } else if (t1 != null && t1.getFlushingType() != null && !t1.getFlushingType().equals(PsiType.NULL)) {
+        DFAType dfaType = DFAType.create(null);
+        myVarTypes.put(descriptor, dfaType.addFlushingType(t1.getFlushingType(), manager));
       }
     }
   }

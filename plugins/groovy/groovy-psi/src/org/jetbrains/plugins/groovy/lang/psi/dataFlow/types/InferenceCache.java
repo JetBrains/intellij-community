@@ -99,14 +99,15 @@ class InferenceCache {
       }
     }
     DFAType dfaType = getCachedInferredType(descriptor, instruction);
-    return dfaType == null ? null : dfaType.getResultType();
+    return dfaType == null ? null : dfaType.getResultType(myScope.getManager());
   }
 
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
                                             @NotNull DFAFlowInfo flowInfo) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, new InitialTypeProvider(owner, flowInfo));
+    final TypeDfaInstance dfaInstance =
+      new TypeDfaInstance(flow, flowInfo, this, owner.getManager(), new InitialTypeProvider(owner, flowInfo));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }

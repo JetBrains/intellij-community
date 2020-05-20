@@ -28,7 +28,7 @@ class PartialContext(private val types: Map<VariableDescriptor, DFAType>) : Infe
   override fun getVariableType(ref: GrReferenceExpression): PsiType? {
     val descriptor = ref.createDescriptor()
     if (types.containsKey(descriptor)) {
-      return types[descriptor]?.resultType
+      return types[descriptor]?.getResultType(ref.manager)
     }
     else {
       return null
