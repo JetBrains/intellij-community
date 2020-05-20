@@ -167,7 +167,12 @@ public final class JBCefApp {
       };
       // warn: do not change to Registry.is(), the method used at startup
       if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
-        return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled'");
+        return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
+      }
+      if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
+      {
+        return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
       String version;
       try {
