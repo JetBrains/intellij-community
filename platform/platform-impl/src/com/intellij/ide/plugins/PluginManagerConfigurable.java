@@ -454,11 +454,11 @@ public class PluginManagerConfigurable
           @Override
           protected List<String> getAttributes() {
             List<String> attributes = new ArrayList<>();
-            attributes.add("/tag:");
-            attributes.add("/sortBy:");
-            attributes.add("/vendor:");
+            attributes.add(SearchWords.TAG.getValue());
+            attributes.add(SearchWords.SORT_BY.getValue());
+            attributes.add(SearchWords.ORGANIZATION.getValue());
             if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
-              attributes.add("/repository:");
+              attributes.add(SearchWords.REPOSITORY.getValue());
             }
             return attributes;
           }
@@ -466,8 +466,10 @@ public class PluginManagerConfigurable
           @Nullable
           @Override
           protected List<String> getValues(@NotNull String attribute) {
-            switch (attribute) {
-              case "/tag:":
+            SearchWords word = SearchWords.find(attribute);
+            if (word == null) return null;
+            switch (word) {
+              case TAG:
                 if (ContainerUtil.isEmpty(myTagsSorted)) { // XXX
                   Set<String> allTags = new HashSet<>();
                   for (IdeaPluginDescriptor descriptor : getCustomRepositoryPlugins()) {
@@ -489,9 +491,9 @@ public class PluginManagerConfigurable
                   myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
                 }
                 return myTagsSorted;
-              case "/sortBy:":
+              case SORT_BY:
                 return Arrays.asList("downloads", "name", "rating", "updated");
-              case "/vendor:":
+              case ORGANIZATION:
                 if (ContainerUtil.isEmpty(myVendorsSorted)) { // XXX
                   List<String> customRepositoriesVendors = MyPluginModel.getVendors(getCustomRepositoryPlugins());
                   LinkedHashSet<String> vendors = new LinkedHashSet<>(customRepositoriesVendors);
@@ -506,7 +508,7 @@ public class PluginManagerConfigurable
                   myVendorsSorted = new ArrayList<>(vendors);
                 }
                 return myVendorsSorted;
-              case "/repository:":
+              case REPOSITORY:
                 return UpdateSettings.getInstance().getPluginHosts();
             }
             return null;
@@ -925,16 +927,26 @@ public class PluginManagerConfigurable
           @NotNull
           @Override
           protected List<String> getAttributes() {
-            return Arrays.asList("/downloaded", "/outdated", "/enabled", "/disabled", "/invalid", "/bundled", "/vendor:", "/tag:");
+            return Arrays
+              .asList(
+                "/downloaded",
+                "/outdated",
+                "/enabled",
+                "/disabled",
+                "/invalid",
+                "/bundled",
+                SearchWords.ORGANIZATION.getValue(),
+                SearchWords.TAG.getValue()
+              );
           }
 
           @Nullable
           @Override
           protected List<String> getValues(@NotNull String attribute) {
-            if ("/vendor:".equals(attribute)) {
+            if (SearchWords.ORGANIZATION.getValue().equals(attribute)) {
               return myPluginModel.getVendors();
             }
-            if ("/tag:".equals(attribute)) {
+            if (SearchWords.TAG.getValue().equals(attribute)) {
               return myPluginModel.getTags();
             }
             return null;
@@ -1705,7 +1717,7 @@ public class PluginManagerConfigurable
     }
 
     return () -> {
-      boolean marketplace = option != null && option.startsWith("/tag:");
+      boolean marketplace = option != null && option.startsWith(SearchWords.TAG.getValue());
       int tabIndex = marketplace ? MARKETPLACE_TAB : INSTALLED_TAB;
 
       if (myTabHeaderComponent.getSelectionTab() != tabIndex) {

@@ -498,7 +498,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       myVendor.show(vendor, () -> mySearchListener
-        .linkSelected(null, "/vendor:" + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
+        .linkSelected(null, SearchWords.ORGANIZATION.getValue() + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
     }
 
     showLicensePanel();

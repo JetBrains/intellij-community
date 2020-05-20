@@ -115,16 +115,16 @@ public abstract class SearchQueryParser {
     }
 
     protected void handleAttribute(@NotNull String name, @NotNull String value) {
-      if (name.equals("/tag:")) {
+      if (name.equals(SearchWords.TAG.getValue())) {
         tags.add(value);
       }
-      else if (name.equals("/sortBy:")) {
+      else if (name.equals(SearchWords.SORT_BY.getValue())) {
         sortBy = value;
       }
-      else if (name.equals("/repository:")) {
+      else if (name.equals(SearchWords.REPOSITORY.getValue())) {
         repositories.add(value);
       }
-      else if (name.equals("/vendor:")) {
+      else if (name.equals(SearchWords.ORGANIZATION.getValue())) {
         vendors.add(value);
       }
     }
@@ -201,7 +201,7 @@ public abstract class SearchQueryParser {
       while (index < size) {
         String name = words.get(index++);
         if (name.startsWith("/")) {
-          if (name.equals("/vendor:") || name.equals("/tag:")) {
+          if (name.equals(SearchWords.ORGANIZATION.getValue()) || name.equals(SearchWords.TAG.getValue())) {
             if (index < size) {
               handleAttribute(name, words.get(index++));
             }
@@ -241,10 +241,10 @@ public abstract class SearchQueryParser {
       else if ("/outdated".equals(name)) {
         needUpdate = true;
       }
-      else if ("/vendor:".equals(name)) {
+      else if (SearchWords.ORGANIZATION.getValue().equals(name)) {
         vendors.add(value);
       }
-      else if ("/tag:".equals(name)) {
+      else if (SearchWords.TAG.getValue().equals(name)) {
         tags.add(value);
       }
     }
