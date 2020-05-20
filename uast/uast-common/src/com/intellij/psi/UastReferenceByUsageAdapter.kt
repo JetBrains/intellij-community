@@ -2,16 +2,24 @@
 package com.intellij.psi
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.model.search.SearchService
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.uast.UElementPattern
 import com.intellij.patterns.uast.injectionHostUExpression
+import com.intellij.psi.impl.cache.impl.id.IdIndex
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -80,21 +88,65 @@ private fun getOriginalUastParent(element: UElement): UElement? {
   return original.toUElement()?.uastParent
 }
 
-private fun getDirectVariableUsages(uVar: UVariable): Collection<PsiElement> {
-  val variablePsi = uVar.sourcePsi ?: return emptyList()
-  return CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
-    Result.createSingleDependency(findDirectVariableUsages(variablePsi), PsiModificationTracker.MODIFICATION_COUNT)
+private fun getDirectVariableUsages(uVar: UVariable): Sequence<PsiElement> {
+  val variablePsi = uVar.sourcePsi ?: return emptySequence()
+
+  val cachedValue = CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
+    val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
+    Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
   })
+  return cachedValue.asSequence().mapNotNull(PsiAnchor::retrieve)
 }
 
-private fun findDirectVariableUsages(variablePsi: PsiElement): Collection<PsiElement> {
-  val variableName = variablePsi.toUElementOfType<UVariable>()?.name
-  if (variableName.isNullOrEmpty()) return emptyList()
-  val file = variablePsi.containingFile ?: return emptyList()
+private const val MAX_NON_LOCAL_USAGE_FILES_TO_CHECK = 5
+private const val MAX_USAGES_TO_PROCESS_PER_FILE = 10
+private val STRICT_CONSTANT_NAME_PATTERN = Regex("[\\p{Upper}_0-9]+")
 
+private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiElement> {
+  val uVariable = variablePsi.toUElementOfType<UVariable>()
+  val variableName = uVariable?.name
+  if (variableName.isNullOrEmpty()) return emptyList()
+  val currentFile = variablePsi.containingFile ?: return emptyList()
+
+  val localUsages = findVariableUsages(variablePsi, variableName, arrayOf(currentFile))
+
+  // non-local searches are limited for real-life use cases, we do not try to find all possible usages
+  if (uVariable is ULocalVariable
+      || (variablePsi is PsiModifierListOwner && variablePsi.hasModifier(JvmModifier.PRIVATE))
+      || !STRICT_CONSTANT_NAME_PATTERN.matches(variableName)) {
+    return localUsages
+  }
+
+  val module = ModuleUtilCore.findModuleForPsiElement(variablePsi) ?: return localUsages
+  val uastScope = getUastScope(module.moduleScope)
+
+  val searchHelper = PsiSearchHelper.getInstance(variablePsi.project)
+  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, null, null) != PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
+    return localUsages
+  }
+
+  val containingFiles = FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, IdIndexEntry(variableName, true), uastScope)
+  val useScope = variablePsi.useScope
+
+  val psiManager = PsiManager.getInstance(module.project)
+  val filesToSearch = containingFiles.asSequence()
+    .filter { useScope.contains(it) }
+    .sortedBy { it.canonicalPath }
+    .mapNotNull { psiManager.findFile(it) }
+    .filter { it != currentFile }
+    .take(MAX_NON_LOCAL_USAGE_FILES_TO_CHECK)
+    .toList()
+    .toTypedArray()
+
+  val nonLocalUsages = findVariableUsages(variablePsi, variableName, filesToSearch)
+
+  return ContainerUtil.concat(localUsages, nonLocalUsages)
+}
+
+private fun findVariableUsages(variablePsi: PsiElement, variableName: String, files: Array<PsiFile>): Collection<PsiElement> {
   return SearchService.getInstance()
     .searchWord(variablePsi.project, variableName)
-    .inScope(LocalSearchScope(arrayOf(file), null, true))
+    .inScope(LocalSearchScope(files, null, true))
     .buildQuery { _, occurrencePsi, _ ->
       // we get identifiers and need to process their parents, see IDEA-232166
       val uRef = occurrencePsi.parent.findContaining(UReferenceExpression::class.java)
@@ -107,5 +159,13 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Collection<PsiEle
         }
       }
       emptyList<PsiElement>()
-    }.findAll()
+    }
+    .asSequence()
+    .take(MAX_USAGES_TO_PROCESS_PER_FILE)
+    .toList()
+}
+
+private fun getUastScope(originalScope: GlobalSearchScope): GlobalSearchScope {
+  val fileTypes = UastLanguagePlugin.getInstances().map { it.language.associatedFileType }.toTypedArray()
+  return GlobalSearchScope.getScopeRestrictedByFileTypes(originalScope, *fileTypes)
 }
