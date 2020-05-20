@@ -20,7 +20,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "  }", "int",
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Range:</td><td>Integer.MIN_VALUE or >= 0</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Range:</td><td>Integer.MIN_VALUE or &gt;= 0</td></tr>" +
            "</table>");
   }
 
@@ -112,7 +112,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "}", "String", 
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>String</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Value (one of):</td><td>\"bar\", \"foo\"</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Value (one of):</td><td>&quot;bar&quot;, &quot;foo&quot;</td></tr>" +
            "</table>");
   }
   
@@ -124,7 +124,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "}", "String", 
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>String</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Not equal to:</td><td>\"bar\", \"foo\"</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Not equal to:</td><td>&quot;bar&quot;, &quot;foo&quot;</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
            "</table>");
   }
@@ -139,6 +139,18 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>X</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Not equal to:</td><td>X.A</td></tr>" +
+           "</table>");
+  }
+  
+  public void testEscaping() {
+    doTest("public static void main(int i) {\n" +
+           "  if (i < 50) {\n" +
+           "    System.out.println(<selection>i</selection>);\n" +
+           "  }\n" +
+           "}", "int", 
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Range:</td><td>&lt;= 49</td></tr>" +
            "</table>");
   }
 
