@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.types.JvmType
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
@@ -11,6 +12,8 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -203,7 +206,7 @@ private fun getContainingClasses(startClass: PsiClass?): List<PsiClass> {
   return getContainingClassesMutable(startClass)
 }
 
-private fun buildVirtualEnvironmentForMethod(method: GrMethod, omitBody: Boolean): Pair<String, Int> {
+private fun buildVirtualEnvironmentForMethod(method: GrMethod, newTypeParameterListText: String?, omitBody: Boolean): Pair<String, Int>? {
   val text = method.containingFile.text
   val containingClasses = getContainingClasses(method.containingClass)
   val classRepresentations = mutableListOf<String>()
@@ -218,33 +221,52 @@ private fun buildVirtualEnvironmentForMethod(method: GrMethod, omitBody: Boolean
     .joinToString("") { (classDef, fields) -> "$classDef {\n $fields \n " }
   val footer = " } ".repeat(containingClasses.size)
   val methodText = if (omitBody) {
-    method.text.removeSuffix(method.block?.text ?: "")
+    method.text?.removeSuffix(method.block?.text ?: "")
   }
   else {
     method.text
-  }
-  return header + methodText + footer to (header.length)
+  } ?: return null
+  val resultMethodText = insertTypeParameterList(method, methodText, newTypeParameterListText)
+  return header + resultMethodText + footer to (header.length)
+}
+
+@Suppress("UnnecessaryVariable")
+private fun insertTypeParameterList(method: GrMethod, methodText: String, newTypeParameterListText: String?): String {
+  val methodStartOffset: Int = method.startOffset
+  val typeParameterList: TextRange? = method.typeParameterList?.textRange?.takeIf { !it.isEmpty }
+  val resultMethodText =
+    if (typeParameterList != null && newTypeParameterListText != null) {
+      val startOffset = typeParameterList.startOffset - methodStartOffset
+      val erasedText = methodText.removeRange(startOffset, typeParameterList.endOffset - methodStartOffset)
+      erasedText.insert(startOffset, newTypeParameterListText)
+    }
+    else if (typeParameterList == null) {
+      var curtext = methodText
+      val insertionOffset = if (method.modifierList.modifierFlags == 0) {
+        curtext = "def $curtext"
+        3
+      }
+      else {
+        method.firstChild.endOffset - methodStartOffset
+      }
+      val actualTypeParameterListText = newTypeParameterListText ?: "<>"
+      curtext.insert(insertionOffset, actualTypeParameterListText)
+    }
+    else {
+      methodText
+    }
+  return resultMethodText
+}
+
+private fun String.insert(position: Int, content: String): String {
+  return "${take(position)}$content${drop(position)}"
 }
 
 fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null, omitBody: Boolean = false): GrMethod? {
-  val (fileText, offset) = buildVirtualEnvironmentForMethod(method, omitBody)
+  val (fileText, offset) = buildVirtualEnvironmentForMethod(method, typeParameterList?.text, omitBody) ?: return null
   val factory = GroovyPsiElementFactory.getInstance(method.project)
   val newFile = factory.createGroovyFile(fileText, false, method)
-  val newMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
-  if (newMethod.hasTypeParameters()) {
-    if (typeParameterList != null) {
-      newMethod.typeParameterList!!.replace(typeParameterList)
-    }
-  }
-  else {
-    if (typeParameterList != null) {
-      newMethod.addAfter(typeParameterList, newMethod.firstChild)
-    }
-    else {
-      newMethod.addAfter(factory.createTypeParameterList(), newMethod.firstChild)
-    }
-  }
-  return newMethod
+  return newFile.findElementAt(offset)?.parentOfType() ?: return null
 }
 
 fun convertToGroovyMethod(method: PsiMethod): GrMethod? {
