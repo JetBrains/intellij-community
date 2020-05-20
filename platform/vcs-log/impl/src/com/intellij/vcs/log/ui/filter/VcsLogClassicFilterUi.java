@@ -33,7 +33,6 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,10 +111,27 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   @NotNull
   public ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(createBranchComponent());
-    actionGroup.add(createUserComponent());
-    actionGroup.add(createDateComponent());
-    actionGroup.add(createStructureFilterComponent());
+
+    FilterActionComponent branchComponent = createBranchComponent();
+    if (branchComponent != null) {
+      actionGroup.add(branchComponent);
+    }
+
+    FilterActionComponent userComponent = createUserComponent();
+    if (userComponent != null) {
+      actionGroup.add(userComponent);
+    }
+
+    FilterActionComponent dateComponent = createDateComponent();
+    if (dateComponent != null) {
+      actionGroup.add(dateComponent);
+    }
+
+    FilterActionComponent structureFilterComponent = createStructureFilterComponent();
+    if (structureFilterComponent != null) {
+      actionGroup.add(structureFilterComponent);
+    }
+
     return actionGroup;
   }
 
@@ -143,22 +159,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myUserFilterModel.setFilter(collection.get(USER_FILTER));
   }
 
-  @NotNull
+  @Nullable
   protected FilterActionComponent createBranchComponent() {
     return new FilterActionComponent(() -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi());
   }
 
-  @NotNull
+  @Nullable
   protected FilterActionComponent createUserComponent() {
     return new FilterActionComponent(() -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi());
   }
 
-  @NotNull
+  @Nullable
   protected FilterActionComponent createDateComponent() {
     return new FilterActionComponent(() -> new DateFilterPopupComponent(myDateFilterModel).initUi());
   }
 
-  @NotNull
+  @Nullable
   protected FilterActionComponent createStructureFilterComponent() {
     return new FilterActionComponent(
       () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi());
