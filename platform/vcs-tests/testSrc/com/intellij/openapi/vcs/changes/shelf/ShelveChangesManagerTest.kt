@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.shelf
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor.ShelfPatchBuilder
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
 import java.io.File
@@ -80,6 +81,25 @@ class ShelveChangesManagerTest : HeavyPlatformTestCase() {
   fun `test undo file deletion`() {
     //correct undo depends on ability to merge 2 shelved lists with separated changes inside
     doTestDelete(myShelvedChangesManager.shelvedChangeLists[0], 1, 1, 3, 1, true)
+  }
+
+  fun `test create patch from shelf`() {
+    val shelvedChangeList = myShelvedChangesManager.shelvedChangeLists[0]
+    shelvedChangeList.loadChangesIfNeeded(project)
+    val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, emptyList())
+    val patches = patchBuilder.buildPatches(project.basePath!!, emptyList(), false, false);
+    val changeSize = shelvedChangeList.changes?.size ?: 0
+    TestCase.assertTrue(patches.size == (changeSize + shelvedChangeList.binaryFiles.size))
+  }
+
+  fun `test create patch from shelved changes`() {
+    val shelvedChangeList = myShelvedChangesManager.shelvedChangeLists[0]
+    shelvedChangeList.loadChangesIfNeeded(project)
+    val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first()).path,
+                               ShelvedWrapper(shelvedChangeList.binaryFiles!!.first()).path)
+    val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, selectedPaths)
+    val patches = patchBuilder.buildPatches(project.basePath!!, emptyList(), false, false);
+    TestCase.assertTrue(patches.size == selectedPaths.size)
   }
 
   private fun doTestUnshelve(changesNum: Int,

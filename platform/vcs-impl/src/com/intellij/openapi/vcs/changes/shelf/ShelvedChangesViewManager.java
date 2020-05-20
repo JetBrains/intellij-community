@@ -486,6 +486,13 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   @NotNull
+  public static List<ShelvedChangeList> getExactlySelectedLists(@NotNull final DataContext dataContext) {
+    ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
+    if (shelvedChangeTree == null) return emptyList();
+    return StreamEx.of(VcsTreeModelData.exactlySelected(shelvedChangeTree).userObjectsStream(ShelvedChangeList.class)).toList();
+  }
+
+  @NotNull
   public static List<ShelvedChange> getShelveChanges(@NotNull final DataContext dataContext) {
     return notNullize(dataContext.getData(SHELVED_CHANGE_KEY));
   }
@@ -500,7 +507,7 @@ public class ShelvedChangesViewManager implements Disposable {
     ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
     if (shelvedChangeTree == null) return emptyList();
     return StreamEx.of(VcsTreeModelData.selected(shelvedChangeTree).userObjectsStream(ShelvedWrapper.class))
-      .map(ShelvedWrapper::getRequestName).toList();
+      .map(ShelvedWrapper::getPath).toList();
   }
 
   private static class MyShelveDeleteProvider implements DeleteProvider {
