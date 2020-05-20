@@ -19,12 +19,8 @@ import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.SideBorder
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -33,6 +29,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -46,16 +43,18 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
-import org.jetbrains.plugins.github.ui.GHListLoaderPanel
+import org.jetbrains.plugins.github.ui.GHHandledErrorPanelModel
+import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
-import java.awt.event.AdjustmentListener
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 
 internal class GHPREditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
@@ -80,6 +79,16 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider.reviewData, disposable)
 
     val loader = dataProvider.acquireTimelineLoader(disposable)
+    val errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
+      loader.reset()
+    }
+    val errorModel = GHHandledErrorPanelModel(GithubBundle.message("pull.request.timeline.cannot.load"),
+                                              errorHandler).apply {
+      error = loader.error
+    }
+    loader.addErrorChangeListener(disposable) {
+      errorModel.error = loader.error
+    }
 
     dataProvider.detailsData.loadDetails(disposable) {
       it.handleOnEdt(disposable) { pr, _ ->
@@ -123,80 +132,76 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     }
     val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
       border = JBUI.Borders.empty(8, 0)
-      isVisible = false
+      isVisible = loader.loading
+    }
+    loader.addLoadingStateChangeListener(disposable) {
+      loadingIcon.isVisible = loader.loading
     }
 
-    val timelinePanel = object : ScrollablePanel(), ComponentWithEmptyText {
-      init {
-        isOpaque = false
-        border = JBUI.Borders.empty(24, 20)
+    val errorPanel = GHHtmlErrorPanel.create(errorModel, JComponent.CENTER_ALIGNMENT)
+    val timelinePanel = ScrollablePanel().apply {
+      isOpaque = false
+      border = JBUI.Borders.empty(24, 20)
 
-        val maxWidth = (GithubUIUtil.getFontEM(this) * 42).toInt()
+      val maxWidth = (GithubUIUtil.getFontEM(this) * 42).toInt()
 
-        layout = MigLayout(LC().gridGap("0", "0")
-                             .insets("0", "0", "0", "0")
-                             .fillX()
-                             .flowY(),
-                           AC().size(":$maxWidth:$maxWidth").gap("push"))
+      layout = MigLayout(LC().gridGap("0", "0")
+                           .insets("0", "0", "0", "0")
+                           .fill()
+                           .flowY(),
+                         AC().size(":$maxWidth:$maxWidth").gap("push"))
 
-        emptyText.clear()
+      add(header)
+      add(timeline, CC().growX().minWidth(""))
+      add(errorPanel, CC().hideMode(2).alignX("center"))
+      add(loadingIcon, CC().hideMode(2).alignX("center"))
 
-        add(header)
-        add(timeline, CC().growX().minWidth(""))
-        add(loadingIcon, CC().hideMode(2).alignX("center"))
-
-        if (dataContext.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
-          val commentField = createCommentField(dataProvider.commentsData,
-                                                avatarIconsProvider,
-                                                dataContext.securityService.currentUser)
-          add(commentField, CC().growX())
-        }
+      if (dataContext.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
+        val commentField = createCommentField(dataProvider.commentsData,
+                                              avatarIconsProvider,
+                                              dataContext.securityService.currentUser)
+        add(commentField, CC().growX())
       }
-
-      override fun getEmptyText() = timeline.emptyText
     }
 
-    val loaderPanel = object : GHListLoaderPanel(loader, timelinePanel, disposable, true) {
-      init {
-        errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
-          loader.reset()
+
+    val scrollPane = ScrollPaneFactory.createScrollPane(timelinePanel, true).apply {
+      background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      viewport.isOpaque = false
+      verticalScrollBar.model.addChangeListener(object : ChangeListener {
+        private var firstScroll = true
+
+        override fun stateChanged(e: ChangeEvent) {
+          if (firstScroll && verticalScrollBar.value > 0) firstScroll = false
+          if (!firstScroll) {
+            if (loader.canLoadMore()) {
+              loader.loadMore()
+            }
+          }
         }
-      }
-
-      override val loadingText
-        get() = ""
-
-      override fun createCenterPanel(content: JComponent) = Wrapper(content)
-
-      override fun setLoading(isLoading: Boolean) {
-        loadingIcon.isVisible = isLoading
-      }
+      })
     }.also {
       GithubUIUtil.addUIUpdateListener(it) {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
     }
 
+    loader.addDataListener(disposable, object : GHListLoader.ListDataListener {
+      override fun onAllDataRemoved() {
+        if (scrollPane.isShowing) loader.loadMore()
+      }
+    })
+
     val stateModel = GHPRStateModelImpl(project, dataProvider, detailsModel.value, disposable)
-    val statePanel = GHPRStatePanel(dataContext.securityService, stateModel)
+    val statePanel = GHPRStatePanel(dataContext.securityService, stateModel).apply {
+      border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
+                                                  JBUI.Borders.empty(8))
+    }
     detailsModel.addAndInvokeValueChangedListener {
       statePanel.select(detailsModel.value.state, true)
     }
 
-    val contentPanel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()
-
-    val verticalScrollBar = loaderPanel.scrollPane.verticalScrollBar
-    verticalScrollBar.addAdjustmentListener(AdjustmentListener {
-
-      if (verticalScrollBar.maximum - verticalScrollBar.visibleAmount >= 1) {
-        statePanel.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
-                                                               JBUI.Borders.empty(8))
-      }
-      else {
-        statePanel.border = JBUI.Borders.empty(8)
-      }
-
-    })
+    val contentPanel = JBUI.Panels.simplePanel(scrollPane).addToBottom(statePanel).andTransparent()
 
     mainPanel.setContent(contentPanel)
 

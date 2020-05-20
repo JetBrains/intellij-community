@@ -32,6 +32,18 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
     return builder.toString()
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is GHPRSearchQuery) return false
+
+    if (terms != other.terms) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = terms.hashCode()
+
+
   companion object {
     val DEFAULT = GHPRSearchQuery(listOf(Term.Qualifier.Enum(QualifierName.state, GithubIssueState.open)))
 
@@ -89,6 +101,17 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
    */
   sealed class Term<T : Any>(protected val value: T) {
     abstract val apiValue: String?
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Term<*>) return false
+
+      if (value != other.value) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int = value.hashCode()
 
     class QueryPart(value: String) : Term<String>(value) {
       override val apiValue = this.value
