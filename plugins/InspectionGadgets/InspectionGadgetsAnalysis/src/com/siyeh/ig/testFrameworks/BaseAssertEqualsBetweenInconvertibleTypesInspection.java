@@ -55,11 +55,11 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
     }
 
     private void processAssertEquals(@NotNull PsiMethodCallExpression expression) {
-      processAssertEquals(AssertHint.createAssertEqualsHint(expression, checkTestNG()), expression);
+      processAssertHint(AssertHint.createAssertEqualsHint(expression, checkTestNG()), expression);
     }
 
     private void processAssertSame(@NotNull PsiMethodCallExpression expression) {
-      processAssertEquals(AssertHint.createAssertSameHint(expression, checkTestNG()), expression);
+      processAssertHint(AssertHint.createAssertSameHint(expression, checkTestNG()), expression);
     }
 
     private void processAssertJ(@NotNull PsiMethodCallExpression call) {
@@ -72,7 +72,7 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
       checkConvertibleTypes(call, call.getArgumentList().getExpressions()[0], qualifierCall.getArgumentList().getExpressions()[0]);
     }
 
-    private void processAssertEquals(@Nullable AssertHint assertHint, @NotNull PsiMethodCallExpression expression) {
+    private void processAssertHint(@Nullable AssertHint assertHint, @NotNull PsiMethodCallExpression expression) {
       if (assertHint == null) return;
       PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression secondArgument = assertHint.getSecondArgument();
