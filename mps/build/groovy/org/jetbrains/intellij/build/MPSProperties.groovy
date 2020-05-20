@@ -81,8 +81,6 @@ class MPSProperties extends JetBrainsProductProperties {
                 excludeFromModule("intellij.platform.ide", "messages/FeatureStatisticsBundle.properties")
                 //Removing Idea Tips & Tricks
                 excludeFromModule("intellij.java.ide.resources", "ProductivityFeaturesRegistry.xml")
-                excludeFromModule("intellij.java.resources.en", "tips/*")
-                excludeFromModule("intellij.platform.resources.en", "tips/*")
             }
         } as Consumer<PlatformLayout>
 
