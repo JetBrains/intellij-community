@@ -109,7 +109,7 @@ public class InvokeIntention extends ActionOnFile {
     }
     IntentionAction intention = chooseIntention(env, intentions);
     if (intention == null) return;
-    if (myPolicy.shouldCheckPreview(intention)) {
+    if (myPolicy.shouldCheckPreview(intention) && intention.getElementToMakeWritable(file) == file) {
       checkPreview(intention, editor);
     }
 
