@@ -19,12 +19,12 @@ internal class PChildSampleEntityData : PEntityData<PChildSampleEntity>() {
 internal class PChildSampleEntity(
   val data: String
 ) : PTypedEntity() {
-  val parent: PSampleEntity? by ManyToOne.Nullable(PSampleEntity::class)
+  val parent: PSampleEntity? by ManyToOne.Nullable(PSampleEntity::class.java)
 }
 
 internal class ModifiablePChildSampleEntity : PModifiableTypedEntity<PChildSampleEntity>() {
   var data: String by EntityDataDelegation()
-  var parent: PSampleEntity? by MutableManyToOne.Nullable(PChildSampleEntity::class, PSampleEntity::class)
+  var parent: PSampleEntity? by MutableManyToOne.Nullable(PChildSampleEntity::class.java, PSampleEntity::class.java)
 }
 
 internal fun TypedEntityStorageBuilder.addPChildSampleEntity(stringProperty: String,

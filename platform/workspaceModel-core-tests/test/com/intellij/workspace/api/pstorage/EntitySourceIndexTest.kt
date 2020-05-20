@@ -38,12 +38,12 @@ internal class PChildSourceEntityData : PEntityData<PChildSourceEntity>() {
 }
 
 internal class PChildSourceEntity(val data: String) : PTypedEntity() {
-  val parent: PSourceEntity by ManyToOne.NotNull(PSourceEntity::class)
+  val parent: PSourceEntity by ManyToOne.NotNull(PSourceEntity::class.java)
 }
 
 internal class ModifiablePChildSourceEntity : PModifiableTypedEntity<PChildSourceEntity>() {
   var data: String by EntityDataDelegation()
-  var parent: PSourceEntity by MutableManyToOne.NotNull(PChildSourceEntity::class, PSourceEntity::class)
+  var parent: PSourceEntity by MutableManyToOne.NotNull(PChildSourceEntity::class.java, PSourceEntity::class.java)
 }
 
 class EntitySourceIndexTest {

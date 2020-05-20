@@ -12,25 +12,25 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 class OneToOneParent private constructor() {
-  class NotNull<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: KClass<SUBT>,
+  class NotNull<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: Class<SUBT>,
                                                        val isParentInChildNullable: Boolean) : ReadOnlyProperty<T, SUBT> {
     private var connectionId: ConnectionId<T, SUBT>? = null
 
     override fun getValue(thisRef: T, property: KProperty<*>): SUBT {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, ONE_TO_ONE, isParentInChildNullable, false)
+        connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable, false)
       }
       return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id as PId<T>)!!
     }
   }
 
-  class Nullable<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: KClass<SUBT>,
+  class Nullable<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: Class<SUBT>,
                                                         val isParentInChildNullable: Boolean) : ReadOnlyProperty<T, SUBT?> {
     private var connectionId: ConnectionId<T, SUBT>? = null
 
     override fun getValue(thisRef: T, property: KProperty<*>): SUBT? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, ONE_TO_ONE, isParentInChildNullable, true)
+        connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable, true)
       }
       return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id as PId<T>)
     }
@@ -38,25 +38,25 @@ class OneToOneParent private constructor() {
 }
 
 class OneToOneChild private constructor() {
-  class NotNull<SUBT : PTypedEntity, T : PTypedEntity>(private val parentClass: KClass<T>,
+  class NotNull<SUBT : PTypedEntity, T : PTypedEntity>(private val parentClass: Class<T>,
                                                        val isChildInParentNullable: Boolean) : ReadOnlyProperty<SUBT, T> {
     private var connectionId: ConnectionId<T, SUBT>? = null
 
     override fun getValue(thisRef: SUBT, property: KProperty<*>): T {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, ONE_TO_ONE, false, isChildInParentNullable)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, false, isChildInParentNullable)
       }
       return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id as PId<SUBT>)!!
     }
   }
 
-  class Nullable<SUBT : PTypedEntity, T : PTypedEntity>(private val parentClass: KClass<T>,
+  class Nullable<SUBT : PTypedEntity, T : PTypedEntity>(private val parentClass: Class<T>,
                                                         val isChildInParentNullable: Boolean) : ReadOnlyProperty<SUBT, T?> {
     private var connectionId: ConnectionId<T, SUBT>? = null
 
     override fun getValue(thisRef: SUBT, property: KProperty<*>): T? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, ONE_TO_ONE, true, isChildInParentNullable)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, true, isChildInParentNullable)
       }
       return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id as PId<SUBT>)
     }
@@ -65,8 +65,8 @@ class OneToOneChild private constructor() {
 
 class MutableOneToOneParent private constructor() {
   class NotNull<T : PTypedEntity, SUBT : PTypedEntity, MODT : PModifiableTypedEntity<T>>(
-    private val parentClass: KClass<T>,
-    private val childClass: KClass<SUBT>,
+    private val parentClass: Class<T>,
+    private val childClass: Class<SUBT>,
     private val isParentInChildNullable: Boolean
   ) : ReadWriteProperty<MODT, SUBT> {
 
@@ -91,8 +91,8 @@ class MutableOneToOneParent private constructor() {
   }
 
   class Nullable<T : PTypedEntity, SUBT : PTypedEntity, MODT : PModifiableTypedEntity<T>>(
-    private val parentClass: KClass<T>,
-    private val childClass: KClass<SUBT>,
+    private val parentClass: Class<T>,
+    private val childClass: Class<SUBT>,
     private val isParentInChildNullable: Boolean
   ) : ReadWriteProperty<MODT, SUBT?> {
 
@@ -119,8 +119,8 @@ class MutableOneToOneParent private constructor() {
 
 class MutableOneToOneChild private constructor() {
   class NotNull<T : PTypedEntity, SUBT : PTypedEntity, MODSUBT : PModifiableTypedEntity<SUBT>>(
-    private val childClass: KClass<SUBT>,
-    private val parentClass: KClass<T>,
+    private val childClass: Class<SUBT>,
+    private val parentClass: Class<T>,
     private val isChildInParentNullable: Boolean
   ) : ReadWriteProperty<MODSUBT, T> {
     private var connectionId: ConnectionId<T, SUBT>? = null
@@ -144,8 +144,8 @@ class MutableOneToOneChild private constructor() {
   }
 
   class Nullable<T : PTypedEntity, SUBT : PTypedEntity, MODSUBT : PModifiableTypedEntity<SUBT>>(
-    private val childClass: KClass<SUBT>,
-    private val parentClass: KClass<T>,
+    private val childClass: Class<SUBT>,
+    private val parentClass: Class<T>,
     private val isChildInParentNullable: Boolean
   ) : ReadWriteProperty<MODSUBT, T?> {
     private var connectionId: ConnectionId<T, SUBT>? = null

@@ -10,8 +10,8 @@ import pstorage.containers.LinkedBidirectionalMap
 import kotlin.reflect.KClass
 
 internal class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
-  val parentClass: KClass<T>,
-  val childClass: KClass<SUBT>,
+  val parentClass: Class<T>,
+  val childClass: Class<SUBT>,
   val connectionType: ConnectionType,
   val isParentNullable: Boolean,
   val isChildNullable: Boolean
@@ -29,8 +29,8 @@ internal class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constru
 
     other as ConnectionId<*, *>
 
-    if (parentClass.java != other.parentClass.java) return false
-    if (childClass.java != other.childClass.java) return false
+    if (parentClass != other.parentClass) return false
+    if (childClass != other.childClass) return false
     if (connectionType != other.connectionType) return false
     if (isParentNullable != other.isParentNullable) return false
     if (isChildNullable != other.isChildNullable) return false
@@ -39,8 +39,8 @@ internal class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constru
   }
 
   override fun hashCode(): Int {
-    var result = parentClass.java.hashCode()
-    result = 31 * result + childClass.java.hashCode()
+    var result = parentClass.hashCode()
+    result = 31 * result + childClass.hashCode()
     result = 31 * result + connectionType.hashCode()
     result = 31 * result + isParentNullable.hashCode()
     result = 31 * result + isChildNullable.hashCode()
@@ -52,8 +52,8 @@ internal class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constru
     @Suppress("UNCHECKED_CAST")
     @Synchronized
     fun <T : TypedEntity, SUBT : TypedEntity> create(
-      parentClass: KClass<T>,
-      childClass: KClass<SUBT>,
+      parentClass: Class<T>,
+      childClass: Class<SUBT>,
       connectionType: ConnectionType,
       isParentNullable: Boolean,
       isChildNullable: Boolean
@@ -329,13 +329,13 @@ internal sealed class AbstractRefsTable {
 
   fun <T : TypedEntity, SUBT : TypedEntity> findConnectionId(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT>? {
     // TODO: 07.04.2020 broken for abstract container
-    return (oneToManyContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin }
-            ?: oneToOneContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin }
+    return (oneToManyContainer.keys.find { it.parentClass == parentClass && it.childClass == childClass }
+            ?: oneToOneContainer.keys.find { it.parentClass == parentClass && it.childClass == childClass }
             ?: oneToAbstractManyContainer.keys.find {
-              it.parentClass.java.isAssignableFrom(parentClass) && it.childClass.java.isAssignableFrom(childClass)
+              it.parentClass.isAssignableFrom(parentClass) && it.childClass.isAssignableFrom(childClass)
             }
             ?: abstractOneToOneContainer.keys.find {
-              it.parentClass.java.isAssignableFrom(parentClass) && it.childClass.java.isAssignableFrom(childClass)
+              it.parentClass.isAssignableFrom(parentClass) && it.childClass.isAssignableFrom(childClass)
             })
       as ConnectionId<T, SUBT>?
   }
@@ -347,27 +347,27 @@ internal sealed class AbstractRefsTable {
     val res = HashMap<ConnectionId<TypedEntity, SUBT>, PId<TypedEntity>>()
 
     val filteredOneToMany = oneToManyContainer
-      .filterKeys { it.childClass.java == childClass }
+      .filterKeys { it.childClass == childClass }
       as Map<ConnectionId<TypedEntity, SUBT>, PositiveIntIntBiMap>
     for ((connectionId, bimap) in filteredOneToMany) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass))
+      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass.kotlin))
       if (existingValue != null) error("This parent already exists")
     }
 
     val filteredOneToOne = oneToOneContainer
-      .filterKeys { it.childClass.java == childClass }
+      .filterKeys { it.childClass == childClass }
       as Map<ConnectionId<TypedEntity, SUBT>, IntIntUniqueBiMap>
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass))
+      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass.kotlin))
       if (existingValue != null) error("This parent already exists")
     }
 
     val filteredOneToAbstractMany = oneToAbstractManyContainer
-      .filterKeys { it.childClass.java.isAssignableFrom(childClass) }
+      .filterKeys { it.childClass.isAssignableFrom(childClass) }
       as Map<ConnectionId<TypedEntity, SUBT>, LinkedBidirectionalMap<PId<out SUBT>, PId<TypedEntity>>>
     for ((connectionId, bimap) in filteredOneToAbstractMany) {
       if (!bimap.containsKey(childId)) continue
@@ -377,7 +377,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredAbstractOneToOne = abstractOneToOneContainer
-      .filterKeys { it.childClass.java.isAssignableFrom(childClass) }
+      .filterKeys { it.childClass.isAssignableFrom(childClass) }
       as Map<ConnectionId<TypedEntity, SUBT>, BiMap<PId<out SUBT>, PId<TypedEntity>>>
     for ((connectionId, bimap) in filteredAbstractOneToOne) {
       if (!bimap.containsKey(childId)) continue
@@ -396,29 +396,29 @@ internal sealed class AbstractRefsTable {
     val res = HashMap<ConnectionId<T, TypedEntity>, Set<PId<TypedEntity>>>()
 
     val filteredOneToMany = oneToManyContainer
-      .filterKeys { it.parentClass.java == parentClass }
+      .filterKeys { it.parentClass == parentClass }
       as Map<ConnectionId<T, TypedEntity>, PositiveIntIntBiMap>
     for ((connectionId, bimap) in filteredOneToMany) {
       val keys = bimap.getKeys(parentArrayId)
       if (!keys.isEmpty()) {
-        val children = keys.map { PId(it, connectionId.childClass) }.toSet()
+        val children = keys.map { PId(it, connectionId.childClass.kotlin) }.toSet()
         val existingValue = res.putIfAbsent(connectionId, children)
         if (existingValue != null) error("These children already exist")
       }
     }
 
     val filteredOneToOne = oneToOneContainer
-      .filterKeys { it.parentClass.java == parentClass }
+      .filterKeys { it.parentClass == parentClass }
       as Map<ConnectionId<T, TypedEntity>, IntIntUniqueBiMap>
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsValue(parentArrayId)) continue
       val key = bimap.getKey(parentArrayId)
-      val existingValue = res.putIfAbsent(connectionId, setOf(PId(key, connectionId.childClass)))
+      val existingValue = res.putIfAbsent(connectionId, setOf(PId(key, connectionId.childClass.kotlin)))
       if (existingValue != null) error("These children already exist")
     }
 
     val filteredOneToAbstractMany = oneToAbstractManyContainer
-      .filterKeys { it.parentClass.java.isAssignableFrom(parentClass) }
+      .filterKeys { it.parentClass.isAssignableFrom(parentClass) }
       as Map<ConnectionId<T, TypedEntity>, LinkedBidirectionalMap<PId<TypedEntity>, PId<out T>>>
     for ((connectionId, bimap) in filteredOneToAbstractMany) {
       val keys = bimap.getKeysByValue(parentId) ?: continue
@@ -429,7 +429,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredAbstractOneToOne = abstractOneToOneContainer
-      .filterKeys { it.parentClass.java.isAssignableFrom(parentClass) }
+      .filterKeys { it.parentClass.isAssignableFrom(parentClass) }
       as Map<ConnectionId<T, TypedEntity>, BiMap<PId<TypedEntity>, PId<out T>>>
     for ((connectionId, bimap) in filteredAbstractOneToOne) {
       val key = bimap.inverse().get(parentId)

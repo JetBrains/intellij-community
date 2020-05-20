@@ -77,15 +77,15 @@ class ModuleEntity(
 
   override fun persistentId(): ModuleId = ModuleId(name)
 
-  val sourceRoots: Sequence<SourceRootEntity> by OneToMany(SourceRootEntity::class, false)
+  val sourceRoots: Sequence<SourceRootEntity> by OneToMany(SourceRootEntity::class.java, false)
 
-  val contentRoots: Sequence<ContentRootEntity> by OneToMany(ContentRootEntity::class, false)
+  val contentRoots: Sequence<ContentRootEntity> by OneToMany(ContentRootEntity::class.java, false)
 
-  val customImlData: ModuleCustomImlDataEntity? by OneToOneParent.Nullable(ModuleCustomImlDataEntity::class, false)
+  val customImlData: ModuleCustomImlDataEntity? by OneToOneParent.Nullable(ModuleCustomImlDataEntity::class.java, false)
 
-  val groupPath: ModuleGroupPathEntity? by OneToOneParent.Nullable(ModuleGroupPathEntity::class, false)
+  val groupPath: ModuleGroupPathEntity? by OneToOneParent.Nullable(ModuleGroupPathEntity::class.java, false)
 
-  val javaSettings: JavaModuleSettingsEntity? by OneToOneParent.Nullable(JavaModuleSettingsEntity::class, false)
+  val javaSettings: JavaModuleSettingsEntity? by OneToOneParent.Nullable(JavaModuleSettingsEntity::class.java, false)
 }
 
 @Suppress("unused")
@@ -106,7 +106,7 @@ class JavaModuleSettingsEntity(
   val compilerOutput: VirtualFileUrl?,
   val compilerOutputForTests: VirtualFileUrl?
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
 }
 
 @Suppress("unused")
@@ -123,7 +123,7 @@ class ModuleCustomImlDataEntity(
   val rootManagerTagCustomData: String?,
   val customModuleOptions: Map<String, String>
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
 }
 
 @Suppress("unused")
@@ -136,7 +136,7 @@ class ModuleGroupPathEntityData : PEntityData<ModuleGroupPathEntity>() {
 class ModuleGroupPathEntity(
   val path: List<String>
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
 }
 
 data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
@@ -196,7 +196,7 @@ open class SourceRootEntity(
   val tests: Boolean,
   val rootType: String
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
 }
 
 @Suppress("unused")
@@ -211,7 +211,7 @@ class JavaSourceRootEntity(
   val generated: Boolean,
   val packagePrefix: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class)
+  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class.java)
 }
 
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
@@ -228,7 +228,7 @@ class JavaResourceRootEntity(
   val generated: Boolean,
   val relativeOutputPath: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class)
+  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class.java)
 }
 
 fun SourceRootEntity.asJavaResourceRoot() = referrers(JavaResourceRootEntity::sourceRoot).firstOrNull()
@@ -244,7 +244,7 @@ class CustomSourceRootPropertiesEntityData : PEntityData<CustomSourceRootPropert
 class CustomSourceRootPropertiesEntity(
   val propertiesXmlTag: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class)
+  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class.java)
 }
 
 fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
@@ -265,7 +265,7 @@ open class ContentRootEntity(
   val excludedUrls: List<VirtualFileUrl>,
   val excludedPatterns: List<String>
 ) : PTypedEntity() {
-  open val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  open val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
 }
 
 class FakeContentRootEntity(url: VirtualFileUrl, moduleEntity: ModuleEntity) : ContentRootEntity(url, emptyList(), emptyList()) {
@@ -290,13 +290,13 @@ class SourceRootOrderEntityData : PEntityData<SourceRootOrderEntity>() {
 class SourceRootOrderEntity(
   var orderOfSourceRoots: List<VirtualFileUrl>
 ) : PTypedEntity() {
-  val contentRootEntity: ContentRootEntity by OneToOneChild.NotNull(ContentRootEntity::class, true)
+  val contentRootEntity: ContentRootEntity by OneToOneChild.NotNull(ContentRootEntity::class.java, true)
 }
 
 class ModifiableSourceRootOrderEntity : PModifiableTypedEntity<SourceRootOrderEntity>() {
   var orderOfSourceRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 
-  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class, ContentRootEntity::class,
+  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java,
                                                                                    true)
 }
 
@@ -399,7 +399,7 @@ class LibraryPropertiesEntity(
   val libraryType: String,
   val propertiesXmlTag: String?
 ) : PTypedEntity() {
-  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class, true)
+  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class.java, true)
 }
 
 fun LibraryEntity.getCustomProperties() = referrers(LibraryPropertiesEntity::library).firstOrNull()
@@ -414,7 +414,7 @@ class SdkEntityData : PEntityData<SdkEntity>() {
 class SdkEntity(
   val homeUrl: VirtualFileUrl
 ) : PTypedEntity() {
-  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class, true)
+  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class.java, true)
 }
 
 @Suppress("unused")
@@ -446,7 +446,7 @@ class ExternalSystemModuleOptionsEntity(
   val externalSystemModuleGroup: String?,
   val externalSystemModuleType: String?
 ) : PTypedEntity() {
-  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class, true)
+  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class.java, true)
 }
 
 
@@ -467,9 +467,9 @@ class FacetEntity(
   val facetType: String,
   val configurationXmlTag: String?
 ) : TypedEntityWithPersistentId, PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
 
-  val underlyingFacet: FacetEntity? by OneToOneChild.Nullable(FacetEntity::class, true)
+  val underlyingFacet: FacetEntity? by OneToOneChild.Nullable(FacetEntity::class.java, true)
 
   override fun persistentId(): FacetId = FacetId(name, facetType, module.persistentId())
 }
@@ -513,11 +513,11 @@ class ArtifactEntity(
   val includeInProjectBuild: Boolean,
   val outputUrl: VirtualFileUrl
 ) : TypedEntityWithPersistentId, PTypedEntity() {
-  val rootElement: CompositePackagingElementEntity by OneToAbstractOneChild(CompositePackagingElementEntity::class)
+  val rootElement: CompositePackagingElementEntity by OneToAbstractOneChild(CompositePackagingElementEntity::class.java)
 
   override fun persistentId(): ArtifactId = ArtifactId(name)
 
-  val customProperties: Sequence<ArtifactPropertiesEntity> by OneToMany(ArtifactPropertiesEntity::class, false)
+  val customProperties: Sequence<ArtifactPropertiesEntity> by OneToMany(ArtifactPropertiesEntity::class.java, false)
 }
 
 @Suppress("unused")
@@ -534,13 +534,13 @@ class ArtifactPropertiesEntity(
   val providerType: String,
   val propertiesXmlTag: String?
 ) : PTypedEntity() {
-  val artifact: ArtifactEntity by ManyToOne.NotNull(ArtifactEntity::class)
+  val artifact: ArtifactEntity by ManyToOne.NotNull(ArtifactEntity::class.java)
 }
 
 abstract class PackagingElementEntity : PTypedEntity()
 
 abstract class CompositePackagingElementEntity : PackagingElementEntity() {
-  val children: Sequence<PackagingElementEntity> by OneToAbstractMany(PackagingElementEntity::class)
+  val children: Sequence<PackagingElementEntity> by OneToAbstractMany(PackagingElementEntity::class.java)
 }
 
 @Suppress("unused")

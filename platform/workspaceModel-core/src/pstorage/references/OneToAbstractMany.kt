@@ -11,21 +11,21 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-class OneToAbstractMany<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: KClass<SUBT>) : ReadOnlyProperty<T, Sequence<SUBT>> {
+class OneToAbstractMany<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: Class<SUBT>) : ReadOnlyProperty<T, Sequence<SUBT>> {
 
   private var connectionId: ConnectionId<T, SUBT>? = null
 
   override fun getValue(thisRef: T, property: KProperty<*>): Sequence<SUBT> {
     if (connectionId == null) {
-      connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, ONE_TO_ABSTRACT_MANY, false, false)
+      connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ABSTRACT_MANY, false, false)
     }
     return thisRef.snapshot.extractOneToAbstractManyChildren(connectionId!!, thisRef.id as PId<T>)
   }
 }
 
 class MutableOneToAbstractMany<T : PTypedEntity, SUBT : PTypedEntity, MODT : PModifiableTypedEntity<T>>(
-  private val parentClass: KClass<T>,
-  private val childClass: KClass<SUBT>
+  private val parentClass: Class<T>,
+  private val childClass: Class<SUBT>
 ) : ReadWriteProperty<MODT, Sequence<SUBT>> {
 
   private var connectionId: ConnectionId<T, SUBT>? = null

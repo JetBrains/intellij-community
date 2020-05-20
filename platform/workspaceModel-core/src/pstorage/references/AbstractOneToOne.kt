@@ -10,13 +10,13 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-class OneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity>(private val parentClass: KClass<T>) : ReadOnlyProperty<SUBT, T> {
+class OneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity>(private val parentClass: Class<T>) : ReadOnlyProperty<SUBT, T> {
 
   private var connectionId: ConnectionId<T, SUBT>? = null
 
   override fun getValue(thisRef: SUBT, property: KProperty<*>): T {
     if (connectionId == null) {
-      connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false,
+      connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false,
                                          false)
     }
     return thisRef.snapshot.extractOneToAbstractOneParent(connectionId!!, thisRef.id as PId<SUBT>)!!
@@ -24,8 +24,8 @@ class OneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity>(private val p
 }
 
 class MutableOneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUBT : PModifiableTypedEntity<SUBT>>(
-  private val childClass: KClass<SUBT>,
-  private val parentClass: KClass<T>
+  private val childClass: Class<SUBT>,
+  private val parentClass: Class<T>
 ) : ReadWriteProperty<MODSUBT, T> {
 
   private var connectionId: ConnectionId<T, SUBT>? = null

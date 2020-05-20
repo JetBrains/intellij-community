@@ -843,8 +843,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
-        assertResolvable(parentId.clazz, parentId.arrayId)
-        assertResolvable(childId.clazz, childId.arrayId)
+        assertResolvable(parentId.clazz.java, parentId.arrayId)
+        assertResolvable(childId.clazz.java, childId.arrayId)
 
         //  1.1) For abstract containers: PId has the class of ConnectionId
         assertCorrectEntityClass(connectionId.parentClass, parentId)
@@ -855,8 +855,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     refs.abstractOneToOneContainer.forEach { (connectionId, map) ->
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
-        assertResolvable(parentId.clazz, parentId.arrayId)
-        assertResolvable(childId.clazz, childId.arrayId)
+        assertResolvable(parentId.clazz.java, parentId.arrayId)
+        assertResolvable(childId.clazz.java, childId.arrayId)
 
         //  1.1) For abstract containers: PId has the class of ConnectionId
         assertCorrectEntityClass(connectionId.parentClass, parentId)
@@ -865,14 +865,14 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     }
   }
 
-  private fun assertResolvable(clazz: KClass<out TypedEntity>, id: Int) {
-    assert(entitiesByType[clazz.java]?.get(id) != null) {
+  private fun assertResolvable(clazz: Class<out TypedEntity>, id: Int) {
+    assert(entitiesByType[clazz]?.get(id) != null) {
       "Reference to $clazz-:-$id cannot be resolved"
     }
   }
 
-  private fun assertCorrectEntityClass(connectionClass: KClass<out TypedEntity>, entityId: PId<out TypedEntity>) {
-    assert(connectionClass.java.isAssignableFrom(entityId.clazz.java)) {
+  private fun assertCorrectEntityClass(connectionClass: Class<out TypedEntity>, entityId: PId<out TypedEntity>) {
+    assert(connectionClass.isAssignableFrom(entityId.clazz.java)) {
       "Entity storage with connection class $connectionClass contains entity data of wrong type $entityId"
     }
   }
@@ -902,7 +902,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
   internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyChildren(connectionId: ConnectionId<T, SUBT>,
                                                                           parentId: PId<T>): Sequence<SUBT> {
-    val entitiesList = entitiesByType[connectionId.childClass.java] ?: return emptySequence()
+    val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
     return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { entitiesList[it]!!.createEntity(this) } ?: emptySequence()
   }
 
@@ -927,18 +927,18 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
   internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToOneChild(connectionId: ConnectionId<T, SUBT>,
                                                                       parentId: PId<T>): SUBT? {
-    val entitiesList = entitiesByType[connectionId.childClass.java] ?: return null
+    val entitiesList = entitiesByType[connectionId.childClass] ?: return null
     return refs.getOneToOneChild(connectionId, parentId.arrayId) { entitiesList[it]!!.createEntity(this) }
   }
 
   internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToOneParent(connectionId: ConnectionId<T, SUBT>,
                                                                        childId: PId<SUBT>): T? {
-    val entitiesList = entitiesByType[connectionId.parentClass.java] ?: return null
+    val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
     return refs.getOneToOneParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) }
   }
 
   internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyParent(connectionId: ConnectionId<T, SUBT>, childId: PId<SUBT>): T? {
-    val entitiesList = entitiesByType[connectionId.parentClass.java] ?: return null
+    val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
     return refs.getOneToManyParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) }
   }
 
