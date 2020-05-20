@@ -372,7 +372,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
     AnAction delegate = ActionManager.getInstance().getAction(id);
-    return new DumbAwareAction(delegate.getTemplatePresentation().getDescription(), null, icon) {
+    AnAction result = new DumbAwareAction(delegate.getTemplatePresentation().getText(), null, icon) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
@@ -393,6 +393,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       }
     };
+
+    result.copyShortcutFrom(delegate);
+    return result;
   }
 
   private int offsetToLine(int offset, @NotNull Document document) {
