@@ -13,32 +13,45 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 open class VirtualFileIndex private constructor(
-  internal val index: BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>
+  internal open val index: BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>
 ) {
   constructor() : this(BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>())
 
   internal fun getVirtualFiles(id: PId<out TypedEntity>): Set<VirtualFileUrl>? =
     index.getKeys(id)
 
-  internal fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>> {
-    val copy = BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>()
-    index.keys.forEach { key -> index.getValues(key).forEach { value -> copy.put(key, value) } }
-    return copy
-  }
-
   class MutableVirtualFileIndex private constructor(
-    index: BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>
+    override var index: BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>
   ) : VirtualFileIndex(index) {
+
+    private var freezed = true
+
     internal fun index(id: PId<out TypedEntity>, virtualFileUrls: List<VirtualFileUrl>? = null) {
+      startWrite()
       index.removeValue(id)
       if (virtualFileUrls == null) return
       virtualFileUrls.forEach { index.put(it, id) }
     }
 
-    fun toImmutable(): VirtualFileIndex = VirtualFileIndex(copyIndex())
+    private fun startWrite() {
+      if (!freezed) return
+      freezed = false
+      index = copyIndex()
+    }
+
+    private fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>> {
+      val copy = BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>()
+      index.keys.forEach { key -> index.getValues(key).forEach { value -> copy.put(key, value) } }
+      return copy
+    }
+
+    fun toImmutable(): VirtualFileIndex {
+      freezed = true
+      return VirtualFileIndex(index)
+    }
 
     companion object {
-      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.copyIndex())
+      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.index)
     }
   }
 }

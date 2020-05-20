@@ -7,7 +7,7 @@ import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.PId
 
 open class PersistentIdIndex private constructor(
-  internal val index: BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>
+  internal open val index: BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>
 ) {
   constructor() : this(BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>())
 
@@ -16,25 +16,38 @@ open class PersistentIdIndex private constructor(
 
   internal fun getPersistentId(id: PId<out TypedEntity>): PersistentEntityId<*>? = index[id]
 
-  internal fun copyIndex(): BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>> {
-    val copy = BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>()
-    index.keys.forEach { key -> index[key]?.also { value -> copy[key] = value } }
-    return copy
-  }
-
   class MutablePersistentIdIndex private constructor(
-    index: BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>
+    override var index: BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>
   ) : PersistentIdIndex(index) {
+
+    private var freezed = true
+
     internal fun index(id: PId<out TypedEntity>, persistentId: PersistentEntityId<*>? = null) {
+      startWrite()
       index.remove(id)
       if (persistentId == null) return
       index[id] = persistentId
     }
 
-    fun toImmutable(): PersistentIdIndex = PersistentIdIndex(copyIndex())
+    private fun startWrite() {
+      if (!freezed) return
+      freezed = false
+      index = copyIndex()
+    }
+
+    private fun copyIndex(): BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>> {
+      val copy = BidirectionalMap<PId<out TypedEntity>, PersistentEntityId<*>>()
+      index.keys.forEach { key -> index[key]?.also { value -> copy[key] = value } }
+      return copy
+    }
+
+    fun toImmutable(): PersistentIdIndex {
+      freezed = true
+      return PersistentIdIndex(index)
+    }
 
     companion object {
-      fun from(other: PersistentIdIndex): MutablePersistentIdIndex = MutablePersistentIdIndex(other.copyIndex())
+      fun from(other: PersistentIdIndex): MutablePersistentIdIndex = MutablePersistentIdIndex(other.index)
     }
   }
 }

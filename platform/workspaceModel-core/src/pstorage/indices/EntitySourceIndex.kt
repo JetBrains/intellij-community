@@ -7,7 +7,7 @@ import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.PId
 
 open class EntitySourceIndex private constructor(
-  internal val index: BidirectionalMap<PId<out TypedEntity>, EntitySource>
+  internal open val index: BidirectionalMap<PId<out TypedEntity>, EntitySource>
 ) {
   constructor() : this(BidirectionalMap<PId<out TypedEntity>, EntitySource>())
 
@@ -16,29 +16,42 @@ open class EntitySourceIndex private constructor(
 
   internal fun getEntitySource(id: PId<out TypedEntity>): EntitySource? = index[id]
 
-  internal fun copyIndex(): BidirectionalMap<PId<out TypedEntity>, EntitySource> {
-    val copy = BidirectionalMap<PId<out TypedEntity>, EntitySource>()
-    index.keys.forEach { key -> index[key]?.also { value -> copy[key] = value } }
-    return copy
-  }
-
   internal fun entitySources(): Collection<EntitySource> {
     return index.values
   }
 
   class MutableEntitySourceIndex private constructor(
-    index: BidirectionalMap<PId<out TypedEntity>, EntitySource>
+    override var index: BidirectionalMap<PId<out TypedEntity>, EntitySource>
   ) : EntitySourceIndex(index) {
+
+    private var freezed = true
+
     internal fun index(id: PId<out TypedEntity>, entitySource: EntitySource? = null) {
+      startWrite()
       index.remove(id)
       if (entitySource == null) return
       index[id] = entitySource
     }
 
-    fun toImmutable(): EntitySourceIndex = EntitySourceIndex(copyIndex())
+    private fun startWrite() {
+      if (!freezed) return
+      freezed = false
+      index = copyIndex()
+    }
+
+    private fun copyIndex(): BidirectionalMap<PId<out TypedEntity>, EntitySource> {
+      val copy = BidirectionalMap<PId<out TypedEntity>, EntitySource>()
+      index.keys.forEach { key -> index[key]?.also { value -> copy[key] = value } }
+      return copy
+    }
+
+    fun toImmutable(): EntitySourceIndex {
+      freezed = true
+      return EntitySourceIndex(index)
+    }
 
     companion object {
-      fun from(other: EntitySourceIndex): MutableEntitySourceIndex = MutableEntitySourceIndex(other.copyIndex())
+      fun from(other: EntitySourceIndex): MutableEntitySourceIndex = MutableEntitySourceIndex(other.index)
     }
   }
 }
