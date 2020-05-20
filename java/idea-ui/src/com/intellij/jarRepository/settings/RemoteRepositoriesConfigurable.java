@@ -269,7 +269,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     @Override
     public boolean checkInput(String inputString) {
       try {
-        return StringUtil.isNotEmpty(new URL(inputString).getHost());
+        URL url = new URL(inputString);
+        return StringUtil.isNotEmpty(url.getHost()) || "file".equals(url.getProtocol());
       }
       catch (MalformedURLException e) {
         return false;
