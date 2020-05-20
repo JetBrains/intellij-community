@@ -3,6 +3,8 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ide.scratch.ScratchFileHelper;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.model.ModelBranch;
+import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -112,12 +114,19 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
     if (containingFile == null) {
       return GlobalSearchScope.allScope(myProject);
     }
-    if (containingFile instanceof FileResolveScopeProvider) {
-      return ((FileResolveScopeProvider)containingFile).getFileResolveScope();
+    GlobalSearchScope scope = getPsiFileResolveScope(containingFile);
+    ModelBranch branch = ModelBranch.getPsiBranch(containingFile);
+    return branch != null ? ((ModelBranchImpl)branch).modifyScope(scope) : scope;
+  }
+
+  @NotNull
+  private GlobalSearchScope getPsiFileResolveScope(@NotNull PsiFile psiFile) {
+    if (psiFile instanceof FileResolveScopeProvider) {
+      return ((FileResolveScopeProvider)psiFile).getFileResolveScope();
     }
-    VirtualFile vFile = containingFile.getOriginalFile().getVirtualFile();
+    VirtualFile vFile = psiFile.getOriginalFile().getVirtualFile();
     if (vFile == null) {
-      return withFile(containingFile, GlobalSearchScope.allScope(myProject));
+      return withFile(psiFile, GlobalSearchScope.allScope(myProject));
     }
     return getResolveScopeFromProviders(vFile);
   }
