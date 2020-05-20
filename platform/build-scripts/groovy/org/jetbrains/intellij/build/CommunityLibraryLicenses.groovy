@@ -604,6 +604,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-java"),
     jetbrainsLibrary("completion-ranking-kotlin"),
     jetbrainsLibrary("completion-ranking-python"),
+    jetbrainsLibrary("completion-ranking-scala"),
     jetbrainsLibrary("CoverageReport"),
     jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("intellij-coverage"),
