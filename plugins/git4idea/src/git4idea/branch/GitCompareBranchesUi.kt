@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.ui.StatusText
@@ -25,7 +24,6 @@ import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
-import com.intellij.vcs.log.util.VcsLogUiUtil.getLinkAttributes
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
@@ -66,31 +64,12 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
                                             logManager, rangeFilter.asReversed(), rootFilter)
     val topLogUi = logManager.createLogUi(topLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
     val bottomLogUi = logManager.createLogUi(bottomLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
-    SwapBranchesAction.install(topLogUi, bottomLogUi)
 
     val mainSplitter = OnePixelSplitter(true).apply {
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)
     }
     createAndOpenLogFile(project, logManager, mainSplitter, listOf(topLogUi, bottomLogUi), tabName, { tabName }, true)
-  }
-
-  private class SwapBranchesAction private constructor(private val topLogFilterUi: MyFilterUi, private val bottomLogFilterUi: MyFilterUi) {
-
-    companion object {
-      fun install(topVcsLogUi: MainVcsLogUi, bottomVcsLogUi: MainVcsLogUi) {
-        val topLogFilterUi = topVcsLogUi.filterUi as MyFilterUi
-        val bottomLogFilterUi = bottomVcsLogUi.filterUi as MyFilterUi
-        val swapBranchAction = SwapBranchesAction(topLogFilterUi, bottomLogFilterUi)
-        topLogFilterUi.swapAction = swapBranchAction
-        bottomLogFilterUi.swapAction = swapBranchAction
-      }
-    }
-
-    fun swap() {
-      with(topLogFilterUi) { setRangeFilter(rangeFilter.asReversed()) }
-      with(bottomLogFilterUi) { setRangeFilter(rangeFilter.asReversed()) }
-    }
   }
 
   private fun getEditorTabName(branch1Name: String, branch2Name: String) =
@@ -135,22 +114,10 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
                            colorManager: VcsLogColorManager, filters: VcsLogFilterCollection?, parentDisposable: Disposable
   ) : VcsLogClassicFilterUi(data, filterConsumer, properties, colorManager, filters, parentDisposable) {
 
-    var swapAction: SwapBranchesAction? = null
-
     val rangeFilter: VcsLogRangeFilter
       get() = myBranchFilterModel.rangeFilter!!
 
-    fun setRangeFilter(rangeFilter: VcsLogRangeFilter){
-      myBranchFilterModel.setRangeFilter(rangeFilter)
-    }
-
-    override fun createBranchComponent(): FilterActionComponent {
-      return FilterActionComponent {
-        LinkLabel.create(GitBundle.message("git.compare.branches.swap.link")) {
-          swapAction?.swap()
-        }
-      }
-    }
+    override fun createBranchComponent(): FilterActionComponent? = null
 
     override fun setCustomEmptyText(text: StatusText) {
       if (filters.filters.any { it !is VcsLogRangeFilter && it !is VcsLogRootFilter }) {
@@ -160,9 +127,6 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
       else {
         val (start, end) = rangeFilter.getRange()
         text.text = GitBundle.message("git.compare.branches.empty.status", start, end)
-        text.appendSecondaryText(GitBundle.message("git.compare.branches.swap.link"), getLinkAttributes()) {
-          swapAction?.swap()
-        }
       }
     }
 
