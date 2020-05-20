@@ -88,12 +88,12 @@ object GHPRReviewCommentComponent {
                          AC().gap("${UI.scale(8)}"))
 
       add(avatarLabel, CC().pushY())
-      add(titlePane, CC().minWidth("0").split(5).alignX("left"))
+      add(titlePane, CC().minWidth("0").split(5).alignX("left").pushX())
       add(pendingLabel, CC().hideMode(3).alignX("left"))
       add(resolvedLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
       add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
-      add(contentPanel, CC().newline().skip().grow().push().minWidth("0").minHeight("0"))
+      add(contentPanel, CC().newline().skip().push().minWidth("0").minHeight("0"))
     }
   }
 

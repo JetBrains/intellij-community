@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
@@ -61,7 +62,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         buttonsPanel.add(button)
       }
 
-      return NonOpaquePanel(VerticalLayout(4)).apply {
+      return NonOpaquePanel(VerticalLayout(UI.scale(4))).apply {
         border = JBUI.Borders.emptyLeft(4)
 
         add(statusComponent, VerticalLayout.FILL_HORIZONTAL)
@@ -94,7 +95,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
             icon = AllIcons.RunConfigurations.TestError
             text = GithubBundle.message("pull.request.repo.access.required")
           }
-          JPanel(VerticalLayout(STATUSES_GAP)).apply {
+          JPanel(VerticalLayout(UI.scale(STATUSES_GAP))).apply {
             add(stateLabel, VerticalLayout.FILL_HORIZONTAL)
             add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
           }
@@ -133,7 +134,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         val accessDeniedLabel = createAccessDeniedLabel()
         return if (accessDeniedLabel == null) stateLabel
         else {
-          JPanel(VerticalLayout(STATUSES_GAP)).apply {
+          JPanel(VerticalLayout(UI.scale(STATUSES_GAP))).apply {
             add(stateLabel, VerticalLayout.FILL_HORIZONTAL)
             add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
           }
@@ -161,7 +162,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         RestrictionsController(mergeabilityModel, restrictionsLabel)
 
         val accessDeniedLabel = createAccessDeniedLabel()
-        return JPanel(VerticalLayout(STATUSES_GAP)).apply {
+        return JPanel(VerticalLayout(UI.scale(STATUSES_GAP))).apply {
           add(statusChecks, VerticalLayout.FILL_HORIZONTAL)
           add(requiredReviewsLabel, VerticalLayout.FILL_HORIZONTAL)
           add(conflictsLabel, VerticalLayout.FILL_HORIZONTAL)

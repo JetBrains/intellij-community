@@ -206,9 +206,9 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     mainPanel.setContent(contentPanel)
 
     val actionManager = ActionManager.getInstance()
-    (actionManager.getAction("Github.PullRequest.Timeline.Update") as RefreshAction).registerCustomShortcutSet(mainPanel, disposable)
+    (actionManager.getAction("Github.PullRequest.Timeline.Update") as RefreshAction).registerCustomShortcutSet(scrollPane, disposable)
     val actionGroup = actionManager.getAction("Github.PullRequest.Timeline.Popup") as ActionGroup
-    PopupHandler.installPopupHandler(timelinePanel, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+    PopupHandler.installPopupHandler(scrollPane, actionGroup, ActionPlaces.UNKNOWN, actionManager)
 
     loader.loadMore()
 

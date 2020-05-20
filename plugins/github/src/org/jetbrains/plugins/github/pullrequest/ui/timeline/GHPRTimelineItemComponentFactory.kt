@@ -3,10 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
-import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
@@ -65,16 +65,15 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
   private fun createComponent(review: GHPullRequestReview): Item {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
 
-    val reviewPanel = VerticalBox().apply {
-      add(Box.createRigidArea(JBDimension(0, 4)))
+    val reviewPanel = JPanel(VerticalLayout(UI.scale(12))).apply {
+      isOpaque = false
+      border = JBUI.Borders.emptyTop(4)
       if (review.bodyHTML.isNotEmpty()) {
-        add(HtmlEditorPane(review.bodyHTML).apply {
-          border = JBUI.Borders.emptyBottom(12)
-        })
+        add(HtmlEditorPane(review.bodyHTML))
       }
       add(GHPRReviewThreadsPanel(reviewThreadsModel) {
         GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
-      })
+      }, VerticalLayout.FILL_HORIZONTAL)
     }
 
     val icon = when (review.state) {
@@ -130,7 +129,7 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
       }
 
       add(marker, CC().pushY())
-      add(title, CC().growX().pushX())
+      add(title, CC().pushX())
       if (content != null) add(content, CC().newline().skip().grow().push())
     }
 

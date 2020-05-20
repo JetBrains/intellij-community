@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalBox
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -35,70 +35,69 @@ object GHPRReviewThreadComponent {
                      diffComponentFactory: GHPRReviewThreadDiffComponentFactory?,
                      avatarIconsProvider: GHAvatarIconsProvider, currentUser: GHUser): JComponent {
 
-    val panel = JPanel(VerticalLayout(12)).apply {
+    val panel = JPanel(VerticalLayout(UI.scale(12))).apply {
       isOpaque = false
     }
     if (diffComponentFactory != null) {
-      panel.add(diffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
+      panel.add(diffComponentFactory.createComponent(thread.filePath, thread.diffHunk), VerticalLayout.FILL_HORIZONTAL)
     }
 
     panel.add(
       GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(thread, reviewDataProvider, avatarIconsProvider)))
 
-    panel.add(getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser))
+    if (reviewDataProvider.canComment()) {
+      panel.add(getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser), VerticalLayout.FILL_HORIZONTAL)
+    }
     return panel
   }
 
   private fun getThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
                                         thread: GHPRReviewThreadModel,
                                         avatarIconsProvider: GHAvatarIconsProvider,
-                                        currentUser: GHUser): JComponent? {
-    if (reviewDataProvider.canComment()) {
-      val toggleModel = SingleValueModel(false)
-      val textFieldModel = GHPRSubmittableTextField.Model { text ->
-        reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
-          thread.addComment(GHPRReviewCommentModel.convert(it))
-          toggleModel.value = false
-        }
+                                        currentUser: GHUser): JComponent {
+    val toggleModel = SingleValueModel(false)
+    val textFieldModel = GHPRSubmittableTextField.Model { text ->
+      reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
+        thread.addComment(GHPRReviewCommentModel.convert(it))
+        toggleModel.value = false
       }
-
-      val toggleReplyLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.reply"), null) { _, _ ->
-        toggleModel.value = true
-      }.apply {
-        isFocusable = true
-      }
-
-      val resolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.resolve"), null).apply {
-        isFocusable = true
-      }.also {
-        it.setListener({ _, _ ->
-                         it.isEnabled = false
-                         reviewDataProvider.resolveThread(EmptyProgressIndicator(), thread.id).handleOnEdt { _, _ ->
-                           it.isEnabled = true
-                         }
-                       }, null)
-      }
-
-      val unresolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.unresolve"), null).apply {
-        isFocusable = true
-      }.also {
-        it.setListener({ _, _ ->
-                         it.isEnabled = false
-                         reviewDataProvider.unresolveThread(EmptyProgressIndicator(), thread.id).handleOnEdt { _, _ ->
-                           it.isEnabled = true
-                         }
-                       }, null)
-      }
-
-      return GHPRToggleableContainer.create(toggleModel,
-                                            { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
-                                            {
-                                              GHPRSubmittableTextField.create(textFieldModel, avatarIconsProvider, currentUser,
-                                                                              GithubBundle.message("pull.request.review.thread.reply"),
-                                                                              onCancel = { toggleModel.value = false })
-                                            })
     }
-    return null
+
+    val toggleReplyLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.reply"), null) { _, _ ->
+      toggleModel.value = true
+    }.apply {
+      isFocusable = true
+    }
+
+    val resolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.resolve"), null).apply {
+      isFocusable = true
+    }.also {
+      it.setListener({ _, _ ->
+                       it.isEnabled = false
+                       reviewDataProvider.resolveThread(EmptyProgressIndicator(), thread.id).handleOnEdt { _, _ ->
+                         it.isEnabled = true
+                       }
+                     }, null)
+    }
+
+    val unresolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.unresolve"), null).apply {
+      isFocusable = true
+    }.also {
+      it.setListener({ _, _ ->
+                       it.isEnabled = false
+                       reviewDataProvider.unresolveThread(EmptyProgressIndicator(), thread.id).handleOnEdt { _, _ ->
+                         it.isEnabled = true
+                       }
+                     }, null)
+    }
+
+    return GHPRToggleableContainer.create(toggleModel,
+                                          { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
+                                          {
+                                            GHPRSubmittableTextField.create(textFieldModel, avatarIconsProvider, currentUser,
+                                                                            GithubBundle.message("pull.request.review.thread.reply"),
+                                                                            onCancel = { toggleModel.value = false })
+                                          })
   }
 
   private fun createThreadActionsComponent(model: GHPRReviewThreadModel,
