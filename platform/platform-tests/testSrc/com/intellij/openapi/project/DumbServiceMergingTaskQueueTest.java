@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
   private final DumbServiceMergingTaskQueue myQueue = new DumbServiceMergingTaskQueue();
@@ -225,4 +228,54 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     Assert.assertEquals("older task must be disposed " + disposeLog, Arrays.asList(1, 2, -1, -2, 3, -3), disposeLog);
   }
 
+  @TestFor(issues = "IDEA-241378")
+  public void testRunningTaskIndicatorShouldBeCancelledOnDisposeRunningTasks() {
+    CyclicBarrier b = new CyclicBarrier(2);
+    AtomicReference<Boolean> isRun = new AtomicReference<>();
+    myQueue.addTask(new DumbModeTask("any") {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        for (int i = 0; i < 2; i++) {
+          await(b);
+        }
+        isRun.set(indicator.isCanceled());
+      }
+    });
+
+    Thread th = new Thread(() -> {
+      try {
+        DumbServiceMergingTaskQueue.QueuedDumbModeTask nextTask = myQueue.extractNextTask();
+        nextTask.executeTask();
+      } catch (Exception e) {
+        LOG.error(e);
+      }
+    }, getClass().getName() + "-thread");
+    th.setDaemon(true);
+    th.start();
+
+    await(b);
+    //now the task is in the middle
+    myQueue.disposePendingTasks();
+    await(b);
+
+    //not it soould complete
+    try {
+      th.join(5_000);
+    }
+    catch (InterruptedException e) {
+      th.interrupt();
+      Assert.fail();
+    }
+
+    Assert.assertEquals(Boolean.TRUE, isRun.get());
+  }
+
+  private static void await(@NotNull CyclicBarrier b) {
+    try {
+      b.await();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
 }
