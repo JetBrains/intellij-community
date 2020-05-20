@@ -4,6 +4,10 @@ package com.intellij.internal.statistic.uploader.events;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 import static com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escape;
 
@@ -21,7 +25,10 @@ public class ExternalSystemEventSerializer {
     }
     else if (event instanceof ExternalUploadSendEvent) {
       ExternalUploadSendEvent finished = (ExternalUploadSendEvent)event;
-      return prefix + " " + finished.getSucceed() + " " + finished.getFailed() + " " + finished.getTotal();
+      String hashedFiles = finished.getSuccessfullySentFiles().stream()
+        .map(path -> Base64.getEncoder().encodeToString(path.getBytes(StandardCharsets.UTF_8)))
+        .collect(Collectors.joining(",", "[", "]"));
+      return prefix + " " + finished.getSucceed() + " " + finished.getFailed() + " " + finished.getTotal() + " " + hashedFiles;
     }
     else if (event instanceof ExternalSystemErrorEvent) {
       ExternalSystemErrorEvent error = (ExternalSystemErrorEvent)event;
@@ -44,11 +51,12 @@ public class ExternalSystemEventSerializer {
       String error = parts.length >= 3 ? parts[2].trim() : null;
       return new ExternalUploadFinishedEvent(timestamp, error);
     }
-    else if (type == ExternalSystemEventType.SEND && length == 5) {
+    else if (type == ExternalSystemEventType.SEND && (length == 6 || length == 5)) {
       int succeed = parseInt(parts[2]);
       int failed = parseInt(parts[3]);
       int total = parseInt(parts[4]);
-      return new ExternalUploadSendEvent(timestamp, succeed, failed, total);
+      List<String> sentFiles = length == 6 ? parseSentFiles(parts[5]) : Collections.emptyList();
+      return new ExternalUploadSendEvent(timestamp, succeed, failed, total, sentFiles);
     }
     else if (type == ExternalSystemEventType.STARTED && length == 2) {
       return new ExternalUploadStartedEvent(timestamp);
@@ -59,6 +67,23 @@ public class ExternalSystemEventSerializer {
       return new ExternalSystemErrorEvent(timestamp, event, errorClass);
     }
     return null;
+  }
+
+  private static List<String> parseSentFiles(@NotNull String part) {
+    try {
+      if (part.startsWith("[") && part.endsWith("]")) {
+        String unwrappedPart = part.substring(1, part.length() - 1);
+        String[] filePathHashes = unwrappedPart.split(",");
+        return Arrays.stream(filePathHashes)
+          .filter(hash -> !hash.isEmpty())
+          .map(hash -> new String(Base64.getDecoder().decode(hash), StandardCharsets.UTF_8))
+          .collect(Collectors.toList());
+      }
+      return Collections.emptyList();
+    }
+    catch (IllegalArgumentException e) {
+      return Collections.emptyList();
+    }
   }
 
   private static int parseInt(String value) {

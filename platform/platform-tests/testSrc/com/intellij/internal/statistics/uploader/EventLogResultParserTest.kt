@@ -16,11 +16,16 @@ class EventLogResultParserTest : UsefulTestCase() {
   }
 
   fun test_parse_send_event() {
-    assertEquals(deserialize("1583419435214 SEND 2 1 10"), ExternalUploadSendEvent(1583419435214, 2, 1, 10))
-    assertEquals(deserialize("1583419435214 SEND 6 0 15"), ExternalUploadSendEvent(1583419435214, 6, 0, 15))
-    assertEquals(deserialize("1583419435214 SEND 2 a 5"), ExternalUploadSendEvent(1583419435214, 2, -1, 5))
-    assertEquals(deserialize("1583419435214 SEND a b b"), ExternalUploadSendEvent(1583419435214, -1, -1, -1))
-    assertEquals(deserialize("1583419435214 SEND 12a 34 50"), ExternalUploadSendEvent(1583419435214, -1, 34, 50))
+    assertEquals(deserialize("1583419435214 SEND 2 1 10"), ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()))
+    assertEquals(deserialize("1583419435214 SEND 6 0 15"), ExternalUploadSendEvent(1583419435214, 6, 0, 15, emptyList()))
+    assertEquals(deserialize("1583419435214 SEND 2 a 5"), ExternalUploadSendEvent(1583419435214, 2, -1, 5, emptyList()))
+    assertEquals(deserialize("1583419435214 SEND a b b"), ExternalUploadSendEvent(1583419435214, -1, -1, -1, emptyList()))
+    assertEquals(deserialize("1583419435214 SEND 12a 34 50"), ExternalUploadSendEvent(1583419435214, -1, 34, 50, emptyList()))
+  }
+
+  fun test_parse_send_event_with_files_hashes() {
+    assertEquals(deserialize("1583419435214 SEND 2 1 10 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==]"), ExternalUploadSendEvent(1583419435214, 2, 1, 10, listOf("path_to_file1", "path_to_file2")))
+    assertEquals(deserialize("1583419435214 SEND 2 1 10 []"), ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()))
   }
 
   fun test_parse_finished_event() {
@@ -49,11 +54,16 @@ class EventLogResultParserTest : UsefulTestCase() {
     assertNull(deserialize("1583419435214 SEND"))
     assertNull(deserialize("1583419435214 SEND 2"))
     assertNull(deserialize("1583419435214 SEND 2 3"))
-    assertNull(deserialize("1583419435214 SEND 2 3 4 5"))
+    assertNull(deserialize("1583419435214 SEND 2 3 4 5 6"))
     assertNull(deserialize("1583419435214 SEND 2,3,5"))
     assertNull(deserialize("1583419435214 SEND,2,3,5"))
     assertNull(deserialize("SEND 2 3 4 5"))
     assertNull(deserialize("SEND 2 3 4"))
+  }
+
+  fun test_parse_send_event_if_files_hashes_incorrect() {
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10 qwerty"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10 [']"))
   }
 
   fun test_parse_error_event_failed() {
@@ -87,8 +97,8 @@ class EventLogResultParserTest : UsefulTestCase() {
   }
 
   fun test_serialize_send_event() {
-    assertEquals(serialize(ExternalUploadSendEvent(1583419435214, 1, 2, 3)), "1583419435214 SEND 1 2 3")
-    assertEquals(serialize(ExternalUploadSendEvent(1583419435214, 5, -1, 12)), "1583419435214 SEND 5 -1 12")
+    assertEquals(serialize(ExternalUploadSendEvent(1583419435214, 1, 2, 3, listOf("path_to_file"))), "1583419435214 SEND 1 2 3 [cGF0aF90b19maWxl]")
+    assertEquals(serialize(ExternalUploadSendEvent(1583419435214, 2, -1, 12, listOf("path_to_file1", "path_to_file2"))), "1583419435214 SEND 2 -1 12 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==]")
   }
 
   fun test_serialize_failed_event() {
@@ -161,7 +171,7 @@ class EventLogResultParserTest : UsefulTestCase() {
   fun test_parse_external_send_succeed_result_file() {
     doTestParseFile(
       "1583419435214 STARTED\n1583419435234 SEND 1 2 3",
-      ExternalUploadStartedEvent(1583419435214), ExternalUploadSendEvent(1583419435234, 1, 2, 3)
+      ExternalUploadStartedEvent(1583419435214), ExternalUploadSendEvent(1583419435234, 1, 2, 3, emptyList())
     )
   }
 

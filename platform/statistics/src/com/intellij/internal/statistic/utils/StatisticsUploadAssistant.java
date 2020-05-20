@@ -7,6 +7,8 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public final class StatisticsUploadAssistant {
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
@@ -36,8 +38,8 @@ public final class StatisticsUploadAssistant {
   public static @NotNull StatisticsService getEventLogStatisticsService(@NotNull String recorderId) {
     EventLogSendListener listener = new EventLogSendListener() {
       @Override
-      public void onLogsSend(int succeed, int failed, int totalLocalFiles) {
-        EventLogSystemLogger.logFilesSend(recorderId, totalLocalFiles, succeed, failed, false);
+      public void onLogsSend(@NotNull List<String> successfullySentFiles, int failed, int totalLocalFiles) {
+        EventLogSystemLogger.logFilesSend(recorderId, totalLocalFiles, successfullySentFiles.size(), failed, false, successfullySentFiles);
       }
     };
 

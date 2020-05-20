@@ -47,7 +47,7 @@ internal class EventLogStatisticsServiceTest : StatisticsUploaderBaseTest() {
     val resultHolder = ResultHolder()
     val result = service.send(resultHolder)
     TestCase.assertEquals(result.description, StatisticsResult.ResultCode.ERROR_IN_CONFIG, result.code)
-    TestCase.assertEquals(0, resultHolder.succeed)
+    TestCase.assertEquals(0, resultHolder.getSucceed())
     TestCase.assertTrue(logFile.exists())
   }
 
@@ -59,7 +59,7 @@ internal class EventLogStatisticsServiceTest : StatisticsUploaderBaseTest() {
     val resultHolder = ResultHolder()
     val result = service.send(resultHolder)
     TestCase.assertEquals(result.description, StatisticsResult.ResultCode.SENT_WITH_ERRORS, result.code)
-    TestCase.assertEquals(0, resultHolder.succeed)
+    TestCase.assertEquals(0, resultHolder.getSucceed())
     TestCase.assertTrue(logFile.exists())
   }
 
@@ -70,7 +70,7 @@ internal class EventLogStatisticsServiceTest : StatisticsUploaderBaseTest() {
     val resultHolder = ResultHolder()
     val result = service.send(resultHolder)
     TestCase.assertEquals(result.description, StatisticsResult.ResultCode.SENT_WITH_ERRORS, result.code)
-    TestCase.assertEquals(0, resultHolder.succeed)
+    TestCase.assertEquals(0, resultHolder.getSucceed())
     TestCase.assertTrue(!logFile.exists())
   }
 
@@ -80,7 +80,7 @@ internal class EventLogStatisticsServiceTest : StatisticsUploaderBaseTest() {
     val resultHolder = ResultHolder()
     val result = service.send(resultHolder)
     TestCase.assertEquals(result.description, StatisticsResult.ResultCode.NOTHING_TO_SEND, result.code)
-    TestCase.assertEquals(0, resultHolder.succeed)
+    TestCase.assertEquals(0, resultHolder.getSucceed())
     TestCase.assertTrue(!logFile.exists())
   }
 
@@ -97,6 +97,7 @@ internal class EventLogStatisticsServiceTest : StatisticsUploaderBaseTest() {
     TestCase.assertEquals(result.description, StatisticsResult.ResultCode.SEND, result.code)
     for (logFile in logFiles) {
       TestCase.assertTrue(!logFile.exists())
+      TestCase.assertTrue(resultHolder.successfullySentFiles.contains(logFile.absolutePath))
     }
 
     return resultHolder.successContents.map {
@@ -148,11 +149,11 @@ internal class EventLogStatisticsServiceTest : StatisticsUploaderBaseTest() {
 
   private class ResultHolder : EventLogResultDecorator {
     var failed = 0
-    var succeed = 0
+    val successfullySentFiles= mutableListOf<String>()
     val successContents = mutableListOf<String>()
 
-    override fun onSucceed(request: LogEventRecordRequest, content: String) {
-      succeed++
+    override fun onSucceed(request: LogEventRecordRequest, content: String, logPath: String) {
+      successfullySentFiles.add(logPath)
       successContents.add(content)
     }
 
@@ -161,6 +162,7 @@ internal class EventLogStatisticsServiceTest : StatisticsUploaderBaseTest() {
     }
 
     override fun onFinished(): StatisticsResult {
+      val succeed = getSucceed()
       val total = succeed + failed
       if (total == 0) {
         return StatisticsResult(StatisticsResult.ResultCode.NOTHING_TO_SEND, "No files to upload.")
@@ -170,5 +172,7 @@ internal class EventLogStatisticsServiceTest : StatisticsUploaderBaseTest() {
       }
       return StatisticsResult(StatisticsResult.ResultCode.SEND, "Uploaded $succeed files.")
     }
+
+    fun getSucceed(): Int = successfullySentFiles.size
   }
 }

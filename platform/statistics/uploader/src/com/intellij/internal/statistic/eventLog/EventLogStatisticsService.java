@@ -124,7 +124,7 @@ public class EventLogStatisticsService implements StatisticsService {
           int code = response.getStatusLine().getStatusCode();
           String content = getResponseMessage(response);
           if (code == HttpStatus.SC_OK) {
-            decorator.onSucceed(recordRequest, content);
+            decorator.onSucceed(recordRequest, content, file.getAbsolutePath());
             toRemove.add(file);
           }
           else {
@@ -242,7 +242,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
     private int myLocalFiles = -1;
     private int myFailed = 0;
-    private int mySucceed = 0;
+    private final List<String> mySuccessfullySentFiles = new ArrayList<>();
 
     private EventLogCounterResultDecorator(@Nullable EventLogSendListener listener) {
       myListener = listener;
@@ -254,8 +254,8 @@ public class EventLogStatisticsService implements StatisticsService {
     }
 
     @Override
-    public void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content) {
-      mySucceed++;
+    public void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content, @NotNull String logPath) {
+      mySuccessfullySentFiles.add(logPath);
     }
 
     @Override
@@ -267,17 +267,18 @@ public class EventLogStatisticsService implements StatisticsService {
     @Override
     public StatisticsResult onFinished() {
       if (myListener != null) {
-        myListener.onLogsSend(mySucceed, myFailed, myLocalFiles);
+        myListener.onLogsSend(mySuccessfullySentFiles, myFailed, myLocalFiles);
       }
 
-      int total = mySucceed + myFailed;
+      int succeed = mySuccessfullySentFiles.size();
+      int total = succeed + myFailed;
       if (total == 0) {
         return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to upload.");
       }
       else if (myFailed > 0) {
-        return new StatisticsResult(ResultCode.SENT_WITH_ERRORS, "Uploaded " + mySucceed + " out of " + total + " files.");
+        return new StatisticsResult(ResultCode.SENT_WITH_ERRORS, "Uploaded " + succeed + " out of " + total + " files.");
       }
-      return new StatisticsResult(ResultCode.SEND, "Uploaded " + mySucceed + " files.");
+      return new StatisticsResult(ResultCode.SEND, "Uploaded " + succeed + " files.");
     }
   }
 }
