@@ -32,6 +32,7 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.proxy.CommonProxy
+import org.jetbrains.idea.svn.RootsToWorkingCopies
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnConfigurable.selectConfigurationDirectory
 import org.jetbrains.idea.svn.SvnConfiguration
@@ -79,6 +80,7 @@ class SvnAuthenticationNotifier(project: Project) :
   private var myVerificationInProgress = false
 
   private val vcs: SvnVcs get() = SvnVcs.getInstance(myProject)
+  private val rootsToWorkingCopies: RootsToWorkingCopies get() = RootsToWorkingCopies.getInstance(myProject)
 
   override fun dispose() {
     myTimer.cancel(false)
@@ -159,7 +161,7 @@ class SvnAuthenticationNotifier(project: Project) :
     if (obj.isOutsideCopies) return null
     if (obj.wcUrl != null) return obj.wcUrl
 
-    val copy = vcs.rootsToWorkingCopies.getMatchingCopy(obj.url)
+    val copy = rootsToWorkingCopies.getMatchingCopy(obj.url)
     if (copy != null) {
       obj.isOutsideCopies = false
       obj.wcUrl = copy.url
@@ -174,7 +176,7 @@ class SvnAuthenticationNotifier(project: Project) :
    * Bases on presence of notifications!
    */
   fun isAuthenticatedFor(vf: VirtualFile, factory: ClientFactory?): ThreeState {
-    val wcCopy = vcs.rootsToWorkingCopies.getWcRoot(vf) ?: return ThreeState.UNSURE
+    val wcCopy = rootsToWorkingCopies.getWcRoot(vf) ?: return ThreeState.UNSURE
 
     val haveCancellation = getStateFor(wcCopy.url)
     if (haveCancellation) return ThreeState.NO

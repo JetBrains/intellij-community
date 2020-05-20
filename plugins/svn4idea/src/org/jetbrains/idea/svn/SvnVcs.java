@@ -119,9 +119,6 @@ public final class SvnVcs extends AbstractVcs {
   public static final Topic<Consumer> ROOTS_RELOADED = new Topic<>("ROOTS_RELOADED", Consumer.class);
 
   private SvnBranchPointsCalculator mySvnBranchPointsCalculator;
-
-  private final RootsToWorkingCopies myRootsToWorkingCopies;
-
   private SvnCheckoutProvider myCheckoutProvider;
 
   @NotNull private final ClientFactory cmdClientFactory;
@@ -131,7 +128,6 @@ public final class SvnVcs extends AbstractVcs {
   public SvnVcs(@NotNull Project project) {
     super(project, VCS_NAME);
 
-    myRootsToWorkingCopies = new RootsToWorkingCopies(this);
     cmdClientFactory = new CmdClientFactory(this);
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -243,10 +239,7 @@ public final class SvnVcs extends AbstractVcs {
     MessageBusConnection busConnection = myProject.getMessageBus().connect();
     if (!myProject.isDefault()) {
       busConnection.subscribe(ChangeListListener.TOPIC, myChangeListListener);
-      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> {
-        invokeRefreshSvnRoots();
-        myRootsToWorkingCopies.directoryMappingChanged();
-      });
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> invokeRefreshSvnRoots());
     }
 
     myFileOperationsHandler = new SvnFileSystemListener(this);
@@ -267,6 +260,7 @@ public final class SvnVcs extends AbstractVcs {
       checkCommandLineVersion();
     }
 
+    RootsToWorkingCopies.getInstance(myProject);
     ProjectLevelVcsManager.getInstance(myProject).runAfterInitialization(() -> setupChangeLists());
     StartupManager.getInstance(myProject).runAfterOpened(() -> {
       postStartup();
@@ -285,20 +279,11 @@ public final class SvnVcs extends AbstractVcs {
       }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
     });
 
-    // not allowed to subscribe to the same topic several times, see subscribing above
-    if (myProject.isDefault()) {
-      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
-    }
-
     SvnLoadedBranchesStorage.getInstance(myProject).activate();
   }
 
   public static Logger wrapLogger(final Logger logger) {
     return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), new SvnExceptionLogFilter());
-  }
-
-  public RootsToWorkingCopies getRootsToWorkingCopies() {
-    return myRootsToWorkingCopies;
   }
 
   @Override
@@ -319,7 +304,7 @@ public final class SvnVcs extends AbstractVcs {
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
     }
-    myRootsToWorkingCopies.clear();
+    RootsToWorkingCopies.getInstance(myProject).clear();
     SvnAuthenticationNotifier.getInstance(myProject).clear();
 
     mySvnBranchPointsCalculator.deactivate();
@@ -560,7 +545,7 @@ public final class SvnVcs extends AbstractVcs {
   public boolean isWcRoot(@NotNull FilePath filePath) {
     boolean isWcRoot = false;
     VirtualFile file = filePath.getVirtualFile();
-    WorkingCopy wcRoot = file != null ? myRootsToWorkingCopies.getWcRoot(file) : null;
+    WorkingCopy wcRoot = file != null ? RootsToWorkingCopies.getInstance(myProject).getWcRoot(file) : null;
     if (wcRoot != null) {
       isWcRoot = wcRoot.getFile().getAbsolutePath().equals(filePath.getPath());
     }
