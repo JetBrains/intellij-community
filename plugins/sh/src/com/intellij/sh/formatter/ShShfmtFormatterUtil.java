@@ -5,6 +5,11 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,8 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
@@ -33,11 +36,16 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.sh.ShBundle.message;
+import static com.intellij.sh.ShBundle.messagePointer;
+import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
+
 public class ShShfmtFormatterUtil {
   private static final Logger LOG = Logger.getInstance(ShShfmtFormatterUtil.class);
   private static final String FEATURE_ACTION_ID = "ExternalFormatterDownloaded";
 
   private static final String SHFMT = "shfmt";
+  private static final String OLD_SHFMT = "old_shfmt";
   private static final String SHFMT_VERSION = "v2.6.4";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
@@ -50,6 +58,10 @@ public class ShShfmtFormatterUtil {
   private static final String FREE_BSD = "_freebsd";
 
   public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+    download(project, onSuccess, onFailure, false);
+  }
+
+  private static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure, boolean withReplace) {
     File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
       //noinspection ResultOfMethodCallIgnored
@@ -57,21 +69,13 @@ public class ShShfmtFormatterUtil {
     }
 
     File formatter = new File(DOWNLOAD_PATH + File.separator + SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
+    File oldFormatter = new File(DOWNLOAD_PATH + File.separator + OLD_SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
     if (formatter.exists()) {
-      try {
-        String formatterPath = formatter.getCanonicalPath();
-        if (ShSettings.getShfmtPath().equals(formatterPath)) {
-          LOG.debug("Shfmt formatter already downloaded");
-        }
-        else {
-          ShSettings.setShfmtPath(formatterPath);
-        }
-        ApplicationManager.getApplication().invokeLater(onSuccess);
-        return;
-      }
-      catch (IOException e) {
-        LOG.debug("Can't evaluate formatter path", e);
-        ApplicationManager.getApplication().invokeLater(onFailure);
+      if (withReplace) {
+        boolean successful = renameOldFormatter(formatter, oldFormatter, onFailure);
+        if (!successful) return;
+      } else {
+        setupFormatterPath(formatter, onSuccess, onFailure);
         return;
       }
     }
@@ -81,7 +85,7 @@ public class ShShfmtFormatterUtil {
     DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
 
-    Task.Backgroundable task = new Task.Backgroundable(project, ShBundle.message("sh.label.download.shfmt.formatter")) {
+    Task.Backgroundable task = new Task.Backgroundable(project, message("sh.label.download.shfmt.formatter")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -91,12 +95,17 @@ public class ShShfmtFormatterUtil {
           if (file != null) {
             FileUtil.setExecutable(file);
             ShSettings.setShfmtPath(file.getCanonicalPath());
+            if (withReplace) {
+              LOG.info("Remove old formatter");
+              FileUtil.delete(oldFormatter);
+            }
             ApplicationManager.getApplication().invokeLater(onSuccess);
             ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
           }
         }
         catch (IOException e) {
           LOG.warn("Can't download shfmt formatter", e);
+          if (withReplace) rollbackToOldFormatter(formatter, oldFormatter);
           ApplicationManager.getApplication().invokeLater(onFailure);
         }
       }
@@ -104,6 +113,47 @@ public class ShShfmtFormatterUtil {
     BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
     processIndicator.setIndeterminate(false);
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
+  }
+
+  private static void setupFormatterPath(@NotNull File formatter, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+    try {
+      String formatterPath = formatter.getCanonicalPath();
+      if (ShSettings.getShfmtPath().equals(formatterPath)) {
+        LOG.info("Shfmt formatter already downloaded");
+      }
+      else {
+        ShSettings.setShfmtPath(formatterPath);
+      }
+      ApplicationManager.getApplication().invokeLater(onSuccess);
+    }
+    catch (IOException e) {
+      LOG.debug("Can't evaluate formatter path", e);
+      ApplicationManager.getApplication().invokeLater(onFailure);
+    }
+  }
+
+  private static boolean renameOldFormatter(@NotNull File formatter, @NotNull File oldFormatter, @NotNull Runnable onFailure) {
+    LOG.info("Rename formatter to the temporary filename");
+    try {
+      FileUtil.rename(formatter, oldFormatter);
+    }
+    catch (IOException e) {
+      LOG.info("Can't rename formatter to the temporary filename", e);
+      ApplicationManager.getApplication().invokeLater(onFailure);
+      return false;
+    }
+    return true;
+  }
+
+  private static void rollbackToOldFormatter(@NotNull File formatter, @NotNull File oldFormatter) {
+    LOG.info("Update failed, rollback");
+    try {
+      FileUtil.rename(oldFormatter, formatter);
+    }
+    catch (IOException e) {
+      LOG.info("Can't rollback formatter after failed update", e);
+    }
+    FileUtil.delete(oldFormatter);
   }
 
   public static boolean isValidPath(@Nullable String path) {
@@ -114,7 +164,40 @@ public class ShShfmtFormatterUtil {
     return file.getName().contains(SHFMT);
   }
 
-  public static boolean isNewVersionAvailable() {
+  static void checkShfmtForUpdate(@NotNull Project project) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      application.executeOnPooledThread(() -> checkForUpdateInBackgroundThread(project));
+    } else {
+      checkForUpdateInBackgroundThread(project);
+    }
+  }
+
+  private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
+    if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
+    if (!isNewVersionAvailable()) return;
+    Notification notification = new Notification(NOTIFICATION_GROUP_ID, "", message("sh.fmt.update.question"),
+                                                 NotificationType.INFORMATION);
+    notification.addAction(
+      NotificationAction.createSimple(messagePointer("sh.update"), () -> {
+        notification.expire();
+        download(project,
+                 () -> Notifications.Bus
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, "", message("sh.fmt.success.update"),
+                                            NotificationType.INFORMATION)),
+                 () -> Notifications.Bus
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, "", message("sh.fmt.cannot.update"),
+                                            NotificationType.ERROR)),
+                 true);
+      }));
+    notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {
+      notification.expire();
+      ShSettings.setSkippedShfmtVersion(SHFMT_VERSION);
+    }));
+    Notifications.Bus.notify(notification, project);
+  }
+
+  private static boolean isNewVersionAvailable() {
     String path = ShSettings.getShfmtPath();
     if (ShSettings.I_DO_MIND.equals(path)) return false;
     File file = new File(path);
@@ -125,8 +208,7 @@ public class ShShfmtFormatterUtil {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
       String stdout = processOutput.getStdout();
-      //return !stdout.contains(SHFMT_VERSION);
-      return !stdout.contains("SHFMT_VERSION");
+      return !stdout.contains(SHFMT_VERSION) && !ShSettings.getSkippedShfmtVersion().equals(SHFMT_VERSION);
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);

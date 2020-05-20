@@ -39,7 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.sh.ShDependenciesVersionInspector.NOTIFICATION_GROUP_ID;
+import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
 // todo: rewrite with the future API, see IDEA-203568
 public class ShExternalFormatter implements ExternalFormatProcessor {
@@ -78,9 +78,8 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     if (ShSettings.I_DO_MIND.equals(shFmtExecutable)) return;
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
-      Notification notification =
-        new Notification(NOTIFICATION_GROUP_ID, "", ShBundle.message("sh.fmt.install.question"),
-                         NotificationType.INFORMATION);
+      Notification notification = new Notification(NOTIFICATION_GROUP_ID, "", ShBundle.message("sh.fmt.install.question"),
+                                                   NotificationType.INFORMATION);
       notification.addAction(
         NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
           notification.expire();
@@ -96,9 +95,10 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
         notification.expire();
         ShSettings.setShfmtPath(ShSettings.I_DO_MIND);
       }));
-      Notifications.Bus.notify(notification);
+      Notifications.Bus.notify(notification, project);
       return;
     }
+    ShShfmtFormatterUtil.checkShfmtForUpdate(project);
 
     String filePath = file.getPath();
     String realPath = FileUtil.toSystemDependentName(filePath);

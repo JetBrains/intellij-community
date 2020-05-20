@@ -45,7 +45,7 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
         Notifications.Bus.notify(new Notification(message("sh.shell.script"), "", message("sh.shellcheck.success.install"),
                                                   NotificationType.INFORMATION));
       };
-      Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), "", message("sh.shellcheck.error.label"),
+      Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), "", message("sh.shellcheck.cannot.download"),
                                                                            NotificationType.ERROR));
       panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(null, onSuccess, onFailure));
       //noinspection DialogTitleCapitalization

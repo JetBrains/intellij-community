@@ -5,6 +5,11 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,11 +42,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.intellij.sh.ShBundle.message;
+import static com.intellij.sh.ShBundle.messagePointer;
+import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
+
 public class ShShellcheckUtil {
   @NonNls private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
   private static final String WINDOWS_EXTENSION = ".exe";
   static final String SHELLCHECK = "shellcheck";
+  static final String OLD_SHELLCHECK = "old_shellcheck";
   static final String SHELLCHECK_VERSION = "0.6.0-1";
   static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
   static final String SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/" +
@@ -50,6 +60,10 @@ public class ShShellcheckUtil {
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
   public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+    download(project, onSuccess, onFailure, false);
+  }
+
+  private static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure, boolean withReplace) {
     File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
       //noinspection ResultOfMethodCallIgnored
@@ -57,22 +71,13 @@ public class ShShellcheckUtil {
     }
 
     File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
+    File oldShellcheck = new File(DOWNLOAD_PATH + File.separator + OLD_SHELLCHECK + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
     if (shellcheck.exists()) {
-      try {
-        String path = ShSettings.getShellcheckPath();
-        String shellcheckPath = shellcheck.getCanonicalPath();
-        if (StringUtil.isNotEmpty(path) && path.equals(shellcheckPath)) {
-          LOG.debug("Shellcheck already downloaded");
-        }
-        else {
-          ShSettings.setShellcheckPath(shellcheckPath);
-        }
-        ApplicationManager.getApplication().invokeLater(onSuccess);
-        return;
-      }
-      catch (IOException e) {
-        LOG.debug("Can't evaluate shellcheck path", e);
-        ApplicationManager.getApplication().invokeLater(onFailure);
+      if (withReplace) {
+        boolean successful = renameOldShellcheck(shellcheck, oldShellcheck, onFailure);
+        if (!successful) return;
+      } else {
+        setupShellcheckPath(shellcheck, onSuccess, onFailure);
         return;
       }
     }
@@ -88,7 +93,7 @@ public class ShShellcheckUtil {
     DownloadableFileDescription description = service.createFileDescription(url, downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
 
-    Task.Backgroundable task = new Task.Backgroundable(project, ShBundle.message("sh.shellcheck.download.label.text")) {
+    Task.Backgroundable task = new Task.Backgroundable(project, message("sh.shellcheck.download.label.text")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -100,6 +105,10 @@ public class ShShellcheckUtil {
             if (StringUtil.isNotEmpty(path)) {
               FileUtil.setExecutable(new File(path));
               ShSettings.setShellcheckPath(path);
+              if (withReplace) {
+                LOG.debug("Remove old shellcheck");
+                FileUtil.delete(oldShellcheck);
+              }
               ApplicationManager.getApplication().invokeLater(onSuccess);
               ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
             }
@@ -107,6 +116,7 @@ public class ShShellcheckUtil {
         }
         catch (IOException e) {
           LOG.warn("Can't download shellcheck", e);
+          if (withReplace) rollbackToOldShellcheck(shellcheck, oldShellcheck);
           ApplicationManager.getApplication().invokeLater(onFailure);
         }
       }
@@ -114,6 +124,48 @@ public class ShShellcheckUtil {
     BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
     processIndicator.setIndeterminate(false);
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
+  }
+
+  private static void setupShellcheckPath(@NotNull File shellcheck, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+    try {
+      String path = ShSettings.getShellcheckPath();
+      String shellcheckPath = shellcheck.getCanonicalPath();
+      if (StringUtil.isNotEmpty(path) && path.equals(shellcheckPath)) {
+        LOG.debug("Shellcheck already downloaded");
+      }
+      else {
+        ShSettings.setShellcheckPath(shellcheckPath);
+      }
+      ApplicationManager.getApplication().invokeLater(onSuccess);
+    }
+    catch (IOException e) {
+      LOG.info("Can't evaluate shellcheck path", e);
+      ApplicationManager.getApplication().invokeLater(onFailure);
+    }
+  }
+
+  private static boolean renameOldShellcheck(@NotNull File shellcheck, @NotNull File oldShellcheck, @NotNull Runnable onFailure) {
+    LOG.info("Rename shellcheck to the temporary filename");
+    try {
+      FileUtil.rename(shellcheck, oldShellcheck);
+    }
+    catch (IOException e) {
+      LOG.info("Can't rename shellcheck to the temporary filename", e);
+      ApplicationManager.getApplication().invokeLater(onFailure);
+      return false;
+    }
+    return true;
+  }
+
+  private static void rollbackToOldShellcheck(@NotNull File shellcheck, @NotNull File oldShellcheck) {
+    LOG.info("Update failed, rollback");
+    try {
+      FileUtil.rename(oldShellcheck, shellcheck);
+    }
+    catch (IOException e) {
+      LOG.info("Can't rollback shellcheck after failed update", e);
+    }
+    FileUtil.delete(oldShellcheck);
   }
 
   static boolean isExecutionValidPath(@Nullable String path) {
@@ -129,7 +181,40 @@ public class ShShellcheckUtil {
     return file.canExecute() && file.getName().contains(SHELLCHECK);
   }
 
-  public static boolean isNewVersionAvailable() {
+  static void checkShellCheckForUpdate(@NotNull Project project) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      application.executeOnPooledThread(() -> checkForUpdateInBackgroundThread(project));
+    } else {
+      checkForUpdateInBackgroundThread(project);
+    }
+  }
+
+  private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
+    if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
+    if (!isNewVersionAvailable()) return;
+    Notification notification = new Notification(NOTIFICATION_GROUP_ID, "", message("sh.shellcheck.update.question"),
+                                                 NotificationType.INFORMATION);
+    notification.addAction(
+      NotificationAction.createSimple(messagePointer("sh.update"), () -> {
+        notification.expire();
+        download(project,
+                 () -> Notifications.Bus
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, "", message("sh.shellcheck.success.update"),
+                                            NotificationType.INFORMATION)),
+                 () -> Notifications.Bus
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, "", message("sh.shellcheck.cannot.update"),
+                                            NotificationType.ERROR)),
+                 true);
+      }));
+    notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {
+      notification.expire();
+      ShSettings.setSkippedShellcheckVersion(SHELLCHECK_VERSION);
+    }));
+    Notifications.Bus.notify(notification, project);
+  }
+
+  private static boolean isNewVersionAvailable() {
     String path = ShSettings.getShellcheckPath();
     if (ShSettings.I_DO_MIND.equals(path)) return false;
     File file = new File(path);
@@ -140,8 +225,7 @@ public class ShShellcheckUtil {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
       String stdout = processOutput.getStdout();
-      //return !stdout.contains(SHELLCHECK);
-      return !stdout.contains("SHELLCHECK");
+      return !stdout.contains(SHELLCHECK_VERSION) && !ShSettings.getSkippedShellcheckVersion().equals(SHELLCHECK_VERSION);
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);
