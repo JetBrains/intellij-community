@@ -1,28 +1,13 @@
-<idea-plugin version="2">
+<idea-plugin>
     <id>com.jetbrains.space</id>
     <name>Space</name>
-    <version>0.1.dev</version>
-    <vendor email="support@jetbrains.com" url="jetbrains.com">JetBrains</vendor>
 
     <description>
         <![CDATA[
             Lets you connect your IDE to your organization in <a href="https://jetbrains.com/space/">JetBrains Space</a> so you can view and clone project repositories.
         ]]>
     </description>
-
-    <change-notes><![CDATA[
-<ul>
-<li>Share a project on Space directly from the IntelliJ-based IDE</li>
-<li>Configure the method of clonning HTTP/SSH. HTTP is set by default</li>
-<li>UI improvements</li>
-</ul>
-		]]>
-
-    </change-notes>
-
-    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="201"
-                  until-build="202.*"/>
+    <vendor>JetBrains</vendor>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
@@ -55,10 +40,10 @@
         <projectService serviceImplementation="circlet.plugins.pipelines.services.execution.CircletTaskRunner"/>
         <projectService serviceImplementation="circlet.plugins.pipelines.ui.CircletToolWindowService"/>
         <projectService serviceImplementation="circlet.vcs.CircletProjectContext"/>
-<!--        <runLineMarkerContributor-->
-<!--            language="kotlin"-->
-<!--            id="circletScriptRunLineMarkerProvider"-->
-<!--            implementationClass="circlet.plugins.pipelines.services.CircletScriptRunLineMarkerProvider"/>-->
+        <runLineMarkerContributor
+            language="kotlin"
+            id="circletScriptRunLineMarkerProvider"
+            implementationClass="circlet.plugins.pipelines.services.CircletScriptRunLineMarkerProvider"/>
 
         <configurationType implementation="circlet.plugins.pipelines.services.run.CircletRunConfigurationType"/>
 
