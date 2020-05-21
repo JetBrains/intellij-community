@@ -21,9 +21,11 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.font.TextAttribute;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public abstract class MultilineTreeCellRenderer extends JComponent implements Accessible, TreeCellRenderer {
 
@@ -100,7 +102,11 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   }
 
   private FontMetrics getCurrFontMetrics() {
-    return getFontMetrics(getFont());
+    // Disable kerning for font because of huge performance penalty
+    // String width will increase a bit but it's OK here
+    Font font = getFont().deriveFont(
+      Collections.singletonMap(TextAttribute.KERNING, Integer.valueOf(0)));
+    return getFontMetrics(font);
   }
 
   @Override
