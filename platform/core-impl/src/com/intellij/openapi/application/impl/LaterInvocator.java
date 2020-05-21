@@ -109,8 +109,7 @@ public class LaterInvocator {
       return;
     }
     FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired, callback);
-    getRunnableQueue(onEdt).push(runnableInfo);
-    requestFlush();
+    pushRunnableToQueue(onEdt, runnableInfo);
   }
 
   static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState, boolean onEdt) {
@@ -183,8 +182,7 @@ public class LaterInvocator {
       guard.enteredModality(appendedState);
     }
 
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
   public static void enterModal(Project project, Dialog dialog) {
@@ -218,8 +216,7 @@ public class LaterInvocator {
   @ApiStatus.Internal
   public static void markTransparent(@NotNull ModalityState state) {
     ((ModalityStateEx)state).markTransparent();
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
   public static void leaveModal(Project project, Dialog dialog) {
@@ -247,8 +244,7 @@ public class LaterInvocator {
       }
     }
 
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
   private static void removeModality(@NotNull Object modalEntity, int index) {
@@ -276,8 +272,7 @@ public class LaterInvocator {
     LOG.assertTrue(index >= 0);
     removeModality(modalEntity, index);
 
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
   @TestOnly
@@ -286,8 +281,7 @@ public class LaterInvocator {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
     LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
   public static Object @NotNull [] getCurrentModalEntities() {
@@ -392,14 +386,21 @@ public class LaterInvocator {
     return ourWtQueue.getQueue();
   }
 
-  private static void reincludeSkippedItems() {
+  private static void pushRunnableToQueue(boolean onEdt, FlushQueue.RunnableInfo runnableInfo) {
+    getRunnableQueue(onEdt).push(runnableInfo);
+    requestFlush();
+  }
+
+  private static void reincludeSkippedItemsAndRequestFlush() {
     ourEdtQueue.reincludeSkippedItems();
     ourWtQueue.reincludeSkippedItems();
+    requestFlush();
   }
 
   public static void purgeExpiredItems() {
     ourEdtQueue.purgeExpiredItems();
     ourWtQueue.purgeExpiredItems();
+    requestFlush();
   }
 
   @TestOnly
