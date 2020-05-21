@@ -68,7 +68,8 @@ abstract class PyExternalDocTest : PyTestCase() {
     urls = listOf(urls!![0].replace("3.7 Mock SDK", "3.7"))
 
     TestCase.assertTrue(
-      (provider as CompositeDocumentationProvider).fetchExternalDocumentation(myFixture.project, element, urls)!!.contains(expectedHtml))
+      (provider as CompositeDocumentationProvider)
+        .fetchExternalDocumentation(myFixture.project, element, urls, false)!!.contains(expectedHtml))
   }
 
     fun doUrl(qname: String, expectedUrl: String) {

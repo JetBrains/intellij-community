@@ -212,10 +212,10 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
   }
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     for (DocumentationProvider provider : getAllProviders()) {
       if (provider instanceof ExternalDocumentationProvider) {
-        final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, docUrls);
+        final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, docUrls, onHover);
         if (doc != null) {
           LOG.debug("fetchExternalDocumentation: ", provider);
           return doc;

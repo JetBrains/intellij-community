@@ -79,7 +79,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
 
   @Nullable
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     final XmlTag tag = element instanceof XmlElement ?
                        ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlTag.class, false)) :
                        null;

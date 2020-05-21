@@ -9,18 +9,28 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface ExternalDocumentationProvider {
-  @Nullable
-  String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls);
-
   /**
-   * Quick check for existence of external documentation for specified element. Called from action update, so must be fast.
-   * If not implemented, update check is performed by calling {@link DocumentationProvider#getUrlFor(PsiElement, PsiElement)}.
-   *
-   * @deprecated existing implementations fall back to checking for existing url
-   * @param element the element to check for existence of documentation
-   * @param originalElement the element at caret (on which the action was invoked)
-   * @return true if the external documentation action should be enabled, false otherwise.
+   * @deprecated Use/override {@link #fetchExternalDocumentation(Project, PsiElement, List, boolean)} instead.
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  default @Nullable String fetchExternalDocumentation(final Project project, PsiElement element, List<String> docUrls) {
+    return null;
+  }
+
+  default @Nullable String fetchExternalDocumentation(final Project project, PsiElement element, List<String> docUrls, boolean onHover) {
+    return fetchExternalDocumentation(project, element, docUrls);
+  }
+
+    /**
+     * Quick check for existence of external documentation for specified element. Called from action update, so must be fast.
+     * If not implemented, update check is performed by calling {@link DocumentationProvider#getUrlFor(PsiElement, PsiElement)}.
+     *
+     * @deprecated existing implementations fall back to checking for existing url
+     * @param element the element to check for existence of documentation
+     * @param originalElement the element at caret (on which the action was invoked)
+     * @return true if the external documentation action should be enabled, false otherwise.
+     */
   @Deprecated
   boolean hasDocumentationFor(PsiElement element, PsiElement originalElement);
 

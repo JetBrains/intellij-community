@@ -58,7 +58,7 @@ public interface DocumentationProvider {
    * If the list contains a single URL, it will be opened.
    * If the list contains multiple URLs, the user will be prompted to choose one of them.
    * For {@link ExternalDocumentationProvider}, first URL, yielding non-empty result in
-   * {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List)} will be used.
+   * {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List, boolean)} will be used.
    */
   @Nullable
   default List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
