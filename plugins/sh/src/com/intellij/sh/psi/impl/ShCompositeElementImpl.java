@@ -37,11 +37,6 @@ public class ShCompositeElementImpl extends ASTWrapperPsiElement implements ShCo
   }
 
   @Override
-  public @NotNull GlobalSearchScope getResolveScope() {
-    return GlobalSearchScope.fileScope(getContainingFile());
-  }
-
-  @Override
   public @NotNull SearchScope getUseScope() {
     return GlobalSearchScope.fileScope(getContainingFile());
   }
