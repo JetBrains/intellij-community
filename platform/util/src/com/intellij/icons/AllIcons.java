@@ -1120,12 +1120,18 @@ public class AllIcons {
 
   public final static class Welcome {
     /** 32x32 */ public static final @NotNull Icon CreateDesktopEntry = load("/welcome/createDesktopEntry.png");
-    /** 16x16 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
-    /** 16x16 */ public static final @NotNull Icon FromVCS = load("/welcome/fromVCS.svg");
+    /** 24x24 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
+    /** 24x24 */ public static final @NotNull Icon CreateNewProjectSelected = load("/welcome/createNewProjectSelected.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCS = load("/welcome/fromVCS.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSSelected = load("/welcome/fromVCSSelected.svg");
+    /** 24x24 */ public static final @NotNull Icon Open = load("/welcome/open.svg");
+    /** 24x24 */ public static final @NotNull Icon OpenSelected = load("/welcome/openSelected.svg");
 
     public final static class Project {
       /** 10x10 */ public static final @NotNull Icon Remove_hover = load("/welcome/project/remove-hover.svg");
       /** 10x10 */ public static final @NotNull Icon Remove = load("/welcome/project/remove.svg");
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabled_hover = load("/welcome/project/removeDisabled-hover.svg");
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("/welcome/project/removeDisabled.svg");
 
     }
     /** 32x32 */ public static final @NotNull Icon Register = load("/welcome/register.png");
