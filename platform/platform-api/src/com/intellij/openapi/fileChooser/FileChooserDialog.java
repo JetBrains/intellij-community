@@ -25,7 +25,7 @@ public interface FileChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = PathChooserDialog.PREFER_LAST_OVER_EXPLICIT;
 
   /**
-   * @deprecated Please use {@link #choose(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile...)} because
+   * @deprecated Please use {@link #choose(Project, VirtualFile...)} because
    * it supports several selections
    */
   @Deprecated

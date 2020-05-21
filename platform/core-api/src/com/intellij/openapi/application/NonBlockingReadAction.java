@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 /**
  * A utility for running non-blocking read actions in background thread.
  * "Non-blocking" means that to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
- * {@link com.intellij.openapi.progress.ProcessCanceledException} and then restarted.
+ * {@link ProcessCanceledException} and then restarted.
  * Code blocks running inside should be prepared to get this exception at any moment,
  * and they should call {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} frequently enough.
  * They should also be side-effect-free or at least idempotent, to avoid consistency issues when interrupted in the middle and restarted.

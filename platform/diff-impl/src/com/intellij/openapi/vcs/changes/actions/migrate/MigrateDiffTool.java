@@ -71,7 +71,7 @@ public class MigrateDiffTool implements DiffTool {
     return request.getContents().length == 2 || request.getContents().length == 3;
   }
 
-  private static boolean isMergeRequest(com.intellij.openapi.diff.DiffRequest request) {
+  private static boolean isMergeRequest(DiffRequest request) {
     return request instanceof MergeRequestImpl && ((MergeRequestImpl)request).getMergeContent() != null;
   }
 

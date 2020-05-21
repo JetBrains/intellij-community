@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a model of the document containing the formatted text, as seen by the
  * formatter. Allows a formatter to access information about the document.
  *
- * @see com.intellij.formatting.FormattingModel#getDocumentModel()
+ * @see FormattingModel#getDocumentModel()
  */
 
 public interface FormattingDocumentModel {

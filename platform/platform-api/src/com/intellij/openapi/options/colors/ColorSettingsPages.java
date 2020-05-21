@@ -40,7 +40,7 @@ public abstract class ColorSettingsPages {
    * @param page the instance of the page to register.
    *
    * Used only in special cases when pages are registered dynamically (Rider).
-   * Otherwise pages should be registered as extensions with {@link com.intellij.openapi.options.colors.ColorSettingsPage#EP_NAME}
+   * Otherwise pages should be registered as extensions with {@link ColorSettingsPage#EP_NAME}
    */
   public abstract void registerPage(ColorSettingsPage page);
 

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair<Long, T>>> {
   private final Function<? super H, ? extends T> myFunction;
   /**
-   * One of {@link com.intellij.psi.util.PsiModificationTracker} constants that marks when to flush cache
+   * One of {@link PsiModificationTracker} constants that marks when to flush cache
    */
   @NotNull
   private final Key<?> myModifyCause;
@@ -104,7 +104,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
    *
    * @param name        key name
    * @param function    function to reproduce new value when old value is stale
-   * @param modifyCause one one {@link com.intellij.psi.util.PsiModificationTracker}'s constants that marks when to flush cache
+   * @param modifyCause one one {@link PsiModificationTracker}'s constants that marks when to flush cache
    * @param <T>         value type
    * @param <H>         key type
    * @return instance
@@ -116,7 +116,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
   }
 
   /**
-   * Creates cache key value using {@link com.intellij.psi.util.PsiModificationTracker#JAVA_STRUCTURE_MODIFICATION_COUNT} as
+   * Creates cache key value using {@link PsiModificationTracker#JAVA_STRUCTURE_MODIFICATION_COUNT} as
    * modification count to flush cache
    *
    * @param name     key name

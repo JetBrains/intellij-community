@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
  * A request for target environment.
  * <p>
  * Can be filled with the requirements for target environment like files to upload,
- * ports to bind and locations to imported from another environents.
+ * ports to bind and locations to imported from another environments.
  * <p>
  * Implementations must cancel promises of all created TargetValues
  */
@@ -40,7 +40,7 @@ public interface TargetEnvironmentRequest {
 
   /**
    * @param temporary If true, volume should be deleted after calling
-   *                  {@link com.intellij.execution.target.TargetEnvironment#shutdown() TargetEnvironment.shutdown()}
+   *                  {@link TargetEnvironment#shutdown() TargetEnvironment.shutdown()}
    *                  of owning environment instance.
    */
   @NotNull

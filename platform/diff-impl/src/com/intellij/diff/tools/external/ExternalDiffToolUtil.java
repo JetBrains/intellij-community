@@ -188,7 +188,7 @@ public class ExternalDiffToolUtil {
       files.add(createFile(project, content, fileName));
     }
 
-    Map<String, String> patterns = new java.util.HashMap<>();
+    Map<String, String> patterns = new HashMap<>();
     if (files.size() == 2) {
       patterns.put("%1", files.get(0).getPath());
       patterns.put("%2", files.get(1).getPath());

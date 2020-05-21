@@ -17,10 +17,10 @@ public interface DumbUtil {
   }
 
   /**
-   * @return all the elements of the given collection if there's no dumb mode currently ({@link com.intellij.openapi.project.DumbService#isDumb()} is false),
-   * or method is called inside {@link com.intellij.util.indexing.FileBasedIndex#ignoreDumbMode(Runnable, Project, com.intellij.util.indexing.DumbModeAccessType)}.
+   * @return all the elements of the given collection if there's no dumb mode currently ({@link DumbService#isDumb()} is false),
+   * or method is called inside {@link com.intellij.util.indexing.FileBasedIndex#ignoreDumbMode(Runnable, com.intellij.util.indexing.DumbModeAccessType)}.
    * Otherwise, the dumb-aware ones are returned.
-   * @see com.intellij.openapi.project.DumbService#isDumbAware(Object)
+   * @see DumbService#isDumbAware(Object)
    */
   @Contract(pure = true)
   @ApiStatus.Internal

@@ -20,12 +20,11 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import javax.swing.JLayeredPane;
+import javax.swing.*;
 import java.awt.*;
 
 /**
- * @see com.intellij.openapi.ui.popup.JBPopupFactory
+ * @see JBPopupFactory
  */
 public interface Balloon extends Disposable, PositionTracker.Client<Balloon>, LightweightWindow {
 

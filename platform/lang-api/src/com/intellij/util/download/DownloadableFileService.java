@@ -57,7 +57,7 @@ public abstract class DownloadableFileService {
                                                   JComponent parent);
 
   /**
-   * @deprecated use {@link #createDownloader(java.util.List, String)} instead
+   * @deprecated use {@link #createDownloader(List, String)} instead
    */
   @Deprecated
   @NotNull

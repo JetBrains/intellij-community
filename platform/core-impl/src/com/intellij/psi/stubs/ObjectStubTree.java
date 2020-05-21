@@ -106,11 +106,11 @@ public class ObjectStubTree<T extends Stub> {
 
   private static final class StubIndexSink implements IndexSink, TObjectProcedure<Map<Object, int[]>>, TObjectObjectProcedure<Object,int[]> {
     private final THashMap<StubIndexKey<?, ?>, Map<Object, int[]>> myResult = new THashMap<>();
-    private final java.util.function.Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> myHashingStrategyFunction;
+    private final Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> myHashingStrategyFunction;
     private int myStubIdx;
     private Map<Object, int[]> myProcessingMap;
 
-    private StubIndexSink(@NotNull java.util.function.Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> hashingStrategyFunction) {
+    private StubIndexSink(@NotNull Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> hashingStrategyFunction) {
       myHashingStrategyFunction = hashingStrategyFunction;
     }
 

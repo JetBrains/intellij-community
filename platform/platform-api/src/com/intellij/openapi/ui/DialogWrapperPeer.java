@@ -19,27 +19,27 @@ public abstract class DialogWrapperPeer {
   public abstract void setUndecorated(boolean undecorated);
 
   /**
-   * @see java.awt.Component#addMouseListener
+   * @see Component#addMouseListener
    */
   public abstract void addMouseListener(MouseListener listener);
 
   /**
-   * @see java.awt.Component#addMouseMotionListener
+   * @see Component#addMouseMotionListener
    */
   public abstract void addMouseListener(MouseMotionListener listener);
 
   /**
-   * @see java.awt.Component#addKeyListener
+   * @see Component#addKeyListener
    */
   public abstract void addKeyListener(KeyListener listener);
 
   /**
-   * @see java.awt.Window#toFront()
+   * @see Window#toFront()
    */
   public abstract void toFront();
 
   /**
-   * @see java.awt.Window#toBack()
+   * @see Window#toBack()
    */
   public abstract void toBack();
 
@@ -51,30 +51,30 @@ public abstract class DialogWrapperPeer {
   protected abstract void dispose();
 
   /**
-   * @see javax.swing.JDialog#getContentPane
+   * @see JDialog#getContentPane
    */
   @Nullable
   public abstract Container getContentPane();
 
   /**
-   * @see java.awt.Window#getOwner
+   * @see Window#getOwner
    */
   public abstract Window getOwner();
 
   public abstract Window getWindow();
 
   /**
-   * @see javax.swing.JDialog#getRootPane
+   * @see JDialog#getRootPane
    */
   public abstract JRootPane getRootPane();
 
   /**
-   * @see java.awt.Window#getSize
+   * @see Window#getSize
    */
   public abstract Dimension getSize();
 
   /**
-   * @see java.awt.Dialog#getTitle
+   * @see Dialog#getTitle
    */
   public abstract String getTitle();
 
@@ -85,48 +85,48 @@ public abstract class DialogWrapperPeer {
   public abstract boolean isModal();
 
   /**
-   * @see java.awt.Component#isVisible
+   * @see Component#isVisible
    */
   public abstract boolean isVisible();
 
   /**
-   * @see java.awt.Window#isShowing
+   * @see Window#isShowing
    */
   public abstract boolean isShowing();
 
   /**
-   * @see javax.swing.JDialog#setSize
+   * @see JDialog#setSize
    */
   public abstract void setSize(int width, int height);
 
   /**
-   * @see javax.swing.JDialog#setTitle
+   * @see JDialog#setTitle
    */
   public abstract void setTitle(String title);
 
   /**
-   * @see javax.swing.JDialog#isResizable
+   * @see JDialog#isResizable
    */
   public abstract void isResizable();
 
   /**
-   * @see javax.swing.JDialog#setResizable
+   * @see JDialog#setResizable
    */
   public abstract void setResizable(boolean resizable);
 
   /**
-   * @see javax.swing.JDialog#getLocation
+   * @see JDialog#getLocation
    */
   @NotNull
   public abstract Point getLocation();
 
   /**
-   * @see javax.swing.JDialog#setLocation(java.awt.Point)
+   * @see JDialog#setLocation(Point)
    */
   public abstract void setLocation(@NotNull Point p);
 
   /**
-   * @see javax.swing.JDialog#setLocation(int,int)
+   * @see JDialog#setLocation(int,int)
    */
   public abstract void setLocation(int x, int y);
 

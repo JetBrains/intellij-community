@@ -18,7 +18,7 @@ package com.intellij.openapi.command.undo;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @see com.intellij.openapi.command.undo.UndoManager#undoableActionPerformed(UndoableAction) 
+ * @see UndoManager#undoableActionPerformed(UndoableAction) 
  */
 public interface UndoableAction {
   void undo() throws UnexpectedUndoException;

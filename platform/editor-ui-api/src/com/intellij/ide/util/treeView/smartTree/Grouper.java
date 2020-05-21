@@ -9,7 +9,7 @@ import java.util.Collection;
 /**
  * Action for grouping items in a generic tree.
  *
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getGroupers()
+ * @see TreeModel#getGroupers()
  */
 
 public interface Grouper extends TreeAction {

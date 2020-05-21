@@ -34,7 +34,7 @@ public abstract class DiffRequestFactory {
 
   /**
    * Creates a request for a merge operation. To execute the request, obtain the diff tool instance by calling
-   * {@link com.intellij.openapi.diff.DiffManager#getDiffTool()} and then call {@link DiffTool#show(DiffRequest)}.
+   * {@link DiffManager#getDiffTool()} and then call {@link DiffTool#show(DiffRequest)}.
    *
    * @param leftText                 First of the changed versions of the content (to be displayed in the left pane).
    * @param rightText                Second of the changed versions of the content (to be displayed in the right pane).

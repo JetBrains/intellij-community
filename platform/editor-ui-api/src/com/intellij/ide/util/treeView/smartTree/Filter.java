@@ -18,7 +18,7 @@ package com.intellij.ide.util.treeView.smartTree;
 /**
  * Action for filtering items in a generic tree.
  *
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getFilters()
+ * @see TreeModel#getFilters()
  */
 
 public interface Filter extends TreeAction {

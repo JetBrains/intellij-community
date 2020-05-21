@@ -43,7 +43,7 @@ public abstract class DetectedFacetPresentation {
 
 
   /**
-   * @deprecated override {@link DetectedFacetPresentation#getAutodetectionPopupText(com.intellij.openapi.module.Module, com.intellij.facet.FacetType, String, com.intellij.openapi.vfs.VirtualFile[])}
+   * @deprecated override {@link DetectedFacetPresentation#getAutodetectionPopupText(Module, FacetType, String, VirtualFile[])}
    * instead
    */
   @Deprecated

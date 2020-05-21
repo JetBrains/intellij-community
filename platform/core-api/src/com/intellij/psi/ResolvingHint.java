@@ -18,9 +18,9 @@ package com.intellij.psi;
 
 /**
  * CAUTION: this is a workaround to fix java method searcher performance.
- * This can be removed in future if the searcher is fixed to obey {@link com.intellij.psi.PsiReference#isReferenceTo(PsiElement)} contract.
+ * This can be removed in future if the searcher is fixed to obey {@link PsiReference#isReferenceTo(PsiElement)} contract.
  *
- * Can be implemented by {@link com.intellij.psi.PsiReference}
+ * Can be implemented by {@link PsiReference}
  * @author Dmitry Avdeev
  */
 public interface ResolvingHint {

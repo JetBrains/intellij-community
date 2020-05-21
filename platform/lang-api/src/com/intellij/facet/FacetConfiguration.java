@@ -14,7 +14,7 @@ import org.jdom.Element;
  *
  * <p>
  * Implement {@link com.intellij.openapi.components.PersistentStateComponent} instead of overriding {@link #readExternal(Element)} and
- * {@link #writeExternal(Element)} methods in your implementation of {@link com.intellij.facet.FacetConfiguration}
+ * {@link #writeExternal(Element)} methods in your implementation of {@link FacetConfiguration}
  */
 public interface FacetConfiguration {
 
