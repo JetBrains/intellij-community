@@ -39,6 +39,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestDataFile;
@@ -190,18 +191,33 @@ public class CodeInsightTestUtil {
     doInlineRename(handler, newName, fixture.getEditor(), fixture.getElementAtCaret());
   }
 
-  @TestOnly
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {
+    if (!tryInlineRename(handler, newName, editor, elementAtCaret)) {
+      Assert.fail("Inline refactoring wasn't performed");
+    }
+  }
+
+  /**
+   * @return true if the refactoring was performed, false otherwise
+   */
+  @TestOnly
+  public static boolean tryInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {
     Project project = editor.getProject();
     Disposable disposable = Disposer.newDisposable();
     try {
       TemplateManagerImpl.setTemplateTesting(disposable);
-      handler.doRename(elementAtCaret, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
+      InplaceRefactoring renamer =
+        handler.doRename(elementAtCaret, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
       if (editor instanceof EditorWindow) {
         editor = ((EditorWindow)editor).getDelegate();
       }
       TemplateState state = TemplateManagerImpl.getTemplateState(editor);
-      assert state != null;
+      if (state == null) {
+        if (renamer != null) {
+          renamer.finish(false);
+        }
+        return false;
+      }
       final TextRange range = state.getCurrentVariableRange();
       assert range != null;
       final Editor finalEditor = editor;
@@ -215,6 +231,7 @@ public class CodeInsightTestUtil {
     finally {
       Disposer.dispose(disposable);
     }
+    return true;
   }
 
   @TestOnly
