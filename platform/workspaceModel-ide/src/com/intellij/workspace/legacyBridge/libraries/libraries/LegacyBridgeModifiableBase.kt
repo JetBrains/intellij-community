@@ -5,8 +5,8 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
 
-abstract class LegacyBridgeModifiableBase(protected val diff: TypedEntityStorageBuilder) {
-  protected val entityStoreOnDiff = EntityStoreOnBuilder(diff)
+abstract class LegacyBridgeModifiableBase(internal val diff: TypedEntityStorageBuilder) {
+  internal val entityStoreOnDiff = EntityStoreOnBuilder(diff)
 
   private var committedOrDisposed = false
 
@@ -17,22 +17,22 @@ abstract class LegacyBridgeModifiableBase(protected val diff: TypedEntityStorage
       committedOrDisposed = true
     }
 
-  protected fun assertModelIsLive() {
+  internal fun assertModelIsLive() {
     if (committedOrDisposed) {
       error("${javaClass.simpleName} was already committed or disposed" )
     }
-  }
-
-  internal fun serializeComponentAsString(rootElementName: String, component: PersistentStateComponent<*>?) : String? {
-    val state = component?.state ?: return null
-    val propertiesElement = serialize(state) ?: return null
-    propertiesElement.name = rootElementName
-    return JDOMUtil.writeElement(propertiesElement)
   }
 
   companion object {
     // TODO Some common mechanics?
     internal val assertChangesApplied
       get() = true
+
+    internal fun serializeComponentAsString(rootElementName: String, component: PersistentStateComponent<*>?): String? {
+      val state = component?.state ?: return null
+      val propertiesElement = serialize(state) ?: return null
+      propertiesElement.name = rootElementName
+      return JDOMUtil.writeElement(propertiesElement)
+    }
   }
 }

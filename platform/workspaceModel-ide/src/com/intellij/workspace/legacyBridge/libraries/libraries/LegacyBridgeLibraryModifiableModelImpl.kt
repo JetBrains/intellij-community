@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import org.jdom.Element
@@ -23,12 +24,11 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   private val originalLibrary: LegacyBridgeLibraryImpl,
   private val originalLibrarySnapshot: LibraryViaTypedEntity,
   diff: TypedEntityStorageBuilder,
-  private val committer: (LegacyBridgeLibraryModifiableModelImpl, TypedEntityStorageDiffBuilder) -> Unit
+  private val targetBuilder: TypedEntityStorageDiffBuilder?
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
-  internal var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
-    private set
+  private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
   private var reloadKind = false
 
   private val currentLibraryValue = CachedValue { storage ->
@@ -36,8 +36,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
       libraryEntity = storage.resolve(entityId) ?: error("Can't resolve library via $entityId"),
       filePointerProvider = originalLibrarySnapshot.filePointerProvider,
       storage = storage,
-      libraryTable = originalLibrarySnapshot.libraryTable,
-      modifiableModelFactory = { _,_ -> throw UnsupportedOperationException() }
+      libraryTable = originalLibrarySnapshot.libraryTable
     )
 
     newLibrary
@@ -83,7 +82,15 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
       originalLibrary.cleanCachedValue()
     }
     if (isChanged) {
-      committer(this, diff)
+      if (targetBuilder != null) {
+        targetBuilder.addDiff(diff)
+      }
+      else {
+        WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel {
+          it.addDiff(diff)
+        }
+      }
+      originalLibrary.entityId = entityId
       originalLibrary.fireRootSetChanged()
     }
   }

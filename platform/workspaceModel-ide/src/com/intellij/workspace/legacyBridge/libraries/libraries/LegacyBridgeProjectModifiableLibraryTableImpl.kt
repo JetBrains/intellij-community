@@ -13,6 +13,7 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class LegacyBridgeProjectModifiableLibraryTableImpl(
   originalStorage: TypedEntityStorage,
@@ -72,7 +73,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
       diff.addLibraryPropertiesEntity(
         library = libraryEntity,
         libraryType = type.kindId,
-        propertiesXmlTag = null,
+        propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties()),
         source = libraryEntity.entitySource
       )
     }
@@ -82,19 +83,9 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
       project = project,
       initialId = LibraryId(name, libraryTableId),
       initialEntityStore = entityStoreOnDiff,
-      parent = libraryTable
+      parent = libraryTable,
+      targetBuilder = this.diff
     ).also { libraryImpl ->
-      libraryImpl.modifiableModelFactory = { librarySnapshot, diff ->
-        LegacyBridgeLibraryModifiableModelImpl(
-          originalLibrary = libraryImpl,
-          originalLibrarySnapshot = librarySnapshot,
-          diff = diff,
-          committer = { modifiableLib, diffBuilder ->
-            this.diff.addDiff(diffBuilder)
-            runAsWriteActionIfNeeded { libraryImpl.entityId = modifiableLib.entityId }
-          }
-        )
-      }
       myLibrariesToAdd.add(libraryImpl)
     }
   }
@@ -121,8 +112,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
     modelIsCommittedOrDisposed = true
 
     myLibrariesToAdd.forEach { library ->
-      val componentAsString = serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
-      library.updatePropertyEntities(diff, componentAsString)
+      library.clearTargetBuilder()
     }
 
     libraryTable.setNewLibraryInstances(myLibrariesToAdd)

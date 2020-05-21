@@ -1,8 +1,6 @@
 package com.intellij.workspace.legacyBridge.intellij
 
-import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.configurationStore.serializeStateInto
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.module.Module
@@ -12,9 +10,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl
-import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
-import com.intellij.openapi.roots.libraries.*
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.ModificationTracker
@@ -25,7 +22,6 @@ import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryModifiableModelImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEntryImpl
 import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryViaTypedEntity
@@ -39,7 +35,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 class LegacyBridgeModifiableRootModel(
   diff: TypedEntityStorageBuilder,
   private val legacyBridgeModule: LegacyBridgeModule,
-  private val moduleId: ModuleId,
+  internal val moduleId: ModuleId,
   private val initialStorage: TypedEntityStorage,
   private val accessor: RootConfigurationAccessor
 ) : LegacyBridgeModifiableBase(diff), ModifiableRootModel, ModificationTracker {
@@ -61,11 +57,11 @@ class LegacyBridgeModifiableRootModel(
     it.resolve(moduleId)
   }
 
-  private val moduleEntity: ModuleEntity
+  internal val moduleEntity: ModuleEntity
     get() = entityStoreOnDiff.cachedValue(moduleEntityValue) ?: error("Unable to resolve module by id '$moduleId'")
 
-  private val moduleLibraryTable = ModuleLibraryTable(
-    this, LegacyBridgeModuleRootComponent.getInstance(module).moduleLibraries.toList())
+  private val moduleLibraryTable = LegacyBridgeModifiableModuleLibraryTable(this,
+                                                                            LegacyBridgeModuleRootComponent.getInstance(module).moduleLibraryTable.moduleLibraries)
 
   private val contentEntriesImplValue: CachedValue<List<LegacyBridgeModifiableContentEntryImpl>> = CachedValue { storage ->
     val moduleEntity = storage.resolve(moduleId) ?: return@CachedValue emptyList<LegacyBridgeModifiableContentEntryImpl>()
@@ -130,33 +126,14 @@ class LegacyBridgeModifiableRootModel(
     assertModelIsLive()
     when (orderEntry) {
       is LibraryOrderEntryViaTypedEntity -> {
-
-        val tableId = if (orderEntry.isModuleLevel) {
-          LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId())
-        }
-        else toLibraryTableId(orderEntry.libraryLevel)
-
-        val libraryEntityName = LegacyBridgeLibraryImpl.generateLibraryEntityName(orderEntry.libraryName) { existsName ->
-          diff.resolve(LibraryId(existsName, tableId)) != null
-        }
-
         if (orderEntry.isModuleLevel) {
-          this.diff.addLibraryEntity(
-            roots = emptyList(),
-            tableId = tableId,
-            name = libraryEntityName,
-            excludedRoots = emptyList(),
-            source = moduleEntity.entitySource
-          )
+          moduleLibraryTable.addCopiedLibrary(orderEntry.library as LegacyBridgeLibraryImpl)
         }
 
         updateDependencies { it + orderEntry.libraryDependencyItem }
-        val orderEntryLibrary = orderEntry.library
-        if (orderEntryLibrary is LegacyBridgeLibraryImpl) moduleLibraryTable.librariesToAdd += orderEntryLibrary
-        Unit
       }
 
-      is ModuleOrderEntry -> orderEntry.module?.let { addModuleOrderEntry(it); return } ?: error("Module is empty: $orderEntry")
+      is ModuleOrderEntry -> orderEntry.module?.let { addModuleOrderEntry(it) } ?: error("Module is empty: $orderEntry")
       is ModuleSourceOrderEntry -> updateDependencies { it + ModuleDependencyItem.ModuleSourceDependency }
 
       is InheritedJdkOrderEntry -> updateDependencies { it + ModuleDependencyItem.InheritedSdkDependency }
@@ -345,19 +322,14 @@ class LegacyBridgeModifiableRootModel(
       }
     }
 
-    LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries.clear()
-    LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries.addAll(moduleLibraryTable.librariesToAdd)
-    // Do not clear `librariesToAdd`. Otherwise `getLibraries()` will return an empty list after the commit
-
     disposeWithoutLibraries()
     return diff
   }
 
   override fun commit() {
+    Disposer.dispose(moduleLibraryTable)
     val diff = collectChanges() ?: return
-
     val moduleDiff = module.diff
-
     if (moduleDiff != null) {
       moduleDiff.addDiff(diff)
     } else {
@@ -369,9 +341,7 @@ class LegacyBridgeModifiableRootModel(
 
   override fun dispose() {
     disposeWithoutLibraries()
-    if (isDisposed) return
-    moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
-    moduleLibraryTable.librariesToRemove.clear()
+    Disposer.dispose(moduleLibraryTable)
   }
 
   private fun disposeWithoutLibraries() {
@@ -454,7 +424,7 @@ class LegacyBridgeModifiableRootModel(
       .filter { it !is ModuleDependencyItem.SdkDependency }
   }
 
-  private fun updateDependencies(updater: (List<ModuleDependencyItem>) -> List<ModuleDependencyItem>) {
+  internal fun updateDependencies(updater: (List<ModuleDependencyItem>) -> List<ModuleDependencyItem>) {
     val newDependencies = updater(moduleEntity.dependencies)
     if (newDependencies == moduleEntity.dependencies) return
 
@@ -523,149 +493,6 @@ class LegacyBridgeModifiableRootModel(
   override fun getContentRootUrls(): Array<String> = currentModel.contentRootUrls
   override fun getModuleDependencies(): Array<Module> = currentModel.moduleDependencies
   override fun getModuleDependencies(includeTests: Boolean): Array<Module> = currentModel.getModuleDependencies(includeTests)
-
-  private class ModuleLibraryTable(
-    private val modifiableModel: LegacyBridgeModifiableRootModel,
-    private val initialLibraries: List<LegacyBridgeLibraryImpl>
-  ) : LibraryTable, LibraryTable.ModifiableModel {
-
-    val librariesToAdd = mutableListOf<LegacyBridgeLibraryImpl>()
-    val librariesToRemove = mutableListOf<Library>()
-
-    private val librariesValue = CachedValueWithParameter { _: TypedEntityStorage, (librariesToAdd, librariesToRemove): Pair<List<LegacyBridgeLibraryImpl>, List<Library>> ->
-      val libs = initialLibraries.toMutableList<Library>()
-      libs.removeAll(librariesToRemove)
-      libs.addAll(librariesToAdd)
-      return@CachedValueWithParameter libs.map { it.name to it }.toMap() to libs.toTypedArray()
-    }
-
-    private val libraries
-      get() = modifiableModel.entityStoreOnDiff.cachedValue(librariesValue, librariesToAdd to librariesToRemove)
-
-    override fun commit() {
-      librariesToAdd.forEach { library ->
-        val componentAsString = modifiableModel.serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
-        library.updatePropertyEntities(modifiableModel.diff, componentAsString)
-      }
-    }
-
-    override fun dispose() {
-    }
-
-    override fun isChanged(): Boolean = modifiableModel.isChanged
-
-    override fun createLibrary(): Library = createLibrary(name = null)
-    override fun createLibrary(name: String?): Library = createLibrary(name = name, type = null)
-    override fun createLibrary(name: String?, type: PersistentLibraryKind<out LibraryProperties<*>>?): Library =
-      createLibrary(name = name, type = type, externalSource = null)
-
-    // TODO Support externalSource. Could it be different from module's?
-    override fun createLibrary(name: String?,
-                               type: PersistentLibraryKind<out LibraryProperties<*>>?,
-                               externalSource: ProjectModelExternalSource?): Library {
-
-      modifiableModel.assertModelIsLive()
-
-      val tableId = LibraryTableId.ModuleLibraryTableId(modifiableModel.moduleEntity.persistentId())
-
-      val libraryEntityName = LegacyBridgeLibraryImpl.generateLibraryEntityName(name) { existsName ->
-        modifiableModel.diff.resolve(LibraryId(existsName, tableId)) != null
-      }
-
-      val libraryEntity = modifiableModel.diff.addLibraryEntity(
-        roots = emptyList(),
-        tableId = tableId,
-        name = libraryEntityName,
-        excludedRoots = emptyList(),
-        source = modifiableModel.moduleEntity.entitySource
-      )
-
-      if (type != null) {
-        modifiableModel.diff.addLibraryPropertiesEntity(
-          library = libraryEntity,
-          libraryType = type.kindId,
-          propertiesXmlTag = null,
-          source = libraryEntity.entitySource
-        )
-      }
-
-      val libraryId = libraryEntity.persistentId()
-
-      modifiableModel.updateDependencies {
-        it + ModuleDependencyItem.Exportable.LibraryDependency(
-          library = libraryId,
-          exported = false,
-          scope = ModuleDependencyItem.DependencyScope.COMPILE
-        )
-      }
-
-      val moduleRootComponent = LegacyBridgeModuleRootComponent.getInstance(modifiableModel.module)
-
-      val libraryImpl = LegacyBridgeLibraryImpl(
-        libraryTable = moduleRootComponent.moduleLibraryTable,
-        project = modifiableModel.project,
-        initialId = libraryId,
-        initialEntityStore = modifiableModel.entityStoreOnDiff,
-        parent = moduleRootComponent
-      )
-      libraryImpl.modifiableModelFactory = { librarySnapshot , diff->
-        LegacyBridgeLibraryModifiableModelImpl(
-          originalLibrary = libraryImpl,
-          originalLibrarySnapshot = librarySnapshot,
-          diff = diff,
-          committer = { modifiableLib, diffBuilder ->
-            modifiableModel.diff.addDiff(diffBuilder)
-            runAsWriteActionIfNeeded { libraryImpl.entityId = modifiableLib.entityId }
-          }
-        )
-      }
-      librariesToAdd.add(libraryImpl)
-      return libraryImpl
-    }
-
-    override fun removeLibrary(library: Library) {
-      modifiableModel.assertModelIsLive()
-      library as LegacyBridgeLibrary
-
-      val moduleLibraryTableId = library.libraryId.tableId as LibraryTableId.ModuleLibraryTableId
-      if (moduleLibraryTableId.moduleId != modifiableModel.moduleId) {
-        error("removeLibrary should be called on a module library from the same module. " +
-              "Library moduleId: '${moduleLibraryTableId.moduleId}', this model moduleId: '${modifiableModel.moduleId}'")
-      }
-
-      val libraryEntity = library.libraryId.resolve(modifiableModel.entityStoreOnDiff.current)
-                          ?: error("Unable to resolve module library by id: ${library.libraryId}")
-
-      modifiableModel.updateDependencies { dependencies ->
-        dependencies.filterNot { it is ModuleDependencyItem.Exportable.LibraryDependency && it.library == library.libraryId }
-      }
-
-      modifiableModel.diff.removeEntity(libraryEntity)
-
-      if (librariesToAdd.remove(library)) {
-        Disposer.dispose(library)
-      }
-      else {
-        librariesToRemove.add(library)
-      }
-    }
-
-    override fun getLibraries(): Array<Library> = libraries.second
-    override fun getLibraryIterator(): Iterator<Library> = libraries.second.iterator()
-    override fun getLibraryByName(name: String): Library? = libraries.second.firstOrNull { it.name == name }
-    override fun getTableLevel(): String = LibraryTableImplUtil.MODULE_LEVEL
-    override fun getPresentation(): LibraryTablePresentation = com.intellij.openapi.roots.impl.ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION
-    override fun getModifiableModel(): LibraryTable.ModifiableModel = this
-
-    override fun addListener(listener: LibraryTable.Listener) =
-      throw UnsupportedOperationException("Not implemented for module-level library table")
-
-    override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) =
-      throw UnsupportedOperationException("Not implemented for module-level library table")
-
-    override fun removeListener(listener: LibraryTable.Listener) =
-      throw UnsupportedOperationException("Not implemented for module-level library table")
-  }
 }
 
 fun toLibraryTableId(level: String) = when (level) {

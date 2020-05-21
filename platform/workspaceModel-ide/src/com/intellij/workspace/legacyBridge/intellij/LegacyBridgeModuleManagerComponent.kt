@@ -250,10 +250,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       is EntityChange.Removed -> {
         val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
         val persistentId = change.entity.persistentId()
-        val moduleLibrary = moduleRootComponent.moduleLibraries.firstOrNull { it.entityId == persistentId }
-                            ?: error("Could not find library '${change.entity.name}' in module ${moduleRootComponent.module.name}")
-        moduleRootComponent.moduleLibraries.remove(moduleLibrary)
-        Disposer.dispose(moduleLibrary)
+        moduleRootComponent.moduleLibraryTable.removeLibrary(persistentId)
       }
       is EntityChange.Replaced -> {
         val idBefore = change.oldEntity.persistentId()
@@ -267,9 +264,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
           }
 
           val moduleRootComponent = getModuleRootComponentByLibrary(change.oldEntity)
-          val moduleLibrary = moduleRootComponent.moduleLibraries.firstOrNull { it.entityId == idBefore }
-                              ?: error("Could not find library '${idBefore.name}' in module ${moduleRootComponent.module.name}")
-          moduleLibrary.entityId = idAfter
+          moduleRootComponent.moduleLibraryTable.updateLibrary(idBefore, idAfter)
         }
 
         Unit
@@ -279,19 +274,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         modulesToCheck.add(moduleRootComponent.module)
 
         val addedLibraryId = change.entity.persistentId()
-        val alreadyCreatedLibrary = moduleRootComponent.newModuleLibraries.firstOrNull { it.entityId == addedLibraryId }
-        val libraryImpl = if (alreadyCreatedLibrary != null) {
-          moduleRootComponent.newModuleLibraries.remove(alreadyCreatedLibrary)
-          alreadyCreatedLibrary.entityStore = entityStore
-          alreadyCreatedLibrary.modifiableModelFactory = null
-          alreadyCreatedLibrary
-        }
-        else {
-          moduleRootComponent.createModuleLibrary(addedLibraryId)
-        }
-
-        moduleRootComponent.moduleLibraries.add(libraryImpl)
-
+        moduleRootComponent.moduleLibraryTable.addLibrary(addedLibraryId)
         Unit
       }
     }.let {} // exhaustive when
@@ -614,14 +597,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
     }
 
-    private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() =
-      filter {
-        when (it) {
-          is EntityChange.Added -> it.entity.tableId is LibraryTableId.ModuleLibraryTableId
-          is EntityChange.Removed -> it.entity.tableId is LibraryTableId.ModuleLibraryTableId
-          is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
-        }
-      }
+    private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() = filter { it.isModuleLibrary() }
 
     private fun EntityChange<*>.entity(): TypedEntity = when (this) {
       is EntityChange.Added -> entity

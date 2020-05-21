@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
+import com.intellij.util.PathUtil
 import com.intellij.workspace.api.LibraryId
 import com.intellij.workspace.api.LibraryTableId
 import com.intellij.workspace.api.ModuleDependencyItem
@@ -211,14 +212,19 @@ internal class LibraryOrderEntryViaTypedEntity(
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
 ) : LibraryOrderEntryBaseViaTypedEntity(module, index, libraryDependencyItem, itemUpdater), LibraryOrderEntry, ClonableOrderEntry {
 
-  override fun getPresentableName() = libraryName
+  override fun getPresentableName(): String = libraryName ?: getPresentableNameForUnnamedLibrary()
+
+  private fun getPresentableNameForUnnamedLibrary(): String {
+    val url = getUrls(OrderRootType.CLASSES).firstOrNull()
+    return if (url != null) PathUtil.toPresentableUrl(url) else ProjectModelBundle.message("library.empty.library.item")
+  }
 
   override val rootProvider: RootProvider?
     get() = library?.rootProvider
 
   override fun getLibraryLevel() = libraryDependencyItem.library.tableId.level
 
-  override fun getLibraryName() = libraryDependencyItem.library.presentableName
+  override fun getLibraryName() = LegacyBridgeLibraryImpl.getLegacyLibraryName(libraryDependencyItem.library)
 
   override fun getLibrary(): Library? {
     val libraryId = libraryDependencyItem.library
@@ -284,9 +290,8 @@ internal class LibraryOrderEntryViaTypedEntity(
     val libraryDependencyItemCopy = libraryDependencyItem.copy(library = libraryId)
 
     val moduleLibraryCopy = moduleLibrary?.let {
-      val libraryTable = rootModel.moduleLibraryTable
-      val disposable = LegacyBridgeModuleRootComponent.getInstance(rootModel.module)
-      LegacyBridgeLibraryImpl(libraryTable, rootModel.project, libraryId, rootModel.module.entityStore, disposable)
+      val libraryTable = rootModel.moduleLibraryTable as LegacyBridgeModifiableModuleLibraryTable
+      libraryTable.createLibraryCopy(it as LegacyBridgeLibraryImpl)
     }
     return LibraryOrderEntryViaTypedEntity(currentModule, index, libraryDependencyItemCopy, moduleLibraryCopy, null)
   }

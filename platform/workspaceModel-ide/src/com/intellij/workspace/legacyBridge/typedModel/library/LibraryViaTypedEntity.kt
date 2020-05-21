@@ -19,9 +19,7 @@ internal class LibraryViaTypedEntity(
   val libraryEntity: LibraryEntity,
   internal val filePointerProvider: LegacyBridgeFilePointerProvider,
   val storage: TypedEntityStorage,
-  val libraryTable: LibraryTable,
-  private val modifiableModelFactory: (LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LibraryEx.ModifiableModelEx
-) {
+  val libraryTable: LibraryTable) {
   private val roots = libraryEntity.roots.groupBy { it.type }.mapValues {(_, roots) ->
     val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }
     val jarDirs = roots
@@ -96,9 +94,4 @@ internal class LibraryViaTypedEntity(
   // TODO Implement
   val externalSource: ProjectModelExternalSource?
     get() = null
-
-  val modifiableModel: LibraryEx.ModifiableModelEx
-    get() = modifiableModelFactory(this, TypedEntityStorageBuilder.from(storage))
-
-  fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = modifiableModelFactory(this, builder)
 }

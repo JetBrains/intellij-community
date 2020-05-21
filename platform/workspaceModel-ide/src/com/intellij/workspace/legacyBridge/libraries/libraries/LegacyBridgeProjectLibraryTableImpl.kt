@@ -109,7 +109,8 @@ internal class LegacyBridgeProjectLibraryTableImpl(
                   project = project,
                   initialId = addedLibraryId,
                   initialEntityStore = entityStore,
-                  parent = this@LegacyBridgeProjectLibraryTableImpl
+                  parent = this@LegacyBridgeProjectLibraryTableImpl,
+                  targetBuilder = null
                 )
 
                 addLibraryToMaps(libraryImpl)
@@ -163,7 +164,8 @@ internal class LegacyBridgeProjectLibraryTableImpl(
             project = project,
             initialId = libraryEntity.persistentId(),
             initialEntityStore = entityStore,
-            parent = this@LegacyBridgeProjectLibraryTableImpl
+            parent = this@LegacyBridgeProjectLibraryTableImpl,
+            targetBuilder = null
           )
 
           addLibraryToMaps(library)

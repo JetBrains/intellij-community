@@ -38,7 +38,8 @@ internal class LegacyBridgeLibraryImpl(
   val project: Project,
   initialId: LibraryId,
   initialEntityStore: TypedEntityStore,
-  parent: Disposable
+  parent: Disposable,
+  private var targetBuilder: TypedEntityStorageDiffBuilder?
 ) : LegacyBridgeLibrary, RootProvider, TraceableDisposable(true) {
 
   init {
@@ -55,11 +56,7 @@ internal class LegacyBridgeLibraryImpl(
       field = value
     }
 
-  var entityId: LibraryId = initialId
-    internal set(value) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
-      field = value
-    }
+  internal var entityId: LibraryId = initialId
 
   private var disposed = false
 
@@ -77,44 +74,27 @@ internal class LegacyBridgeLibraryImpl(
       libraryEntity = storage.resolve(id) ?: FakeLibraryEntity(id.name),
       filePointerProvider = filePointerProvider,
       storage = storage,
-      libraryTable = libraryTable,
-      modifiableModelFactory = modifiableModelFactory ?: { librarySnapshot, diff ->
-        LegacyBridgeLibraryModifiableModelImpl(
-          originalLibrary = this,
-          originalLibrarySnapshot = librarySnapshot,
-          diff = diff,
-          committer = { _, diffBuilder ->
-            WorkspaceModel.getInstance(project).updateProjectModel {
-              it.addDiff(diffBuilder)
-            }
-          })
-      }
+      libraryTable = libraryTable
     )
   }
 
-  private val librarySnapshot: LibraryViaTypedEntity
+  internal val librarySnapshot: LibraryViaTypedEntity
     get() {
       checkDisposed()
       return entityStore.cachedValue(librarySnapshotCached, entityId)
     }
-
-  internal fun updatePropertyEntities(diff: TypedEntityStorageDiffBuilder, propertiesXmlTag: String) {
-    // TODO: 23.04.2020 Maybe just resolve every time? Resolving is a constant time
-    val nonFakeLibraryEntity = if (librarySnapshot.libraryEntity !is FakeLibraryEntity) librarySnapshot.libraryEntity else return
-    nonFakeLibraryEntity.getCustomProperties()?.let { property ->
-      diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
-        this.propertiesXmlTag = propertiesXmlTag
-      }
-    }
-  }
 
   override val libraryId: LibraryId
     get() = entityId
   override fun getTable(): LibraryTable? = if (libraryTable is LegacyBridgeModuleLibraryTable) null else libraryTable
   override fun getRootProvider(): RootProvider = this
 
-  override fun getModifiableModel(): LibraryEx.ModifiableModelEx = librarySnapshot.modifiableModel
-  override fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = librarySnapshot.getModifiableModel(builder)
+  override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
+    return getModifiableModel(TypedEntityStorageBuilder.from(librarySnapshot.storage))
+  }
+  override fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx {
+    return LegacyBridgeLibraryModifiableModelImpl(this, librarySnapshot, builder, targetBuilder)
+  }
   override fun getSource(): Library? = null
   override fun getExternalSource(): ProjectModelExternalSource? = librarySnapshot.externalSource
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = librarySnapshot.getInvalidRootUrls(type)
@@ -161,6 +141,10 @@ internal class LegacyBridgeLibraryImpl(
 
   internal fun fireRootSetChanged() {
     dispatcher.multicaster.rootSetChanged(this)
+  }
+
+  fun clearTargetBuilder() {
+    targetBuilder = null
   }
 
   companion object {

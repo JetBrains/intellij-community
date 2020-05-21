@@ -7,20 +7,17 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.impl.ModuleLibraryTable
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.api.*
+import com.intellij.workspace.api.CachedValue
+import com.intellij.workspace.api.DisposableCachedValue
+import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 class LegacyBridgeModuleRootComponent(
   private val currentModule: Module
@@ -30,7 +27,6 @@ class LegacyBridgeModuleRootComponent(
 
   private val orderRootsCache =  OrderRootsCache(currentModule)
 
-  internal val moduleLibraries = mutableListOf<LegacyBridgeLibraryImpl>()
   internal val newModuleLibraries = mutableListOf<LegacyBridgeLibraryImpl>()
 
   private val modelValue = DisposableCachedValue(
@@ -49,36 +45,13 @@ class LegacyBridgeModuleRootComponent(
       )
     }).also { Disposer.register(this, it) }
 
-  internal val moduleLibraryTable = legacyBridgeModuleLibraryTable()
+  internal val moduleLibraryTable: LegacyBridgeModuleLibraryTableImpl = LegacyBridgeModuleLibraryTableImpl(legacyBridgeModule)
 
-  fun legacyBridgeModuleLibraryTable(): LegacyBridgeModuleLibraryTable {
-    return object : LegacyBridgeModuleLibraryTable {
-      override val module: Module = legacyBridgeModule
-      override fun getLibraries(): Array<Library> = moduleLibraries.toTypedArray()
-      override fun createLibrary(): Library = throw UnsupportedOperationException()
-      override fun createLibrary(name: String?): Library = throw UnsupportedOperationException()
-      override fun removeLibrary(library: Library): Nothing = throw UnsupportedOperationException()
-      override fun getLibraryIterator(): Iterator<Library> = libraries.iterator()
-      override fun getLibraryByName(name: String): Library? = moduleLibraries.firstOrNull { it.name == name }
-      override fun getTableLevel(): String = JpsLibraryTableSerializer.MODULE_LEVEL
-      override fun getPresentation(): LibraryTablePresentation = ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION
-      override fun getModifiableModel(): LibraryTable.ModifiableModel = throw UnsupportedOperationException()
-      override fun addListener(listener: LibraryTable.Listener): Nothing = throw UnsupportedOperationException()
-      override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) = throw UnsupportedOperationException()
-      override fun removeListener(listener: LibraryTable.Listener): Nothing = throw UnsupportedOperationException()
-    }
+  fun getModuleLibraryTable(): LegacyBridgeModuleLibraryTable {
+    return moduleLibraryTable
   }
 
   init {
-    val moduleLibraryTableId = LibraryTableId.ModuleLibraryTableId(legacyBridgeModule.moduleEntityId)
-
-    legacyBridgeModule.entityStore.current
-      .entities(LibraryEntity::class.java)
-      .filter { it.tableId == moduleLibraryTableId }
-      .forEach { libraryEntity ->
-        val library = createModuleLibrary(libraryEntity.persistentId())
-        moduleLibraries.add(library)
-      }
     MODULE_EXTENSION_NAME.getPoint(legacyBridgeModule).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension?> {
       override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
         modelValue.dropCache()
@@ -89,14 +62,6 @@ class LegacyBridgeModuleRootComponent(
       }
     }, false, null)
   }
-
-  internal fun createModuleLibrary(libraryId: LibraryId) = LegacyBridgeLibraryImpl(
-    libraryTable = moduleLibraryTable,
-    project = currentModule.project,
-    initialId = libraryId,
-    initialEntityStore = legacyBridgeModule.entityStore,
-    parent = this
-  )
 
   internal val model: RootModelViaTypedEntityImpl
     get() = modelValue.value
