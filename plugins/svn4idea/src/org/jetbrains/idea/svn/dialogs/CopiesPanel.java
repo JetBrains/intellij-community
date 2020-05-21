@@ -69,7 +69,6 @@ public class CopiesPanel {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Svn Roots Detection Errors", STICKY_BALLOON, true);
 
   private final Project myProject;
-  private final SvnVcs myVcs;
   private final JPanel myPanel;
   private final JComponent myHolder;
   private LinkLabel myRefreshLabel;
@@ -84,13 +83,12 @@ public class CopiesPanel {
 
   public CopiesPanel(@NotNull Project project) {
     myProject = project;
-    myVcs = SvnVcs.getInstance(myProject);
     myCurrentInfoList = null;
 
     final Runnable focus = () -> IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true);
     final Runnable refreshView = () -> {
-      final List<WCInfo> infoList = myVcs.getWcInfosWithErrors();
-      final boolean hasErrors = !myVcs.getSvnFileUrlMapping().getErrorRoots().isEmpty();
+      final List<WCInfo> infoList = getVcs().getWcInfosWithErrors();
+      final boolean hasErrors = !getVcs().getSvnFileUrlMapping().getErrorRoots().isEmpty();
       final List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
       Runnable runnable = () -> {
         if (myCurrentInfoList != null) {
@@ -134,7 +132,7 @@ public class CopiesPanel {
     holderPanel.add(panel, BorderLayout.WEST);
     myRefreshLabel = new MyLinkLabel((int)(fm.getHeight() * 1.3), "Refresh", (aSource, aLinkData) -> {
       if (myRefreshLabel.isEnabled()) {
-        myVcs.invokeRefreshSvnRoots();
+        getVcs().invokeRefreshSvnRoots();
         myRefreshLabel.setEnabled(false);
       }
     });
@@ -145,6 +143,11 @@ public class CopiesPanel {
     setFocusableForLinks(myRefreshLabel);
     refreshOnPooled.consume(true);
     initView();
+  }
+
+  @NotNull
+  private SvnVcs getVcs() {
+    return SvnVcs.getInstance(myProject);
   }
 
   private void updateList(@NotNull final List<WCInfo> infoList, @NotNull final List<WorkingCopyFormat> supportedFormats) {
@@ -179,13 +182,14 @@ public class CopiesPanel {
               BranchConfigurationDialog.configureBranches(myProject, root);
             } else if (FIX_DEPTH.equals(e.getDescription())) {
               final int result =
-                Messages.showOkCancelDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
-                                                        "This will update your working copy to HEAD revision as well.",
-                                    "Set Working Copy Infinity Depth",
-                                    Messages.getWarningIcon());
+                Messages.showOkCancelDialog(myProject,
+                                            "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
+                                            "This will update your working copy to HEAD revision as well.",
+                                            "Set Working Copy Infinity Depth",
+                                            Messages.getWarningIcon());
               if (result == Messages.OK) {
                 // update of view will be triggered by roots changed event
-                SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getUrl(), Revision.HEAD,
+                SvnCheckoutProvider.checkout(myProject, new File(wcInfo.getPath()), wcInfo.getUrl(), Revision.HEAD,
                                              Depth.INFINITY, false, null, wcInfo.getFormat());
               }
             } else if (CHANGE_FORMAT.equals(e.getDescription())) {
@@ -195,7 +199,7 @@ public class CopiesPanel {
               mergeFrom(wcInfo, root, infoPanel);
             } else if (CLEANUP.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Cleanup")) return;
-              new CleanupWorker(myVcs, singletonList(root)).execute();
+              new CleanupWorker(getVcs(), singletonList(root)).execute();
             }
           }
         }
@@ -280,7 +284,7 @@ public class CopiesPanel {
   @NotNull
   private List<WorkingCopyFormat> getSupportedFormats() {
     List<WorkingCopyFormat> result = new ArrayList<>();
-    ClientFactory factory = myVcs.getFactory();
+    ClientFactory factory = getVcs().getFactory();
 
     try {
       result.addAll(factory.createUpgradeClient().getSupportedFormats());
@@ -309,7 +313,7 @@ public class CopiesPanel {
     SelectBranchPopup.showForBranchRoot(myProject, root, (project, configuration, branchUrl, revision) -> {
       try {
         Url workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
-        MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, branchUrl.getTail(), root);
+        MergeContext mergeContext = new MergeContext(getVcs(), workingCopyUrlInSelectedBranch, wcInfo, branchUrl.getTail(), root);
 
         new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
       }
