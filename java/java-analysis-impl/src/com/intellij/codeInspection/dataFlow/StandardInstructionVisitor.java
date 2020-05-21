@@ -555,6 +555,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       if(state != null) {
         DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, new DfaCallState(state, arguments));
+        result = DfaUtil.boxUnbox(result, expression.getType());
         state.push(result);
         finalStates.add(state);
       }
