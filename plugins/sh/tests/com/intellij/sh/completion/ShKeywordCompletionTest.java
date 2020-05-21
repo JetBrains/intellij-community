@@ -355,6 +355,16 @@ public class ShKeywordCompletionTest extends BasePlatformTestCase {
     assertEmpty(myFixture.completeBasic());
   }
 
+  public void testNoKeywordCompletionInCommandSubstitution() {
+    myFixture.configureByText("a.sh", "` cas<caret> `");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testNoKeywordCompletionInSubshellCommand() {
+    myFixture.configureByText("a.sh", "$( cas<caret> )");
+    assertEmpty(myFixture.completeBasic());
+  }
+
   public void testNoKeywordCompletionInString() {
     myFixture.configureByText("a.sh", "\"<caret> \"");
     myFixture.completeBasic();
