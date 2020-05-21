@@ -34,13 +34,13 @@ public abstract class CoverageViewExtension {
   }
 
   @Nullable
-  public abstract String getSummaryForNode(AbstractTreeNode<?> node);
+  public abstract String getSummaryForNode(@NotNull AbstractTreeNode<?> node);
 
   @Nullable
-  public abstract String getSummaryForRootNode(AbstractTreeNode<?> childNode);
+  public abstract String getSummaryForRootNode(@NotNull AbstractTreeNode<?> childNode);
 
   @Nullable
-  public abstract String getPercentage(int columnIdx, AbstractTreeNode<?> node);
+  public abstract String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node);
 
   public abstract List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode<?> node);
 
