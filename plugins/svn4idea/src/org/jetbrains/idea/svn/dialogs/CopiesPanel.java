@@ -26,7 +26,6 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.EqualityPolicy;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -61,6 +60,7 @@ import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
+import static java.util.Comparator.comparing;
 
 public class CopiesPanel {
 
@@ -69,14 +69,12 @@ public class CopiesPanel {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Svn Roots Detection Errors", STICKY_BALLOON, true);
 
   private final Project myProject;
-  private final MessageBusConnection myConnection;
   private final SvnVcs myVcs;
   private final JPanel myPanel;
   private final JComponent myHolder;
   private LinkLabel myRefreshLabel;
   // updated only on AWT
   private List<OverrideEqualsWrapper<WCInfo>> myCurrentInfoList;
-  private final int myTextHeight;
 
   private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
   private final static String CLEANUP = "CLEANUP";
@@ -86,7 +84,6 @@ public class CopiesPanel {
 
   public CopiesPanel(@NotNull Project project) {
     myProject = project;
-    myConnection = myProject.getMessageBus().connect(myProject);
     myVcs = SvnVcs.getInstance(myProject);
     myCurrentInfoList = null;
 
@@ -106,7 +103,7 @@ public class CopiesPanel {
           }
           myCurrentInfoList = newList;
         }
-        infoList.sort(WCComparator.getInstance());
+        infoList.sort(comparing(WCInfo::getPath));
         updateList(infoList, supportedFormats);
         myRefreshLabel.setEnabled(true);
         showErrorNotification(hasErrors);
@@ -127,16 +124,15 @@ public class CopiesPanel {
         ApplicationManager.getApplication().invokeLater(() -> myRefreshLabel.setEnabled(true), ModalityState.NON_MODAL);
       }
     };
-    myConnection.subscribe(SvnVcs.ROOTS_RELOADED, refreshOnPooled);
+    myProject.getMessageBus().connect().subscribe(SvnVcs.ROOTS_RELOADED, refreshOnPooled);
 
     final JPanel holderPanel = new JPanel(new BorderLayout());
     FontMetrics fm = holderPanel.getFontMetrics(holderPanel.getFont());
-    myTextHeight = (int)(fm.getHeight() * 1.3);
     myPanel = new JPanel(new GridBagLayout());
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myPanel, BorderLayout.NORTH);
     holderPanel.add(panel, BorderLayout.WEST);
-    myRefreshLabel = new MyLinkLabel(myTextHeight, "Refresh", (aSource, aLinkData) -> {
+    myRefreshLabel = new MyLinkLabel((int)(fm.getHeight() * 1.3), "Refresh", (aSource, aLinkData) -> {
       if (myRefreshLabel.isEnabled()) {
         myVcs.invokeRefreshSvnRoots();
         myRefreshLabel.setEnabled(false);
@@ -149,10 +145,6 @@ public class CopiesPanel {
     setFocusableForLinks(myRefreshLabel);
     refreshOnPooled.consume(true);
     initView();
-  }
-
-  public JComponent getPreferredFocusedComponent() {
-    return myRefreshLabel;
   }
 
   private void updateList(@NotNull final List<WCInfo> infoList, @NotNull final List<WorkingCopyFormat> supportedFormats) {
@@ -492,19 +484,6 @@ public class CopiesPanel {
       if (! Comparing.equal(val1.getUrl(), val2.getUrl())) return false;
 
       return true;
-    }
-  }
-
-  private static class WCComparator implements Comparator<WCInfo> {
-    private final static WCComparator ourComparator = new WCComparator();
-
-    public static WCComparator getInstance() {
-      return ourComparator;
-    }
-
-    @Override
-    public int compare(WCInfo o1, WCInfo o2) {
-      return o1.getPath().compareTo(o2.getPath());
     }
   }
 
