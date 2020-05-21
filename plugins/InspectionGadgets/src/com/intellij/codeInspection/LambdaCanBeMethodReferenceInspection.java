@@ -1,13 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -53,38 +53,39 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!HighlightingFeature.LAMBDA_EXPRESSIONS.isAvailable(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
-        if (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_8)) {
-          final PsiElement body = expression.getBody();
-          final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-          if (functionalInterfaceType == null) return;
-          MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(body);
-          if (methodRefCandidate == null) return;
-          final PsiExpression candidate =
-            canBeMethodReferenceProblem(expression.getParameterList().getParameters(), functionalInterfaceType, null,
-                                        methodRefCandidate.myExpression);
-          if (candidate == null) return;
-          ProblemHighlightType type;
-          if (methodRefCandidate.mySafeQualifier && methodRefCandidate.myConformsCodeStyle) {
-            type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-          }
-          else {
-            if (!isOnTheFly) return;
-            type = ProblemHighlightType.INFORMATION;
-          }
-          PsiElement element =
-            type == ProblemHighlightType.INFORMATION || InspectionProjectProfileManager.isInformationLevel(getShortName(), expression)
-            ? expression
-            : candidate;
-          holder.registerProblem(holder.getManager().createProblemDescriptor(
-            element,
-            getDisplayName(),
-            type != ProblemHighlightType.INFORMATION,
-            type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
+        final PsiElement body = expression.getBody();
+        final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+        if (functionalInterfaceType == null) return;
+        MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(body);
+        if (methodRefCandidate == null) return;
+        final PsiExpression candidate =
+          canBeMethodReferenceProblem(expression.getParameterList().getParameters(), functionalInterfaceType, null,
+                                      methodRefCandidate.myExpression);
+        if (candidate == null) return;
+        ProblemHighlightType type;
+        if (methodRefCandidate.mySafeQualifier && methodRefCandidate.myConformsCodeStyle) {
+          type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         }
+        else {
+          if (!isOnTheFly) return;
+          type = ProblemHighlightType.INFORMATION;
+        }
+        PsiElement element =
+          type == ProblemHighlightType.INFORMATION || InspectionProjectProfileManager.isInformationLevel(getShortName(), expression)
+          ? expression
+          : candidate;
+        holder.registerProblem(holder.getManager().createProblemDescriptor(
+          element,
+          getDisplayName(),
+          type != ProblemHighlightType.INFORMATION,
+          type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
       }
     };
   }
