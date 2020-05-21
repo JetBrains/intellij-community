@@ -137,7 +137,8 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_UTIL_PROPERTIES)) return;
       if ("putAll".equals(call.getMethodExpression().getReferenceName())) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
-        // putAll with properties argument is probably safe, assuming that the original Properties object was safely filled
+        // putAll with properties or Map<String, String> argument is probably safe, 
+        // assuming that the original Properties or Map<String, String> object was safely filled
         if (args.length == 1) {
           PsiType type = args[0].getType();
           if (TypeUtils.typeEquals(CommonClassNames.JAVA_UTIL_PROPERTIES, type) ||
