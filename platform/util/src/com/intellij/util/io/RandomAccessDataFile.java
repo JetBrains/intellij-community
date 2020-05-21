@@ -24,7 +24,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   private final PagePool myPool;
   private long lastSeek = -1L;
 
-  private final ThreadLocal<byte[]> myTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
+  private static final ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
 
   private final FileWriter log;
 
@@ -86,23 +86,23 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   }
 
   public void putInt(long addr, int value) {
-    Bits.putInt(myTypedIOBuffer.get(), 0, value);
-    put(addr, myTypedIOBuffer.get(), 0, 4);
+    Bits.putInt(ourTypedIOBuffer.get(), 0, value);
+    put(addr, ourTypedIOBuffer.get(), 0, 4);
   }
 
   public int getInt(long addr) {
-    get(addr, myTypedIOBuffer.get(), 0, 4);
-    return Bits.getInt(myTypedIOBuffer.get(), 0);
+    get(addr, ourTypedIOBuffer.get(), 0, 4);
+    return Bits.getInt(ourTypedIOBuffer.get(), 0);
   }
 
   public void putLong(long addr, long value) {
-    Bits.putLong(myTypedIOBuffer.get(), 0, value);
-    put(addr, myTypedIOBuffer.get(), 0, 8);
+    Bits.putLong(ourTypedIOBuffer.get(), 0, value);
+    put(addr, ourTypedIOBuffer.get(), 0, 8);
   }
 
   public long getLong(long addr) {
-    get(addr, myTypedIOBuffer.get(), 0, 8);
-    return Bits.getLong(myTypedIOBuffer.get(), 0);
+    get(addr, ourTypedIOBuffer.get(), 0, 8);
+    return Bits.getLong(ourTypedIOBuffer.get(), 0);
   }
 
   public long length() {
