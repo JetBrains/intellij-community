@@ -14,7 +14,8 @@ class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurab
   override val cases: List<ImmediateConfigurable.Case>
     get() = listOf(
       ImmediateConfigurable.Case(JavaBundle.message("settings.inlay.java.usages"), "usages", { settings.isShowUsages}, { settings.isShowUsages = it}),
-      ImmediateConfigurable.Case(JavaBundle.message("settings.inlay.java.inheritors"), "inheritors", { settings.isShowImplementations}, { settings.isShowImplementations = it})
+      ImmediateConfigurable.Case(JavaBundle.message("settings.inlay.java.inheritors"), "inheritors", { settings.isShowImplementations}, { settings.isShowImplementations = it}),
+      ImmediateConfigurable.Case(JavaBundle.message("project.problems.title"), "broken.usages", { settings.isShowBrokenUsages}, { settings.isShowBrokenUsages = it})
     )
 
   override val mainCheckboxText: String

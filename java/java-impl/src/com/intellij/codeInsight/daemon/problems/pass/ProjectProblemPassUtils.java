@@ -3,12 +3,12 @@ package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.JavaLensProvider;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hints.BlockConstrainedPresentation;
 import com.intellij.codeInsight.hints.BlockConstraints;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
 import com.intellij.codeInsight.hints.presentation.*;
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.java.JavaBundle;
@@ -30,7 +30,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
@@ -40,7 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
-import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlaySettingsProvider.HINTS_ID;
 
 public class ProjectProblemPassUtils {
 
@@ -65,8 +63,7 @@ public class ProjectProblemPassUtils {
 
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem item = new JMenuItem(JavaBundle.message("project.problems.settings"));
-    item.addActionListener(e -> InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE,
-                                                                                     model -> model.getId().equals(HINTS_ID)));
+    item.addActionListener(e -> JavaLensProvider.openSettings(JavaLanguage.INSTANCE, project));
     popupMenu.add(item);
 
     InlayPresentation withSettings = factory.onClick(usagesPresentation, MouseButton.Right, (e, __) -> {
@@ -156,6 +153,10 @@ public class ProjectProblemPassUtils {
     return false;
   }
 
+  static boolean hintsEnabled() {
+    return JavaLensProvider.getSettings().isShowBrokenUsages();
+  }
+
   public static @NotNull Map<PsiMember, Inlay<?>> getInlays(@NotNull Editor editor) {
     return ContainerUtil.map2Map(getEditorInfos(editor).entrySet(), e -> Pair.create(e.getKey(), e.getValue().myInlay));
   }
@@ -233,7 +234,7 @@ public class ProjectProblemPassUtils {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return ProjectProblemInlaySettingsProvider.hintsEnabled();
+      return hintsEnabled();
     }
 
     @Override

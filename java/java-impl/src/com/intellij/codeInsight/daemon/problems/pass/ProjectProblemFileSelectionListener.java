@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlaySettingsProvider.hintsEnabled;
+import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.hintsEnabled;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 final class ProjectProblemFileSelectionListener implements FileEditorManagerListener, InlayHintsSettings.SettingsListener, BulkFileListener {
