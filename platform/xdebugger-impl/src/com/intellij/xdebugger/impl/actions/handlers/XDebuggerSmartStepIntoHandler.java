@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -14,10 +14,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -209,14 +207,13 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
 
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.SMART_STEP_INTO_TARGET);
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
     for (SmartStepData.VariantInfo info : data.myVariants) {
       TextRange range = info.myVariant.getHighlightRange();
       if (range != null) {
         List<RangeHighlighter> highlighters = new SmartList<>();
-        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes,
-                                                HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters, null);
+        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), DebuggerColors.SMART_STEP_INTO_TARGET,
+                                                HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters);
         RangeHighlighter highlighter = highlighters.get(0);
         hyperlinkSupport.createHyperlink(highlighter, project -> data.stepInto(info));
         data.myHighlighters.add(highlighter);
