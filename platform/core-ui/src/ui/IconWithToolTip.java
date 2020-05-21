@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.ScalableIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,7 +21,12 @@ public interface IconWithToolTip extends Icon {
   String getToolTip(boolean composite);
 
   static IconWithToolTip create(Icon icon, Supplier<String> tooltip) {
-    return new IconWrapperWithToolTip(icon, tooltip);
+    if (icon instanceof ScalableIcon) {
+      return new ScalableIconWrapperWithToolTip((ScalableIcon)icon, tooltip);
+    }
+    else {
+      return new IconWrapperWithToolTip(icon, tooltip);
+    }
   }
 
   static IconWithToolTip tooltipOnlyIfComposite(Icon icon) {
