@@ -98,8 +98,8 @@ private fun getDirectVariableUsages(uVar: UVariable): Sequence<PsiElement> {
   return cachedValue.asSequence().mapNotNull(PsiAnchor::retrieve)
 }
 
-private const val MAX_NON_LOCAL_USAGE_FILES_TO_CHECK = 5
-private const val MAX_USAGES_TO_PROCESS_PER_FILE = 10
+private const val MAX_FILES_TO_FIND_USAGES = 5
+private const val MAX_USAGES_TO_PROCESS_PER_SEARCH = 10
 private val STRICT_CONSTANT_NAME_PATTERN = Regex("[\\p{Upper}_0-9]+")
 
 private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiElement> {
@@ -130,11 +130,10 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
 
   val psiManager = PsiManager.getInstance(module.project)
   val filesToSearch = containingFiles.asSequence()
-    .filter { useScope.contains(it) }
-    .sortedBy { it.canonicalPath }
+    .filter { useScope.contains(it) && it != currentFile.virtualFile }
     .mapNotNull { psiManager.findFile(it) }
-    .filter { it != currentFile }
-    .take(MAX_NON_LOCAL_USAGE_FILES_TO_CHECK)
+    .sortedBy { it.virtualFile.canonicalPath }
+    .take(MAX_FILES_TO_FIND_USAGES)
     .toList()
     .toTypedArray()
 
@@ -144,6 +143,8 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
 }
 
 private fun findVariableUsages(variablePsi: PsiElement, variableName: String, files: Array<PsiFile>): Collection<PsiElement> {
+  if (files.isEmpty()) return emptyList()
+
   return SearchService.getInstance()
     .searchWord(variablePsi.project, variableName)
     .inScope(LocalSearchScope(files, null, true))
@@ -161,7 +162,7 @@ private fun findVariableUsages(variablePsi: PsiElement, variableName: String, fi
       emptyList<PsiElement>()
     }
     .asSequence()
-    .take(MAX_USAGES_TO_PROCESS_PER_FILE)
+    .take(MAX_USAGES_TO_PROCESS_PER_SEARCH)
     .toList()
 }
 
