@@ -1,12 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.spellchecker.grazie
+package com.intellij.spellchecker.grazie.async
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.grazie.speller.lists.TraversableWordList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.util.containers.ContainerUtil
@@ -23,7 +21,7 @@ internal class WordListLoader(private val project: Project) {
   private val myListsToLoad: MutableList<Pair<Loader, (String, TraversableWordList) -> Unit>> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   fun loadWordList(loader: Loader, consumer: (String, TraversableWordList) -> Unit) {
-    if (ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isHeadlessEnvironment) {
+    if (AsyncUtils.isNonAsyncMode()) {
       consumer(loader.name, TraversableWordList.create(loader.readAll()))
     }
     else {
@@ -66,11 +64,7 @@ internal class WordListLoader(private val project: Project) {
         myIsLoadingList.set(false)
 
         UIUtil.invokeLaterIfNeeded {
-          if (app.isDisposed) return@invokeLaterIfNeeded
-
-          for (project in ProjectManager.getInstance().openProjects.filter { project.isInitialized && project.isOpen && !project.isDefault }) {
-            DaemonCodeAnalyzer.getInstance(project)?.restart()
-          }
+          AsyncUtils.restartInspection(app)
         }
       }
     }

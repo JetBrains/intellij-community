@@ -20,6 +20,8 @@ import com.intellij.spellchecker.dictionary.EditableDictionary
 import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.Transformation
+import com.intellij.spellchecker.grazie.async.GrazieAsyncSpeller
+import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import com.intellij.spellchecker.util.Strings
 import java.util.*
@@ -33,31 +35,33 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
 
   private val transformation = WordTransformation.LowerCase(Locale.ENGLISH)
 
-  private val mySpeller: Speller = GrazieSplittingSpeller(
-    GrazieSpeller(
-      GrazieSpeller.UserConfig(
-        dictionaries = GrazieSpeller.UserConfig.Dictionaries(
-          transformation = transformation,
-          suggested = Aggregated(
-            //transform main dictionary -- add lower-cased versions for misspelled check
-            TransformedDictionary(English.Lists.suggested, transformation),
-            //add splits to support camel-cased words
-            DictionaryResources.getSplitsDictionary(English.Lists.suggested, transformation, GrazieIdentifierSplitter),
-            //Should not be transformed, since it is already in lower case
-            TransformingDictionary(adapter, transformation)
+  private val mySpeller: Speller = GrazieAsyncSpeller(project) {
+    GrazieSplittingSpeller(
+      GrazieSpeller(
+        GrazieSpeller.UserConfig(
+          dictionaries = GrazieSpeller.UserConfig.Dictionaries(
+            transformation = transformation,
+            suggested = Aggregated(
+              //transform main dictionary -- add lower-cased versions for misspelled check
+              TransformedDictionary(English.Lists.suggested, transformation),
+              //add splits to support camel-cased words
+              DictionaryResources.getSplitsDictionary(English.Lists.suggested, transformation, GrazieIdentifierSplitter),
+              //Should not be transformed, since it is already in lower case
+              TransformingDictionary(adapter, transformation)
+            ),
+            splitter = GrazieIdentifierSplitter
           ),
-          splitter = GrazieIdentifierSplitter
-        ),
-        model = GrazieSpeller.UserConfig.Model(
-          filter = ChainSuggestionFilter(
-            ListSuggestionFilter(English.Lists.excluded),
-            CasingSuggestionFilter(Locale.ENGLISH, 1)
+          model = GrazieSpeller.UserConfig.Model(
+            filter = ChainSuggestionFilter(
+              ListSuggestionFilter(English.Lists.excluded),
+              CasingSuggestionFilter(Locale.ENGLISH, 1)
+            )
           )
         )
-      )
-    ),
-    GrazieSplittingSpeller.UserConfig(splitter = GrazieIdentifierSplitter)
-  )
+      ),
+      GrazieSplittingSpeller.UserConfig(splitter = GrazieIdentifierSplitter)
+    )
+  }
 
   override fun isDictionaryLoad(name: String) = adapter.containsSource(name)
 
