@@ -792,11 +792,11 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String, isPar
                     ApplicationManager.getApplication().invokeLater {
                       if (keymap.name == keymapName) {
                         connect.disconnect()
-                        var successMessage = IdeBundle.message("notification.content.keymap.successfully.activated", keymapName)
-                        if (isParent)
+                        var successMessage = IdeBundle.message("notification.content.keymap.successfully.installed", keymapName)
+                        if (!isParent)
                         {
-                          successMessage = IdeBundle.message("notification.content.keymap.successfully.installed", keymapName)
                           KeymapManagerEx.getInstanceEx().activeKeymap = keymap
+                          successMessage = IdeBundle.message("notification.content.keymap.successfully.activated", keymapName)
                         }
                         val group = NotificationGroup("Keymap", NotificationDisplayType.BALLOON, true)
                         val notificationManager = SingletonNotificationManager(group, NotificationType.INFORMATION)
