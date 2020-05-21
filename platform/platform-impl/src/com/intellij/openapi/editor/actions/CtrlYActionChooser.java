@@ -18,9 +18,17 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CtrlYActionChooser {
   private static final String ASK_ABOUT_SHORTCUT = "ask.about.ctrl.y.shortcut";
+  private static final Set<String> TARGET_KEYMAPS = new HashSet<String>() {{
+    add(KeymapManager.DEFAULT_IDEA_KEYMAP);
+    add(KeymapManager.X_WINDOW_KEYMAP);
+    add(KeymapManager.KDE_KEYMAP);
+    add(KeymapManager.GNOME_KEYMAP);
+  }};
 
   @Nullable
   private static Keymap getCurrentKeymap() {
@@ -81,7 +89,7 @@ public class CtrlYActionChooser {
     Keymap keymap = getCurrentKeymap();
     if (keymap == null) return true;
     Keymap rootKeymap = getRootKeymap(keymap);
-    if (!KeymapManager.DEFAULT_IDEA_KEYMAP.equals(rootKeymap.getName())) return true;
+    if (!TARGET_KEYMAPS.contains(rootKeymap.getName())) return true;
 
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
     if (!isCtrlY(event)) return true;
