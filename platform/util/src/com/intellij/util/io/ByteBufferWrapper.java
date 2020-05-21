@@ -46,13 +46,9 @@ public abstract class ByteBufferWrapper {
 
   public abstract ByteBuffer getBuffer() throws IOException;
 
-  public abstract void unmap();
-
   public abstract void flush();
 
-  public void dispose() {
-    unmap();
-  }
+  public abstract void release();
 
   public static ByteBufferWrapper readWriteDirect(Path file, final long offset, final int length) {
     return new ReadWriteDirectBufferWrapper(file, offset, length);

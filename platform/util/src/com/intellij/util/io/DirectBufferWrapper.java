@@ -68,7 +68,7 @@ abstract class DirectBufferWrapper extends ByteBufferWrapper {
   protected abstract ByteBuffer create() throws IOException;
 
   @Override
-  public void unmap() {
+  public void release() {
     if (isDirty()) flush();
     if (myBuffer != null) {
       ByteBufferUtil.cleanBuffer(myBuffer);

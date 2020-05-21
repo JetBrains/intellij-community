@@ -572,10 +572,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  public boolean isBusyReading() {
-    return myBusyReading;
-  }
-
   @Nullable
   protected Value doGet(Key key) throws IOException {
     myEnumerator.lockStorage();

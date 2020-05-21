@@ -150,17 +150,6 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public final void putShort(long addr, short value) {
-    if (myValuesAreBufferAligned) {
-      long page = addr / myPageSize;
-      int page_offset = (int)(addr % myPageSize);
-      getBuffer(page).putShort(page_offset, value);
-    } else {
-      Bits.putShort(myTypedIOBuffer, 0, value);
-      put(addr, myTypedIOBuffer, 0, 2);
-    }
-  }
-
   public int getOffsetInPage(long addr) {
     return (int)(addr % myPageSize);
   }
@@ -169,17 +158,6 @@ public class PagedFileStorage implements Forceable {
     long page = address / myPageSize;
     assert page >= 0 && page <= MAX_PAGES_COUNT:address + " in " + myFile;
     return getBufferWrapper(page, modify);
-  }
-
-  public final short getShort(long addr) {
-    if (myValuesAreBufferAligned) {
-      long page = addr / myPageSize;
-      int page_offset = (int)(addr % myPageSize);
-      return getReadOnlyBuffer(page).getShort(page_offset);
-    } else {
-      get(addr, myTypedIOBuffer, 0, 2);
-      return Bits.getShort(myTypedIOBuffer, 0);
-    }
   }
 
   public void putLong(long addr, long value) {
@@ -191,15 +169,6 @@ public class PagedFileStorage implements Forceable {
       Bits.putLong(myTypedIOBuffer, 0, value);
       put(addr, myTypedIOBuffer, 0, 8);
     }
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void putByte(final long addr, final byte b) {
-    put(addr, b);
-  }
-
-  public byte getByte(long addr) {
-    return get(addr);
   }
 
   public long getLong(long addr) {
@@ -578,7 +547,7 @@ public class PagedFileStorage implements Forceable {
       assert mySegmentsAllocationLock.isHeldByCurrentThread();
       Iterator<ByteBufferWrapper> iterator = mySegmentsToRemove.iterator();
       while(iterator.hasNext()) {
-        iterator.next().dispose();
+        iterator.next().release();
         iterator.remove();
       }
     }

@@ -208,15 +208,6 @@ public class ResizeableMappedFile implements Forceable {
     myStorage.putInt(index, value);
   }
 
-  public short getShort(long index) {
-    return myStorage.getShort(index);
-  }
-
-  public void putShort(long index, short value) {
-    ensureSize(index + 2);
-    myStorage.putShort(index, value);
-  }
-
   public long getLong(long index) {
     return myStorage.getLong(index);
   }
@@ -228,11 +219,6 @@ public class ResizeableMappedFile implements Forceable {
 
   public byte get(long index) {
     return myStorage.get(index);
-  }
-
-  public void put(long index, byte value) {
-    ensureSize(index + 1);
-    myStorage.put(index, value);
   }
 
   public void get(long index, byte[] dst, int offset, int length) {
