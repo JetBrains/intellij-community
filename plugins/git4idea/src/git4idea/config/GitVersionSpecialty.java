@@ -156,7 +156,7 @@ public enum GitVersionSpecialty {
   CAN_USE_SCHANNEL {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
-      return version.isLaterOrEqual(new GitVersion(2, 14, 0, 0));
+      return version.isLaterOrEqual(new GitVersion(2, 14, 0, 0)) && version.getType().equals(GitVersion.Type.MSYS);
     }
   },
 
