@@ -697,7 +697,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         append(getItemText(t));
       }
       catch (IndexNotReadyException e) {
-        append("loading...");
+        append(IdeBundle.message("progress.text.loading"));
       }
 
       try {
