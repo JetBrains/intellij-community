@@ -33,8 +33,8 @@ public final class HeavyProcessLatch {
    */
   public enum Type {
     Indexing("heavyProcess.type.indexing"),
-    Refreshing("heavyProcess.type.refreshing"),
-    Paused("heavyProcess.type.paused");
+    Syncing("heavyProcess.type.syncing"),
+    Processing("heavyProcess.type.processing");
 
     private final String bundleKey;
     Type(String bundleKey) {
@@ -48,7 +48,7 @@ public final class HeavyProcessLatch {
   }
 
   public @NotNull AccessToken processStarted(@NotNull String operationName) {
-    return processStarted(operationName, Type.Paused);
+    return processStarted(operationName, Type.Processing);
   }
 
   public AccessToken processStarted(@NotNull String operationName, @NotNull Type type) {
