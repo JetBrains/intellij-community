@@ -268,6 +268,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testManyNestedOptionals() { doTest(); }
   public void testGetClass() { doTest(); }
   public void testParamContract() { doTest(); }
+  public void testParamContractBoolean() { doTest(); }
   public void testTypeUseVarArg() {
     setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
