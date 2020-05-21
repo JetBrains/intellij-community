@@ -92,13 +92,9 @@ public interface CaretModel {
   }
 
   /**
-   * Caret position may be updated on document change (e.g. consider that user updates from VCS that causes addition of text
-   * before caret. Caret offset, visual and logical positions should be updated then). So, there is a possible case
-   * that caret model in in the process of caret position update now.
-   * <p/>
-   * Current method allows to check that.
-   *
-   * @return    {@code true} if caret position is up-to-date for now; {@code false} otherwise
+   * Tells whether caret model is in consistent state currently. This might not be the case during document update, but client code can
+   * observe such a state only in specific circumstances. So unless you're implementing very low-level editor logic (involving
+   * {@code PrioritizedDocumentListener}), you don't need this method - you'll only see it return {@code true}.
    */
   default boolean isUpToDate() {
     return getCurrentCaret().isUpToDate();
@@ -207,7 +203,8 @@ public interface CaretModel {
   int getCaretCount();
 
   /**
-   * Returns all carets currently existing in the document, ordered by their visual position in editor.
+   * Returns all carets currently existing in the document, ordered by their visual position in editor. Use {@link #getCaretCount()} if you
+   * only need to know the number of carets, it's much faster.
    */
   @NotNull
   List<Caret> getAllCarets();

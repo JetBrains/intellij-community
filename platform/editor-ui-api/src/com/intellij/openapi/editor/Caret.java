@@ -96,13 +96,9 @@ public interface Caret extends UserDataHolderEx, Disposable {
   void moveToOffset(int offset, boolean locateBeforeSoftWrap);
 
   /**
-   * Caret position may be updated on document change (e.g. consider that user updates from VCS that causes addition of text
-   * before caret. Caret offset, visual and logical positions should be updated then). So, there is a possible case
-   * that caret model in in the process of caret position update now.
-   * <p/>
-   * Current method allows to check that.
-   *
-   * @return    {@code true} if caret position is up-to-date for now; {@code false} otherwise
+   * Tells whether caret is in consistent state currently. This might not be the case during document update, but client code can
+   * observe such a state only in specific circumstances. So unless you're implementing very low-level editor logic (involving
+   * {@code PrioritizedDocumentListener}), you don't need this method - you'll only see it return {@code true}.
    */
   boolean isUpToDate();
 
