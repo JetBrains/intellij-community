@@ -16,7 +16,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
-import com.intellij.util.indexing.caches.IndexUpdateRunner
+import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 
