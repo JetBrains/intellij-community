@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -21,11 +22,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
 import java.util.List;
@@ -141,47 +143,12 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
             presentations.add(new SpacePresentation(columnWidth, 0));
           }
           SequencePresentation shiftedPresentation = new SequencePresentation(presentations);
-          SpacePresentation placeholder = new SpacePresentation(columnWidth * 5, 0);
-          InlayPresentation withSettingsAppearing = createTopLevelPresentation(factory,
-                                                                               shiftedPresentation,
-                                                                               settings(factory, element, editor),
-                                                                               placeholder);
-          sink.addBlockElement(startOffset, true, true, BlockInlayPriority.CODE_VISION, withSettingsAppearing);
+          InlayPresentation withSettings = addSettings(element.getProject(), factory, shiftedPresentation);
+          sink.addBlockElement(startOffset, true, true, BlockInlayPriority.CODE_VISION, withSettings);
         }
         return true;
       }
     };
-  }
-
-  private static InlayPresentation createTopLevelPresentation(@NotNull PresentationFactory factory,
-                                                              @NotNull InlayPresentation shifted,
-                                                              @NotNull InlayPresentation settings,
-                                                              @NotNull InlayPresentation settingsPlaceholder) {
-    BiStatePresentation settingsOrPlaceholder = new BiStatePresentation(() -> settings, () -> settingsPlaceholder, false) {
-      @Override
-      public int getWidth() {
-        return Math.max(settings.getWidth(), settingsPlaceholder.getWidth());
-      }
-
-      @Override
-      public int getHeight() {
-        return Math.max(settings.getHeight(), settingsPlaceholder.getHeight());
-      }
-    };
-
-    InlayPresentation withoutHover = factory.seq(shifted, settingsOrPlaceholder);
-
-    return factory.onHover(withoutHover, new InlayPresentationFactory.HoverListener() {
-      @Override
-      public void onHover(@NotNull MouseEvent event, @NotNull Point translated) {
-        settingsOrPlaceholder.setFirst();
-      }
-
-      @Override
-      public void onHoverFinished() {
-        settingsOrPlaceholder.setSecond();
-      }
-    });
   }
 
   private static int getAnchorOffset(PsiElement element) {
@@ -208,27 +175,22 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
     });
   }
 
-  @NotNull
-  private static InlayPresentation settings(@NotNull PresentationFactory factory,
-                                            @NotNull PsiElement element,
-                                            @NotNull Editor editor) {
-    return createPresentation(factory, element, editor, new InlResult() {
-      @Override
-      public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
-        Project project = element.getProject();
-        FUCounterUsageLogger.getInstance().logEvent(project, FUS_GROUP_ID, SETTING_CLICKED_EVENT_ID);
-        InlayHintsConfigurable.showSettingsDialogForLanguage(project, element.getLanguage(), model ->
-          model.getId().equals(CODE_LENS_ID));
-      }
+  private static InlayPresentation addSettings(@NotNull Project project,
+                                               @NotNull PresentationFactory factory,
+                                               @NotNull InlayPresentation presentation) {
+    JPopupMenu popupMenu = new JPopupMenu();
+    JMenuItem item = new JMenuItem(JavaBundle.message("button.text.settings"));
+    item.addActionListener(e -> {
+      FUCounterUsageLogger.getInstance().logEvent(project, FUS_GROUP_ID, SETTING_CLICKED_EVENT_ID);
+      InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE, model -> model.getId().equals(CODE_LENS_ID));
+    });
+    popupMenu.add(item);
 
-      @NotNull
-      @Override
-      public String getRegularText() {
-        return "Settings...";
-      }
+    return factory.onClick(presentation, MouseButton.Right, (e, __) -> {
+      popupMenu.show(e.getComponent(), e.getX(), e.getY());
+      return Unit.INSTANCE;
     });
   }
-
 
   @NotNull
   @Override
