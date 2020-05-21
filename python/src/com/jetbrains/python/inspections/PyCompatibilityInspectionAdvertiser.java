@@ -58,7 +58,6 @@ import java.util.List;
  */
 public class PyCompatibilityInspectionAdvertiser implements Annotator {
 
-  //private static final String NOTIFICATIONS_TITLE = "Python Versions Compatibility";
   private static final NotificationGroup BALLOON_NOTIFICATIONS = new NotificationGroup(
     "Python Compatibility Inspection Advertiser",
     NotificationDisplayType.STICKY_BALLOON,
