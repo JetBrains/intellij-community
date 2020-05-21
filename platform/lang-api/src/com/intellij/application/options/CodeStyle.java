@@ -4,6 +4,7 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -399,5 +400,21 @@ public class CodeStyle {
   @TestOnly
   public static CodeStyleSettings createTestSettings() {
     return CodeStyleSettingsManager.createTestSettings(null);
+  }
+
+  public static void scheduleReformatWhenSettingsComputed(final @NotNull PsiFile file) {
+    final Project project = file.getProject();
+    CodeStyleCachingService.getInstance(project).scheduleWhenSettingsComputed(
+      file,
+      () -> CommandProcessor.getInstance().executeCommand(
+        project,
+        () -> {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CodeStyleManager.getInstance(project).reformat(file);
+          });
+        },
+        "reformat", null
+      )
+    );
   }
 }
