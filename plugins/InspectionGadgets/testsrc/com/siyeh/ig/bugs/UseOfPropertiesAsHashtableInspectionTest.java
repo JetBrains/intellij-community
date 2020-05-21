@@ -21,12 +21,13 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 public class UseOfPropertiesAsHashtableInspectionTest extends LightJavaInspectionTestCase {
 
   public void testProperties() {
-    doMemberTest("public void testThis(java.util.Properties p, java.util.Properties p2, java.util.Map m) {\n" +
+    doMemberTest("public void testThis(java.util.Properties p, java.util.Properties p2, java.util.Map m, java.util.Map<String, String> m2) {\n" +
                  "  p./*Call to 'Hashtable.get()' on properties object*/get/**/(\"foo\");\n" +
                  "  p.getProperty(\"foo\");\n" +
                  "  p./*Call to 'Hashtable.put()' on properties object*/put/**/(\"foo\", \"bar\");\n" +
                  "  p.setProperty(\"foo\", \"bar\");\n" +
                  "  p./*Call to 'Hashtable.putAll()' on properties object*/putAll/**/(m);\n" +
+                 "  p.putAll(m2);\n" +
                  "  p.putAll(p2);\n" +
                  "}\n");
   }

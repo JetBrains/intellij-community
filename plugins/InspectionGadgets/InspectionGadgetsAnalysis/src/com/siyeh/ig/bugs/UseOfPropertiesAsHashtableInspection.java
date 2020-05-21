@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -137,7 +138,14 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       if ("putAll".equals(call.getMethodExpression().getReferenceName())) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         // putAll with properties argument is probably safe, assuming that the original Properties object was safely filled
-        if (args.length == 1 && TypeUtils.typeEquals(CommonClassNames.JAVA_UTIL_PROPERTIES, args[0].getType())) return;
+        if (args.length == 1) {
+          PsiType type = args[0].getType();
+          if (TypeUtils.typeEquals(CommonClassNames.JAVA_UTIL_PROPERTIES, type) ||
+            TypeUtils.isJavaLangString(PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true)) &&
+            TypeUtils.isJavaLangString(PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true))) {
+            return;
+          }
+        }
       }
       registerMethodCallError(call, call);
     }
