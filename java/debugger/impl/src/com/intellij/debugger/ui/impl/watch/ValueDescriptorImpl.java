@@ -465,7 +465,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public CompletableFuture<NodeRenderer> getRendererAsync(DebugProcessImpl debugProcess, SuspendContext context) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return getTypeAsync(context).thenCompose(type -> getRendererAsync(type, debugProcess, context));
+    return DebuggerUtilsAsync.type(getValue(), context)
+      .thenCompose(type -> getRendererAsync(type, debugProcess, context));
   }
 
   public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {

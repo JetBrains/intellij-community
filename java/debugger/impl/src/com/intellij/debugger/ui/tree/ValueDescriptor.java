@@ -3,28 +3,19 @@ package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.concurrent.CompletableFuture;
 
 public interface ValueDescriptor extends NodeDescriptor{
   PsiElement getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   Value getValue();
-
-  @NotNull
-  default CompletableFuture<? extends Type> getTypeAsync(SuspendContext context) {
-    return DebuggerUtilsAsync.type(getValue(), context);
-  }
 
   @Nullable
   default Type getType() {

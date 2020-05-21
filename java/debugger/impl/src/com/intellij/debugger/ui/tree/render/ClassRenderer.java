@@ -169,17 +169,18 @@ public class ClassRenderer extends NodeRendererImpl{
     final ObjectReference objRef = (ObjectReference)value;
     final ReferenceType refType = objRef.referenceType();
     // default ObjectReference processing
-    DebuggerUtilsAsync.allFields(refType, evaluationContext.getSuspendContext()).thenAccept(
-      fields -> {
-        if (fields.isEmpty()) {
-          builder.setChildren(Collections.singletonList(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel())));
-          return;
-        }
+    DebuggerUtilsAsync.allFields(refType, evaluationContext.getSuspendContext())
+      .thenAccept(
+        fields -> {
+          if (fields.isEmpty()) {
+            builder.setChildren(Collections.singletonList(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel())));
+            return;
+          }
 
-        List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
-        if (fieldsToShow.isEmpty()) {
-          builder.setChildren(Collections.singletonList(
-            nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display"))));
+          List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
+          if (fieldsToShow.isEmpty()) {
+            builder.setChildren(Collections.singletonList(
+              nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display"))));
           return;
         }
 
@@ -202,21 +203,22 @@ public class ClassRenderer extends NodeRendererImpl{
                                                                 NodeDescriptorFactory nodeDescriptorFactory,
                                                                 ObjectReference objRef,
                                                                 Set<String> names) {
-    return DebuggerUtilsAsync.getValues(objRef, fields, evaluationContext.getSuspendContext()).thenApply(cachedValues -> {
-      List<DebuggerTreeNode> res = new ArrayList<>(fields.size());
-      for (Field field : fields) {
-        FieldDescriptorImpl fieldDescriptor =
-          (FieldDescriptorImpl)createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);
-        if (cachedValues != null) {
-          fieldDescriptor.setValue(cachedValues.get(field));
+    return DebuggerUtilsAsync.getValues(objRef, fields, evaluationContext.getSuspendContext())
+      .thenApply(cachedValues -> {
+        List<DebuggerTreeNode> res = new ArrayList<>(fields.size());
+        for (Field field : fields) {
+          FieldDescriptorImpl fieldDescriptor =
+            (FieldDescriptorImpl)createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);
+          if (cachedValues != null) {
+            fieldDescriptor.setValue(cachedValues.get(field));
+          }
+          if (!names.add(fieldDescriptor.getName())) {
+            fieldDescriptor.putUserData(FieldDescriptor.SHOW_DECLARING_TYPE, Boolean.TRUE);
+          }
+          res.add(nodeManager.createNode(fieldDescriptor, evaluationContext));
         }
-        if (!names.add(fieldDescriptor.getName())) {
-          fieldDescriptor.putUserData(FieldDescriptor.SHOW_DECLARING_TYPE, Boolean.TRUE);
-        }
-        res.add(nodeManager.createNode(fieldDescriptor, evaluationContext));
-      }
-      return res;
-    });
+        return res;
+      });
   }
 
   @NotNull

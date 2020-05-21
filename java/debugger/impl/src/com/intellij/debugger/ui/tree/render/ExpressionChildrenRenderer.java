@@ -67,10 +67,11 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
         evaluationContext.createEvaluationContext(value), parentDescriptor
       );
 
-      DebuggerUtilsAsync.type(childrenValue, evaluationContext.getSuspendContext()).thenAccept(type -> {
-        NodeRenderer renderer = getChildrenRenderer(type, parentDescriptor);
-        renderer.buildChildren(childrenValue, builder, evaluationContext);
-      });
+      DebuggerUtilsAsync.type(childrenValue, evaluationContext.getSuspendContext())
+        .thenAccept(type -> {
+          NodeRenderer renderer = getChildrenRenderer(type, parentDescriptor);
+          renderer.buildChildren(childrenValue, builder, evaluationContext);
+        });
     }
     catch (final EvaluateException e) {
       List<DebuggerTreeNode> errorChildren = new ArrayList<>();

@@ -104,17 +104,18 @@ public class ArrayRenderer extends NodeRendererImpl{
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     ArrayReference array = (ArrayReference)value;
-    DebuggerUtilsAsync.length(array, evaluationContext.getSuspendContext()).thenAccept(arrayLength -> {
-      if (arrayLength > 0) {
-        if (!myForced) {
-          builder.initChildrenArrayRenderer(this, arrayLength);
-        }
+    DebuggerUtilsAsync.length(array, evaluationContext.getSuspendContext())
+      .thenAccept(arrayLength -> {
+        if (arrayLength > 0) {
+          if (!myForced) {
+            builder.initChildrenArrayRenderer(this, arrayLength);
+          }
 
-        if (ENTRIES_LIMIT <= 0) {
-          ENTRIES_LIMIT = 1;
-        }
+          if (ENTRIES_LIMIT <= 0) {
+            ENTRIES_LIMIT = 1;
+          }
 
-        AtomicInteger added = new AtomicInteger();
+          AtomicInteger added = new AtomicInteger();
         AtomicBoolean hiddenNulls = new AtomicBoolean();
 
         addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);

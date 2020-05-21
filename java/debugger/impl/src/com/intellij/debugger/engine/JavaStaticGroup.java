@@ -70,17 +70,19 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         ReferenceType refType = myStaticDescriptor.getType();
-        DebuggerUtilsAsync.allFields(refType, suspendContext).thenAccept(
-          fields -> {
-            boolean showSynthetics = NodeRendererSettings.getInstance().getClassRenderer().SHOW_SYNTHETICS;
-            List<Field> fieldsToShow = ContainerUtil.filter(fields, f -> f.isStatic() && (showSynthetics || !DebuggerUtils.isSynthetic(f)));
-            List<List<Field>> chunks = DebuggerUtilsImpl.partition(fieldsToShow, XCompositeNode.MAX_CHILDREN_TO_SHOW);
+        DebuggerUtilsAsync.allFields(refType, suspendContext)
+          .thenAccept(
+            fields -> {
+              boolean showSynthetics = NodeRendererSettings.getInstance().getClassRenderer().SHOW_SYNTHETICS;
+              List<Field> fieldsToShow =
+                ContainerUtil.filter(fields, f -> f.isStatic() && (showSynthetics || !DebuggerUtils.isSynthetic(f)));
+              List<List<Field>> chunks = DebuggerUtilsImpl.partition(fieldsToShow, XCompositeNode.MAX_CHILDREN_TO_SHOW);
 
-            //noinspection unchecked
-            CompletableFuture<XValueChildrenList>[] futures = chunks.stream()
-              .map(l -> createNodes(l, refType, suspendContext))
-              .toArray(CompletableFuture[]::new);
-            CompletableFuture.allOf(futures)
+              //noinspection unchecked
+              CompletableFuture<XValueChildrenList>[] futures = chunks.stream()
+                .map(l -> createNodes(l, refType, suspendContext))
+                .toArray(CompletableFuture[]::new);
+              CompletableFuture.allOf(futures)
               .thenAccept(__ -> {
                 StreamEx.of(futures).map(CompletableFuture::join).forEach(c -> node.addChildren(c, false));
                 node.addChildren(XValueChildrenList.EMPTY, true);

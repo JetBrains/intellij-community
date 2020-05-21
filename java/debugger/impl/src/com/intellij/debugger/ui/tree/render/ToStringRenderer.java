@@ -161,11 +161,12 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     if (type instanceof ClassType) {
       return DebuggerUtilsAsync.findAnyBaseType(type, t -> {
         if (t instanceof ReferenceType) {
-          return DebuggerUtilsAsync.methods((ReferenceType)t, context).thenApply(methods -> {
-            return methods.stream().anyMatch(m -> !m.isAbstract() &&
-                                                  DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
-                                                  !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
-          });
+          return DebuggerUtilsAsync.methods((ReferenceType)t, context)
+            .thenApply(methods -> {
+              return methods.stream().anyMatch(m -> !m.isAbstract() &&
+                                                    DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
+                                                    !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
+            });
         }
         return CompletableFuture.completedFuture(false);
       }, context).thenApply(t -> t != null);

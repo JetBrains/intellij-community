@@ -88,13 +88,14 @@ public class UnBoxingEvaluator implements Evaluator {
       ReferenceType type = value.referenceType();
       Field valueField = type.fieldByName("value");
       if (valueField != null) {
-        return DebuggerUtilsAsync.getValue(value, valueField, context).thenApply(primitiveValue -> {
-          if (primitiveValue instanceof PrimitiveValue) {
-            LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
-            return (PrimitiveValue)primitiveValue;
-          }
-          return null;
-        });
+        return DebuggerUtilsAsync.getValue(value, valueField, context)
+          .thenApply(primitiveValue -> {
+            if (primitiveValue instanceof PrimitiveValue) {
+              LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
+              return (PrimitiveValue)primitiveValue;
+            }
+            return null;
+          });
       }
     }
     return CompletableFuture.completedFuture(null);
