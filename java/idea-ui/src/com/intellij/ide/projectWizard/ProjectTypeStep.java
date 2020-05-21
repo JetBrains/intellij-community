@@ -44,7 +44,10 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -56,8 +59,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.*;
 
@@ -65,7 +66,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings("unchecked")
-public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
+public final class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
 
   private static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
@@ -98,7 +99,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     myContext = context;
     myWizard = wizard;
 
-    myTemplatesMap = new ConcurrentMultiMap<>();
+    myTemplatesMap = MultiMap.createConcurrent();
     final List<TemplatesGroup> groups = fillTemplatesMap(context);
     LOG.debug("groups=" + groups);
 
@@ -558,7 +559,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   private MultiMap<String, ProjectTemplate> loadLocalTemplates() {
-    ConcurrentMultiMap<String, ProjectTemplate> map = new ConcurrentMultiMap<>();
+    MultiMap<String, ProjectTemplate> map = MultiMap.createConcurrent();
     ProjectTemplateEP[] extensions = ProjectTemplateEP.EP_NAME.getExtensions();
     for (ProjectTemplateEP ep : extensions) {
       ClassLoader classLoader = ep.getLoaderForClass();

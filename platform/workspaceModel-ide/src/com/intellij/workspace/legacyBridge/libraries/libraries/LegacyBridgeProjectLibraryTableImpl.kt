@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
 import com.intellij.openapi.Disposable
@@ -10,7 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.ConcurrentMultiMap
+import com.intellij.util.containers.MultiMap
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
 import com.intellij.workspace.executeOrQueueOnDispatchThread
@@ -28,7 +29,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
   private val LOG = Logger.getInstance(javaClass)
 
   private val librariesMap: ConcurrentMap<LibraryId, LegacyBridgeLibraryImpl> = ConcurrentHashMap()
-  private val libraryNameMap: ConcurrentMultiMap<String, LegacyBridgeLibraryImpl> = ConcurrentMultiMap()
+  private val libraryNameMap = MultiMap.createConcurrent<String, LegacyBridgeLibraryImpl>()
 
   private val newLibraryInstances = mutableMapOf<LibraryId, LegacyBridgeLibraryImpl>()
 

@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Pass custom map using {@link #MultiMap(Map)} if needed.
  * @see BidirectionalMultiMap
- * @see ConcurrentMultiMap
  */
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 @ApiStatus.NonExtendable

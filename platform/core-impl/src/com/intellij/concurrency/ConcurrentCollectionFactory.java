@@ -32,6 +32,11 @@ public final class ConcurrentCollectionFactory {
   }
 
   @Contract(pure = true)
+  public static @NotNull <T> Set<T> createConcurrentSet(int initialCapacity, @NotNull TObjectHashingStrategy<T> hashStrategy) {
+    return Collections.newSetFromMap(createMap(initialCapacity, 0.75f, 16, hashStrategy));
+  }
+
+  @Contract(pure = true)
   public static @NotNull <T> Set<T> createConcurrentSet(int initialCapacity,
                                                         float loadFactor,
                                                         int concurrencyLevel,
