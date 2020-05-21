@@ -46,13 +46,14 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
 
     PsiAssignmentExpression parentExpr = (PsiAssignmentExpression)parent;
     PsiElement parentParentExpr = parentExpr.getParent();
-    PsiExpression rExpr = getRExpression(parentExpr);
-    if (mayBeFixedWithoutSideEffect(parentParentExpr, rExpr)) {
+    PsiExpression initializer = getInitializer(parentExpr);
+    if (mayBeFixedWithoutSideEffect(parentParentExpr, initializer)) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(parentParentExpr.getContainingFile())) return;
       WriteAction.run(() -> {
         if (parentParentExpr instanceof PsiParenthesizedExpression) {
-          parentParentExpr.replace(rExpr);
+          parentParentExpr.replace(initializer);
         } else {
-          parentExpr.replace(rExpr);
+          parentExpr.replace(initializer);
         }
       });
       return;
@@ -61,10 +62,11 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
     PsiElement resolve = resolveExpression(element, parentExpr);
     if (!(resolve instanceof PsiVariable)) return;
 
-    sideEffectAwareRemove(project, rExpr, parent, (PsiVariable)resolve);
+    sideEffectAwareRemove(project, initializer, parent, (PsiVariable)resolve);
   }
 
-  private @Nullable PsiExpression getRExpression(@NotNull PsiAssignmentExpression assignmentExpr) {
+  @Nullable
+  private static PsiExpression getInitializer(@NotNull PsiAssignmentExpression assignmentExpr) {
     final IElementType operationSign = assignmentExpr.getOperationTokenType();
     PsiExpression result = assignmentExpr.getRExpression();
     if (JavaTokenType.EQ != operationSign && result != null) {
@@ -73,16 +75,14 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
     return result;
   }
 
-  private boolean mayBeFixedWithoutSideEffect(@NotNull PsiElement expr, @Nullable PsiExpression rExpr) {
-    if (rExpr == null) return false;
-    if (expr instanceof PsiExpression || expr instanceof PsiExpressionList || expr instanceof PsiReturnStatement
-         || expr instanceof PsiLocalVariable) {
-      return FileModificationService.getInstance().prepareFileForWrite(expr.getContainingFile());
-    }
-    return false;
+  private static boolean mayBeFixedWithoutSideEffect(@NotNull PsiElement expr, @Nullable PsiExpression initializer) {
+    if (initializer == null) return false;
+    return expr instanceof PsiExpression || expr instanceof PsiExpressionList || expr instanceof PsiReturnStatement
+            || expr instanceof PsiLocalVariable;
   }
 
-  private @Nullable PsiElement resolveExpression(@NotNull PsiElement expr, @NotNull PsiAssignmentExpression parentExpr) {
+  @Nullable
+  private static PsiElement resolveExpression(@NotNull PsiElement expr, @NotNull PsiAssignmentExpression parentExpr) {
     PsiElement result = null;
     if (expr instanceof PsiReferenceExpression) {
       result = ((PsiReferenceExpression)expr).resolve();

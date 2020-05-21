@@ -1,3 +1,4 @@
+// "Remove redundant assignment" "true"
 class Foo {
   int sent;
 

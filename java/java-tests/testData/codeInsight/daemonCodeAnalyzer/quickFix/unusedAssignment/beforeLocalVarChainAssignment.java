@@ -1,3 +1,4 @@
+// "Remove redundant assignment" "true"
 class Foo {
   void bar(int begin) {
     int current;
