@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
 public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeMethodReferenceInspection.class);
@@ -106,6 +107,8 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
                                                           @Nullable PsiElement context,
                                                           final PsiExpression methodRefCandidate) {
     if (functionalInterfaceType == null) return null;
+    // Do not suggest for annotated lambda, as annotation will be lost during the conversion
+    if (Stream.of(parameters).anyMatch(LambdaCanBeMethodReferenceInspection::hasAnnotation)) return null;
     if (methodRefCandidate instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)methodRefCandidate;
       if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {
@@ -572,6 +575,17 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     else {
       return containingClass.getName();
     }
+  }
+
+  /**
+   * @param p variable to test
+   * @return true if given variable is annotated or its type is annotated
+   */
+  private static boolean hasAnnotation(PsiVariable p) {
+    if (p.getAnnotations().length > 0) return true;
+    PsiTypeElement typeElement = p.getTypeElement();
+    return typeElement != null && !typeElement.isInferredType() &&
+           !typeElement.getType().getCanonicalText(true).equals(typeElement.getType().getCanonicalText(false));
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {

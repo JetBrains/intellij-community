@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
@@ -1100,15 +1101,25 @@ public class LambdaUtil {
     if (parameters.length != lambdaParameters.length) return null;
     final PsiSubstitutor substitutor = getSubstitutor(interfaceMethod, resolveResult);
     for (int i = 0; i < parameters.length; i++) {
-      PsiType psiType = substitutor.substitute(parameters[i].getType());
-      if (psiType == null) return null;
-      if (!PsiTypesUtil.isDenotableType(psiType, lambdaExpression)) {
-        return null;
+      PsiParameter lambdaParameter = lambdaParameters[i];
+      PsiTypeElement origTypeElement = lambdaParameter.getTypeElement();
+
+      PsiType psiType;
+      if (origTypeElement != null && !origTypeElement.isInferredType()) {
+        psiType = origTypeElement.getType();
+      } else {
+        psiType = substitutor.substitute(parameters[i].getType());
+        if (psiType == null || !PsiTypesUtil.isDenotableType(psiType, lambdaExpression)) return null;
       }
 
-      buf.append(checkApplicability ? psiType.getPresentableText() : psiType.getCanonicalText())
+      PsiAnnotation[] annotations = lambdaParameter.getAnnotations();
+      for (PsiAnnotation annotation : annotations) {
+        if (AnnotationTargetUtil.isTypeAnnotation(annotation)) continue;
+        buf.append(annotation.getText()).append(' ');
+      }
+      buf.append(checkApplicability ? psiType.getPresentableText(true) : psiType.getCanonicalText(true))
         .append(" ")
-        .append(lambdaParameters[i].getName());
+        .append(lambdaParameter.getName());
       if (i < parameters.length - 1) {
         buf.append(", ");
       }
