@@ -36,6 +36,7 @@ public class CastConflictsWithInstanceofInspectionTest extends LightJavaInspecti
   public void testWhileOrChain() { doTest(); }
   public void testOrCasts() { doTest(); }
   public void testNextOperand() { doTest(); }
+  public void testOrNotInWhile() { doTest(); }
 
   @Nullable
   @Override
