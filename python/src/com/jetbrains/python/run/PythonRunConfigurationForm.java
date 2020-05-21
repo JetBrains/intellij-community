@@ -250,6 +250,10 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     return PyBundle.message("runcfg.labels.module.name");
   }
 
+  @Nls public static String getCustomNameText() {
+    return PyBundle.message("runcfg.labels.custom.name");
+  }
+
   @Override
   @NotNull
   public String getInputFile() {
