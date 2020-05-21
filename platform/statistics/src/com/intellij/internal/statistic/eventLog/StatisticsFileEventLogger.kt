@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.util.concurrent.CompletableFuture
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.concurrent.RejectedExecutionException
 
 open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val sessionId: String,
@@ -47,21 +47,26 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
     group.validateEventId(eventId)
+    return try {
+      CompletableFuture.runAsync(Runnable {
+        val context = EventContext.create(eventId, data)
+        val validator = SensitiveDataValidator.getInstance(recorderId)
+        val validatedEventId = validator.guaranteeCorrectEventId(group, context)
+        val validatedEventData = validator.guaranteeCorrectEventData(group, context)
 
-    return CompletableFuture.runAsync(Runnable {
-      val context = EventContext.create(eventId, data)
-      val validator = SensitiveDataValidator.getInstance(recorderId)
-      val validatedEventId = validator.guaranteeCorrectEventId(group, context)
-      val validatedEventData = validator.guaranteeCorrectEventData(group, context)
-
-      val creationTime = System.currentTimeMillis()
-      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion,
-                              validatedEventId, isState)
-      for (datum in validatedEventData) {
-        event.event.addData(datum.key, datum.value)
-      }
-      log(event, creationTime)
-    }, logExecutor)
+        val creationTime = System.currentTimeMillis()
+        val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion,
+                                validatedEventId, isState)
+        for (datum in validatedEventData) {
+          event.event.addData(datum.key, datum.value)
+        }
+        log(event, creationTime)
+      }, logExecutor)
+    }
+    catch (e: RejectedExecutionException) {
+      //executor is shutdown
+      CompletableFuture.completedFuture(null)
+    }
   }
 
   private fun log(event: LogEvent, createdTime: Long) {
