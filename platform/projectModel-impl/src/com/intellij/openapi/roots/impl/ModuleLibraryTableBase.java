@@ -63,7 +63,7 @@ public abstract class ModuleLibraryTableBase implements LibraryTable, LibraryTab
 
   @NotNull
   @Override
-  public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type) {
     return createLibrary(name, type, null);
   }
 

@@ -47,7 +47,7 @@ public class ModuleLibraryTable extends ModuleLibraryTableBase {
 
   @NotNull
   @Override
-  public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> kind, @Nullable ProjectModelExternalSource externalSource) {
     ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager, externalSource);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();

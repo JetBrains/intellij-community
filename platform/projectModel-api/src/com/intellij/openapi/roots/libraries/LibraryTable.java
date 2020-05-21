@@ -77,10 +77,10 @@ public interface LibraryTable {
     Library createLibrary(String name);
 
     @NotNull
-    Library createLibrary(String name, @Nullable PersistentLibraryKind type);
+    Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type);
 
     @NotNull 
-    Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource);
+    Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type, @Nullable ProjectModelExternalSource externalSource);
 
     void removeLibrary(@NotNull Library library);
 
