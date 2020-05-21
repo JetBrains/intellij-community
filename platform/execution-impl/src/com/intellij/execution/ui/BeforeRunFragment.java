@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.WrapLayout;
@@ -74,12 +75,15 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     private final InplaceButton myAddButton;
     private Runnable myChangeListener;
     private RunConfiguration myConfiguration;
+    private final LinkLabel<Object> myAddLabel;
 
     public BeforeRunComponent() {
       super(new WrapLayout(FlowLayout.LEADING));
       setBorder(JBUI.Borders.emptyLeft(-5));
       add(new JLabel(ExecutionBundle.message("run.configuration.before.run.label")));
       myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
+      myAddLabel =
+        new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
       add(myAddButton);
     }
 
@@ -116,16 +120,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     public void reset(RunnerAndConfigurationSettingsImpl s) {
       myConfiguration = s.getConfiguration();
       if (myTags == null) {
-        myTags = new ArrayList<>();
-        RunConfiguration configuration = s.getConfiguration();
-        for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : BeforeRunTaskProvider.EP_NAME.getExtensions(configuration.getProject())) {
-          if (provider.createTask(configuration) == null) {
-            continue;
-          }
-          TaskButton button = new TaskButton(provider);
-          add(button);
-          myTags.add(button);
-        }
+        addButtons();
       }
       List<BeforeRunTask<?>> tasks = s.getManager().getBeforeRunTasks(s.getConfiguration());
       for (BeforeRunTask<?> task : tasks) {
@@ -134,23 +129,48 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
           button.setTask(task);
         }
       }
+      updateAddLabel();
+    }
+
+    private void updateAddLabel() {
+      myAddLabel.setVisible(getEnabledTasks().isEmpty());
+    }
+
+    private void addButtons() {
+      myTags = new ArrayList<>();
+      for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject())) {
+        if (provider.createTask(myConfiguration) == null) {
+          continue;
+        }
+        TaskButton button = new TaskButton(provider, () -> {
+          myChangeListener.run();
+          updateAddLabel();
+        });
+        add(button);
+        myTags.add(button);
+      }
+      add(myAddButton);
+      add(myAddLabel);
     }
 
     public void apply(RunnerAndConfigurationSettingsImpl s) {
-      RunConfiguration configuration = s.getConfiguration();
-      List<BeforeRunTask<?>> tasks = myTags.stream()
+      s.getManager().setBeforeRunTasks(s.getConfiguration(), getEnabledTasks());
+    }
+
+    @NotNull
+    private List<BeforeRunTask<?>> getEnabledTasks() {
+      return myTags.stream()
         .filter(button -> button.myTask != null && button.isVisible())
         .map(button -> button.myTask)
         .collect(Collectors.toList());
-      s.getManager().setBeforeRunTasks(configuration, tasks);
     }
 
-    private final class TaskButton extends TagButton {
+    private static final class TaskButton extends TagButton {
       @NotNull private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
       private BeforeRunTask<?> myTask;
 
-      private TaskButton(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
-        super(provider.getName(), myChangeListener);
+      private TaskButton(BeforeRunTaskProvider<BeforeRunTask<?>> provider, Runnable action) {
+        super(provider.getName(), action);
         myProvider = provider;
         setVisible(false);
       }
