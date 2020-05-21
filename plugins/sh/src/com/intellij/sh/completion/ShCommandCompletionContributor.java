@@ -100,8 +100,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
   private static PsiElementPattern.Capture<PsiElement> elementPattern() {
     return psiElement().andNot(psiElement().andOr(insideForClause(), insideIfDeclaration(), insideWhileDeclaration(),
         insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration(),
-        insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion(),
-        insideComment()));
+        insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideComment()));
   }
 
   @NonNls private static final List<String> BUILTIN =
