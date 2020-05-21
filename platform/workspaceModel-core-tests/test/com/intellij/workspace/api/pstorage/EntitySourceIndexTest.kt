@@ -53,15 +53,15 @@ class EntitySourceIndexTest {
     val newSource = PSampleEntitySource("newSource")
     val builder = PEntityStorageBuilder.create()
     val entity = builder.addPSourceEntity("hello", oldSource)
-    assertEquals(entity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
+    assertEquals(entity.id, builder.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
     builder.changeSource(entity, newSource)
-    assertNull(builder.entitySourceIndex.getIdsByEntitySource(oldSource))
-    assertEquals(entity.id, builder.entitySourceIndex.getIdsByEntitySource(newSource)?.get(0))
+    assertNull(builder.entitySourceIndex.getIdsByEntry(oldSource))
+    assertEquals(entity.id, builder.entitySourceIndex.getIdsByEntry(newSource)?.get(0))
 
     builder.removeEntity(entity)
-    assertNull(builder.entitySourceIndex.getIdsByEntitySource(oldSource))
-    assertNull(builder.entitySourceIndex.getIdsByEntitySource(newSource))
+    assertNull(builder.entitySourceIndex.getIdsByEntry(oldSource))
+    assertNull(builder.entitySourceIndex.getIdsByEntry(newSource))
   }
 
   @Test
@@ -70,20 +70,20 @@ class EntitySourceIndexTest {
     val newSource = PSampleEntitySource("newSource")
     val builder = PEntityStorageBuilder.create()
     val firstEntity = builder.addPSourceEntity("one", oldSource)
-    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
+    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
-    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
-    assertNull(diff.entitySourceIndex.getIdsByEntitySource(newSource))
+    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
+    assertNull(diff.entitySourceIndex.getIdsByEntry(newSource))
 
     val secondEntity = diff.addPSourceEntity("two", newSource)
-    assertEquals(secondEntity.id, diff.entitySourceIndex.getIdsByEntitySource(newSource)?.get(0))
-    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
-    assertNull(builder.entitySourceIndex.getIdsByEntitySource(newSource))
+    assertEquals(secondEntity.id, diff.entitySourceIndex.getIdsByEntry(newSource)?.get(0))
+    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
+    assertNull(builder.entitySourceIndex.getIdsByEntry(newSource))
 
     builder.addDiff(diff)
-    assertEquals(secondEntity.id, builder.entitySourceIndex.getIdsByEntitySource(newSource)?.get(0))
-    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
+    assertEquals(secondEntity.id, builder.entitySourceIndex.getIdsByEntry(newSource)?.get(0))
+    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
   }
 
   @Test
@@ -91,17 +91,17 @@ class EntitySourceIndexTest {
     val oldSource = PSampleEntitySource("oldSource")
     val builder = PEntityStorageBuilder.create()
     val firstEntity = builder.addPSourceEntity("one", oldSource)
-    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
+    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
-    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
+    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
     diff.removeEntity(firstEntity)
-    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
-    assertNull(diff.entitySourceIndex.getIdsByEntitySource(oldSource))
+    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
+    assertNull(diff.entitySourceIndex.getIdsByEntry(oldSource))
 
     builder.addDiff(diff)
-    assertNull(builder.entitySourceIndex.getIdsByEntitySource(oldSource))
+    assertNull(builder.entitySourceIndex.getIdsByEntry(oldSource))
   }
 
   @Test
@@ -110,20 +110,20 @@ class EntitySourceIndexTest {
     val newSource = PSampleEntitySource("newSource")
     val builder = PEntityStorageBuilder.create()
     val firstEntity = builder.addPSourceEntity("one", oldSource)
-    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
+    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
-    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
-    assertNull(diff.entitySourceIndex.getIdsByEntitySource(newSource))
+    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
+    assertNull(diff.entitySourceIndex.getIdsByEntry(newSource))
 
     diff.changeSource(firstEntity, newSource)
-    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
-    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntitySource(newSource)?.get(0))
-    assertNull(builder.entitySourceIndex.getIdsByEntitySource(newSource))
+    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
+    assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntry(newSource)?.get(0))
+    assertNull(builder.entitySourceIndex.getIdsByEntry(newSource))
 
     builder.addDiff(diff)
-    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(newSource)?.get(0))
-    assertNull(builder.entitySourceIndex.getIdsByEntitySource(oldSource))
+    assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntry(newSource)?.get(0))
+    assertNull(builder.entitySourceIndex.getIdsByEntry(oldSource))
   }
 
   @Test
@@ -136,12 +136,12 @@ class EntitySourceIndexTest {
       this.parent = firstEntity
     }
 
-    var entities = builder.entitySourceIndex.getIdsByEntitySource(entitySource)
+    var entities = builder.entitySourceIndex.getIdsByEntry(entitySource)
     assertEquals(2, entities?.size)
 
     builder.removeEntity(firstEntity)
 
-    entities = builder.entitySourceIndex.getIdsByEntitySource(entitySource)
+    entities = builder.entitySourceIndex.getIdsByEntry(entitySource)
     assertNull(entities)
   }
 }
