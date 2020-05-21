@@ -106,11 +106,7 @@ final class FileTree {
       LOG.assertTrue(children != null);
       dirsToBeRemoved = collectDirsToRemove(file, children, dirsToBeRemoved, _directory);
     }
-    for (VirtualFile dir : myStrictDirectory2Children.keySet()) {
-      List<VirtualFile> children = myStrictDirectory2Children.get(dir);
-      LOG.assertTrue(children != null);
-      children.remove(file);
-    }
+    myStrictDirectory2Children.values().forEach(files -> files.remove(file));
     // We have remove also all removed (empty) directories
     if (dirsToBeRemoved != null) {
       LOG.assertTrue(dirsToBeRemoved.size() > 0);
