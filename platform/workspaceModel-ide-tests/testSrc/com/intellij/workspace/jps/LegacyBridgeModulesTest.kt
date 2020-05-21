@@ -2,11 +2,13 @@ package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.module.*
+import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -28,9 +30,9 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.toVirtualFileUrl
-import org.jetbrains.jps.model.java.JavaSourceRootProperties
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.LanguageLevel
+import org.jetbrains.jps.model.module.UnknownSourceRootType
+import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.junit.Assert.*
@@ -517,8 +519,8 @@ class LegacyBridgeModulesTest {
       val contentEntry = ModuleRootManager.getInstance(module).contentEntries.single()
       val sourceFolder = contentEntry.sourceFolders.single()
 
-      assertSame(JavaSourceRootType.SOURCE, sourceFolder.rootType)
-      assertTrue(sourceFolder.jpsElement.properties is JavaSourceRootProperties)
+      assertSame(UnknownSourceRootType.getInstance("unsupported-custom-source-root-type", false), sourceFolder.rootType)
+      assertTrue(sourceFolder.jpsElement.properties is UnknownSourceRootTypeProperties<*>)
 
       val customRoot = WorkspaceModel.getInstance(project).entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList().single()

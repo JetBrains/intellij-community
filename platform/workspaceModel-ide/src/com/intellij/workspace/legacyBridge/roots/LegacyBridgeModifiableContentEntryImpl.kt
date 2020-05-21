@@ -23,9 +23,11 @@ import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
+import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
 
 internal class LegacyBridgeModifiableContentEntryImpl(
   private val diff: TypedEntityStorageDiffBuilder,
@@ -53,10 +55,12 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    val serializer: JpsModuleSourceRootPropertiesSerializer<P> = (JpsModelSerializerExtension.getExtensions()
+    val serializer: JpsModuleSourceRootPropertiesSerializer<P> = if (type is UnknownSourceRootType)
+      UnknownSourceRootPropertiesSerializer.forType(type as UnknownSourceRootType) as JpsModuleSourceRootPropertiesSerializer<P>
+      else
+      (JpsModelSerializerExtension.getExtensions()
       .flatMap { it.moduleSourceRootPropertiesSerializers }
-      .firstOrNull { it.type == type }) as? JpsModuleSourceRootPropertiesSerializer<P>
-      ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
+      .firstOrNull { it.type == type }) as? JpsModuleSourceRootPropertiesSerializer<P> ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
 
     val entitySource = currentContentEntry.value.entity.entitySource
     val sourceRootEntity = diff.addSourceRootEntity(

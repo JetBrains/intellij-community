@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -55,4 +56,6 @@ public interface SourceFolder extends ContentFolder {
 
   @NotNull
   JpsModuleSourceRoot getJpsElement();
+
+  <P extends JpsElement> void changeType(JpsModuleSourceRootType<P> newType, P properties);
 }

@@ -14,7 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
@@ -25,7 +27,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
  */
 @ApiStatus.Internal
 public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
-  private final JpsModuleSourceRoot myJpsElement;
+  private JpsModuleSourceRoot myJpsElement;
   @NonNls public static final String ELEMENT_NAME = JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG;
   @NonNls public static final String TEST_SOURCE_ATTR = JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE;
   static final String DEFAULT_PACKAGE_PREFIX = "";
@@ -110,6 +112,11 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
   @NotNull
   public JpsModuleSourceRoot getJpsElement() {
     return myJpsElement;
+  }
+
+  @Override
+  public <P extends JpsElement> void changeType(JpsModuleSourceRootType<P> newType, P properties) {
+    myJpsElement = JpsElementFactory.getInstance().createModuleSourceRoot(myJpsElement.getUrl(), newType, properties);
   }
 
   private boolean isForGeneratedSources() {

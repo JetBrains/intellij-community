@@ -171,7 +171,7 @@ class LegacyBridgeModuleLibraryTest {
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
       val template = "\$MODULE_DIR\$"
-      assertTrue(moduleFile.readText().contains("""<orderEntry type="module-library">
+      assertTrue(moduleFile.readText().replace("\r\n", "\n").contains("""<orderEntry type="module-library">
       <library name="$mavenLibraryName">
         <CLASSES>
           <root url="$template/$antLibraryName.jar" />

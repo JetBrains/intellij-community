@@ -12,7 +12,7 @@
     <extensionPoint name="errorHandler" interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter" dynamic="true"/>
 
     <extensionPoint name="jps.plugin"
-                    beanClass="com.intellij.jps.impl.JpsPluginBean"/>
+                    beanClass="com.intellij.jps.impl.JpsPluginBean" dynamic="true"/>
 
     <extensionPoint name="preloadingActivity"
                     interface="com.intellij.openapi.application.PreloadingActivity"

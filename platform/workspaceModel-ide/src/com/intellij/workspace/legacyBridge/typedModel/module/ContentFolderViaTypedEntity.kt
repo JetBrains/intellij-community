@@ -10,15 +10,16 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsElementFactory
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.SOURCE_ROOT_TYPE_ATTRIBUTE
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.URL_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
 
 internal abstract class ContentFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
   override fun getContentEntry(): ContentEntryViaTypedEntity = entry
@@ -34,7 +35,7 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
   override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(sourceRootEntity.url, LegacyBridgeFilePointerScope.SourceRoot).file
 
   private var packagePrefixVar: String? = null
-  private val sourceRootType: JpsModuleSourceRootType<*> by lazy { getSourceRootType(sourceRootEntity.rootType) }
+  private var sourceRootType: JpsModuleSourceRootType<out JpsElement> = getSourceRootType(sourceRootEntity)
 
   override fun getRootType() = sourceRootType
   override fun isTestSource() = sourceRootEntity.tests
@@ -71,7 +72,10 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
     val customSourceRoot = sourceRootEntity.asCustomSourceRoot() ?: return elementFactory.createDummyElement()
     if (customSourceRoot.propertiesXmlTag.isEmpty()) return rootType.createDefaultProperties()
 
-    val serializer = JpsModelSerializerExtension.getExtensions()
+    val serializer = if (rootType is UnknownSourceRootType)
+      UnknownSourceRootPropertiesSerializer.forType(rootType as UnknownSourceRootType)
+      else
+      JpsModelSerializerExtension.getExtensions ()
       .flatMap { it.moduleSourceRootPropertiesSerializers }
       .firstOrNull { it.type == rootType }
     if (serializer == null) {
@@ -89,6 +93,10 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
       LOG.error("Unable to deserialize source root '${sourceRootEntity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
       elementFactory.createDummyElement()
     }
+  }
+
+  override fun <P : JpsElement> changeType(newType: JpsModuleSourceRootType<P>, properties: P) {
+    sourceRootType = newType
   }
 
   override fun hashCode() = entry.url.hashCode()
@@ -142,13 +150,13 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
     packagePrefixVar = packagePrefix
   }
 
-  private fun getSourceRootType(rootType: String): JpsModuleSourceRootType<*> {
+  private fun getSourceRootType(entity: SourceRootEntity): JpsModuleSourceRootType<out JpsElement> {
     JpsModelSerializerExtension.getExtensions().forEach { extensions ->
       extensions.moduleSourceRootPropertiesSerializers.forEach {
-        if (it.typeId == rootType) return it.type
+        if (it.typeId == entity.rootType) return it.type
       }
     }
-    return JavaSourceRootType.SOURCE
+    return UnknownSourceRootType.getInstance(entity.rootType, entity.tests)
   }
 
   companion object {
