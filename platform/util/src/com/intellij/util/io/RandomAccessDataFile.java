@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class RandomAccessDataFile implements Forceable, Closeable {
@@ -49,11 +48,6 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     else {
       log = null;
     }
-  }
-
-  @NotNull
-  public File getFile() {
-    return myFile;
   }
 
   public void put(long addr, byte[] bytes, int off, int len) {
@@ -106,32 +100,9 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     put(addr, myTypedIOBuffer.get(), 0, 8);
   }
 
-  public void putByte(final long addr, final byte b) {
-    myTypedIOBuffer.get()[0] = b;
-    put(addr, myTypedIOBuffer.get(), 0, 1);
-  }
-
-  public byte getByte(long addr) {
-    get(addr, myTypedIOBuffer.get(), 0, 1);
-    return myTypedIOBuffer.get()[0];
-  }
-
   public long getLong(long addr) {
     get(addr, myTypedIOBuffer.get(), 0, 8);
     return Bits.getLong(myTypedIOBuffer.get(), 0);
-  }
-
-  public String getUTF(long addr) {
-    int len = getInt(addr);
-    byte[] bytes = new byte[len];
-    get(addr + 4, bytes, 0, len);
-    return new String(bytes, StandardCharsets.UTF_8);
-  }
-
-  public void putUTF(long addr, String value) {
-    final byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-    putInt(addr, bytes.length);
-    put(addr + 4, bytes, 0, bytes.length);
   }
 
   public long length() {

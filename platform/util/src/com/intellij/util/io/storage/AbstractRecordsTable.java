@@ -89,7 +89,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     if (myFreeRecordsList.isEmpty()) {
       int result = getRecordsCount() + 1;
       doCleanRecord(result);
-      if (getRecordsCount() != result)  LOG.error("Failed to correctly allocate new record in: " + myStorage.getFile());
+      if (getRecordsCount() != result)  LOG.error("Failed to correctly allocate new record in: " + myStorage);
       return result;
     }
     else {
