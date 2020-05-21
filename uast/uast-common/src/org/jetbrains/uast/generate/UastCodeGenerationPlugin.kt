@@ -2,6 +2,7 @@
 package org.jetbrains.uast.generate
 
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -93,10 +94,17 @@ infix fun String?.ofType(type: PsiType?): UParameterInfo = UParameterInfo(type, 
 @ApiStatus.Experimental
 inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
   UastCodeGenerationPlugin.byLanguage(this.lang)
-    ?.replace(this, newElement, T::class.java)
+    ?.replace(this, newElement, T::class.java).also {
+      if (it == null) {
+        logger<UastCodeGenerationPlugin>().warn("failed replacing the $this with $newElement")
+      }
+    }
 
 @ApiStatus.Experimental
-inline fun <reified T : UElement> T.refreshed() = sourcePsi?.toUElementOfType<T>()
+inline fun <reified T : UElement> T.refreshed() = sourcePsi?.also {
+  logger<UastCodeGenerationPlugin>().assertTrue(it.isValid,
+                                                "psi $it of class ${it.javaClass} should be valid, containing file = ${it.containingFile}")
+}?.toUElementOfType<T>()
 
 val UElement.generationPlugin: UastCodeGenerationPlugin?
   @ApiStatus.Experimental
