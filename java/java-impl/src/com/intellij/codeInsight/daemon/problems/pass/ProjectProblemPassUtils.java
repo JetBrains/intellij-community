@@ -250,6 +250,11 @@ public class ProjectProblemPassUtils {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public @NotNull String getFamilyName() {
       return JavaBundle.message("project.problems.fix.text");
     }
