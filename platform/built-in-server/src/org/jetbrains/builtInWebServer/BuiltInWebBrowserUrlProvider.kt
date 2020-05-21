@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
+import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.ide.browsers.OpenInBrowserRequest
-import com.intellij.ide.browsers.WebBrowserService
 import com.intellij.ide.browsers.WebBrowserUrlProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -26,7 +26,7 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
     return request.isPhysicalFile() && isFileOfMyLanguage(request.file)
   }
 
-  protected open fun isFileOfMyLanguage(psiFile: PsiFile): Boolean = WebBrowserService.isHtmlOrXmlFile(psiFile)
+  protected open fun isFileOfMyLanguage(psiFile: PsiFile): Boolean = WebBrowserXmlService.getInstance().isHtmlOrXmlFile(psiFile)
 
   override fun getUrl(request: OpenInBrowserRequest, file: VirtualFile): Url? {
     if (file is HttpVirtualFile) {

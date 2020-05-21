@@ -2,6 +2,7 @@
 package com.intellij.ide.browsers.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -20,8 +21,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.BitUtil
 import com.intellij.util.Url
-import com.intellij.xml.XmlBundle
-import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -41,7 +40,7 @@ internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolea
     }
   }
   catch (e: WebBrowserUrlProvider.BrowserException) {
-    Messages.showErrorDialog(e.message, XmlBundle.message("browser.error"))
+    Messages.showErrorDialog(e.message, IdeBundle.message("browser.error"))
   }
   catch (e: Exception) {
     LOG.error(e)
@@ -103,9 +102,9 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
           append(KeymapUtil.getShortcutText(shortcut))
         }
 
-        if (HtmlUtil.isHtmlFile(result.file)) {
+        if (WebBrowserXmlService.getInstance().isHtmlFile(result.file)) {
           append(if (shortcut != null) ", " else "")
-          append(XmlBundle.message("browser.shortcut"))
+          append(IdeBundle.message("browser.shortcut"))
         }
       }
       if (shortcutInfo.isNotEmpty()) {
@@ -166,7 +165,7 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
       label.icon = AllIcons.Nodes.Servlet
       label.text = (value as Url).toDecodedForm()
     })
-    .setTitle(XmlBundle.message("browser.url.popup"))
+    .setTitle(IdeBundle.message("browser.url.popup"))
     .setItemChosenCallback { value ->
       result.setResult(value)
     }

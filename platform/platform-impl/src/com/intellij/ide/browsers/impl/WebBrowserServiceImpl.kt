@@ -1,11 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.impl
 
-import com.intellij.ide.browsers.OpenInBrowserRequest
-import com.intellij.ide.browsers.WebBrowserService
-import com.intellij.ide.browsers.WebBrowserUrlProvider
-import com.intellij.ide.browsers.createOpenInBrowserRequest
-import com.intellij.lang.xml.XMLLanguage
+import com.intellij.ide.browsers.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
@@ -13,7 +9,6 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.xml.util.HtmlUtil
 import java.util.*
 import java.util.stream.Stream
 
@@ -31,7 +26,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
     fun getDebuggableUrls(context: PsiElement?): Collection<Url> {
       try {
         val request = if (context == null) null else createOpenInBrowserRequest(context)
-        if (request == null || request.file.viewProvider.baseLanguage === XMLLanguage.INSTANCE) {
+        if (request == null || WebBrowserXmlService.getInstance().isXmlLanguage(request.file.viewProvider.baseLanguage)) {
           return emptyList()
         }
         else {
@@ -52,7 +47,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
   }
 
   override fun getUrlsToOpen(request: OpenInBrowserRequest, preferLocalUrl: Boolean): Collection<Url> {
-    val isHtmlOrXml = isHtmlOrXmlFile(request.file)
+    val isHtmlOrXml = WebBrowserXmlService.getInstance().isHtmlOrXmlFile(request.file)
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
       for (urlProvider in URL_PROVIDER_EP.extensionList) {
@@ -82,7 +77,7 @@ private fun getUrls(provider: WebBrowserUrlProvider?, request: OpenInBrowserRequ
       return provider.getUrls(request)
     }
     catch (e: WebBrowserUrlProvider.BrowserException) {
-      if (!HtmlUtil.isHtmlFile(request.file)) {
+      if (!WebBrowserXmlService.getInstance().isHtmlFile(request.file)) {
         throw e
       }
     }

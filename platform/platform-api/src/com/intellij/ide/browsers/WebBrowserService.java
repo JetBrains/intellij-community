@@ -16,12 +16,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,22 +30,8 @@ public abstract class WebBrowserService {
   @NotNull
   public abstract Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 
+  @SuppressWarnings("unused")
   public static boolean isHtmlOrXmlLanguage(@NotNull Language language) {
-    return language.isKindOf(HTMLLanguage.INSTANCE)
-           || language == XHTMLLanguage.INSTANCE
-           || language == XMLLanguage.INSTANCE;
-  }
-
-  public static boolean isHtmlOrXmlFile(@NotNull PsiFile psiFile) {
-    Language baseLanguage = psiFile.getViewProvider().getBaseLanguage();
-    if (isHtmlOrXmlLanguage(baseLanguage)) {
-      return true;
-    }
-
-    if (psiFile.getFileType() instanceof LanguageFileType) {
-      return isHtmlOrXmlLanguage(((LanguageFileType)psiFile.getFileType()).getLanguage());
-    }
-
-    return false;
+    return WebBrowserXmlService.getInstance().isHtmlOrXmlLanguage(language);
   }
 }

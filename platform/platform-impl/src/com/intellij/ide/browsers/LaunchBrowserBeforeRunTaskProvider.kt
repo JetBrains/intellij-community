@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -19,7 +20,6 @@ import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.xml.XmlBundle
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
@@ -29,7 +29,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     val ID = Key.create<LaunchBrowserBeforeRunTask>("LaunchBrowser.Before.Run")
   }
 
-  override fun getName() = XmlBundle.message("task.browser.launch")
+  override fun getName() = IdeBundle.message("task.browser.launch")
 
   override fun getId() = ID
 
@@ -56,18 +56,18 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
     StartBrowserPanel.setupUrlField(url, runConfiguration.project)
 
-    val startJavaScriptDebuggerCheckBox = if (JavaScriptDebuggerStarter.Util.hasStarters()) CheckBox(XmlBundle.message("start.browser.with.js.debugger"), state.withDebugger) else null
+    val startJavaScriptDebuggerCheckBox = if (JavaScriptDebuggerStarter.Util.hasStarters()) CheckBox(IdeBundle.message("start.browser.with.js.debugger"), state.withDebugger) else null
 
     val panel = panel {
-      row(XmlBundle.message("task.browser.label")) {
+      row(IdeBundle.message("task.browser.label")) {
         browserComboBox()
         startJavaScriptDebuggerCheckBox?.invoke()
       }
-      row(XmlBundle.message("task.browser.url")) {
+      row(IdeBundle.message("task.browser.url")) {
         url(growPolicy = GrowPolicy.MEDIUM_TEXT)
       }
     }
-    dialog(XmlBundle.message("task.browser.launch"), panel = panel, resizable = true, focusedComponent = url)
+    dialog(IdeBundle.message("task.browser.launch"), panel = panel, resizable = true, focusedComponent = url)
       .show()
 
     state.browser = browserSelector.selected

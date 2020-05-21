@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.google.common.net.HostAndPort;
@@ -6,6 +6,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -13,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Urls;
 import com.intellij.util.net.NetUtils;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,13 +124,13 @@ public class BrowserStarter {
 
   private void showBrowserOpenTimeoutNotification() {
     NotificationGroup group =
-      NotificationGroup.balloonGroup("URL does not respond notification", XmlBundle.message("browser.notification.timeout.group"));
+      NotificationGroup.balloonGroup("URL does not respond notification", IdeBundle.message("browser.notification.timeout.group"));
     NotificationType type = NotificationType.ERROR;
 
-    String title = XmlBundle.message("browser.notification.timeout.title");
+    String title = IdeBundle.message("browser.notification.timeout.title");
     String url = Objects.requireNonNull(mySettings.getUrl());
     String openUrlDescription = "open_url";
-    String content = XmlBundle.message("browser.notification.timeout.text", url, openUrlDescription);
+    String content = IdeBundle.message("browser.notification.timeout.text", url, openUrlDescription);
 
     Notification openBrowserNotification = group.createNotification(title, content, type, (notification, event) -> {
       if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;

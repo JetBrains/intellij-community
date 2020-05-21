@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
@@ -19,8 +20,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.util.Url;
 import com.intellij.util.io.URLUtil;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,11 +142,11 @@ public class StartBrowserPanel {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        return HtmlUtil.isHtmlFile(file) || virtualFileToUrl(file, project) != null;
+        return WebBrowserXmlService.getInstance().isHtmlFile(file) || virtualFileToUrl(file, project) != null;
       }
     };
-    descriptor.setTitle(XmlBundle.message("javascript.debugger.settings.choose.file.title"));
-    descriptor.setDescription(XmlBundle.message("javascript.debugger.settings.choose.file.subtitle"));
+    descriptor.setTitle(IdeBundle.message("javascript.debugger.settings.choose.file.title"));
+    descriptor.setDescription(IdeBundle.message("javascript.debugger.settings.choose.file.subtitle"));
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
 
     field.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.PlatformIcons;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +46,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
     DefaultActionGroup group = new DefaultActionGroup();
     for (final WebBrowser browser : WebBrowserManager.getInstance().getActiveBrowsers()) {
       if (browserCondition.value(browser)) {
-        group.add(new AnAction(XmlBundle.message("open.in.0", browser.getName()), XmlBundle.message("open.url.in.0", browser.getName()), browser.getIcon()) {
+        group.add(new AnAction(IdeBundle.message("open.in.0", browser.getName()), IdeBundle.message("open.url.in.0", browser.getName()), browser.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             BrowserLauncher.getInstance().browse(url, browser, e.getProject());
@@ -69,8 +55,8 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
       }
     }
 
-    group.add(new AnAction(XmlBundle.messagePointer("action.OpenUrlHyperlinkInfo.Anonymous.text.copy.url"),
-                           XmlBundle.messagePointer("action.OpenUrlHyperlinkInfo.Anonymous.description.copy.url.to.clipboard"),
+    group.add(new AnAction(IdeBundle.messagePointer("action.OpenUrlHyperlinkInfo.Anonymous.text.copy.url"),
+                           IdeBundle.messagePointer("action.OpenUrlHyperlinkInfo.Anonymous.description.copy.url.to.clipboard"),
                            PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
