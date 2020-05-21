@@ -69,6 +69,8 @@ import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.indexing.impl.forward.IntForwardIndex
+import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
+import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
