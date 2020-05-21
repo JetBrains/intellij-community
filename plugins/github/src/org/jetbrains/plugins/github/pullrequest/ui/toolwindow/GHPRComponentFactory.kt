@@ -35,8 +35,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
-import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
-import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -54,9 +52,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                         private val wrapper: Wrapper,
                                         private val parentDisposable: Disposable) {
 
-    private val avatarIconsProviderFactory =
-      CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(), GithubImageResizer.getInstance(),
-                                               dataContext.requestExecutor)
+    private val avatarIconsProviderFactory = dataContext.avatarIconsProviderFactory
 
     private val listComponent = GHPRListComponent.create(project, dataContext, avatarIconsProviderFactory, parentDisposable)
 
@@ -112,7 +108,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider.changesData,
                                                         disposable)
 
-    val actionDataContext = GHPRFixedActionDataContext(dataContext, dataProvider, avatarIconsProviderFactory) {
+    val actionDataContext = GHPRFixedActionDataContext(dataContext, dataProvider) {
       detailsLoadingModel.result ?: details
     }
 
@@ -167,7 +163,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                               dataContext.securityService,
                                               dataContext.repositoryDataService,
                                               dataProvider.detailsData)
-      GHPRDetailsComponent.create(detailsModel, actionDataContext.avatarIconsProviderFactory)
+      GHPRDetailsComponent.create(detailsModel, dataContext.avatarIconsProviderFactory)
     },
                                                     disposable,
                                                     GithubBundle.message("cannot.load.details"),
@@ -194,8 +190,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       DataManager.registerDataProvider(it) { dataId ->
         if (Disposer.isDisposed(disposable)) null
         else when {
-          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, dataProvider,
-                                                                                        actionDataContext.avatarIconsProviderFactory) {
+          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, dataProvider) {
             detailsLoadingModel.result ?: actionDataContext.pullRequestDetails
           }
           else -> null

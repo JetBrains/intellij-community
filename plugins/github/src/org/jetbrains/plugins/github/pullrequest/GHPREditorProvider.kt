@@ -32,7 +32,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -46,8 +45,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
 import org.jetbrains.plugins.github.ui.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
-import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import javax.swing.BorderFactory
@@ -96,14 +93,12 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       }
     }
 
-    val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(),
-                                                                              GithubImageResizer.getInstance(),
-                                                                              dataContext.requestExecutor)
+    val avatarIconsProviderFactory = dataContext.avatarIconsProviderFactory
 
     val mainPanel = Wrapper().also {
       DataManager.registerDataProvider(it, DataProvider { dataId ->
         if (GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId))
-          GHPRFixedActionDataContext(dataContext, dataProvider, avatarIconsProviderFactory) {
+          GHPRFixedActionDataContext(dataContext, dataProvider) {
             detailsModel.value
           }
         else null

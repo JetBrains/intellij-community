@@ -3,24 +3,15 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.editor.EditorFactory
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 class GHPRFixedActionDataContext internal constructor(dataContext: GHPRDataContext,
                                                       dataProvider: GHPRDataProvider,
-                                                      override val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                                       private val detailsProvider: () -> GHPullRequestShort)
   : GHPRActionDataContext {
 
-  override val account = dataContext.account
-
   override val gitRepositoryCoordinates = dataContext.gitRepositoryCoordinates
-  override val repositoryCoordinates = dataContext.repositoryCoordinates
-
-  override val requestExecutor = dataContext.requestExecutor
-
-  override val currentUser = dataContext.securityService.currentUser
 
   override val pullRequestDetails
     get() = detailsProvider()

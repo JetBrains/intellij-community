@@ -8,10 +8,13 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
+import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
+import org.jetbrains.plugins.github.util.GithubImageResizer
 
 internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordinates,
                                val repositoryCoordinates: GHRepositoryCoordinates,
@@ -38,6 +41,10 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
       listLoader.updateData(details)
     }
   }
+
+  val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(),
+                                                                            GithubImageResizer.getInstance(),
+                                                                            requestExecutor)
 
   override fun dispose() {
     Disposer.dispose(listenersDisposable)
