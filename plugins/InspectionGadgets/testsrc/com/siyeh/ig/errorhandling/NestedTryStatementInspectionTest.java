@@ -18,6 +18,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
+@SuppressWarnings("EmptyFinallyBlock")
 public class NestedTryStatementInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
