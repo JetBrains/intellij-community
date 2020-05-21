@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
@@ -23,7 +24,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -55,9 +55,6 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
     PsiClass createdClass = classes[0];
-    if(reformat){
-      CodeStyleManager.getInstance(project).reformat(psiJavaFile);
-    }
     String className = createdClass.getName();
     JavaDirectoryServiceImpl.checkCreateClassOrInterface(directory, className);
 
@@ -76,6 +73,9 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     PsiElement addedElement = directory.add(psiJavaFile);
     if (addedElement instanceof PsiJavaFile) {
       psiJavaFile = (PsiJavaFile)addedElement;
+      if(reformat){
+        CodeStyle.scheduleReformatWhenSettingsComputed(psiJavaFile);
+      }
 
       return psiJavaFile.getClasses()[0];
     }
