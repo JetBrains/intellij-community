@@ -1952,6 +1952,10 @@ private val activateToolWindowVKsMask: Int
       return 0
     }
 
+    if (Registry.`is`("toolwindow.disable.overlay.by.double.key")) {
+      return 0
+    }
+
     val keymap = KeymapManager.getInstance().activeKeymap
     val baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow")
     var baseModifiers = if (SystemInfo.isMac) InputEvent.META_MASK else InputEvent.ALT_MASK
