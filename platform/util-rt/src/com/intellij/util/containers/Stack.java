@@ -59,7 +59,7 @@ public class Stack<T> extends ArrayList<T> {
   @Override
   public boolean equals(Object o) {
     if (o instanceof RandomAccess && o instanceof List) {
-      List other = (List)o;
+      List<?> other = (List<?>)o;
       if (size() != other.size()) {
         return false;
       }
