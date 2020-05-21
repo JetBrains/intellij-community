@@ -49,6 +49,10 @@ public abstract class WindowManager {
    */
   public abstract void setAlphaModeEnabled(Window window, boolean state);
 
+  public boolean isNotSuggestAsParent(@NotNull Window window) {
+    return false;
+  }
+
   public abstract void doNotSuggestAsParent(Window window);
 
   /**

@@ -17,6 +17,8 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.panel.ProgressPanel;
+import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
@@ -618,7 +620,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       }
     }
 
-    MyInlineProgressIndicator inline = new MyInlineProgressIndicator(compact, info, original);
+    MyInlineProgressIndicator inline = compact ? new MyInlineProgressIndicator(true, info, original)
+                                               : new ProgressPanelProgressIndicator(info, original);
     myInlineToOriginal.put(inline, original);
     inlines.add(inline);
 
@@ -702,7 +705,76 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  private final class MyInlineProgressIndicator extends InlineProgressIndicator {
+  private class ProgressPanelProgressIndicator extends MyInlineProgressIndicator {
+    private final ProgressPanel myProgressPanel;
+    private final Runnable mySuspendUpdateRunnable;
+
+    ProgressPanelProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
+      super(false, task, original);
+
+      ProgressPanelBuilder builder = new ProgressPanelBuilder(myProgress).withTopSeparator();
+
+      if (task.isCancellable()) {
+        builder.withCancel(this::cancelRequest);
+      }
+
+      Runnable suspendRunnable = createSuspendRunnable();
+      builder.withPause(suspendRunnable).withResume(suspendRunnable);
+
+      myComponent = builder.createPanel();
+      myProgressPanel = Objects.requireNonNull(ProgressPanel.getProgressPanel(myProgress));
+      UIUtil.putClientProperty(myComponent, ProcessPopup.KEY, myProgressPanel);
+
+      mySuspendUpdateRunnable = createSuspendUpdateRunnable(Objects.requireNonNull(myProgressPanel.getSuspendButton()));
+    }
+
+    @Override
+    protected void createComponent() {
+    }
+
+    @Override
+    protected @Nullable String getTextValue() {
+      return myProgressPanel.getLabelText();
+    }
+
+    @Override
+    protected void setTextValue(@NotNull String text) {
+      myProgressPanel.setLabelText(text);
+    }
+
+    @Override
+    protected void setTextEnabled(boolean value) {
+      myProgressPanel.setLabelEnabled(value);
+    }
+
+    @Override
+    protected void setText2Value(@NotNull String text) {
+      myProgressPanel.setCommentText(text);
+    }
+
+    @Override
+    protected void setText2Enabled(boolean value) {
+      myProgressPanel.setCommentEnabled(value);
+    }
+
+    @Override
+    protected void setProcessNameValue(@NotNull String text) {
+    }
+
+    @Override
+    public void updateProgressNow() {
+      super.updateProgressNow();
+
+      InplaceButton cancelButton = myProgressPanel.getCancelButton();
+      if (cancelButton != null) {
+        cancelButton.setPainting(!isStopping());
+      }
+
+      mySuspendUpdateRunnable.run();
+    }
+  }
+
+  private class MyInlineProgressIndicator extends InlineProgressIndicator {
     private ProgressIndicatorEx myOriginal;
     private PresentationModeProgressPanel myPresentationModeProgressPanel;
 
@@ -733,24 +805,32 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     private ProgressButton createSuspendButton() {
-      InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> {
+      InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> createSuspendRunnable().run()).setFillBg(false);
+      return new ProgressButton(suspendButton, createSuspendUpdateRunnable(suspendButton));
+    }
+
+    @NotNull
+    protected Runnable createSuspendRunnable() {
+      return () -> {
         ProgressSuspender suspender = getSuspender();
         if (suspender == null) {
           return;
         }
-
         if (suspender.isSuspended()) {
           suspender.resumeProcess();
-        } else {
+        }
+        else {
           suspender.suspendProcess(null);
         }
-        UIEventLogger.logUIEvent(
-          suspender.isSuspended() ? UIEventId.ProgressPaused : UIEventId.ProgressResumed
-        );
-      }).setFillBg(false);
+        UIEventLogger.logUIEvent(suspender.isSuspended() ? UIEventId.ProgressPaused : UIEventId.ProgressResumed);
+      };
+    }
+
+    @NotNull
+    protected Runnable createSuspendUpdateRunnable(@NotNull InplaceButton suspendButton) {
       suspendButton.setVisible(false);
 
-      return new ProgressButton(suspendButton, () -> {
+      return () -> {
         ProgressSuspender suspender = getSuspender();
         suspendButton.setVisible(suspender != null);
         if (suspender != null) {
@@ -762,7 +842,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
             suspendButton.setToolTipText(toolTipText);
           }
         }
-      });
+      };
     }
 
     private void showPauseIcons(InplaceButton button) {

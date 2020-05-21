@@ -260,6 +260,13 @@ public final class WindowWatcher implements PropertyChangeListener{
     }
   }
 
+  public boolean isNotSuggestAsParent(@NotNull Window window) {
+    synchronized (myLock) {
+      WindowInfo info = windowToInfo.get(window);
+      return info != null && !info.mySuggestAsParent;
+    }
+  }
+
   public final void doNotSuggestAsParent(final Window window) {
     if(LOG.isDebugEnabled()){
       LOG.debug("enter: doNotSuggestAsParent("+window+")");
